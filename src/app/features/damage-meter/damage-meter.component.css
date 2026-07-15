@@ -1,0 +1,149 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.tool-panel {
+  height: 100%;
+}
+
+.header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.tab-header {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.meter-tab {
+  flex: 1;
+  height: auto;
+  padding: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #888;
+  background: #222;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+.meter-tab:hover {
+  background: #2c2c2c;
+  color: #fff;
+}
+.meter-tab.active {
+  background: #333;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.meter-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.meter-separator {
+  height: 2px;
+  background: #333;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #444;
+  flex-shrink: 0;
+}
+
+/* --- Historique --- */
+.fight-entry {
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.fight-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+.fight-summary:hover {
+  background: #242424;
+}
+.fight-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.fight-badge.won {
+  background: rgba(46, 204, 113, 0.18);
+  color: var(--btn-active-green);
+  border: 1px solid var(--btn-active-green);
+}
+.fight-badge.lost {
+  background: rgba(231, 76, 60, 0.18);
+  color: var(--btn-active-red);
+  border: 1px solid var(--btn-active-red);
+}
+.fight-time {
+  color: #888;
+  font-family: monospace;
+  font-size: 0.85rem;
+  flex-grow: 1;
+}
+.fight-summary .caret {
+  font-size: 0.7em;
+  color: #666;
+  transition: transform 0.2s;
+}
+.fight-entry.expanded .caret {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.fight-details {
+  display: flex;
+  flex-direction: column;
+  background: #161616;
+  border-top: 1px solid #2a2a2a;
+  max-height: 420px;
+}
+
+.loot-section {
+  padding: 10px 15px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.loot-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+.loot-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: #ccc;
+  padding: 3px 0;
+}
+.loot-qty {
+  font-family: monospace;
+  color: var(--kama-color);
+}
+
+.empty-state.small {
+  height: auto;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  justify-content: flex-start;
+}

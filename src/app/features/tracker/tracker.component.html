@@ -1,0 +1,59 @@
+<div class="tool-panel">
+  <div class="panel-header">
+    <span class="header-label">Suivi</span>
+  </div>
+
+  <div class="tracker-section">
+    <div class="tracker-subheader">Ennemis vaincus</div>
+    <div class="tracker-controls">
+      <input
+        type="text"
+        placeholder="Nom de l'ennemi à suivre..."
+        [value]="newEnemyName()"
+        (input)="setNewEnemyName($any($event.target).value)"
+        (keydown.enter)="addEnemy()"
+      />
+      <button class="primary-btn" (click)="addEnemy()">Ajouter</button>
+    </div>
+    <div class="tracker-list">
+      @if (stats.enemyWatchlist().length === 0) {
+        <div class="empty-state">Ajoutez un nom d'ennemi pour compter ses défaites.</div>
+      } @else {
+        @for (enemy of stats.enemyWatchlist(); track enemy.name) {
+          <div class="watch-row">
+            <span class="watch-name">{{ enemy.name }}</span>
+            <span class="watch-count">{{ enemy.count | numberFr }}</span>
+            <button class="icon-btn" title="Retirer" (click)="removeEnemy(enemy.name)">×</button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="tracker-section">
+    <div class="tracker-subheader">Ressources obtenues</div>
+    <div class="tracker-controls">
+      <input
+        type="text"
+        placeholder="Nom de la ressource à suivre..."
+        [value]="newItemName()"
+        (input)="setNewItemName($any($event.target).value)"
+        (keydown.enter)="addItem()"
+      />
+      <button class="primary-btn" (click)="addItem()">Ajouter</button>
+    </div>
+    <div class="tracker-list">
+      @if (stats.itemWatchlist().length === 0) {
+        <div class="empty-state">Ajoutez un nom d'objet pour compter les prises.</div>
+      } @else {
+        @for (item of stats.itemWatchlist(); track item.name) {
+          <div class="watch-row">
+            <span class="watch-name">{{ item.name }}</span>
+            <span class="watch-count">{{ item.count | numberFr }}</span>
+            <button class="icon-btn" title="Retirer" (click)="removeItem(item.name)">×</button>
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>

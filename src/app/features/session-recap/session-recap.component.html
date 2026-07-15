@@ -1,0 +1,71 @@
+@if (visible()) {
+  <div
+    class="recap-panel"
+    #panel
+    [class.positioned]="position() !== null"
+    [style.left.px]="position()?.left"
+    [style.top.px]="position()?.top"
+  >
+    <div class="recap-header" (mousedown)="onHeaderMouseDown($event, panel)">
+      <div class="recap-header-group">
+        <img [src]="headerIcon" class="recap-icon" alt="" />
+        <h3>Session Recap</h3>
+      </div>
+      <button class="close-btn" (click)="close()">×</button>
+    </div>
+
+    <div class="recap-body">
+      <div class="recap-row duration-row">
+        <span class="recap-label">Durée</span>
+        <span class="recap-value accent">{{ duration() }}</span>
+      </div>
+
+      <div class="recap-section">
+        <span class="recap-section-title">Kamas</span>
+        <div class="kama-net-wrap">
+          <div class="recap-row">
+            <span class="recap-label">Net (survoler pour le détail)</span>
+            <span
+              class="recap-value"
+              [class.gain]="stats.netKamas() >= 0"
+              [class.loss]="stats.netKamas() < 0"
+              >{{ stats.netKamas() | numberFr }}</span
+            >
+          </div>
+          <div class="kama-breakdown">
+            <div>Gagné : <span class="gain">+{{ stats.kamasEarned() | numberFr }}</span></div>
+            <div>Dépensé : <span class="loss">-{{ stats.kamasLost() | numberFr }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="recap-section">
+        <span class="recap-section-title">Expérience par personnage</span>
+        @if (stats.xpByCharacter().length === 0) {
+          <div class="empty-state small">Aucune XP enregistrée pour le moment.</div>
+        } @else {
+          <div class="xp-list">
+            @for (row of stats.xpByCharacter(); track row.name) {
+              <div class="xp-row">
+                <span class="xp-name">{{ row.name }}</span>
+                <span class="xp-amount">+{{ row.amount | numberFr }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="recap-section">
+        <span class="recap-section-title">Combats</span>
+        <div class="recap-row">
+          <span class="recap-label">Victoires</span>
+          <span class="recap-value gain">{{ stats.combatsWon() }}</span>
+        </div>
+        <div class="recap-row">
+          <span class="recap-label">Défaites</span>
+          <span class="recap-value loss">{{ stats.combatsLost() }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+}

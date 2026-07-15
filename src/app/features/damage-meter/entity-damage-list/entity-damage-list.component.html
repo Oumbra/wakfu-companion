@@ -1,0 +1,56 @@
+<div
+  class="half-header"
+  [class.header-allies]="side() === 'ally'"
+  [class.header-enemies]="side() === 'enemy'"
+  [class.drag-over]="interactive() && dragOver()"
+  (dragover)="onDragOverList($event)"
+  (dragleave)="onDragLeaveList()"
+  (drop)="onDropOnList($event)"
+>
+  <span>{{ title() }}</span>
+  <span class="half-total">{{ total() | numberFr }}</span>
+</div>
+<div
+  class="half-list"
+  [class.drag-over]="interactive() && dragOver()"
+  (dragover)="onDragOverList($event)"
+  (dragleave)="onDragLeaveList()"
+  (drop)="onDropOnList($event)"
+>
+  @if (rows().length === 0) {
+    <div class="empty-state">{{ emptyMessage() }}</div>
+  } @else {
+    @for (row of rows(); track row.name) {
+      <div class="entity-block" [class.expanded]="isExpanded(row.name)">
+        <div
+          class="entity-row"
+          [attr.draggable]="interactive() ? 'true' : null"
+          (dragstart)="onDragStart($event, row.name)"
+          (click)="toggle(row.name)"
+        >
+          <div class="entity-bg-bar" [style.width]="barWidth(row.total)"></div>
+          <app-entity-icon [name]="row.name" [side]="side()" />
+          <span class="entity-name"><span class="caret">▸</span> {{ row.name }}</span>
+          <span class="entity-total">{{ row.total | numberFr }}</span>
+        </div>
+        @if (isExpanded(row.name)) {
+          <div class="spell-list">
+            @for (spell of row.spells; track spell.spell) {
+              <div class="spell-row">
+                <span class="spell-name">{{ spell.spell }}</span>
+                <span class="spell-elements">
+                  @for (el of spell.byElement | keyvalue; track el.key) {
+                    <span class="spell-element" [class]="elementClass($any(el.key))">{{
+                      el.value | numberFr
+                    }}</span>
+                  }
+                </span>
+                <span class="spell-total">{{ spell.total | numberFr }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

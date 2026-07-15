@@ -1,0 +1,56 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.app-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #181818;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-title {
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 1.05rem;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.file-chip {
+  font-family: monospace;
+  color: #aaa;
+  font-size: 0.8rem;
+  background: #000;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-main {
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.app-main > * {
+  flex-grow: 1;
+  min-width: 0;
+  min-height: 0;
+}
