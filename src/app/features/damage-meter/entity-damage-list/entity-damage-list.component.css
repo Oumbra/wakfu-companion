@@ -1,0 +1,139 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.half-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 15px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #ddd;
+  text-transform: uppercase;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.header-allies {
+  background-color: var(--ally-header-bg);
+}
+.header-enemies {
+  background-color: var(--enemy-header-bg);
+}
+.half-header.drag-over {
+  background-color: rgba(0, 210, 255, 0.25);
+}
+.half-total {
+  font-family: monospace;
+}
+
+.half-list {
+  overflow-y: auto;
+  flex-grow: 1;
+  min-height: 0;
+  transition: background-color 0.15s;
+}
+.half-list.drag-over {
+  background-color: rgba(0, 210, 255, 0.08);
+}
+
+.entity-block {
+  border-bottom: 1px solid #2a2a2a;
+}
+.entity-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 9px 15px;
+  cursor: pointer;
+  gap: 8px;
+}
+.entity-row[draggable='true'] {
+  cursor: grab;
+}
+.entity-row[draggable='true']:active {
+  cursor: grabbing;
+}
+.entity-row:hover {
+  background: #242424;
+}
+.entity-bg-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 0;
+  background-color: rgba(0, 210, 255, 0.12);
+  border-right: 2px solid var(--accent);
+  transition: width 0.3s ease;
+}
+.entity-name {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  font-size: 0.88rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.caret {
+  font-size: 0.65em;
+  color: #666;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+.entity-block.expanded .caret {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+.entity-total {
+  position: relative;
+  z-index: 1;
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.spell-list {
+  background: #161616;
+  border-top: 1px solid #2a2a2a;
+}
+.spell-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 15px 6px 32px;
+  font-size: 0.78rem;
+  color: #ccc;
+  border-bottom: 1px solid #222;
+  gap: 10px;
+}
+.spell-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.spell-elements {
+  display: flex;
+  gap: 8px;
+  font-family: monospace;
+  font-weight: 600;
+}
+.spell-total {
+  font-family: monospace;
+  color: #888;
+  min-width: 70px;
+  text-align: right;
+}

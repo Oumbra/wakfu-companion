@@ -1,0 +1,245 @@
+/* Charte graphique reprise de https://wakfu-companion.nexuswow.workers.dev/ */
+:root {
+  --bg-color: #121212;
+  --panel-bg: #1e1e1e;
+  --panel-header-bg: #2a2a2a;
+  --text-color: #e0e0e0;
+  --text-muted: #888;
+  --accent: #00d2ff;
+  --border: #333;
+
+  --btn-active-green: #2ecc71;
+  --btn-active-red: #e74c3c;
+  --highlight-green: rgba(46, 204, 113, 0.2);
+  --highlight-green-border: #2ecc71;
+
+  --chat-msg-bg: #252525;
+  --scrollbar-track: #1a1a1a;
+  --scrollbar-thumb: #444;
+
+  --dmg-fire: #e9782d;
+  --dmg-air: #d69dfc;
+  --dmg-earth: #1b8045;
+  --dmg-water: #00e1ff;
+  --dmg-light: #ffd700;
+  --dmg-stasis: #cf9fff;
+  --dmg-neutre: #cfcfcf;
+  --dmg-inconnu: #999;
+
+  --kama-color: rgb(255, 215, 0);
+
+  --channel-proximite: #d8d8d8;
+  --channel-groupe: #00d2ff;
+  --channel-guilde: #b48cff;
+  --channel-recrutement: #2ecc71;
+  --channel-commerce: #ffd700;
+  --channel-communaute: #5dade2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+button {
+  border: none;
+  padding: 0 12px;
+  height: 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-family: inherit;
+  font-size: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  color: var(--text-color);
+  background: #333;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type='text'] {
+  background: #151515;
+  border: 1px solid #444;
+  color: var(--text-color);
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+input[type='text']:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+button.toggle-btn {
+  background-color: #333;
+  color: #aaa;
+  border: 1px solid #444;
+  white-space: nowrap;
+}
+button.toggle-btn:hover {
+  background-color: #3a3a3a;
+  color: #ddd;
+  border-color: #666;
+}
+button.toggle-btn.active {
+  background-color: rgba(0, 210, 255, 0.15);
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 5px rgba(0, 210, 255, 0.1);
+}
+
+button.primary-btn {
+  background: var(--accent);
+  color: #04222a;
+  font-weight: 700;
+}
+button.primary-btn:hover {
+  background: #33dcff;
+}
+
+button.reset-btn {
+  background-color: #b33939;
+  color: white;
+  border: 1px solid #b33939;
+}
+button.reset-btn:hover {
+  background-color: #ff4d4d;
+  border-color: #ff4d4d;
+}
+
+button.icon-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ccc;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font-size: 0.9rem;
+}
+button.icon-btn:hover {
+  background: var(--accent);
+  color: #04222a;
+  border-color: var(--accent);
+}
+
+/* --- Panneaux --- */
+.tool-panel {
+  position: relative;
+  background: var(--panel-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  min-height: 0;
+}
+
+.panel-header {
+  background: var(--panel-header-bg);
+  padding: 10px 15px;
+  font-weight: bold;
+  color: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.panel-header .header-label {
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.panel-body {
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.empty-state {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+  color: #555;
+  font-style: italic;
+  font-size: 0.95rem;
+  padding: 20px;
+  text-align: center;
+}
+
+/* --- Scrollbars --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* --- Couleurs des éléments de dégâts --- */
+.dmg-fire {
+  color: var(--dmg-fire);
+}
+.dmg-air {
+  color: var(--dmg-air);
+}
+.dmg-earth {
+  color: var(--dmg-earth);
+}
+.dmg-water {
+  color: var(--dmg-water);
+}
+.dmg-light {
+  color: var(--dmg-light);
+}
+.dmg-stasis {
+  color: var(--dmg-stasis);
+}
+.dmg-neutre {
+  color: var(--dmg-neutre);
+}
+.dmg-inconnu {
+  color: var(--dmg-inconnu);
+}

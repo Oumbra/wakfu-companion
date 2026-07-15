@@ -1,0 +1,23 @@
+<div class="app-shell">
+  <header class="app-header">
+    <div class="app-title">Wakfu Companion</div>
+    @if (logFileAccess.status() === 'connected') {
+      <div class="app-header-actions">
+        <span class="file-chip">{{ logFileAccess.fileName() }}</span>
+        <button class="icon-btn" title="Changer de fichier" (click)="onChangeFile()">⇄</button>
+        <button class="toggle-btn" (click)="sessionRecap.toggle()">Session recap</button>
+        <button class="reset-btn" (click)="onReset()">Réinitialiser</button>
+      </div>
+    }
+  </header>
+
+  <main class="app-main">
+    @if (logFileAccess.status() === 'connected') {
+      <app-dashboard />
+    } @else {
+      <app-setup />
+    }
+  </main>
+
+  <app-session-recap #sessionRecap />
+</div>

@@ -1,0 +1,48 @@
+<div class="setup-shell">
+  <div class="setup-card">
+    <h1 class="setup-title">Wakfu Companion</h1>
+
+    @switch (logFileAccess.status()) {
+      @case ('unsupported') {
+        <div class="setup-message error">
+          Ce navigateur ne supporte pas la lecture de fichier en direct (File System Access API).
+          Utilisez <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong> pour suivre votre
+          log en temps réel.
+        </div>
+      }
+      @case ('needs-reconnect') {
+        <div class="reconnect-box">
+          <p class="prev-file-label">Fichier précédemment connecté :</p>
+          <p class="prev-filename">{{ logFileAccess.fileName() }}</p>
+          <button class="primary-btn reconnect-btn" (click)="reconnect()">Reconnecter</button>
+          <p class="browser-warning">
+            Le navigateur exige une confirmation à chaque ouverture, pour des raisons de sécurité.
+          </p>
+          <button class="link-btn" (click)="forget()">Choisir un autre fichier</button>
+        </div>
+      }
+      @default {
+        <div
+          class="drop-zone"
+          [class.drag-over]="dragOver()"
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave()"
+          (drop)="onDrop($event)"
+          (click)="pickFile()"
+        >
+          <p class="drop-title">GLISSEZ « wakfu_chat.log » ICI</p>
+          <p class="drop-sub">ou cliquez pour parcourir vos fichiers</p>
+        </div>
+
+        <div class="path-hint">
+          <span class="path-label">Chemin par défaut :</span>
+          <code>%AppData%\zaap\gamesLogs\wakfu\logs\</code>
+        </div>
+
+        @if (logFileAccess.status() === 'error') {
+          <div class="setup-message error">{{ logFileAccess.errorMessage() }}</div>
+        }
+      }
+    }
+  </div>
+</div>

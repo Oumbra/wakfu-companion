@@ -1,0 +1,89 @@
+<div class="tool-panel">
+  <div class="panel-header">
+    <span class="header-label">
+      <img [src]="headerIcon" class="header-icon" alt="" />
+      Dommage
+    </span>
+  </div>
+
+  <div class="tab-header">
+    <button class="meter-tab" [class.active]="view() === 'current'" (click)="setView('current')">
+      Combat en cours
+    </button>
+    <button class="meter-tab" [class.active]="view() === 'history'" (click)="setView('history')">
+      Historique
+    </button>
+  </div>
+
+  <div class="panel-body meter-body">
+    @if (view() === 'current') {
+      <app-entity-damage-list
+        title="Alliés"
+        side="ally"
+        [rows]="allyRows()"
+        [interactive]="true"
+        emptyMessage="Aucun allié n'a encore infligé de dégâts."
+      />
+      <div class="meter-separator"></div>
+      <app-entity-damage-list
+        title="Ennemis"
+        side="enemy"
+        [rows]="enemyRows()"
+        [interactive]="true"
+        emptyMessage="Aucun ennemi n'a encore infligé de dégâts."
+      />
+    } @else {
+      @if (fightHistory().length === 0) {
+        <div class="empty-state">Aucun combat détecté pour le moment.</div>
+      } @else {
+        @for (record of fightHistory(); track record.id) {
+          <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
+            <div class="fight-summary" (click)="toggleFight(record.id)">
+              <span
+                class="fight-badge"
+                [class.won]="record.result === 'won'"
+                [class.lost]="record.result === 'lost'"
+              >
+                {{ record.result === 'won' ? 'Victoire' : 'Défaite' }}
+              </span>
+              <span class="fight-time">{{ record.time.slice(0, 8) }}</span>
+              <span class="caret">▸</span>
+            </div>
+            @if (isFightExpanded(record.id)) {
+              <div class="fight-details">
+                <app-entity-damage-list
+                  title="Personnages"
+                  side="ally"
+                  [rows]="allyRowsFor(record)"
+                  emptyMessage="Aucun personnage n'a infligé de dégâts."
+                />
+                <div class="meter-separator"></div>
+                <app-entity-damage-list
+                  title="Ennemis"
+                  side="enemy"
+                  [rows]="enemyRowsFor(record)"
+                  emptyMessage="Aucun ennemi n'a infligé de dégâts."
+                />
+                @if (record.result === 'won') {
+                  <div class="loot-section">
+                    <div class="loot-header">Butin</div>
+                    @if (record.loot.length === 0) {
+                      <div class="empty-state small">Aucun butin ramassé.</div>
+                    } @else {
+                      @for (item of record.loot; track item.name) {
+                        <div class="loot-row">
+                          <span class="loot-name">{{ item.name }}</span>
+                          <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    }
+  </div>
+</div>

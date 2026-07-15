@@ -1,0 +1,32 @@
+{
+  "name": "wakfu-companion",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "build:standalone:compile": "ng build --configuration production,standalone",
+    "build:standalone": "npm run build:standalone:compile && node tools/build-standalone.mjs"
+  },
+  "private": true,
+  "packageManager": "npm@11.16.0",
+  "dependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/forms": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.19",
+    "@angular/cli": "^21.2.19",
+    "@angular/compiler-cli": "^21.2.0",
+    "@types/wicg-file-system-access": "^2023.10.7",
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
+  }
+}

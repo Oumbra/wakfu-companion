@@ -1,0 +1,43 @@
+<div class="tool-panel">
+  <div class="panel-header">
+    <span class="header-label">Chat</span>
+  </div>
+
+  <div class="channel-filters">
+    @for (channel of channels; track channel.key) {
+      <button
+        [class]="channelBtnClass(channel.key)"
+        [style.--ch]="channelColorVar(channel.key)"
+        (click)="toggleChannel(channel.key)"
+      >
+        {{ channel.label }}
+      </button>
+    }
+  </div>
+
+  <div class="search-bar">
+    <input
+      type="text"
+      placeholder="Filtrer les messages..."
+      [value]="filterText()"
+      (input)="setFilter($any($event.target).value)"
+    />
+  </div>
+
+  <div class="panel-body chat-list">
+    @if (filteredMessages().length === 0) {
+      <div class="empty-state">Aucun message ne correspond.</div>
+    } @else {
+      @for (msg of filteredMessages(); track $index) {
+        <div class="chat-msg" [style.--ch]="channelColorVar(msg.channel)">
+          <div class="chat-meta">
+            <span class="chat-time">{{ msg.time.slice(0, 8) }}</span>
+            <span class="chat-channel">[{{ msg.channelLabel }}]</span>
+            <span class="chat-author">{{ msg.author }}</span>
+          </div>
+          <div class="chat-content">{{ msg.message }}</div>
+        </div>
+      }
+    }
+  </div>
+</div>
