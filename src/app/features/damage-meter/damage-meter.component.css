@@ -109,9 +109,9 @@
 .fight-clock::after {
   content: attr(data-tooltip);
   position: absolute;
-  bottom: 100%;
+  top: 100%;
   left: 0;
-  margin-bottom: 6px;
+  margin-top: 6px;
   padding: 4px 8px;
   background: #000;
   color: #fff;
@@ -135,12 +135,37 @@
   font-size: 0.85rem;
   flex-grow: 1;
 }
-.fight-summary .caret {
+
+.fight-stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 15px;
+  border-bottom: 1px solid #2a2a2a;
+}
+.fight-turns {
+  color: #ccc;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.fight-duration {
+  color: #888;
+  font-family: monospace;
+  font-size: 0.72rem;
+}
+.fight-stats-sep {
+  color: #555;
+}
+.caret {
   font-size: 0.7em;
   color: #666;
   transition: transform 0.2s;
+  display: inline-block;
+  margin-left: auto;
 }
-.fight-entry.expanded .caret {
+.caret.expanded {
   transform: rotate(90deg);
   color: var(--accent);
 }
@@ -152,27 +177,29 @@
   border-top: 1px solid #2a2a2a;
 }
 
-.loot-section {
-  padding: 10px 15px;
+.collapsible-section {
   border-top: 1px solid #2a2a2a;
   flex-shrink: 0;
 }
-.loot-header-row {
+.collapsible-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.loot-header {
+  gap: 8px;
+  padding: 8px 15px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--accent);
+  cursor: pointer;
+}
+.collapsible-header:hover {
+  background: #1c1c1c;
 }
 .loot-sort {
   display: flex;
   gap: 4px;
+  text-transform: none;
 }
 .loot-sort button {
   height: 20px;
@@ -197,6 +224,44 @@
   overflow-y: auto;
   padding-right: 10px;
 }
+.collapsible-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.collapsible-body {
+  padding: 4px 15px 10px;
+}
+
+.loot-section {
+  padding: 10px 15px;
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.loot-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+.loot-header-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.loot-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.loot-count {
+  font-family: monospace;
+  font-size: 0.68rem;
+  color: #888;
+}
+
 .loot-row {
   display: flex;
   align-items: center;
@@ -211,6 +276,29 @@
 .loot-qty {
   font-family: monospace;
   color: var(--kama-color);
+}
+
+.fight-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #ccc;
+  padding: 3px 0;
+}
+.fight-xp-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.fight-xp-amount {
+  font-family: monospace;
+  color: var(--accent);
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .empty-state.small {

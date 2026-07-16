@@ -8,7 +8,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 500;
-  width: 320px;
+  width: 450px;
   max-height: 80vh;
   display: flex;
   flex-direction: column;
@@ -75,22 +75,72 @@
   gap: 14px;
 }
 
-.duration-row {
+.duration-box {
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: 1rem;
+  gap: 8px;
+  background: #181818;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+}
+.duration-label {
+  color: #999;
+  font-size: 0.85rem;
+}
+.duration-value {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 1.05rem;
+  letter-spacing: 1px;
 }
 
 .recap-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  background: #181818;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
 }
-.recap-section-title {
-  font-size: 0.7rem;
-  color: var(--text-muted);
+
+.recap-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+.recap-section-header.clickable {
+  cursor: pointer;
+}
+.section-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+.section-header-value {
+  margin-left: auto;
+  font-family: monospace;
+  color: var(--accent);
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 700;
+}
+.section-caret {
+  font-size: 0.7em;
+  color: #666;
+  transition: transform 0.2s;
+}
+.section-caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
 }
 
 .recap-row {
@@ -107,9 +157,7 @@
   font-family: monospace;
   font-weight: 700;
   color: var(--text-color);
-}
-.recap-value.accent {
-  color: var(--accent);
+  text-align: right;
 }
 .recap-value.gain {
   color: var(--btn-active-green);
@@ -118,54 +166,129 @@
   color: var(--btn-active-red);
 }
 
-.kama-net-wrap {
-  position: relative;
+.section-header-value.gold {
+  color: var(--kama-color);
 }
-.kama-breakdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 6px;
-  background: #000;
-  border: 1px solid var(--accent);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 0.78rem;
-  white-space: nowrap;
-  z-index: 10;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+.kama-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed #333;
 }
-.kama-net-wrap:hover .kama-breakdown {
-  display: block;
+
+.challenges-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+.challenges-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.challenges-label {
+  color: var(--accent);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.challenges-sep {
+  border-top: 1px dashed #333;
+}
+
+.split-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.split-part {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+.split-sep {
+  flex-shrink: 0;
+  color: #555;
+  padding: 0 10px;
+}
+.split-label {
+  font-size: 0.85rem;
+}
+.split-value {
+  font-family: monospace;
+  font-weight: 700;
+}
+.split-label.gain,
+.split-value.gain {
+  color: var(--btn-active-green);
+}
+.split-label.loss,
+.split-value.loss {
+  color: var(--btn-active-red);
 }
 
 .xp-list {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  max-height: 100px;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 76px;
+  overflow: hidden;
+}
+.xp-list.expanded {
+  max-height: 160px;
   overflow-y: auto;
   padding-right: 10px;
 }
+
+.show-more-btn {
+  align-self: center;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.72rem;
+  cursor: pointer;
+  padding: 2px 0 0;
+  height: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.show-more-btn:hover {
+  color: #fff;
+}
 .xp-row {
   display: flex;
+  align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
-  white-space: nowrap;
+  font-size: 0.85rem;
 }
 .xp-name {
   color: #ccc;
   font-weight: 600;
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .xp-amount {
   font-family: monospace;
   color: var(--accent);
+  text-align: right;
+  flex-shrink: 0;
 }
 
 .empty-state.small {
   height: auto;
-  padding: 4px 0;
+  padding: 2px 0;
   font-size: 0.8rem;
+  font-style: italic;
+  color: #666;
   justify-content: flex-start;
 }

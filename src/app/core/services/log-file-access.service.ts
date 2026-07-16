@@ -42,14 +42,20 @@ export class LogFileAccessService {
    */
   readonly usingClassicPicker = signal(false);
 
-  /** Lignes complètes nouvellement lues, émises par lot à chaque sondage. */
-  readonly newLines$ = new Subject<string[]>();
+  /**
+   * Lignes complètes nouvellement lues, émises par lot à chaque sondage.
+   * `isInitialLoad` est vrai uniquement pour le tout premier lot d'une
+   * connexion (contenu déjà présent dans le fichier avant l'ouverture) :
+   * permet de ne pas re-compter dans les suivis un historique déjà vécu.
+   */
+  readonly newLines$ = new Subject<{ lines: string[]; isInitialLoad: boolean }>();
 
   private handle: FileSystemFileHandle | null = null;
   private lastOffset = 0;
   private carry = '';
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly decoder = new TextDecoder('utf-8');
+  private isFirstRead = true;
 
   isSupported(): boolean {
     return typeof window !== 'undefined' && 'showOpenFilePicker' in window;
@@ -140,6 +146,7 @@ export class LogFileAccessService {
         this.handle = null;
         this.lastOffset = 0;
         this.carry = '';
+        this.isFirstRead = true;
         await this.persistence.clearFileHandle(STORAGE_KEY);
       }
       this.usingClassicPicker.set(true);
@@ -179,6 +186,7 @@ export class LogFileAccessService {
     this.usingClassicPicker.set(false);
     this.lastOffset = 0;
     this.carry = '';
+    this.isFirstRead = true;
     this.status.set('idle');
     this.fileName.set(null);
     this.fileSize.set(0);
@@ -191,6 +199,7 @@ export class LogFileAccessService {
     this.fileName.set(handle.name);
     this.lastOffset = 0;
     this.carry = '';
+    this.isFirstRead = true;
     this.errorMessage.set(null);
     this.status.set('connected');
     this.stopPolling();
@@ -211,6 +220,9 @@ export class LogFileAccessService {
 
   /** Découpe/décode la portion nouvellement écrite d'un fichier (depuis `lastOffset`) et publie les lignes complètes. */
   private async processFile(file: File): Promise<void> {
+    const isInitialLoad = this.isFirstRead;
+    this.isFirstRead = false;
+
     if (file.size < this.lastOffset) {
       // Fichier tronqué ou remplacé (rotation du log) : on repart de zéro.
       this.lastOffset = 0;
@@ -229,7 +241,7 @@ export class LogFileAccessService {
       this.carry = parts.pop() ?? '';
       const lines = parts.filter((line) => line.length > 0);
       if (lines.length > 0) {
-        this.newLines$.next(lines);
+        this.newLines$.next({ lines, isInitialLoad });
       }
     }
   }

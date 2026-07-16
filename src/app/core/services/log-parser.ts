@@ -50,6 +50,8 @@ const CHAT_CONTENT_RE = /^(.+?) : (.*)$/;
 const KAMA_GAIN_RE = new RegExp(`^Vous avez gagné (${NUM}) kamas\\.?$`);
 const KAMA_LOSS_RE = new RegExp(`^Vous avez perdu (${NUM}) kamas\\.?$`);
 const RAMASSE_RE = new RegExp(`^Vous avez ramassé (${NUM})x (.+?)\\s*\\.?$`);
+const CHALLENGE_SUCCESS_RE = /^Le challenge "(.+?)" est réussi\.?$/;
+const CHALLENGE_FAIL_RE = /^Le challenge "(.+?)" a échoué\.?$/;
 const XP_RE = new RegExp(`^(.+?) : \\+(${NUM}) points d'XP\\.`);
 const SPELL_CAST_RE = /^(.+?) lance le sort (.+)$/;
 const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
@@ -183,6 +185,14 @@ export class LogParser {
         item: loot[2].trim(),
         quantity: parseFrenchNumber(loot[1]),
       };
+    }
+    const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
+    if (challengeSuccess) {
+      return { kind: 'challenge-result', time, name: challengeSuccess[1].trim(), success: true };
+    }
+    const challengeFail = CHALLENGE_FAIL_RE.exec(content);
+    if (challengeFail) {
+      return { kind: 'challenge-result', time, name: challengeFail[1].trim(), success: false };
     }
     return null;
   }

@@ -104,6 +104,13 @@ export interface TurnMarkerEntry {
   time: string;
 }
 
+export interface ChallengeResultEntry {
+  kind: 'challenge-result';
+  time: string;
+  name: string;
+  success: boolean;
+}
+
 export type LogEntry =
   | ChatMessageEntry
   | KamaGainEntry
@@ -116,4 +123,5 @@ export type LogEntry =
   | CombatStartEntry
   | CombatEndEntry
   | LootEntry
-  | TurnMarkerEntry;
+  | TurnMarkerEntry
+  | ChallengeResultEntry;

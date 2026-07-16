@@ -4,8 +4,12 @@ import { EntityDamageRow, StatsStoreService } from '../../../core/services/stats
 import { EntityClassifierService, EntitySide } from '../../../core/services/entity-classifier.service';
 import { NumberFrPipe } from '../../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
+import { KoIconComponent } from '../../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
-import { CLASS_ICON_DATA_URI } from '../../../core/data/class-icons.data';
+import {
+  ClassPickerComponent,
+  ClassPickerPosition,
+} from '../../../shared/class-picker/class-picker.component';
 import { DamageElement } from '../../../core/models/log-entry.model';
 
 const ELEMENT_CLASS: Record<DamageElement, string> = {
@@ -19,26 +23,6 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
   Inconnu: 'dmg-inconnu',
 };
 
-interface ClassOption {
-  key: string;
-  label: string;
-  icon: string;
-}
-
-const CLASS_OPTIONS: ClassOption[] = Object.keys(CLASS_ICON_DATA_URI)
-  .sort()
-  .map((key) => ({
-    key,
-    label: key.charAt(0).toUpperCase() + key.slice(1),
-    icon: CLASS_ICON_DATA_URI[key],
-  }));
-
-interface ClassPickerState {
-  name: string;
-  x: number;
-  y: number;
-}
-
 /**
  * Liste dépliable d'entités (alliés ou ennemis) avec détail des dégâts par
  * sort et icône. Réutilisée pour le combat en cours (glisser-déposer actif,
@@ -46,7 +30,14 @@ interface ClassPickerState {
  */
 @Component({
   selector: 'app-entity-damage-list',
-  imports: [NumberFrPipe, KeyValuePipe, EntityIconComponent, TranslatePipe],
+  imports: [
+    NumberFrPipe,
+    KeyValuePipe,
+    EntityIconComponent,
+    KoIconComponent,
+    TranslatePipe,
+    ClassPickerComponent,
+  ],
   templateUrl: './entity-damage-list.component.html',
   styleUrl: './entity-damage-list.component.css',
 })
@@ -61,8 +52,7 @@ export class EntityDamageListComponent {
   private readonly stats = inject(StatsStoreService);
   private readonly expandedNames = signal<ReadonlySet<string>>(new Set());
   protected readonly dragOver = signal(false);
-  protected readonly classOptions = CLASS_OPTIONS;
-  protected readonly classPicker = signal<ClassPickerState | null>(null);
+  protected readonly classPicker = signal<ClassPickerPosition | null>(null);
 
   protected readonly total = computed(() => this.rows().reduce((sum, r) => sum + r.total, 0));
   private readonly maxTotal = computed(
@@ -125,7 +115,7 @@ export class EntityDamageListComponent {
     }
   }
 
-  protected chooseClass(className: string): void {
+  protected onClassChosen(className: string): void {
     const picker = this.classPicker();
     if (!picker) return;
     this.classifier.setManualClass(picker.name, className);

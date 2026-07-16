@@ -9,11 +9,17 @@
   background: #222;
   border: 1px solid #444;
   font-size: 1.1rem;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .lang-current:hover {
   border-color: var(--accent);
   background: #2a2a2a;
+}
+.lang-current-glyph {
+  width: 22px;
+  height: 16px;
 }
 
 .lang-backdrop {
@@ -56,5 +62,6 @@
   color: #fff;
 }
 .lang-flag {
-  font-size: 1.05rem;
+  width: 22px;
+  height: 16px;
 }
