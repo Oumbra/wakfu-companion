@@ -17,6 +17,15 @@
 
   <div class="panel-body meter-body">
     @if (view() === 'current') {
+      @if (hasCurrentFight()) {
+        <div class="fight-stats-row">
+          <span class="fight-turns"
+            >{{ currentFightTurns() }} {{ 'damageMeter.turns' | t }}</span
+          >
+          <span class="fight-stats-sep">|</span>
+          <span class="fight-duration">{{ formatDuration(currentFightDurationMs()) }}</span>
+        </div>
+      }
       <app-entity-damage-list
         [title]="'damageMeter.allies' | t"
         side="ally"
@@ -39,7 +48,7 @@
         @for (record of fightHistory(); track record.id) {
           <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
             <div class="fight-summary" (click)="toggleFight(record.id)">
-              <span class="fight-clock" [attr.data-tooltip]="record.fullTimestamp">
+              <span class="fight-clock" [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round" />
@@ -55,12 +64,10 @@
               >
                 {{ record.result === 'won' ? ('damageMeter.won' | t) : ('damageMeter.lost' | t) }}
               </span>
-              <span class="fight-meta"
-                >{{ record.turns }} {{ 'damageMeter.turns' | t }} ({{
-                  formatDuration(record.durationMs)
-                }})</span
-              >
-              <span class="caret">▸</span>
+              <span class="fight-meta">
+                {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{ formatDuration(record.durationMs)}})
+              </span>
+              <span class="caret" [class.expanded]="isFightExpanded(record.id)">▸</span>
             </div>
             @if (isFightExpanded(record.id)) {
               <div class="fight-details">
@@ -80,7 +87,14 @@
                 @if (record.result === 'won') {
                   <div class="loot-section">
                     <div class="loot-header-row">
-                      <div class="loot-header">{{ 'damageMeter.loot' | t }}</div>
+                      <div class="loot-header-left">
+                        <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
+                        @if (record.loot.length > 0) {
+                          <span class="loot-count"
+                            >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
+                          >
+                        }
+                      </div>
                       @if (record.loot.length > 1) {
                         <div class="loot-sort">
                           <button
@@ -107,6 +121,26 @@
                             <app-item-icon [name]="item.name" />
                             <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
                             <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @if (record.xp.length > 0) {
+                  <div class="collapsible-section">
+                    <div class="collapsible-header" (click)="toggleFightXp(record.id)">
+                      <img [src]="xpIcon" class="collapsible-icon" alt="" />
+                      <span>{{ 'damageMeter.experience' | t }}</span>
+                      <span class="caret" [class.expanded]="isFightXpExpanded(record.id)">▸</span>
+                    </div>
+                    @if (isFightXpExpanded(record.id)) {
+                      <div class="collapsible-body">
+                        @for (row of record.xp; track row.name) {
+                          <div class="fight-xp-row">
+                            <app-entity-icon [name]="row.name" side="ally" />
+                            <span class="fight-xp-name">{{ row.name }}</span>
+                            <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
                           </div>
                         }
                       </div>

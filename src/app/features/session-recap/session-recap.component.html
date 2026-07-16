@@ -15,63 +15,107 @@
     </div>
 
     <div class="recap-body">
-      <div class="recap-row duration-row">
-        <span class="recap-label">{{ 'sessionRecap.duration' | t }}</span>
-        <span class="recap-value accent">{{ duration() }}</span>
+      <div class="duration-box">
+        <span class="duration-label">{{ 'sessionRecap.duration' | t }}</span>
+        <span class="duration-value">{{ duration() }}</span>
       </div>
 
       <div class="recap-section">
-        <span class="recap-section-title">{{ 'sessionRecap.kamas' | t }}</span>
-        <div class="kama-net-wrap">
-          <div class="recap-row">
-            <span class="recap-label">{{ 'sessionRecap.netHint' | t }}</span>
-            <span
-              class="recap-value"
-              [class.gain]="stats.netKamas() >= 0"
-              [class.loss]="stats.netKamas() < 0"
-              >{{ stats.netKamas() | numberFr }}</span
-            >
-          </div>
-          <div class="kama-breakdown">
-            <div>
-              {{ 'sessionRecap.earned' | t }}
-              <span class="gain">+{{ stats.kamasEarned() | numberFr }}</span>
-            </div>
-            <div>
-              {{ 'sessionRecap.spent' | t }}
-              <span class="loss">-{{ stats.kamasLost() | numberFr }}</span>
-            </div>
-          </div>
+        <div class="recap-section-header">
+          <img [src]="xpIcon" class="section-icon" alt="" />
+          <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
         </div>
-      </div>
-
-      <div class="recap-section">
-        <span class="recap-section-title">{{ 'sessionRecap.xpByCharacter' | t }}</span>
         @if (stats.xpByCharacter().length === 0) {
           <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
         } @else {
-          <div class="xp-list">
+          <div class="xp-list" #xpList [class.expanded]="xpExpanded()">
             @for (row of stats.xpByCharacter(); track row.name) {
-              <div class="xp-row">
+              <div class="xp-row" (contextmenu)="onXpNameContextMenu($event, row.name)">
+                <app-entity-icon [name]="row.name" side="ally" />
                 <span class="xp-name">{{ row.name }}</span>
                 <span class="xp-amount">+{{ row.amount | numberFr }}</span>
               </div>
             }
           </div>
+          @if (stats.xpByCharacter().length > 3) {
+            <button class="show-more-btn" (click)="toggleXp()">
+              {{ (xpExpanded() ? 'sessionRecap.showLess' : 'sessionRecap.showMore') | t }}
+              <span class="section-caret" [class.expanded]="xpExpanded()">▸</span>
+            </button>
+          }
         }
       </div>
 
       <div class="recap-section">
-        <span class="recap-section-title">{{ 'sessionRecap.combats' | t }}</span>
-        <div class="recap-row">
-          <span class="recap-label">{{ 'sessionRecap.wins' | t }}</span>
-          <span class="recap-value gain">{{ stats.combatsWon() }}</span>
+        <div class="recap-section-header clickable" (click)="toggleKamas()">
+          <img [src]="kamasIcon" class="section-icon" alt="" />
+          <span>{{ 'sessionRecap.kamas' | t }}</span>
+          <span class="section-header-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
+          <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
         </div>
-        <div class="recap-row">
-          <span class="recap-label">{{ 'sessionRecap.losses' | t }}</span>
-          <span class="recap-value loss">{{ stats.combatsLost() }}</span>
+        @if (kamasExpanded()) {
+          <div class="kama-detail">
+            <div class="recap-row">
+              <span class="recap-label">{{ 'sessionRecap.earned' | t }}</span>
+              <span class="recap-value gain">+{{ stats.kamasEarned() | numberFr }} ₭</span>
+            </div>
+            <div class="recap-row">
+              <span class="recap-label">{{ 'sessionRecap.spent' | t }}</span>
+              <span class="recap-value loss">-{{ stats.kamasLost() | numberFr }} ₭</span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="recap-section">
+        <div class="recap-section-header clickable" (click)="toggleCombats()">
+          <img [src]="combatIcon" class="section-icon" alt="" />
+          <span>{{ 'sessionRecap.combats' | t }}</span>
+          <span class="section-header-value">{{ stats.totalCombats() }}</span>
+          <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
         </div>
+        @if (combatsExpanded()) {
+          <div class="kama-detail">
+            <div class="split-row">
+              <div class="split-part">
+                <span class="split-value gain">{{ stats.combatsWon() }}</span>
+                <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
+              </div>
+              <span class="split-sep">|</span>
+              <div class="split-part">
+                <span class="split-value loss">{{ stats.combatsLost() }}</span>
+                <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
+              </div>
+            </div>
+            <div class="challenges-block">
+              <div class="challenges-title">
+                <img [src]="challengesIcon" class="section-icon" alt="" />
+                <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
+              </div>
+              <div class="challenges-sep"></div>
+              <div class="split-row">
+                <div class="split-part">
+                  <span class="split-value gain">{{ stats.challengesPassed() }}</span>
+                  <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
+                </div>
+                <span class="split-sep">|</span>
+                <div class="split-part">
+                  <span class="split-value loss">{{ stats.challengesFailed() }}</span>
+                  <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
       </div>
     </div>
+
+    @if (classPicker(); as picker) {
+      <app-class-picker
+        [position]="picker"
+        (classChosen)="onClassChosen($event)"
+        (closed)="closeClassPicker()"
+      />
+    }
   </div>
 }

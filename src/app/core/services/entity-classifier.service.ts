@@ -7,6 +7,7 @@ import { PersistenceService } from './persistence.service';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
 const MANUAL_CLASSES_KEY = 'wakfu-entity-classes';
+const DETECTED_CLASSES_KEY = 'wakfu-entity-detected-classes';
 
 export type EntitySide = 'ally' | 'enemy';
 
@@ -42,9 +43,11 @@ export class EntityClassifierService {
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
 
-  // Mutable, alimentée ligne par ligne (potentiellement des milliers de fois
-  // lors de la lecture initiale d'un fichier) : volontairement pas un signal.
-  private readonly detectedClasses = new Map<string, string>();
+  // Alimentée ligne par ligne (potentiellement des milliers de fois lors de
+  // la lecture initiale d'un fichier) : la persistance se fait par lot dans
+  // commit(), pas à chaque détection, pour éviter une écriture par ligne.
+  private readonly detectedClasses: Map<string, string>;
+  private detectedClassesDirty = false;
   /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres/familles) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
   private readonly confirmedAlliesByDamage = new Set<string>();
   private readonly overrides: Map<string, EntitySide>;
@@ -59,6 +62,9 @@ export class EntityClassifierService {
     this.overrides = new Map(Object.entries(stored));
     const storedClasses = this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
     this.manualClasses = new Map(Object.entries(storedClasses));
+    const storedDetected =
+      this.persistence.getJson<Record<string, string>>(DETECTED_CLASSES_KEY) ?? {};
+    this.detectedClasses = new Map(Object.entries(storedDetected));
   }
 
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
@@ -67,6 +73,7 @@ export class EntityClassifierService {
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
+      this.detectedClassesDirty = true;
     }
   }
 
@@ -79,6 +86,10 @@ export class EntityClassifierService {
 
   /** À appeler une fois par lot de lignes traité (voir StatsStoreService.ingest). */
   commit(): void {
+    if (this.detectedClassesDirty) {
+      this.persistence.setJson(DETECTED_CLASSES_KEY, Object.fromEntries(this.detectedClasses));
+      this.detectedClassesDirty = false;
+    }
     this.version.update((v) => v + 1);
   }
 

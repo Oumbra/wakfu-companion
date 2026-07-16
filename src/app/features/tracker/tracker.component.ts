@@ -3,12 +3,13 @@ import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
+import { KoIconComponent } from '../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-tracker',
-  imports: [NumberFrPipe, EntityIconComponent, ItemIconComponent, TranslatePipe],
+  imports: [NumberFrPipe, EntityIconComponent, ItemIconComponent, KoIconComponent, TranslatePipe],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',
 })
@@ -28,10 +29,6 @@ export class TrackerComponent {
     this.newEnemyName.set('');
   }
 
-  protected removeEnemy(name: string): void {
-    this.stats.removeWatchedEnemy(name);
-  }
-
   protected setNewItemName(value: string): void {
     this.newItemName.set(value);
   }
@@ -41,32 +38,24 @@ export class TrackerComponent {
     this.newItemName.set('');
   }
 
-  protected removeItem(name: string): void {
-    this.stats.removeWatchedItem(name);
+  protected remove(name: string): void {
+    this.stats.removeWatched(name);
   }
 
-  private dragEnemyIndex: number | null = null;
-  private dragItemIndex: number | null = null;
-
-  protected onEnemyDragStart(index: number): void {
-    this.dragEnemyIndex = index;
+  protected resetCount(name: string): void {
+    this.stats.resetWatchedCount(name);
   }
 
-  protected onEnemyDrop(index: number): void {
-    if (this.dragEnemyIndex !== null && this.dragEnemyIndex !== index) {
-      this.stats.reorderEnemyWatchlist(this.dragEnemyIndex, index);
+  private dragIndex: number | null = null;
+
+  protected onDragStart(index: number): void {
+    this.dragIndex = index;
+  }
+
+  protected onDrop(index: number): void {
+    if (this.dragIndex !== null && this.dragIndex !== index) {
+      this.stats.reorderWatchlist(this.dragIndex, index);
     }
-    this.dragEnemyIndex = null;
-  }
-
-  protected onItemDragStart(index: number): void {
-    this.dragItemIndex = index;
-  }
-
-  protected onItemDrop(index: number): void {
-    if (this.dragItemIndex !== null && this.dragItemIndex !== index) {
-      this.stats.reorderItemWatchlist(this.dragItemIndex, index);
-    }
-    this.dragItemIndex = null;
+    this.dragIndex = null;
   }
 }

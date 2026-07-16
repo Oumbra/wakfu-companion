@@ -24,7 +24,7 @@
     />
   </div>
 
-  <div class="panel-body chat-list">
+  <div class="panel-body chat-list" #chatList (scroll)="onScroll()">
     @if (filteredMessages().length === 0) {
       <div class="empty-state">{{ 'chat.empty' | t }}</div>
     } @else {
@@ -40,4 +40,10 @@
       }
     }
   </div>
+
+  @if (!isAtBottom()) {
+    <button class="scroll-to-bottom-btn" (click)="scrollToBottom()">
+      ↓ {{ 'chat.scrollToBottom' | t }}
+    </button>
+  }
 </div>
