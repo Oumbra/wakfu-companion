@@ -1,0 +1,79 @@
+.loot-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 500;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+}
+
+.confetti-layer {
+  position: absolute;
+  top: -10px;
+  left: -160px;
+  width: 320px;
+  height: 220px;
+  overflow: visible;
+  pointer-events: none;
+}
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  animation-name: confetti-fall;
+  animation-timing-function: ease-in;
+  animation-fill-mode: forwards;
+}
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(220px) rotate(var(--rot, 180deg));
+    opacity: 0;
+  }
+}
+
+.loot-alert-card {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #1c1c1c, #262626);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: loot-pop 0.35s ease-out;
+}
+@keyframes loot-pop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loot-alert-text {
+  display: flex;
+  flex-direction: column;
+}
+.loot-alert-title {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  font-weight: 700;
+}
+.loot-alert-name {
+  font-weight: 700;
+  color: #fff;
+}

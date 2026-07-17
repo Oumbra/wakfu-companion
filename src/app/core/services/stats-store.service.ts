@@ -3,7 +3,9 @@ import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../model
 import { EntityClassifierService } from './entity-classifier.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { LogParser } from './log-parser';
+import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
+import { ProfileService } from './profile.service';
 
 const WATCHLIST_KEY = 'wakfu-watchlist';
 /** Anciennes clés (listes séparées), lues une seule fois pour migrer vers la liste fusionnée si besoin. */
@@ -121,6 +123,8 @@ export class StatsStoreService {
     private readonly logFileAccess: LogFileAccessService,
     private readonly persistence: PersistenceService,
     private readonly classifier: EntityClassifierService,
+    private readonly profile: ProfileService,
+    private readonly lootAlert: LootAlertService,
   ) {
     this.watchlist.set(this.loadWatchlist());
     this.logFileAccess.newLines$.subscribe(({ lines, isInitialLoad }) =>
@@ -419,6 +423,8 @@ export class StatsStoreService {
   private registerLoot(item: string, quantity: number): void {
     if (!this.currentBatchIsInitialLoad) {
       this.incrementWatched(item, quantity);
+      const soundEntry = this.profile.findEnabledSoundItem(item);
+      if (soundEntry) this.lootAlert.trigger(item, quantity);
     }
 
     const existing = this.currentFightLoot.find(
