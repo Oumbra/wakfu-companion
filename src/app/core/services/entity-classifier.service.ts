@@ -50,6 +50,17 @@ export class EntityClassifierService {
   private detectedClassesDirty = false;
   /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres/familles) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
   private readonly confirmedAlliesByDamage = new Set<string>();
+  /**
+   * Camp déduit du marqueur "[_FL_] ... isControlledByAI=true/false" émis à
+   * chaque combat pour chaque combattant : signal fiable et systématique (pas
+   * en mémoire persistante, redérivé à chaque combat), utilisé seulement en
+   * dernier recours avant le repli par défaut — un monstre absent de la base
+   * statique ET n'ayant pas encore de dégât attribué serait sinon classé
+   * "ennemi" par défaut, tout comme le joueur lui-même si celui-ci n'a ni
+   * lancé de sort connu ni pris de dégât ce combat-ci (bug réel observé : le
+   * personnage se retrouvait compté comme l'ennemi mis KO).
+   */
+  private readonly fighterAiSide = new Map<string, EntitySide>();
   private readonly overrides: Map<string, EntitySide>;
   /** Classe choisie manuellement (clic droit sur un allié dont la classe n'a pas pu être détectée via ses sorts). */
   private readonly manualClasses: Map<string, string>;
@@ -77,6 +88,11 @@ export class EntityClassifierService {
     }
   }
 
+  /** À appeler pour chaque ligne "[_FL_] ... isControlledByAI=..." rencontrée. */
+  registerFighterJoin(name: string, isControlledByAI: boolean): void {
+    this.fighterAiSide.set(name, isControlledByAI ? 'enemy' : 'ally');
+  }
+
   /** À appeler pour chaque ligne de dégâts rencontrée. */
   registerDamageTarget(target: string, attacker: string): void {
     if (this.isConfirmedEnemy(attacker) && !this.isConfirmedEnemy(target)) {
@@ -102,6 +118,8 @@ export class EntityClassifierService {
     if (this.detectedClasses.has(name)) return 'ally';
     if (this.allySummonNames.has(normalizeName(name))) return 'ally';
     if (this.confirmedAlliesByDamage.has(normalizeName(name))) return 'ally';
+    const aiSide = this.fighterAiSide.get(name);
+    if (aiSide) return aiSide;
     return 'enemy';
   }
 

@@ -295,6 +295,13 @@ export class StatsStoreService {
       case 'spell-cast':
         this.classifier.registerSpellCast(entry.caster, entry.spell);
         break;
+      case 'fighter-joined':
+        this.classifier.registerFighterJoin(entry.name, entry.isControlledByAI);
+        // Un combattant qui ne prend/inflige jamais de dégâts (ex. tué en un
+        // coup avant d'avoir pu jouer) doit quand même apparaître dans le
+        // combat, comme pour une mise KO sans dégât infligé (voir ci-dessus).
+        this.ensurePresent(this.attackerMap, entry.name);
+        break;
       case 'combat-defeat-marker':
         break;
     }
