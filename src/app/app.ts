@@ -6,6 +6,8 @@ import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { SessionRecapComponent } from './features/session-recap/session-recap.component';
 import { LanguageSwitcherComponent } from './shared/language-switcher/language-switcher.component';
+import { ProfileComponent } from './features/profile/profile.component';
+import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
 
 @Component({
@@ -15,6 +17,8 @@ import { TranslatePipe } from './shared/translate.pipe';
     DashboardComponent,
     SessionRecapComponent,
     LanguageSwitcherComponent,
+    ProfileComponent,
+    LootAlertComponent,
     TranslatePipe,
   ],
   templateUrl: './app.html',

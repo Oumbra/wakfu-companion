@@ -15,10 +15,19 @@ const ITEM_IMAGE_BASE_URL =
   selector: 'app-item-icon',
   template: `
     @if (imgSrc(); as src) {
-      <img class="item-icon-img" [src]="src" (error)="onError()" alt="" />
+      <img
+        class="item-icon-img"
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        [src]="src"
+        (error)="onError()"
+        alt=""
+      />
     } @else {
       <svg
         class="item-icon"
+        [style.width.px]="size()"
+        [style.height.px]="size()"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -35,14 +44,10 @@ const ITEM_IMAGE_BASE_URL =
   styles: [
     `
       .item-icon {
-        width: 18px;
-        height: 18px;
         color: #999;
         flex-shrink: 0;
       }
       .item-icon-img {
-        width: 18px;
-        height: 18px;
         object-fit: contain;
         border-radius: 3px;
         flex-shrink: 0;
@@ -52,6 +57,8 @@ const ITEM_IMAGE_BASE_URL =
 })
 export class ItemIconComponent {
   readonly name = input.required<string>();
+  /** Taille en px (carrée). Par défaut 18px, comme dans les listes de suivi/butin. */
+  readonly size = input(18);
 
   private readonly errored = signal(false);
 

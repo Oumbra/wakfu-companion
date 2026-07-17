@@ -1,0 +1,107 @@
+<button class="profile-btn" (click)="toggle()" [title]="'profile.button' | t">
+  @if (profile.avatarIndex(); as idx) {
+    <app-avatar-icon class="profile-avatar" [index]="idx" />
+  } @else {
+    <span class="profile-question">?</span>
+  }
+</button>
+
+@if (open()) {
+  <div class="profile-backdrop" (click)="close()"></div>
+  <div class="profile-modal">
+    <div class="profile-modal-header">
+      <span>{{ 'profile.title' | t }}</span>
+      <button class="icon-btn" (click)="close()">×</button>
+    </div>
+
+    <div class="profile-modal-body">
+      <div class="profile-field">
+        <label class="profile-label">{{ 'profile.pseudoLabel' | t }}</label>
+        <input
+          type="text"
+          [placeholder]="'profile.pseudoPlaceholder' | t"
+          [value]="profile.pseudo()"
+          (input)="onPseudoInput($any($event.target).value)"
+        />
+      </div>
+
+      <div class="profile-field">
+        <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+        <div class="avatar-grid">
+          @for (i of avatarIndexes; track i) {
+            <button
+              class="avatar-cell-btn"
+              [class.selected]="profile.avatarIndex() === i"
+              (click)="chooseAvatar(i)"
+            >
+              <app-avatar-icon [index]="i" />
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="profile-field">
+        <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+        <div class="sound-item-add">
+          <input
+            type="text"
+            [placeholder]="'profile.soundItemPlaceholder' | t"
+            [value]="newItemName()"
+            (input)="setNewItemName($any($event.target).value)"
+            (keydown.enter)="addSoundItem()"
+          />
+          <button class="primary-btn" (click)="addSoundItem()">{{ 'tracker.add' | t }}</button>
+        </div>
+        <div class="sound-item-list">
+          @for (entry of profile.soundItems(); track entry.name) {
+            <div class="sound-item-row">
+              <app-item-icon [name]="entry.name" [size]="26" />
+              <span class="sound-item-name">{{ i18n.translateItemName(entry.name) }}</span>
+              <button
+                class="icon-btn"
+                [title]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
+                (click)="toggleSound(entry.name)"
+              >
+                @if (entry.enabled) {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 9v6h4l5 4V5L8 9H4z" />
+                    <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+                    <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+                  </svg>
+                } @else {
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 9v6h4l5 4V5L8 9H4z" />
+                    <path d="M3 3l18 18" />
+                  </svg>
+                }
+              </button>
+              @if (!entry.isDefault) {
+                <button
+                  class="icon-btn"
+                  [title]="'tracker.remove' | t"
+                  (click)="removeSoundItem(entry.name)"
+                >
+                  ×
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
