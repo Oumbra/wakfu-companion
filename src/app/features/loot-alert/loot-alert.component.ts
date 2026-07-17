@@ -1,5 +1,6 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { LootAlertService } from '../../core/services/loot-alert.service';
+import { ProfileService } from '../../core/services/profile.service';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -23,7 +24,6 @@ const CONFETTI_COLORS = [
   '#06d6a0',
 ];
 const CONFETTI_PIECE_COUNT = 28;
-const VISIBLE_DURATION_MS = 3500;
 
 /**
  * Toast affiché en haut de l'écran quand un objet suivi (son activé, voir
@@ -39,6 +39,7 @@ const VISIBLE_DURATION_MS = 3500;
 })
 export class LootAlertComponent {
   private readonly lootAlertService = inject(LootAlertService);
+  private readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly visible = signal(false);
@@ -63,7 +64,20 @@ export class LootAlertComponent {
     this.visible.set(true);
     this.playChime();
     if (this.hideTimer !== null) clearTimeout(this.hideTimer);
-    this.hideTimer = setTimeout(() => this.visible.set(false), VISIBLE_DURATION_MS);
+    this.hideTimer = null;
+    // Fermeture manuelle (voir close()) : pas de minuterie du tout.
+    if (!this.profile.alertManualClose()) {
+      const durationSeconds = this.profile.alertDurationSeconds();
+      this.hideTimer = setTimeout(() => this.visible.set(false), durationSeconds * 1000);
+    }
+  }
+
+  protected close(): void {
+    if (this.hideTimer !== null) {
+      clearTimeout(this.hideTimer);
+      this.hideTimer = null;
+    }
+    this.visible.set(false);
   }
 
   private buildConfetti(): ConfettiPiece[] {

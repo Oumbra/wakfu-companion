@@ -58,6 +58,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
+    'profile.back': 'Retour',
+    'profile.noPseudo': 'Aucun pseudo défini',
     'profile.pseudoLabel': 'Pseudo',
     'profile.pseudoPlaceholder': 'Votre pseudo...',
     'profile.avatarLabel': 'Avatar',
@@ -66,6 +68,15 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOn': 'Son activé',
     'profile.soundOff': 'Son désactivé',
     'profile.lootAlertTitle': 'Objet obtenu !',
+    'profile.closeToast': 'Fermer',
+    'profile.alertTimingLabel': "Fermeture de l'alerte",
+    'profile.secondsUnit': 'sec.',
+    'profile.manualCloseLabel': 'Manuelle',
+    'profile.manualCloseTooltip': "Le toast se fermera à l'appui du bouton ×.",
+    'profile.autoCloseTooltipSingular':
+      'Le toast se fermera automatiquement au bout de {{seconds}} seconde.',
+    'profile.autoCloseTooltipPlural':
+      'Le toast se fermera automatiquement au bout de {{seconds}} secondes.',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrer les messages...',
@@ -146,6 +157,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'profile.button': 'Profile',
     'profile.title': 'My profile',
+    'profile.back': 'Back',
+    'profile.noPseudo': 'No nickname set',
     'profile.pseudoLabel': 'Nickname',
     'profile.pseudoPlaceholder': 'Your nickname...',
     'profile.avatarLabel': 'Avatar',
@@ -154,6 +167,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOn': 'Sound on',
     'profile.soundOff': 'Sound off',
     'profile.lootAlertTitle': 'Item obtained!',
+    'profile.closeToast': 'Close',
+    'profile.alertTimingLabel': 'Alert close timing',
+    'profile.secondsUnit': 'sec.',
+    'profile.manualCloseLabel': 'Manual',
+    'profile.manualCloseTooltip': 'The toast will only close when you press the × button.',
+    'profile.autoCloseTooltipSingular': 'The toast will close automatically after {{seconds}} second.',
+    'profile.autoCloseTooltipPlural': 'The toast will close automatically after {{seconds}} seconds.',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filter messages...',
@@ -234,6 +254,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
+    'profile.back': 'Volver',
+    'profile.noPseudo': 'Ningún apodo definido',
     'profile.pseudoLabel': 'Apodo',
     'profile.pseudoPlaceholder': 'Tu apodo...',
     'profile.avatarLabel': 'Avatar',
@@ -242,6 +264,15 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOn': 'Sonido activado',
     'profile.soundOff': 'Sonido desactivado',
     'profile.lootAlertTitle': '¡Objeto obtenido!',
+    'profile.closeToast': 'Cerrar',
+    'profile.alertTimingLabel': 'Cierre de la alerta',
+    'profile.secondsUnit': 'seg.',
+    'profile.manualCloseLabel': 'Manual',
+    'profile.manualCloseTooltip': 'El aviso solo se cerrará al pulsar el botón ×.',
+    'profile.autoCloseTooltipSingular':
+      'El aviso se cerrará automáticamente después de {{seconds}} segundo.',
+    'profile.autoCloseTooltipPlural':
+      'El aviso se cerrará automáticamente después de {{seconds}} segundos.',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
@@ -322,6 +353,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',
+    'profile.back': 'Voltar',
+    'profile.noPseudo': 'Nenhum apelido definido',
     'profile.pseudoLabel': 'Apelido',
     'profile.pseudoPlaceholder': 'Seu apelido...',
     'profile.avatarLabel': 'Avatar',
@@ -330,6 +363,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOn': 'Som ativado',
     'profile.soundOff': 'Som desativado',
     'profile.lootAlertTitle': 'Item obtido!',
+    'profile.closeToast': 'Fechar',
+    'profile.alertTimingLabel': 'Fechamento do aviso',
+    'profile.secondsUnit': 'seg.',
+    'profile.manualCloseLabel': 'Manual',
+    'profile.manualCloseTooltip': 'O aviso só vai fechar ao pressionar o botão ×.',
+    'profile.autoCloseTooltipSingular': 'O aviso vai fechar automaticamente após {{seconds}} segundo.',
+    'profile.autoCloseTooltipPlural': 'O aviso vai fechar automaticamente após {{seconds}} segundos.',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensagens...',

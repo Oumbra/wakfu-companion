@@ -1,0 +1,154 @@
+<div class="profile-page">
+  <header class="profile-page-header">
+    <button class="back-btn" (click)="goBack()" [title]="'profile.back' | t">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      <span>{{ 'profile.back' | t }}</span>
+    </button>
+    <span class="profile-page-title">{{ 'profile.title' | t }}</span>
+    <span class="profile-page-spacer"></span>
+  </header>
+
+  <div class="profile-page-body">
+    <div class="profile-preview">
+      <div class="avatar-preview">
+        @if (profile.avatarIndex(); as idx) {
+          <app-avatar-icon [index]="idx" />
+        } @else {
+          <span class="avatar-preview-question">?</span>
+        }
+      </div>
+      <span class="profile-preview-name">{{ profile.pseudo() || ('profile.noPseudo' | t) }}</span>
+    </div>
+
+    <div class="profile-field">
+      <label class="profile-label">{{ 'profile.pseudoLabel' | t }}</label>
+      <input
+        type="text"
+        [placeholder]="'profile.pseudoPlaceholder' | t"
+        [value]="profile.pseudo()"
+        (input)="onPseudoInput($any($event.target).value)"
+      />
+    </div>
+
+    <div class="profile-field">
+      <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+      <div class="avatar-grid">
+        @for (i of avatarIndexes; track i) {
+          <button
+            class="avatar-cell-btn"
+            [class.selected]="profile.avatarIndex() === i"
+            (click)="chooseAvatar(i)"
+          >
+            <app-avatar-icon [index]="i" />
+          </button>
+        }
+      </div>
+    </div>
+
+    <div class="profile-field profile-field-wide">
+      <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+
+      <div class="alert-timing-control">
+        <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3.5 3.5" />
+          </svg>
+        </div>
+        <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
+        <div class="alert-timing-duration" [class.is-disabled]="profile.alertManualClose()">
+          <input
+            type="number"
+            class="alert-duration-input"
+            min="0.5"
+            step="0.5"
+            [disabled]="profile.alertManualClose()"
+            [value]="profile.alertDurationSeconds()"
+            (input)="onDurationInput($any($event.target).value)"
+          />
+          <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
+        </div>
+
+        <label class="manual-close-switch" [attr.data-tooltip]="manualCloseTooltip()">
+          <input
+            type="checkbox"
+            class="switch-input"
+            [checked]="profile.alertManualClose()"
+            (change)="setManualClose($any($event.target).checked)"
+          />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+          <span class="switch-label">{{ 'profile.manualCloseLabel' | t }}</span>
+        </label>
+      </div>
+
+      <div class="sound-item-add">
+        <input
+          type="text"
+          [placeholder]="'profile.soundItemPlaceholder' | t"
+          [value]="newItemName()"
+          (input)="setNewItemName($any($event.target).value)"
+          (keydown.enter)="addSoundItem()"
+        />
+        <button class="primary-btn" (click)="addSoundItem()">{{ 'tracker.add' | t }}</button>
+      </div>
+      <div class="sound-item-grid">
+        @for (entry of profile.soundItems(); track entry.name) {
+          <div class="sound-item-tile" [class]="rarityClass(entry.name)">
+            <button
+              class="sound-toggle-btn"
+              [title]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
+              (click)="toggleSound(entry.name)"
+            >
+              @if (entry.enabled) {
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M4 9v6h4l5 4V5L8 9H4z" />
+                  <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+                  <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+                </svg>
+              } @else {
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M4 9v6h4l5 4V5L8 9H4z" />
+                  <path d="M3 3l18 18" />
+                </svg>
+              }
+            </button>
+            @if (!entry.isDefault) {
+              <button
+                class="remove-btn"
+                [title]="'tracker.remove' | t"
+                (click)="removeSoundItem(entry.name)"
+              >
+                ×
+              </button>
+            }
+            <app-item-icon [name]="entry.name" [size]="32" />
+            <span class="sound-item-name">{{ i18n.translateItemName(entry.name) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

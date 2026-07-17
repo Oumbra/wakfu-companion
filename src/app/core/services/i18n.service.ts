@@ -37,9 +37,11 @@ export class I18nService {
     this.persistence.setJson(LOCALE_KEY, locale);
   }
 
-  t(key: string): string {
+  t(key: string, params?: Record<string, string | number>): string {
     const locale = this.locale();
-    return TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.fr[key] ?? key;
+    const raw = TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.fr[key] ?? key;
+    if (!params) return raw;
+    return raw.replace(/\{\{(\w+)\}\}/g, (_, name) => String(params[name] ?? ''));
   }
 
   /** Formate un horodatage (epoch ms) selon les conventions de la langue courante. */
