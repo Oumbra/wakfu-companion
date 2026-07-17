@@ -1,14 +1,30 @@
 <div class="app-shell">
   <header class="app-header">
     <div class="app-title">Wakfu Companion</div>
-    @if (logFileAccess.status() === 'connected') {
-      <div class="app-header-actions">
-        <span class="file-chip">{{ logFileAccess.fileName() }}</span>
-        <button class="icon-btn" title="Changer de fichier" (click)="onChangeFile()">⇄</button>
-        <button class="toggle-btn" (click)="sessionRecap.toggle()">Session recap</button>
-        <button class="reset-btn" (click)="onReset()">Réinitialiser</button>
-      </div>
-    }
+    <div class="app-header-right">
+      @if (logFileAccess.status() === 'connected') {
+        <div class="app-header-actions">
+          <span class="file-chip">{{ logFileAccess.fileName() }}</span>
+          @if (logFileAccess.usingClassicPicker()) {
+            <button
+              class="icon-btn"
+              [title]="'app.refresh' | t"
+              (click)="classicRefreshInput.click()"
+            >
+              ↻
+            </button>
+          }
+          <button class="icon-btn" [title]="'app.changeFile' | t" (click)="onChangeFile()">
+            ⇄
+          </button>
+          <button class="toggle-btn" (click)="sessionRecap.toggle()">
+            {{ 'app.sessionRecap' | t }}
+          </button>
+          <button class="reset-btn" (click)="onReset()">{{ 'app.reset' | t }}</button>
+        </div>
+      }
+      <app-language-switcher />
+    </div>
   </header>
 
   <main class="app-main">
@@ -20,4 +36,12 @@
   </main>
 
   <app-session-recap #sessionRecap />
+
+  <input
+    #classicRefreshInput
+    type="file"
+    accept=".log,.txt"
+    style="display: none"
+    (change)="onClassicRefreshSelected($event)"
+  />
 </div>

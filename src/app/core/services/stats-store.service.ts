@@ -25,6 +25,7 @@ export interface EntityDamageRow {
   name: string;
   total: number;
   spells: SpellBreakdownRow[];
+  defeated: boolean;
 }
 
 export interface XpRow {
@@ -46,9 +47,13 @@ export interface LootRow {
 export interface FightRecord {
   id: number;
   time: string;
+  /** Date et heure complètes du combat, prêtes à afficher (le log Wakfu n'expose que l'heure). */
+  fullTimestamp: string;
   result: 'won' | 'lost';
   rows: EntityDamageRow[];
   loot: LootRow[];
+  turns: number;
+  durationMs: number;
 }
 
 /**
@@ -87,7 +92,13 @@ export class StatsStoreService {
   private readonly attackerMap = new Map<string, Map<string, SpellAgg>>();
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
-  private lootTarget: LootRow[] | null = null;
+  /** Butin accumulé depuis le début du combat en cours (les lignes "ramassé" arrivent avant la détection de fin de combat, pas après). */
+  private currentFightLoot: LootRow[] = [];
+  /** Compte le premier tour (jamais annoncé par un marqueur) plus une transition par marqueur "tour suivant" rencontré. */
+  private currentFightTurns = 1;
+  private currentFightStartTime: string | null = null;
+  /** Noms (en minuscules) déjà mis KO ce combat-ci : évite un double comptage du suivi des ennemis à la conclusion du combat, et alimente le badge KO affiché sur la ligne. */
+  private readonly currentFightDefeatedNames = new Set<string>();
   private nextFightId = 1;
 
   constructor(
@@ -116,6 +127,14 @@ export class StatsStoreService {
     this.removeWatched(this.itemWatchlist, ITEM_WATCHLIST_KEY, name);
   }
 
+  reorderEnemyWatchlist(fromIndex: number, toIndex: number): void {
+    this.reorderWatched(this.enemyWatchlist, ENEMY_WATCHLIST_KEY, fromIndex, toIndex);
+  }
+
+  reorderItemWatchlist(fromIndex: number, toIndex: number): void {
+    this.reorderWatched(this.itemWatchlist, ITEM_WATCHLIST_KEY, fromIndex, toIndex);
+  }
+
   /** Remet à zéro les compteurs de la session (conserve les noms suivis). */
   resetStats(): void {
     this.sessionStartedAt.set(Date.now());
@@ -133,7 +152,10 @@ export class StatsStoreService {
 
     this.fightHistoryList.length = 0;
     this.fightHistory.set([]);
-    this.lootTarget = null;
+    this.currentFightLoot = [];
+    this.currentFightTurns = 1;
+    this.currentFightStartTime = null;
+    this.currentFightDefeatedNames.clear();
 
     this.chatBuffer.length = 0;
     this.chatMessages.set([]);
@@ -165,6 +187,19 @@ export class StatsStoreService {
       case 'xp-gain':
         this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
         break;
+      case 'combat-start':
+        if (this.attackerMap.size > 0) {
+          // Filet de sécurité : le marqueur de fin du combat précédent n'a
+          // pas été reçu (ex. ligne perdue lors d'une rotation du fichier de
+          // log). On le clôture quand même plutôt que de fusionner ses
+          // dégâts avec ceux du nouveau combat qui démarre.
+          this.concludeFight(entry.time, 'won');
+          this.combatsWon.update((v) => v + 1);
+        }
+        this.currentFightLoot = [];
+        this.currentFightTurns = 1;
+        this.currentFightStartTime = entry.time;
+        break;
       case 'combat-end':
         this.concludeFight(entry.time, entry.result);
         if (entry.result === 'won') this.combatsWon.update((v) => v + 1);
@@ -172,12 +207,20 @@ export class StatsStoreService {
         break;
       case 'enemy-defeated':
         this.registerDefeat(entry.name);
+        this.currentFightDefeatedNames.add(entry.name.toLowerCase());
+        // Un personnage mis KO sans avoir infligé de dégât doit quand même
+        // apparaître dans le combat (à 0 dégât), pas seulement les attaquants.
+        this.ensurePresent(this.attackerMap, entry.name);
         break;
       case 'damage':
         this.addDamage(this.attackerMap, entry.attacker, entry);
+        this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
       case 'loot':
         this.registerLoot(entry.item, entry.quantity);
+        break;
+      case 'turn-marker':
+        this.currentFightTurns += 1;
         break;
       case 'chat':
         this.chatBuffer.push(entry);
@@ -186,7 +229,6 @@ export class StatsStoreService {
         }
         break;
       case 'spell-cast':
-        this.lootTarget = null; // un nouveau combat commence : on arrête d'y attacher du butin
         this.classifier.registerSpellCast(entry.caster, entry.spell);
         break;
       case 'combat-defeat-marker':
@@ -195,17 +237,67 @@ export class StatsStoreService {
   }
 
   private concludeFight(time: string, result: 'won' | 'lost'): void {
+    if (result === 'won') {
+      // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
+      // le combat se termine et n'a alors pas droit à sa propre ligne "est KO !"
+      // (contrairement aux adds tués en cours de route) : sans ce filet, il
+      // n'est jamais crédité dans le suivi des ennemis vaincus. Un combat gagné
+      // implique que tous les ennemis ayant combattu sont morts.
+      for (const name of this.attackerMap.keys()) {
+        if (
+          this.classifier.classify(name) === 'enemy' &&
+          !this.currentFightDefeatedNames.has(name.toLowerCase())
+        ) {
+          this.registerDefeat(name);
+          this.currentFightDefeatedNames.add(name.toLowerCase());
+        }
+      }
+    }
+
     const record: FightRecord = {
       id: this.nextFightId++,
       time,
+      fullTimestamp: this.formatFullTimestamp(time),
       result,
-      rows: this.buildEntityDamageRows(this.attackerMap),
-      loot: [],
+      rows: this.buildEntityDamageRows(this.attackerMap, this.currentFightDefeatedNames),
+      loot: this.currentFightLoot,
+      turns: this.currentFightTurns,
+      durationMs: this.currentFightStartTime
+        ? this.computeDurationMs(this.currentFightStartTime, time)
+        : 0,
     };
     this.fightHistoryList.unshift(record);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
     this.attackerMap.clear();
-    this.lootTarget = result === 'won' ? record.loot : null;
+    this.currentFightLoot = [];
+    this.currentFightTurns = 1;
+    this.currentFightStartTime = null;
+    this.currentFightDefeatedNames.clear();
+  }
+
+  /** Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) : on complète avec la date système, le fichier étant lu en direct au fil de l'eau. */
+  private formatFullTimestamp(time: string): string {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}/${now.getFullYear()} ${time.split(',')[0]}`;
+  }
+
+  private computeDurationMs(startTime: string, endTime: string): number {
+    const diff = this.timeToMs(endTime) - this.timeToMs(startTime);
+    return diff >= 0 ? diff : diff + 24 * 60 * 60 * 1000;
+  }
+
+  private timeToMs(time: string): number {
+    const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
+    if (!match) return 0;
+    const [, h, m, s, ms] = match;
+    return ((+h * 60 + +m) * 60 + +s) * 1000 + +ms;
+  }
+
+  /** Garantit une ligne à 0 dégât pour un personnage sans y écraser des dégâts déjà enregistrés. */
+  private ensurePresent(map: Map<string, Map<string, SpellAgg>>, name: string): void {
+    if (!map.has(name)) map.set(name, new Map());
   }
 
   private addDamage(
@@ -234,11 +326,11 @@ export class StatsStoreService {
   private registerLoot(item: string, quantity: number): void {
     this.incrementWatched(this.itemWatchlist, ITEM_WATCHLIST_KEY, item, quantity);
 
-    if (this.lootTarget) {
-      const existing = this.lootTarget.find((l) => l.name.toLowerCase() === item.toLowerCase());
-      if (existing) existing.quantity += quantity;
-      else this.lootTarget.push({ name: item, quantity });
-    }
+    const existing = this.currentFightLoot.find(
+      (l) => l.name.toLowerCase() === item.toLowerCase(),
+    );
+    if (existing) existing.quantity += quantity;
+    else this.currentFightLoot.push({ name: item, quantity });
   }
 
   private addWatched(
@@ -261,6 +353,20 @@ export class StatsStoreService {
     name: string,
   ): void {
     const updated = list().filter((w) => w.name !== name);
+    list.set(updated);
+    this.persistence.setJson(key, updated);
+  }
+
+  private reorderWatched(
+    list: WritableSignal<WatchlistEntry[]>,
+    key: string,
+    fromIndex: number,
+    toIndex: number,
+  ): void {
+    const updated = list().slice();
+    const [moved] = updated.splice(fromIndex, 1);
+    if (!moved) return;
+    updated.splice(toIndex, 0, moved);
     list.set(updated);
     this.persistence.setJson(key, updated);
   }
@@ -293,12 +399,17 @@ export class StatsStoreService {
         .map(([name, amount]) => ({ name, amount }))
         .sort((a, b) => b.amount - a.amount),
     );
-    this.damageByAttacker.set(this.buildEntityDamageRows(this.attackerMap));
+    this.damageByAttacker.set(
+      this.buildEntityDamageRows(this.attackerMap, this.currentFightDefeatedNames),
+    );
     this.fightHistory.set([...this.fightHistoryList]);
     this.chatMessages.set([...this.chatBuffer]);
   }
 
-  private buildEntityDamageRows(map: Map<string, Map<string, SpellAgg>>): EntityDamageRow[] {
+  private buildEntityDamageRows(
+    map: Map<string, Map<string, SpellAgg>>,
+    defeatedNames: ReadonlySet<string>,
+  ): EntityDamageRow[] {
     return [...map.entries()]
       .map(([name, spells]) => {
         const spellRows: SpellBreakdownRow[] = [...spells.entries()]
@@ -309,7 +420,7 @@ export class StatsStoreService {
           }))
           .sort((a, b) => b.total - a.total);
         const total = spellRows.reduce((sum, row) => sum + row.total, 0);
-        return { name, total, spells: spellRows };
+        return { name, total, spells: spellRows, defeated: defeatedNames.has(name.toLowerCase()) };
       })
       .sort((a, b) => b.total - a.total);
   }

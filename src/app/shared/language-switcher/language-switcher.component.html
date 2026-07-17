@@ -1,0 +1,18 @@
+<div class="lang-switcher">
+  <button class="lang-current" (click)="toggle()" [title]="current().label">
+    {{ current().flag }}
+  </button>
+  @if (open()) {
+    <div class="lang-backdrop" (click)="close()"></div>
+    <div class="lang-menu">
+      @for (l of locales; track l.code) {
+        @if (l.code !== i18n.locale()) {
+          <button class="lang-option" (click)="choose(l.code)">
+            <span class="lang-flag">{{ l.flag }}</span>
+            <span class="lang-label">{{ l.label }}</span>
+          </button>
+        }
+      }
+    </div>
+  }
+</div>

@@ -3,22 +3,19 @@
     <h1 class="setup-title">Wakfu Companion</h1>
 
     @switch (logFileAccess.status()) {
-      @case ('unsupported') {
-        <div class="setup-message error">
-          Ce navigateur ne supporte pas la lecture de fichier en direct (File System Access API).
-          Utilisez <strong>Google Chrome</strong> ou <strong>Microsoft Edge</strong> pour suivre votre
-          log en temps réel.
-        </div>
-      }
       @case ('needs-reconnect') {
         <div class="reconnect-box">
-          <p class="prev-file-label">Fichier précédemment connecté :</p>
+          <p class="prev-file-label">{{ 'setup.reconnect.label' | t }}</p>
           <p class="prev-filename">{{ logFileAccess.fileName() }}</p>
-          <button class="primary-btn reconnect-btn" (click)="reconnect()">Reconnecter</button>
+          <button class="primary-btn reconnect-btn" (click)="reconnect()">
+            {{ 'setup.reconnect.button' | t }}
+          </button>
           <p class="browser-warning">
-            Le navigateur exige une confirmation à chaque ouverture, pour des raisons de sécurité.
+            {{ 'setup.reconnect.warning' | t }}
           </p>
-          <button class="link-btn" (click)="forget()">Choisir un autre fichier</button>
+          <button class="link-btn" (click)="forget()">
+            {{ 'setup.reconnect.chooseOther' | t }}
+          </button>
         </div>
       }
       @default {
@@ -28,14 +25,14 @@
           (dragover)="onDragOver($event)"
           (dragleave)="onDragLeave()"
           (drop)="onDrop($event)"
-          (click)="pickFile()"
+          (click)="classicInput.click()"
         >
-          <p class="drop-title">GLISSEZ « wakfu_chat.log » ICI</p>
-          <p class="drop-sub">ou cliquez pour parcourir vos fichiers</p>
+          <p class="drop-title">{{ 'setup.dropTitle' | t }}</p>
+          <p class="drop-sub">{{ 'setup.dropSub' | t }}</p>
         </div>
 
         <div class="path-hint">
-          <span class="path-label">Chemin par défaut :</span>
+          <span class="path-label">{{ 'setup.pathLabel' | t }}</span>
           <code>%AppData%\zaap\gamesLogs\wakfu\logs\</code>
         </div>
 
@@ -44,5 +41,13 @@
         }
       }
     }
+
+    <input
+      #classicInput
+      type="file"
+      accept=".log,.txt"
+      style="display: none"
+      (change)="onClassicFileSelected($event)"
+    />
   </div>
 </div>

@@ -1,7 +1,7 @@
 # wakfu-companion
 Mise en forme de log Wakfu
 
-Application Angular 21 qui lit `wakfu_chat.log` en direct (Chrome/Edge — File
+Application Angular 21 qui lit `wakfu.log` en direct (Chrome/Edge — File
 System Access API) et affiche kamas, XP, dégâts, combats et chat par canal.
 Design repris de https://wakfu-companion.nexuswow.workers.dev/.
 
