@@ -14,7 +14,14 @@ interface StoredProfile {
   pseudo: string;
   avatarIndex: number | null;
   soundItems: SoundItemEntry[];
+  /** Durée d'affichage du toast d'alerte sonore, en secondes (utilisée seulement si !alertManualClose). */
+  alertDurationSeconds: number;
+  /** Si vrai, le toast d'alerte sonore ne se ferme plus qu'à la main (voir le bouton de fermeture du toast). */
+  alertManualClose: boolean;
 }
+
+const DEFAULT_ALERT_DURATION_SECONDS = 3.5;
+const MIN_ALERT_DURATION_SECONDS = 0.5;
 
 const DEFAULT_SOUND_ITEM_NAMES: readonly string[] = [
   "Pierre d'aventure",
@@ -33,6 +40,8 @@ export class ProfileService {
   readonly pseudo = signal('');
   readonly avatarIndex = signal<number | null>(null);
   readonly soundItems = signal<SoundItemEntry[]>([]);
+  readonly alertDurationSeconds = signal(DEFAULT_ALERT_DURATION_SECONDS);
+  readonly alertManualClose = signal(false);
 
   constructor() {
     const stored = this.persistence.getJson<StoredProfile>(PROFILE_KEY);
@@ -42,6 +51,14 @@ export class ProfileService {
       stored?.soundItems ??
         DEFAULT_SOUND_ITEM_NAMES.map((name) => ({ name, enabled: true, isDefault: true })),
     );
+    // Migration : une ancienne version stockait 0 = "fermeture manuelle" dans alertDurationSeconds.
+    if (stored?.alertDurationSeconds === 0) {
+      this.alertDurationSeconds.set(DEFAULT_ALERT_DURATION_SECONDS);
+      this.alertManualClose.set(true);
+    } else {
+      this.alertDurationSeconds.set(stored?.alertDurationSeconds ?? DEFAULT_ALERT_DURATION_SECONDS);
+      this.alertManualClose.set(stored?.alertManualClose ?? false);
+    }
   }
 
   setPseudo(value: string): void {
@@ -51,6 +68,16 @@ export class ProfileService {
 
   setAvatar(index: number): void {
     this.avatarIndex.set(index);
+    this.persist();
+  }
+
+  setAlertDuration(seconds: number): void {
+    this.alertDurationSeconds.set(Math.max(MIN_ALERT_DURATION_SECONDS, seconds));
+    this.persist();
+  }
+
+  setAlertManualClose(value: boolean): void {
+    this.alertManualClose.set(value);
     this.persist();
   }
 
@@ -87,6 +114,8 @@ export class ProfileService {
       pseudo: this.pseudo(),
       avatarIndex: this.avatarIndex(),
       soundItems: this.soundItems(),
+      alertDurationSeconds: this.alertDurationSeconds(),
+      alertManualClose: this.alertManualClose(),
     };
     this.persistence.setJson(PROFILE_KEY, value);
   }

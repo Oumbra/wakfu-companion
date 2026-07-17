@@ -2,11 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { LogFileAccessService } from './core/services/log-file-access.service';
 import { StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
+import { NavigationService } from './core/services/navigation.service';
 import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
 import { SessionRecapComponent } from './features/session-recap/session-recap.component';
 import { LanguageSwitcherComponent } from './shared/language-switcher/language-switcher.component';
 import { ProfileComponent } from './features/profile/profile.component';
+import { ProfilePageComponent } from './features/profile-page/profile-page.component';
 import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
 
@@ -18,6 +20,7 @@ import { TranslatePipe } from './shared/translate.pipe';
     SessionRecapComponent,
     LanguageSwitcherComponent,
     ProfileComponent,
+    ProfilePageComponent,
     LootAlertComponent,
     TranslatePipe,
   ],
@@ -27,6 +30,7 @@ import { TranslatePipe } from './shared/translate.pipe';
 export class App implements OnInit {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly i18n = inject(I18nService);
+  protected readonly nav = inject(NavigationService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
 
