@@ -48,6 +48,7 @@
   flex-grow: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-right: 10px;
 }
 
 .watch-row {
@@ -56,6 +57,10 @@
   gap: 10px;
   padding: 8px 15px;
   border-bottom: 1px solid #2a2a2a;
+  cursor: grab;
+}
+.watch-row:active {
+  cursor: grabbing;
 }
 .watch-name {
   flex-grow: 1;

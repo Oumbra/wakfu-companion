@@ -1,9 +1,11 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
-import { EntityDamageRow } from '../../../core/services/stats-store.service';
+import { EntityDamageRow, StatsStoreService } from '../../../core/services/stats-store.service';
 import { EntityClassifierService, EntitySide } from '../../../core/services/entity-classifier.service';
 import { NumberFrPipe } from '../../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
+import { TranslatePipe } from '../../../shared/translate.pipe';
+import { CLASS_ICON_DATA_URI } from '../../../core/data/class-icons.data';
 import { DamageElement } from '../../../core/models/log-entry.model';
 
 const ELEMENT_CLASS: Record<DamageElement, string> = {
@@ -17,6 +19,26 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
   Inconnu: 'dmg-inconnu',
 };
 
+interface ClassOption {
+  key: string;
+  label: string;
+  icon: string;
+}
+
+const CLASS_OPTIONS: ClassOption[] = Object.keys(CLASS_ICON_DATA_URI)
+  .sort()
+  .map((key) => ({
+    key,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    icon: CLASS_ICON_DATA_URI[key],
+  }));
+
+interface ClassPickerState {
+  name: string;
+  x: number;
+  y: number;
+}
+
 /**
  * Liste dépliable d'entités (alliés ou ennemis) avec détail des dégâts par
  * sort et icône. Réutilisée pour le combat en cours (glisser-déposer actif,
@@ -24,7 +46,7 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
  */
 @Component({
   selector: 'app-entity-damage-list',
-  imports: [NumberFrPipe, KeyValuePipe, EntityIconComponent],
+  imports: [NumberFrPipe, KeyValuePipe, EntityIconComponent, TranslatePipe],
   templateUrl: './entity-damage-list.component.html',
   styleUrl: './entity-damage-list.component.css',
 })
@@ -36,18 +58,22 @@ export class EntityDamageListComponent {
   readonly emptyMessage = input('Aucun dégât enregistré.');
 
   private readonly classifier = inject(EntityClassifierService);
+  private readonly stats = inject(StatsStoreService);
   private readonly expandedNames = signal<ReadonlySet<string>>(new Set());
   protected readonly dragOver = signal(false);
+  protected readonly classOptions = CLASS_OPTIONS;
+  protected readonly classPicker = signal<ClassPickerState | null>(null);
 
   protected readonly total = computed(() => this.rows().reduce((sum, r) => sum + r.total, 0));
   private readonly maxTotal = computed(
     () => this.rows().reduce((max, r) => Math.max(max, r.total), 0) || 1,
   );
 
-  protected toggle(name: string): void {
+  protected toggle(row: EntityDamageRow): void {
+    if (row.total === 0) return;
     const next = new Set(this.expandedNames());
-    if (next.has(name)) next.delete(name);
-    else next.add(name);
+    if (next.has(row.name)) next.delete(row.name);
+    else next.add(row.name);
     this.expandedNames.set(next);
   }
 
@@ -56,6 +82,7 @@ export class EntityDamageListComponent {
   }
 
   protected barWidth(total: number): string {
+    if (total === 0) return '0%';
     return `${Math.max(2, (total / this.maxTotal()) * 100)}%`;
   }
 
@@ -84,5 +111,28 @@ export class EntityDamageListComponent {
     this.dragOver.set(false);
     const name = event.dataTransfer?.getData('text/plain');
     if (name) this.classifier.setOverride(name, this.side());
+  }
+
+  protected onContextMenu(event: MouseEvent, row: EntityDamageRow): void {
+    if (this.side() === 'enemy') {
+      event.preventDefault();
+      this.stats.addWatchedEnemy(row.name);
+      return;
+    }
+    if (this.side() === 'ally' && !this.classifier.getDetectedClass(row.name)) {
+      event.preventDefault();
+      this.classPicker.set({ name: row.name, x: event.clientX, y: event.clientY });
+    }
+  }
+
+  protected chooseClass(className: string): void {
+    const picker = this.classPicker();
+    if (!picker) return;
+    this.classifier.setManualClass(picker.name, className);
+    this.classPicker.set(null);
+  }
+
+  protected closeClassPicker(): void {
+    this.classPicker.set(null);
   }
 }

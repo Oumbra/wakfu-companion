@@ -6,6 +6,7 @@ import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
 import { PersistenceService } from './persistence.service';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
+const MANUAL_CLASSES_KEY = 'wakfu-entity-classes';
 
 export type EntitySide = 'ally' | 'enemy';
 
@@ -44,7 +45,11 @@ export class EntityClassifierService {
   // Mutable, alimentée ligne par ligne (potentiellement des milliers de fois
   // lors de la lecture initiale d'un fichier) : volontairement pas un signal.
   private readonly detectedClasses = new Map<string, string>();
+  /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres/familles) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
+  private readonly confirmedAlliesByDamage = new Set<string>();
   private readonly overrides: Map<string, EntitySide>;
+  /** Classe choisie manuellement (clic droit sur un allié dont la classe n'a pas pu être détectée via ses sorts). */
+  private readonly manualClasses: Map<string, string>;
 
   /** Incrémentée par commit()/setOverride() pour notifier les computed() consommateurs. */
   readonly version = signal(0);
@@ -52,6 +57,8 @@ export class EntityClassifierService {
   constructor(private readonly persistence: PersistenceService) {
     const stored = this.persistence.getJson<Record<string, EntitySide>>(OVERRIDES_KEY) ?? {};
     this.overrides = new Map(Object.entries(stored));
+    const storedClasses = this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
+    this.manualClasses = new Map(Object.entries(storedClasses));
   }
 
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
@@ -60,6 +67,13 @@ export class EntityClassifierService {
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
+    }
+  }
+
+  /** À appeler pour chaque ligne de dégâts rencontrée. */
+  registerDamageTarget(target: string, attacker: string): void {
+    if (this.isConfirmedEnemy(attacker) && !this.isConfirmedEnemy(target)) {
+      this.confirmedAlliesByDamage.add(normalizeName(target));
     }
   }
 
@@ -73,12 +87,16 @@ export class EntityClassifierService {
     const override = this.overrides.get(name);
     if (override) return override;
 
-    const lower = normalizeName(name);
-    if (this.monsterNames.has(lower)) return 'enemy';
-    if (this.enemyFamilies.some((fam) => lower.includes(fam))) return 'enemy';
+    if (this.isConfirmedEnemy(name)) return 'enemy';
     if (this.detectedClasses.has(name)) return 'ally';
-    if (this.allySummonNames.has(lower)) return 'ally';
+    if (this.allySummonNames.has(normalizeName(name))) return 'ally';
+    if (this.confirmedAlliesByDamage.has(normalizeName(name))) return 'ally';
     return 'enemy';
+  }
+
+  private isConfirmedEnemy(name: string): boolean {
+    const lower = normalizeName(name);
+    return this.monsterNames.has(lower) || this.enemyFamilies.some((fam) => lower.includes(fam));
   }
 
   setOverride(name: string, side: EntitySide): void {
@@ -87,9 +105,16 @@ export class EntityClassifierService {
     this.version.update((v) => v + 1);
   }
 
-  /** Classe détectée pour ce nom (via ses sorts lancés), si connue. */
+  /** Classe détectée pour ce nom (manuelle en priorité, sinon via ses sorts lancés), si connue. */
   getDetectedClass(name: string): string | undefined {
     this.version(); // dépendance réactive
-    return this.detectedClasses.get(name);
+    return this.manualClasses.get(name) ?? this.detectedClasses.get(name);
+  }
+
+  /** Choix manuel de classe (clic droit sur un allié dont la classe n'a pas été détectée automatiquement). */
+  setManualClass(name: string, className: string): void {
+    this.manualClasses.set(name, className);
+    this.persistence.setJson(MANUAL_CLASSES_KEY, Object.fromEntries(this.manualClasses));
+    this.version.update((v) => v + 1);
   }
 }

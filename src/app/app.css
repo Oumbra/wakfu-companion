@@ -23,6 +23,12 @@
   font-size: 1.05rem;
 }
 
+.app-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .app-header-actions {
   display: flex;
   align-items: center;

@@ -80,6 +80,11 @@ export interface CombatDefeatMarkerEntry {
   time: string;
 }
 
+export interface CombatStartEntry {
+  kind: 'combat-start';
+  time: string;
+}
+
 export interface CombatEndEntry {
   kind: 'combat-end';
   time: string;
@@ -93,6 +98,12 @@ export interface LootEntry {
   quantity: number;
 }
 
+/** Marqueur fiable de changement de tour ("N secondes reportées pour le tour suivant"), émis une fois par transition. */
+export interface TurnMarkerEntry {
+  kind: 'turn-marker';
+  time: string;
+}
+
 export type LogEntry =
   | ChatMessageEntry
   | KamaGainEntry
@@ -102,5 +113,7 @@ export type LogEntry =
   | DamageEntry
   | EnemyDefeatedEntry
   | CombatDefeatMarkerEntry
+  | CombatStartEntry
   | CombatEndEntry
-  | LootEntry;
+  | LootEntry
+  | TurnMarkerEntry;

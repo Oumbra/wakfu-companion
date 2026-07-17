@@ -2,14 +2,18 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { CHAT_CHANNELS } from '../../core/services/log-parser';
 import { ChatChannelKey } from '../../core/models/log-entry.model';
+import { TranslatePipe } from '../../shared/translate.pipe';
+import { I18nService } from '../../core/services/i18n.service';
 
 @Component({
   selector: 'app-chat-panel',
+  imports: [TranslatePipe],
   templateUrl: './chat-panel.component.html',
   styleUrl: './chat-panel.component.css',
 })
 export class ChatPanelComponent {
   protected readonly stats = inject(StatsStoreService);
+  protected readonly i18n = inject(I18nService);
   protected readonly channels = CHAT_CHANNELS;
 
   protected readonly activeChannels = signal<ReadonlySet<ChatChannelKey>>(
@@ -52,5 +56,9 @@ export class ChatPanelComponent {
 
   protected channelColorVar(key: ChatChannelKey): string {
     return `var(--channel-${key})`;
+  }
+
+  protected channelLabelKey(key: ChatChannelKey): string {
+    return `chat.channel.${key}`;
   }
 }

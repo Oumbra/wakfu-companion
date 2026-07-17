@@ -92,7 +92,44 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
-.fight-time {
+.fight-clock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #888;
+  flex-shrink: 0;
+}
+.fight-clock svg {
+  width: 15px;
+  height: 15px;
+}
+.fight-clock:hover {
+  color: var(--accent);
+}
+.fight-clock::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  padding: 4px 8px;
+  background: #000;
+  color: #fff;
+  font-family: monospace;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  border-radius: 4px;
+  border: 1px solid #333;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 10;
+}
+.fight-clock:hover::after {
+  opacity: 1;
+}
+
+.fight-meta {
   color: #888;
   font-family: monospace;
   font-size: 0.85rem;
@@ -113,7 +150,6 @@
   flex-direction: column;
   background: #161616;
   border-top: 1px solid #2a2a2a;
-  max-height: 420px;
 }
 
 .loot-section {
@@ -121,20 +157,56 @@
   border-top: 1px solid #2a2a2a;
   flex-shrink: 0;
 }
+.loot-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
 .loot-header {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--accent);
-  margin-bottom: 6px;
+}
+.loot-sort {
+  display: flex;
+  gap: 4px;
+}
+.loot-sort button {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: #222;
+  color: #888;
+  border: 1px solid #333;
+}
+.loot-sort button:hover {
+  color: #fff;
+  border-color: #555;
+}
+.loot-sort button.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0, 210, 255, 0.1);
+}
+.loot-list.scrollable {
+  max-height: 130px;
+  overflow-y: auto;
+  padding-right: 10px;
 }
 .loot-row {
   display: flex;
-  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
   font-size: 0.82rem;
   color: #ccc;
   padding: 3px 0;
+}
+.loot-name {
+  flex-grow: 1;
 }
 .loot-qty {
   font-family: monospace;

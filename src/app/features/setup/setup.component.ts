@@ -1,8 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
+import { TranslatePipe } from '../../shared/translate.pipe';
 
 @Component({
   selector: 'app-setup',
+  imports: [TranslatePipe],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',
 })
@@ -27,8 +29,11 @@ export class SetupComponent {
     }
   }
 
-  protected pickFile(): void {
-    void this.logFileAccess.pickFile();
+  protected onClassicFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (file) void this.logFileAccess.pickFileClassic(file);
   }
 
   protected reconnect(): void {

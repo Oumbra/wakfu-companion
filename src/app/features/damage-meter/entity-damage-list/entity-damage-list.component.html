@@ -21,19 +21,43 @@
     <div class="empty-state">{{ emptyMessage() }}</div>
   } @else {
     @for (row of rows(); track row.name) {
-      <div class="entity-block" [class.expanded]="isExpanded(row.name)">
+      <div class="entity-block" [class.expanded]="row.total > 0 && isExpanded(row.name)">
         <div
           class="entity-row"
+          [class.no-toggle]="row.total === 0"
+          [class.ko-zero]="row.total === 0 && row.defeated"
           [attr.draggable]="interactive() ? 'true' : null"
           (dragstart)="onDragStart($event, row.name)"
-          (click)="toggle(row.name)"
+          (click)="toggle(row)"
+          (contextmenu)="onContextMenu($event, row)"
         >
-          <div class="entity-bg-bar" [style.width]="barWidth(row.total)"></div>
+          <div
+            class="entity-bg-bar"
+            [class.no-bar]="row.total === 0"
+            [style.width]="barWidth(row.total)"
+          ></div>
+          @if (row.defeated) {
+            <span class="ko-icon" [title]="'damageMeter.koTitle' | t">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <path
+                  d="M5 11c0-4.4 3.4-7.5 7-7.5s7 3.1 7 7.5c0 2.5-1.2 4.6-3 6v2.3a1 1 0 0 1-1 1h-6a1 1 0 0 1-1-1V17c-1.8-1.4-3-3.5-3-6z"
+                />
+                <circle cx="9.3" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                <circle cx="14.7" cy="11" r="1.2" fill="currentColor" stroke="none" />
+                <path d="M9.5 18.7h5" />
+              </svg>
+            </span>
+          }
           <app-entity-icon [name]="row.name" [side]="side()" />
-          <span class="entity-name"><span class="caret">▸</span> {{ row.name }}</span>
+          <span class="entity-name">
+            @if (row.total > 0) {
+              <span class="caret">▸</span>
+            }
+            {{ row.name }}
+          </span>
           <span class="entity-total">{{ row.total | numberFr }}</span>
         </div>
-        @if (isExpanded(row.name)) {
+        @if (row.total > 0 && isExpanded(row.name)) {
           <div class="spell-list">
             @for (spell of row.spells; track spell.spell) {
               <div class="spell-row">
@@ -54,3 +78,17 @@
     }
   }
 </div>
+
+@if (classPicker(); as picker) {
+  <div class="class-picker-backdrop" (click)="closeClassPicker()" (contextmenu)="$event.preventDefault(); closeClassPicker()"></div>
+  <div class="class-picker" [style.left.px]="picker.x" [style.top.px]="picker.y">
+    <div class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ picker.name }}</div>
+    <div class="class-picker-grid">
+      @for (option of classOptions; track option.key) {
+        <button class="class-picker-item" [title]="option.label" (click)="chooseClass(option.key)">
+          <img [src]="option.icon" alt="" />
+        </button>
+      }
+    </div>
+  </div>
+}

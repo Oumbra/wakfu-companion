@@ -68,7 +68,7 @@
 }
 
 .recap-body {
-  padding: 14px 16px;
+  padding: 14px 24px 14px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -146,6 +146,7 @@
   gap: 6px 16px;
   max-height: 100px;
   overflow-y: auto;
+  padding-right: 10px;
 }
 .xp-row {
   display: flex;

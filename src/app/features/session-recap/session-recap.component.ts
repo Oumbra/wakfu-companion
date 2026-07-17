@@ -1,6 +1,7 @@
 import { Component, inject, OnDestroy, signal } from '@angular/core';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { TranslatePipe } from '../../shared/translate.pipe';
 import { HEADER_ICON_SESSION_RECAP_DATA_URI } from '../../core/data/header-icons.data';
 
 /**
@@ -10,7 +11,7 @@ import { HEADER_ICON_SESSION_RECAP_DATA_URI } from '../../core/data/header-icons
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe],
+  imports: [NumberFrPipe, TranslatePipe],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
