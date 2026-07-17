@@ -22,8 +22,8 @@
 
 # Bug
 
-- Lorsqu'on bas un monstre seul, le personnage est considéré comme l'ennemi KO....
-
+- Lorsqu'on bas un monstre seul, le personnage est considéré comme l'ennemi KO et on le ou les ennemis ne sont pas correctement référencé comme le peuvent le prouvé les 6 derniers combats.
+- Lors du premier chargement du fichier, un nouvel historique de combats et construit. Le problème c'est que si on fait plusieurs fois la manipulation, on se rend vite compte que les historiques sont dupliqués.
 
 # Ameliorations
 

@@ -62,6 +62,15 @@ const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
 /** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). */
 const FIGHT_END_RE = /^\[FIGHT\] End fight with id -?\d+$/;
 const COMBAT_START_MARKER = 'CREATION DU COMBAT';
+/**
+ * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
+ * — présent pour chaque combattant de chaque combat. `obstacleId` différent de
+ * -1 signale un décor/praticable de la zone (ex. "Larme d'Ogrest" dans un
+ * donjon Abraknyde) qui "rejoint" techniquement le combat sans être un vrai
+ * personnage à classer allié/ennemi.
+ */
+const FIGHTER_JOIN_RE =
+  /^fightId=-?\d+ (.+?) breed : \d+ \[-?\d+\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
 const DAMAGE_RE = new RegExp(`^(.+?): ([+-])(${NUM}) PV\\b(.*)$`);
 const TAG_RE = /\(([^)]+)\)/g;
 /** Application/rafraîchissement d'un effet à stacks : "Personnage: NomEffet (Niv. N)" ou "(+N Niv.)". */
@@ -154,6 +163,19 @@ export class LogParser {
 
     if (category === 'Information (combat)') {
       return this.parseCombatLine(time, bracketContent);
+    }
+
+    if (category === '_FL_') {
+      const join = FIGHTER_JOIN_RE.exec(bracketContent);
+      if (join && join[3] === '-1') {
+        return {
+          kind: 'fighter-joined',
+          time,
+          name: join[1].trim(),
+          isControlledByAI: join[2] === 'true',
+        };
+      }
+      return null;
     }
 
     return null;
