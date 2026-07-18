@@ -45,11 +45,4 @@ export class App implements OnInit {
   protected onChangeFile(): void {
     void this.logFileAccess.forgetFile();
   }
-
-  protected onClassicRefreshSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (file) void this.logFileAccess.pickFileClassic(file);
-  }
 }
