@@ -15,14 +15,23 @@ const POLL_INTERVAL_MS = 1000;
 const EXPECTED_FILE_NAME_RE = /^wakfu\.log$/i;
 
 /**
- * Ouvre `wakfu.log` via la File System Access API (Chrome/Edge) et le relit
- * en direct par sondage périodique. Contrairement à `wakfu_chat.log`, ce
- * fichier technique du client contient aussi les marqueurs fiables de
- * début/fin de combat (indispensables pour distinguer proprement plusieurs
- * combats, y compris les entraînements contre un mannequin qui n'affichent
- * jamais l'écran de fin de combat côté chat). Le handle est mémorisé en
- * IndexedDB pour proposer une reconnexion en un clic à la prochaine visite
- * (la permission navigateur n'est jamais conservée automatiquement).
+ * Ouvre `wakfu.log` via la File System Access API (Chrome/Edge/Opera) et le
+ * relit en direct par sondage périodique — seul mode de lecture supporté
+ * (voir README de session : le sélecteur classique `<input type="file">` a
+ * été retiré, il ne permettait aucune lecture continue). Contrairement à
+ * `wakfu_chat.log`, ce fichier technique du client contient aussi les
+ * marqueurs fiables de début/fin de combat (indispensables pour distinguer
+ * proprement plusieurs combats, y compris les entraînements contre un
+ * mannequin qui n'affichent jamais l'écran de fin de combat côté chat). Le
+ * handle est mémorisé en IndexedDB pour proposer une reconnexion en un clic
+ * à la prochaine visite (la permission navigateur n'est jamais conservée
+ * automatiquement).
+ *
+ * Chrome/Edge bloquent le sélecteur natif (`showOpenFilePicker`) pour tout
+ * fichier situé sous `%AppData%\Roaming` — précisément le dossier par défaut
+ * des logs Wakfu — mais PAS le glisser-déposer (`getAsFileSystemHandle`),
+ * qui reste donc la solution de repli à recommander à l'utilisateur si le
+ * clic échoue pour cette raison (voir errorMessage dans pickFile()).
  */
 @Injectable({ providedIn: 'root' })
 export class LogFileAccessService {
@@ -30,17 +39,6 @@ export class LogFileAccessService {
   readonly fileName = signal<string | null>(null);
   readonly fileSize = signal<number>(0);
   readonly errorMessage = signal<string | null>(null);
-  /**
-   * Vrai si le fichier a été ouvert via l'`<input type="file">` classique
-   * plutôt que la File System Access API. Chrome/Edge bloquent cette
-   * dernière (sélecteur ET glisser-déposer) pour tout fichier situé sous
-   * `%AppData%\Roaming` (restriction de sécurité du navigateur, y compris
-   * pour le dossier de logs Wakfu par défaut) : la sélection classique reste
-   * le seul moyen d'y accéder, mais sans handle persistant ni sondage
-   * automatique — l'utilisateur doit ressélectionner le fichier pour lire
-   * les nouvelles lignes.
-   */
-  readonly usingClassicPicker = signal(false);
 
   /**
    * Lignes complètes nouvellement lues, émises par lot à chaque sondage.
@@ -66,9 +64,6 @@ export class LogFileAccessService {
   /** À appeler au démarrage de l'application. */
   async init(): Promise<void> {
     if (!this.isSupported()) {
-      // Pas de File System Access API (ex. Firefox) : la sélection classique
-      // reste disponible (voir pickFileClassic), seul le suivi automatique
-      // par sondage est indisponible.
       this.status.set('unsupported');
       return;
     }
@@ -90,6 +85,32 @@ export class LogFileAccessService {
       await this.connect(stored);
     } else {
       this.status.set('needs-reconnect');
+    }
+  }
+
+  /** Ouvre le sélecteur natif du navigateur (clic sur la zone de sélection). */
+  async pickFile(): Promise<void> {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        types: [{ description: 'Wakfu log', accept: { 'text/plain': ['.log', '.txt'] } }],
+      });
+      if (!this.isAcceptedFileName(handle.name)) {
+        this.rejectWrongFile(handle.name);
+        return;
+      }
+      await this.persistence.setFileHandle(STORAGE_KEY, handle);
+      await this.connect(handle);
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // L'utilisateur a fermé le sélecteur sans choisir de fichier : pas une erreur.
+        return;
+      }
+      this.status.set('error');
+      this.errorMessage.set(
+        "Le sélecteur de fichier n'a pas pu ouvrir wakfu.log (dossier protégé par le navigateur, " +
+          'notamment sous %AppData%\\Roaming). Essayez de glisser-déposer le fichier directement ' +
+          'dans la zone ci-dessus : ce mode fonctionne même quand le sélecteur est bloqué.',
+      );
     }
   }
 
@@ -126,39 +147,6 @@ export class LogFileAccessService {
     }
   }
 
-  /**
-   * Lit un fichier choisi via un `<input type="file">` classique — ne
-   * déclenche jamais le blocage navigateur des dossiers sensibles (contrairement
-   * à `pickFile`/`handleDrop`), car cette API ne délivre qu'un instantané en
-   * lecture seule sans handle persistant. Sans handle, aucun sondage
-   * automatique n'est possible : ressélectionner le même fichier (ex. via un
-   * bouton « Rafraîchir ») relit uniquement les lignes ajoutées depuis la
-   * dernière lecture.
-   */
-  async pickFileClassic(file: File): Promise<void> {
-    if (!this.isAcceptedFileName(file.name)) {
-      this.rejectWrongFile(file.name);
-      return;
-    }
-    try {
-      if (!this.usingClassicPicker() || file.name !== this.fileName()) {
-        this.stopPolling();
-        this.handle = null;
-        this.lastOffset = 0;
-        this.carry = '';
-        this.isFirstRead = true;
-        await this.persistence.clearFileHandle(STORAGE_KEY);
-      }
-      this.usingClassicPicker.set(true);
-      this.fileName.set(file.name);
-      this.errorMessage.set(null);
-      this.status.set('connected');
-      await this.processFile(file);
-    } catch (err) {
-      this.setError(err);
-    }
-  }
-
   /** Redemande la permission sur le handle mémorisé (geste utilisateur requis). */
   async reconnect(): Promise<void> {
     if (!this.handle) {
@@ -183,7 +171,6 @@ export class LogFileAccessService {
     this.stopPolling();
     await this.persistence.clearFileHandle(STORAGE_KEY);
     this.handle = null;
-    this.usingClassicPicker.set(false);
     this.lastOffset = 0;
     this.carry = '';
     this.isFirstRead = true;
@@ -195,7 +182,6 @@ export class LogFileAccessService {
 
   private async connect(handle: FileSystemFileHandle): Promise<void> {
     this.handle = handle;
-    this.usingClassicPicker.set(false);
     this.fileName.set(handle.name);
     this.lastOffset = 0;
     this.carry = '';

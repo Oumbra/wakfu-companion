@@ -1,16 +1,29 @@
 import { Component, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
+import { BrowserIconComponent, BrowserKind } from '../../shared/browser-icon/browser-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+
+interface CompatibleBrowser {
+  kind: BrowserKind;
+  name: string;
+}
+
+const COMPATIBLE_BROWSERS: readonly CompatibleBrowser[] = [
+  { kind: 'chrome', name: 'Google Chrome' },
+  { kind: 'edge', name: 'Microsoft Edge' },
+  { kind: 'opera', name: 'Opera' },
+];
 
 @Component({
   selector: 'app-setup',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, BrowserIconComponent],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',
 })
 export class SetupComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly dragOver = signal(false);
+  protected readonly compatibleBrowsers = COMPATIBLE_BROWSERS;
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -29,11 +42,8 @@ export class SetupComponent {
     }
   }
 
-  protected onClassicFileSelected(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (file) void this.logFileAccess.pickFileClassic(file);
+  protected pickFile(): void {
+    void this.logFileAccess.pickFile();
   }
 
   protected reconnect(): void {

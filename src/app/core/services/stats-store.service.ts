@@ -183,6 +183,39 @@ export class StatsStoreService {
 
   /** Remet à zéro les compteurs de la session (conserve les noms suivis). */
   resetStats(): void {
+    this.resetSessionState();
+    this.publish();
+
+    const resetCounts = this.watchlist().map((w) => ({ ...w, count: 0 }));
+    this.watchlist.set(resetCounts);
+    this.persistence.setJson(WATCHLIST_KEY, resetCounts);
+  }
+
+  private ingest(lines: string[], isInitialLoad: boolean): void {
+    this.currentBatchIsInitialLoad = isInitialLoad;
+    if (isInitialLoad) {
+      // Une (re)connexion relit tout le fichier depuis le début : sans ce
+      // nettoyage, l'historique de combats (et les autres stats dérivées du
+      // fichier) déjà reconstruits lors d'une connexion précédente seraient
+      // dupliqués au lieu d'être simplement reconstruits à l'identique.
+      this.resetSessionState();
+    }
+    for (const line of lines) {
+      const entry = this.parser.parseLine(line);
+      if (entry) this.apply(entry);
+    }
+    this.classifier.commit();
+    this.publish();
+  }
+
+  /**
+   * Réinitialise tout ce qui est dérivé du contenu du fichier (historique de
+   * combats, kamas, xp, combats gagnés/perdus, chat...) — mais PAS le suivi
+   * (`watchlist`), qui doit persister indépendamment des reconnexions/du
+   * fichier actuellement ouvert (voir resetStats() pour la remise à zéro
+   * explicite et complète demandée par l'utilisateur).
+   */
+  private resetSessionState(): void {
     this.sessionStartedAt.set(Date.now());
 
     this.kamasEarned.set(0);
@@ -192,41 +225,20 @@ export class StatsStoreService {
     this.challengesPassed.set(0);
     this.challengesFailed.set(0);
     this.currentFightTurns.set(1);
-    this.currentFightDurationMs.set(0);
 
     this.xpMap.clear();
-    this.xpByCharacter.set([]);
     this.currentFightXpMap.clear();
 
     this.attackerMap.clear();
-    this.damageByAttacker.set([]);
 
     this.fightHistoryList.length = 0;
-    this.fightHistory.set([]);
     this.currentFightLoot = [];
     this.currentFightStartTime = null;
     this.lastLineTime = null;
     this.currentFightDefeatedNames.clear();
+    this.nextFightId = 1;
 
     this.chatBuffer.length = 0;
-    this.chatMessages.set([]);
-
-    const resetCounts = this.watchlist().map((w) => ({ ...w, count: 0 }));
-    this.watchlist.set(resetCounts);
-    this.persistence.setJson(WATCHLIST_KEY, resetCounts);
-  }
-
-  private ingest(lines: string[], isInitialLoad: boolean): void {
-    this.currentBatchIsInitialLoad = isInitialLoad;
-    if (this.sessionStartedAt() === null) {
-      this.sessionStartedAt.set(Date.now());
-    }
-    for (const line of lines) {
-      const entry = this.parser.parseLine(line);
-      if (entry) this.apply(entry);
-    }
-    this.classifier.commit();
-    this.publish();
   }
 
   private apply(entry: LogEntry): void {

@@ -134,17 +134,13 @@ button.icon-btn:hover {
   border-color: var(--accent);
 }
 
-/* Déclaré après .icon-btn : un bouton combinant les deux classes (icône de
-   réinitialisation dans le header) doit garder le gabarit d'icon-btn mais
-   avec le code couleur rouge de reset-btn, pas l'inverse. */
-button.reset-btn {
+/* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
+   + reset-btn) est identique au bouton "changer de fichier" (fond transparent,
+   bordure grise) ; le rouge n'apparaît qu'au survol. */
+button.reset-btn:hover {
   background-color: #b33939;
   color: white;
-  border: 1px solid #b33939;
-}
-button.reset-btn:hover {
-  background-color: #ff4d4d;
-  border-color: #ff4d4d;
+  border-color: #b33939;
 }
 
 /* --- Panneaux --- */

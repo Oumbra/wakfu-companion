@@ -18,15 +18,6 @@
         </div>
         <div class="app-header-right">
           @if (logFileAccess.status() === 'connected') {
-            @if (logFileAccess.usingClassicPicker()) {
-              <button
-                class="icon-btn"
-                [title]="'app.refresh' | t"
-                (click)="classicRefreshInput.click()"
-              >
-                ↻
-              </button>
-            }
             <button class="toggle-btn" (click)="sessionRecap.toggle()">
               {{ 'app.sessionRecap' | t }}
             </button>
@@ -52,12 +43,4 @@
 
   <app-session-recap #sessionRecap />
   <app-loot-alert />
-
-  <input
-    #classicRefreshInput
-    type="file"
-    accept=".log,.txt"
-    style="display: none"
-    (change)="onClassicRefreshSelected($event)"
-  />
 </div>

@@ -15,11 +15,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.warning':
       'Le navigateur exige une confirmation à chaque ouverture, pour des raisons de sécurité.',
     'setup.reconnect.chooseOther': 'Choisir un autre fichier',
+    'setup.unsupported.message':
+      "Ce navigateur ne permet pas de lire wakfu.log en continu. Utilisez l'un des navigateurs compatibles ci-dessous.",
 
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Réinitialiser',
     'app.changeFile': 'Changer de fichier',
-    'app.refresh': 'Rafraîchir (relire les nouvelles lignes)',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'En cours',
@@ -114,11 +115,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.warning':
       'The browser requires confirmation every time you open it, for security reasons.',
     'setup.reconnect.chooseOther': 'Choose another file',
+    'setup.unsupported.message':
+      'This browser cannot read wakfu.log continuously. Use one of the compatible browsers below.',
 
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Reset',
     'app.changeFile': 'Change file',
-    'app.refresh': 'Refresh (read new lines)',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'Current',
@@ -211,11 +213,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.warning':
       'El navegador exige una confirmación cada vez que se abre, por razones de seguridad.',
     'setup.reconnect.chooseOther': 'Elegir otro archivo',
+    'setup.unsupported.message':
+      'Este navegador no puede leer wakfu.log de forma continua. Usa uno de los navegadores compatibles a continuación.',
 
     'app.sessionRecap': 'Resumen de sesión',
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Cambiar archivo',
-    'app.refresh': 'Actualizar (leer nuevas líneas)',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'En curso',
@@ -310,11 +313,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.warning':
       'O navegador exige confirmação a cada abertura, por motivos de segurança.',
     'setup.reconnect.chooseOther': 'Escolher outro arquivo',
+    'setup.unsupported.message':
+      'Este navegador não consegue ler o wakfu.log continuamente. Use um dos navegadores compatíveis abaixo.',
 
     'app.sessionRecap': 'Resumo da sessão',
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Trocar arquivo',
-    'app.refresh': 'Atualizar (ler novas linhas)',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'Em andamento',

@@ -130,3 +130,38 @@
 .setup-message.error {
   color: var(--btn-active-red);
 }
+
+.unsupported-box {
+  background: #141414;
+  padding: 36px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 1);
+  text-align: center;
+}
+.unsupported-message {
+  font-size: 0.95rem;
+  color: #eee;
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+.browser-list {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.browser-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.browser-item-icon {
+  width: 40px;
+  height: 40px;
+}
+.browser-item-name {
+  font-size: 0.8rem;
+  color: #aaa;
+}
