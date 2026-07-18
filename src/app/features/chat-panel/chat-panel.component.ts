@@ -1,9 +1,14 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { StatsStoreService } from '../../core/services/stats-store.service';
+import { PersistenceService } from '../../core/services/persistence.service';
 import { CHAT_CHANNELS } from '../../core/services/log-parser';
 import { ChatChannelKey } from '../../core/models/log-entry.model';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
+
+const ACTIVE_CHANNELS_KEY = 'wakfu-active-chat-channels';
+/** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
+const BOTTOM_THRESHOLD_PX = 24;
 
 @Component({
   selector: 'app-chat-panel',
@@ -14,12 +19,18 @@ import { I18nService } from '../../core/services/i18n.service';
 export class ChatPanelComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  private readonly persistence = inject(PersistenceService);
   protected readonly channels = CHAT_CHANNELS;
 
   protected readonly activeChannels = signal<ReadonlySet<ChatChannelKey>>(
-    new Set(CHAT_CHANNELS.map((c) => c.key)),
+    this.loadActiveChannels(),
   );
   protected readonly filterText = signal('');
+
+  private loadActiveChannels(): ReadonlySet<ChatChannelKey> {
+    const stored = this.persistence.getJson<ChatChannelKey[]>(ACTIVE_CHANNELS_KEY);
+    return new Set(stored ?? CHAT_CHANNELS.map((c) => c.key));
+  }
 
   protected readonly filteredMessages = computed(() => {
     const active = this.activeChannels();
@@ -35,11 +46,42 @@ export class ChatPanelComponent {
       );
   });
 
+  private readonly chatList = viewChild<ElementRef<HTMLDivElement>>('chatList');
+  /** Faux tant qu'on n'a pas encore mesuré le scroll une première fois : évite d'afficher le bouton avant le premier rendu. */
+  protected readonly isAtBottom = signal(true);
+  private lastMessageCount = 0;
+
+  constructor() {
+    effect(() => {
+      const count = this.filteredMessages().length;
+      const shouldStickToBottom = count > this.lastMessageCount && this.isAtBottom();
+      this.lastMessageCount = count;
+      if (shouldStickToBottom) {
+        queueMicrotask(() => this.scrollToBottom());
+      }
+    });
+  }
+
+  protected onScroll(): void {
+    const el = this.chatList()?.nativeElement;
+    if (!el) return;
+    const distanceToBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.isAtBottom.set(distanceToBottom <= BOTTOM_THRESHOLD_PX);
+  }
+
+  protected scrollToBottom(): void {
+    const el = this.chatList()?.nativeElement;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    this.isAtBottom.set(true);
+  }
+
   protected toggleChannel(key: ChatChannelKey): void {
     const next = new Set(this.activeChannels());
     if (next.has(key)) next.delete(key);
     else next.add(key);
     this.activeChannels.set(next);
+    this.persistence.setJson(ACTIVE_CHANNELS_KEY, [...next]);
   }
 
   protected isActive(key: ChatChannelKey): boolean {

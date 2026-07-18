@@ -1,8 +1,21 @@
-import { Component, inject, OnDestroy, signal } from '@angular/core';
+import { Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
-import { HEADER_ICON_SESSION_RECAP_DATA_URI } from '../../core/data/header-icons.data';
+import { I18nService } from '../../core/services/i18n.service';
+import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
+import { EntityClassifierService } from '../../core/services/entity-classifier.service';
+import {
+  ClassPickerComponent,
+  ClassPickerPosition,
+} from '../../shared/class-picker/class-picker.component';
+import {
+  HEADER_ICON_CHALLENGES_DATA_URI,
+  HEADER_ICON_DAMAGE_DATA_URI,
+  HEADER_ICON_KAMAS_DATA_URI,
+  HEADER_ICON_SESSION_RECAP_DATA_URI,
+  HEADER_ICON_XP_DATA_URI,
+} from '../../core/data/header-icons.data';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -11,17 +24,30 @@ import { HEADER_ICON_SESSION_RECAP_DATA_URI } from '../../core/data/header-icons
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe],
+  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, ClassPickerComponent],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
 export class SessionRecapComponent implements OnDestroy {
   protected readonly headerIcon = HEADER_ICON_SESSION_RECAP_DATA_URI;
+  protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
+  protected readonly kamasIcon = HEADER_ICON_KAMAS_DATA_URI;
+  protected readonly combatIcon = HEADER_ICON_DAMAGE_DATA_URI;
+  protected readonly challengesIcon = HEADER_ICON_CHALLENGES_DATA_URI;
+
   protected readonly stats = inject(StatsStoreService);
+  protected readonly i18n = inject(I18nService);
+  private readonly classifier = inject(EntityClassifierService);
+
+  @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
   protected readonly visible = signal(false);
   protected readonly duration = signal('00:00:00');
   protected readonly position = signal<{ left: number; top: number } | null>(null);
+  protected readonly kamasExpanded = signal(false);
+  protected readonly xpExpanded = signal(false);
+  protected readonly combatsExpanded = signal(false);
+  protected readonly classPicker = signal<ClassPickerPosition | null>(null);
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
   private dragStartMouse = { x: 0, y: 0 };
@@ -45,6 +71,43 @@ export class SessionRecapComponent implements OnDestroy {
   toggle(): void {
     if (this.visible()) this.close();
     else this.open();
+  }
+
+  toggleKamas(): void {
+    this.kamasExpanded.update((v) => !v);
+  }
+
+  toggleXp(): void {
+    const next = !this.xpExpanded();
+    this.xpExpanded.set(next);
+    if (!next) {
+      // Revenir replié doit toujours remontrer les 3 premiers (liste déjà
+      // triée par XP décroissante) : on réinitialise le scroll éventuel.
+      queueMicrotask(() => {
+        if (this.xpListRef) this.xpListRef.nativeElement.scrollTop = 0;
+      });
+    }
+  }
+
+  toggleCombats(): void {
+    this.combatsExpanded.update((v) => !v);
+  }
+
+  protected onXpNameContextMenu(event: MouseEvent, name: string): void {
+    if (this.classifier.getDetectedClass(name)) return;
+    event.preventDefault();
+    this.classPicker.set({ name, x: event.clientX, y: event.clientY });
+  }
+
+  protected onClassChosen(className: string): void {
+    const picker = this.classPicker();
+    if (!picker) return;
+    this.classifier.setManualClass(picker.name, className);
+    this.classPicker.set(null);
+  }
+
+  protected closeClassPicker(): void {
+    this.classPicker.set(null);
   }
 
   ngOnDestroy(): void {

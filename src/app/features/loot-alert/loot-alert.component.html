@@ -1,0 +1,31 @@
+@if (visible()) {
+  <div class="loot-alert-overlay">
+    <div class="confetti-layer">
+      @for (piece of confetti(); track $index) {
+        <span
+          class="confetti-piece"
+          [style.left]="piece.left"
+          [style.animation-delay]="piece.delay"
+          [style.animation-duration]="piece.duration"
+          [style.background]="piece.color"
+          [style.--rot]="piece.rotate"
+        ></span>
+      }
+    </div>
+    <div class="loot-alert-card">
+      <app-item-icon [name]="itemName()" [size]="34" />
+      <div class="loot-alert-text">
+        <span class="loot-alert-title">{{ 'profile.lootAlertTitle' | t }}</span>
+        <span class="loot-alert-name">
+          {{ i18n.translateItemName(itemName()) }}
+          @if (quantity() > 1) {
+            × {{ quantity() }}
+          }
+        </span>
+      </div>
+      <button class="loot-alert-close" [title]="'profile.closeToast' | t" (click)="close()">
+        ×
+      </button>
+    </div>
+  </div>
+}

@@ -18,6 +18,19 @@
           </button>
         </div>
       }
+      @case ('unsupported') {
+        <div class="unsupported-box">
+          <p class="unsupported-message">{{ 'setup.unsupported.message' | t }}</p>
+          <div class="browser-list">
+            @for (browser of compatibleBrowsers; track browser.kind) {
+              <div class="browser-item">
+                <app-browser-icon class="browser-item-icon" [kind]="browser.kind" />
+                <span class="browser-item-name">{{ browser.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
       @default {
         <div
           class="drop-zone"
@@ -25,7 +38,7 @@
           (dragover)="onDragOver($event)"
           (dragleave)="onDragLeave()"
           (drop)="onDrop($event)"
-          (click)="classicInput.click()"
+          (click)="pickFile()"
         >
           <p class="drop-title">{{ 'setup.dropTitle' | t }}</p>
           <p class="drop-sub">{{ 'setup.dropSub' | t }}</p>
@@ -41,13 +54,5 @@
         }
       }
     }
-
-    <input
-      #classicInput
-      type="file"
-      accept=".log,.txt"
-      style="display: none"
-      (change)="onClassicFileSelected($event)"
-    />
   </div>
 </div>

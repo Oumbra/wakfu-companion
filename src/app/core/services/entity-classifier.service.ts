@@ -7,6 +7,7 @@ import { PersistenceService } from './persistence.service';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
 const MANUAL_CLASSES_KEY = 'wakfu-entity-classes';
+const DETECTED_CLASSES_KEY = 'wakfu-entity-detected-classes';
 
 export type EntitySide = 'ally' | 'enemy';
 
@@ -42,11 +43,24 @@ export class EntityClassifierService {
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
 
-  // Mutable, alimentée ligne par ligne (potentiellement des milliers de fois
-  // lors de la lecture initiale d'un fichier) : volontairement pas un signal.
-  private readonly detectedClasses = new Map<string, string>();
+  // Alimentée ligne par ligne (potentiellement des milliers de fois lors de
+  // la lecture initiale d'un fichier) : la persistance se fait par lot dans
+  // commit(), pas à chaque détection, pour éviter une écriture par ligne.
+  private readonly detectedClasses: Map<string, string>;
+  private detectedClassesDirty = false;
   /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres/familles) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
   private readonly confirmedAlliesByDamage = new Set<string>();
+  /**
+   * Camp déduit du marqueur "[_FL_] ... isControlledByAI=true/false" émis à
+   * chaque combat pour chaque combattant : signal fiable et systématique (pas
+   * en mémoire persistante, redérivé à chaque combat), utilisé seulement en
+   * dernier recours avant le repli par défaut — un monstre absent de la base
+   * statique ET n'ayant pas encore de dégât attribué serait sinon classé
+   * "ennemi" par défaut, tout comme le joueur lui-même si celui-ci n'a ni
+   * lancé de sort connu ni pris de dégât ce combat-ci (bug réel observé : le
+   * personnage se retrouvait compté comme l'ennemi mis KO).
+   */
+  private readonly fighterAiSide = new Map<string, EntitySide>();
   private readonly overrides: Map<string, EntitySide>;
   /** Classe choisie manuellement (clic droit sur un allié dont la classe n'a pas pu être détectée via ses sorts). */
   private readonly manualClasses: Map<string, string>;
@@ -59,6 +73,9 @@ export class EntityClassifierService {
     this.overrides = new Map(Object.entries(stored));
     const storedClasses = this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
     this.manualClasses = new Map(Object.entries(storedClasses));
+    const storedDetected =
+      this.persistence.getJson<Record<string, string>>(DETECTED_CLASSES_KEY) ?? {};
+    this.detectedClasses = new Map(Object.entries(storedDetected));
   }
 
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
@@ -67,7 +84,13 @@ export class EntityClassifierService {
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
+      this.detectedClassesDirty = true;
     }
+  }
+
+  /** À appeler pour chaque ligne "[_FL_] ... isControlledByAI=..." rencontrée. */
+  registerFighterJoin(name: string, isControlledByAI: boolean): void {
+    this.fighterAiSide.set(name, isControlledByAI ? 'enemy' : 'ally');
   }
 
   /** À appeler pour chaque ligne de dégâts rencontrée. */
@@ -79,6 +102,10 @@ export class EntityClassifierService {
 
   /** À appeler une fois par lot de lignes traité (voir StatsStoreService.ingest). */
   commit(): void {
+    if (this.detectedClassesDirty) {
+      this.persistence.setJson(DETECTED_CLASSES_KEY, Object.fromEntries(this.detectedClasses));
+      this.detectedClassesDirty = false;
+    }
     this.version.update((v) => v + 1);
   }
 
@@ -91,6 +118,8 @@ export class EntityClassifierService {
     if (this.detectedClasses.has(name)) return 'ally';
     if (this.allySummonNames.has(normalizeName(name))) return 'ally';
     if (this.confirmedAlliesByDamage.has(normalizeName(name))) return 'ally';
+    const aiSide = this.fighterAiSide.get(name);
+    if (aiSide) return aiSide;
     return 'enemy';
   }
 
