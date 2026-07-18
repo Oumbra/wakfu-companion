@@ -1,47 +1,46 @@
 <div class="app-shell">
-  <header class="app-header">
-    <div class="app-title">Wakfu Companion</div>
-    <div class="app-header-right">
-      @if (logFileAccess.status() === 'connected') {
-        <div class="app-header-actions">
-          <span class="file-chip">{{ logFileAccess.fileName() }}</span>
-          @if (logFileAccess.usingClassicPicker()) {
-            <button
-              class="icon-btn"
-              [title]="'app.refresh' | t"
-              (click)="classicRefreshInput.click()"
-            >
-              ↻
+  <div class="view-slider" [class.showing-profile]="nav.view() === 'profile'">
+    <div class="view-panel">
+      <header class="app-header">
+        <div class="app-header-left">
+          <div class="app-title">Wakfu Companion</div>
+          @if (logFileAccess.status() === 'connected') {
+            <div class="app-header-file-group">
+              <span class="file-chip">{{ logFileAccess.fileName() }}</span>
+              <button class="icon-btn" [title]="'app.changeFile' | t" (click)="onChangeFile()">
+                ⇄
+              </button>
+              <button class="icon-btn reset-btn" [title]="'app.reset' | t" (click)="onReset()">
+                ↺
+              </button>
+            </div>
+          }
+        </div>
+        <div class="app-header-right">
+          @if (logFileAccess.status() === 'connected') {
+            <button class="toggle-btn" (click)="sessionRecap.toggle()">
+              {{ 'app.sessionRecap' | t }}
             </button>
           }
-          <button class="icon-btn" [title]="'app.changeFile' | t" (click)="onChangeFile()">
-            ⇄
-          </button>
-          <button class="toggle-btn" (click)="sessionRecap.toggle()">
-            {{ 'app.sessionRecap' | t }}
-          </button>
-          <button class="reset-btn" (click)="onReset()">{{ 'app.reset' | t }}</button>
+          <app-language-switcher />
+          <app-profile />
         </div>
-      }
-      <app-language-switcher />
-    </div>
-  </header>
+      </header>
 
-  <main class="app-main">
-    @if (logFileAccess.status() === 'connected') {
-      <app-dashboard />
-    } @else {
-      <app-setup />
-    }
-  </main>
+      <main class="app-main">
+        @if (logFileAccess.status() === 'connected') {
+          <app-dashboard />
+        } @else {
+          <app-setup />
+        }
+      </main>
+    </div>
+
+    <div class="view-panel">
+      <app-profile-page />
+    </div>
+  </div>
 
   <app-session-recap #sessionRecap />
-
-  <input
-    #classicRefreshInput
-    type="file"
-    accept=".log,.txt"
-    style="display: none"
-    (change)="onClassicRefreshSelected($event)"
-  />
+  <app-loot-alert />
 </div>

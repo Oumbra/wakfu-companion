@@ -1,22 +1,24 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
+import { FlagCountry, FlagIconComponent } from '../flag-icon/flag-icon.component';
 
 interface LocaleOption {
   code: AppLocale;
-  flag: string;
+  flagCountry: FlagCountry;
   label: string;
 }
 
 const LOCALES: readonly LocaleOption[] = [
-  { code: 'fr', flag: '🇫🇷', label: 'Français' },
-  { code: 'en', flag: '🇬🇧', label: 'English' },
-  { code: 'es', flag: '🇪🇸', label: 'Español' },
-  { code: 'pt', flag: '🇵🇹', label: 'Português' },
+  { code: 'fr', flagCountry: 'fr', label: 'Français' },
+  { code: 'en', flagCountry: 'gb', label: 'English' },
+  { code: 'es', flagCountry: 'es', label: 'Español' },
+  { code: 'pt', flagCountry: 'pt', label: 'Português' },
 ];
 
 /** Drapeau de langue courante ; clic pour choisir une autre langue parmi celles proposées. */
 @Component({
   selector: 'app-language-switcher',
+  imports: [FlagIconComponent],
   templateUrl: './language-switcher.component.html',
   styleUrl: './language-switcher.component.css',
 })

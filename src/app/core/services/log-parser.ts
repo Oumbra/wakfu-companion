@@ -50,6 +50,8 @@ const CHAT_CONTENT_RE = /^(.+?) : (.*)$/;
 const KAMA_GAIN_RE = new RegExp(`^Vous avez gagné (${NUM}) kamas\\.?$`);
 const KAMA_LOSS_RE = new RegExp(`^Vous avez perdu (${NUM}) kamas\\.?$`);
 const RAMASSE_RE = new RegExp(`^Vous avez ramassé (${NUM})x (.+?)\\s*\\.?$`);
+const CHALLENGE_SUCCESS_RE = /^Le challenge "(.+?)" est réussi\.?$/;
+const CHALLENGE_FAIL_RE = /^Le challenge "(.+?)" a échoué\.?$/;
 const XP_RE = new RegExp(`^(.+?) : \\+(${NUM}) points d'XP\\.`);
 const SPELL_CAST_RE = /^(.+?) lance le sort (.+)$/;
 const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
@@ -60,6 +62,15 @@ const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
 /** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). */
 const FIGHT_END_RE = /^\[FIGHT\] End fight with id -?\d+$/;
 const COMBAT_START_MARKER = 'CREATION DU COMBAT';
+/**
+ * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
+ * — présent pour chaque combattant de chaque combat. `obstacleId` différent de
+ * -1 signale un décor/praticable de la zone (ex. "Larme d'Ogrest" dans un
+ * donjon Abraknyde) qui "rejoint" techniquement le combat sans être un vrai
+ * personnage à classer allié/ennemi.
+ */
+const FIGHTER_JOIN_RE =
+  /^fightId=-?\d+ (.+?) breed : \d+ \[-?\d+\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
 const DAMAGE_RE = new RegExp(`^(.+?): ([+-])(${NUM}) PV\\b(.*)$`);
 const TAG_RE = /\(([^)]+)\)/g;
 /** Application/rafraîchissement d'un effet à stacks : "Personnage: NomEffet (Niv. N)" ou "(+N Niv.)". */
@@ -154,6 +165,19 @@ export class LogParser {
       return this.parseCombatLine(time, bracketContent);
     }
 
+    if (category === '_FL_') {
+      const join = FIGHTER_JOIN_RE.exec(bracketContent);
+      if (join && join[3] === '-1') {
+        return {
+          kind: 'fighter-joined',
+          time,
+          name: join[1].trim(),
+          isControlledByAI: join[2] === 'true',
+        };
+      }
+      return null;
+    }
+
     return null;
   }
 
@@ -183,6 +207,14 @@ export class LogParser {
         item: loot[2].trim(),
         quantity: parseFrenchNumber(loot[1]),
       };
+    }
+    const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
+    if (challengeSuccess) {
+      return { kind: 'challenge-result', time, name: challengeSuccess[1].trim(), success: true };
+    }
+    const challengeFail = CHALLENGE_FAIL_RE.exec(content);
+    if (challengeFail) {
+      return { kind: 'challenge-result', time, name: challengeFail[1].trim(), success: false };
     }
     return null;
   }

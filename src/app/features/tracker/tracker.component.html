@@ -3,75 +3,65 @@
     <span class="header-label">{{ 'tracker.header' | t }}</span>
   </div>
 
-  <div class="tracker-section">
-    <div class="tracker-subheader">{{ 'tracker.enemiesTitle' | t }}</div>
-    <div class="tracker-controls">
-      <input
-        type="text"
-        [placeholder]="'tracker.enemyPlaceholder' | t"
-        [value]="newEnemyName()"
-        (input)="setNewEnemyName($any($event.target).value)"
-        (keydown.enter)="addEnemy()"
-      />
-      <button class="primary-btn" (click)="addEnemy()">{{ 'tracker.add' | t }}</button>
-    </div>
-    <div class="tracker-list">
-      @if (stats.enemyWatchlist().length === 0) {
-        <div class="empty-state">{{ 'tracker.emptyEnemies' | t }}</div>
-      } @else {
-        @for (enemy of stats.enemyWatchlist(); track enemy.name; let i = $index) {
-          <div
-            class="watch-row"
-            draggable="true"
-            (dragstart)="onEnemyDragStart(i)"
-            (dragover)="$event.preventDefault()"
-            (drop)="onEnemyDrop(i)"
-          >
-            <app-entity-icon [name]="enemy.name" side="enemy" />
-            <span class="watch-name">{{ enemy.name }}</span>
-            <span class="watch-count">{{ enemy.count | numberFr }}</span>
-            <button class="icon-btn" [title]="'tracker.remove' | t" (click)="removeEnemy(enemy.name)">
-              ×
-            </button>
-          </div>
-        }
-      }
-    </div>
+  <div class="tracker-controls">
+    <span class="tracker-control-label">{{ 'tracker.enemiesTitle' | t }}</span>
+    <input
+      type="text"
+      [placeholder]="'tracker.enemyPlaceholder' | t"
+      [value]="newEnemyName()"
+      (input)="setNewEnemyName($any($event.target).value)"
+      (keydown.enter)="addEnemy()"
+    />
+    <button class="primary-btn" (click)="addEnemy()">{{ 'tracker.add' | t }}</button>
+  </div>
+  <div class="tracker-controls">
+    <span class="tracker-control-label">{{ 'tracker.itemsTitle' | t }}</span>
+    <input
+      type="text"
+      [placeholder]="'tracker.itemPlaceholder' | t"
+      [value]="newItemName()"
+      (input)="setNewItemName($any($event.target).value)"
+      (keydown.enter)="addItem()"
+    />
+    <button class="primary-btn" (click)="addItem()">{{ 'tracker.add' | t }}</button>
   </div>
 
-  <div class="tracker-section">
-    <div class="tracker-subheader">{{ 'tracker.itemsTitle' | t }}</div>
-    <div class="tracker-controls">
-      <input
-        type="text"
-        [placeholder]="'tracker.itemPlaceholder' | t"
-        [value]="newItemName()"
-        (input)="setNewItemName($any($event.target).value)"
-        (keydown.enter)="addItem()"
-      />
-      <button class="primary-btn" (click)="addItem()">{{ 'tracker.add' | t }}</button>
-    </div>
-    <div class="tracker-list">
-      @if (stats.itemWatchlist().length === 0) {
-        <div class="empty-state">{{ 'tracker.emptyItems' | t }}</div>
-      } @else {
-        @for (item of stats.itemWatchlist(); track item.name; let i = $index) {
-          <div
-            class="watch-row"
-            draggable="true"
-            (dragstart)="onItemDragStart(i)"
-            (dragover)="$event.preventDefault()"
-            (drop)="onItemDrop(i)"
-          >
-            <app-item-icon [name]="item.name" />
-            <span class="watch-name">{{ i18n.translateItemName(item.name) }}</span>
-            <span class="watch-count">{{ item.count | numberFr }}</span>
-            <button class="icon-btn" [title]="'tracker.remove' | t" (click)="removeItem(item.name)">
-              ×
-            </button>
-          </div>
-        }
+  <div class="tracker-list">
+    @if (stats.watchlist().length === 0) {
+      <div class="empty-state">{{ 'tracker.empty' | t }}</div>
+    } @else {
+      @for (entry of stats.watchlist(); track entry.name; let i = $index) {
+        <div
+          class="watch-row"
+          draggable="true"
+          (dragstart)="onDragStart(i)"
+          (dragover)="$event.preventDefault()"
+          (drop)="onDrop(i)"
+        >
+          @if (entry.kind === 'enemy') {
+            <app-entity-icon [name]="entry.name" side="enemy" />
+          } @else {
+            <app-item-icon [name]="entry.name" />
+          }
+          <span class="watch-name">{{
+            entry.kind === 'item' ? i18n.translateItemName(entry.name) : entry.name
+          }}</span>
+          <span class="watch-count">
+            {{ entry.count | numberFr }}
+            @if (entry.kind === 'enemy') {
+              <span class="watch-kill-icon" [title]="'damageMeter.koTitle' | t">
+                <app-ko-icon />
+              </span>
+            }
+          </span>
+          <button class="icon-btn" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
+            ↺
+          </button>
+          <button class="icon-btn" [title]="'tracker.remove' | t" (click)="remove(entry.name)">
+            ×
+          </button>
+        </div>
       }
-    </div>
+    }
   </div>
 </div>

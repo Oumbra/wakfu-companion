@@ -1,0 +1,7 @@
+<button class="profile-btn" (click)="open()" [title]="'profile.button' | t">
+  @if (profile.avatarIndex(); as idx) {
+    <app-avatar-icon class="profile-avatar" [index]="idx" />
+  } @else {
+    <span class="profile-question">?</span>
+  }
+</button>

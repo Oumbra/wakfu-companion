@@ -104,6 +104,28 @@ export interface TurnMarkerEntry {
   time: string;
 }
 
+export interface ChallengeResultEntry {
+  kind: 'challenge-result';
+  time: string;
+  name: string;
+  success: boolean;
+}
+
+/**
+ * Rejointe d'un combattant au combat ("[_FL_] fightId=... Nom breed : B [id]
+ * isControlledByAI=true/false obstacleId : O join the fight..."). Signal fiable
+ * et systématique (émis pour CHAQUE combattant de CHAQUE combat) pour distinguer
+ * allié (isControlledByAI=false, contrôlé par un vrai joueur) d'ennemi
+ * (isControlledByAI=true) — bien plus robuste que les heuristiques par sorts/dégâts
+ * quand un monstre est absent de la base statique ou qu'aucun sort n'a été lancé.
+ */
+export interface FighterJoinedEntry {
+  kind: 'fighter-joined';
+  time: string;
+  name: string;
+  isControlledByAI: boolean;
+}
+
 export type LogEntry =
   | ChatMessageEntry
   | KamaGainEntry
@@ -116,4 +138,6 @@ export type LogEntry =
   | CombatStartEntry
   | CombatEndEntry
   | LootEntry
-  | TurnMarkerEntry;
+  | TurnMarkerEntry
+  | ChallengeResultEntry
+  | FighterJoinedEntry;

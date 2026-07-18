@@ -9,6 +9,13 @@ export const SUPPORTED_LOCALES: readonly AppLocale[] = ['fr', 'en', 'es', 'pt'];
 
 const LOCALE_KEY = 'wakfu-locale';
 
+const LOCALE_TAGS: Record<AppLocale, string> = {
+  fr: 'fr-FR',
+  en: 'en-GB',
+  es: 'es-ES',
+  pt: 'pt-PT',
+};
+
 /**
  * Traduction d'exécution (pas de compilation par locale à la `@angular/localize`) :
  * nécessaire pour permettre à l'utilisateur de changer de langue en un clic,
@@ -30,9 +37,19 @@ export class I18nService {
     this.persistence.setJson(LOCALE_KEY, locale);
   }
 
-  t(key: string): string {
+  t(key: string, params?: Record<string, string | number>): string {
     const locale = this.locale();
-    return TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.fr[key] ?? key;
+    const raw = TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.fr[key] ?? key;
+    if (!params) return raw;
+    return raw.replace(/\{\{(\w+)\}\}/g, (_, name) => String(params[name] ?? ''));
+  }
+
+  /** Formate un horodatage (epoch ms) selon les conventions de la langue courante. */
+  formatDateTime(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], {
+      dateStyle: 'medium',
+      timeStyle: 'medium',
+    }).format(new Date(ms));
   }
 
   /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama ; conserve le nom FR si non trouvé ou si la locale est FR. */
