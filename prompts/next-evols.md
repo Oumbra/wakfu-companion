@@ -1,6 +1,3 @@
-# Bug
-
-- lorsque l'on utilise le clique pour sélectionner le fichier `wakfu.log` à interprété et que celui-ci est enrichi par le jeu, l'application ne met pas à jour les informations, comme si la lecture du fichier n'était pas en continue avec cette méthode.
 
 # Ameliorations
 
@@ -9,6 +6,8 @@ Il serait peut nécessaire que tu construises un referentiel d'objet et d'item v
 
 
 - J'aimerai que tu fusionne les deux inputs "ennemis vaincus" et "ressources obtenues" afin de rendre la fonctionnalité plus simple pour l'utilisateur.
+
+- J'aimerai que le son des alertes soit le même que celui-ci (https://www.filterblade.xyz/assets/sounds/AlertSound6.mp3)
 
 # Features
 

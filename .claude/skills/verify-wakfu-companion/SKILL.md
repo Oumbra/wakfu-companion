@@ -18,19 +18,22 @@ Si le port 4200 est déjà occupé par un `node.exe` non suivi par l'outil (arri
 
 ## Simuler une connexion au fichier de log
 
-L'app utilise `<input type="file">` (le fallback classique, voir CLAUDE.md — FSA bloqué sous `%AppData%\Roaming`). On peut lui injecter un fichier synthétique directement :
+Le sélecteur classique (`<input type="file">`) a été supprimé : l'app n'utilise plus que l'API File System Access (bouton/clic sur la zone de dépôt = `showOpenFilePicker()`, bloqué sous `%AppData%\Roaming` ; glisser-déposer = `getAsFileSystemHandle()`, non bloqué — voir CLAUDE.md). Aucune des deux ne s'injecte facilement depuis la console (un vrai `FileSystemFileHandle` n'est pas synthétisable en JS).
+
+Le plus simple pour tester le pipeline de parsing/store sans passer par le File System Access API : récupérer l'instance de `LogFileAccessService` déjà injectée dans `app-root` (`protected readonly logFileAccess`, lisible en JS runtime via `ng.getComponent` malgré `protected`/`private` — TypeScript n'efface pas ces propriétés à l'exécution) et pousser directement des lignes synthétiques sur son `newLines$` — c'est exactement ce que `processFile()` fait en interne après lecture du fichier, donc ça déclenche le même pipeline (`StatsStoreService` y est abonné) :
 
 ```js
 (function(){
-  function mkFile(text) { return new File([text], 'wakfu.log', { type: 'text/plain' }); }
-  const el = document.querySelector('input[type=file]');
-  const dt = new DataTransfer();
-  dt.items.add(mkFile('INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez gagné 1 kamas.\n'));
-  el.files = dt.files;
-  el.dispatchEvent(new Event('change', { bubbles: true }));
+  const root = ng.getComponent(document.querySelector('app-root'));
+  root.logFileAccess.newLines$.next({
+    lines: ['INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez gagné 42 kamas.'],
+    isInitialLoad: true,
+  });
   return 'dispatched';
 })();
 ```
+
+Vérifié (2026-07-18) : après ce dispatch, `root.stats.kamasEarned()` vaut bien `42` (`stats` est le `StatsStoreService` injecté dans `app-root`, accessible pour la même raison). Ceci ne fait PAS passer `logFileAccess.status()` à `'connected'` (l'écran affiché reste celui piloté par le statut réel), donc pour vérifier un rendu visuel dans le dashboard il faut aussi `root.logFileAccess.status.set('connected')`.
 
 **Format des lignes de log** (`LOG_LINE_RE` dans `log-parser.ts`) :
 ```
