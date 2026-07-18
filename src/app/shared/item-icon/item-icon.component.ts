@@ -1,15 +1,20 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal } from '@angular/core';
 import { WAKFU_ITEMS_FR } from '../../core/data/wakfu-items.data';
+import { WAKFU_ITEM_IMAGE_OVERRIDES } from '../../core/data/wakfu-item-image-overrides.data';
 
-const ITEM_IMAGE_BASE_URL =
-  'https://raw.githubusercontent.com/Nexus-Hub/Wakfu-Companion/master/public/assets/img/items/';
+const GFX_ID_IMAGE_SOURCES: readonly ((gfxId: number) => string)[] = [
+  (gfxId) => `https://raw.githubusercontent.com/Nexus-Hub/Wakfu-Companion/master/public/assets/img/items/${gfxId}.png`,
+  (gfxId) => `https://cdn.wakfuli.com/items/${gfxId}.webp`,
+];
 
 /**
  * Icône précédant un objet (butin, suivi de ressources). Illustration réelle
- * chargée en direct depuis le dépôt du site de référence si le nom (FR)
- * correspond à un objet connu dans la base officielle Ankama (voir
- * wakfu-items.data.ts), avec repli automatique sur une icône générique
- * (hors-ligne ou objet inconnu).
+ * résolue via une chaîne de sources, dans l'ordre : recours manuel direct
+ * (wakfu-item-image-overrides.data.ts, pour les objets absents des
+ * catalogues officiels) puis, pour un objet connu (voir
+ * wakfu-items.data.ts), les CDN indexant par gfxId (Nexus-Hub, Wakfuli),
+ * essayés l'un après l'autre en cas d'échec de chargement. Repli final sur
+ * une icône générique si tout échoue ou si l'objet est inconnu.
  */
 @Component({
   selector: 'app-item-icon',
@@ -20,6 +25,7 @@ const ITEM_IMAGE_BASE_URL =
         [style.width.px]="size()"
         [style.height.px]="size()"
         [src]="src"
+        referrerpolicy="no-referrer"
         (error)="onError()"
         alt=""
       />
@@ -60,15 +66,20 @@ export class ItemIconComponent {
   /** Taille en px (carrée). Par défaut 18px, comme dans les listes de suivi/butin. */
   readonly size = input(18);
 
-  private readonly errored = signal(false);
-
-  protected readonly imgSrc = computed(() => {
-    if (this.errored()) return null;
-    const entry = WAKFU_ITEMS_FR[this.name().toLowerCase().trim()];
-    return entry ? `${ITEM_IMAGE_BASE_URL}${entry.gfxId}.png` : null;
+  private readonly candidates = computed(() => {
+    const key = this.name().toLowerCase().trim();
+    const override = WAKFU_ITEM_IMAGE_OVERRIDES[key];
+    if (override) return [override];
+    const entry = WAKFU_ITEMS_FR[key];
+    return entry ? GFX_ID_IMAGE_SOURCES.map((source) => source(entry.gfxId)) : [];
   });
 
+  /** Reprend candidates()[0] à chaque changement d'objet ; onError() avance dans la liste. */
+  protected readonly imgSrc = linkedSignal<string | null>(() => this.candidates()[0] ?? null);
+
   protected onError(): void {
-    this.errored.set(true);
+    const list = this.candidates();
+    const currentIndex = list.indexOf(this.imgSrc() ?? '');
+    this.imgSrc.set(list[currentIndex + 1] ?? null);
   }
 }
