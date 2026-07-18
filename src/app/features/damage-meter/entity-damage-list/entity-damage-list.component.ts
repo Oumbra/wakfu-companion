@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { EntityDamageRow, StatsStoreService } from '../../../core/services/stats-store.service';
 import { EntityClassifierService, EntitySide } from '../../../core/services/entity-classifier.service';
+import { I18nService } from '../../../core/services/i18n.service';
 import { NumberFrPipe } from '../../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
 import { KoIconComponent } from '../../../shared/ko-icon/ko-icon.component';
@@ -50,6 +51,7 @@ export class EntityDamageListComponent {
 
   private readonly classifier = inject(EntityClassifierService);
   private readonly stats = inject(StatsStoreService);
+  protected readonly i18n = inject(I18nService);
   private readonly expandedNames = signal<ReadonlySet<string>>(new Set());
   protected readonly dragOver = signal(false);
   protected readonly classPicker = signal<ClassPickerPosition | null>(null);
@@ -58,6 +60,12 @@ export class EntityDamageListComponent {
   private readonly maxTotal = computed(
     () => this.rows().reduce((max, r) => Math.max(max, r.total), 0) || 1,
   );
+
+  protected displayName(row: EntityDamageRow): string {
+    return this.side() === 'enemy'
+      ? this.i18n.translateMonsterName(row.name)
+      : row.name;
+  }
 
   protected toggle(row: EntityDamageRow): void {
     if (row.total === 0) return;

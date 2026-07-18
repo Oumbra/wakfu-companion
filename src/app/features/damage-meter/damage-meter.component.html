@@ -117,7 +117,11 @@
                     } @else {
                       <div class="loot-list" [class.scrollable]="record.loot.length > 5">
                         @for (item of sortedLoot(record.loot); track item.name) {
-                          <div class="loot-row">
+                          <div
+                            class="loot-row"
+                            [title]="'damageMeter.lootAddToWatchlist' | t"
+                            (contextmenu)="onLootContextMenu($event, item.name)"
+                          >
                             <app-item-icon [name]="item.name" />
                             <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
                             <span class="loot-qty">×{{ item.quantity | numberFr }}</span>

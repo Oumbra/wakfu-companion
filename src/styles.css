@@ -143,6 +143,39 @@ button.reset-btn:hover {
   border-color: #b33939;
 }
 
+/* Tooltip générique pour tout bouton icône portant un attribut title (reprend
+   le style des tooltips existants type fight-clock/manual-close-switch). Le
+   tooltip natif du navigateur reste affiché après un délai en parallèle :
+   comportement accepté, pas de moyen CSS de le désactiver sans dupliquer
+   title en data-tooltip sur chaque template. */
+button[title] {
+  position: relative;
+}
+button[title]::after {
+  content: attr(title);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #000;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 400;
+  white-space: nowrap;
+  border-radius: 4px;
+  border: 1px solid #333;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+  z-index: 30;
+}
+button[title]:hover::after {
+  opacity: 1;
+}
+
 /* --- Panneaux --- */
 .tool-panel {
   position: relative;

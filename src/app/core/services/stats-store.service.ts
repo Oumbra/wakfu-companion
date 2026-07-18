@@ -117,6 +117,11 @@ export class StatsStoreService {
   private readonly currentFightDefeatedNames = new Set<string>();
   /** Vrai pendant le traitement du tout premier lot de lignes d'une connexion (contenu déjà présent dans le fichier) : les compteurs de suivi ne doivent pas être incrémentés pour cet historique déjà vécu. */
   private currentBatchIsInitialLoad = false;
+
+  /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
+  wasLastBatchInitialLoad(): boolean {
+    return this.currentBatchIsInitialLoad;
+  }
   private nextFightId = 1;
 
   constructor(

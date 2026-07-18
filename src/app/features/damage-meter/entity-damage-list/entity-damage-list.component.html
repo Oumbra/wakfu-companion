@@ -46,7 +46,7 @@
             @if (row.total > 0) {
               <span class="caret">▸</span>
             }
-            {{ row.name }}
+            {{ displayName(row) }}
           </span>
           <span class="entity-total">{{ row.total | numberFr }}</span>
         </div>

@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -19,6 +20,7 @@ export class ProfilePageComponent {
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
   private readonly nav = inject(NavigationService);
+  private readonly alertSound = inject(AlertSoundService);
 
   protected readonly newItemName = signal('');
   protected readonly avatarIndexes = Array.from(
@@ -49,6 +51,10 @@ export class ProfilePageComponent {
 
   protected setManualClose(value: boolean): void {
     this.profile.setAlertManualClose(value);
+  }
+
+  protected testAlertSound(): void {
+    this.alertSound.play();
   }
 
   protected manualCloseTooltip(): string {

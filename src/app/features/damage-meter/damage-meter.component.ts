@@ -111,4 +111,9 @@ export class DamageMeterComponent {
       ? [...loot].sort((a, b) => b.quantity - a.quantity)
       : [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
+
+  protected onLootContextMenu(event: MouseEvent, name: string): void {
+    event.preventDefault();
+    this.stats.addWatchedItem(name);
+  }
 }

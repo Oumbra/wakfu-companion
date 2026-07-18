@@ -107,6 +107,15 @@
   letter-spacing: 0.5px;
   color: #aaa;
 }
+.profile-label-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.profile-label-row .test-sound-btn {
+  flex-shrink: 0;
+}
 
 .avatar-grid {
   display: grid;
@@ -149,6 +158,13 @@
   background: #202020;
   border-radius: 8px;
   flex-wrap: wrap;
+}
+.test-sound-btn {
+  flex-shrink: 0;
+}
+.test-sound-btn svg {
+  width: 14px;
+  height: 14px;
 }
 .alert-timing-icon {
   display: flex;

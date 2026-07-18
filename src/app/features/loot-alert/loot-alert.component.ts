@@ -1,6 +1,7 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { LootAlertService } from '../../core/services/loot-alert.service';
 import { ProfileService } from '../../core/services/profile.service';
+import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -40,6 +41,7 @@ const CONFETTI_PIECE_COUNT = 28;
 export class LootAlertComponent {
   private readonly lootAlertService = inject(LootAlertService);
   private readonly profile = inject(ProfileService);
+  private readonly alertSound = inject(AlertSoundService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly visible = signal(false);
@@ -62,7 +64,7 @@ export class LootAlertComponent {
     this.quantity.set(quantity);
     this.confetti.set(this.buildConfetti());
     this.visible.set(true);
-    this.playChime();
+    this.alertSound.play();
     if (this.hideTimer !== null) clearTimeout(this.hideTimer);
     this.hideTimer = null;
     // Fermeture manuelle (voir close()) : pas de minuterie du tout.
@@ -88,32 +90,5 @@ export class LootAlertComponent {
       rotate: `${Math.round(Math.random() * 360)}deg`,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
     }));
-  }
-
-  /** Petit carillon généré via Web Audio (pas de fichier audio à embarquer/servir). */
-  private playChime(): void {
-    try {
-      const AudioCtx =
-        window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext })
-          .webkitAudioContext;
-      const ctx = new AudioCtx();
-      const notes = [880, 1318.51];
-      notes.forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.value = freq;
-        const start = ctx.currentTime + i * 0.11;
-        gain.gain.setValueAtTime(0, start);
-        gain.gain.linearRampToValueAtTime(0.25, start + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.35);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(start);
-        osc.stop(start + 0.4);
-      });
-      setTimeout(() => void ctx.close(), 900);
-    } catch {
-      // Web Audio indisponible : l'alerte visuelle reste affichée sans son.
-    }
   }
 }

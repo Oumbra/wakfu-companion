@@ -21,13 +21,9 @@
   flex-grow: 1;
   min-width: 0;
 }
-.tracker-control-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--accent);
-  width: 90px;
+.kind-toggle {
+  display: flex;
+  gap: 6px;
   flex-shrink: 0;
 }
 

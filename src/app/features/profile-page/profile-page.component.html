@@ -55,7 +55,28 @@
     </div>
 
     <div class="profile-field profile-field-wide">
-      <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+      <div class="profile-label-row">
+        <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+        <button
+          class="icon-btn test-sound-btn"
+          type="button"
+          [title]="'profile.testSound' | t"
+          (click)="testAlertSound()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 9v6h4l5 4V5L8 9H4z" />
+            <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+            <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+          </svg>
+        </button>
+      </div>
 
       <div class="alert-timing-control">
         <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
