@@ -1,11 +1,12 @@
 /**
- * Rareté (FR minuscule -> palier) des objets suivis pour alerte sonore.
- * Vérifié un par un sur la base communautaire MethodWakfu (db.methodwakfu.com/items/…) :
- * Pierre d'aventure (29847), Pierre d'équilibre (29848), Pierre de vitesse (29849),
- * Pierre d'entourage (29850) et Pierre ultime (29851) sont Mythique ;
- * Influence III (28872) est Légendaire.
- * Repli sur "common" pour tout objet ajouté manuellement dont la rareté est inconnue.
+ * Rareté (FR minuscule -> palier) des objets, lue depuis le référentiel
+ * complet (voir wakfu-items.data.ts, généré depuis referentiel/items_wakfu.json).
+ * Repli sur "common" pour tout objet absent du référentiel (ex. ajouté
+ * manuellement au suivi sous un nom introuvable).
  */
+import { WAKFU_ITEMS_FR } from './wakfu-items.data';
+import { normalizeWakfuName } from '../utils/wakfu-name.util';
+
 export type WakfuRarity =
   | 'common'
   | 'rare'
@@ -15,15 +16,6 @@ export type WakfuRarity =
   | 'epic'
   | 'relic';
 
-const WAKFU_ITEM_RARITY: Readonly<Record<string, WakfuRarity>> = {
-  "pierre d'aventure": 'mythical',
-  "pierre d'équilibre": 'mythical',
-  "pierre d'entourage": 'mythical',
-  'pierre de vitesse': 'mythical',
-  'pierre ultime': 'mythical',
-  'influence iii': 'legendary',
-};
-
 export function getWakfuItemRarity(name: string): WakfuRarity {
-  return WAKFU_ITEM_RARITY[name.toLowerCase().trim()] ?? 'common';
+  return WAKFU_ITEMS_FR[normalizeWakfuName(name)]?.rarity ?? 'common';
 }

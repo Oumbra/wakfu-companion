@@ -16,12 +16,32 @@
   </div>
 
   <div class="search-bar">
-    <input
-      type="text"
-      [placeholder]="'chat.filterPlaceholder' | t"
-      [value]="filterText()"
-      (input)="setFilter($any($event.target).value)"
-    />
+    <div class="filter-input-row">
+      <input
+        type="text"
+        [placeholder]="'chat.filterPlaceholder' | t"
+        [value]="newFilterText()"
+        (input)="setNewFilterText($any($event.target).value)"
+        (keydown.enter)="addFilter()"
+      />
+      <button class="primary-btn" (click)="addFilter()">{{ 'tracker.add' | t }}</button>
+    </div>
+    @if (filters().length > 0) {
+      <div class="filter-chips">
+        @for (filter of filters(); track filter) {
+          <span class="filter-chip">
+            {{ filter }}
+            <button
+              class="icon-btn reset-btn chip-remove-btn"
+              [title]="'tracker.remove' | t"
+              (click)="removeFilter(filter)"
+            >
+              ×
+            </button>
+          </span>
+        }
+      </div>
+    }
   </div>
 
   <div class="panel-body chat-list" #chatList (scroll)="onScroll()">

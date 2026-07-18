@@ -4,26 +4,30 @@
   </div>
 
   <div class="tracker-controls">
-    <span class="tracker-control-label">{{ 'tracker.enemiesTitle' | t }}</span>
+    <div class="kind-toggle">
+      <button
+        class="toggle-btn"
+        [class.active]="newKind() === 'enemy'"
+        (click)="setNewKind('enemy')"
+      >
+        {{ 'tracker.kindEnemy' | t }}
+      </button>
+      <button
+        class="toggle-btn"
+        [class.active]="newKind() === 'item'"
+        (click)="setNewKind('item')"
+      >
+        {{ 'tracker.kindItem' | t }}
+      </button>
+    </div>
     <input
       type="text"
-      [placeholder]="'tracker.enemyPlaceholder' | t"
-      [value]="newEnemyName()"
-      (input)="setNewEnemyName($any($event.target).value)"
-      (keydown.enter)="addEnemy()"
+      [placeholder]="(newKind() === 'enemy' ? 'tracker.enemyPlaceholder' : 'tracker.itemPlaceholder') | t"
+      [value]="newName()"
+      (input)="setNewName($any($event.target).value)"
+      (keydown.enter)="add()"
     />
-    <button class="primary-btn" (click)="addEnemy()">{{ 'tracker.add' | t }}</button>
-  </div>
-  <div class="tracker-controls">
-    <span class="tracker-control-label">{{ 'tracker.itemsTitle' | t }}</span>
-    <input
-      type="text"
-      [placeholder]="'tracker.itemPlaceholder' | t"
-      [value]="newItemName()"
-      (input)="setNewItemName($any($event.target).value)"
-      (keydown.enter)="addItem()"
-    />
-    <button class="primary-btn" (click)="addItem()">{{ 'tracker.add' | t }}</button>
+    <button class="primary-btn" (click)="add()">{{ 'tracker.add' | t }}</button>
   </div>
 
   <div class="tracker-list">
@@ -44,7 +48,9 @@
             <app-item-icon [name]="entry.name" />
           }
           <span class="watch-name">{{
-            entry.kind === 'item' ? i18n.translateItemName(entry.name) : entry.name
+            entry.kind === 'item'
+              ? i18n.translateItemName(entry.name)
+              : i18n.translateMonsterName(entry.name)
           }}</span>
           <span class="watch-count">
             {{ entry.count | numberFr }}
@@ -57,7 +63,11 @@
           <button class="icon-btn" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
             ↺
           </button>
-          <button class="icon-btn" [title]="'tracker.remove' | t" (click)="remove(entry.name)">
+          <button
+            class="icon-btn reset-btn"
+            [title]="'tracker.remove' | t"
+            (click)="remove(entry.name)"
+          >
             ×
           </button>
         </div>

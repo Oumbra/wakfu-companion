@@ -2,6 +2,8 @@ import { Injectable, signal } from '@angular/core';
 import { PersistenceService } from './persistence.service';
 import { TRANSLATIONS } from '../i18n/translations';
 import { WAKFU_ITEMS_FR } from '../data/wakfu-items.data';
+import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
+import { normalizeWakfuName } from '../utils/wakfu-name.util';
 
 export type AppLocale = 'fr' | 'en' | 'es' | 'pt';
 
@@ -56,7 +58,16 @@ export class I18nService {
   translateItemName(frName: string): string {
     const locale = this.locale();
     if (locale === 'fr') return frName;
-    const entry = WAKFU_ITEMS_FR[frName.toLowerCase().trim()];
+    const entry = WAKFU_ITEMS_FR[normalizeWakfuName(frName)];
+    const translated = entry?.[locale];
+    return translated ? translated : frName;
+  }
+
+  /** Traduit un nom de monstre (dégâts, suivi) via le référentiel officiel Ankama ; conserve le nom FR si non trouvé ou si la locale est FR. */
+  translateMonsterName(frName: string): string {
+    const locale = this.locale();
+    if (locale === 'fr') return frName;
+    const entry = WAKFU_MONSTERS_FR[normalizeWakfuName(frName)];
     const translated = entry?.[locale];
     return translated ? translated : frName;
   }

@@ -29,8 +29,39 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.search-bar input {
-  width: 100%;
+.filter-input-row {
+  display: flex;
+  gap: 8px;
+}
+.filter-input-row input {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.filter-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border: 1px solid var(--accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.chip-remove-btn {
+  width: 16px;
+  height: 16px;
+  font-size: 0.8rem;
+  line-height: 1;
+  border: none;
+  background: transparent;
 }
 
 .chat-list {

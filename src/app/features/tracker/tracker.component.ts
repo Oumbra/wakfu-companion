@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { StatsStoreService } from '../../core/services/stats-store.service';
+import { StatsStoreService, WatchlistKind } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -17,25 +17,24 @@ export class TrackerComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
 
-  protected readonly newEnemyName = signal('');
-  protected readonly newItemName = signal('');
+  protected readonly newName = signal('');
+  protected readonly newKind = signal<WatchlistKind>('enemy');
 
-  protected setNewEnemyName(value: string): void {
-    this.newEnemyName.set(value);
+  protected setNewName(value: string): void {
+    this.newName.set(value);
   }
 
-  protected addEnemy(): void {
-    this.stats.addWatchedEnemy(this.newEnemyName());
-    this.newEnemyName.set('');
+  protected setNewKind(kind: WatchlistKind): void {
+    this.newKind.set(kind);
   }
 
-  protected setNewItemName(value: string): void {
-    this.newItemName.set(value);
-  }
-
-  protected addItem(): void {
-    this.stats.addWatchedItem(this.newItemName());
-    this.newItemName.set('');
+  protected add(): void {
+    if (this.newKind() === 'enemy') {
+      this.stats.addWatchedEnemy(this.newName());
+    } else {
+      this.stats.addWatchedItem(this.newName());
+    }
+    this.newName.set('');
   }
 
   protected remove(name: string): void {
