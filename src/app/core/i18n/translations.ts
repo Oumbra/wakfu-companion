@@ -49,14 +49,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.experience': 'Expérience',
 
     'tracker.header': 'Suivi',
-    'tracker.kindEnemy': 'Ennemi',
-    'tracker.kindItem': 'Ressource',
-    'tracker.enemyPlaceholder': "Nom de l'ennemi à suivre...",
+    'tracker.searchPlaceholder': "Nom de l'ennemi ou de la ressource à suivre...",
     'tracker.add': 'Ajouter',
     'tracker.empty': 'Ajoutez un ennemi ou une ressource à suivre.',
     'tracker.remove': 'Retirer',
     'tracker.reset': 'Remettre le compteur à zéro',
-    'tracker.itemPlaceholder': 'Nom de la ressource à suivre...',
 
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
@@ -151,14 +148,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.experience': 'Experience',
 
     'tracker.header': 'Tracker',
-    'tracker.kindEnemy': 'Enemy',
-    'tracker.kindItem': 'Resource',
-    'tracker.enemyPlaceholder': 'Enemy name to track...',
+    'tracker.searchPlaceholder': 'Enemy or resource name to track...',
     'tracker.add': 'Add',
     'tracker.empty': 'Add an enemy or a resource to track.',
     'tracker.remove': 'Remove',
     'tracker.reset': 'Reset counter to zero',
-    'tracker.itemPlaceholder': 'Resource name to track...',
 
     'profile.button': 'Profile',
     'profile.title': 'My profile',
@@ -251,14 +245,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.experience': 'Experiencia',
 
     'tracker.header': 'Seguimiento',
-    'tracker.kindEnemy': 'Enemigo',
-    'tracker.kindItem': 'Recurso',
-    'tracker.enemyPlaceholder': 'Nombre del enemigo a seguir...',
+    'tracker.searchPlaceholder': 'Nombre del enemigo o del recurso a seguir...',
     'tracker.add': 'Añadir',
     'tracker.empty': 'Añade un enemigo o un recurso a seguir.',
     'tracker.remove': 'Quitar',
     'tracker.reset': 'Reiniciar el contador a cero',
-    'tracker.itemPlaceholder': 'Nombre del recurso a seguir...',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -353,14 +344,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.experience': 'Experiência',
 
     'tracker.header': 'Rastreamento',
-    'tracker.kindEnemy': 'Inimigo',
-    'tracker.kindItem': 'Recurso',
-    'tracker.enemyPlaceholder': 'Nome do inimigo a rastrear...',
+    'tracker.searchPlaceholder': 'Nome do inimigo ou do recurso a rastrear...',
     'tracker.add': 'Adicionar',
     'tracker.empty': 'Adicione um inimigo ou um recurso a rastrear.',
     'tracker.remove': 'Remover',
     'tracker.reset': 'Reiniciar o contador para zero',
-    'tracker.itemPlaceholder': 'Nome do recurso a rastrear...',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',

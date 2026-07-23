@@ -1,15 +1,24 @@
-import { Component, inject, signal } from '@angular/core';
-import { StatsStoreService, WatchlistKind } from '../../core/services/stats-store.service';
+import { Component, computed, inject } from '@angular/core';
+import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { KoIconComponent } from '../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
+import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
+import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 
 @Component({
   selector: 'app-tracker',
-  imports: [NumberFrPipe, EntityIconComponent, ItemIconComponent, KoIconComponent, TranslatePipe],
+  imports: [
+    NumberFrPipe,
+    EntityIconComponent,
+    ItemIconComponent,
+    KoIconComponent,
+    TranslatePipe,
+    WakfuAutocompleteComponent,
+  ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',
 })
@@ -17,24 +26,16 @@ export class TrackerComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
 
-  protected readonly newName = signal('');
-  protected readonly newKind = signal<WatchlistKind>('enemy');
+  protected readonly existingNames = computed(() =>
+    this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
+  );
 
-  protected setNewName(value: string): void {
-    this.newName.set(value);
-  }
-
-  protected setNewKind(kind: WatchlistKind): void {
-    this.newKind.set(kind);
-  }
-
-  protected add(): void {
-    if (this.newKind() === 'enemy') {
-      this.stats.addWatchedEnemy(this.newName());
+  protected add(result: WakfuSearchResult): void {
+    if (result.kind === 'enemy') {
+      this.stats.addWatchedEnemy(result.name);
     } else {
-      this.stats.addWatchedItem(this.newName());
+      this.stats.addWatchedItem(result.name);
     }
-    this.newName.set('');
   }
 
   protected remove(name: string): void {

@@ -295,10 +295,6 @@
   display: flex;
   gap: 8px;
 }
-.sound-item-add input {
-  flex-grow: 1;
-  min-width: 0;
-}
 
 .sound-item-grid {
   display: grid;

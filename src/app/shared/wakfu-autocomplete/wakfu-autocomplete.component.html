@@ -1,0 +1,36 @@
+<div class="wakfu-autocomplete">
+  <input
+    type="text"
+    [placeholder]="placeholder()"
+    [value]="query()"
+    (input)="onInput($any($event.target).value)"
+    (focus)="onFocus()"
+    (keydown.arrowdown)="moveActive(1); $event.preventDefault()"
+    (keydown.arrowup)="moveActive(-1); $event.preventDefault()"
+    (keydown.enter)="selectActive(); $event.preventDefault()"
+    (keydown.escape)="close()"
+  />
+  @if (open() && results().length > 0) {
+    <div class="wakfu-autocomplete-list">
+      @for (r of results(); track r.kind + ':' + r.name; let i = $index) {
+        <button
+          type="button"
+          class="wakfu-autocomplete-item"
+          [class.active]="i === activeIndex() && !r.disabled"
+          [class.disabled]="r.disabled"
+          [disabled]="r.disabled"
+          (click)="select(r)"
+        >
+          <span class="wakfu-autocomplete-item-icon">
+            @if (r.kind === 'item') {
+              <app-item-icon [name]="r.name" [size]="24" />
+            } @else {
+              <app-entity-icon [name]="r.name" side="enemy" [size]="24" />
+            }
+          </span>
+          <span class="wakfu-autocomplete-item-name" [title]="r.label">{{ r.label }}</span>
+        </button>
+      }
+    </div>
+  }
+</div>

@@ -17,16 +17,6 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.tracker-controls input {
-  flex-grow: 1;
-  min-width: 0;
-}
-.kind-toggle {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
 .tracker-list {
   flex-grow: 1;
   overflow-y: auto;
