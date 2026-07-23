@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -33,12 +33,36 @@ export class ProfilePageComponent {
     this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
   );
 
+  private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
+  protected readonly editingPseudo = signal(false);
+
+  constructor() {
+    effect(() => {
+      const input = this.pseudoEditInput();
+      if (this.editingPseudo() && input) {
+        input.nativeElement.focus();
+        input.nativeElement.select();
+      }
+    });
+  }
+
   protected goBack(): void {
     this.nav.goToMain();
   }
 
-  protected onPseudoInput(value: string): void {
-    this.profile.setPseudo(value);
+  protected startEditPseudo(): void {
+    this.editingPseudo.set(true);
+  }
+
+  protected commitPseudo(value: string): void {
+    this.profile.setPseudo(value.trim());
+    this.editingPseudo.set(false);
+  }
+
+  protected onPseudoKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') {
+      this.commitPseudo((event.target as HTMLInputElement).value);
+    }
   }
 
   protected chooseAvatar(index: number): void {
