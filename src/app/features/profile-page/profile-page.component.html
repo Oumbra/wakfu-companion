@@ -18,39 +18,63 @@
   </header>
 
   <div class="profile-page-body">
-    <div class="profile-preview">
-      <div class="avatar-preview">
-        @if (profile.avatarIndex(); as idx) {
-          <app-avatar-icon [index]="idx" />
+    <div class="identity-row">
+      <div class="identity-left">
+        <div class="avatar-preview">
+          @if (profile.avatarIndex(); as idx) {
+            <app-avatar-icon [index]="idx" />
+          } @else {
+            <span class="avatar-preview-question">?</span>
+          }
+        </div>
+        @if (editingPseudo()) {
+          <input
+            #pseudoEditInput
+            type="text"
+            class="pseudo-edit-input"
+            [placeholder]="'profile.pseudoPlaceholder' | t"
+            [value]="profile.pseudo()"
+            (blur)="commitPseudo($any($event.target).value)"
+            (keydown)="onPseudoKeydown($event)"
+          />
         } @else {
-          <span class="avatar-preview-question">?</span>
+          <div class="profile-preview-name-row">
+            <span class="profile-preview-name">{{ profile.pseudo() || ('profile.noPseudo' | t) }}</span>
+            <button
+              class="icon-btn pseudo-edit-btn"
+              type="button"
+              [title]="'profile.editPseudo' | t"
+              (click)="startEditPseudo()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+            </button>
+          </div>
         }
       </div>
-      <span class="profile-preview-name">{{ profile.pseudo() || ('profile.noPseudo' | t) }}</span>
-    </div>
 
-    <div class="profile-field">
-      <label class="profile-label">{{ 'profile.pseudoLabel' | t }}</label>
-      <input
-        type="text"
-        [placeholder]="'profile.pseudoPlaceholder' | t"
-        [value]="profile.pseudo()"
-        (input)="onPseudoInput($any($event.target).value)"
-      />
-    </div>
-
-    <div class="profile-field">
-      <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
-      <div class="avatar-grid">
-        @for (i of avatarIndexes; track i) {
-          <button
-            class="avatar-cell-btn"
-            [class.selected]="profile.avatarIndex() === i"
-            (click)="chooseAvatar(i)"
-          >
-            <app-avatar-icon [index]="i" />
-          </button>
-        }
+      <div class="profile-field identity-right">
+        <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+        <div class="avatar-grid">
+          @for (i of avatarIndexes; track i) {
+            <button
+              class="avatar-cell-btn"
+              [class.selected]="profile.avatarIndex() === i"
+              (click)="chooseAvatar(i)"
+            >
+              <app-avatar-icon [index]="i" />
+            </button>
+          }
+        </div>
       </div>
     </div>
 
