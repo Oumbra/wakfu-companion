@@ -4,30 +4,12 @@
   </div>
 
   <div class="tracker-controls">
-    <div class="kind-toggle">
-      <button
-        class="toggle-btn"
-        [class.active]="newKind() === 'enemy'"
-        (click)="setNewKind('enemy')"
-      >
-        {{ 'tracker.kindEnemy' | t }}
-      </button>
-      <button
-        class="toggle-btn"
-        [class.active]="newKind() === 'item'"
-        (click)="setNewKind('item')"
-      >
-        {{ 'tracker.kindItem' | t }}
-      </button>
-    </div>
-    <input
-      type="text"
-      [placeholder]="(newKind() === 'enemy' ? 'tracker.enemyPlaceholder' : 'tracker.itemPlaceholder') | t"
-      [value]="newName()"
-      (input)="setNewName($any($event.target).value)"
-      (keydown.enter)="add()"
+    <app-wakfu-autocomplete
+      domain="both"
+      [placeholder]="'tracker.searchPlaceholder' | t"
+      [existingNames]="existingNames()"
+      (selected)="add($event)"
     />
-    <button class="primary-btn" (click)="add()">{{ 'tracker.add' | t }}</button>
   </div>
 
   <div class="tracker-list">

@@ -112,14 +112,12 @@
       </div>
 
       <div class="sound-item-add">
-        <input
-          type="text"
+        <app-wakfu-autocomplete
+          domain="item"
           [placeholder]="'profile.soundItemPlaceholder' | t"
-          [value]="newItemName()"
-          (input)="setNewItemName($any($event.target).value)"
-          (keydown.enter)="addSoundItem()"
+          [existingNames]="existingSoundItemNames()"
+          (selected)="addSoundItem($event)"
         />
-        <button class="primary-btn" (click)="addSoundItem()">{{ 'tracker.add' | t }}</button>
       </div>
       <div class="sound-item-grid">
         @for (entry of profile.soundItems(); track entry.name) {

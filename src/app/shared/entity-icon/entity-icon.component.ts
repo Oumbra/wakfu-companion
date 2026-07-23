@@ -35,6 +35,8 @@ function monsterImageCandidates(entry: WakfuMonsterEntry): string[] {
   selector: 'app-entity-icon',
   template: `<img
     class="entity-icon"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
     [src]="src()"
     referrerpolicy="no-referrer"
     (error)="onError()"
@@ -43,8 +45,6 @@ function monsterImageCandidates(entry: WakfuMonsterEntry): string[] {
   styles: [
     `
       .entity-icon {
-        width: 22px;
-        height: 22px;
         object-fit: contain;
         border-radius: 3px;
         flex-shrink: 0;
@@ -55,6 +55,8 @@ function monsterImageCandidates(entry: WakfuMonsterEntry): string[] {
 export class EntityIconComponent {
   readonly name = input.required<string>();
   readonly side = input.required<EntitySide>();
+  /** Taille en px (carrée). Par défaut 22px, comme dans les listes de dégâts/suivi. */
+  readonly size = input(22);
 
   private readonly classifier = inject(EntityClassifierService);
 

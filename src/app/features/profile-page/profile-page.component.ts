@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -8,11 +8,13 @@ import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { BREEDS_SPRITE_COLS, BREEDS_SPRITE_ROWS } from '../../core/data/class-breeds.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
+import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 
 /** Page dédiée au profil (pseudo, avatar, alertes sonores de butin) — voir NavigationService pour le slide d'entrée/sortie. */
 @Component({
   selector: 'app-profile-page',
-  imports: [AvatarIconComponent, ItemIconComponent, TranslatePipe],
+  imports: [AvatarIconComponent, ItemIconComponent, TranslatePipe, WakfuAutocompleteComponent],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
@@ -22,10 +24,13 @@ export class ProfilePageComponent {
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
 
-  protected readonly newItemName = signal('');
   protected readonly avatarIndexes = Array.from(
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
     (_, i) => i,
+  );
+
+  protected readonly existingSoundItemNames = computed(() =>
+    this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
   );
 
   protected goBack(): void {
@@ -38,10 +43,6 @@ export class ProfilePageComponent {
 
   protected chooseAvatar(index: number): void {
     this.profile.setAvatar(index);
-  }
-
-  protected setNewItemName(value: string): void {
-    this.newItemName.set(value);
   }
 
   protected onDurationInput(value: string): void {
@@ -66,9 +67,8 @@ export class ProfilePageComponent {
     return this.i18n.t(key, { seconds });
   }
 
-  protected addSoundItem(): void {
-    this.profile.addSoundItem(this.newItemName());
-    this.newItemName.set('');
+  protected addSoundItem(result: WakfuSearchResult): void {
+    this.profile.addSoundItem(result.name);
   }
 
   protected toggleSound(name: string): void {
