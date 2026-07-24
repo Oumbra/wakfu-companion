@@ -5,10 +5,7 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
-import {
-  ClassPickerComponent,
-  ClassPickerPosition,
-} from '../../shared/class-picker/class-picker.component';
+import { ClassPickerService } from '../../core/services/class-picker.service';
 import {
   HEADER_ICON_CHALLENGES_DATA_URI,
   HEADER_ICON_DAMAGE_DATA_URI,
@@ -24,7 +21,7 @@ import {
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, ClassPickerComponent],
+  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
@@ -38,6 +35,7 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   private readonly classifier = inject(EntityClassifierService);
+  private readonly classPickerService = inject(ClassPickerService);
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
@@ -47,7 +45,6 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly kamasExpanded = signal(false);
   protected readonly xpExpanded = signal(false);
   protected readonly combatsExpanded = signal(false);
-  protected readonly classPicker = signal<ClassPickerPosition | null>(null);
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
   private dragStartMouse = { x: 0, y: 0 };
@@ -94,20 +91,10 @@ export class SessionRecapComponent implements OnDestroy {
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {
-    if (this.classifier.getDetectedClass(name)) return;
     event.preventDefault();
-    this.classPicker.set({ name, x: event.clientX, y: event.clientY });
-  }
-
-  protected onClassChosen(className: string): void {
-    const picker = this.classPicker();
-    if (!picker) return;
-    this.classifier.setManualClass(picker.name, className);
-    this.classPicker.set(null);
-  }
-
-  protected closeClassPicker(): void {
-    this.classPicker.set(null);
+    this.classPickerService.open(name, event.clientX, event.clientY, (className) => {
+      this.classifier.setManualClass(name, className);
+    });
   }
 
   ngOnDestroy(): void {

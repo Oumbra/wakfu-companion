@@ -109,13 +109,5 @@
         }
       </div>
     </div>
-
-    @if (classPicker(); as picker) {
-      <app-class-picker
-        [position]="picker"
-        (classChosen)="onClassChosen($event)"
-        (closed)="closeClassPicker()"
-      />
-    }
   </div>
 }

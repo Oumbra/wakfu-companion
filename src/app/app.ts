@@ -11,6 +11,8 @@ import { ProfileComponent } from './features/profile/profile.component';
 import { ProfilePageComponent } from './features/profile-page/profile-page.component';
 import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
+import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
+import { ClassPickerService } from './core/services/class-picker.service';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +24,7 @@ import { TranslatePipe } from './shared/translate.pipe';
     ProfileComponent,
     ProfilePageComponent,
     LootAlertComponent,
+    ClassPickerComponent,
     TranslatePipe,
   ],
   templateUrl: './app.html',
@@ -31,6 +34,7 @@ export class App implements OnInit {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavigationService);
+  protected readonly classPickerService = inject(ClassPickerService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
 
@@ -44,5 +48,10 @@ export class App implements OnInit {
 
   protected onChangeFile(): void {
     void this.logFileAccess.forgetFile();
+  }
+
+  protected onClassChosen(className: string): void {
+    this.classPickerService.request()?.onChosen(className);
+    this.classPickerService.close();
   }
 }

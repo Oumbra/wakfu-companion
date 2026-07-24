@@ -51,4 +51,12 @@
 
   <app-session-recap #sessionRecap />
   <app-loot-alert />
+
+  @if (classPickerService.request(); as req) {
+    <app-class-picker
+      [position]="{ name: req.name, x: req.x, y: req.y }"
+      (classChosen)="onClassChosen($event)"
+      (closed)="classPickerService.close()"
+    />
+  }
 </div>

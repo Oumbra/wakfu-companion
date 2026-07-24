@@ -1,11 +1,15 @@
+/* z-index > .recap-panel/.loot-alert-overlay (500) : le picker doit toujours
+   passer au premier plan, y compris ouvert depuis la modale "Session recap"
+   (elle-même à 500) — sinon il se retrouve rendu derrière une fois la modale
+   déplacée/repeinte. */
 .class-picker-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  z-index: 600;
 }
 .class-picker {
   position: fixed;
-  z-index: 101;
+  z-index: 601;
   background: #1c1c1c;
   border: 1px solid var(--accent);
   border-radius: 8px;

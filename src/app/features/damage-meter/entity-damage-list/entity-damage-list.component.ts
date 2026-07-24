@@ -7,10 +7,7 @@ import { NumberFrPipe } from '../../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
 import { KoIconComponent } from '../../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
-import {
-  ClassPickerComponent,
-  ClassPickerPosition,
-} from '../../../shared/class-picker/class-picker.component';
+import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { DamageElement } from '../../../core/models/log-entry.model';
 
 const ELEMENT_CLASS: Record<DamageElement, string> = {
@@ -31,14 +28,7 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
  */
 @Component({
   selector: 'app-entity-damage-list',
-  imports: [
-    NumberFrPipe,
-    KeyValuePipe,
-    EntityIconComponent,
-    KoIconComponent,
-    TranslatePipe,
-    ClassPickerComponent,
-  ],
+  imports: [NumberFrPipe, KeyValuePipe, EntityIconComponent, KoIconComponent, TranslatePipe],
   templateUrl: './entity-damage-list.component.html',
   styleUrl: './entity-damage-list.component.css',
 })
@@ -51,10 +41,10 @@ export class EntityDamageListComponent {
 
   private readonly classifier = inject(EntityClassifierService);
   private readonly stats = inject(StatsStoreService);
+  private readonly classPickerService = inject(ClassPickerService);
   protected readonly i18n = inject(I18nService);
   private readonly expandedNames = signal<ReadonlySet<string>>(new Set());
   protected readonly dragOver = signal(false);
-  protected readonly classPicker = signal<ClassPickerPosition | null>(null);
 
   protected readonly total = computed(() => this.rows().reduce((sum, r) => sum + r.total, 0));
   private readonly maxTotal = computed(
@@ -117,20 +107,11 @@ export class EntityDamageListComponent {
       this.stats.addWatchedEnemy(row.name);
       return;
     }
-    if (this.side() === 'ally' && !this.classifier.getDetectedClass(row.name)) {
+    if (this.side() === 'ally') {
       event.preventDefault();
-      this.classPicker.set({ name: row.name, x: event.clientX, y: event.clientY });
+      this.classPickerService.open(row.name, event.clientX, event.clientY, (className) => {
+        this.classifier.setManualClass(row.name, className);
+      });
     }
-  }
-
-  protected onClassChosen(className: string): void {
-    const picker = this.classPicker();
-    if (!picker) return;
-    this.classifier.setManualClass(picker.name, className);
-    this.classPicker.set(null);
-  }
-
-  protected closeClassPicker(): void {
-    this.classPicker.set(null);
   }
 }
