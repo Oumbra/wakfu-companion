@@ -164,6 +164,12 @@ export class StatsStoreService {
     this.addWatched(rawName, 'item');
   }
 
+  /** Utilisé pour masquer l'invite "clic droit pour suivre" une fois l'entrée déjà suivie. */
+  isWatched(rawName: string): boolean {
+    const name = rawName.trim().toLowerCase();
+    return this.watchlist().some((w) => w.name.toLowerCase() === name);
+  }
+
   removeWatched(name: string): void {
     const updated = this.watchlist().filter((w) => w.name !== name);
     this.watchlist.set(updated);

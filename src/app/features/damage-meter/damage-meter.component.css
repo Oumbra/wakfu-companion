@@ -74,6 +74,19 @@
 .fight-summary:hover {
   background: #242424;
 }
+/* Une fois l'entrée dépliée, le header (horloge/monstre/tours/durée) reste
+   collé en haut du panneau pendant le scroll du détail — permet de refermer
+   d'un clic sans devoir remonter tout en haut de la liste. */
+.fight-summary.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.fight-summary.sticky:hover {
+  background: #242424;
+}
 .fight-badge {
   font-size: 0.7rem;
   font-weight: 700;
@@ -162,7 +175,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 15px;
+  box-sizing: border-box;
+  height: 41px;
+  padding: 0 15px;
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -211,19 +226,38 @@
 }
 
 .loot-section {
-  padding: 10px 15px;
   border-top: 1px solid #2a2a2a;
   flex-shrink: 0;
 }
 .loot-header-row {
   display: flex;
   align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 41px;
+  padding: 0 15px;
+  cursor: pointer;
+}
+.loot-header-row:hover {
+  filter: brightness(1.15);
+}
+.loot-body {
+  padding: 4px 15px 10px;
+}
+/* Reprend exactement l'agencement original de .loot-header-row (label+count à
+   gauche, tri à droite) : isolé dans un wrapper à part pour que l'ajout du
+   caret (repli/dépli) n'insère pas un 3e élément dans ce `justify-content:
+   space-between`, ce qui aurait déplacé les boutons de tri vers le centre. */
+.loot-header-main {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  flex-grow: 1;
+  min-width: 0;
 }
 .loot-header-left {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: 8px;
 }
 .loot-header {

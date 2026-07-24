@@ -1,10 +1,5 @@
 # Features
 
-- J'aimerai pouvoir redéfinir une classe si celle-ci a été mal détecté (le jugement revient à l'utilisateur), que ce soit dans l'historique ou dans le recap de session.
-- J'aimerai que la sélection de classe dans la modal de recap puisse être possible, il semble y avoir un souci car suivant la largeur
-
----
-
 - J'aimerai que tu reprennes le favicon qui n'est pas une excellente qualité, pour se faire, tu peux partir du fichier `/public/logo.png`. Il me faut d'ailleurs une version de ce logo en violet également (toujours en png avec le fond transparent). Ensuite à partir de ce nouvel icone violet png en fond transparent, tu pourra le convertir en `.ico`.
 - J'aimerai que tu utilises ce nouvel logo violet png afin de l'afficher à gauche du titre `Wakfu Companion`. 
 

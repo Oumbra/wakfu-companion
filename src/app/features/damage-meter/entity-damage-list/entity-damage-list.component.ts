@@ -9,6 +9,10 @@ import { KoIconComponent } from '../../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { DamageElement } from '../../../core/models/log-entry.model';
+import {
+  HEADER_ICON_ALLIES_DATA_URI,
+  HEADER_ICON_ENEMIES_DATA_URI,
+} from '../../../core/data/header-icons.data';
 
 const ELEMENT_CLASS: Record<DamageElement, string> = {
   Feu: 'dmg-fire',
@@ -38,6 +42,10 @@ export class EntityDamageListComponent {
   readonly rows = input<EntityDamageRow[]>([]);
   readonly interactive = input(false);
   readonly emptyMessage = input('Aucun dégât enregistré.');
+  /** Historique de combat uniquement : rend le header cliquable pour replier
+   * toute la section (ouverte par défaut), contrairement au combat en cours
+   * qui reste toujours visible. */
+  readonly collapsible = input(false);
 
   private readonly classifier = inject(EntityClassifierService);
   private readonly stats = inject(StatsStoreService);
@@ -45,6 +53,10 @@ export class EntityDamageListComponent {
   protected readonly i18n = inject(I18nService);
   private readonly expandedNames = signal<ReadonlySet<string>>(new Set());
   protected readonly dragOver = signal(false);
+  protected readonly sectionExpanded = signal(true);
+  protected readonly headerIcon = computed(() =>
+    this.side() === 'ally' ? HEADER_ICON_ALLIES_DATA_URI : HEADER_ICON_ENEMIES_DATA_URI,
+  );
 
   protected readonly total = computed(() => this.rows().reduce((sum, r) => sum + r.total, 0));
   private readonly maxTotal = computed(
@@ -67,6 +79,15 @@ export class EntityDamageListComponent {
 
   protected isExpanded(name: string): boolean {
     return this.expandedNames().has(name);
+  }
+
+  protected toggleSection(): void {
+    if (!this.collapsible()) return;
+    this.sectionExpanded.update((v) => !v);
+  }
+
+  protected isTracked(name: string): boolean {
+    return this.stats.isWatched(name);
   }
 
   protected barWidth(total: number): string {
