@@ -65,31 +65,4 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  position: relative;
-}
-
-/* Tooltip du nom complet (le natif du navigateur via title reste affiché en parallèle,
-   voir même limitation que la tooltip générique des icon-btn dans styles.css). */
-.wakfu-autocomplete-item-name::after {
-  content: attr(title);
-  position: absolute;
-  bottom: 100%;
-  left: 0;
-  margin-bottom: 6px;
-  padding: 4px 8px;
-  background: #000;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 400;
-  white-space: nowrap;
-  border-radius: 4px;
-  border: 1px solid #333;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 30;
-}
-.wakfu-autocomplete-item:hover .wakfu-autocomplete-item-name::after {
-  opacity: 1;
 }

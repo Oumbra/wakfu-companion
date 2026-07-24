@@ -45,10 +45,14 @@
       @if (fightHistory().length === 0) {
         <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
       } @else {
-        @for (record of fightHistory(); track record.id) {
+        @for (record of fightHistory(); track record.id; let first = $first) {
           <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
             <div class="fight-summary" (click)="toggleFight(record.id)">
-              <span class="fight-clock" [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)">
+              <span
+                class="fight-clock tooltip-align-left"
+                [class.tooltip-below]="first"
+                [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+              >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round" />
@@ -116,9 +120,10 @@
                       <div class="empty-state small">{{ 'damageMeter.noLoot' | t }}</div>
                     } @else {
                       <div class="loot-list" [class.scrollable]="record.loot.length > 5">
-                        @for (item of sortedLoot(record.loot); track item.name) {
+                        @for (item of sortedLoot(record.loot); track item.name; let first = $first) {
                           <div
                             class="loot-row"
+                            [class.tooltip-below]="first"
                             [title]="'damageMeter.lootAddToWatchlist' | t"
                             (contextmenu)="onLootContextMenu($event, item.name)"
                           >

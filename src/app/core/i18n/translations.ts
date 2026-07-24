@@ -53,7 +53,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.add': 'Ajouter',
     'tracker.empty': 'Ajoutez un ennemi ou une ressource à suivre.',
     'tracker.remove': 'Retirer',
-    'tracker.reset': 'Remettre le compteur à zéro',
+    'tracker.reset': 'Remettre à zéro',
 
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
@@ -152,7 +152,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.add': 'Add',
     'tracker.empty': 'Add an enemy or a resource to track.',
     'tracker.remove': 'Remove',
-    'tracker.reset': 'Reset counter to zero',
+    'tracker.reset': 'Reset to zero',
 
     'profile.button': 'Profile',
     'profile.title': 'My profile',
@@ -249,7 +249,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.add': 'Añadir',
     'tracker.empty': 'Añade un enemigo o un recurso a seguir.',
     'tracker.remove': 'Quitar',
-    'tracker.reset': 'Reiniciar el contador a cero',
+    'tracker.reset': 'Reiniciar a cero',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -348,7 +348,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.add': 'Adicionar',
     'tracker.empty': 'Adicione um inimigo ou um recurso a rastrear.',
     'tracker.remove': 'Remover',
-    'tracker.reset': 'Reiniciar o contador para zero',
+    'tracker.reset': 'Reiniciar para zero',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',

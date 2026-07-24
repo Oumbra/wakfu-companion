@@ -1,4 +1,13 @@
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  OnDestroy,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -18,7 +27,7 @@ import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
-export class ProfilePageComponent {
+export class ProfilePageComponent implements OnDestroy {
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
   private readonly nav = inject(NavigationService);
@@ -36,6 +45,19 @@ export class ProfilePageComponent {
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
 
+  /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en
+   * `auto-fill`, donc variable selon la largeur disponible) — recalculé à
+   * chaque redimensionnement via ResizeObserver, pour savoir combien de
+   * tuiles composent la 1ère ligne (dont le tooltip doit s'afficher en
+   * dessous plutôt qu'au-dessus, sinon rogné par le panneau). Valeurs en dur
+   * = copie de `.sound-item-grid` dans profile-page.component.css
+   * (`gap: 8px`, `minmax(120px, 1fr)`, `padding: 2px`). */
+  private static readonly SOUND_GRID_GAP = 8;
+  private static readonly SOUND_GRID_MIN_COL = 120;
+  private readonly soundGrid = viewChild<ElementRef<HTMLDivElement>>('soundGrid');
+  protected readonly soundGridColumns = signal(1);
+  private soundGridResizeObserver?: ResizeObserver;
+
   constructor() {
     effect(() => {
       const input = this.pseudoEditInput();
@@ -44,6 +66,28 @@ export class ProfilePageComponent {
         input.nativeElement.select();
       }
     });
+
+    effect(() => {
+      const el = this.soundGrid()?.nativeElement;
+      this.soundGridResizeObserver?.disconnect();
+      if (!el) return;
+      this.soundGridResizeObserver = new ResizeObserver(() => this.updateSoundGridColumns(el));
+      this.soundGridResizeObserver.observe(el);
+      this.updateSoundGridColumns(el);
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.soundGridResizeObserver?.disconnect();
+  }
+
+  private updateSoundGridColumns(el: HTMLElement): void {
+    const style = getComputedStyle(el);
+    const contentWidth =
+      el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const { SOUND_GRID_GAP: gap, SOUND_GRID_MIN_COL: minCol } = ProfilePageComponent;
+    const columns = Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
+    this.soundGridColumns.set(columns);
   }
 
   protected goBack(): void {

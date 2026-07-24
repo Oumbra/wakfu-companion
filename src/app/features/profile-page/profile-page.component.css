@@ -275,7 +275,6 @@
 }
 
 .manual-close-switch {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -283,30 +282,6 @@
   font-size: 0.78rem;
   color: #ccc;
   user-select: none;
-}
-.manual-close-switch::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: -50px;
-  right: 0;
-  padding: 6px 10px;
-  background: #000;
-  color: #fff;
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 400;
-  white-space: normal;
-  width: max-content;
-  max-width: 220px;
-  border-radius: 4px;
-  border: 1px solid #333;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 10;
-}
-.manual-close-switch:hover::after {
-  opacity: 1;
 }
 .switch-input {
   position: absolute;

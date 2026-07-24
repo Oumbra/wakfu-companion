@@ -1,6 +1,10 @@
 <div class="profile-page">
   <header class="profile-page-header">
-    <button class="back-btn" (click)="goBack()" [title]="'profile.back' | t">
+    <button
+      class="back-btn tooltip-align-left tooltip-below"
+      (click)="goBack()"
+      [title]="'profile.back' | t"
+    >
       <svg
         viewBox="0 0 24 24"
         fill="none"
@@ -21,8 +25,8 @@
     <div class="identity-row">
       <div class="identity-left">
         <div class="avatar-preview">
-          @if (profile.avatarIndex(); as idx) {
-            <app-avatar-icon [index]="idx" />
+          @if (profile.avatarIndex() !== null) {
+            <app-avatar-icon [index]="profile.avatarIndex()!" />
           } @else {
             <span class="avatar-preview-question">?</span>
           }
@@ -123,7 +127,10 @@
           <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
         </div>
 
-        <label class="manual-close-switch" [attr.data-tooltip]="manualCloseTooltip()">
+        <label
+          class="manual-close-switch tooltip-align-right tooltip-multiline"
+          [attr.data-tooltip]="manualCloseTooltip()"
+        >
           <input
             type="checkbox"
             class="switch-input"
@@ -143,11 +150,12 @@
           (selected)="addSoundItem($event)"
         />
       </div>
-      <div class="sound-item-grid">
-        @for (entry of profile.soundItems(); track entry.name) {
+      <div class="sound-item-grid" #soundGrid>
+        @for (entry of profile.soundItems(); track entry.name; let i = $index) {
           <div class="sound-item-tile" [class]="rarityClass(entry.name)">
             <button
-              class="sound-toggle-btn"
+              class="sound-toggle-btn tooltip-align-left"
+              [class.tooltip-below]="i < soundGridColumns()"
               [title]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
               (click)="toggleSound(entry.name)"
             >
@@ -180,7 +188,8 @@
             </button>
             @if (!entry.isDefault) {
               <button
-                class="remove-btn"
+                class="remove-btn tooltip-align-right"
+                [class.tooltip-below]="i < soundGridColumns()"
                 [title]="'tracker.remove' | t"
                 (click)="removeSoundItem(entry.name)"
               >

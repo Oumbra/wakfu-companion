@@ -143,21 +143,31 @@ button.reset-btn:hover {
   border-color: #b33939;
 }
 
-/* Tooltip générique pour tout bouton icône portant un attribut title (reprend
-   le style des tooltips existants type fight-clock/manual-close-switch). Le
-   tooltip natif du navigateur reste affiché après un délai en parallèle :
-   comportement accepté, pas de moyen CSS de le désactiver sans dupliquer
-   title en data-tooltip sur chaque template. */
-button[title] {
+/* Tooltip générique : tout élément portant un attribut `title` (statique via
+   [title], ou dynamique via [attr.data-tooltip] pour les libellés calculés/
+   multi-lignes) obtient ce style au survol — évite de dupliquer le CSS
+   ::after dans chaque composant. Le tooltip natif du navigateur reste affiché
+   après un délai en parallèle : comportement accepté, pas de moyen CSS de le
+   désactiver sans retirer `title` (impossible pour l'accessibilité clavier).
+   Variantes de positionnement (à ajouter en classe sur l'élément) :
+   - défaut : centré, au-dessus de l'élément
+   - .tooltip-below : en dessous au lieu d'au-dessus (réservé aux éléments du
+     header applicatif/de page, sans place au-dessus — voir CLAUDE.md)
+   - .tooltip-align-left / .tooltip-align-right : ancré à gauche/droite au
+     lieu de centré (éviter le débordement d'écran pour les éléments en bord)
+   - .tooltip-multiline : largeur max + retour à la ligne (libellés longs/dynamiques) */
+[title],
+[data-tooltip] {
   position: relative;
 }
-button[title]::after {
-  content: attr(title);
+[title]::after,
+[data-tooltip]::after {
+  content: attr(title) attr(data-tooltip);
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 6px;
+  margin-bottom: 6px;
   padding: 4px 8px;
   background: #000;
   color: #fff;
@@ -172,8 +182,31 @@ button[title]::after {
   transition: opacity 0.15s;
   z-index: 30;
 }
-button[title]:hover::after {
+[title]:hover::after,
+[data-tooltip]:hover::after,
+[title]:focus-visible::after,
+[data-tooltip]:focus-visible::after {
   opacity: 1;
+}
+.tooltip-align-left::after {
+  left: 0;
+  transform: none;
+}
+.tooltip-align-right::after {
+  left: auto;
+  right: 0;
+  transform: none;
+}
+.tooltip-below::after {
+  bottom: auto;
+  top: 100%;
+  margin-bottom: 0;
+  margin-top: 6px;
+}
+.tooltip-multiline::after {
+  white-space: normal;
+  width: max-content;
+  max-width: 220px;
 }
 
 /* --- Panneaux --- */
