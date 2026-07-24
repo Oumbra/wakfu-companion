@@ -3,6 +3,7 @@
 }
 
 .profile-btn {
+  position: relative;
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -18,7 +19,7 @@
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
-  overflow: hidden;
+  overflow: visible;
 }
 .profile-btn:hover {
   transform: scale(1.07);
@@ -35,4 +36,6 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
+  overflow: hidden;
+  display: block;
 }

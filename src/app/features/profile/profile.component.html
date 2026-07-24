@@ -1,6 +1,10 @@
-<button class="profile-btn" (click)="open()" [title]="'profile.button' | t">
-  @if (profile.avatarIndex(); as idx) {
-    <app-avatar-icon class="profile-avatar" [index]="idx" />
+<button
+  class="profile-btn tooltip-align-right tooltip-below"
+  (click)="open()"
+  [title]="'profile.button' | t"
+>
+  @if (profile.avatarIndex() !== null) {
+    <app-avatar-icon class="profile-avatar" [index]="profile.avatarIndex()!" />
   } @else {
     <span class="profile-question">?</span>
   }

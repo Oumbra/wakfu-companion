@@ -16,7 +16,7 @@
     @if (stats.watchlist().length === 0) {
       <div class="empty-state">{{ 'tracker.empty' | t }}</div>
     } @else {
-      @for (entry of stats.watchlist(); track entry.name; let i = $index) {
+      @for (entry of stats.watchlist(); track entry.name; let i = $index, first = $first) {
         <div
           class="watch-row"
           draggable="true"
@@ -37,16 +37,26 @@
           <span class="watch-count">
             {{ entry.count | numberFr }}
             @if (entry.kind === 'enemy') {
-              <span class="watch-kill-icon" [title]="'damageMeter.koTitle' | t">
+              <span
+                class="watch-kill-icon"
+                [class.tooltip-below]="first"
+                [title]="'damageMeter.koTitle' | t"
+              >
                 <app-ko-icon />
               </span>
             }
           </span>
-          <button class="icon-btn" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
+          <button
+            class="icon-btn tooltip-align-right"
+            [class.tooltip-below]="first"
+            [title]="'tracker.reset' | t"
+            (click)="resetCount(entry.name)"
+          >
             ↺
           </button>
           <button
-            class="icon-btn reset-btn"
+            class="icon-btn reset-btn tooltip-align-right"
+            [class.tooltip-below]="first"
             [title]="'tracker.remove' | t"
             (click)="remove(entry.name)"
           >

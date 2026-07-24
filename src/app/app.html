@@ -7,10 +7,18 @@
           @if (logFileAccess.status() === 'connected') {
             <div class="app-header-file-group">
               <span class="file-chip">{{ logFileAccess.fileName() }}</span>
-              <button class="icon-btn" [title]="'app.changeFile' | t" (click)="onChangeFile()">
+              <button
+                class="icon-btn tooltip-below"
+                [title]="'app.changeFile' | t"
+                (click)="onChangeFile()"
+              >
                 ⇄
               </button>
-              <button class="icon-btn reset-btn" [title]="'app.reset' | t" (click)="onReset()">
+              <button
+                class="icon-btn reset-btn tooltip-below"
+                [title]="'app.reset' | t"
+                (click)="onReset()"
+              >
                 ↺
               </button>
             </div>

@@ -1,5 +1,9 @@
 <div class="lang-switcher">
-  <button class="lang-current" (click)="toggle()" [title]="current().label">
+  <button
+    class="lang-current tooltip-align-right tooltip-below"
+    (click)="toggle()"
+    [title]="current().label"
+  >
     <app-flag-icon class="lang-current-glyph" [country]="current().flagCountry" />
   </button>
   @if (open()) {

@@ -12,7 +12,28 @@ Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagno
 - `npm run build` — build web de prod (dist/wakfu-companion)
 - `npm run build:standalone` — build `production,standalone` puis inline tout (JS/CSS/favicon) dans `wakfu-companion.standalone.html` à la racine via `tools/build-standalone.mjs`
 - Toujours valider les **3 builds** après un changement non trivial (dev, `npm run build`, `npm run build:standalone`) — un changement peut casser silencieusement l'un sans casser les autres (voir gotcha CSS/assets ci-dessous).
-- Le fichier `wakfu-companion.standalone.html` est un artefact généré, pas mis à jour automatiquement : après un fix, le régénérer avant de dire à l'utilisateur de retester (il peut tester une copie plus ancienne sans le savoir).
+- Le fichier `wakfu-companion.standalone.html` est un artefact généré, pas mis à jour automatiquement : **après chaque validation réussie d'un test/vérification en navigateur (voir section suivante), régénérer systématiquement avec `npm run build:standalone`** avant de dire à l'utilisateur que c'est bon — sinon il peut retester une copie plus ancienne sans le savoir.
+
+## Vérification systématique des résultats via Playwright (MCP)
+
+Pour toute tâche avec un effet visuel ou comportemental (CSS, layout, interaction, nouveau composant, tooltip, scroll...), ne jamais se contenter d'une relecture du code : **vérifier réellement dans un navigateur piloté par Playwright** avant de déclarer la tâche terminée. La confiance "ça devrait marcher d'après le CSS" a produit plusieurs faux positifs dans l'historique du projet (ex. z-index du header, clipping de grille CSS, tooltip natif invisible).
+
+Démarche standard :
+1. `npm start` (ou vérifier que le serveur de dev tourne déjà sur le port 4200).
+2. Piloter le navigateur avec l'outil MCP Playwright (`mcp__playwright__browser_navigate`, `browser_hover`, `browser_click`, `browser_evaluate`, `browser_take_screenshot`...).
+3. Pour un état applicatif difficile à atteindre par l'UI (connexion à un fichier, données de test), utiliser `browser_evaluate` pour piloter directement les signaux Angular via `ng.getComponent(...)` (voir `.claude/skills/verify-wakfu-companion/SKILL.md` pour le détail — simulation de lignes de log, navigation entre vues, injection de données factices).
+4. Inspecter le DOM/CSSOM réel (`getComputedStyle`, `getBoundingClientRect`, `elementFromPoint`) plutôt que de deviner — notamment pour tout ce qui touche au *stacking context* (z-index) ou au débordement (`scrollWidth`/`clientWidth`), deux catégories de bug qui ne se voient pas à la lecture du CSS seul.
+5. Capturer une screenshot pour confirmation visuelle quand c'est pertinent (état avant/après, hover, etc.).
+6. Une fois le résultat confirmé bon : **régénérer `wakfu-companion.standalone.html`** (`npm run build:standalone`) puis valider aussi `npm run build` (prod classique) avant de conclure.
+
+**Chrome absent de cet environnement** : `mcp__playwright__browser_navigate` échoue avec `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, et `npx playwright install chrome` échoue aussi (nécessite un mot de passe sudo non disponible). Solution de repli qui fonctionne sans sudo : installer Firefox via Playwright (`npx playwright install firefox`, ne nécessite pas de droits root) puis piloter le navigateur directement avec le paquet `playwright-core` (déjà présent après un premier `npm install playwright-core` dans le répertoire scratchpad) en pointant l'exécutable :
+```js
+const { firefox } = require('playwright-core');
+const browser = await firefox.launch({
+  executablePath: '/home/deck/.cache/ms-playwright/firefox-XXXX/firefox/firefox', // adapter le numéro de version présent sous ~/.cache/ms-playwright
+});
+```
+Écrire ces scripts de vérification dans le dossier scratchpad de la session (jamais dans le repo), et les supprimer une fois la vérification terminée.
 
 ## Principe d'architecture n°1 : rien d'externe ne doit fuiter dans le build standalone
 
@@ -61,6 +82,21 @@ Rencontré plusieurs fois cette session — avant de conclure à un bug produit 
 - [static.ankama.com/wakfu/portal/game/item/](https://static.ankama.com/wakfu/portal/game/item/) — CDN officiel Ankama, utilisé uniquement pour les recours manuels (`wakfu-item-image-overrides.data.ts`) sur des objets absents des JSON publics. Nécessite `referrerpolicy="no-referrer"` sur l'`<img>` (protection anti-hotlink, voir gotcha ci-dessus).
 - [cdn.wakfuli.com/items/](https://cdn.wakfuli.com/items/) — CDN alternatif indexant aussi par `gfxId` (`.webp`), utilisé comme 2ᵉ source de repli dans `item-icon.component.ts`.
 - [wakfu.com/fr/forum/590-outils/416762-donnee-json](https://www.wakfu.com/fr/forum/590-outils/416762-donnee-json) — fil du forum officiel expliquant comment récupérer et interpréter les fichiers JSON de gamedata Ankama (`wakfu.cdn.ankama.com/gamedata/{version}/{type}.json`, version courante dans `gamedata/config.json`) : source des données fusionnées dans `wakfu-items.data.ts` (`items.json` + `jobsItems.json`).
+
+## Conventions UI transverses (réutiliser, ne pas recréer)
+
+- **Tooltips** : système générique dans `src/styles.css` (`[title]`/`[attr.data-tooltip]` + `::after`) — ne JAMAIS dupliquer un bloc CSS `::after` local dans un composant pour un tooltip simple. Mettre le texte dans `[title]="'xxx' | t"` (statique) ou `[attr.data-tooltip]="expression()"` (texte dynamique/calculé, ex. `manualCloseTooltip()`) sur l'élément — le `::after` s'applique automatiquement, quel que soit le type d'élément (bouton, span, label...). **Par défaut le tooltip s'affiche au-dessus de l'élément** (évite qu'il soit masqué par le contenu qui suit dans le DOM). Classes modificatrices à ajouter selon la position de l'élément à l'écran :
+  - `.tooltip-below` : en dessous au lieu d'au-dessus — réservé (1) aux éléments situés dans un header (`.app-header` principal ou `.profile-page-header`), qui n'ont pas de place au-dessus (bord haut de l'écran/de la vue) ; (2) au **premier élément (ou 1ère ligne) d'une liste/grille à défilement** dans un `.tool-panel` (`overflow: hidden`), dont le tooltip "au-dessus" serait sinon rogné par le bord du panneau.
+    - Liste à une colonne : appliquer via `[class.tooltip-below]="$first"` (ou `i === 0`) dans la boucle `@for` (voir `tracker.component.html`, `damage-meter.component.html`) — jamais en dur sur toute la liste.
+    - Grille à plusieurs colonnes ET responsive (ex. `sound-item-grid` dans `profile-page.component.html`, `repeat(auto-fill, minmax(...))`) : `$first` ne suffit pas (il faut toute la 1ère ligne), et un nombre de colonnes figé en CSS (`:nth-child(-n + N)`) non plus — le nombre réel de colonnes varie avec la largeur du conteneur (fenêtre redimensionnée, sidebar, etc.), un `N` en dur sous-couvre ou sur-couvre selon la taille. Solution appliquée : un `ResizeObserver` sur l'élément grille (`viewChild` + `effect`, voir `profile-page.component.ts` `soundGridColumns`/`updateSoundGridColumns`) recalcule le nombre de colonnes réellement rendues à chaque redimensionnement (même formule que le CSS : `floor((largeurConteneur+gap)/(minColonne+gap))`, valeurs dupliquées en constantes `SOUND_GRID_GAP`/`SOUND_GRID_MIN_COL` à garder synchronisées avec le CSS de la grille), exposé en signal et utilisé côté template via `[class.tooltip-below]="i < soundGridColumns()"`. Ne pas cleanup l'observer dans `OnDestroy` serait une fuite mémoire.
+  - `.tooltip-align-left` / `.tooltip-align-right` : ancré à gauche/droite au lieu de centré (éléments proches d'un bord gauche/droit — ex. bouton "Retour", bouton profil en haut à droite, boutons × en bord de ligne/tuile)
+  - `.tooltip-multiline` : largeur max + retour à la ligne (libellés longs/dynamiques, ex. `manual-close-switch`)
+  - Ces classes sont combinables (ex. `tooltip-align-right tooltip-below`).
+  - Le tooltip natif du navigateur (délai ~1s, rendu OS) reste affiché en parallèle de celui-ci — comportement accepté, aucun moyen CSS de le désactiver sans retirer `title` (mauvais pour l'accessibilité clavier).
+- **Boutons icône** : classe globale `.icon-btn` (`styles.css`) pour tout bouton carré contenant uniquement une icône/glyphe (reset, suppression, fermeture...). Variante `.reset-btn` pour l'état rouge au survol (action destructive). Toujours accompagner d'un `[title]` (voir tooltips ci-dessus) — un bouton icône seul sans libellé visible doit systématiquement en avoir un.
+- **Panneaux d'outils** (Combat/Suivi/Chat, page profil...) : classe globale `.tool-panel` (`styles.css`) — fond, bordure, radius, ombre, `overflow: hidden` déjà gérés. Structure attendue à l'intérieur : `.panel-header` (classe globale) puis le contenu scrollable propre au composant.
+- **Header applicatif** (`app.css` `.app-header`) : porte explicitement `position: relative; z-index: 10;`. Nécessaire car c'est un flex-item de `.view-panel` sans quoi son contenu (dont les tooltips) perd le duel d'empilement face au contenu principal (`.app-main`) qui vient après lui dans le DOM et repeint par-dessus au moindre chevauchement — bug réel corrigé en session (tooltip "Profil" à moitié caché par le panneau Chat). Si un nouvel élément fixe/sticky est ajouté ailleurs dans l'app et se retrouve caché par du contenu qui le suit dans le DOM, suspecter le même mécanisme (stacking context manquant sur un ancêtre flex/grid-item) avant de chercher une autre cause.
+- **Signal d'index nullable (`number | null`)** : ne jamais tester `@if (signal(); as x)` sur un signal qui peut légitimement valoir `0` (ex. `avatarIndex`) — `0` est falsy en JS/Angular et le bloc `@else` se déclenche à tort. Toujours écrire `@if (signal() !== null)` explicitement dans ce cas (bug réel corrigé en session : le tout premier avatar de la liste ne s'affichait jamais).
 
 ## Autres conventions
 
