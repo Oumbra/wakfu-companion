@@ -3,71 +3,81 @@
   [class.header-allies]="side() === 'ally'"
   [class.header-enemies]="side() === 'enemy'"
   [class.drag-over]="interactive() && dragOver()"
+  [class.collapsible]="collapsible()"
+  (click)="toggleSection()"
   (dragover)="onDragOverList($event)"
   (dragleave)="onDragLeaveList()"
   (drop)="onDropOnList($event)"
 >
+  <img [src]="headerIcon()" class="half-header-icon" alt="" />
   <span>{{ title() }}</span>
   <span class="half-total">{{ total() | numberFr }}</span>
-</div>
-<div
-  class="half-list"
-  [class.drag-over]="interactive() && dragOver()"
-  (dragover)="onDragOverList($event)"
-  (dragleave)="onDragLeaveList()"
-  (drop)="onDropOnList($event)"
->
-  @if (rows().length === 0) {
-    <div class="empty-state">{{ emptyMessage() }}</div>
-  } @else {
-    @for (row of rows(); track row.name; let first = $first) {
-      <div class="entity-block" [class.expanded]="row.total > 0 && isExpanded(row.name)">
-        <div
-          class="entity-row"
-          [class.no-toggle]="row.total === 0"
-          [class.ko-zero]="row.total === 0 && row.defeated"
-          [attr.draggable]="interactive() ? 'true' : null"
-          (dragstart)="onDragStart($event, row.name)"
-          (click)="toggle(row)"
-          (contextmenu)="onContextMenu($event, row)"
-        >
-          <div
-            class="entity-bg-bar"
-            [class.no-bar]="row.total === 0"
-            [style.width]="barWidth(row.total)"
-          ></div>
-          @if (row.defeated) {
-            <span class="ko-icon" [class.tooltip-below]="first" [title]="'damageMeter.koTitle' | t">
-              <app-ko-icon />
-            </span>
-          }
-          <app-entity-icon [name]="row.name" [side]="side()" />
-          <span class="entity-name">
-            @if (row.total > 0) {
-              <span class="caret">▸</span>
-            }
-            {{ displayName(row) }}
-          </span>
-          <span class="entity-total">{{ row.total | numberFr }}</span>
-        </div>
-        @if (row.total > 0 && isExpanded(row.name)) {
-          <div class="spell-list">
-            @for (spell of row.spells; track spell.spell) {
-              <div class="spell-row">
-                <span class="spell-name">{{ spell.spell }}</span>
-                <span class="spell-elements">
-                  @for (el of spell.byElement | keyvalue; track el.key) {
-                    <span class="spell-element" [class]="elementClass($any(el.key))">{{
-                      el.value | numberFr
-                    }}</span>
-                  }
-                </span>
-                <span class="spell-total">{{ spell.total | numberFr }}</span>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    }
+  @if (collapsible()) {
+    <span class="caret" [class.expanded]="sectionExpanded()">▸</span>
   }
 </div>
+@if (!collapsible() || sectionExpanded()) {
+  <div
+    class="half-list"
+    [class.drag-over]="interactive() && dragOver()"
+    (dragover)="onDragOverList($event)"
+    (dragleave)="onDragLeaveList()"
+    (drop)="onDropOnList($event)"
+  >
+    @if (rows().length === 0) {
+      <div class="empty-state">{{ emptyMessage() }}</div>
+    } @else {
+      @for (row of rows(); track row.name; let first = $first) {
+        <div class="entity-block" [class.expanded]="row.total > 0 && isExpanded(row.name)">
+          <div
+            class="entity-row"
+            [class.no-toggle]="row.total === 0"
+            [class.ko-zero]="row.total === 0 && row.defeated"
+            [class.tooltip-below]="first"
+            [attr.title]="side() === 'enemy' && !isTracked(row.name) ? ('damageMeter.trackHint' | t) : null"
+            [attr.draggable]="interactive() ? 'true' : null"
+            (dragstart)="onDragStart($event, row.name)"
+            (click)="toggle(row)"
+            (contextmenu)="onContextMenu($event, row)"
+          >
+            <div
+              class="entity-bg-bar"
+              [class.no-bar]="row.total === 0"
+              [style.width]="barWidth(row.total)"
+            ></div>
+            @if (row.defeated) {
+              <span class="ko-icon" [class.tooltip-below]="first" [title]="'damageMeter.koTitle' | t">
+                <app-ko-icon />
+              </span>
+            }
+            <app-entity-icon [name]="row.name" [side]="side()" />
+            <span class="entity-name">
+              @if (row.total > 0) {
+                <span class="caret">▸</span>
+              }
+              {{ displayName(row) }}
+            </span>
+            <span class="entity-total">{{ row.total | numberFr }}</span>
+          </div>
+          @if (row.total > 0 && isExpanded(row.name)) {
+            <div class="spell-list">
+              @for (spell of row.spells; track spell.spell) {
+                <div class="spell-row">
+                  <span class="spell-name">{{ spell.spell }}</span>
+                  <span class="spell-elements">
+                    @for (el of spell.byElement | keyvalue; track el.key) {
+                      <span class="spell-element" [class]="elementClass($any(el.key))">{{
+                        el.value | numberFr
+                      }}</span>
+                    }
+                  </span>
+                  <span class="spell-total">{{ spell.total | numberFr }}</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    }
+  </div>
+}

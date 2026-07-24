@@ -6,13 +6,18 @@ import {
   StatsStoreService,
 } from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
+import { ClassPickerService } from '../../core/services/class-picker.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityDamageListComponent } from './entity-damage-list/entity-damage-list.component';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
-import { HEADER_ICON_DAMAGE_DATA_URI, HEADER_ICON_XP_DATA_URI } from '../../core/data/header-icons.data';
+import {
+  HEADER_ICON_COMBAT_DATA_URI,
+  HEADER_ICON_LOOT_DATA_URI,
+  HEADER_ICON_XP_DATA_URI,
+} from '../../core/data/header-icons.data';
 
 type MeterView = 'current' | 'history';
 type LootSort = 'name' | 'quantity';
@@ -30,17 +35,20 @@ type LootSort = 'name' | 'quantity';
   styleUrl: './damage-meter.component.css',
 })
 export class DamageMeterComponent {
-  protected readonly headerIcon = HEADER_ICON_DAMAGE_DATA_URI;
+  protected readonly headerIcon = HEADER_ICON_COMBAT_DATA_URI;
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
+  protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
 
   private readonly stats = inject(StatsStoreService);
   private readonly classifier = inject(EntityClassifierService);
+  private readonly classPickerService = inject(ClassPickerService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly view = signal<MeterView>('current');
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   protected readonly lootSort = signal<LootSort>('name');
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
+  private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
 
   protected readonly allyRows = computed<EntityDamageRow[]>(() =>
     this.stats.damageByAttacker().filter((r) => this.classifier.classify(r.name) === 'ally'),
@@ -82,6 +90,17 @@ export class DamageMeterComponent {
     return this.expandedFightXpIds().has(id);
   }
 
+  protected toggleFightLoot(id: number): void {
+    const next = new Set(this.expandedFightLootIds());
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this.expandedFightLootIds.set(next);
+  }
+
+  protected isFightLootExpanded(id: number): boolean {
+    return this.expandedFightLootIds().has(id);
+  }
+
   protected allyRowsFor(record: FightRecord): EntityDamageRow[] {
     return record.rows.filter((r) => this.classifier.classify(r.name) === 'ally');
   }
@@ -115,5 +134,16 @@ export class DamageMeterComponent {
   protected onLootContextMenu(event: MouseEvent, name: string): void {
     event.preventDefault();
     this.stats.addWatchedItem(name);
+  }
+
+  protected isWatched(name: string): boolean {
+    return this.stats.isWatched(name);
+  }
+
+  protected onXpContextMenu(event: MouseEvent, name: string): void {
+    event.preventDefault();
+    this.classPickerService.open(name, event.clientX, event.clientY, (className) => {
+      this.classifier.setManualClass(name, className);
+    });
   }
 }
