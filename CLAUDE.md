@@ -2,6 +2,10 @@
 
 Toutes les réponses, y compris la description des étapes, des actions et des raisonnements communiqués à l'utilisateur, doivent être rédigées exclusivement en français. Cela s'applique même si les messages de l'utilisateur, le code, ou la documentation du projet sont en anglais.
 
+# Mode full confiance (commandes shell)
+
+Ne jamais demander d'autorisation avant d'exécuter une commande Bash/Shell/Python/Npm/Node dont l'objectif est de répondre à une demande liée à ce projet (build, tests, scripts de vérification navigateur, installation de dépendances, inspection git en lecture, etc.). Exécuter ces commandes directement tant qu'elles ne compromettent pas l'intégrité de l'environnement OS ou du dépôt (pas de suppression destructive hors zone de travail temporaire, pas de force-push, pas de `git reset --hard`/`git clean -f` sans confirmation explicite, pas de modification de configuration système). Le détail des règles d'autorisation associées est dans `.claude/settings.json` (allowlist partagée par l'équipe) — l'étendre si une nouvelle commande de dev récurrente et sûre apparaît, plutôt que de laisser le prompt d'autorisation se répéter à chaque session.
+
 # Wakfu Companion — contexte projet
 
 Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagnon de jeu en temps réel qui lit le fichier `wakfu.log` du MMORPG Wakfu (parsing de logs, suivi de dégâts, historique de combats, butin, chat, alertes sonores). Trois cibles de build : dev servi (`npm start`), build web classique (`npm run build`), et **un fichier HTML autonome** (`npm run build:standalone`) ouvrable en `file://` sans serveur — cette 3ᵉ cible impose des contraintes qui reviennent dans presque toutes les tâches (voir plus bas).
