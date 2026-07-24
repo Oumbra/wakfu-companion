@@ -1,0 +1,46 @@
+name: Deploy production (GitHub Pages)
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Pas de package-lock.json committé dans ce dépôt (voir .gitignore) :
+      # `npm ci` échouerait, on utilise donc `npm install`.
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build standalone
+        run: npm run build:standalone
+
+      - name: Prepare deploy directory
+        run: |
+          mkdir -p public_deploy
+          cp wakfu-companion.standalone.html public_deploy/index.html
+
+      - name: Deploy to GitHub Pages (root)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public_deploy
+          destination_dir: .
+          keep_files: true
