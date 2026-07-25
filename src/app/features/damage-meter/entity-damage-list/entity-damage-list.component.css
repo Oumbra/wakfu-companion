@@ -16,7 +16,7 @@
   font-size: 0.75rem;
   font-weight: bold;
   letter-spacing: 1px;
-  color: #ddd;
+  color: var(--accent);
   text-transform: uppercase;
   border-bottom: 1px solid #333;
   flex-shrink: 0;
