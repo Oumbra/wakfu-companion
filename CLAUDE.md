@@ -10,6 +10,14 @@ Ne jamais demander d'autorisation avant d'exécuter une commande Bash/Shell/Pyth
 
 Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagnon de jeu en temps réel qui lit le fichier `wakfu.log` du MMORPG Wakfu (parsing de logs, suivi de dégâts, historique de combats, butin, chat, alertes sonores). Trois cibles de build : dev servi (`npm start`), build web classique (`npm run build`), et **un fichier HTML autonome** (`npm run build:standalone`) ouvrable en `file://` sans serveur — cette 3ᵉ cible impose des contraintes qui reviennent dans presque toutes les tâches (voir plus bas).
 
+## Git Commit Guidelines
+
+- Utiliser le format `Conventional Commits` : feat:, fix:, docs:, refactor:, chore:
+- Ligne de sujet < 50 caractères
+- Ne pas ajouter d'attribution IA (pas de "Co-Authored-By: Claude")
+- Toujours commit sur la branche `claude/dev`, jamais sur main
+- Travaille uniquement sur la branche `claude/dev`, ne crée pas de nouvelle branche.
+
 ## Commandes utiles
 
 - `npm start` — serveur de dev (port 4200, voir `.claude/launch.json`)
