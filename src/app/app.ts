@@ -13,6 +13,7 @@ import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
+import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 
 @Component({
   selector: 'app-root',
@@ -35,6 +36,7 @@ export class App implements OnInit {
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
+  protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
 

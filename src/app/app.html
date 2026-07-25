@@ -3,6 +3,7 @@
     <div class="view-panel">
       <header class="app-header">
         <div class="app-header-left">
+          <img [src]="appLogo" class="app-logo" alt="" />
           <div class="app-title">Wakfu Companion</div>
           @if (logFileAccess.status() === 'connected') {
             <div class="app-header-file-group">

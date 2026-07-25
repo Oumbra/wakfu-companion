@@ -54,6 +54,12 @@
   font-size: 1.05rem;
 }
 
+.app-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 .app-header-left {
   display: flex;
   align-items: center;
