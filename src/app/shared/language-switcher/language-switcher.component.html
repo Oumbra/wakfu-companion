@@ -5,7 +5,7 @@
     [class.tooltip-align-right]="variant() === 'header'"
     [class.tooltip-below]="variant() === 'header'"
     (click)="toggle()"
-    [title]="variant() === 'header' ? current().label : null"
+    [attr.title]="variant() === 'header' ? current().label : null"
   >
     <app-flag-icon class="lang-current-glyph" [country]="current().flagCountry" />
     @if (variant() === 'row') {
