@@ -38,15 +38,14 @@
 }
 
 /* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
-   plutôt qu'une fenêtre flottante centrée, le panneau occupe exactement la
-   même zone que la carte Combat/Suivi/Chat active (mêmes largeur/hauteur),
-   tab-bar visible au-dessus. `top` = hauteur .app-header mobile (45px, voir
-   app.css) + padding-top .dashboard (15px) + hauteur .tab-bar mobile (41px,
-   voir dashboard.component.css) — à garder synchronisé si l'une des 3
+   plutôt qu'une fenêtre flottante centrée, le panneau recouvre toute la zone
+   dashboard (tab-bar Combat/Suivi/Chat comprise) avec la même largeur que la
+   carte. `top` = hauteur .app-header mobile (45px, voir app.css) +
+   padding-top .dashboard (15px) — à garder synchronisé si l'une des 2
    change. Glisser n'a plus de sens à taille fixe : curseur par défaut. */
 @media (max-width: 800px) {
   .recap-panel {
-    top: 101px;
+    top: 60px;
     left: 15px;
     right: 15px;
     bottom: 15px;

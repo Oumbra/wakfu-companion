@@ -221,6 +221,45 @@
   .avatar-grid {
     grid-template-columns: repeat(6, 1fr);
   }
+
+  /* "Fermeture de l'alerte" sur une seule ligne : le libellé tronque en
+     ellipsis plutôt que de forcer un retour à la ligne, l'unité "sec." et le
+     libellé "Manuelle" (déjà portés par le tooltip du switch) sont masqués
+     visuellement mais restent lisibles par un lecteur d'écran. */
+  .alert-timing-control {
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .alert-timing-text {
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.72rem;
+  }
+  .alert-timing-duration {
+    flex-shrink: 0;
+    gap: 3px;
+  }
+  .alert-duration-input {
+    width: 38px;
+    padding: 6px 4px;
+  }
+  .alert-timing-unit,
+  .manual-close-switch .switch-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .manual-close-switch {
+    flex-shrink: 0;
+    gap: 0;
+  }
 }
 
 /* Bloc "quand fermer le toast d'alerte" : icône + libellé + durée (grisée en

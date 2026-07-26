@@ -36,7 +36,9 @@
             </button>
           }
           <app-language-switcher />
-          <app-profile />
+          @if (logFileAccess.status() === 'connected') {
+            <app-profile />
+          }
         </div>
 
         <div class="app-header-burger">
@@ -69,9 +71,11 @@
                 </button>
               }
               <app-language-switcher variant="row" />
-              <div (click)="closeMobileMenu()">
-                <app-profile variant="row" />
-              </div>
+              @if (logFileAccess.status() === 'connected') {
+                <div (click)="closeMobileMenu()">
+                  <app-profile variant="row" />
+                </div>
+              }
             </div>
           }
         </div>

@@ -135,6 +135,10 @@
   align-items: center;
   justify-content: center;
 }
+.session-recap-btn:hover {
+  background: transparent;
+  border-color: var(--accent);
+}
 .session-recap-icon {
   width: 18px;
   height: 18px;
@@ -175,11 +179,21 @@
   .app-header {
     padding: 8px 10px;
   }
+  .app-header-left {
+    gap: 8px;
+    min-width: 0;
+  }
   .app-title {
-    display: none;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .app-header-file-group {
+    gap: 4px;
+    min-width: 0;
   }
   .file-chip {
-    max-width: 120px;
+    max-width: 90px;
   }
   .app-header-right-desktop {
     display: none;

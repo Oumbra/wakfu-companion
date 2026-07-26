@@ -63,7 +63,8 @@
 
   @if (!isAtBottom()) {
     <button class="scroll-to-bottom-btn" (click)="scrollToBottom()">
-      ↓ {{ 'chat.scrollToBottom' | t }}
+      {{ 'chat.scrollToBottom' | t }}
+      <span class="scroll-to-bottom-icon">↓</span>
     </button>
   }
 </div>

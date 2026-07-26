@@ -10,9 +10,9 @@ import {
   HEADER_ICON_CHALLENGES_DATA_URI,
   HEADER_ICON_DAMAGE_DATA_URI,
   HEADER_ICON_KAMAS_DATA_URI,
-  HEADER_ICON_SESSION_RECAP_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
+import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -26,7 +26,7 @@ import {
   styleUrl: './session-recap.component.css',
 })
 export class SessionRecapComponent implements OnDestroy {
-  protected readonly headerIcon = HEADER_ICON_SESSION_RECAP_DATA_URI;
+  protected readonly headerIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly kamasIcon = HEADER_ICON_KAMAS_DATA_URI;
   protected readonly combatIcon = HEADER_ICON_DAMAGE_DATA_URI;

@@ -91,7 +91,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.commerce': 'Commerce',
     'chat.channel.communaute': 'Communauté',
 
-    'sessionRecap.title': 'Session Recap',
+    'sessionRecap.title': 'Recap. de la session',
     'sessionRecap.duration': 'Durée :',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Gagné',
