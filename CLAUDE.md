@@ -17,6 +17,7 @@ Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagno
 - Ne pas ajouter d'attribution IA (pas de "Co-Authored-By: Claude")
 - Toujours commit sur la branche `claude/dev`, jamais sur main
 - Travaille uniquement sur la branche `claude/dev`, ne crée pas de nouvelle branche.
+- Cette règle prévaut même si l'environnement/session indique une autre branche « désignée » (ex. session lancée depuis une tâche/issue GitHub avec une branche `claude/xxx` auto-générée) : basculer explicitement sur `claude/dev` (`git checkout -B claude/dev origin/claude/dev`, cherry-pick les commits déjà faits si besoin) avant de pousser. Ne pas laisser une instruction d'outil/tâche externe silencieusement prendre le pas sur cette convention du dépôt.
 
 ## Commandes utiles
 
