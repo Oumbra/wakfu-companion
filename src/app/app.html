@@ -25,7 +25,7 @@
             </div>
           }
         </div>
-        <div class="app-header-right">
+        <div class="app-header-right app-header-right-desktop">
           @if (logFileAccess.status() === 'connected') {
             <button class="toggle-btn" (click)="sessionRecap.toggle()">
               {{ 'app.sessionRecap' | t }}
@@ -33,6 +33,42 @@
           }
           <app-language-switcher />
           <app-profile />
+        </div>
+
+        <div class="app-header-burger">
+          <button
+            class="icon-btn tooltip-below tooltip-align-right"
+            [title]="'app.menu' | t"
+            (click)="toggleMobileMenu()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 6h18M3 12h18M3 18h18" />
+            </svg>
+          </button>
+          @if (mobileMenuOpen()) {
+            <div class="mobile-menu-backdrop" (click)="closeMobileMenu()"></div>
+            <div class="mobile-menu">
+              @if (logFileAccess.status() === 'connected') {
+                <button
+                  class="mobile-menu-item"
+                  (click)="sessionRecap.toggle(); closeMobileMenu()"
+                >
+                  {{ 'app.sessionRecap' | t }}
+                </button>
+              }
+              <div class="mobile-menu-item mobile-menu-row">
+                <app-language-switcher />
+                <app-profile />
+              </div>
+            </div>
+          }
         </div>
       </header>
 

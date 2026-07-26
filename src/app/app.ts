@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { LogFileAccessService } from './core/services/log-file-access.service';
 import { StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
@@ -37,6 +37,7 @@ export class App implements OnInit {
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
+  protected readonly mobileMenuOpen = signal(false);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
 
@@ -50,6 +51,14 @@ export class App implements OnInit {
 
   protected onChangeFile(): void {
     void this.logFileAccess.forgetFile();
+  }
+
+  protected toggleMobileMenu(): void {
+    this.mobileMenuOpen.update((v) => !v);
+  }
+
+  protected closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 
   protected onClassChosen(className: string): void {
