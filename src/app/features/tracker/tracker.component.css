@@ -44,6 +44,7 @@
 }
 .watch-name {
   flex-grow: 1;
+  min-width: 0;
   font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
