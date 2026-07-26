@@ -22,6 +22,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.reset': 'Réinitialiser',
     'app.changeFile': 'Changer de fichier',
     'app.menu': 'Menu',
+    'app.language': 'Langue',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'En cours',
@@ -122,6 +123,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.reset': 'Reset',
     'app.changeFile': 'Change file',
     'app.menu': 'Menu',
+    'app.language': 'Language',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'Current',
@@ -220,6 +222,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Cambiar archivo',
     'app.menu': 'Menú',
+    'app.language': 'Idioma',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'En curso',
@@ -320,6 +323,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Trocar arquivo',
     'app.menu': 'Menu',
+    'app.language': 'Idioma',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'Em andamento',

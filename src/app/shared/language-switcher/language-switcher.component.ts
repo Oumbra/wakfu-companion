@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { FlagCountry, FlagIconComponent } from '../flag-icon/flag-icon.component';
+import { TranslatePipe } from '../translate.pipe';
 
 interface LocaleOption {
   code: AppLocale;
@@ -18,7 +19,7 @@ const LOCALES: readonly LocaleOption[] = [
 /** Drapeau de langue courante ; clic pour choisir une autre langue parmi celles proposées. */
 @Component({
   selector: 'app-language-switcher',
-  imports: [FlagIconComponent],
+  imports: [FlagIconComponent, TranslatePipe],
   templateUrl: './language-switcher.component.html',
   styleUrl: './language-switcher.component.css',
 })
@@ -26,6 +27,9 @@ export class LanguageSwitcherComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly locales = LOCALES;
   protected readonly open = signal(false);
+
+  /** 'header' : bouton icône seul (défaut) ; 'row' : ligne de menu burger (icône + libellé). */
+  readonly variant = input<'header' | 'row'>('header');
 
   protected readonly current = computed(
     () => this.locales.find((l) => l.code === this.i18n.locale()) ?? this.locales[0],

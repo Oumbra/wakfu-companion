@@ -108,7 +108,8 @@
 .mobile-menu-item {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 10px;
   height: 36px;
   padding: 0 10px;
   background: #262626;
@@ -122,12 +123,22 @@
   background: #2f2f2f;
   color: #fff;
 }
+.mobile-menu-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
 
-.mobile-menu-row {
-  justify-content: space-between;
-  background: none;
-  padding: 2px 4px;
-  height: auto;
+.session-recap-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.session-recap-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
 }
 
 .file-chip {
