@@ -223,12 +223,13 @@
   }
 
   /* "Fermeture de l'alerte" sur une seule ligne : le libellé tronque en
-     ellipsis plutôt que de forcer un retour à la ligne, l'unité "sec." et le
-     libellé "Manuelle" (déjà portés par le tooltip du switch) sont masqués
-     visuellement mais restent lisibles par un lecteur d'écran. */
+     ellipsis plutôt que de forcer un retour à la ligne. L'unité "sec." reste
+     affichée (sans elle le nombre seul est incompréhensible) ; seul le
+     libellé "Manuelle" est masqué visuellement (déjà porté par le tooltip du
+     switch) mais reste lisible par un lecteur d'écran. */
   .alert-timing-control {
     flex-wrap: nowrap;
-    gap: 6px;
+    gap: 5px;
     padding: 8px 10px;
   }
   .alert-timing-text {
@@ -238,17 +239,20 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
   }
   .alert-timing-duration {
     flex-shrink: 0;
-    gap: 3px;
+    gap: 2px;
   }
   .alert-duration-input {
-    width: 38px;
-    padding: 6px 4px;
+    width: 32px;
+    padding: 6px 2px;
+    font-size: 0.78rem;
   }
-  .alert-timing-unit,
+  .alert-timing-unit {
+    font-size: 0.68rem;
+  }
   .manual-close-switch .switch-label {
     position: absolute;
     width: 1px;

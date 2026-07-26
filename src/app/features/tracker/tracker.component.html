@@ -29,11 +29,13 @@
           } @else {
             <app-item-icon [name]="entry.name" />
           }
-          <span class="watch-name">{{
-            entry.kind === 'item'
-              ? i18n.translateItemName(entry.name)
-              : i18n.translateMonsterName(entry.name)
-          }}</span>
+          <span
+            class="watch-name"
+            #nameEl
+            (mouseenter)="checkTruncation(nameEl, entry.name)"
+            [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
+            >{{ displayName(entry) }}</span
+          >
           <span class="watch-count">
             {{ entry.count | numberFr }}
             @if (entry.kind === 'enemy') {

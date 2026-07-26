@@ -1,5 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
-import { StatsStoreService } from '../../core/services/stats-store.service';
+import { Component, computed, inject, signal } from '@angular/core';
+import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -29,6 +29,27 @@ export class TrackerComponent {
   protected readonly existingNames = computed(() =>
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
   );
+
+  /** Noms actuellement tronqués par l'ellipsis CSS (détecté au survol, voir
+   * `checkTruncation`) : seuls ceux-là reçoivent un `title`, pour n'afficher
+   * la tooltip que quand le nom complet n'est pas déjà visible. */
+  protected readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
+
+  protected displayName(entry: WatchlistEntry): string {
+    return entry.kind === 'item'
+      ? this.i18n.translateItemName(entry.name)
+      : this.i18n.translateMonsterName(entry.name);
+  }
+
+  protected checkTruncation(el: HTMLElement, name: string): void {
+    const isTruncated = el.scrollWidth > el.clientWidth;
+    const current = this.truncatedNames();
+    if (isTruncated === current.has(name)) return;
+    const updated = new Set(current);
+    if (isTruncated) updated.add(name);
+    else updated.delete(name);
+    this.truncatedNames.set(updated);
+  }
 
   protected add(result: WakfuSearchResult): void {
     if (result.kind === 'enemy') {

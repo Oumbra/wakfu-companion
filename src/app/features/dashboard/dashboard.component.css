@@ -53,7 +53,13 @@
 
 .panels-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  /* `minmax(0, 1fr)` plutôt que `1fr` seul : une simple `1fr` a un minimum
+     implicite `auto` (basé sur le contenu), qui laisse une colonne grandir
+     au-delà de sa part équitable si un panneau contient du texte non
+     tronqué (ex. un nom suivi trop long) — la colonne, puis toute la chaîne
+     de parents jusqu'à `app-tracker`, grandit alors plus large que l'écran
+     au lieu de forcer le contenu à rétrécir/tronquer en ellipsis. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 15px;
   flex-grow: 1;
   min-height: 0;
@@ -61,7 +67,7 @@
 
 @media (max-width: 1200px) {
   .panels-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 }
 
@@ -76,7 +82,7 @@
     display: flex;
   }
   .panels-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .panels-row > .tab-hidden {
     display: none;
