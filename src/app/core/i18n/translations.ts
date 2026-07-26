@@ -21,6 +21,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Réinitialiser',
     'app.changeFile': 'Changer de fichier',
+    'app.menu': 'Menu',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'En cours',
@@ -120,6 +121,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Reset',
     'app.changeFile': 'Change file',
+    'app.menu': 'Menu',
 
     'damageMeter.header': 'Combat',
     'damageMeter.tab.current': 'Current',
@@ -217,6 +219,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.sessionRecap': 'Resumen de sesión',
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Cambiar archivo',
+    'app.menu': 'Menú',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'En curso',
@@ -316,6 +319,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.sessionRecap': 'Resumo da sessão',
     'app.reset': 'Reiniciar',
     'app.changeFile': 'Trocar arquivo',
+    'app.menu': 'Menu',
 
     'damageMeter.header': 'Combate',
     'damageMeter.tab.current': 'Em andamento',

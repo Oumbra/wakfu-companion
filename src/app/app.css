@@ -78,6 +78,58 @@
   gap: 14px;
 }
 
+.app-header-burger {
+  position: relative;
+  display: none;
+}
+
+.mobile-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.mobile-menu {
+  position: absolute;
+  z-index: 101;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #1c1c1c;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 10px;
+  background: #262626;
+  border: none;
+  border-radius: 6px;
+  color: #ccc;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+.mobile-menu-item:hover {
+  background: #2f2f2f;
+  color: #fff;
+}
+
+.mobile-menu-row {
+  justify-content: space-between;
+  background: none;
+  padding: 2px 4px;
+  height: auto;
+}
+
 .file-chip {
   font-family: monospace;
   color: #aaa;
@@ -102,4 +154,26 @@
   flex-grow: 1;
   min-width: 0;
   min-height: 0;
+}
+
+/* Breakpoint mobile (ex. Galaxy S23, 360px de large) : le header horizontal
+   (logo + titre + fichier + session recap + langue + profil) ne tient plus
+   sur une seule ligne sans wrap → on masque le titre et on regroupe
+   session recap/langue/profil dans un menu burger. */
+@media (max-width: 640px) {
+  .app-header {
+    padding: 8px 10px;
+  }
+  .app-title {
+    display: none;
+  }
+  .file-chip {
+    max-width: 120px;
+  }
+  .app-header-right-desktop {
+    display: none;
+  }
+  .app-header-burger {
+    display: flex;
+  }
 }

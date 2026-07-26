@@ -203,6 +203,26 @@
   box-shadow: 0 0 8px var(--accent);
 }
 
+/* Breakpoint mobile (ex. Galaxy S23, 360px de large) : `identity-left` (160px
+   fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
+   on passe en colonne et on réduit le nombre de colonnes de la grille. */
+@media (max-width: 640px) {
+  .identity-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .identity-left {
+    width: 100%;
+  }
+  .identity-right {
+    width: 100%;
+  }
+  .avatar-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
 /* Bloc "quand fermer le toast d'alerte" : icône + libellé + durée (grisée en
    mode manuel) + interrupteur explicite, plutôt qu'un simple nombre isolé. */
 .alert-timing-control {
