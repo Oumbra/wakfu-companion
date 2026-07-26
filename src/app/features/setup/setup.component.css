@@ -21,14 +21,6 @@
   animation: fadeIn 0.4s;
 }
 
-.setup-title {
-  color: var(--accent);
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  margin: 0 0 28px;
-  font-size: 1.6rem;
-}
-
 .drop-zone {
   border: 2px dashed #555;
   border-radius: 10px;
