@@ -5,6 +5,7 @@
       [class.active]="activeTab() === 'damage'"
       (click)="activeTab.set('damage')"
     >
+      <img [src]="combatIcon" class="tab-icon" alt="" />
       {{ 'damageMeter.header' | t }}
     </button>
     <button
@@ -12,6 +13,7 @@
       [class.active]="activeTab() === 'tracker'"
       (click)="activeTab.set('tracker')"
     >
+      <img [src]="suiviIcon" class="tab-icon" alt="" />
       {{ 'tracker.header' | t }}
     </button>
     <button
@@ -19,6 +21,7 @@
       [class.active]="activeTab() === 'chat'"
       (click)="activeTab.set('chat')"
     >
+      <img [src]="chatIcon" class="tab-icon" alt="" />
       {{ 'chat.header' | t }}
     </button>
   </div>

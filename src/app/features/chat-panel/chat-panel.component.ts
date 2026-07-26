@@ -6,6 +6,7 @@ import { CHAT_CHANNELS } from '../../core/services/log-parser';
 import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.model';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
+import { HEADER_ICON_CHAT_DATA_URI } from '../../core/data/header-icons.data';
 
 const ACTIVE_CHANNELS_KEY = 'wakfu-active-chat-channels';
 const CHAT_FILTERS_KEY = 'wakfu-chat-filters';
@@ -26,6 +27,7 @@ function messageMatchesFilters(msg: ChatMessageEntry, filters: readonly string[]
   styleUrl: './chat-panel.component.css',
 })
 export class ChatPanelComponent {
+  protected readonly headerIcon = HEADER_ICON_CHAT_DATA_URI;
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   private readonly persistence = inject(PersistenceService);

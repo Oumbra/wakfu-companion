@@ -33,6 +33,10 @@
 
 .tab-btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   height: 34px;
   padding: 0 8px;
   background: transparent;
@@ -49,6 +53,12 @@
   background: var(--panel-bg);
   border-bottom-color: var(--accent);
   color: var(--accent);
+}
+.tab-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .panels-row {
