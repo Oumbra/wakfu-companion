@@ -16,28 +16,38 @@
   min-height: 0;
 }
 
+/* Barre d'onglets mobile : fusionnée visuellement avec l'en-tête du panneau
+   actif (voir styles.css pour le masquage du .panel-header propre à chaque
+   panneau et l'alignement du haut de .tool-panel) plutôt que d'être une
+   rangée séparée au-dessus — gagne de la hauteur et lit comme un seul bloc. */
 .tab-bar {
   display: none;
   flex-shrink: 0;
-  gap: 8px;
+  gap: 2px;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 6px 0;
 }
 
 .tab-btn {
   flex: 1;
-  height: 36px;
+  height: 34px;
   padding: 0 8px;
-  background: #202020;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  color: #aaa;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  color: #999;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 .tab-btn.active {
-  background: var(--panel-header-bg);
-  border-color: var(--accent);
+  background: var(--panel-bg);
+  border-bottom-color: var(--accent);
   color: var(--accent);
 }
 
@@ -59,6 +69,9 @@
    de hauteur chacun pour être utilisables en combat (voir CLAUDE.md) : on
    passe en mode onglet, un seul panneau affiché en plein espace disponible. */
 @media (max-width: 800px) {
+  .dashboard {
+    gap: 0;
+  }
   .tab-bar {
     display: flex;
   }
