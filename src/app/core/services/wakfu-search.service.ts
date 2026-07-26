@@ -22,20 +22,11 @@ interface LocalizedEntry {
 }
 
 const MIN_QUERY_LENGTH = 3;
-const MAX_RESULTS = 5;
 
-interface ScoredEntry {
+interface SearchEntry {
   fr: string;
   label: string;
-  score: number;
   kind: WakfuSearchKind;
-}
-
-/** 0 = correspond exactement, 1 = commence par la recherche, 2 = la contient ailleurs. */
-function matchRank(query: string, candidate: string): number {
-  if (candidate === query) return 0;
-  if (candidate.startsWith(query)) return 1;
-  return 2;
 }
 
 function localizedName(entry: LocalizedEntry, locale: AppLocale): string {
@@ -47,8 +38,8 @@ function searchTable(
   kind: WakfuSearchKind,
   query: string,
   locale: AppLocale,
-): ScoredEntry[] {
-  const results: ScoredEntry[] = [];
+): SearchEntry[] {
+  const results: SearchEntry[] = [];
   for (const key in table) {
     const entry = table[key];
     const label = localizedName(entry, locale);
@@ -58,7 +49,6 @@ function searchTable(
       fr: entry.fr,
       label,
       kind,
-      score: matchRank(query, normalizedLabel) * 1000 + normalizedLabel.length,
     });
   }
   return results;
@@ -77,41 +67,40 @@ function searchTable(
 export class WakfuSearchService {
   private readonly i18n = inject(I18nService);
 
-  searchItems(query: string, limit = MAX_RESULTS): WakfuSearchResult[] {
-    return this.rank(this.scoredItems(query), limit);
+  searchItems(query: string): WakfuSearchResult[] {
+    return this.sortAlphabetically(this.matchedItems(query));
   }
 
-  searchEnemies(query: string, limit = MAX_RESULTS): WakfuSearchResult[] {
-    return this.rank(this.scoredEnemies(query), limit);
+  searchEnemies(query: string): WakfuSearchResult[] {
+    return this.sortAlphabetically(this.matchedEnemies(query));
   }
 
-  /** Recherche combinée objets + monstres, triée toutes catégories confondues — le nom (unique par domaine, voir `kind`) sert à identifier le type sans sélecteur manuel. */
-  searchAll(query: string, limit = MAX_RESULTS): WakfuSearchResult[] {
-    return this.rank([...this.scoredItems(query), ...this.scoredEnemies(query)], limit);
+  /** Recherche combinée objets + monstres, triée alphabétiquement toutes catégories confondues — le nom (unique par domaine, voir `kind`) sert à identifier le type sans sélecteur manuel. */
+  searchAll(query: string): WakfuSearchResult[] {
+    return this.sortAlphabetically([...this.matchedItems(query), ...this.matchedEnemies(query)]);
   }
 
-  private scoredItems(query: string): ScoredEntry[] {
-    return this.scoredSearch(WAKFU_ITEMS_FR, 'item', query);
+  private matchedItems(query: string): SearchEntry[] {
+    return this.matchedSearch(WAKFU_ITEMS_FR, 'item', query);
   }
 
-  private scoredEnemies(query: string): ScoredEntry[] {
-    return this.scoredSearch(WAKFU_MONSTERS_FR, 'enemy', query);
+  private matchedEnemies(query: string): SearchEntry[] {
+    return this.matchedSearch(WAKFU_MONSTERS_FR, 'enemy', query);
   }
 
-  private scoredSearch(
+  private matchedSearch(
     table: Readonly<Record<string, LocalizedEntry>>,
     kind: WakfuSearchKind,
     query: string,
-  ): ScoredEntry[] {
+  ): SearchEntry[] {
     const normalized = normalizeWakfuName(query);
     if (normalized.length < MIN_QUERY_LENGTH) return [];
     return searchTable(table, kind, normalized, this.i18n.locale());
   }
 
-  private rank(entries: ScoredEntry[], limit: number): WakfuSearchResult[] {
+  private sortAlphabetically(entries: SearchEntry[]): WakfuSearchResult[] {
     return entries
-      .sort((a, b) => a.score - b.score)
-      .slice(0, limit)
+      .sort((a, b) => a.label.localeCompare(b.label, this.i18n.locale()))
       .map((r) => ({ name: r.fr, label: r.label, kind: r.kind }));
   }
 }
