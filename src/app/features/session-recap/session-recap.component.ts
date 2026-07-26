@@ -8,7 +8,7 @@ import { EntityClassifierService } from '../../core/services/entity-classifier.s
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import {
   HEADER_ICON_CHALLENGES_DATA_URI,
-  HEADER_ICON_DAMAGE_DATA_URI,
+  HEADER_ICON_COMBAT_DATA_URI,
   HEADER_ICON_KAMAS_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
@@ -29,7 +29,7 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly headerIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly kamasIcon = HEADER_ICON_KAMAS_DATA_URI;
-  protected readonly combatIcon = HEADER_ICON_DAMAGE_DATA_URI;
+  protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
   protected readonly challengesIcon = HEADER_ICON_CHALLENGES_DATA_URI;
 
   protected readonly stats = inject(StatsStoreService);

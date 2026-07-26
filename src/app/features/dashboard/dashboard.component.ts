@@ -3,6 +3,11 @@ import { DamageMeterComponent } from '../damage-meter/damage-meter.component';
 import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { TrackerComponent } from '../tracker/tracker.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import {
+  HEADER_ICON_CHAT_DATA_URI,
+  HEADER_ICON_COMBAT_DATA_URI,
+  HEADER_ICON_SUIVI_DATA_URI,
+} from '../../core/data/header-icons.data';
 
 type DashboardTab = 'damage' | 'tracker' | 'chat';
 
@@ -18,4 +23,7 @@ type DashboardTab = 'damage' | 'tracker' | 'chat';
 })
 export class DashboardComponent {
   protected readonly activeTab = signal<DashboardTab>('damage');
+  protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
+  protected readonly suiviIcon = HEADER_ICON_SUIVI_DATA_URI;
+  protected readonly chatIcon = HEADER_ICON_CHAT_DATA_URI;
 }

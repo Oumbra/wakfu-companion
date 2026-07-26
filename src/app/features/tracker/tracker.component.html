@@ -1,6 +1,9 @@
 <div class="tool-panel">
   <div class="panel-header">
-    <span class="header-label">{{ 'tracker.header' | t }}</span>
+    <span class="header-label">
+      <img [src]="headerIcon" class="header-icon" alt="" />
+      {{ 'tracker.header' | t }}
+    </span>
   </div>
 
   <div class="tracker-controls">

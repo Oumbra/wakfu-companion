@@ -1,6 +1,9 @@
 <div class="tool-panel">
   <div class="panel-header">
-    <span class="header-label">{{ 'chat.header' | t }}</span>
+    <span class="header-label">
+      <img [src]="headerIcon" class="header-icon" alt="" />
+      {{ 'chat.header' | t }}
+    </span>
   </div>
 
   <div class="channel-filters">
