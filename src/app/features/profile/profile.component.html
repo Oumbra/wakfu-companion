@@ -4,7 +4,7 @@
   [class.tooltip-below]="variant() === 'header'"
   [class.profile-btn-row]="variant() === 'row'"
   (click)="open()"
-  [title]="variant() === 'header' ? ('profile.button' | t) : null"
+  [attr.title]="variant() === 'header' ? ('profile.button' | t) : null"
 >
   @if (profile.avatarIndex() !== null) {
     <app-avatar-icon class="profile-avatar" [index]="profile.avatarIndex()!" />
