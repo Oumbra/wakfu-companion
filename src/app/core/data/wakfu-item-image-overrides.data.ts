@@ -15,5 +15,4 @@
 export const WAKFU_ITEM_IMAGE_OVERRIDES: Readonly<Record<string, string>> = {
   'jeton brut': 'https://static.ankama.com/wakfu/portal/game/item/64/64921003.png',
   'eclat': 'https://static.ankama.com/wakfu/portal/game/item/64/81127083.png',
-  'mimicroquettes': 'https://static.ankama.com/wakfu/portal/game/item/42/47612324.w40h40.png',
 };
