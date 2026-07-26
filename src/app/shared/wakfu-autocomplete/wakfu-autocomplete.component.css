@@ -21,7 +21,9 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
+  /* Au-delà de 5 éléments (5 * 35px), la liste défile au lieu de s'étirer. */
+  max-height: 175px;
+  overflow-y: auto;
   z-index: 20;
 }
 .wakfu-autocomplete-item {
@@ -33,6 +35,7 @@
   /* Le `button { height: 28px }` global doit être écrasé, sinon la ligne
      ne respecte pas la hauteur voulue ici. */
   height: 35px;
+  flex-shrink: 0;
   padding: 0 10px;
   background: transparent;
   border: none;

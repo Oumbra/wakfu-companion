@@ -7,6 +7,7 @@ import {
   input,
   output,
   signal,
+  viewChildren,
 } from '@angular/core';
 import {
   WakfuSearchKind,
@@ -32,13 +33,15 @@ export interface WakfuAutocompleteOption extends WakfuSearchResult {
 /**
  * Champ de saisie avec autocomplétion sur le référentiel objets/monstres
  * (voir WakfuSearchService) : se déclenche à partir de 3 caractères,
- * affiche au plus 5 résultats sous la forme icône + nom, dans la langue
- * actuelle de l'utilisateur. Aucune saisie libre n'est acceptée — seule la
- * sélection d'une suggestion non déjà présente (voir `existingNames`) émet
- * `selected` (le champ se vide ensuite, prêt pour un nouvel ajout). En
- * domaine `both`, chaque suggestion identifie elle-même son type (`kind`,
- * objet ou monstre) via le référentiel qui l'a produite — pas besoin d'un
- * sélecteur manuel préalable.
+ * affiche les résultats triés par ordre alphabétique sous la forme icône +
+ * nom, dans la langue actuelle de l'utilisateur — la liste défile au-delà de
+ * 5 éléments (voir `.wakfu-autocomplete-list` en CSS) plutôt que de tronquer
+ * les résultats. Aucune saisie libre n'est acceptée — seule la sélection
+ * d'une suggestion non déjà présente (voir `existingNames`) émet `selected`
+ * (le champ se vide ensuite, prêt pour un nouvel ajout). En domaine `both`,
+ * chaque suggestion identifie elle-même son type (`kind`, objet ou monstre)
+ * via le référentiel qui l'a produite — pas besoin d'un sélecteur manuel
+ * préalable.
  */
 @Component({
   selector: 'app-wakfu-autocomplete',
@@ -60,6 +63,8 @@ export class WakfuAutocompleteComponent {
   protected readonly query = signal('');
   protected readonly open = signal(false);
   protected readonly activeIndex = signal(0);
+
+  private readonly itemButtons = viewChildren<ElementRef<HTMLButtonElement>>('itemButton');
 
   private readonly existingSet = computed(
     () => new Set(this.existingNames().map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`)),
@@ -110,6 +115,7 @@ export class WakfuAutocompleteComponent {
       if (!list[index].disabled) break;
     }
     this.activeIndex.set(index);
+    this.itemButtons()[index]?.nativeElement.scrollIntoView({ block: 'nearest' });
   }
 
   protected selectActive(): void {

@@ -14,6 +14,7 @@
     <div class="wakfu-autocomplete-list">
       @for (r of results(); track r.kind + ':' + r.name; let i = $index) {
         <button
+          #itemButton
           type="button"
           class="wakfu-autocomplete-item"
           [class.active]="i === activeIndex() && !r.disabled"
