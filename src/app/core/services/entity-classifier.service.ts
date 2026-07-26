@@ -1,8 +1,8 @@
 import { Injectable, signal } from '@angular/core';
-import { WAKFU_MONSTER_NAMES_FR } from '../data/wakfu-monster-names.data';
+import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
 import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
-import { WAKFU_ENEMY_FAMILIES } from '../data/wakfu-enemy-families.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
+import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { PersistenceService } from './persistence.service';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
@@ -11,9 +11,7 @@ const DETECTED_CLASSES_KEY = 'wakfu-entity-detected-classes';
 
 export type EntitySide = 'ally' | 'enemy';
 
-function normalizeName(name: string): string {
-  return name.toLowerCase().trim();
-}
+const normalizeName = normalizeWakfuName;
 
 /** Tolère les variantes de ponctuation d'un même sort ("Brise'Os" vs "Brise-os"). */
 function normalizeSpellKey(spell: string): string {
@@ -32,14 +30,12 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
 
 /**
  * Réplique la logique `isPlayerAlly` du site de référence : cascade
- * override manuel → base de monstres officielle → familles d'ennemis
- * génériques → classe détectée via les sorts lancés → invocations connues
- * → ennemi par défaut.
+ * override manuel → base de monstres officielle → classe détectée via les
+ * sorts lancés → invocations connues → ennemi par défaut.
  */
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
-  private readonly monsterNames = new Set(WAKFU_MONSTER_NAMES_FR.map(normalizeName));
-  private readonly enemyFamilies = WAKFU_ENEMY_FAMILIES.map(normalizeName);
+  private readonly monsterNames = new Set(Object.keys(WAKFU_MONSTERS_FR));
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
 
@@ -48,7 +44,7 @@ export class EntityClassifierService {
   // commit(), pas à chaque détection, pour éviter une écriture par ligne.
   private readonly detectedClasses: Map<string, string>;
   private detectedClassesDirty = false;
-  /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres/familles) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
+  /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres officielle) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
   private readonly confirmedAlliesByDamage = new Set<string>();
   /**
    * Camp déduit du marqueur "[_FL_] ... isControlledByAI=true/false" émis à
@@ -124,8 +120,7 @@ export class EntityClassifierService {
   }
 
   private isConfirmedEnemy(name: string): boolean {
-    const lower = normalizeName(name);
-    return this.monsterNames.has(lower) || this.enemyFamilies.some((fam) => lower.includes(fam));
+    return this.monsterNames.has(normalizeName(name));
   }
 
   setOverride(name: string, side: EntitySide): void {
