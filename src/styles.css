@@ -243,6 +243,25 @@ button.reset-btn:hover {
   white-space: nowrap;
 }
 
+/* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
+   sa barre d'onglets fusionne visuellement avec l'en-tête du panneau actif,
+   donc l'en-tête propre à chaque panneau (icône + "COMBAT"/"SUIVI"/"CHAT")
+   devient redondant et le haut de .tool-panel doit s'aligner sans bordure ni
+   arrondi pour continuer la barre d'onglets sans coupure. Règle globale (pas
+   dans dashboard.component.css) : .tool-panel/.panel-header sont rendus dans
+   les templates encapsulés de app-damage-meter/app-tracker/app-chat-panel,
+   qu'un sélecteur scopé au composant dashboard ne peut pas atteindre. */
+@media (max-width: 800px) {
+  .panels-row .panel-header {
+    display: none;
+  }
+  .panels-row .tool-panel {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
 .panel-body {
   flex-grow: 1;
   overflow-y: auto;
