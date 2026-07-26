@@ -1,10 +1,16 @@
-<div class="lang-switcher">
+<div class="lang-switcher" [class.lang-switcher-row]="variant() === 'row'">
   <button
-    class="lang-current tooltip-align-right tooltip-below"
+    class="lang-current"
+    [class.lang-current-row]="variant() === 'row'"
+    [class.tooltip-align-right]="variant() === 'header'"
+    [class.tooltip-below]="variant() === 'header'"
     (click)="toggle()"
-    [title]="current().label"
+    [title]="variant() === 'header' ? current().label : null"
   >
     <app-flag-icon class="lang-current-glyph" [country]="current().flagCountry" />
+    @if (variant() === 'row') {
+      <span class="lang-current-label">{{ 'app.language' | t }}</span>
+    }
   </button>
   @if (open()) {
     <div class="lang-backdrop" (click)="close()"></div>

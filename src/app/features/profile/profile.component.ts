@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
@@ -14,6 +14,9 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 export class ProfileComponent {
   protected readonly profile = inject(ProfileService);
   private readonly nav = inject(NavigationService);
+
+  /** 'header' : bouton avatar rond seul (défaut) ; 'row' : ligne de menu burger (avatar + libellé). */
+  readonly variant = input<'header' | 'row'>('header');
 
   protected open(): void {
     this.nav.openProfile();

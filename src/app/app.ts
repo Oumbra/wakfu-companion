@@ -14,6 +14,7 @@ import { TranslatePipe } from './shared/translate.pipe';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
+import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
 
 @Component({
   selector: 'app-root',
@@ -37,6 +38,7 @@ export class App implements OnInit {
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
+  protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
