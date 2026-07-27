@@ -1,10 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
 import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { PersistenceService } from './persistence.service';
 import { Gender } from '../data/class-icons.data';
+import { CharacterRosterService } from './character-roster.service';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
 const MANUAL_CLASSES_KEY = 'wakfu-entity-classes';
@@ -37,6 +38,7 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
  */
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
+  private readonly roster = inject(CharacterRosterService);
   private readonly monsterNames = new Set(Object.keys(WAKFU_MONSTERS_FR));
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
@@ -117,6 +119,7 @@ export class EntityClassifierService {
     if (override) return override;
 
     if (this.isConfirmedEnemy(name)) return 'enemy';
+    if (this.roster.hasCharacter(name)) return 'ally';
     if (this.detectedClasses.has(name)) return 'ally';
     if (this.allySummonNames.has(normalizeName(name))) return 'ally';
     if (this.confirmedAlliesByDamage.has(normalizeName(name))) return 'ally';
@@ -135,16 +138,24 @@ export class EntityClassifierService {
     this.version.update((v) => v + 1);
   }
 
-  /** Classe détectée pour ce nom (manuelle en priorité, sinon via ses sorts lancés), si connue. */
+  /** Classe détectée pour ce nom : override manuel en priorité (clic droit),
+   * sinon le roster de personnages déclarés (page profil), sinon la
+   * détection automatique via les sorts lancés. */
   getDetectedClass(name: string): string | undefined {
     this.version(); // dépendance réactive
-    return this.manualClasses.get(name) ?? this.detectedClasses.get(name);
+    return (
+      this.manualClasses.get(name) ??
+      this.roster.findCharacter(name)?.className ??
+      this.detectedClasses.get(name)
+    );
   }
 
-  /** Sexe de l'icône pour ce nom (choisi manuellement en même temps que la classe), 'm' par défaut. */
+  /** Sexe de l'icône pour ce nom : override manuel en priorité, sinon le
+   * roster déclaré, 'm' par défaut (la détection par sorts ne donne aucune
+   * info de sexe). */
   getGender(name: string): Gender {
     this.version(); // dépendance réactive
-    return this.manualGenders.get(name) ?? 'm';
+    return this.manualGenders.get(name) ?? this.roster.findCharacter(name)?.gender ?? 'm';
   }
 
   /** Choix manuel de classe (clic droit sur un allié dont la classe n'a pas été détectée automatiquement). */

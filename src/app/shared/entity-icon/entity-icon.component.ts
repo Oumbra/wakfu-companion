@@ -1,10 +1,6 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { EntityClassifierService, EntitySide } from '../../core/services/entity-classifier.service';
-import {
-  CLASS_ICON_DATA_URI,
-  CLASS_ICON_FEMALE_DATA_URI,
-  UNKNOWN_ENTITY_ICON_DATA_URI,
-} from '../../core/data/class-icons.data';
+import { getClassIconUri, UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
 import { WAKFU_MONSTERS_FR, WakfuMonsterEntry } from '../../core/data/wakfu-monsters.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 
@@ -76,10 +72,7 @@ export class EntityIconComponent {
   protected readonly src = computed(() => {
     if (this.side() === 'ally') {
       const className = this.classifier.getDetectedClass(this.name());
-      if (!className) return UNKNOWN_ENTITY_ICON_DATA_URI;
-      const icons =
-        this.classifier.getGender(this.name()) === 'f' ? CLASS_ICON_FEMALE_DATA_URI : CLASS_ICON_DATA_URI;
-      return icons[className] || UNKNOWN_ENTITY_ICON_DATA_URI;
+      return getClassIconUri(className, this.classifier.getGender(this.name()));
     }
     return this.imgSrc() ?? UNKNOWN_ENTITY_ICON_DATA_URI;
   });

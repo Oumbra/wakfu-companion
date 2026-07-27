@@ -222,5 +222,103 @@
         }
       </div>
     </div>
+
+    <div class="profile-field profile-field-wide">
+      <div class="profile-label-row">
+        <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
+        <button
+          class="icon-btn"
+          type="button"
+          [title]="'profile.rosterAddAccount' | t"
+          (click)="addAccount()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      </div>
+
+      @if (roster.accounts().length === 0) {
+        <div class="roster-empty">{{ 'profile.rosterEmpty' | t }}</div>
+      } @else {
+        <div class="roster-accounts">
+          @for (account of roster.accounts(); track account.id) {
+            <div class="roster-account">
+              <div class="roster-account-header">
+                <input
+                  type="text"
+                  class="roster-account-label-input"
+                  [value]="account.label"
+                  [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                  (change)="renameAccount(account.id, $any($event.target).value)"
+                />
+                <button
+                  class="icon-btn reset-btn tooltip-align-right"
+                  type="button"
+                  [title]="'profile.rosterRemoveAccount' | t"
+                  (click)="removeAccount(account.id)"
+                >
+                  ×
+                </button>
+              </div>
+
+              @if (account.characters.length > 0) {
+                <div class="roster-character-list">
+                  @for (char of account.characters; track char.name) {
+                    <div class="roster-character-row">
+                      <img [src]="characterIcon(char)" class="roster-character-icon" alt="" />
+                      <span class="roster-character-name">{{ char.name }}</span>
+                      <button
+                        class="icon-btn reset-btn tooltip-align-right"
+                        type="button"
+                        [title]="'tracker.remove' | t"
+                        (click)="removeCharacter(account.id, char.name)"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="roster-character-add">
+                <input
+                  type="text"
+                  #charNameInput
+                  class="roster-character-name-input"
+                  [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
+                />
+                <button
+                  class="icon-btn roster-class-pick-btn"
+                  type="button"
+                  [title]="'profile.rosterPickClass' | t"
+                  (click)="openCharacterClassPicker(account.id, charNameInput, $event)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
   </div>
 </div>
