@@ -9,6 +9,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { HEADER_ICON_SUIVI_DATA_URI } from '../../core/data/header-icons.data';
+import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 
 @Component({
   selector: 'app-tracker',
@@ -36,6 +37,10 @@ export class TrackerComponent {
    * `checkTruncation`) : seuls ceux-là reçoivent un `title`, pour n'afficher
    * la tooltip que quand le nom complet n'est pas déjà visible. */
   protected readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
+
+  protected rarityClass(entry: WatchlistEntry): string {
+    return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
+  }
 
   protected displayName(entry: WatchlistEntry): string {
     return entry.kind === 'item'

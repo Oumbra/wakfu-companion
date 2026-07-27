@@ -22,6 +22,7 @@
       @for (entry of stats.watchlist(); track entry.name; let i = $index, first = $first) {
         <div
           class="watch-row"
+          [class]="rarityClass(entry)"
           draggable="true"
           (dragstart)="onDragStart(i, $event)"
           (dragover)="$event.preventDefault()"
