@@ -1,10 +1,11 @@
 import { Injectable, signal } from '@angular/core';
+import { Gender } from '../data/class-icons.data';
 
 export interface ClassPickerRequest {
   name: string;
   x: number;
   y: number;
-  onChosen: (className: string) => void;
+  onChosen: (className: string, gender: Gender) => void;
 }
 
 /**
@@ -20,7 +21,7 @@ export interface ClassPickerRequest {
 export class ClassPickerService {
   readonly request = signal<ClassPickerRequest | null>(null);
 
-  open(name: string, x: number, y: number, onChosen: (className: string) => void): void {
+  open(name: string, x: number, y: number, onChosen: (className: string, gender: Gender) => void): void {
     this.request.set({ name, x, y, onChosen });
   }
 

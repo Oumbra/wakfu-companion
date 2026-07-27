@@ -96,8 +96,8 @@ export class SessionRecapComponent implements OnDestroy {
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {
     event.preventDefault();
-    this.classPickerService.open(name, event.clientX, event.clientY, (className) => {
-      this.classifier.setManualClass(name, className);
+    this.classPickerService.open(name, event.clientX, event.clientY, (className, gender) => {
+      this.classifier.setManualClass(name, className, gender);
     });
   }
 
