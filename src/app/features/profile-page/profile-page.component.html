@@ -94,7 +94,6 @@
       </div>
 
       <div class="profile-field identity-right">
-        <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
         <div class="avatar-grid">
           @for (i of avatarIndexes; track i) {
             <button
@@ -111,7 +110,7 @@
 
     <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'alerts'">
       <div class="profile-label-row">
-        <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+        <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
         <button
           class="icon-btn test-sound-btn"
           type="button"
@@ -251,8 +250,23 @@
     </div>
 
     <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'characters'">
-      <div class="profile-label-row">
-        <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
+      <div class="roster-tab-bar" #tabBar>
+        <span
+          class="roster-tab-slider"
+          [style.left.px]="tabSliderRect().left"
+          [style.width.px]="tabSliderRect().width"
+        ></span>
+        @for (account of roster.accounts(); track account.id; let i = $index) {
+          <button
+            #tabBtn
+            class="roster-tab-btn"
+            [class.active]="account.id === selectedAccountId()"
+            [title]="tabLabel(account, i)"
+            (click)="selectAccount(account.id)"
+          >
+            <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
+          </button>
+        }
         <button
           class="icon-btn roster-add-account-btn"
           type="button"
@@ -271,25 +285,6 @@
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
         </button>
-      </div>
-
-      <div class="roster-tab-bar" #tabBar>
-        <span
-          class="roster-tab-slider"
-          [style.left.px]="tabSliderRect().left"
-          [style.width.px]="tabSliderRect().width"
-        ></span>
-        @for (account of roster.accounts(); track account.id; let i = $index) {
-          <button
-            #tabBtn
-            class="roster-tab-btn"
-            [class.active]="account.id === selectedAccountId()"
-            [title]="tabLabel(account, i)"
-            (click)="selectAccount(account.id)"
-          >
-            <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
-          </button>
-        }
       </div>
 
       @if (selectedAccount(); as account) {
