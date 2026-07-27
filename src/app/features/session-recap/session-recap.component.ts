@@ -59,6 +59,10 @@ export class SessionRecapComponent implements OnDestroy {
 
   close(): void {
     this.visible.set(false);
+    // Sinon une position glissée en desktop (coordonnées pixel absolues)
+    // reste appliquée telle quelle après un passage en mode mobile — le
+    // panneau peut alors se retrouver hors écran/invisible à la réouverture.
+    this.position.set(null);
     if (this.tickInterval !== null) {
       clearInterval(this.tickInterval);
       this.tickInterval = null;

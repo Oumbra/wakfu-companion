@@ -203,71 +203,12 @@
   box-shadow: 0 0 8px var(--accent);
 }
 
-/* Breakpoint mobile (ex. Galaxy S23, 360px de large) : `identity-left` (160px
-   fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
-   on passe en colonne et on réduit le nombre de colonnes de la grille. */
-@media (max-width: 640px) {
-  .identity-row {
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-  .identity-left {
-    width: 100%;
-  }
-  .identity-right {
-    width: 100%;
-  }
-  .avatar-grid {
-    grid-template-columns: repeat(6, 1fr);
-  }
-
-  /* "Fermeture de l'alerte" sur une seule ligne : le libellé tronque en
-     ellipsis plutôt que de forcer un retour à la ligne. L'unité "sec." reste
-     affichée (sans elle le nombre seul est incompréhensible) ; seul le
-     libellé "Manuelle" est masqué visuellement (déjà porté par le tooltip du
-     switch) mais reste lisible par un lecteur d'écran. */
-  .alert-timing-control {
-    flex-wrap: nowrap;
-    gap: 5px;
-    padding: 8px 10px;
-  }
-  .alert-timing-text {
-    flex-shrink: 1;
-    min-width: 0;
-    margin-right: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.68rem;
-  }
-  .alert-timing-duration {
-    flex-shrink: 0;
-    gap: 2px;
-  }
-  .alert-duration-input {
-    width: 32px;
-    padding: 6px 2px;
-    font-size: 0.78rem;
-  }
-  .alert-timing-unit {
-    font-size: 0.68rem;
-  }
-  .manual-close-switch .switch-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-  .manual-close-switch {
-    flex-shrink: 0;
-    gap: 0;
-  }
-}
-
 /* Bloc "quand fermer le toast d'alerte" : icône + libellé + durée (grisée en
-   mode manuel) + interrupteur explicite, plutôt qu'un simple nombre isolé. */
+   mode manuel) + interrupteur explicite, plutôt qu'un simple nombre isolé.
+   Déclaré avant la media query mobile ci-dessous : à spécificité égale,
+   l'ordre du fichier tranche — après elle, ses overrides ne l'emporteraient
+   plus (piège déjà rencontré une fois avec .switch-hand-icon, cf. historique
+   git — évité ici en gardant systématiquement "base avant media query"). */
 .alert-timing-control {
   display: flex;
   align-items: center;
@@ -383,6 +324,78 @@
 }
 .switch-input:focus-visible + .switch-track {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+.switch-hand-icon {
+  display: none;
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+/* Breakpoint mobile (ex. Galaxy S23, 360px de large) : `identity-left` (160px
+   fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
+   on passe en colonne et on réduit le nombre de colonnes de la grille. */
+@media (max-width: 640px) {
+  .identity-row {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .identity-left {
+    width: 100%;
+  }
+  .identity-right {
+    width: 100%;
+  }
+  .avatar-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  /* "Fermeture de l'alerte" sur une seule ligne : le libellé tronque en
+     ellipsis plutôt que de forcer un retour à la ligne. L'unité "sec." reste
+     affichée (sans elle le nombre seul est incompréhensible) ; seul le
+     libellé "Manuelle" est masqué visuellement (déjà porté par le tooltip du
+     switch) mais reste lisible par un lecteur d'écran. */
+  .alert-timing-control {
+    flex-wrap: nowrap;
+    gap: 5px;
+    padding: 8px 8px;
+  }
+  .alert-timing-text {
+    flex-shrink: 1;
+    min-width: 0;
+    margin-right: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.68rem;
+  }
+  .alert-timing-duration {
+    flex-shrink: 0;
+    gap: 2px;
+  }
+  .alert-duration-input {
+    width: 36px;
+    padding: 6px 2px;
+    font-size: 0.78rem;
+  }
+  .alert-timing-unit {
+    font-size: 0.68rem;
+  }
+  .manual-close-switch .switch-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .manual-close-switch {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+  .switch-hand-icon {
+    display: block;
+  }
 }
 
 .sound-item-add {

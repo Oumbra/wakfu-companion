@@ -29,7 +29,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.tab.history': 'Historique',
     'damageMeter.allies': 'Alliés',
     'damageMeter.enemies': 'Ennemis',
-    'damageMeter.characters': 'Personnages',
     'damageMeter.emptyAllies': "Aucun allié n'a encore infligé de dégâts.",
     'damageMeter.emptyEnemies': "Aucun ennemi n'a encore infligé de dégâts.",
     'damageMeter.emptyCharactersHistory': "Aucun personnage n'a infligé de dégâts.",
@@ -47,6 +46,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.sortQuantity': 'Quantité',
     'damageMeter.koTitle': 'KO',
     'damageMeter.classOf': 'Classe de',
+    'classPicker.showMale': 'Afficher les icônes masculines',
+    'classPicker.showFemale': 'Afficher les icônes féminines',
     'damageMeter.items': 'objet(s)',
     'damageMeter.experience': 'Expérience',
 
@@ -82,6 +83,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrer les messages...',
+    'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Aucun message ne correspond.',
     'chat.scrollToBottom': 'Aller en bas',
     'chat.channel.proximite': 'Proximité',
@@ -130,7 +132,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.tab.history': 'History',
     'damageMeter.allies': 'Allies',
     'damageMeter.enemies': 'Enemies',
-    'damageMeter.characters': 'Characters',
     'damageMeter.emptyAllies': 'No ally has dealt damage yet.',
     'damageMeter.emptyEnemies': 'No enemy has dealt damage yet.',
     'damageMeter.emptyCharactersHistory': 'No character dealt damage.',
@@ -148,6 +149,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.sortQuantity': 'Quantity',
     'damageMeter.koTitle': 'KO',
     'damageMeter.classOf': 'Class of',
+    'classPicker.showMale': 'Show male icons',
+    'classPicker.showFemale': 'Show female icons',
     'damageMeter.items': 'item(s)',
     'damageMeter.experience': 'Experience',
 
@@ -181,6 +184,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filter messages...',
+    'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'No message matches.',
     'chat.scrollToBottom': 'Scroll to bottom',
     'chat.channel.proximite': 'Nearby',
@@ -229,7 +233,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.tab.history': 'Historial',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Enemigos',
-    'damageMeter.characters': 'Personajes',
     'damageMeter.emptyAllies': 'Ningún aliado ha infligido daño todavía.',
     'damageMeter.emptyEnemies': 'Ningún enemigo ha infligido daño todavía.',
     'damageMeter.emptyCharactersHistory': 'Ningún personaje infligió daño.',
@@ -247,6 +250,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.sortQuantity': 'Cantidad',
     'damageMeter.koTitle': 'KO',
     'damageMeter.classOf': 'Clase de',
+    'classPicker.showMale': 'Mostrar iconos masculinos',
+    'classPicker.showFemale': 'Mostrar iconos femeninos',
     'damageMeter.items': 'objeto(s)',
     'damageMeter.experience': 'Experiencia',
 
@@ -282,6 +287,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
+    'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Ningún mensaje coincide.',
     'chat.scrollToBottom': 'Ir abajo',
     'chat.channel.proximite': 'Cercanía',
@@ -330,7 +336,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.tab.history': 'Histórico',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Inimigos',
-    'damageMeter.characters': 'Personagens',
     'damageMeter.emptyAllies': 'Nenhum aliado causou dano ainda.',
     'damageMeter.emptyEnemies': 'Nenhum inimigo causou dano ainda.',
     'damageMeter.emptyCharactersHistory': 'Nenhum personagem causou dano.',
@@ -348,6 +353,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.sortQuantity': 'Quantidade',
     'damageMeter.koTitle': 'KO',
     'damageMeter.classOf': 'Classe de',
+    'classPicker.showMale': 'Mostrar ícones masculinos',
+    'classPicker.showFemale': 'Mostrar ícones femininos',
     'damageMeter.items': 'item(s)',
     'damageMeter.experience': 'Experiência',
 
@@ -381,6 +388,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensagens...',
+    'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Nenhuma mensagem corresponde.',
     'chat.scrollToBottom': 'Ir para o fim',
     'chat.channel.proximite': 'Proximidade',

@@ -27,13 +27,26 @@
         (input)="setNewFilterText($any($event.target).value)"
         (keydown.enter)="addFilter()"
       />
+      <select
+        class="filter-channel-select"
+        [value]="newFilterChannel()"
+        (change)="setNewFilterChannel($any($event.target).value)"
+      >
+        <option value="global">{{ 'chat.filterChannelGlobal' | t }}</option>
+        @for (channel of channels; track channel.key) {
+          <option [value]="channel.key">{{ channelLabelKey(channel.key) | t }}</option>
+        }
+      </select>
       <button class="primary-btn" (click)="addFilter()">{{ 'tracker.add' | t }}</button>
     </div>
     @if (filters().length > 0) {
       <div class="filter-chips">
-        @for (filter of filters(); track filter) {
-          <span class="filter-chip">
-            {{ filter }}
+        @for (filter of filters(); track filter.text + '|' + filter.channel) {
+          <span class="filter-chip" [style.--ch]="filterChannelColorVar(filter.channel)">
+            @if (filter.channel !== 'global') {
+              <span class="filter-chip-channel">{{ filterChannelLabelKey(filter.channel) | t }}:</span>
+            }
+            {{ filter.text }}
             <button
               class="icon-btn reset-btn chip-remove-btn"
               [title]="'tracker.remove' | t"

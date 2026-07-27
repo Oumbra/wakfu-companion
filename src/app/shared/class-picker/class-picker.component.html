@@ -9,9 +9,18 @@
   [style.left.px]="displayPosition().left"
   [style.top.px]="displayPosition().top"
 >
-  <div class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ position().name }}</div>
+  <div class="class-picker-title-row">
+    <span class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ position().name }}</span>
+    <button
+      class="icon-btn gender-toggle-btn"
+      [title]="(gender() === 'm' ? 'classPicker.showFemale' : 'classPicker.showMale') | t"
+      (click)="toggleGender()"
+    >
+      {{ gender() === 'm' ? '♂' : '♀' }}
+    </button>
+  </div>
   <div class="class-picker-grid">
-    @for (option of classOptions; track option.key) {
+    @for (option of classOptions(); track option.key) {
       <button class="class-picker-item" [title]="option.label" (click)="choose(option.key)">
         <img [src]="option.icon" alt="" />
       </button>

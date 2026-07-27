@@ -1,5 +1,6 @@
 import {
   Component,
+  computed,
   effect,
   ElementRef,
   input,
@@ -8,7 +9,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { CLASS_ICON_DATA_URI } from '../../core/data/class-icons.data';
+import { CLASS_ICON_DATA_URI, CLASS_ICON_FEMALE_DATA_URI } from '../../core/data/class-icons.data';
 import { TranslatePipe } from '../translate.pipe';
 
 export interface ClassPickerPosition {
@@ -17,19 +18,28 @@ export interface ClassPickerPosition {
   y: number;
 }
 
+type Gender = 'm' | 'f';
+
 interface ClassOption {
   key: string;
   label: string;
   icon: string;
 }
 
-const CLASS_OPTIONS: ClassOption[] = Object.keys(CLASS_ICON_DATA_URI)
-  .sort()
-  .map((key) => ({
+const CLASS_KEYS = Object.keys(CLASS_ICON_DATA_URI).sort();
+const ICON_MAPS: Record<Gender, Readonly<Record<string, string>>> = {
+  m: CLASS_ICON_DATA_URI,
+  f: CLASS_ICON_FEMALE_DATA_URI,
+};
+
+function buildOptions(gender: Gender): ClassOption[] {
+  const icons = ICON_MAPS[gender];
+  return CLASS_KEYS.map((key) => ({
     key,
     label: key.charAt(0).toUpperCase() + key.slice(1),
-    icon: CLASS_ICON_DATA_URI[key],
+    icon: icons[key],
   }));
+}
 
 /**
  * Petit menu de sélection de classe (par image), positionné au point de
@@ -47,7 +57,10 @@ export class ClassPickerComponent implements OnDestroy {
   readonly classChosen = output<string>();
   readonly closed = output<void>();
 
-  protected readonly classOptions = CLASS_OPTIONS;
+  /** Sexe des icônes affichées — purement visuel, la classe choisie (émise
+   * via `classChosen`) ne dépend pas du sexe sélectionné ici. */
+  protected readonly gender = signal<Gender>('m');
+  protected readonly classOptions = computed(() => buildOptions(this.gender()));
 
   private readonly pickerEl = viewChild<ElementRef<HTMLDivElement>>('picker');
   /** Position affichée, recalée pour ne jamais déborder du viewport (le clic
@@ -86,6 +99,10 @@ export class ClassPickerComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.resizeObserver?.disconnect();
+  }
+
+  protected toggleGender(): void {
+    this.gender.update((g) => (g === 'm' ? 'f' : 'm'));
   }
 
   protected choose(className: string): void {
