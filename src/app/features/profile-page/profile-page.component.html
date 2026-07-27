@@ -141,9 +141,12 @@
               (change)="setManualClose($any($event.target).checked)"
             />
             <span class="switch-track"><span class="switch-thumb"></span></span>
-            <span class="switch-label">{{ 'profile.manualCloseLabel' | t }}</span>
+            <span class="switch-label" [class.is-disabled]="!profile.alertManualClose()">{{
+              'profile.manualCloseLabel' | t
+            }}</span>
             <svg
               class="switch-hand-icon"
+              [class.is-disabled]="!profile.alertManualClose()"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
