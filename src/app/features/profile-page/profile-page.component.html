@@ -94,6 +94,7 @@
       </div>
 
       <div class="profile-field identity-right">
+        <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
         <div class="avatar-grid">
           @for (i of avatarIndexes; track i) {
             <button
@@ -110,6 +111,7 @@
 
     <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'alerts'">
       <div class="profile-label-row">
+        <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
         <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
         <button
           class="icon-btn test-sound-btn"
@@ -250,23 +252,8 @@
     </div>
 
     <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'characters'">
-      <div class="roster-tab-bar" #tabBar>
-        <span
-          class="roster-tab-slider"
-          [style.left.px]="tabSliderRect().left"
-          [style.width.px]="tabSliderRect().width"
-        ></span>
-        @for (account of roster.accounts(); track account.id; let i = $index) {
-          <button
-            #tabBtn
-            class="roster-tab-btn"
-            [class.active]="account.id === selectedAccountId()"
-            [title]="tabLabel(account, i)"
-            (click)="selectAccount(account.id)"
-          >
-            <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
-          </button>
-        }
+      <div class="profile-label-row roster-label-row-desktop">
+        <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
         <button
           class="icon-btn roster-add-account-btn"
           type="button"
@@ -287,12 +274,56 @@
         </button>
       </div>
 
+      <div class="roster-tab-bar" #tabBar>
+        <span
+          class="roster-tab-slider"
+          [style.left.px]="tabSliderRect().left"
+          [style.width.px]="tabSliderRect().width"
+        ></span>
+        @for (account of roster.accounts(); track account.id; let i = $index) {
+          <button
+            #tabBtn
+            class="roster-tab-btn"
+            [class.active]="account.id === selectedAccountId()"
+            [title]="tabLabel(account, i)"
+            (click)="selectAccount(account.id)"
+          >
+            <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
+            @if (!account.isDefault && account.id === selectedAccountId()) {
+              <span
+                class="roster-tab-remove"
+                [title]="'profile.rosterRemoveAccount' | t"
+                (click)="removeAccountFromTab($event, account.id)"
+              >
+                ×
+              </span>
+            }
+          </button>
+        }
+        <button
+          class="icon-btn roster-add-account-btn roster-add-account-btn-mobile"
+          type="button"
+          [title]="'profile.rosterAddAccount' | t"
+          (click)="addAccount()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+        </button>
+      </div>
+
       @if (selectedAccount(); as account) {
         <div class="roster-account-panel">
-          <div class="roster-account-header">
-            @if (account.isDefault) {
-              <span class="roster-account-label">{{ 'profile.rosterDefaultAccountLabel' | t }}</span>
-            } @else {
+          @if (!account.isDefault) {
+            <div class="roster-account-header">
               <input
                 type="text"
                 class="roster-account-label-input"
@@ -308,8 +339,8 @@
               >
                 ×
               </button>
-            }
-          </div>
+            </div>
+          }
 
           @if (account.characters.length > 0) {
             <div class="roster-character-list">
