@@ -90,6 +90,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterRemoveAccount': 'Supprimer ce compte',
     'profile.rosterCharacterNamePlaceholder': 'Nom du personnage...',
     'profile.rosterPickClass': 'Choisir la classe',
+    'profile.rosterDefaultAccountLabel': 'Principal',
+    'profile.rosterUnnamedAccount': 'Compte {{index}}',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrer les messages...',
@@ -201,6 +203,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterRemoveAccount': 'Remove this account',
     'profile.rosterCharacterNamePlaceholder': 'Character name...',
     'profile.rosterPickClass': 'Choose class',
+    'profile.rosterDefaultAccountLabel': 'Main',
+    'profile.rosterUnnamedAccount': 'Account {{index}}',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filter messages...',
@@ -314,6 +318,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterRemoveAccount': 'Eliminar esta cuenta',
     'profile.rosterCharacterNamePlaceholder': 'Nombre del personaje...',
     'profile.rosterPickClass': 'Elegir la clase',
+    'profile.rosterDefaultAccountLabel': 'Principal',
+    'profile.rosterUnnamedAccount': 'Cuenta {{index}}',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
@@ -425,6 +431,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterRemoveAccount': 'Remover esta conta',
     'profile.rosterCharacterNamePlaceholder': 'Nome do personagem...',
     'profile.rosterPickClass': 'Escolher a classe',
+    'profile.rosterDefaultAccountLabel': 'Principal',
+    'profile.rosterUnnamedAccount': 'Conta {{index}}',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensagens...',

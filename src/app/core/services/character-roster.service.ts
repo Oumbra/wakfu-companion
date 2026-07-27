@@ -65,9 +65,12 @@ export class CharacterRosterService {
     return this.findCharacter(name) !== undefined;
   }
 
-  addAccount(): void {
-    this.accounts.update((list) => [...list, { id: generateId(), label: '', characters: [] }]);
+  /** Retourne l'id du compte créé, pour que l'appelant puisse le sélectionner immédiatement (voir onglets, profile-page.component.ts). */
+  addAccount(): string {
+    const id = generateId();
+    this.accounts.update((list) => [...list, { id, label: '', characters: [] }]);
     this.persist();
+    return id;
   }
 
   /** Sans effet sur le compte principal (voir `isDefault`) — pas de bouton associé côté UI de toute façon. */
