@@ -53,12 +53,10 @@
   flex-shrink: 0;
 }
 
-/* Barre d'onglets Avatar/Alertes/Personnages : même principe que
-   `.tab-bar`/`.tab-slider` du dashboard mobile (dashboard.component.css) —
-   3 largeurs égales, fond + bordure glissants via --active-tab-index — mais
-   toujours affichée ici (pas de mise en page alternative "large" à
-   préserver comme pour les 3 panneaux Combat/Suivi/Chat). */
+/* Onglets Avatar/Alertes/Personnages, mobile seulement (cf. media query en
+   fin de fichier) — même principe que .tab-bar du dashboard mobile. */
 .profile-tab-bar-wrap {
+  display: none;
   flex-shrink: 0;
   padding: 14px 20px 0;
 }
@@ -212,13 +210,6 @@
 .profile-field-wide {
   max-width: 720px;
 }
-.profile-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #aaa;
-}
 .profile-label-row {
   display: flex;
   align-items: center;
@@ -227,6 +218,10 @@
 }
 .profile-label-row .test-sound-btn {
   flex-shrink: 0;
+}
+.profile-inline-label {
+  font-size: 0.8rem;
+  color: #ccc;
 }
 
 .avatar-grid {
@@ -667,6 +662,8 @@
   color: var(--text-color);
 }
 .roster-add-account-btn {
+  flex-shrink: 0;
+  align-self: center;
   width: 20px;
   height: 20px;
 }
@@ -689,10 +686,14 @@
   white-space: nowrap;
 }
 
-/* Déclaré en dernier (voir piège de cascade documenté plus haut dans ce
-   fichier, `.alert-timing-control`) : masque la section d'un onglet inactif
-   quelle que soit la spécificité des règles `display` qu'elle porte déjà
-   (`.identity-row`, `.profile-field`...), toutes déclarées plus tôt. */
-.tab-hidden {
-  display: none;
+/* Onglets mobile only (seuil dashboard). Déclaré en dernier pour gagner le
+   conflit de cascade avec .identity-row/.profile-field (même spécificité,
+   voir .alert-timing-control plus haut pour le même piège). */
+@media (max-width: 800px) {
+  .profile-tab-bar-wrap {
+    display: block;
+  }
+  .tab-hidden {
+    display: none;
+  }
 }
