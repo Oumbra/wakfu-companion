@@ -53,6 +53,62 @@
   flex-shrink: 0;
 }
 
+/* Barre d'onglets Avatar/Alertes/Personnages : même principe que
+   `.tab-bar`/`.tab-slider` du dashboard mobile (dashboard.component.css) —
+   3 largeurs égales, fond + bordure glissants via --active-tab-index — mais
+   toujours affichée ici (pas de mise en page alternative "large" à
+   préserver comme pour les 3 panneaux Combat/Suivi/Chat). */
+.profile-tab-bar-wrap {
+  flex-shrink: 0;
+  padding: 14px 20px 0;
+}
+.profile-tab-bar {
+  position: relative;
+  display: flex;
+  gap: 2px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+}
+.profile-tab-slider {
+  position: absolute;
+  top: 6px;
+  left: calc(6px + var(--active-tab-index, 0) * ((100% - 16px) / 3 + 2px));
+  width: calc((100% - 16px) / 3);
+  height: 34px;
+  background: var(--panel-bg);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 6px;
+  transition: left 0.25s ease;
+  pointer-events: none;
+}
+.profile-tab-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #999;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.25s ease;
+}
+.profile-tab-btn.active {
+  color: var(--accent);
+}
+
 .profile-page-body {
   flex-grow: 1;
   min-height: 0;
@@ -631,4 +687,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Déclaré en dernier (voir piège de cascade documenté plus haut dans ce
+   fichier, `.alert-timing-control`) : masque la section d'un onglet inactif
+   quelle que soit la spécificité des règles `display` qu'elle porte déjà
+   (`.identity-row`, `.profile-field`...), toutes déclarées plus tôt. */
+.tab-hidden {
+  display: none;
 }

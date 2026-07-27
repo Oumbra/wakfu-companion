@@ -21,8 +21,35 @@
     <span class="profile-page-spacer"></span>
   </header>
 
+  <div class="profile-tab-bar-wrap">
+    <div class="profile-tab-bar">
+      <span class="profile-tab-slider" [style.--active-tab-index]="activeTabIndex()"></span>
+      <button
+        class="profile-tab-btn"
+        [class.active]="activeTab() === 'avatar'"
+        (click)="activeTab.set('avatar')"
+      >
+        {{ 'profile.tabAvatar' | t }}
+      </button>
+      <button
+        class="profile-tab-btn"
+        [class.active]="activeTab() === 'alerts'"
+        (click)="activeTab.set('alerts')"
+      >
+        {{ 'profile.tabAlerts' | t }}
+      </button>
+      <button
+        class="profile-tab-btn"
+        [class.active]="activeTab() === 'characters'"
+        (click)="activeTab.set('characters')"
+      >
+        {{ 'profile.tabCharacters' | t }}
+      </button>
+    </div>
+  </div>
+
   <div class="profile-page-body">
-    <div class="identity-row">
+    <div class="identity-row" [class.tab-hidden]="activeTab() !== 'avatar'">
       <div class="identity-left">
         <div class="avatar-preview">
           @if (profile.avatarIndex() !== null) {
@@ -82,7 +109,7 @@
       </div>
     </div>
 
-    <div class="profile-field profile-field-wide">
+    <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'alerts'">
       <div class="profile-label-row">
         <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
         <button
@@ -223,7 +250,7 @@
       </div>
     </div>
 
-    <div class="profile-field profile-field-wide">
+    <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'characters'">
       <div class="profile-label-row">
         <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
         <button
