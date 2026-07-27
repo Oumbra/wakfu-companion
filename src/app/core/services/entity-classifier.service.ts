@@ -4,10 +4,12 @@ import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { PersistenceService } from './persistence.service';
+import { Gender } from '../data/class-icons.data';
 
 const OVERRIDES_KEY = 'wakfu-entity-overrides';
 const MANUAL_CLASSES_KEY = 'wakfu-entity-classes';
 const DETECTED_CLASSES_KEY = 'wakfu-entity-detected-classes';
+const MANUAL_GENDERS_KEY = 'wakfu-entity-genders';
 
 export type EntitySide = 'ally' | 'enemy';
 
@@ -60,6 +62,8 @@ export class EntityClassifierService {
   private readonly overrides: Map<string, EntitySide>;
   /** Classe choisie manuellement (clic droit sur un allié dont la classe n'a pas pu être détectée via ses sorts). */
   private readonly manualClasses: Map<string, string>;
+  /** Sexe des icônes choisi manuellement en même temps que la classe (voir `setManualClass`) — les classes détectées via les sorts n'ont pas cette info, repli sur masculin. */
+  private readonly manualGenders: Map<string, Gender>;
 
   /** Incrémentée par commit()/setOverride() pour notifier les computed() consommateurs. */
   readonly version = signal(0);
@@ -69,6 +73,8 @@ export class EntityClassifierService {
     this.overrides = new Map(Object.entries(stored));
     const storedClasses = this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
     this.manualClasses = new Map(Object.entries(storedClasses));
+    const storedGenders = this.persistence.getJson<Record<string, Gender>>(MANUAL_GENDERS_KEY) ?? {};
+    this.manualGenders = new Map(Object.entries(storedGenders));
     const storedDetected =
       this.persistence.getJson<Record<string, string>>(DETECTED_CLASSES_KEY) ?? {};
     this.detectedClasses = new Map(Object.entries(storedDetected));
@@ -135,10 +141,18 @@ export class EntityClassifierService {
     return this.manualClasses.get(name) ?? this.detectedClasses.get(name);
   }
 
+  /** Sexe de l'icône pour ce nom (choisi manuellement en même temps que la classe), 'm' par défaut. */
+  getGender(name: string): Gender {
+    this.version(); // dépendance réactive
+    return this.manualGenders.get(name) ?? 'm';
+  }
+
   /** Choix manuel de classe (clic droit sur un allié dont la classe n'a pas été détectée automatiquement). */
-  setManualClass(name: string, className: string): void {
+  setManualClass(name: string, className: string, gender: Gender): void {
     this.manualClasses.set(name, className);
+    this.manualGenders.set(name, gender);
     this.persistence.setJson(MANUAL_CLASSES_KEY, Object.fromEntries(this.manualClasses));
+    this.persistence.setJson(MANUAL_GENDERS_KEY, Object.fromEntries(this.manualGenders));
     this.version.update((v) => v + 1);
   }
 }

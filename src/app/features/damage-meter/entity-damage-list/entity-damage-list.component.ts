@@ -130,8 +130,8 @@ export class EntityDamageListComponent {
     }
     if (this.side() === 'ally') {
       event.preventDefault();
-      this.classPickerService.open(row.name, event.clientX, event.clientY, (className) => {
-        this.classifier.setManualClass(row.name, className);
+      this.classPickerService.open(row.name, event.clientX, event.clientY, (className, gender) => {
+        this.classifier.setManualClass(row.name, className, gender);
       });
     }
   }

@@ -9,7 +9,11 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { CLASS_ICON_DATA_URI, CLASS_ICON_FEMALE_DATA_URI } from '../../core/data/class-icons.data';
+import {
+  CLASS_ICON_DATA_URI,
+  CLASS_ICON_FEMALE_DATA_URI,
+  Gender,
+} from '../../core/data/class-icons.data';
 import { TranslatePipe } from '../translate.pipe';
 
 export interface ClassPickerPosition {
@@ -17,8 +21,6 @@ export interface ClassPickerPosition {
   x: number;
   y: number;
 }
-
-type Gender = 'm' | 'f';
 
 interface ClassOption {
   key: string;
@@ -54,11 +56,12 @@ function buildOptions(gender: Gender): ClassOption[] {
 })
 export class ClassPickerComponent implements OnDestroy {
   readonly position = input.required<ClassPickerPosition>();
-  readonly classChosen = output<string>();
+  readonly classChosen = output<{ className: string; gender: Gender }>();
   readonly closed = output<void>();
 
-  /** Sexe des icônes affichées — purement visuel, la classe choisie (émise
-   * via `classChosen`) ne dépend pas du sexe sélectionné ici. */
+  /** Sexe des icônes affichées — également transmis dans `classChosen` pour
+   * que l'entité choisie affiche ensuite une icône du même sexe partout
+   * (combat, historique, récap, expérience). */
   protected readonly gender = signal<Gender>('m');
   protected readonly classOptions = computed(() => buildOptions(this.gender()));
 
@@ -106,7 +109,7 @@ export class ClassPickerComponent implements OnDestroy {
   }
 
   protected choose(className: string): void {
-    this.classChosen.emit(className);
+    this.classChosen.emit({ className, gender: this.gender() });
   }
 
   protected close(): void {

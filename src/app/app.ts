@@ -15,6 +15,7 @@ import { ClassPickerComponent } from './shared/class-picker/class-picker.compone
 import { ClassPickerService } from './core/services/class-picker.service';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
+import { Gender } from './core/data/class-icons.data';
 
 @Component({
   selector: 'app-root',
@@ -63,8 +64,8 @@ export class App implements OnInit {
     this.mobileMenuOpen.set(false);
   }
 
-  protected onClassChosen(className: string): void {
-    this.classPickerService.request()?.onChosen(className);
+  protected onClassChosen(event: { className: string; gender: Gender }): void {
+    this.classPickerService.request()?.onChosen(event.className, event.gender);
     this.classPickerService.close();
   }
 }
