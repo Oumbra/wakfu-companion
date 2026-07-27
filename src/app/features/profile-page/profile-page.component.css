@@ -523,3 +523,61 @@
   border-color: #9450d9;
   background: color-mix(in srgb, #9450d9 16%, #202020);
 }
+
+/* Section "Personnages déclarés" (voir CharacterRosterService). */
+.roster-empty {
+  font-size: 0.85rem;
+  color: #777;
+  padding: 8px 0;
+}
+.roster-accounts,
+.roster-account,
+.roster-character-list {
+  display: flex;
+  flex-direction: column;
+}
+.roster-accounts {
+  gap: 12px;
+}
+.roster-character-list {
+  gap: 2px;
+}
+.roster-account {
+  gap: 8px;
+  padding: 10px 12px;
+  background: #1c1c1c;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.roster-account-header,
+.roster-character-row,
+.roster-character-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.roster-character-row {
+  padding: 4px 6px;
+}
+.roster-account-label-input,
+.roster-character-name-input {
+  flex-grow: 1;
+  min-width: 0;
+}
+.roster-account-label-input {
+  font-weight: 700;
+}
+.roster-character-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.roster-character-name {
+  flex-grow: 1;
+  min-width: 0;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
