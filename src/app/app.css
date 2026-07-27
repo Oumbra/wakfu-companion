@@ -1,5 +1,16 @@
+/* `100dvh` (après le fallback `100vh` pour les navigateurs qui ne le
+   supportent pas) : sur mobile, `100vh` se base sur la hauteur de viewport
+   MAXIMALE (barre d'outils du navigateur masquée), pas sur la zone
+   réellement visible — certains navigateurs (ex. Samsung Internet, barre du
+   bas toujours affichée, non rétractable) gardent alors une bande fixe qui
+   recouvre le bas du contenu de l'app sans qu'aucun scroll ne puisse
+   l'atteindre. `100dvh` suit la zone de viewport réellement visible et
+   corrige ça à la racine. Complété par un padding-bottom de secours dans les
+   listes scrollables (voir `--mobile-bottom-safe` dans styles.css) pour les
+   navigateurs plus anciens sans support de `dvh`. */
 .app-shell {
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   overflow: hidden;
   position: relative;

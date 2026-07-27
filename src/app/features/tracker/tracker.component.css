@@ -36,6 +36,15 @@
   padding-right: 10px;
 }
 
+/* Voir --mobile-bottom-safe (styles.css) : marge de secours pour que la
+   dernière ligne reste scrollable au-dessus d'une barre d'outils navigateur
+   mobile fixe. */
+@media (max-width: 800px) {
+  .tracker-list {
+    padding-bottom: var(--mobile-bottom-safe);
+  }
+}
+
 .watch-row {
   display: flex;
   align-items: center;

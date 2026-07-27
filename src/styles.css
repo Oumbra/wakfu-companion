@@ -34,6 +34,13 @@
   --channel-recrutement: #2ecc71;
   --channel-commerce: #ffd700;
   --channel-communaute: #5dade2;
+
+  /* Marge de secours en bas des listes scrollables sur mobile (voir
+     app.css `.app-shell` pour le contexte : `100dvh` corrige la cause
+     racine, ce padding protège en plus les navigateurs sans support de
+     `dvh` en garantissant que la dernière ligne reste scrollable au-dessus
+     d'une barre d'outils navigateur fixe). */
+  --mobile-bottom-safe: 56px;
 }
 
 * {
@@ -260,6 +267,9 @@ button.reset-btn:hover {
     border-top: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
+  }
+  .panel-body {
+    padding-bottom: var(--mobile-bottom-safe);
   }
 }
 
