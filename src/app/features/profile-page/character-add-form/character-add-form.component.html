@@ -1,0 +1,26 @@
+<div class="character-add-form">
+  <button
+    class="icon-btn roster-class-pick-btn"
+    type="button"
+    [title]="'profile.rosterPickClass' | t"
+    (click)="openClassPicker($event)"
+  >
+    <img [src]="icon()" alt="" class="roster-class-pick-icon" />
+  </button>
+  <input
+    type="text"
+    class="roster-character-name-input"
+    [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
+    [value]="name()"
+    (input)="setName($any($event.target).value)"
+  />
+  <button
+    class="icon-btn"
+    type="button"
+    [disabled]="!canAdd()"
+    [title]="'tracker.add' | t"
+    (click)="commit()"
+  >
+    +
+  </button>
+</div>

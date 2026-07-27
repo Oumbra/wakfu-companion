@@ -227,7 +227,7 @@
       <div class="profile-label-row">
         <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
         <button
-          class="icon-btn"
+          class="icon-btn roster-add-account-btn"
           type="button"
           [title]="'profile.rosterAddAccount' | t"
           (click)="addAccount()"
@@ -260,14 +260,16 @@
                   [placeholder]="'profile.rosterAccountPlaceholder' | t"
                   (change)="renameAccount(account.id, $any($event.target).value)"
                 />
-                <button
-                  class="icon-btn reset-btn tooltip-align-right"
-                  type="button"
-                  [title]="'profile.rosterRemoveAccount' | t"
-                  (click)="removeAccount(account.id)"
-                >
-                  ×
-                </button>
+                @if (!account.isDefault) {
+                  <button
+                    class="icon-btn reset-btn tooltip-align-right"
+                    type="button"
+                    [title]="'profile.rosterRemoveAccount' | t"
+                    (click)="removeAccount(account.id)"
+                  >
+                    ×
+                  </button>
+                }
               </div>
 
               @if (account.characters.length > 0) {
@@ -289,32 +291,7 @@
                 </div>
               }
 
-              <div class="roster-character-add">
-                <input
-                  type="text"
-                  #charNameInput
-                  class="roster-character-name-input"
-                  [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
-                />
-                <button
-                  class="icon-btn roster-class-pick-btn"
-                  type="button"
-                  [title]="'profile.rosterPickClass' | t"
-                  (click)="openCharacterClassPicker(account.id, charNameInput, $event)"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="8" r="4" />
-                    <path d="M4 20c0-4 4-6 8-6s8 2 8 6" />
-                  </svg>
-                </button>
-              </div>
+              <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
             </div>
           }
         </div>

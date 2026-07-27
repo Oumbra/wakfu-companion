@@ -15,6 +15,8 @@ export interface RosterAccount {
   id: string;
   label: string;
   characters: RosterCharacter[];
+  /** Compte principal créé automatiquement : toujours présent, pas de bouton de suppression (voir removeAccount). */
+  isDefault?: boolean;
 }
 
 function generateId(): string {
@@ -32,9 +34,22 @@ function generateId(): string {
 export class CharacterRosterService {
   private readonly persistence = inject(PersistenceService);
 
-  readonly accounts = signal<RosterAccount[]>(
-    this.persistence.getJson<RosterAccount[]>(ROSTER_KEY) ?? [],
-  );
+  readonly accounts = signal<RosterAccount[]>(this.loadAccounts());
+
+  /** Garantit qu'un compte principal existe toujours et ne peut être
+   * supprimé : créé au premier lancement, ou rétabli sur d'anciennes
+   * données stockées avant l'introduction de ce champ (le 1er compte
+   * devient alors le compte principal). */
+  private loadAccounts(): RosterAccount[] {
+    const stored = this.persistence.getJson<RosterAccount[]>(ROSTER_KEY) ?? [];
+    if (stored.length === 0) {
+      return [{ id: generateId(), label: '', characters: [], isDefault: true }];
+    }
+    if (!stored.some((a) => a.isDefault)) {
+      return stored.map((a, i) => (i === 0 ? { ...a, isDefault: true } : a));
+    }
+    return stored;
+  }
 
   /** Recherche insensible à la casse à travers tous les comptes déclarés. */
   findCharacter(name: string): RosterCharacter | undefined {
@@ -55,8 +70,9 @@ export class CharacterRosterService {
     this.persist();
   }
 
+  /** Sans effet sur le compte principal (voir `isDefault`) — pas de bouton associé côté UI de toute façon. */
   removeAccount(id: string): void {
-    this.accounts.update((list) => list.filter((a) => a.id !== id));
+    this.accounts.update((list) => list.filter((a) => a.id !== id || a.isDefault));
     this.persist();
   }
 
