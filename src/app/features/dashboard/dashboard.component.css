@@ -21,6 +21,7 @@
    panneau et l'alignement du haut de .tool-panel) plutôt que d'être une
    rangée séparée au-dessus — gagne de la hauteur et lit comme un seul bloc. */
 .tab-bar {
+  position: relative;
   display: none;
   flex-shrink: 0;
   gap: 2px;
@@ -31,7 +32,26 @@
   padding: 6px 6px 0;
 }
 
+/* Fond + bordure inférieure de l'onglet actif, glissés plutôt que basculés
+   instantanément (même principe que `.gender-switch-highlight` du
+   class-picker) — positionné en absolute dans le padding-box de `.tab-bar`
+   (même origine que les boutons flex), sa largeur/position tiennent compte
+   du `gap: 2px` entre les 3 onglets pour rester aligné au pixel près. */
+.tab-slider {
+  position: absolute;
+  top: 6px;
+  left: calc(6px + var(--active-tab-index, 0) * ((100% - 16px) / 3 + 2px));
+  width: calc((100% - 16px) / 3);
+  height: 34px;
+  background: var(--panel-bg);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 6px 6px 0 0;
+  transition: left 0.25s ease;
+  pointer-events: none;
+}
+
 .tab-btn {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -48,10 +68,9 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  transition: color 0.25s ease;
 }
 .tab-btn.active {
-  background: var(--panel-bg);
-  border-bottom-color: var(--accent);
   color: var(--accent);
 }
 .tab-icon {
