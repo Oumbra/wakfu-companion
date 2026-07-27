@@ -135,6 +135,7 @@
                             @for (item of sortedLoot(record.loot); track item.name; let first = $first) {
                               <div
                                 class="loot-row"
+                                [class]="rarityClass(item.name)"
                                 [class.tooltip-below]="first"
                                 [attr.title]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
                                 (contextmenu)="onLootContextMenu($event, item.name)"

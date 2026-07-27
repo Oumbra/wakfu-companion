@@ -13,6 +13,7 @@ import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.compon
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
+import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import {
   HEADER_ICON_COMBAT_DATA_URI,
   HEADER_ICON_LOOT_DATA_URI,
@@ -134,6 +135,10 @@ export class DamageMeterComponent {
   protected onLootContextMenu(event: MouseEvent, name: string): void {
     event.preventDefault();
     this.stats.addWatchedItem(name);
+  }
+
+  protected rarityClass(name: string): string {
+    return `rarity-${getWakfuItemRarity(name)}`;
   }
 
   protected isWatched(name: string): boolean {
