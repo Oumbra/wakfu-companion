@@ -1,5 +1,6 @@
 <div class="dashboard">
   <div class="tab-bar">
+    <div class="tab-slider" [style.--active-tab-index]="activeTabIndex()"></div>
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'damage'"
