@@ -13,15 +13,16 @@ import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.compon
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
-import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { getWakfuItemRarity, RARITY_SORT_ORDER } from '../../core/data/wakfu-item-rarity.data';
 import {
   HEADER_ICON_COMBAT_DATA_URI,
   HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
+import { RARITY_SORT_ICON_DATA_URI } from '../../core/data/rarity-icon.data';
 
 type MeterView = 'current' | 'history';
-type LootSort = 'name' | 'quantity';
+type LootSort = 'name' | 'quantity' | 'rarity';
 
 @Component({
   selector: 'app-damage-meter',
@@ -39,6 +40,7 @@ export class DamageMeterComponent {
   protected readonly headerIcon = HEADER_ICON_COMBAT_DATA_URI;
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
+  protected readonly rarityIcon = RARITY_SORT_ICON_DATA_URI;
 
   private readonly stats = inject(StatsStoreService);
   private readonly classifier = inject(EntityClassifierService);
@@ -127,9 +129,16 @@ export class DamageMeterComponent {
   }
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
-    return this.lootSort() === 'quantity'
-      ? [...loot].sort((a, b) => b.quantity - a.quantity)
-      : [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    const sort = this.lootSort();
+    if (sort === 'quantity') return [...loot].sort((a, b) => b.quantity - a.quantity);
+    if (sort === 'rarity') {
+      return [...loot].sort(
+        (a, b) =>
+          RARITY_SORT_ORDER[getWakfuItemRarity(a.name)] -
+          RARITY_SORT_ORDER[getWakfuItemRarity(b.name)],
+      );
+    }
+    return [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
 
   protected onLootContextMenu(event: MouseEvent, name: string): void {
@@ -147,8 +156,8 @@ export class DamageMeterComponent {
 
   protected onXpContextMenu(event: MouseEvent, name: string): void {
     event.preventDefault();
-    this.classPickerService.open(name, event.clientX, event.clientY, (className) => {
-      this.classifier.setManualClass(name, className);
+    this.classPickerService.open(name, event.clientX, event.clientY, (className, gender) => {
+      this.classifier.setManualClass(name, className, gender);
     });
   }
 }

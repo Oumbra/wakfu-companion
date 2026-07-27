@@ -1,0 +1,8 @@
+/**
+ * Icône générique de rareté (gemme grise, wakassets/rarities/0.png)
+ * embarquée en base64 pour un fonctionnement 100% hors-ligne du fichier
+ * standalone. Utilisée pour le bouton de tri par rareté du butin — pas
+ * pour représenter une rareté précise, d'où le choix du visuel neutre.
+ */
+export const RARITY_SORT_ICON_DATA_URI =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA0AAAAUCAYAAABWMrcvAAACjklEQVR42m2TTUsbQRiAn5nd2d18uwcliFaClBA9GsSbeuqpWEKv3hsEcwoWBO+h4K3+gP6CtuCpt4IevNhAIHpRSFowq0aNJmyycbcH4ycOvAy8M887M+/waLw+DCAEaIAPBE8XtRebNSCSzWbfrqys1GZmZvzd3d0/gDeAARBPZgNIFIvFr7FY7GO73abRaDA9Pf2vWCzOAhdAF/AFoAPhXC43n06nfzqOQyaTYXl5Gcdx2NzcZGRkhNHR0VKhUPgCtAQQXV1d/eV53hzAwsICyWSSfr+PbdukUilKpRKnp6dks1kvn88P64CpadqcZVnkcjmur6+5uLig1+txcnLCzc0N6+vrVKtVKpWKApQERKvVYnJyEqUU7XYbz/PuWmgY1Ot19vb2yGQyRKNRGLwHpRQHBwcMDw/j+z6apuH7Pr7vY5omnU6Hq6srLi8vHyEpJZqmcXZ2RrfbRSlFIpHAMAx0XUfT7n5GCPEIBUGAlBKlFP1+n263i+M4KKWIRCKMj48jpSQIgkfoHhRCIIRA13WCIMDzPM7Pz+n1eqRSKSKRyCMkhEBK+QDd53RdxzRNPM/j6OgI0zQBkACWZRGPx7Es61kBKSUAtm0Ti8UeCkqAUChEpVKhXq8zNDSElPIhwuEwhmFQrVafneRtbW0RDofZ3t5mZ2cH27YJhULE43GEEJTLZVzXpVAo+ICnAYHruj/K5fK7xcXFocPDQxqNBlNTU7iuy/HxMclkknw+X2s2m/PAyb0vp0EQfNvf33+TTqff3t7e6rVajbGxMZrNpr+2tvYdeA/8HWjyzKU48GliYqK5sbERLC0tdYDPQOIV9x6GHBg7C/wGPgCR+4a9lPBlTh/E7eA6z3T/DzNh8ol7uowMAAAAAElFTkSuQmCC';
