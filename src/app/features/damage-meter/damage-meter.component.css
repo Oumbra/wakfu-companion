@@ -193,23 +193,29 @@
   gap: 4px;
   text-transform: none;
 }
-.loot-sort button {
+.loot-sort-btn {
+  width: 22px;
   height: 20px;
-  padding: 0 8px;
-  font-size: 0.68rem;
-  font-weight: 600;
+  padding: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
   background: #222;
   color: #888;
   border: 1px solid #333;
 }
-.loot-sort button:hover {
+.loot-sort-btn:hover {
   color: #fff;
   border-color: #555;
 }
-.loot-sort button.active {
+.loot-sort-btn.active {
   color: var(--accent);
   border-color: var(--accent);
   background: rgba(0, 210, 255, 0.1);
+}
+.loot-sort-rarity-icon {
+  width: 9px;
+  height: 14px;
+  object-fit: contain;
 }
 .loot-list.scrollable {
   max-height: 130px;

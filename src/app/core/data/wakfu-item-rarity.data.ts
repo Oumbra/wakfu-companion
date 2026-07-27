@@ -19,3 +19,14 @@ export type WakfuRarity =
 export function getWakfuItemRarity(name: string): WakfuRarity {
   return WAKFU_ITEMS_FR[normalizeWakfuName(name)]?.rarity ?? 'common';
 }
+
+/** Ordre de tri croissant des raretés (pas de rapport avec leur valeur en jeu). */
+export const RARITY_SORT_ORDER: Readonly<Record<WakfuRarity, number>> = {
+  common: 0,
+  rare: 1,
+  mythical: 2,
+  legendary: 3,
+  souvenir: 4,
+  epic: 5,
+  relic: 6,
+};

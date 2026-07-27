@@ -110,16 +110,28 @@
                         @if (record.loot.length > 1) {
                           <div class="loot-sort" (click)="$event.stopPropagation()">
                             <button
+                              class="loot-sort-btn"
                               [class.active]="lootSort() === 'name'"
+                              [title]="'damageMeter.sortName' | t"
                               (click)="setLootSort('name')"
                             >
-                              {{ 'damageMeter.sortName' | t }}
+                              A-z
                             </button>
                             <button
+                              class="loot-sort-btn"
                               [class.active]="lootSort() === 'quantity'"
+                              [title]="'damageMeter.sortQuantity' | t"
                               (click)="setLootSort('quantity')"
                             >
-                              {{ 'damageMeter.sortQuantity' | t }}
+                              Nb
+                            </button>
+                            <button
+                              class="loot-sort-btn"
+                              [class.active]="lootSort() === 'rarity'"
+                              [title]="'damageMeter.sortRarity' | t"
+                              (click)="setLootSort('rarity')"
+                            >
+                              <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
                             </button>
                           </div>
                         }
