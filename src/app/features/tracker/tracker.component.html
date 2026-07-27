@@ -15,60 +15,82 @@
     />
   </div>
 
+  <ng-template #row let-entry="entry" let-i="index" let-first="first">
+    <div
+      class="watch-row"
+      [class]="rarityClass(entry)"
+      draggable="true"
+      (dragstart)="onDragStart(i, $event)"
+      (dragover)="$event.preventDefault()"
+      (drop)="onDrop(i)"
+    >
+      @if (entry.kind === 'enemy') {
+        <app-entity-icon [name]="entry.name" side="enemy" />
+      } @else {
+        <app-item-icon [name]="entry.name" />
+      }
+      <span
+        class="watch-name"
+        #nameEl
+        (mouseenter)="checkTruncation(nameEl, entry.name)"
+        [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
+        >{{ displayName(entry) }}</span
+      >
+      <span class="watch-count">
+        {{ entry.count | numberFr }}
+        @if (entry.kind === 'enemy') {
+          <span
+            class="watch-kill-icon"
+            [class.tooltip-below]="first"
+            [title]="'damageMeter.koTitle' | t"
+          >
+            <app-ko-icon />
+          </span>
+        }
+      </span>
+      <button
+        class="icon-btn tooltip-align-right"
+        [class.tooltip-below]="first"
+        [title]="'tracker.reset' | t"
+        (click)="resetCount(entry.name)"
+      >
+        ↺
+      </button>
+      <button
+        class="icon-btn reset-btn tooltip-align-right"
+        [class.tooltip-below]="first"
+        [title]="'tracker.remove' | t"
+        (click)="remove(entry.name)"
+      >
+        ×
+      </button>
+    </div>
+  </ng-template>
+
   <div class="tracker-list">
     @if (stats.watchlist().length === 0) {
       <div class="empty-state">{{ 'tracker.empty' | t }}</div>
+    } @else if (hasMixedKinds()) {
+      <div class="watch-group-title">{{ 'tracker.monsters' | t }}</div>
+      @for (r of monsterRows(); track r.entry.name; let first = $first) {
+        <ng-container
+          [ngTemplateOutlet]="row"
+          [ngTemplateOutletContext]="{ entry: r.entry, index: r.index, first: first }"
+        />
+      }
+      <div class="watch-group-title">{{ 'tracker.items' | t }}</div>
+      @for (r of itemRows(); track r.entry.name) {
+        <ng-container
+          [ngTemplateOutlet]="row"
+          [ngTemplateOutletContext]="{ entry: r.entry, index: r.index, first: false }"
+        />
+      }
     } @else {
       @for (entry of stats.watchlist(); track entry.name; let i = $index, first = $first) {
-        <div
-          class="watch-row"
-          [class]="rarityClass(entry)"
-          draggable="true"
-          (dragstart)="onDragStart(i, $event)"
-          (dragover)="$event.preventDefault()"
-          (drop)="onDrop(i)"
-        >
-          @if (entry.kind === 'enemy') {
-            <app-entity-icon [name]="entry.name" side="enemy" />
-          } @else {
-            <app-item-icon [name]="entry.name" />
-          }
-          <span
-            class="watch-name"
-            #nameEl
-            (mouseenter)="checkTruncation(nameEl, entry.name)"
-            [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
-            >{{ displayName(entry) }}</span
-          >
-          <span class="watch-count">
-            {{ entry.count | numberFr }}
-            @if (entry.kind === 'enemy') {
-              <span
-                class="watch-kill-icon"
-                [class.tooltip-below]="first"
-                [title]="'damageMeter.koTitle' | t"
-              >
-                <app-ko-icon />
-              </span>
-            }
-          </span>
-          <button
-            class="icon-btn tooltip-align-right"
-            [class.tooltip-below]="first"
-            [title]="'tracker.reset' | t"
-            (click)="resetCount(entry.name)"
-          >
-            ↺
-          </button>
-          <button
-            class="icon-btn reset-btn tooltip-align-right"
-            [class.tooltip-below]="first"
-            [title]="'tracker.remove' | t"
-            (click)="remove(entry.name)"
-          >
-            ×
-          </button>
-        </div>
+        <ng-container
+          [ngTemplateOutlet]="row"
+          [ngTemplateOutletContext]="{ entry: entry, index: i, first: first }"
+        />
       }
     }
   </div>
