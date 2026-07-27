@@ -58,6 +58,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Ajoutez un ennemi ou une ressource à suivre.',
     'tracker.remove': 'Retirer',
     'tracker.reset': 'Remettre à zéro',
+    'tracker.monsters': 'Monstres',
+    'tracker.items': 'Objets',
 
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
@@ -162,6 +164,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Add an enemy or a resource to track.',
     'tracker.remove': 'Remove',
     'tracker.reset': 'Reset to zero',
+    'tracker.monsters': 'Monsters',
+    'tracker.items': 'Items',
 
     'profile.button': 'Profile',
     'profile.title': 'My profile',
@@ -264,6 +268,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Añade un enemigo o un recurso a seguir.',
     'tracker.remove': 'Quitar',
     'tracker.reset': 'Reiniciar a cero',
+    'tracker.monsters': 'Monstruos',
+    'tracker.items': 'Objetos',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -368,6 +374,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Adicione um inimigo ou um recurso a rastrear.',
     'tracker.remove': 'Remover',
     'tracker.reset': 'Reiniciar para zero',
+    'tracker.monsters': 'Monstros',
+    'tracker.items': 'Itens',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',

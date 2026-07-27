@@ -45,6 +45,18 @@
   }
 }
 
+.watch-group-title {
+  padding: 8px 15px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #777;
+}
+.watch-group-title:first-child {
+  padding-top: 4px;
+}
+
 .watch-row {
   display: flex;
   align-items: center;
@@ -52,6 +64,8 @@
   padding: 8px 15px;
   border-bottom: 1px solid #2a2a2a;
   border-left: 3px solid transparent;
+  border-top: 2px solid transparent;
+  border-radius: 0;
   cursor: grab;
 }
 .watch-row:nth-child(odd) {
@@ -66,34 +80,33 @@
 
 /* Fond en dégradé par rareté pour les objets suivis (les ennemis n'ont pas de
    rareté, ils gardent le zébrage ci-dessus) — même palette que le butin des
-   combats (damage-meter.component.css .loot-row). */
+   combats (damage-meter.component.css .loot-row), même principe de bordure
+   haute assortie (plus fine que la gauche) via `--rarity-color`. */
 .watch-row.rarity-common {
-  border-left-color: #c8c8c8;
-  background: linear-gradient(to right, color-mix(in srgb, #c8c8c8 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #c8c8c8;
 }
 .watch-row.rarity-rare {
-  border-left-color: #1dd15f;
-  background: linear-gradient(to right, color-mix(in srgb, #1dd15f 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #1dd15f;
 }
 .watch-row.rarity-mythical {
-  border-left-color: #d97a00;
-  background: linear-gradient(to right, color-mix(in srgb, #d97a00 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #d97a00;
 }
 .watch-row.rarity-legendary {
-  border-left-color: #c7d400;
-  background: linear-gradient(to right, color-mix(in srgb, #c7d400 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #c7d400;
 }
 .watch-row.rarity-souvenir {
-  border-left-color: #1f97e0;
-  background: linear-gradient(to right, color-mix(in srgb, #1f97e0 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #1f97e0;
 }
 .watch-row.rarity-epic {
-  border-left-color: #d84fa0;
-  background: linear-gradient(to right, color-mix(in srgb, #d84fa0 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #d84fa0;
 }
 .watch-row.rarity-relic {
-  border-left-color: #9450d9;
-  background: linear-gradient(to right, color-mix(in srgb, #9450d9 35%, #1a1a1a), #1a1a1a 70%);
+  --rarity-color: #9450d9;
+}
+.watch-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  border-top-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
 }
 .watch-name {
   flex-grow: 1;
