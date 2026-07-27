@@ -33,11 +33,46 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.gender-toggle-btn {
+.gender-switch {
+  position: relative;
+  display: flex;
   flex-shrink: 0;
-  width: 22px;
+  width: 52px;
   height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.gender-switch-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.gender-switch-highlight.is-female {
+  transform: translateX(100%);
+}
+.gender-switch-option {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #fff;
   font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.25s ease;
+}
+.gender-switch-option.selected {
+  color: #04222a;
 }
 .class-picker-grid {
   display: grid;

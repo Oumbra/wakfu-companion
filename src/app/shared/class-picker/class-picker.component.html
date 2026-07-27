@@ -11,13 +11,27 @@
 >
   <div class="class-picker-title-row">
     <span class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ position().name }}</span>
-    <button
-      class="icon-btn gender-toggle-btn"
-      [title]="(gender() === 'm' ? 'classPicker.showFemale' : 'classPicker.showMale') | t"
-      (click)="toggleGender()"
-    >
-      {{ gender() === 'm' ? '♂' : '♀' }}
-    </button>
+    <div class="gender-switch">
+      <span class="gender-switch-highlight" [class.is-female]="gender() === 'f'"></span>
+      <button
+        type="button"
+        class="gender-switch-option"
+        [class.selected]="gender() === 'm'"
+        [title]="'classPicker.showMale' | t"
+        (click)="setGender('m')"
+      >
+        ♂
+      </button>
+      <button
+        type="button"
+        class="gender-switch-option"
+        [class.selected]="gender() === 'f'"
+        [title]="'classPicker.showFemale' | t"
+        (click)="setGender('f')"
+      >
+        ♀
+      </button>
+    </div>
   </div>
   <div class="class-picker-grid">
     @for (option of classOptions(); track option.key) {
