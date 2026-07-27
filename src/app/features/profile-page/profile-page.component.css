@@ -53,27 +53,29 @@
   flex-shrink: 0;
 }
 
-/* Onglets Avatar/Alertes/Personnages, mobile seulement (cf. media query en
-   fin de fichier) — même principe que .tab-bar du dashboard mobile. */
-.profile-tab-bar-wrap {
+/* Onglets Avatar/Alertes/Personnages : mêmes classes et même CSS que la
+   barre d'onglets mobile du dashboard (dashboard.component.css `.tab-bar`/
+   `.tab-slider`/`.tab-btn`), copiés ici à l'identique (Angular scope le CSS
+   par composant, ces classes ne sont pas partagées) — mobile only comme sur
+   le dashboard : cachée par défaut, affichée dans la media query en fin de
+   fichier. `.panels-row`/`.tool-panel`/`.panel-body` reprennent le même
+   principe : `.tool-panel`/`.panel-body` sont globaux (styles.css, boîte +
+   header + body), neutralisés ici en desktop (voir plus bas) pour ne pas
+   changer la mise en page empilée d'origine, et ne prennent leur habillage
+   "carte" qu'en mobile, connectée sans vide sous `.tab-bar` (comme
+   `.panels-row .tool-panel` sur le dashboard). */
+.tab-bar {
+  position: relative;
   display: none;
   flex-shrink: 0;
-  padding: 14px 20px 0;
-}
-.profile-tab-bar {
-  position: relative;
-  display: flex;
   gap: 2px;
-  width: 100%;
-  max-width: 720px;
-  margin: 0 auto;
-  box-sizing: border-box;
   background: var(--panel-header-bg);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 6px;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 6px 0;
 }
-.profile-tab-slider {
+.tab-slider {
   position: absolute;
   top: 6px;
   left: calc(6px + var(--active-tab-index, 0) * ((100% - 16px) / 3 + 2px));
@@ -81,17 +83,18 @@
   height: 34px;
   background: var(--panel-bg);
   border-bottom: 2px solid var(--accent);
-  border-radius: 6px;
+  border-radius: 6px 6px 0 0;
   transition: left 0.25s ease;
   pointer-events: none;
 }
-.profile-tab-btn {
+.tab-btn {
   flex: 1;
   align-items: center;
   justify-content: center;
   height: 34px;
   padding: 0 8px;
-  border-radius: 6px;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -104,8 +107,33 @@
   padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
+}
+.panels-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 14px;
+}
+/* Neutralisé en desktop (boîte/ombre/padding globaux de styles.css retirés)
+   pour garder la pile de sections d'origine — voir media query mobile plus
+   bas pour l'habillage carte réel, connecté à .tab-bar. */
+.tool-panel {
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+  align-items: center;
+}
+.panel-body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-right: 0;
+  overflow: visible;
 }
 
 .identity-row {
@@ -398,12 +426,6 @@
    fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
    on passe en colonne et on réduit le nombre de colonnes de la grille. */
 @media (max-width: 640px) {
-  /* Voir --mobile-bottom-safe (styles.css) : marge de secours pour que le
-     bas de la page reste scrollable au-dessus d'une barre d'outils
-     navigateur mobile fixe. */
-  .profile-page-body {
-    padding-bottom: var(--mobile-bottom-safe);
-  }
   .identity-row {
     flex-direction: column;
     align-items: center;
@@ -611,7 +633,7 @@
 }
 /* Propriétés communes aux 2 barres d'onglets (Avatar/Alertes/Personnages et
    comptes) : fusionnées pour rester sous le budget CSS par composant. */
-.profile-tab-btn,
+.tab-btn,
 .roster-tab-btn {
   position: relative;
   display: flex;
@@ -621,7 +643,7 @@
   font-weight: 700;
   transition: color 0.25s ease;
 }
-.profile-tab-btn.active,
+.tab-btn.active,
 .roster-tab-btn.active {
   color: var(--accent);
 }
@@ -701,11 +723,45 @@
    conflit de cascade avec .identity-row/.profile-field (même spécificité,
    voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
-  .profile-tab-bar-wrap,
+  .profile-page-body {
+    padding: 15px;
+    overflow: hidden;
+  }
+  .tab-bar {
+    display: flex;
+  }
+  .panels-row {
+    flex-grow: 1;
+    min-height: 0;
+    align-items: stretch;
+    gap: 0;
+  }
+  .panels-row .tab-hidden {
+    display: none;
+  }
+  /* Se connecte sans vide sous .tab-bar (même principe que
+     .panels-row .tool-panel sur le dashboard) : pas de bordure/radius haut. */
+  .tool-panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    align-items: stretch;
+    flex-grow: 1;
+    min-height: 0;
+  }
+  .panel-body {
+    align-items: stretch;
+    padding: 12px 15px var(--mobile-bottom-safe);
+    overflow-y: auto;
+    flex-grow: 1;
+    min-height: 0;
+  }
   .profile-inline-label {
     display: block;
   }
-  .tab-hidden,
   .profile-label,
   .roster-label-row-desktop {
     display: none;
