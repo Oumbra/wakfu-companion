@@ -107,14 +107,16 @@
       </div>
 
       <div class="alert-timing-control">
-        <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
-        <div class="alert-timing-actions">
+        <div class="alert-timing-label">
           <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="9" />
               <path d="M12 7v5l3.5 3.5" />
             </svg>
           </div>
+          <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
+        </div>
+        <div class="alert-timing-actions">
           <div class="alert-timing-duration" [class.is-disabled]="profile.alertManualClose()">
             <input
               type="number"
