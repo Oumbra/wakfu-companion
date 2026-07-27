@@ -254,24 +254,6 @@
     <div class="profile-field profile-field-wide" [class.tab-hidden]="activeTab() !== 'characters'">
       <div class="profile-label-row roster-label-row-desktop">
         <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
-        <button
-          class="icon-btn roster-add-account-btn"
-          type="button"
-          [title]="'profile.rosterAddAccount' | t"
-          (click)="addAccount()"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
       </div>
 
       <div class="roster-tab-bar" #tabBar>
@@ -301,7 +283,7 @@
           </button>
         }
         <button
-          class="icon-btn roster-add-account-btn roster-add-account-btn-mobile"
+          class="icon-btn roster-add-account-btn"
           type="button"
           [title]="'profile.rosterAddAccount' | t"
           (click)="addAccount()"
