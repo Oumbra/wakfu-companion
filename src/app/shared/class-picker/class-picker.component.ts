@@ -101,8 +101,8 @@ export class ClassPickerComponent implements OnDestroy {
     this.resizeObserver?.disconnect();
   }
 
-  protected toggleGender(): void {
-    this.gender.update((g) => (g === 'm' ? 'f' : 'm'));
+  protected setGender(gender: Gender): void {
+    this.gender.set(gender);
   }
 
   protected choose(className: string): void {
