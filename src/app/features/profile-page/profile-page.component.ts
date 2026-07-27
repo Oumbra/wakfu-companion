@@ -20,13 +20,22 @@ import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { CharacterRosterService, RosterCharacter } from '../../core/services/character-roster.service';
-import { ClassPickerService } from '../../core/services/class-picker.service';
 import { getClassIconUri } from '../../core/data/class-icons.data';
+import {
+  CharacterAddFormComponent,
+  NewRosterCharacter,
+} from './character-add-form/character-add-form.component';
 
 /** Page dédiée au profil (pseudo, avatar, alertes sonores de butin) — voir NavigationService pour le slide d'entrée/sortie. */
 @Component({
   selector: 'app-profile-page',
-  imports: [AvatarIconComponent, ItemIconComponent, TranslatePipe, WakfuAutocompleteComponent],
+  imports: [
+    AvatarIconComponent,
+    ItemIconComponent,
+    TranslatePipe,
+    WakfuAutocompleteComponent,
+    CharacterAddFormComponent,
+  ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
@@ -36,7 +45,6 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly roster = inject(CharacterRosterService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
-  private readonly classPickerService = inject(ClassPickerService);
 
   protected readonly avatarIndexes = Array.from(
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
@@ -176,19 +184,7 @@ export class ProfilePageComponent implements OnDestroy {
     this.roster.removeCharacter(accountId, name);
   }
 
-  /** Ouvre le sélecteur de classe partagé (ClassPickerService) pour choisir
-   * classe + sexe du personnage en cours de saisie ; le personnage n'est
-   * ajouté qu'au choix d'une classe (pas de bouton "ajouter" séparé). */
-  protected openCharacterClassPicker(
-    accountId: string,
-    nameInput: HTMLInputElement,
-    event: MouseEvent,
-  ): void {
-    const name = nameInput.value.trim();
-    if (!name) return;
-    this.classPickerService.open(name, event.clientX, event.clientY, (className, gender) => {
-      this.roster.addCharacter(accountId, name, className, gender);
-      nameInput.value = '';
-    });
+  protected addCharacterFromForm(accountId: string, character: NewRosterCharacter): void {
+    this.roster.addCharacter(accountId, character.name, character.className, character.gender);
   }
 }

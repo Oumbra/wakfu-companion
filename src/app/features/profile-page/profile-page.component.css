@@ -550,22 +550,26 @@
   border-radius: 8px;
 }
 .roster-account-header,
-.roster-character-row,
-.roster-character-add {
+.roster-character-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 .roster-character-row {
-  padding: 4px 6px;
-}
-.roster-account-label-input,
-.roster-character-name-input {
-  flex-grow: 1;
-  min-width: 0;
+  padding: 3px 0;
 }
 .roster-account-label-input {
+  flex-grow: 1;
+  min-width: 0;
   font-weight: 700;
+}
+.roster-add-account-btn {
+  width: 20px;
+  height: 20px;
+}
+.roster-add-account-btn svg {
+  width: 12px;
+  height: 12px;
 }
 .roster-character-icon {
   width: 22px;
