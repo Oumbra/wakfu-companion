@@ -22,15 +22,36 @@ export interface ChatFilter {
   channel: ChatFilterChannel;
 }
 
-function messageMatchesFilters(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
-  if (filters.length === 0) return true;
+/** Filtres qui s'appliquent au canal d'un message donné : les filtres
+ * "global" (tous canaux) et ceux propres à ce canal. */
+function applicableFilters(
+  channel: ChatChannelKey,
+  filters: readonly ChatFilter[],
+): ChatFilter[] {
+  return filters.filter((f) => f.channel === 'global' || f.channel === channel);
+}
+
+function matchesFilterText(msg: ChatMessageEntry, filter: ChatFilter): boolean {
   const message = msg.message.toLowerCase();
   const author = msg.author.toLowerCase();
-  return filters.some(
-    (f) =>
-      (f.channel === 'global' || f.channel === msg.channel) &&
-      (message.includes(f.text) || author.includes(f.text)),
-  );
+  return message.includes(filter.text) || author.includes(filter.text);
+}
+
+/** Un canal sans filtre qui le cible (ni filtre "global", ni filtre propre)
+ * affiche tous ses messages sans restriction — un filtre "Commerce" ne doit
+ * pas masquer les messages des autres canaux. */
+function messageVisible(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
+  const applicable = applicableFilters(msg.channel, filters);
+  if (applicable.length === 0) return true;
+  return applicable.some((f) => matchesFilterText(msg, f));
+}
+
+/** Pour l'alerte sonore : contrairement à `messageVisible`, pas de défaut
+ * permissif — un message ne doit déclencher l'alerte que s'il correspond
+ * réellement à un filtre configuré, sinon tout message sur un canal sans
+ * filtre déclencherait une alerte. */
+function messageMatchesAnyFilter(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
+  return applicableFilters(msg.channel, filters).some((f) => matchesFilterText(msg, f));
 }
 
 @Component({
@@ -72,7 +93,7 @@ export class ChatPanelComponent {
     return this.stats
       .chatMessages()
       .filter((m) => active.has(m.channel))
-      .filter((m) => messageMatchesFilters(m, filters));
+      .filter((m) => messageVisible(m, filters));
   });
 
   private readonly chatList = viewChild<ElementRef<HTMLDivElement>>('chatList');
@@ -101,7 +122,7 @@ export class ChatPanelComponent {
       if (filters.length === 0 || messages.length <= previousCount) return;
       if (this.stats.wasLastBatchInitialLoad()) return;
       const newMessages = messages.slice(previousCount);
-      if (newMessages.some((m) => messageMatchesFilters(m, filters))) {
+      if (newMessages.some((m) => messageMatchesAnyFilter(m, filters))) {
         this.alertSound.play();
       }
     });
@@ -172,10 +193,13 @@ export class ChatPanelComponent {
     return `var(--channel-${key})`;
   }
 
-  /** `null` pour un filtre "global" : la chip retombe alors sur la couleur
-   * neutre par défaut (voir `var(--ch, var(--accent))` en CSS). */
-  protected filterChannelColorVar(channel: ChatFilterChannel): string | null {
-    return channel === 'global' ? null : this.channelColorVar(channel);
+  /** La chip n'affiche plus le nom du canal, seulement sa couleur (voir
+   * `.filter-chip` en CSS) : un filtre "global" retombe sur une couleur
+   * neutre (`--text-muted`) distincte de toutes les couleurs de canal —
+   * notamment de `--channel-groupe`, identique à `--accent` — pour ne pas
+   * être confondu visuellement avec un filtre "Groupe". */
+  protected filterChannelColorVar(channel: ChatFilterChannel): string {
+    return channel === 'global' ? 'var(--text-muted)' : this.channelColorVar(channel);
   }
 
   protected channelLabelKey(key: ChatChannelKey): string {

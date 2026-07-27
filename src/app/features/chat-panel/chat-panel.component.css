@@ -77,12 +77,6 @@
   font-size: 0.78rem;
   font-weight: 600;
 }
-.filter-chip-channel {
-  color: var(--ch, var(--accent));
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.3px;
-}
 .chip-remove-btn {
   width: 16px;
   height: 16px;
