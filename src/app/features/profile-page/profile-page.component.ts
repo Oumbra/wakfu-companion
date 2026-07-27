@@ -7,6 +7,7 @@ import {
   OnDestroy,
   signal,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -19,7 +20,11 @@ import { BREEDS_SPRITE_COLS, BREEDS_SPRITE_ROWS } from '../../core/data/class-br
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
-import { CharacterRosterService, RosterCharacter } from '../../core/services/character-roster.service';
+import {
+  CharacterRosterService,
+  RosterAccount,
+  RosterCharacter,
+} from '../../core/services/character-roster.service';
 import { getClassIconUri } from '../../core/data/class-icons.data';
 import {
   CharacterAddFormComponent,
@@ -71,6 +76,22 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly soundGridColumns = signal(1);
   private soundGridResizeObserver?: ResizeObserver;
 
+  /** Onglet de compte actif (voir `.roster-tab-bar`, même principe que les
+   * onglets Combat/Suivi/Chat du dashboard mobile) — signal en mémoire
+   * seulement, pas persisté, comme `DashboardComponent.activeTab`. */
+  protected readonly selectedAccountId = signal<string | null>(null);
+  protected readonly selectedAccount = computed<RosterAccount | null>(
+    () => this.roster.accounts().find((a) => a.id === this.selectedAccountId()) ?? null,
+  );
+
+  private readonly tabBar = viewChild<ElementRef<HTMLDivElement>>('tabBar');
+  private readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
+  /** Position/largeur (px) du fond+bordure glissants de l'onglet actif — measurée
+   * sur le DOM plutôt que calculée en CSS pur, car les onglets ont une largeur
+   * variable (nom du compte, jusqu'à `.roster-tab-btn`'s max-width). */
+  protected readonly tabSliderRect = signal({ left: 0, width: 0 });
+  private tabBarResizeObserver?: ResizeObserver;
+
   constructor() {
     effect(() => {
       const input = this.pseudoEditInput();
@@ -88,10 +109,48 @@ export class ProfilePageComponent implements OnDestroy {
       this.soundGridResizeObserver.observe(el);
       this.updateSoundGridColumns(el);
     });
+
+    // Sélectionne le compte principal (ou le 1er) à l'initialisation, et
+    // recorrige si le compte sélectionné a été supprimé entretemps.
+    effect(() => {
+      const accounts = this.roster.accounts();
+      const current = this.selectedAccountId();
+      if (accounts.some((a) => a.id === current)) return;
+      const fallback = accounts.find((a) => a.isDefault) ?? accounts[0];
+      this.selectedAccountId.set(fallback?.id ?? null);
+    });
+
+    // Repositionne le slider à chaque changement d'onglet actif, de liste de
+    // comptes (largeur du bouton peut changer avec le libellé) ou de taille
+    // de la barre (redimensionnement fenêtre) — voir ResizeObserver plus bas.
+    effect(() => {
+      const id = this.selectedAccountId();
+      const accounts = this.roster.accounts();
+      const buttons = this.tabButtons();
+      const index = accounts.findIndex((a) => a.id === id);
+      const btn = buttons[index]?.nativeElement;
+      this.tabSliderRect.set(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 });
+    });
+
+    effect(() => {
+      const el = this.tabBar()?.nativeElement;
+      this.tabBarResizeObserver?.disconnect();
+      if (!el) return;
+      this.tabBarResizeObserver = new ResizeObserver(() => this.updateTabSliderRect());
+      this.tabBarResizeObserver.observe(el);
+    });
   }
 
   ngOnDestroy(): void {
     this.soundGridResizeObserver?.disconnect();
+    this.tabBarResizeObserver?.disconnect();
+  }
+
+  private updateTabSliderRect(): void {
+    const accounts = this.roster.accounts();
+    const index = accounts.findIndex((a) => a.id === this.selectedAccountId());
+    const btn = this.tabButtons()[index]?.nativeElement;
+    this.tabSliderRect.set(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 });
   }
 
   private updateSoundGridColumns(el: HTMLElement): void {
@@ -169,7 +228,8 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected addAccount(): void {
-    this.roster.addAccount();
+    const id = this.roster.addAccount();
+    this.selectedAccountId.set(id);
   }
 
   protected removeAccount(id: string): void {
@@ -178,6 +238,18 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected renameAccount(id: string, value: string): void {
     this.roster.renameAccount(id, value);
+  }
+
+  protected selectAccount(id: string): void {
+    this.selectedAccountId.set(id);
+  }
+
+  /** Libellé affiché sur l'onglet : "Principal" pour le compte par défaut
+   * (non renommable), le libellé choisi sinon, ou un nom générique tant
+   * qu'il n'a pas encore été renseigné. */
+  protected tabLabel(account: RosterAccount, index: number): string {
+    if (account.isDefault) return this.i18n.t('profile.rosterDefaultAccountLabel');
+    return account.label.trim() || this.i18n.t('profile.rosterUnnamedAccount', { index: index + 1 });
   }
 
   protected removeCharacter(accountId: string, name: string): void {
