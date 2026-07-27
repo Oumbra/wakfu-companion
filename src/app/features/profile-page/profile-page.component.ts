@@ -31,6 +31,8 @@ import {
   NewRosterCharacter,
 } from './character-add-form/character-add-form.component';
 
+type ProfileTab = 'avatar' | 'alerts' | 'characters';
+
 /** Page dédiée au profil (pseudo, avatar, alertes sonores de butin) — voir NavigationService pour le slide d'entrée/sortie. */
 @Component({
   selector: 'app-profile-page',
@@ -62,6 +64,17 @@ export class ProfilePageComponent implements OnDestroy {
 
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
+
+  /** Onglets de la page profil (Avatar/Alertes/Personnages), même principe
+   * que la barre d'onglets mobile du dashboard : 3 largeurs égales, fond +
+   * bordure glissants en CSS pur via `--active-tab-index` (voir
+   * dashboard.component.css `.tab-slider`). Chaque section reste montée en
+   * permanence (juste masquée via `.tab-hidden`) pour conserver son état. */
+  protected readonly activeTab = signal<ProfileTab>('avatar');
+  private static readonly TAB_ORDER: readonly ProfileTab[] = ['avatar', 'alerts', 'characters'];
+  protected readonly activeTabIndex = computed(() =>
+    ProfilePageComponent.TAB_ORDER.indexOf(this.activeTab()),
+  );
 
   /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en
    * `auto-fill`, donc variable selon la largeur disponible) — recalculé à
