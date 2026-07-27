@@ -249,6 +249,14 @@ export class ProfilePageComponent implements OnDestroy {
     this.roster.removeAccount(id);
   }
 
+  /** Suppression via la croix affichée dans l'onglet actif (voir
+   * `.roster-tab-remove`) — stoppe la propagation pour ne pas déclencher
+   * `selectAccount` porté par le bouton `.roster-tab-btn` englobant. */
+  protected removeAccountFromTab(event: MouseEvent, id: string): void {
+    event.stopPropagation();
+    this.roster.removeAccount(id);
+  }
+
   protected renameAccount(id: string, value: string): void {
     this.roster.renameAccount(id, value);
   }

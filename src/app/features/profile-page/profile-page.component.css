@@ -86,25 +86,15 @@
   pointer-events: none;
 }
 .profile-tab-btn {
-  position: relative;
   flex: 1;
-  display: flex;
   align-items: center;
   justify-content: center;
   height: 34px;
   padding: 0 8px;
-  background: transparent;
-  border: none;
   border-radius: 6px;
-  color: #999;
-  font-weight: 700;
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  transition: color 0.25s ease;
-}
-.profile-tab-btn.active {
-  color: var(--accent);
 }
 
 .profile-page-body {
@@ -210,18 +200,22 @@
 .profile-field-wide {
   max-width: 720px;
 }
+.profile-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #aaa;
+}
 .profile-label-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
-.profile-label-row .test-sound-btn {
-  flex-shrink: 0;
-}
+/* Version courte du libellé, mobile only (voir media query en fin). */
 .profile-inline-label {
-  font-size: 0.8rem;
-  color: #ccc;
+  display: none;
 }
 
 .avatar-grid {
@@ -302,7 +296,8 @@
 .alert-timing-icon.is-disabled {
   opacity: 0.35;
 }
-.alert-timing-text {
+.alert-timing-text,
+.profile-inline-label {
   font-size: 0.8rem;
   color: #ccc;
 }
@@ -604,24 +599,34 @@
   pointer-events: none;
 }
 .roster-tab-btn {
-  position: relative;
   flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
   max-width: 140px;
   min-width: 0;
   height: 30px;
   padding: 0 12px;
+  border-radius: 6px 6px 0 0;
+  font-size: 0.75rem;
+}
+/* Propriétés communes aux 2 barres d'onglets (Avatar/Alertes/Personnages et
+   comptes) : fusionnées pour rester sous le budget CSS par composant. */
+.profile-tab-btn,
+.roster-tab-btn {
+  position: relative;
+  display: flex;
   background: transparent;
   border: none;
-  border-radius: 6px 6px 0 0;
   color: #999;
   font-weight: 700;
-  font-size: 0.75rem;
   transition: color 0.25s ease;
 }
+.profile-tab-btn.active,
 .roster-tab-btn.active {
   color: var(--accent);
 }
-.roster-tab-label {
+.roster-tab-label,
+.roster-character-name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -651,15 +656,10 @@
 .roster-character-row {
   padding: 3px 0;
 }
-.roster-account-label,
 .roster-account-label-input {
   flex-grow: 1;
   min-width: 0;
   font-weight: 700;
-}
-.roster-account-label {
-  font-size: 0.85rem;
-  color: var(--text-color);
 }
 .roster-add-account-btn {
   flex-shrink: 0;
@@ -671,6 +671,25 @@
   width: 12px;
   height: 12px;
 }
+/* Doublon mobile (barre d'onglets), caché sauf en media query mobile. */
+.roster-add-account-btn-mobile {
+  display: none;
+}
+/* Croix affichée dans l'onglet actif (voir [class.active] côté template) —
+   pas un <button> imbriqué (invalide dans un <button> englobant), un <span>
+   avec stopPropagation() côté TS pour ne pas sélectionner l'onglet. */
+.roster-tab-remove {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  line-height: 14px;
+  text-align: center;
+  color: #999;
+}
+.roster-tab-remove:hover {
+  background: #b33939;
+  color: #fff;
+}
 .roster-character-icon {
   width: 22px;
   height: 22px;
@@ -679,21 +698,23 @@
 }
 .roster-character-name {
   flex-grow: 1;
-  min-width: 0;
   font-size: 0.85rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* Onglets mobile only (seuil dashboard). Déclaré en dernier pour gagner le
    conflit de cascade avec .identity-row/.profile-field (même spécificité,
    voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
-  .profile-tab-bar-wrap {
+  .profile-tab-bar-wrap,
+  .profile-inline-label {
     display: block;
   }
-  .tab-hidden {
+  .tab-hidden,
+  .profile-label,
+  .roster-label-row-desktop {
     display: none;
+  }
+  .roster-add-account-btn-mobile {
+    display: flex;
   }
 }
