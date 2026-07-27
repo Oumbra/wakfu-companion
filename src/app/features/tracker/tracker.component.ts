@@ -71,8 +71,14 @@ export class TrackerComponent {
 
   private dragIndex: number | null = null;
 
-  protected onDragStart(index: number): void {
+  /** Sans `setDragImage` explicite, le fantôme de drag généré par le
+   * navigateur peut inclure un peu de la ligne voisine (rendu flou/décalé
+   * selon le navigateur) — on le cadre nous-mêmes exactement sur la ligne
+   * concernée pour éviter cet effet de débordement. */
+  protected onDragStart(index: number, event: DragEvent): void {
     this.dragIndex = index;
+    const row = event.currentTarget as HTMLElement;
+    event.dataTransfer?.setDragImage(row, event.offsetX, event.offsetY);
   }
 
   protected onDrop(index: number): void {

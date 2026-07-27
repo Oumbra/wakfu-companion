@@ -23,7 +23,7 @@
         <div
           class="watch-row"
           draggable="true"
-          (dragstart)="onDragStart(i)"
+          (dragstart)="onDragStart(i, $event)"
           (dragover)="$event.preventDefault()"
           (drop)="onDrop(i)"
         >

@@ -13,11 +13,24 @@ const CHAT_FILTERS_KEY = 'wakfu-chat-filters';
 /** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
 const BOTTOM_THRESHOLD_PX = 24;
 
-function messageMatchesFilters(msg: ChatMessageEntry, filters: readonly string[]): boolean {
+/** 'global' : le filtre s'applique à tous les canaux (comportement par défaut,
+ * historique). Un canal précis restreint le filtre à ce seul canal. */
+export type ChatFilterChannel = ChatChannelKey | 'global';
+
+export interface ChatFilter {
+  text: string;
+  channel: ChatFilterChannel;
+}
+
+function messageMatchesFilters(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
   if (filters.length === 0) return true;
   const message = msg.message.toLowerCase();
   const author = msg.author.toLowerCase();
-  return filters.some((f) => message.includes(f) || author.includes(f));
+  return filters.some(
+    (f) =>
+      (f.channel === 'global' || f.channel === msg.channel) &&
+      (message.includes(f.text) || author.includes(f.text)),
+  );
 }
 
 @Component({
@@ -37,16 +50,20 @@ export class ChatPanelComponent {
   protected readonly activeChannels = signal<ReadonlySet<ChatChannelKey>>(
     this.loadActiveChannels(),
   );
-  protected readonly filters = signal<string[]>(this.loadFilters());
+  protected readonly filters = signal<ChatFilter[]>(this.loadFilters());
   protected readonly newFilterText = signal('');
+  protected readonly newFilterChannel = signal<ChatFilterChannel>('global');
 
   private loadActiveChannels(): ReadonlySet<ChatChannelKey> {
     const stored = this.persistence.getJson<ChatChannelKey[]>(ACTIVE_CHANNELS_KEY);
     return new Set(stored ?? CHAT_CHANNELS.map((c) => c.key));
   }
 
-  private loadFilters(): string[] {
-    return this.persistence.getJson<string[]>(CHAT_FILTERS_KEY) ?? [];
+  /** Migration douce : les filtres étaient stockés en simples chaînes avant
+   * l'ajout du choix de canal — reprises telles quelles en filtres "global". */
+  private loadFilters(): ChatFilter[] {
+    const stored = this.persistence.getJson<Array<string | ChatFilter>>(CHAT_FILTERS_KEY) ?? [];
+    return stored.map((f) => (typeof f === 'string' ? { text: f, channel: 'global' } : f));
   }
 
   protected readonly filteredMessages = computed(() => {
@@ -120,22 +137,31 @@ export class ChatPanelComponent {
     this.newFilterText.set(value);
   }
 
+  protected setNewFilterChannel(value: string): void {
+    this.newFilterChannel.set(value as ChatFilterChannel);
+  }
+
   protected addFilter(): void {
-    const value = this.newFilterText().trim().toLowerCase();
-    if (!value) return;
+    const text = this.newFilterText().trim().toLowerCase();
+    if (!text) return;
+    const channel = this.newFilterChannel();
     const current = this.filters();
-    if (!current.includes(value)) {
-      const updated = [...current, value];
+    if (!current.some((f) => f.text === text && f.channel === channel)) {
+      const updated = [...current, { text, channel }];
       this.filters.set(updated);
       this.persistence.setJson(CHAT_FILTERS_KEY, updated);
     }
     this.newFilterText.set('');
   }
 
-  protected removeFilter(value: string): void {
-    const updated = this.filters().filter((f) => f !== value);
+  protected removeFilter(filter: ChatFilter): void {
+    const updated = this.filters().filter((f) => f !== filter);
     this.filters.set(updated);
     this.persistence.setJson(CHAT_FILTERS_KEY, updated);
+  }
+
+  protected filterChannelLabelKey(channel: ChatFilterChannel): string {
+    return channel === 'global' ? 'chat.filterChannelGlobal' : this.channelLabelKey(channel);
   }
 
   protected channelBtnClass(key: ChatChannelKey): string {
@@ -144,6 +170,12 @@ export class ChatPanelComponent {
 
   protected channelColorVar(key: ChatChannelKey): string {
     return `var(--channel-${key})`;
+  }
+
+  /** `null` pour un filtre "global" : la chip retombe alors sur la couleur
+   * neutre par défaut (voir `var(--ch, var(--accent))` en CSS). */
+  protected filterChannelColorVar(channel: ChatFilterChannel): string | null {
+    return channel === 'global' ? null : this.channelColorVar(channel);
   }
 
   protected channelLabelKey(key: ChatChannelKey): string {
