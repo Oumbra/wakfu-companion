@@ -30,12 +30,14 @@
         <app-item-icon [name]="entry.name" />
       }
       <span
-        class="watch-name"
-        #nameEl
-        (mouseenter)="checkTruncation(nameEl, entry.name)"
+        class="watch-name-wrap"
+        [class.tooltip-below]="first"
         [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
-        >{{ displayName(entry) }}</span
       >
+        <span class="watch-name" #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{
+          displayName(entry)
+        }}</span>
+      </span>
       <span class="watch-count">
         {{ entry.count | numberFr }}
         @if (entry.kind === 'enemy') {

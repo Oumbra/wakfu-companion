@@ -41,6 +41,7 @@ function itemImageCandidates(entry: WakfuItemEntry): string[] {
         [style.height.px]="size()"
         [src]="src"
         referrerpolicy="no-referrer"
+        draggable="false"
         (error)="onError()"
         alt=""
       />
