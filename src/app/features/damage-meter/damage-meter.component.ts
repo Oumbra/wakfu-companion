@@ -132,11 +132,12 @@ export class DamageMeterComponent {
     const sort = this.lootSort();
     if (sort === 'quantity') return [...loot].sort((a, b) => b.quantity - a.quantity);
     if (sort === 'rarity') {
-      return [...loot].sort(
-        (a, b) =>
-          RARITY_SORT_ORDER[getWakfuItemRarity(a.name)] -
-          RARITY_SORT_ORDER[getWakfuItemRarity(b.name)],
-      );
+      return [...loot].sort((a, b) => {
+        const diff =
+          RARITY_SORT_ORDER[getWakfuItemRarity(b.name)] -
+          RARITY_SORT_ORDER[getWakfuItemRarity(a.name)];
+        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'fr');
+      });
     }
     return [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
   }
