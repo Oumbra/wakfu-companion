@@ -19,7 +19,7 @@ import {
   HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
-import { RARITY_SORT_ICON_DATA_URI } from '../../core/data/rarity-icon.data';
+import { RARITY_ICON_BASE_DATA_URI, RARITY_SORT_ICON_DATA_URI } from '../../core/data/rarity-icon.data';
 
 type MeterView = 'current' | 'history';
 type LootSort = 'name' | 'quantity' | 'rarity';
@@ -40,7 +40,6 @@ export class DamageMeterComponent {
   protected readonly headerIcon = HEADER_ICON_COMBAT_DATA_URI;
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
-  protected readonly rarityIcon = RARITY_SORT_ICON_DATA_URI;
 
   private readonly stats = inject(StatsStoreService);
   private readonly classifier = inject(EntityClassifierService);
@@ -50,6 +49,10 @@ export class DamageMeterComponent {
   protected readonly view = signal<MeterView>('current');
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   protected readonly lootSort = signal<LootSort>('name');
+  /** Gemme grise au repos, cyan (`--accent`) une fois le tri par rareté actif — même logique que `.loot-sort-btn.active`. */
+  protected readonly rarityIcon = computed(() =>
+    this.lootSort() === 'rarity' ? RARITY_SORT_ICON_DATA_URI : RARITY_ICON_BASE_DATA_URI,
+  );
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
 
