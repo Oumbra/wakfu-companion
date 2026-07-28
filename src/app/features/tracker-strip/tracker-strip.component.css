@@ -88,8 +88,24 @@
   flex-shrink: 0;
 }
 
-.kpi {
+/* `.kpi-wrap` : conteneur de mise en page, TAILLE FIXE — c'est lui, et lui
+   seul, qui est un item flex de `.kpi-strip` (voir commentaire détaillé côté
+   HTML). Ne change jamais de taille, quel que soit l'état de survol. */
+.kpi-wrap {
   position: relative;
+  width: 58px;
+  height: 58px;
+  flex-shrink: 0;
+  cursor: grab;
+}
+.kpi-wrap:active {
+  cursor: grabbing;
+}
+
+.kpi {
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   width: 58px;
@@ -103,8 +119,7 @@
      en maquette : overflow:hidden posé au mauvais niveau). */
   overflow: visible;
   justify-content: center;
-  flex-shrink: 0;
-  cursor: grab;
+  z-index: 1;
   /* Délai avant déclenchement (1s) + durée d'animation (1s), dans les deux
      sens (ouverture ET fermeture) : ce déploiement est déclenché par un
      simple survol, une transition instantanée/rapide rendait le bouton de
@@ -112,9 +127,6 @@
      n'ait eu le temps de l'atteindre) et donnait un effet de clignotement
      désagréable en balayant la bande du regard/de la souris. */
   transition: width 1s ease 1s, padding 1s ease 1s;
-}
-.kpi:active {
-  cursor: grabbing;
 }
 .kpi-icon {
   flex-shrink: 0;
@@ -165,19 +177,26 @@
   color: var(--accent);
 }
 
-.kpi:hover {
+/* Survol de `.kpi-wrap` (pas de `.kpi` directement) : c'est le conteneur de
+   taille fixe qui reçoit le hover, `.kpi` (son enfant, positionné en
+   absolute) réagit — voir commentaire détaillé en haut de fichier. `z-index`
+   passe devant les tuiles voisines dès le début du survol (immédiat, pas de
+   délai) pour que la tuile qui grandit se dessine par-dessus elles pendant
+   toute l'animation plutôt que de zigzaguer derrière/devant. */
+.kpi-wrap:hover .kpi {
   width: auto;
   min-width: 210px;
   justify-content: flex-start;
   padding: 0 12px;
+  z-index: 3;
 }
-.kpi:hover .kpi-icon {
+.kpi-wrap:hover .kpi-icon {
   margin-right: 2px;
 }
-.kpi:hover .kpi-count-badge {
+.kpi-wrap:hover .kpi-count-badge {
   display: none;
 }
-.kpi:hover .kpi-name {
+.kpi-wrap:hover .kpi-name {
   max-width: 140px;
   opacity: 1;
   flex-grow: 1;
@@ -185,14 +204,14 @@
 }
 /* Compteur mis en avant une fois le KPI déployé : bleu accent + plus grand
    (au repos, dans le badge replié, il reste discret en gris). */
-.kpi:hover .kpi-count-inline {
+.kpi-wrap:hover .kpi-count-inline {
   max-width: 40px;
   opacity: 1;
   margin-left: 6px;
   color: var(--accent);
   font-size: 0.95rem;
 }
-.kpi:hover .kpi-reset {
+.kpi-wrap:hover .kpi-reset {
   width: 18px;
   opacity: 1;
   margin-left: 6px;
@@ -270,19 +289,28 @@
   --rarity-color: #9450d9;
   border-color: var(--rarity-color);
 }
-.kpi[class*='rarity-']:hover {
-  background: linear-gradient(
+/* `background-size`/`background-position` FIXES (pas de `%` dans le
+   dégradé) : un dégradé positionné en pourcentage se redessine à chaque
+   frame pendant que `width` anime (voir transition sur `.kpi` ci-dessus),
+   produisant un scintillement très visible le temps que la tuile s'élargit
+   — bug réel observé à l'usage. Une taille fixe (largeur max déployée) fait
+   que le dégradé ne fait que se "révéler" progressivement, sans se redessiner. */
+.kpi-wrap:hover .kpi[class*='rarity-'] {
+  background-image: linear-gradient(
     to right,
     color-mix(in srgb, var(--rarity-color) 30%, var(--panel-header-bg)),
-    var(--panel-header-bg) 85%
+    var(--panel-header-bg)
   );
+  background-size: 210px 100%;
+  background-position: left center;
+  background-repeat: no-repeat;
 }
 /* Monstres : bordure grise, fond toujours transparent (pas de dégradé, même déployé). */
 .kpi.is-monster {
   border-color: #888;
   background: transparent;
 }
-.kpi.is-monster:hover {
+.kpi-wrap:hover .kpi.is-monster {
   background: transparent;
 }
 
