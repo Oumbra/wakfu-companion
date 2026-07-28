@@ -1,0 +1,46 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.tool-panel {
+  height: 100%;
+}
+
+.header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.tab-header {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+}
+.meter-tab {
+  flex: 1;
+  height: auto;
+  padding: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #888;
+  background: #222;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+.meter-tab:hover {
+  background: #2c2c2c;
+  color: #fff;
+}
+.meter-tab.active {
+  background: #333;
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}

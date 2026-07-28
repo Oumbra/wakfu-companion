@@ -105,4 +105,8 @@
       (closed)="classPickerService.close()"
     />
   }
+
+  @if (combatPanel.hasActiveFight() && combatPanel.collapsed()) {
+    <app-combat-edge-tab />
+  }
 </div>

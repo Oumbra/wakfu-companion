@@ -35,13 +35,17 @@
 /* Fond + bordure inférieure de l'onglet actif, glissés plutôt que basculés
    instantanément (même principe que `.gender-switch-highlight` du
    class-picker) — positionné en absolute dans le padding-box de `.tab-bar`
-   (même origine que les boutons flex), sa largeur/position tiennent compte
-   du `gap: 2px` entre les 4 onglets pour rester aligné au pixel près. */
+   (même origine que les boutons flex). Formule générique sur `--tab-count`
+   (3 ou 4 selon qu'un combat est en cours, voir dashboard.component.ts) :
+   6px de padding gauche + N tuiles séparées par un gap de 2px. */
 .tab-slider {
   position: absolute;
   top: 6px;
-  left: calc(6px + var(--active-tab-index, 0) * ((100% - 18px) / 4 + 2px));
-  width: calc((100% - 18px) / 4);
+  left: calc(
+    6px + var(--active-tab-index, 0) *
+      ((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3) + 2px)
+  );
+  width: calc((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3));
   height: 34px;
   background: var(--panel-bg);
   border-bottom: 2px solid var(--accent);
@@ -88,13 +92,18 @@
      tronqué (ex. un nom suivi trop long) — la colonne, puis toute la chaîne
      de parents jusqu'à `app-tracker`, grandit alors plus large que l'écran
      au lieu de forcer le contenu à rétrécir/tronquer en ellipsis. */
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
   flex-grow: 1;
   min-height: 0;
 }
+/* Colonne Combat ajoutée (plus étroite, contenu compact) devant Historique/Chat
+   quand un combat est en cours et que le panneau n'est pas replié. */
+.panels-row.has-combat {
+  grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
+}
 
-/* En dessous de 800px, les 4 panneaux empilés en 1 colonne n'ont plus assez
+/* En dessous de 800px, les panneaux empilés en 1 colonne n'ont plus assez
    de hauteur chacun pour être utilisables en combat (voir CLAUDE.md) : on
    passe en mode onglet, un seul panneau affiché en plein espace disponible. */
 @media (max-width: 800px) {
@@ -104,7 +113,8 @@
   .tab-bar {
     display: flex;
   }
-  .panels-row {
+  .panels-row,
+  .panels-row.has-combat {
     grid-template-columns: minmax(0, 1fr);
   }
   .panels-row > .tab-hidden {

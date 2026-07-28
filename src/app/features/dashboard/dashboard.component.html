@@ -1,14 +1,22 @@
 <div class="dashboard">
+  <app-tracker-strip />
+
   <div class="tab-bar">
-    <div class="tab-slider" [style.--active-tab-index]="activeTabIndex()"></div>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'damage'"
-      (click)="activeTab.set('damage')"
-    >
-      <img [src]="combatIcon" class="tab-icon" alt="" />
-      {{ 'damageMeter.header' | t }}
-    </button>
+    <div
+      class="tab-slider"
+      [style.--active-tab-index]="activeTabIndex()"
+      [style.--tab-count]="tabCount()"
+    ></div>
+    @if (combatPanel.hasActiveFight()) {
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'damage'"
+        (click)="activeTab.set('damage')"
+      >
+        <img [src]="combatIcon" class="tab-icon" alt="" />
+        {{ 'damageMeter.header' | t }}
+      </button>
+    }
     <button
       class="tab-btn"
       [class.active]="activeTab() === 'tracker'"
@@ -19,8 +27,8 @@
     </button>
     <button
       class="tab-btn"
-      [class.active]="activeTab() === 'purchases'"
-      (click)="activeTab.set('purchases')"
+      [class.active]="activeTab() === 'history'"
+      (click)="activeTab.set('history')"
     >
       <svg
         class="tab-icon"
@@ -31,11 +39,10 @@
         stroke-linecap="round"
         stroke-linejoin="round"
       >
-        <circle cx="9" cy="20" r="1.4" />
-        <circle cx="18" cy="20" r="1.4" />
-        <path d="M2 3h2l2.4 12.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L21 7H6" />
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 3" />
       </svg>
-      {{ 'purchases.header' | t }}
+      {{ 'history.header' | t }}
     </button>
     <button
       class="tab-btn"
@@ -46,10 +53,12 @@
       {{ 'chat.header' | t }}
     </button>
   </div>
-  <div class="panels-row">
-    <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
+  <div class="panels-row" [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()">
+    @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
+      <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
+    }
     <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
-    <app-purchases [class.tab-hidden]="activeTab() !== 'purchases'" />
+    <app-history [class.tab-hidden]="activeTab() !== 'history'" />
     <app-chat-panel [class.tab-hidden]="activeTab() !== 'chat'" />
   </div>
 </div>

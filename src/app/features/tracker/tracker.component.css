@@ -1,4 +1,5 @@
 :host {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -6,6 +7,15 @@
 }
 .tool-panel {
   height: 100%;
+}
+
+/* Suivi n'est plus un panneau/onglet du dashboard desktop (remplacé par la
+   bande persistante TrackerStripComponent, voir dashboard.component.html) :
+   ce composant ne reste utile qu'en mode onglet mobile. */
+@media (min-width: 801px) {
+  :host {
+    display: none;
+  }
 }
 
 .header-label {
@@ -28,127 +38,204 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-.tracker-list {
+
+/* Grille de cartes en flex-wrap (voir CLAUDE.md) : icône centrée à gauche,
+   nom+compteur+reset à droite, croix de suppression sur la bordure haute-droite. */
+.kpi-mobile-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+}
+
+.kpi-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 150px;
+  min-width: 150px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background: #232323;
+}
+
+.kpi-card-icon {
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.kpi-card-info {
   flex-grow: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 0;
-  padding-right: 10px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.kpi-card-name {
+  align-self: stretch;
+  display: block;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kpi-card-name > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-card-count-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+.kpi-card-count {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+.kpi-card-reset {
+  flex-shrink: 0;
+  color: #999;
+  background: transparent;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+.kpi-card-reset svg {
+  width: 13px;
+  height: 13px;
+}
+.kpi-card-reset:hover {
+  color: var(--accent);
+}
+
+.kpi-card-del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #333;
+  border: 1px solid #555;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.kpi-card-del:hover {
+  background: #b33939;
+  border-color: #b33939;
+  color: #fff;
+}
+
+.kpi-card.rarity-common {
+  --rarity-color: #c8c8c8;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-rare {
+  --rarity-color: #1dd15f;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-mythical {
+  --rarity-color: #d97a00;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-legendary {
+  --rarity-color: #c7d400;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-souvenir {
+  --rarity-color: #1f97e0;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-epic {
+  --rarity-color: #d84fa0;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+.kpi-card.rarity-relic {
+  --rarity-color: #9450d9;
+  border-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+}
+/* Monstres : bordure grise, fond transparent (pas de dégradé). */
+.kpi-card.is-monster {
+  border-color: #888;
+  background: transparent;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+}
+/* `right`/`bottom` posés dynamiquement en JS (voir tracker.component.ts
+   `confirmPopoverPos`) plutôt qu'ancrés en CSS pur sur la carte — voir
+   commentaire sur `confirmPopoverPos` dans le composant. */
+.confirm-popover {
+  position: absolute;
+  background: #000;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 6px 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 5;
+}
+.confirm-popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  border: 5px solid transparent;
+  border-top-color: #000;
+}
+.confirm-popover button {
+  padding: 2px 7px;
+  height: auto;
+  font-size: 0.68rem;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+}
+.confirm-yes {
+  background: #b33939;
+  color: #fff;
+}
+.confirm-no {
+  background: #333;
+  color: #ccc;
 }
 
 /* Voir --mobile-bottom-safe (styles.css) : marge de secours pour que la
    dernière ligne reste scrollable au-dessus d'une barre d'outils navigateur
    mobile fixe. */
 @media (max-width: 800px) {
-  .tracker-list {
+  .panel-body {
     padding-bottom: var(--mobile-bottom-safe);
   }
-}
-
-.watch-group-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 15px 6px;
-  font-family: monospace;
-  font-size: 0.78rem;
-  font-weight: 400;
-  color: #8a8a8a;
-}
-.watch-group-title:first-child {
-  padding-top: 6px;
-}
-
-.watch-row {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 15px;
-  border-bottom: 1px solid #2a2a2a;
-  border-left: 3px solid transparent;
-  border-radius: 0;
-  cursor: grab;
-}
-.watch-row:nth-child(odd) {
-  background-color: #1a1a1a;
-}
-.watch-row:nth-child(even) {
-  background-color: #30303080;
-}
-.watch-row:active {
-  cursor: grabbing;
-}
-
-/* Fond en dégradé par rareté pour les objets suivis (les ennemis n'ont pas de
-   rareté, ils gardent le zébrage ci-dessus) — même palette que le butin des
-   combats (damage-meter.component.css .loot-row), même principe de bordure
-   haute assortie (plus fine que la gauche) via `--rarity-color`. */
-.watch-row.rarity-common {
-  --rarity-color: #c8c8c8;
-}
-.watch-row.rarity-rare {
-  --rarity-color: #1dd15f;
-}
-.watch-row.rarity-mythical {
-  --rarity-color: #d97a00;
-}
-.watch-row.rarity-legendary {
-  --rarity-color: #c7d400;
-}
-.watch-row.rarity-souvenir {
-  --rarity-color: #1f97e0;
-}
-.watch-row.rarity-epic {
-  --rarity-color: #d84fa0;
-}
-.watch-row.rarity-relic {
-  --rarity-color: #9450d9;
-}
-.watch-row[class*='rarity-'] {
-  border-left-color: var(--rarity-color);
-  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
-}
-.watch-row[class*='rarity-']::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(to right, var(--rarity-color), transparent 70%);
-  pointer-events: none;
-}
-/* Le tooltip (survol du nom tronqué) doit être porté par un élément SANS
-   `overflow: hidden` : `[title]::after` est positionné en absolute par
-   rapport à son hôte, qui le clippe si cet hôte a lui-même overflow:hidden
-   (nécessaire ici pour l'ellipsis) — d'où la séparation en deux éléments :
-   `.watch-name-wrap` (flex + tooltip, overflow visible) contient
-   `.watch-name` (l'ellipsis proprement dite). */
-.watch-name-wrap {
-  flex-grow: 1;
-  min-width: 0;
-}
-.watch-name {
-  display: block;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.watch-count {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--accent);
-  min-width: 40px;
-  flex-shrink: 0;
-  justify-content: flex-end;
-}
-.watch-kill-icon {
-  display: flex;
-  align-items: center;
-  color: var(--btn-active-red);
 }

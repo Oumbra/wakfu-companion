@@ -1,0 +1,309 @@
+/* Rendu directement à l'intérieur du `.tool-panel` de HistoryComponent
+   (voir history.component.html) : ce composant ne porte pas son propre
+   `.tool-panel`/`.panel-header`, `display:contents` laisse son unique enfant
+   racine (`.panel-body.meter-body`) participer au flex-column du parent. */
+:host {
+  display: contents;
+}
+
+.meter-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.meter-separator {
+  height: 2px;
+  background: #333;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #444;
+  flex-shrink: 0;
+}
+
+.fight-entry {
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.fight-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 15px;
+  cursor: pointer;
+}
+.fight-summary:hover {
+  background: #242424;
+}
+/* Une fois l'entrée dépliée, le header (horloge/monstre/tours/durée) reste
+   collé en haut du panneau pendant le scroll du détail — permet de refermer
+   d'un clic sans devoir remonter tout en haut de la liste. */
+.fight-summary.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--panel-bg);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.fight-summary.sticky:hover {
+  background: #242424;
+}
+.fight-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.fight-badge.won {
+  background: rgba(46, 204, 113, 0.18);
+  color: var(--btn-active-green);
+  border: 1px solid var(--btn-active-green);
+}
+.fight-badge.lost {
+  background: rgba(231, 76, 60, 0.18);
+  color: var(--btn-active-red);
+  border: 1px solid var(--btn-active-red);
+}
+.fight-clock {
+  display: flex;
+  align-items: center;
+  color: #888;
+  flex-shrink: 0;
+}
+.fight-clock svg {
+  width: 15px;
+  height: 15px;
+}
+.fight-clock:hover {
+  color: var(--accent);
+}
+
+.fight-meta {
+  color: #888;
+  font-family: monospace;
+  font-size: 0.85rem;
+  flex-grow: 1;
+}
+
+.caret {
+  font-size: 0.7em;
+  color: #666;
+  transition: transform 0.2s;
+  display: inline-block;
+  margin-left: auto;
+}
+.caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.fight-details {
+  display: flex;
+  flex-direction: column;
+  background: #161616;
+  border-top: 1px solid #2a2a2a;
+}
+
+.collapsible-section {
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.collapsible-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 41px;
+  padding: 0 15px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  cursor: pointer;
+}
+.collapsible-header:hover {
+  background: #1c1c1c;
+}
+.loot-sort {
+  display: flex;
+  gap: 4px;
+  text-transform: none;
+}
+.loot-sort-btn {
+  width: 22px;
+  height: 20px;
+  padding: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  background: #222;
+  color: #888;
+  border: 1px solid #333;
+}
+.loot-sort-btn:hover {
+  color: #fff;
+  border-color: #555;
+}
+.loot-sort-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(0, 210, 255, 0.1);
+}
+.loot-sort-rarity-icon {
+  width: 9px;
+  height: 14px;
+  object-fit: contain;
+}
+.loot-list.scrollable {
+  max-height: 130px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.collapsible-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.collapsible-body {
+  padding: 4px 15px 10px;
+}
+
+.loot-section {
+  border-top: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.loot-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  height: 41px;
+  padding: 0 15px;
+  cursor: pointer;
+}
+.loot-header-row:hover {
+  filter: brightness(1.15);
+}
+.loot-body {
+  padding: 4px 15px 10px;
+}
+/* Reprend exactement l'agencement original de .loot-header-row (label+count à
+   gauche, tri à droite) : isolé dans un wrapper à part pour que l'ajout du
+   caret (repli/dépli) n'insère pas un 3e élément dans ce `justify-content:
+   space-between`, ce qui aurait déplacé les boutons de tri vers le centre. */
+.loot-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1;
+  min-width: 0;
+}
+.loot-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.loot-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.loot-count {
+  font-family: monospace;
+  font-size: 0.68rem;
+  color: #888;
+}
+
+.loot-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #ccc;
+  padding: 3px 8px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+}
+
+/* Fond en dégradé par rareté : de la couleur de bordure (gauche) vers #1a1a1a
+   (droite), même palette que les tuiles de la page profil (.sound-item-tile).
+   Bordure haute assortie mais plus fine (1px, en pseudo-élément — un simple
+   `border-top-color` ne peut pas être un dégradé) reprenant le même dégradé
+   que le fond, plutôt que des coins arrondis — `--rarity-color` factorise la
+   couleur pour les 3 déclinaisons (gauche/haut/fond) sans la répéter. */
+.loot-row.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.loot-row.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.loot-row.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.loot-row.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.loot-row.rarity-souvenir {
+  --rarity-color: #1f97e0;
+}
+.loot-row.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.loot-row.rarity-relic {
+  --rarity-color: #9450d9;
+}
+.loot-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
+}
+.loot-row[class*='rarity-']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--rarity-color), transparent 70%);
+  pointer-events: none;
+}
+.loot-name {
+  flex-grow: 1;
+}
+.loot-qty {
+  font-family: monospace;
+  color: var(--kama-color);
+}
+
+.fight-xp-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #ccc;
+  padding: 3px 0;
+}
+.fight-xp-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.fight-xp-amount {
+  font-family: monospace;
+  color: var(--accent);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.empty-state.small {
+  height: auto;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  justify-content: flex-start;
+}

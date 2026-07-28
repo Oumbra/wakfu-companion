@@ -1,0 +1,77 @@
+<div class="kpi-strip">
+  <div class="kpi-add" [class.expanded]="addOpen()">
+    @if (!addOpen()) {
+      <button class="kpi-add-btn" [title]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
+    } @else {
+      <app-wakfu-autocomplete
+        domain="both"
+        [placeholder]="'tracker.searchPlaceholder' | t"
+        [existingNames]="existingNames()"
+        (selected)="add($event)"
+      />
+      <button
+        class="icon-btn kpi-add-close"
+        [title]="'tracker.closeSearch' | t"
+        (click)="addOpen.set(false)"
+      >
+        ×
+      </button>
+    }
+  </div>
+
+  @for (entry of stats.watchlist(); track entry.name; let i = $index) {
+    <div
+      class="kpi"
+      [class]="rarityClass(entry)"
+      [class.is-monster]="entry.kind === 'enemy'"
+      draggable="true"
+      (dragstart)="onDragStart(i, $event)"
+      (dragover)="$event.preventDefault()"
+      (drop)="onDrop(i)"
+    >
+      @if (entry.kind === 'enemy') {
+        <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="24" />
+      } @else {
+        <app-item-icon [name]="entry.name" class="kpi-icon" [size]="24" />
+      }
+      <span class="kpi-name" [attr.title]="isTruncated(entry.name) ? displayName(entry) : null">
+        <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{ displayName(entry) }}</span>
+      </span>
+      <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
+      <button class="kpi-reset" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 4v5h5M20 20v-5h-5" />
+          <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
+        </svg>
+      </button>
+      <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
+      <button class="kpi-del" [title]="'tracker.remove' | t" (click)="requestDelete($event, entry.name)">
+        ×
+      </button>
+    </div>
+  }
+</div>
+
+@if (confirmDeleteName(); as name) {
+  <div class="confirm-backdrop" (click)="cancelDelete($event)"></div>
+  <div
+    class="confirm-popover"
+    [style.right.px]="confirmPopoverPos()?.right"
+    [style.bottom.px]="confirmPopoverPos()?.bottom"
+  >
+    {{ 'tracker.confirmDelete' | t }}
+    <button class="confirm-yes" (click)="confirmDelete($event, name)">
+      {{ 'tracker.confirmYes' | t }}
+    </button>
+    <button class="confirm-no" (click)="cancelDelete($event)">
+      {{ 'tracker.confirmNo' | t }}
+    </button>
+  </div>
+}

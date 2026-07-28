@@ -13,6 +13,8 @@ import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
+import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
+import { CombatPanelService } from './core/services/combat-panel.service';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
 import { Gender } from './core/data/class-icons.data';
@@ -28,6 +30,7 @@ import { Gender } from './core/data/class-icons.data';
     ProfilePageComponent,
     LootAlertComponent,
     ClassPickerComponent,
+    CombatEdgeTabComponent,
     TranslatePipe,
   ],
   templateUrl: './app.html',
@@ -38,6 +41,7 @@ export class App implements OnInit {
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
+  protected readonly combatPanel = inject(CombatPanelService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
   protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
