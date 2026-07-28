@@ -25,8 +25,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.language': 'Langue',
 
     'damageMeter.header': 'Combat',
-    'damageMeter.tab.current': 'En cours',
-    'damageMeter.tab.history': 'Historique',
+    'damageMeter.collapseHint': 'Replier',
+    'damageMeter.expandHint': 'Combat en cours — cliquer pour déplier',
     'damageMeter.allies': 'Alliés',
     'damageMeter.enemies': 'Ennemis',
     'damageMeter.emptyAllies': "Aucun allié n'a encore infligé de dégâts.",
@@ -60,6 +60,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Remettre à zéro',
     'tracker.monsters': 'Monstres',
     'tracker.items': 'Objets',
+    'tracker.confirmDelete': 'Retirer ?',
+    'tracker.confirmYes': 'Oui',
+    'tracker.confirmNo': 'Non',
+    'tracker.closeSearch': 'Fermer',
+
+    'history.header': 'Historique',
+    'history.tabCombats': 'Combats',
 
     'purchases.header': 'Achats',
     'purchases.searchPlaceholder': 'Rechercher un objet ou une date...',
@@ -149,8 +156,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.language': 'Language',
 
     'damageMeter.header': 'Combat',
-    'damageMeter.tab.current': 'Current',
-    'damageMeter.tab.history': 'History',
+    'damageMeter.collapseHint': 'Collapse',
+    'damageMeter.expandHint': 'Fight in progress — click to expand',
     'damageMeter.allies': 'Allies',
     'damageMeter.enemies': 'Enemies',
     'damageMeter.emptyAllies': 'No ally has dealt damage yet.',
@@ -184,6 +191,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Reset to zero',
     'tracker.monsters': 'Monsters',
     'tracker.items': 'Items',
+    'tracker.confirmDelete': 'Remove?',
+    'tracker.confirmYes': 'Yes',
+    'tracker.confirmNo': 'No',
+    'tracker.closeSearch': 'Close',
+
+    'history.header': 'History',
+    'history.tabCombats': 'Fights',
 
     'purchases.header': 'Purchases',
     'purchases.searchPlaceholder': 'Search an item or a date...',
@@ -271,8 +285,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.language': 'Idioma',
 
     'damageMeter.header': 'Combate',
-    'damageMeter.tab.current': 'En curso',
-    'damageMeter.tab.history': 'Historial',
+    'damageMeter.collapseHint': 'Contraer',
+    'damageMeter.expandHint': 'Combate en curso — clic para desplegar',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Enemigos',
     'damageMeter.emptyAllies': 'Ningún aliado ha infligido daño todavía.',
@@ -306,6 +320,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Reiniciar a cero',
     'tracker.monsters': 'Monstruos',
     'tracker.items': 'Objetos',
+    'tracker.confirmDelete': '¿Quitar?',
+    'tracker.confirmYes': 'Sí',
+    'tracker.confirmNo': 'No',
+    'tracker.closeSearch': 'Cerrar',
+
+    'history.header': 'Historial',
+    'history.tabCombats': 'Combates',
 
     'purchases.header': 'Compras',
     'purchases.searchPlaceholder': 'Buscar un objeto o una fecha...',
@@ -395,8 +416,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.language': 'Idioma',
 
     'damageMeter.header': 'Combate',
-    'damageMeter.tab.current': 'Em andamento',
-    'damageMeter.tab.history': 'Histórico',
+    'damageMeter.collapseHint': 'Recolher',
+    'damageMeter.expandHint': 'Combate em andamento — clique para expandir',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Inimigos',
     'damageMeter.emptyAllies': 'Nenhum aliado causou dano ainda.',
@@ -430,6 +451,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Reiniciar para zero',
     'tracker.monsters': 'Monstros',
     'tracker.items': 'Itens',
+    'tracker.confirmDelete': 'Remover?',
+    'tracker.confirmYes': 'Sim',
+    'tracker.confirmNo': 'Não',
+    'tracker.closeSearch': 'Fechar',
+
+    'history.header': 'Histórico',
+    'history.tabCombats': 'Combates',
 
     'purchases.header': 'Compras',
     'purchases.searchPlaceholder': 'Pesquisar um item ou uma data...',

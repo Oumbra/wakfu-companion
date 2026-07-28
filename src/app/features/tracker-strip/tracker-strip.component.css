@@ -1,0 +1,292 @@
+:host {
+  position: relative;
+  display: flex;
+  min-height: 0;
+}
+
+/* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :
+   Suivi y redevient un onglet à part entière (TrackerComponent), pas une
+   bande persistante — pas assez de largeur disponible pour un scroll
+   horizontal utilisable sur petit écran. */
+@media (max-width: 800px) {
+  :host {
+    display: none;
+  }
+}
+
+.kpi-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 4px 12px;
+  width: 100%;
+}
+
+.kpi-add {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 46px;
+  border-radius: 10px;
+  transition: width 0.2s ease;
+}
+.kpi-add-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: #232323;
+  border: 2px dashed #444;
+  color: #999;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.kpi-add-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.kpi-add.expanded {
+  width: 260px;
+  gap: 6px;
+}
+.kpi-add-close {
+  flex-shrink: 0;
+}
+
+.kpi {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: #232323;
+  /* overflow VISIBLE : le badge compteur et la croix de suppression doivent
+     pouvoir déborder de la tuile — seul le texte du nom (interne) se clippe
+     lui-même via son propre overflow:hidden (voir CLAUDE.md, bug identifié
+     en maquette : overflow:hidden posé au mauvais niveau). */
+  overflow: visible;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: grab;
+  transition: width 0.2s ease, padding 0.2s ease;
+}
+.kpi:active {
+  cursor: grabbing;
+}
+.kpi-icon {
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+
+.kpi-name {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 0.8rem;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+.kpi-name > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-count-inline {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #ccc;
+  transition: max-width 0.2s ease, opacity 0.15s ease;
+}
+.kpi-reset {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #999;
+  background: transparent;
+  border: none;
+  padding: 0;
+  transition: width 0.2s ease, opacity 0.15s ease;
+}
+.kpi-reset svg {
+  width: 13px;
+  height: 13px;
+}
+.kpi-reset:hover {
+  color: var(--accent);
+}
+
+.kpi:hover {
+  width: auto;
+  min-width: 190px;
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+.kpi:hover .kpi-icon {
+  margin-right: 2px;
+}
+.kpi:hover .kpi-count-badge {
+  display: none;
+}
+.kpi:hover .kpi-name {
+  max-width: 130px;
+  opacity: 1;
+  flex-grow: 1;
+  margin-left: 6px;
+}
+.kpi:hover .kpi-count-inline {
+  max-width: 40px;
+  opacity: 1;
+  margin-left: 6px;
+}
+.kpi:hover .kpi-reset {
+  width: 16px;
+  opacity: 1;
+  margin-left: 6px;
+}
+
+.kpi-count-badge {
+  position: absolute;
+  bottom: -6px;
+  right: -6px;
+  background: #111;
+  border: 1px solid #444;
+  border-radius: 999px;
+  padding: 1px 5px;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.65rem;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.kpi-del {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #333;
+  border: 1px solid #555;
+  color: #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.kpi-del:hover {
+  background: #b33939;
+  border-color: #b33939;
+  color: #fff;
+}
+
+/* Bordure/dégradé par rareté (objets suivis) — mêmes couleurs que
+   .loot-row/.watch-row. Fond en dégradé uniquement au survol (déployé) :
+   au repos, la tuile carrée reste unie (voir consigne : bordure toujours
+   colorée, fond en dégradé seulement quand le KPI se déploie). */
+.kpi.rarity-common {
+  --rarity-color: #c8c8c8;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-rare {
+  --rarity-color: #1dd15f;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-mythical {
+  --rarity-color: #d97a00;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-legendary {
+  --rarity-color: #c7d400;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-souvenir {
+  --rarity-color: #1f97e0;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-epic {
+  --rarity-color: #d84fa0;
+  border-color: var(--rarity-color);
+}
+.kpi.rarity-relic {
+  --rarity-color: #9450d9;
+  border-color: var(--rarity-color);
+}
+.kpi[class*='rarity-']:hover {
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 30%, #232323), #232323 85%);
+}
+/* Monstres : bordure grise, fond toujours transparent (pas de dégradé, même déployé). */
+.kpi.is-monster {
+  border-color: #888;
+  background: transparent;
+}
+.kpi.is-monster:hover {
+  background: transparent;
+}
+
+.confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+}
+/* `right`/`bottom` posés dynamiquement en JS (voir tracker-strip.component.ts
+   `confirmPopoverPos`, calculés relativement au host) plutôt qu'ancrés en CSS
+   pur sur la tuile : `.kpi-strip` a `overflow-y:hidden`, qui rognerait sinon
+   la popover d'une tuile de la rangée (aucune place au-dessus dans ce cas,
+   contrairement à un `.tool-panel` classique). */
+.confirm-popover {
+  position: absolute;
+  background: #000;
+  border: 1px solid #444;
+  border-radius: 5px;
+  padding: 6px 7px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 5;
+}
+.confirm-popover::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  right: 12px;
+  border: 5px solid transparent;
+  border-top-color: #000;
+}
+.confirm-popover button {
+  padding: 2px 7px;
+  height: auto;
+  font-size: 0.68rem;
+  border-radius: 3px;
+  border: none;
+  cursor: pointer;
+}
+.confirm-yes {
+  background: #b33939;
+  color: #fff;
+}
+.confirm-no {
+  background: #333;
+  color: #ccc;
+}

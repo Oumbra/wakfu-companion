@@ -1,21 +1,10 @@
+/* Plus de `.tool-panel`/`.panel-header` propre : embarqué comme contenu du
+   sous-onglet "Achats" de HistoryComponent (voir history.component.html),
+   qui porte déjà son propre `.tool-panel`. `display:contents` laisse
+   `.controls-row` et `.panel-body` (ci-dessous) participer directement au
+   flex-column du `.tool-panel` parent, même principe que FightHistoryComponent. */
 :host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-.tool-panel {
-  height: 100%;
-}
-
-.header-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.header-icon {
-  width: 18px;
-  height: 18px;
+  display: contents;
 }
 
 .controls-row {

@@ -1,0 +1,42 @@
+<div class="tool-panel">
+  <div class="panel-header">
+    <span class="header-label">
+      <svg
+        class="header-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 3" />
+      </svg>
+      {{ 'history.header' | t }}
+    </span>
+  </div>
+
+  <div class="tab-header">
+    <button
+      class="meter-tab"
+      [class.active]="activeTab() === 'combats'"
+      (click)="activeTab.set('combats')"
+    >
+      {{ 'history.tabCombats' | t }}
+    </button>
+    <button
+      class="meter-tab"
+      [class.active]="activeTab() === 'purchases'"
+      (click)="activeTab.set('purchases')"
+    >
+      {{ 'purchases.header' | t }}
+    </button>
+  </div>
+
+  @if (activeTab() === 'combats') {
+    <app-fight-history />
+  } @else {
+    <app-purchases />
+  }
+</div>

@@ -15,85 +15,75 @@
     />
   </div>
 
-  <ng-template #row let-entry="entry" let-i="index" let-first="first">
-    <div
-      class="watch-row"
-      [class]="rarityClass(entry)"
-      draggable="true"
-      (dragstart)="onDragStart(i, $event)"
-      (dragover)="$event.preventDefault()"
-      (drop)="onDrop(i)"
-    >
-      @if (entry.kind === 'enemy') {
-        <app-entity-icon [name]="entry.name" side="enemy" />
-      } @else {
-        <app-item-icon [name]="entry.name" />
-      }
-      <span
-        class="watch-name-wrap"
-        [class.tooltip-below]="first"
-        [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
-      >
-        <span class="watch-name" #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{
-          displayName(entry)
-        }}</span>
-      </span>
-      <span class="watch-count">
-        {{ entry.count | numberFr }}
-        @if (entry.kind === 'enemy') {
-          <span
-            class="watch-kill-icon"
-            [class.tooltip-below]="first"
-            [title]="'damageMeter.koTitle' | t"
-          >
-            <app-ko-icon />
-          </span>
-        }
-      </span>
-      <button
-        class="icon-btn tooltip-align-right"
-        [class.tooltip-below]="first"
-        [title]="'tracker.reset' | t"
-        (click)="resetCount(entry.name)"
-      >
-        ↺
-      </button>
-      <button
-        class="icon-btn reset-btn tooltip-align-right"
-        [class.tooltip-below]="first"
-        [title]="'tracker.remove' | t"
-        (click)="remove(entry.name)"
-      >
-        ×
-      </button>
-    </div>
-  </ng-template>
-
-  <div class="tracker-list">
+  <div class="panel-body">
     @if (stats.watchlist().length === 0) {
       <div class="empty-state">{{ 'tracker.empty' | t }}</div>
-    } @else if (hasMixedKinds()) {
-      <div class="watch-group-title">{{ 'tracker.monsters' | t }}</div>
-      @for (r of monsterRows(); track r.entry.name; let first = $first) {
-        <ng-container
-          [ngTemplateOutlet]="row"
-          [ngTemplateOutletContext]="{ entry: r.entry, index: r.index, first: first }"
-        />
-      }
-      <div class="watch-group-title">{{ 'tracker.items' | t }}</div>
-      @for (r of itemRows(); track r.entry.name) {
-        <ng-container
-          [ngTemplateOutlet]="row"
-          [ngTemplateOutletContext]="{ entry: r.entry, index: r.index, first: false }"
-        />
-      }
     } @else {
-      @for (entry of stats.watchlist(); track entry.name; let i = $index, first = $first) {
-        <ng-container
-          [ngTemplateOutlet]="row"
-          [ngTemplateOutletContext]="{ entry: entry, index: i, first: first }"
-        />
-      }
+      <div class="kpi-mobile-grid">
+        @for (entry of stats.watchlist(); track entry.name) {
+          <div class="kpi-card" [class]="rarityClass(entry)" [class.is-monster]="entry.kind === 'enemy'">
+            <button
+              class="kpi-card-del"
+              [title]="'tracker.remove' | t"
+              (click)="requestDelete($event, entry.name)"
+            >
+              ×
+            </button>
+            @if (entry.kind === 'enemy') {
+              <app-entity-icon [name]="entry.name" side="enemy" class="kpi-card-icon" [size]="32" />
+            } @else {
+              <app-item-icon [name]="entry.name" class="kpi-card-icon" [size]="32" />
+            }
+            <div class="kpi-card-info">
+              <span
+                class="kpi-card-name"
+                [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
+              >
+                <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{
+                  displayName(entry)
+                }}</span>
+              </span>
+              <div class="kpi-card-count-row">
+                <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
+                <button
+                  class="kpi-card-reset"
+                  [title]="'tracker.reset' | t"
+                  (click)="resetCount(entry.name)"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M4 4v5h5M20 20v-5h-5" />
+                    <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
     }
   </div>
 </div>
+
+@if (confirmDeleteName(); as name) {
+  <div class="confirm-backdrop" (click)="cancelDelete($event)"></div>
+  <div
+    class="confirm-popover"
+    [style.right.px]="confirmPopoverPos()?.right"
+    [style.bottom.px]="confirmPopoverPos()?.bottom"
+  >
+    {{ 'tracker.confirmDelete' | t }}
+    <button class="confirm-yes" (click)="confirmDelete($event, name)">
+      {{ 'tracker.confirmYes' | t }}
+    </button>
+    <button class="confirm-no" (click)="cancelDelete($event)">
+      {{ 'tracker.confirmNo' | t }}
+    </button>
+  </div>
+}
