@@ -22,7 +22,14 @@
    constaté à l'usage (aucun résultat visible en tapant une recherche). */
 .kpi-row {
   display: flex;
-  align-items: center;
+  /* `flex-start` + `margin-top` (ci-dessous) plutôt que `center` : un
+     centrage sur l'axe transversal dépend de la hauteur DE `.kpi-strip`
+     (qui varie légèrement selon qu'une scrollbar horizontale native
+     s'affiche ou non, voir CLAUDE.md-style gotcha), ce qui désalignait
+     visiblement `.kpi-add` par rapport aux tuiles selon les cas. Ancrer les
+     deux au même repère fixe (10px depuis le haut) élimine cette
+     dépendance. */
+  align-items: flex-start;
   gap: 12px;
   width: 100%;
   min-width: 0;
@@ -31,7 +38,11 @@
 .kpi-strip {
   display: flex;
   flex-wrap: nowrap;
-  align-items: center;
+  /* `flex-start` plutôt que `center` : ancre les tuiles à un `padding-top`
+     fixe (voir `.kpi-row`/`.kpi-add` ci-dessus) au lieu de les centrer dans
+     la hauteur de `.kpi-strip`, laquelle varie légèrement selon qu'une
+     scrollbar horizontale native s'affiche ou non. */
+  align-items: flex-start;
   gap: 12px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -45,6 +56,9 @@
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  /* Aligné sur le padding-top de `.kpi-strip` (10px, voir plus haut) — même
+     repère que les tuiles, indépendamment de la hauteur réelle de la bande. */
+  margin-top: 10px;
   height: 58px;
   border-radius: 10px;
   transition: width 0.4s ease;
@@ -91,11 +105,13 @@
   justify-content: center;
   flex-shrink: 0;
   cursor: grab;
-  /* Volontairement plus lente qu'un bouton/switch classique (0.2s ailleurs
-     dans l'app) : ce déploiement est déclenché par un simple survol, une
-     transition rapide donnait un effet de clignotement désagréable en
-     balayant la bande du regard/de la souris. */
-  transition: width 0.4s ease, padding 0.4s ease;
+  /* Délai avant déclenchement (1s) + durée d'animation (1s), dans les deux
+     sens (ouverture ET fermeture) : ce déploiement est déclenché par un
+     simple survol, une transition instantanée/rapide rendait le bouton de
+     suppression difficile à atteindre (il se referme avant que la souris
+     n'ait eu le temps de l'atteindre) et donnait un effet de clignotement
+     désagréable en balayant la bande du regard/de la souris. */
+  transition: width 1s ease 1s, padding 1s ease 1s;
 }
 .kpi:active {
   cursor: grabbing;
@@ -112,7 +128,7 @@
   white-space: nowrap;
   font-weight: 600;
   font-size: 0.8rem;
-  transition: max-width 0.4s ease, opacity 0.3s ease;
+  transition: max-width 1s ease 1s, opacity 0.8s ease 1s;
 }
 .kpi-name > span {
   display: block;
@@ -128,7 +144,7 @@
   font-weight: 700;
   font-size: 0.8rem;
   color: #ccc;
-  transition: max-width 0.4s ease, opacity 0.3s ease, color 0.2s ease, font-size 0.2s ease;
+  transition: max-width 1s ease 1s, opacity 0.8s ease 1s, color 0.3s ease 1s, font-size 0.3s ease 1s;
 }
 .kpi-reset {
   width: 0;
@@ -139,7 +155,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  transition: width 0.4s ease, opacity 0.3s ease;
+  transition: width 1s ease 1s, opacity 0.8s ease 1s;
 }
 .kpi-reset svg {
   width: 15px;
