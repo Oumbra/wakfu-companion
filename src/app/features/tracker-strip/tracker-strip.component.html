@@ -1,4 +1,4 @@
-<div class="kpi-strip">
+<div class="kpi-row">
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
       <button class="kpi-add-btn" [title]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
@@ -19,44 +19,48 @@
     }
   </div>
 
-  @for (entry of stats.watchlist(); track entry.name; let i = $index) {
-    <div
-      class="kpi"
-      [class]="rarityClass(entry)"
-      [class.is-monster]="entry.kind === 'enemy'"
-      draggable="true"
-      (dragstart)="onDragStart(i, $event)"
-      (dragover)="$event.preventDefault()"
-      (drop)="onDrop(i)"
-    >
-      @if (entry.kind === 'enemy') {
-        <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="30" />
-      } @else {
-        <app-item-icon [name]="entry.name" class="kpi-icon" [size]="30" />
-      }
-      <span class="kpi-name" [attr.title]="isTruncated(entry.name) ? displayName(entry) : null">
-        <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{ displayName(entry) }}</span>
-      </span>
-      <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
-      <button class="kpi-reset" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M4 4v5h5M20 20v-5h-5" />
-          <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
-        </svg>
-      </button>
-      <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
-      <button class="kpi-del" [title]="'tracker.remove' | t" (click)="requestDelete($event, entry.name)">
-        ×
-      </button>
-    </div>
-  }
+  <div class="kpi-strip">
+    @for (entry of stats.watchlist(); track entry.name; let i = $index) {
+      <div
+        class="kpi"
+        [class]="rarityClass(entry)"
+        [class.is-monster]="entry.kind === 'enemy'"
+        draggable="true"
+        (dragstart)="onDragStart(i, $event)"
+        (dragover)="$event.preventDefault()"
+        (drop)="onDrop(i)"
+      >
+        @if (entry.kind === 'enemy') {
+          <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="30" />
+        } @else {
+          <app-item-icon [name]="entry.name" class="kpi-icon" [size]="30" />
+        }
+        <span class="kpi-name">
+          <span #nameEl (mouseenter)="onNameHover(nameEl, entry)" (mouseleave)="onNameLeave()">{{
+            displayName(entry)
+          }}</span>
+        </span>
+        <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
+        <button class="kpi-reset" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M4 4v5h5M20 20v-5h-5" />
+            <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
+          </svg>
+        </button>
+        <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
+        <button class="kpi-del" [title]="'tracker.remove' | t" (click)="requestDelete($event, entry.name)">
+          ×
+        </button>
+      </div>
+    }
+  </div>
 </div>
 
 @if (confirmDeleteName(); as name) {
@@ -73,5 +77,11 @@
     <button class="confirm-no" (click)="cancelDelete($event)">
       {{ 'tracker.confirmNo' | t }}
     </button>
+  </div>
+}
+
+@if (nameTooltip(); as tip) {
+  <div class="kpi-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
+    {{ tip.text }}
   </div>
 }
