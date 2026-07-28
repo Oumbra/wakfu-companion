@@ -30,9 +30,9 @@
       (drop)="onDrop(i)"
     >
       @if (entry.kind === 'enemy') {
-        <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="24" />
+        <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="30" />
       } @else {
-        <app-item-icon [name]="entry.name" class="kpi-icon" [size]="24" />
+        <app-item-icon [name]="entry.name" class="kpi-icon" [size]="30" />
       }
       <span class="kpi-name" [attr.title]="isTruncated(entry.name) ? displayName(entry) : null">
         <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{ displayName(entry) }}</span>
