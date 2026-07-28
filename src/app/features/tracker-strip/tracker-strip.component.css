@@ -14,6 +14,20 @@
   }
 }
 
+/* `.kpi-add` est un frère de `.kpi-strip` (pas un enfant) et non plus le
+   premier élément DANS la zone défilante : (1) il reste toujours visible,
+   collé à gauche, quel que soit le scroll horizontal des tuiles ; (2) sa
+   liste de suggestions d'autocomplétion (position:absolute, s'ouvre vers le
+   bas) n'est plus rognée par `overflow-y:hidden` de `.kpi-strip` — bug réel
+   constaté à l'usage (aucun résultat visible en tapant une recherche). */
+.kpi-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .kpi-strip {
   display: flex;
   flex-wrap: nowrap;
@@ -22,7 +36,8 @@
   overflow-x: auto;
   overflow-y: hidden;
   padding: 10px 4px 16px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 .kpi-add {
@@ -32,7 +47,7 @@
   flex-shrink: 0;
   height: 58px;
   border-radius: 10px;
-  transition: width 0.2s ease;
+  transition: width 0.4s ease;
 }
 .kpi-add-btn {
   width: 58px;
@@ -76,7 +91,11 @@
   justify-content: center;
   flex-shrink: 0;
   cursor: grab;
-  transition: width 0.2s ease, padding 0.2s ease;
+  /* Volontairement plus lente qu'un bouton/switch classique (0.2s ailleurs
+     dans l'app) : ce déploiement est déclenché par un simple survol, une
+     transition rapide donnait un effet de clignotement désagréable en
+     balayant la bande du regard/de la souris. */
+  transition: width 0.4s ease, padding 0.4s ease;
 }
 .kpi:active {
   cursor: grabbing;
@@ -93,7 +112,7 @@
   white-space: nowrap;
   font-weight: 600;
   font-size: 0.8rem;
-  transition: max-width 0.2s ease, opacity 0.15s ease;
+  transition: max-width 0.4s ease, opacity 0.3s ease;
 }
 .kpi-name > span {
   display: block;
@@ -109,7 +128,7 @@
   font-weight: 700;
   font-size: 0.8rem;
   color: #ccc;
-  transition: max-width 0.2s ease, opacity 0.15s ease;
+  transition: max-width 0.4s ease, opacity 0.3s ease, color 0.2s ease, font-size 0.2s ease;
 }
 .kpi-reset {
   width: 0;
@@ -120,7 +139,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  transition: width 0.2s ease, opacity 0.15s ease;
+  transition: width 0.4s ease, opacity 0.3s ease;
 }
 .kpi-reset svg {
   width: 15px;
@@ -148,10 +167,14 @@
   flex-grow: 1;
   margin-left: 8px;
 }
+/* Compteur mis en avant une fois le KPI déployé : bleu accent + plus grand
+   (au repos, dans le badge replié, il reste discret en gris). */
 .kpi:hover .kpi-count-inline {
   max-width: 40px;
   opacity: 1;
   margin-left: 6px;
+  color: var(--accent);
+  font-size: 0.95rem;
 }
 .kpi:hover .kpi-reset {
   width: 18px;
@@ -253,10 +276,10 @@
   z-index: 4;
 }
 /* `right`/`bottom` posés dynamiquement en JS (voir tracker-strip.component.ts
-   `confirmPopoverPos`, calculés relativement au host) plutôt qu'ancrés en CSS
-   pur sur la tuile : `.kpi-strip` a `overflow-y:hidden`, qui rognerait sinon
-   la popover d'une tuile de la rangée (aucune place au-dessus dans ce cas,
-   contrairement à un `.tool-panel` classique). */
+   `hostRelativePos`) plutôt qu'ancrés en CSS pur sur la tuile : `.kpi-strip`
+   a `overflow-y:hidden`, qui rognerait sinon la popover d'une tuile de la
+   rangée (aucune place au-dessus dans ce cas, contrairement à un
+   `.tool-panel` classique). */
 .confirm-popover {
   position: absolute;
   background: #000;
@@ -293,4 +316,22 @@
 .confirm-no {
   background: #333;
   color: #ccc;
+}
+
+/* Tooltip du nom tronqué — même raison que `.confirm-popover` ci-dessus
+   (positionné en JS, voir `nameTooltip`/`hostRelativePos`) : reprend le
+   style visuel du système de tooltip générique (styles.css) sans pouvoir en
+   réutiliser le mécanisme CSS pur (`[title]::after`), rogné ici par
+   `.kpi-strip`. */
+.kpi-name-tooltip {
+  position: absolute;
+  background: #000;
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 6;
 }

@@ -34,15 +34,16 @@ export class TrackerStripComponent {
   protected readonly addOpen = signal(false);
   /** Nom de l'entrée dont la popover de confirmation de suppression est actuellement ouverte (une seule à la fois). */
   protected readonly confirmDeleteName = signal<string | null>(null);
-  /** Position (right/bottom, relative au host) de la popover ouverte — calculée en JS plutôt
-   * qu'ancrée en CSS pur sur la tuile : `.kpi-strip` a `overflow-y:hidden` (scroll horizontal
-   * seul, voir CLAUDE.md/consigne desktop), qui rognerait sinon la popover positionnée
-   * au-dessus d'une tuile de la rangée (même piège que les tooltips de première ligne, en pire
-   * — ici c'est un vrai clip d'overflow, pas juste un recouvrement visuel). Ancrer au host
-   * (`:host{position:relative}`, aucun overflow) plutôt qu'à `.kpi-strip` contourne le clip. */
+  /** Position (right/bottom, relative au host) de la popover ouverte — voir `hostRelativePos`. */
   protected readonly confirmPopoverPos = signal<{ right: number; bottom: number } | null>(null);
-  /** Voir tracker.component.ts : mêmes règles de détection de troncature. */
-  private readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
+  /** Tooltip du nom tronqué actuellement survolé (texte + position relative au host) — voir
+   * `hostRelativePos` : ne peut pas être un simple `[title]`/`[data-tooltip]` CSS ici, la classe
+   * globale `[title]::after` (styles.css) serait de toute façon rognée par `.kpi-strip`
+   * (`overflow-y:hidden`, scroll horizontal seul), donc positionnée en JS comme la popover de
+   * suppression plutôt que de dupliquer le système CSS générique dans ce contexte particulier. */
+  protected readonly nameTooltip = signal<{ text: string; right: number; bottom: number } | null>(
+    null,
+  );
 
   protected rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
@@ -54,18 +55,34 @@ export class TrackerStripComponent {
       : this.i18n.translateMonsterName(entry.name);
   }
 
-  protected isTruncated(name: string): boolean {
-    return this.truncatedNames().has(name);
+  /** Position (right/bottom en px) d'un élément relativement au host — sert à sortir les
+   * popovers/tooltips de `.kpi-strip` (qui les rognerait via son overflow) sans pour autant les
+   * ancrer en `position:fixed` (le host vit sous `.view-slider`, qui porte un `transform` :
+   * `position:fixed` s'y positionnerait relativement à cet ancêtre, pas au viewport — voir
+   * CLAUDE.md). `:host{position:relative}`, sans overflow, sert donc de containing block. */
+  private hostRelativePos(target: HTMLElement, gap: number): { right: number; bottom: number } {
+    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    return {
+      right: hostRect.right - targetRect.right - gap,
+      bottom: hostRect.bottom - targetRect.top + gap,
+    };
   }
 
-  protected checkTruncation(el: HTMLElement, name: string): void {
-    const isTruncated = el.scrollWidth > el.clientWidth;
-    const current = this.truncatedNames();
-    if (isTruncated === current.has(name)) return;
-    const updated = new Set(current);
-    if (isTruncated) updated.add(name);
-    else updated.delete(name);
-    this.truncatedNames.set(updated);
+  protected onNameHover(nameEl: HTMLElement, entry: WatchlistEntry): void {
+    if (nameEl.scrollWidth <= nameEl.clientWidth) {
+      this.nameTooltip.set(null);
+      return;
+    }
+    const tile = nameEl.closest('.kpi') as HTMLElement;
+    this.nameTooltip.set({
+      text: this.displayName(entry),
+      ...this.hostRelativePos(tile, 8),
+    });
+  }
+
+  protected onNameLeave(): void {
+    this.nameTooltip.set(null);
   }
 
   protected add(result: WakfuSearchResult): void {
@@ -81,12 +98,7 @@ export class TrackerStripComponent {
   protected requestDelete(event: Event, name: string): void {
     event.stopPropagation();
     const tile = (event.currentTarget as HTMLElement).closest('.kpi') as HTMLElement;
-    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
-    const tileRect = tile.getBoundingClientRect();
-    this.confirmPopoverPos.set({
-      right: hostRect.right - tileRect.right - 8,
-      bottom: hostRect.bottom - tileRect.top + 8,
-    });
+    this.confirmPopoverPos.set(this.hostRelativePos(tile, 8));
     this.confirmDeleteName.set(name);
   }
 
@@ -103,10 +115,35 @@ export class TrackerStripComponent {
 
   private dragIndex: number | null = null;
 
+  /** Construit une image de drag minimaliste (juste l'icône, sur une tuile
+   * neutre) plutôt que de capturer la tuile réelle : celle-ci peut être en
+   * cours de transition d'agrandissement au survol et porte des éléments
+   * `position:absolute` (badge compteur, croix de suppression) qui, capturés
+   * tels quels par `setDragImage`, produisaient un fantôme de drag confus
+   * (superposition visible à l'usage). Détachée du DOM après capture (le
+   * navigateur lit l'image de façon synchrone lors de l'appel). */
+  private buildDragGhost(tile: HTMLElement): HTMLElement {
+    const icon = tile.querySelector('.kpi-icon') as HTMLElement | null;
+    const ghost = document.createElement('div');
+    ghost.style.cssText =
+      'position:fixed; top:-1000px; left:-1000px; width:46px; height:46px;' +
+      'border-radius:10px; background:#232323; display:flex; align-items:center;' +
+      `justify-content:center; border:2px solid ${getComputedStyle(tile).borderColor};`;
+    if (icon) {
+      const clone = icon.cloneNode(true) as HTMLElement;
+      clone.style.margin = '0';
+      ghost.appendChild(clone);
+    }
+    return ghost;
+  }
+
   protected onDragStart(index: number, event: DragEvent): void {
     this.dragIndex = index;
     const tile = event.currentTarget as HTMLElement;
-    event.dataTransfer?.setDragImage(tile, event.offsetX, event.offsetY);
+    const ghost = this.buildDragGhost(tile);
+    document.body.appendChild(ghost);
+    event.dataTransfer?.setDragImage(ghost, 23, 23);
+    setTimeout(() => ghost.remove(), 0);
   }
 
   protected onDrop(index: number): void {
