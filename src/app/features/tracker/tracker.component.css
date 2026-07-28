@@ -39,13 +39,26 @@
   flex-shrink: 0;
 }
 
+/* `.panel-body` (classe globale, styles.css) passe en overflow-x/y:auto dès
+   que overflow-y:auto est posé (règle d'interop CSS : un axe non-`visible`
+   force l'autre à `auto` aussi) — sans ce `hidden` explicite, la croix de
+   suppression d'une carte de la colonne de droite (`.kpi-card-del`, décalée
+   de -9px hors de sa carte, voir plus bas) dépassait de quelques pixels le
+   padding-box de la grille et faisait apparaître un scroll horizontal
+   inutile sur mobile. */
+.panel-body {
+  overflow-x: hidden;
+}
+
 /* Grille de cartes en flex-wrap (voir CLAUDE.md) : icône centrée à gauche,
-   nom+compteur+reset à droite, croix de suppression sur la bordure haute-droite. */
+   nom+compteur+reset à droite, croix de suppression sur la bordure haute-droite.
+   Padding droit un peu plus large que les autres côtés pour laisser de la
+   place à `.kpi-card-del` (voir commentaire ci-dessus) sans la rogner. */
 .kpi-mobile-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 8px;
+  padding: 8px 14px 8px 8px;
 }
 
 .kpi-card {

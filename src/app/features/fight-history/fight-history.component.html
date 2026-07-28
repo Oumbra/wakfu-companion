@@ -65,26 +65,34 @@
                       }
                     </div>
                     @if (record.loot.length > 1) {
-                      <div class="loot-sort" (click)="$event.stopPropagation()">
+                      <div class="loot-sort-switch" (click)="$event.stopPropagation()">
+                        <span
+                          class="loot-sort-switch-highlight"
+                          [class.is-quantity]="lootSort() === 'quantity'"
+                          [class.is-rarity]="lootSort() === 'rarity'"
+                        ></span>
                         <button
-                          class="loot-sort-btn"
-                          [class.active]="lootSort() === 'name'"
+                          type="button"
+                          class="loot-sort-switch-option"
+                          [class.selected]="lootSort() === 'name'"
                           [title]="'damageMeter.sortName' | t"
                           (click)="setLootSort('name')"
                         >
                           Az
                         </button>
                         <button
-                          class="loot-sort-btn"
-                          [class.active]="lootSort() === 'quantity'"
+                          type="button"
+                          class="loot-sort-switch-option"
+                          [class.selected]="lootSort() === 'quantity'"
                           [title]="'damageMeter.sortQuantity' | t"
                           (click)="setLootSort('quantity')"
                         >
                           Nb
                         </button>
                         <button
-                          class="loot-sort-btn"
-                          [class.active]="lootSort() === 'rarity'"
+                          type="button"
+                          class="loot-sort-switch-option"
+                          [class.selected]="lootSort() === 'rarity'"
                           [title]="'damageMeter.sortRarity' | t"
                           (click)="setLootSort('rarity')"
                         >
