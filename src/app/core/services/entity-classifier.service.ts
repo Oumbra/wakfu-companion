@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
+import { isKnownWakfuMonsterName } from '../data/wakfu-monsters.data';
 import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
@@ -39,7 +39,6 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
   private readonly roster = inject(CharacterRosterService);
-  private readonly monsterNames = new Set(Object.keys(WAKFU_MONSTERS_FR));
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
 
@@ -84,7 +83,7 @@ export class EntityClassifierService {
 
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
   registerSpellCast(caster: string, spell: string): void {
-    if (this.monsterNames.has(normalizeName(caster))) return;
+    if (isKnownWakfuMonsterName(caster)) return;
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
@@ -129,7 +128,7 @@ export class EntityClassifierService {
   }
 
   private isConfirmedEnemy(name: string): boolean {
-    return this.monsterNames.has(normalizeName(name));
+    return isKnownWakfuMonsterName(name);
   }
 
   setOverride(name: string, side: EntitySide): void {

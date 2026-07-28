@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal } from '@angular/core';
-import { WAKFU_ITEMS_FR, WakfuItemEntry } from '../../core/data/wakfu-items.data';
+import { findWakfuItemEntry, WakfuItemEntry } from '../../core/data/wakfu-items.data';
 import { WAKFU_ITEM_IMAGE_OVERRIDES } from '../../core/data/wakfu-item-image-overrides.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 
@@ -86,7 +86,7 @@ export class ItemIconComponent {
     const key = normalizeWakfuName(this.name());
     const override = WAKFU_ITEM_IMAGE_OVERRIDES[key];
     if (override) return [override];
-    const entry = WAKFU_ITEMS_FR[key];
+    const entry = findWakfuItemEntry(this.name());
     return entry ? itemImageCandidates(entry) : [];
   });
 

@@ -1,9 +1,8 @@
 import { Injectable, signal } from '@angular/core';
 import { PersistenceService } from './persistence.service';
 import { TRANSLATIONS } from '../i18n/translations';
-import { WAKFU_ITEMS_FR } from '../data/wakfu-items.data';
-import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
-import { normalizeWakfuName } from '../utils/wakfu-name.util';
+import { findWakfuItemEntry } from '../data/wakfu-items.data';
+import { findWakfuMonsterEntry } from '../data/wakfu-monsters.data';
 
 export type AppLocale = 'fr' | 'en' | 'es' | 'pt';
 
@@ -54,21 +53,23 @@ export class I18nService {
     }).format(new Date(ms));
   }
 
-  /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama ; conserve le nom FR si non trouvé ou si la locale est FR. */
-  translateItemName(frName: string): string {
-    const locale = this.locale();
-    if (locale === 'fr') return frName;
-    const entry = WAKFU_ITEMS_FR[normalizeWakfuName(frName)];
-    const translated = entry?.[locale];
-    return translated ? translated : frName;
+  /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama
+   * vers la locale courante de l'app. `name` peut être dans n'importe
+   * laquelle des 4 langues (le client Wakfu de l'utilisateur n'est pas
+   * forcément en français) : `findWakfuItemEntry` le retrouve quelle que
+   * soit sa langue d'origine. Conserve `name` tel quel si l'objet est
+   * introuvable dans le référentiel. */
+  translateItemName(name: string): string {
+    const entry = findWakfuItemEntry(name);
+    const translated = entry?.[this.locale()];
+    return translated ? translated : name;
   }
 
-  /** Traduit un nom de monstre (dégâts, suivi) via le référentiel officiel Ankama ; conserve le nom FR si non trouvé ou si la locale est FR. */
-  translateMonsterName(frName: string): string {
-    const locale = this.locale();
-    if (locale === 'fr') return frName;
-    const entry = WAKFU_MONSTERS_FR[normalizeWakfuName(frName)];
-    const translated = entry?.[locale];
-    return translated ? translated : frName;
+  /** Traduit un nom de monstre (dégâts, suivi) via le référentiel officiel
+   * Ankama vers la locale courante de l'app — voir `translateItemName`. */
+  translateMonsterName(name: string): string {
+    const entry = findWakfuMonsterEntry(name);
+    const translated = entry?.[this.locale()];
+    return translated ? translated : name;
   }
 }

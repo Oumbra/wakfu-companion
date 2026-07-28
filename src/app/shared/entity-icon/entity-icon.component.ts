@@ -1,8 +1,7 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { EntityClassifierService, EntitySide } from '../../core/services/entity-classifier.service';
 import { getClassIconUri, UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
-import { WAKFU_MONSTERS_FR, WakfuMonsterEntry } from '../../core/data/wakfu-monsters.data';
-import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+import { findWakfuMonsterEntry, WakfuMonsterEntry } from '../../core/data/wakfu-monsters.data';
 
 /**
  * Construit la liste des URLs candidates pour un monstre, dans l'ordre :
@@ -63,7 +62,7 @@ export class EntityIconComponent {
 
   private readonly candidates = computed(() => {
     if (this.side() === 'ally') return [];
-    const entry = WAKFU_MONSTERS_FR[normalizeWakfuName(this.name())];
+    const entry = findWakfuMonsterEntry(this.name());
     return entry ? monsterImageCandidates(entry) : [];
   });
 
