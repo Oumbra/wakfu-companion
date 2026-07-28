@@ -1,0 +1,238 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.tool-panel {
+  height: 100%;
+}
+
+.header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #222;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-wrap {
+  position: relative;
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+}
+.search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: #777;
+  pointer-events: none;
+}
+.search-input {
+  flex-grow: 1;
+  min-width: 0;
+  background: #151515;
+  border: 1px solid #444;
+  color: var(--text-color);
+  padding: 6px 10px 6px 30px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Interrupteur de tri (plus récent / plus ancien en premier) : même principe
+   que `.gender-switch` du class-picker (fond glissant translateX). */
+.sort-switch {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  width: 52px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.sort-switch-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.sort-switch-highlight.is-asc {
+  transform: translateX(100%);
+}
+.sort-switch-option {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #999;
+}
+.sort-switch-option.selected {
+  color: #04222a;
+}
+.sort-switch-option svg {
+  width: 14px;
+  height: 14px;
+}
+
+.panel-body {
+  padding: 0;
+}
+
+.date-group {
+  border-bottom: 1px solid #2a2a2a;
+}
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+.date-group-header:hover {
+  background: #232323;
+}
+.date-group-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.date-group-date {
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ccc;
+}
+.date-group-total {
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--kama-color);
+}
+.date-group-caret {
+  font-size: 0.7em;
+  color: #666;
+  transition: transform 0.2s;
+}
+.date-group-caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+/* Ligne d'achat : même principe que `.watch-row`/`.loot-row` (dégradé de
+   fond + bordure gauche/haute par rareté via --rarity-color). */
+.purchase-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 15px 6px 30px;
+  border-left: 3px solid transparent;
+}
+.purchase-row:nth-child(odd) {
+  background-color: #1a1a1a;
+}
+.purchase-row:nth-child(even) {
+  background-color: #30303080;
+}
+.purchase-row.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.purchase-row.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.purchase-row.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.purchase-row.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.purchase-row.rarity-souvenir {
+  --rarity-color: #1f97e0;
+}
+.purchase-row.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.purchase-row.rarity-relic {
+  --rarity-color: #9450d9;
+}
+.purchase-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
+}
+.purchase-row[class*='rarity-']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--rarity-color), transparent 70%);
+  pointer-events: none;
+}
+
+.purchase-clock {
+  flex-shrink: 0;
+  display: flex;
+  color: #888;
+}
+.purchase-clock svg {
+  width: 15px;
+  height: 15px;
+}
+.purchase-name {
+  flex-grow: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.purchase-qty {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #ccc;
+  flex-shrink: 0;
+}
+.purchase-cost {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--kama-color);
+  flex-shrink: 0;
+  min-width: 62px;
+  text-align: right;
+}

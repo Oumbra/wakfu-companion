@@ -19,6 +19,26 @@
     </button>
     <button
       class="tab-btn"
+      [class.active]="activeTab() === 'purchases'"
+      (click)="activeTab.set('purchases')"
+    >
+      <svg
+        class="tab-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="9" cy="20" r="1.4" />
+        <circle cx="18" cy="20" r="1.4" />
+        <path d="M2 3h2l2.4 12.2a2 2 0 0 0 2 1.6h8.8a2 2 0 0 0 2-1.6L21 7H6" />
+      </svg>
+      {{ 'purchases.header' | t }}
+    </button>
+    <button
+      class="tab-btn"
       [class.active]="activeTab() === 'chat'"
       (click)="activeTab.set('chat')"
     >
@@ -29,6 +49,7 @@
   <div class="panels-row">
     <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
     <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
+    <app-purchases [class.tab-hidden]="activeTab() !== 'purchases'" />
     <app-chat-panel [class.tab-hidden]="activeTab() !== 'chat'" />
   </div>
 </div>

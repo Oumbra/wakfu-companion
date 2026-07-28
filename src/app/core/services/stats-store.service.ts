@@ -51,6 +51,17 @@ export interface LootRow {
   quantity: number;
 }
 
+/** Un achat individuel (objet, quantité, coût total, horodatage) — voir
+ * `purchaseHistory` ; aucun parser n'alimente encore ce signal (log Wakfu
+ * pas encore décodé pour les achats), il reste vide jusqu'à son ajout. */
+export interface PurchaseRecord {
+  id: number;
+  item: string;
+  quantity: number;
+  totalCost: number;
+  fullTimestampMs: number;
+}
+
 export interface FightRecord {
   id: number;
   time: string;
@@ -99,6 +110,8 @@ export class StatsStoreService {
   readonly xpByCharacter = signal<XpRow[]>([]);
   readonly damageByAttacker = signal<EntityDamageRow[]>([]);
   readonly fightHistory = signal<FightRecord[]>([]);
+  /** Historique des achats — vide tant qu'aucun parser ne l'alimente (voir PurchaseRecord). */
+  readonly purchaseHistory = signal<PurchaseRecord[]>([]);
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
   /** Suivi fusionné (ennemis vaincus + ressources obtenues), distingué par `kind`. */
   readonly watchlist = signal<WatchlistEntry[]>([]);
@@ -108,6 +121,7 @@ export class StatsStoreService {
   private readonly currentFightXpMap = new Map<string, number>();
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
+  private readonly purchaseHistoryList: PurchaseRecord[] = [];
   /** Butin accumulé depuis le début du combat en cours (les lignes "ramassé" arrivent avant la détection de fin de combat, pas après). */
   private currentFightLoot: LootRow[] = [];
   private currentFightStartTime: string | null = null;
@@ -243,6 +257,7 @@ export class StatsStoreService {
     this.attackerMap.clear();
 
     this.fightHistoryList.length = 0;
+    this.purchaseHistoryList.length = 0;
     this.currentFightLoot = [];
     this.currentFightStartTime = null;
     this.lastLineTime = null;
@@ -500,6 +515,7 @@ export class StatsStoreService {
       this.buildEntityDamageRows(this.attackerMap, this.currentFightDefeatedNames),
     );
     this.fightHistory.set([...this.fightHistoryList]);
+    this.purchaseHistory.set([...this.purchaseHistoryList]);
     this.chatMessages.set([...this.chatBuffer]);
   }
 

@@ -53,6 +53,14 @@ export class I18nService {
     }).format(new Date(ms));
   }
 
+  /** Formate uniquement la date (sans l'heure) — utilisé pour les en-têtes de
+   * regroupement par jour (voir purchases.component.ts). */
+  formatDate(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { dateStyle: 'medium' }).format(
+      new Date(ms),
+    );
+  }
+
   /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama
    * vers la locale courante de l'app. `name` peut être dans n'importe
    * laquelle des 4 langues (le client Wakfu de l'utilisateur n'est pas

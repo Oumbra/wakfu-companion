@@ -61,6 +61,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.monsters': 'Monstres',
     'tracker.items': 'Objets',
 
+    'purchases.header': 'Achats',
+    'purchases.searchPlaceholder': 'Rechercher un objet ou une date...',
+    'purchases.empty': 'Aucun achat enregistré.',
+    'purchases.sortNewestFirst': 'Plus récent en premier',
+    'purchases.sortOldestFirst': 'Plus ancien en premier',
+
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
     'profile.back': 'Retour',
@@ -179,6 +185,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.monsters': 'Monsters',
     'tracker.items': 'Items',
 
+    'purchases.header': 'Purchases',
+    'purchases.searchPlaceholder': 'Search an item or a date...',
+    'purchases.empty': 'No purchase recorded.',
+    'purchases.sortNewestFirst': 'Newest first',
+    'purchases.sortOldestFirst': 'Oldest first',
+
     'profile.button': 'Profile',
     'profile.title': 'My profile',
     'profile.back': 'Back',
@@ -294,6 +306,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Reiniciar a cero',
     'tracker.monsters': 'Monstruos',
     'tracker.items': 'Objetos',
+
+    'purchases.header': 'Compras',
+    'purchases.searchPlaceholder': 'Buscar un objeto o una fecha...',
+    'purchases.empty': 'Ninguna compra registrada.',
+    'purchases.sortNewestFirst': 'Más reciente primero',
+    'purchases.sortOldestFirst': 'Más antiguo primero',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -412,6 +430,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.reset': 'Reiniciar para zero',
     'tracker.monsters': 'Monstros',
     'tracker.items': 'Itens',
+
+    'purchases.header': 'Compras',
+    'purchases.searchPlaceholder': 'Pesquisar um item ou uma data...',
+    'purchases.empty': 'Nenhuma compra registrada.',
+    'purchases.sortNewestFirst': 'Mais recente primeiro',
+    'purchases.sortOldestFirst': 'Mais antigo primeiro',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',
