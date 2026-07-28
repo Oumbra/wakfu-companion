@@ -1,5 +1,6 @@
 [
   {
+    "id": 5314,
     "fr": "Capt'chat",
     "en": "Cap'n Atcha",
     "es": "Capitán Miau",
@@ -12,6 +13,7 @@
     "isArchi": false
   },
   {
+    "id": 4539,
     "fr": "Larme d'Ogrest",
     "en": "Ogrest's Tear",
     "es": "Lágrima de Ogrest",
@@ -24,6 +26,7 @@
     "isArchi": false
   },
   {
+    "id": 4194,
     "fr": "Mimic Fragmenté",
     "en": "Fragmented Mimic",
     "es": "Mimic fragmentado",
@@ -36,6 +39,7 @@
     "isArchi": false
   },
   {
+    "id": 4196,
     "fr": "Mimic Sucré",
     "en": "Sweet Mimic",
     "es": "Mimic dulce",
@@ -48,6 +52,7 @@
     "isArchi": false
   },
   {
+    "id": 4195,
     "fr": "Mimic Domestique",
     "en": "Domestic Mimic",
     "es": "Mimic doméstico",
@@ -60,6 +65,7 @@
     "isArchi": false
   },
   {
+    "id": 5465,
     "fr": "Crapaud Mufle",
     "en": "Prancing Chimera",
     "es": "Sapomorros",
@@ -72,6 +78,7 @@
     "isArchi": false
   },
   {
+    "id": 3646,
     "fr": "Wapin",
     "en": "Wodent",
     "es": "Wonejo",
@@ -84,6 +91,7 @@
     "isArchi": false
   },
   {
+    "id": 4189,
     "fr": "Mimic Runique",
     "en": "Runic Mimic",
     "es": "Mimic rúnico",
@@ -96,6 +104,7 @@
     "isArchi": false
   },
   {
+    "id": 5745,
     "fr": "Noxine",
     "en": "Noxine",
     "es": "Noxina",
@@ -108,6 +117,7 @@
     "isArchi": false
   },
   {
+    "id": 4015,
     "fr": "Tofu Corrompu",
     "en": "Corrupted Tofoone",
     "es": "Tofu corrupto",
@@ -120,6 +130,7 @@
     "isArchi": false
   },
   {
+    "id": 4014,
     "fr": "Bouftou Stasifié",
     "en": "Stasified Gobball",
     "es": "Jalató stasiado",
@@ -132,6 +143,7 @@
     "isArchi": false
   },
   {
+    "id": 4864,
     "fr": "Mercenaire de Brâkmar",
     "en": "Brakmar Mercenary",
     "es": "Mercenario de Brakmar",
@@ -144,6 +156,7 @@
     "isArchi": false
   },
   {
+    "id": 4863,
     "fr": "Mercenaire de Bonta",
     "en": "Bonta Mercenary",
     "es": "Mercenario de Bonta",
@@ -156,6 +169,7 @@
     "isArchi": false
   },
   {
+    "id": 4746,
     "fr": "Mercenaire de Sufokia",
     "en": "Sufokia Mercenary",
     "es": "Mercenario de Sufokia",
@@ -168,6 +182,7 @@
     "isArchi": false
   },
   {
+    "id": 4783,
     "fr": "Mercenaire d'Amakna",
     "en": "Amakna Mercenary",
     "es": "Mercenario de Amakna",
@@ -180,6 +195,7 @@
     "isArchi": false
   },
   {
+    "id": 4013,
     "fr": "Âme Altérée",
     "en": "Distorted Soul",
     "es": "Alma agitada",
@@ -192,6 +208,7 @@
     "isArchi": false
   },
   {
+    "id": 3644,
     "fr": "Mama Wapin",
     "en": "Mama Wodent",
     "es": "Mamá wonejo",
@@ -204,6 +221,7 @@
     "isArchi": false
   },
   {
+    "id": 2616,
     "fr": "Chacha",
     "en": "Bow Meow",
     "es": "Miaumiau",
@@ -216,6 +234,7 @@
     "isArchi": false
   },
   {
+    "id": 2617,
     "fr": "Chacha Blanc",
     "en": "White Bow Meow",
     "es": "Miaumiau blanco",
@@ -228,6 +247,7 @@
     "isArchi": false
   },
   {
+    "id": 39,
     "fr": "Boufton Blanc",
     "en": "White Gobbly",
     "es": "Jalatín blanco",
@@ -240,6 +260,7 @@
     "isArchi": false
   },
   {
+    "id": 2,
     "fr": "Boufton Noir",
     "en": "Black Gobbly",
     "es": "Jalatín negro",
@@ -252,6 +273,7 @@
     "isArchi": false
   },
   {
+    "id": 6,
     "fr": "Bébé Tofu",
     "en": "Baby Tofu",
     "es": "Bebé tofu",
@@ -264,6 +286,7 @@
     "isArchi": false
   },
   {
+    "id": 4012,
     "fr": "Olavrann l'Externel",
     "en": "Olavrann the External",
     "es": "Odalach, el Externo",
@@ -276,6 +299,7 @@
     "isArchi": false
   },
   {
+    "id": 2819,
     "fr": "Larve Nourricière",
     "en": "Nanny Larva",
     "es": "Larva nutricia",
@@ -288,6 +312,7 @@
     "isArchi": false
   },
   {
+    "id": 2598,
     "fr": "Chacha Angora",
     "en": "Angora Bow Meow",
     "es": "Miaumiau angora",
@@ -300,6 +325,7 @@
     "isArchi": false
   },
   {
+    "id": 125,
     "fr": "Larve Verte",
     "en": "Green Larva",
     "es": "Larva verde",
@@ -312,6 +338,7 @@
     "isArchi": false
   },
   {
+    "id": 4212,
     "fr": "Bouftou Patraque",
     "en": "Potrick Gobball",
     "es": "Jalató de San Patírico",
@@ -324,6 +351,7 @@
     "isArchi": false
   },
   {
+    "id": 4,
     "fr": "Tofu",
     "en": "Tofu",
     "es": "Tofu",
@@ -336,6 +364,7 @@
     "isArchi": false
   },
   {
+    "id": 123,
     "fr": "Larve Bleue",
     "en": "Blue Larva",
     "es": "Larva azul",
@@ -348,6 +377,7 @@
     "isArchi": false
   },
   {
+    "id": 5526,
     "fr": "Bouftou céleste",
     "en": "Celestial Gobball",
     "es": "Jalató celestial",
@@ -360,6 +390,7 @@
     "isArchi": false
   },
   {
+    "id": 735,
     "fr": "Larve Blanche",
     "en": "White Larva",
     "es": "Larva blanca",
@@ -372,6 +403,7 @@
     "isArchi": false
   },
   {
+    "id": 1724,
     "fr": "Bouftou Ballotin",
     "en": "Ballotwine Gobball",
     "es": "Jalató amoroso",
@@ -384,6 +416,7 @@
     "isArchi": false
   },
   {
+    "id": 5527,
     "fr": "Dark Wapin",
     "en": "Darth Wodent",
     "es": "Dark wonejo",
@@ -396,6 +429,7 @@
     "isArchi": false
   },
   {
+    "id": 1,
     "fr": "Bouftou",
     "en": "Gobball",
     "es": "Jalató",
@@ -408,6 +442,7 @@
     "isArchi": false
   },
   {
+    "id": 124,
     "fr": "Larve Orange",
     "en": "Orange Larva",
     "es": "Larva naranja",
@@ -420,6 +455,7 @@
     "isArchi": false
   },
   {
+    "id": 785,
     "fr": "Larve Violette",
     "en": "Purple Larva",
     "es": "Larva violeta",
@@ -432,6 +468,7 @@
     "isArchi": false
   },
   {
+    "id": 5,
     "fr": "Tofoune",
     "en": "Tofoone",
     "es": "Tofona",
@@ -444,6 +481,7 @@
     "isArchi": false
   },
   {
+    "id": 41,
     "fr": "Boufette",
     "en": "Gobbette",
     "es": "Jalalínea",
@@ -456,6 +494,7 @@
     "isArchi": false
   },
   {
+    "id": 1816,
     "fr": "Maine Cooyne",
     "en": "Maine Goon",
     "es": "Mein Kuyn",
@@ -468,6 +507,7 @@
     "isArchi": false
   },
   {
+    "id": 3645,
     "fr": "Ti Wapin",
     "en": "Tiwodent",
     "es": "Pekewonejo",
@@ -480,6 +520,7 @@
     "isArchi": false
   },
   {
+    "id": 3009,
     "fr": "Shusharde",
     "en": "Shusnitch",
     "es": "Kiryuk",
@@ -492,6 +533,7 @@
     "isArchi": false
   },
   {
+    "id": 3,
     "fr": "Chef de Guerre Bouftou",
     "en": "Gobball War Chief",
     "es": "Jefe de guerra jalató",
@@ -504,6 +546,7 @@
     "isArchi": false
   },
   {
+    "id": 704,
     "fr": "Ventritofu",
     "en": "Tofurby",
     "es": "Gorditofu",
@@ -516,6 +559,7 @@
     "isArchi": false
   },
   {
+    "id": 3774,
     "fr": "Grouillard",
     "en": "Grambodo",
     "es": "Esbirriador",
@@ -528,6 +572,7 @@
     "isArchi": false
   },
   {
+    "id": 4085,
     "fr": "Bouftou Dominant",
     "en": "Dominant Gobball",
     "es": "Jalató dominante",
@@ -540,6 +585,7 @@
     "isArchi": false
   },
   {
+    "id": 4096,
     "fr": "Larve Dominante",
     "en": "Dominant Larva",
     "es": "Larva dominante",
@@ -552,6 +598,7 @@
     "isArchi": false
   },
   {
+    "id": 4092,
     "fr": "Tofu Dominant",
     "en": "Dominant Tofu",
     "es": "Tofu dominante",
@@ -564,6 +611,7 @@
     "isArchi": false
   },
   {
+    "id": 3212,
     "fr": "Rat Squelette",
     "en": "Skeleton Rat",
     "es": "Rata esqueleto",
@@ -576,6 +624,7 @@
     "isArchi": false
   },
   {
+    "id": 4079,
     "fr": "Arakne",
     "en": "Arachnee",
     "es": "Arakna",
@@ -588,6 +637,7 @@
     "isArchi": false
   },
   {
+    "id": 3780,
     "fr": "Contremaître Baxtock Sterman",
     "en": "Foweman Cult Shredder",
     "es": "Contramaestre Terbax Manstock",
@@ -600,6 +650,7 @@
     "isArchi": false
   },
   {
+    "id": 88,
     "fr": "Piou Bleu",
     "en": "Blue Piwi",
     "es": "Pío azul",
@@ -612,6 +663,7 @@
     "isArchi": false
   },
   {
+    "id": 90,
     "fr": "Piou Vert",
     "en": "Green Piwi",
     "es": "Pío verde",
@@ -624,6 +676,7 @@
     "isArchi": false
   },
   {
+    "id": 271,
     "fr": "Piou Violet",
     "en": "Purple Piwi",
     "es": "Pío violeta",
@@ -636,6 +689,7 @@
     "isArchi": false
   },
   {
+    "id": 1268,
     "fr": "Gugu Rouge",
     "en": "Red Googoo",
     "es": "Gugu rojo",
@@ -648,6 +702,7 @@
     "isArchi": false
   },
   {
+    "id": 1269,
     "fr": "Gugu Vert",
     "en": "Green Googoo",
     "es": "Gugu verde",
@@ -660,6 +715,7 @@
     "isArchi": false
   },
   {
+    "id": 3214,
     "fr": "Bouftou Squelette",
     "en": "Skeletal Gobball",
     "es": "Jalató esqueleto",
@@ -672,6 +728,7 @@
     "isArchi": false
   },
   {
+    "id": 87,
     "fr": "Piou Rouge",
     "en": "Red Piwi",
     "es": "Pío rojo",
@@ -684,6 +741,7 @@
     "isArchi": false
   },
   {
+    "id": 1267,
     "fr": "Gugu Bleu",
     "en": "Blue Googoo",
     "es": "Gugu azul",
@@ -696,6 +754,7 @@
     "isArchi": false
   },
   {
+    "id": 1270,
     "fr": "Gugu Violet",
     "en": "Purple Googoo",
     "es": "Gugu violeta",
@@ -708,6 +767,7 @@
     "isArchi": false
   },
   {
+    "id": 4101,
     "fr": "Griffu l'Acéré",
     "en": "Claud Sharpe",
     "es": "Ganchudo el Acerado",
@@ -720,6 +780,7 @@
     "isArchi": true
   },
   {
+    "id": 44,
     "fr": "Bouftou Royal",
     "en": "Royal Gobball",
     "es": "Jalató Real",
@@ -732,6 +793,7 @@
     "isArchi": false
   },
   {
+    "id": 4077,
     "fr": "Abragland",
     "en": "Treechorn",
     "es": "Abrakllota",
@@ -744,6 +806,7 @@
     "isArchi": false
   },
   {
+    "id": 4086,
     "fr": "Bouchtrou l'Esseulé",
     "en": "Filholl the Forsaken",
     "es": "Jalabujero el Abandonado",
@@ -756,6 +819,7 @@
     "isArchi": true
   },
   {
+    "id": 1259,
     "fr": "Tofu Royal",
     "en": "Royal Tofu",
     "es": "Tofu Real",
@@ -768,6 +832,7 @@
     "isArchi": false
   },
   {
+    "id": 4097,
     "fr": "Lartifice l'Explosive",
     "en": "Explosive Larvawork",
     "es": "Lartificia la Explosiva",
@@ -780,6 +845,7 @@
     "isArchi": true
   },
   {
+    "id": 2157,
     "fr": "Shin Larve",
     "en": "Shin Larva",
     "es": "Shin Larva",
@@ -792,6 +858,7 @@
     "isArchi": false
   },
   {
+    "id": 4078,
     "fr": "Arakne Brodeuse",
     "en": "Arachnee Embroiderer",
     "es": "Arakna tejedora",
@@ -804,6 +871,7 @@
     "isArchi": false
   },
   {
+    "id": 272,
     "fr": "Pioulette",
     "en": "Pink Piwi",
     "es": "Piolina",
@@ -816,6 +884,7 @@
     "isArchi": false
   },
   {
+    "id": 3215,
     "fr": "Garde Squelette",
     "en": "Skeleton Guard",
     "es": "Guardia esqueleto",
@@ -828,6 +897,7 @@
     "isArchi": false
   },
   {
+    "id": 4076,
     "fr": "Abraknyde",
     "en": "Treechnid",
     "es": "Abráknido",
@@ -840,6 +910,7 @@
     "isArchi": false
   },
   {
+    "id": 4047,
     "fr": "Garde mal réveillé",
     "en": "Sleepy Guard",
     "es": "Guardia mal despierto",
@@ -852,6 +923,7 @@
     "isArchi": false
   },
   {
+    "id": 4018,
     "fr": "Mimi Pâti",
     "en": "Mimi Skäte",
     "es": "Torrejillä de ärenä",
@@ -864,6 +936,7 @@
     "isArchi": false
   },
   {
+    "id": 4093,
     "fr": "Piou Dominant",
     "en": "Dominant Piwi",
     "es": "Pío dominante",
@@ -876,6 +949,7 @@
     "isArchi": false
   },
   {
+    "id": 4094,
     "fr": "Abraknyde Dominant",
     "en": "Dominant Treechnid",
     "es": "Abráknido dominante",
@@ -888,6 +962,7 @@
     "isArchi": false
   },
   {
+    "id": 4019,
     "fr": "Pâti Bulleur",
     "en": "Bubble Skäte",
     "es": "Mägdärenä",
@@ -900,6 +975,7 @@
     "isArchi": false
   },
   {
+    "id": 1359,
     "fr": "Blii Framboise",
     "en": "Blue Raspberry Blii",
     "es": "Blii de frambuesa",
@@ -912,6 +988,7 @@
     "isArchi": false
   },
   {
+    "id": 4046,
     "fr": "Garde",
     "en": "Guard",
     "es": "Guarda",
@@ -924,6 +1001,7 @@
     "isArchi": false
   },
   {
+    "id": 4048,
     "fr": "Crokdurr dressé",
     "en": "Trained Bythard",
     "es": "Mordeduro adiestrado",
@@ -936,6 +1014,7 @@
     "isArchi": false
   },
   {
+    "id": 4055,
     "fr": "Momie de sable",
     "en": "Sand Mummy",
     "es": "Momia de arena",
@@ -948,6 +1027,7 @@
     "isArchi": false
   },
   {
+    "id": 3893,
     "fr": "Khan Karkass",
     "en": "Khan Karkass",
     "es": "Khan Karkasa",
@@ -960,6 +1040,7 @@
     "isArchi": false
   },
   {
+    "id": 1360,
     "fr": "Blii Citron",
     "en": "Lemon Blii",
     "es": "Blii de limón",
@@ -972,6 +1053,7 @@
     "isArchi": false
   },
   {
+    "id": 1361,
     "fr": "Blii Fraise",
     "en": "Strawberry Blii",
     "es": "Blii de fresa",
@@ -984,6 +1066,7 @@
     "isArchi": false
   },
   {
+    "id": 1362,
     "fr": "Blii Menthe",
     "en": "Mint Blii",
     "es": "Blii de menta",
@@ -996,6 +1079,7 @@
     "isArchi": false
   },
   {
+    "id": 4049,
     "fr": "Mékan-0",
     "en": "Mechan-0",
     "es": "Mekan-0",
@@ -1008,6 +1092,7 @@
     "isArchi": false
   },
   {
+    "id": 4051,
     "fr": "Garde Momihypnotisé",
     "en": "Mummypnotized Guard",
     "es": "Guardia momipnotizado",
@@ -1020,6 +1105,7 @@
     "isArchi": false
   },
   {
+    "id": 4050,
     "fr": "Sergent Momihypnotisé",
     "en": "Mummypnotized Sergeant",
     "es": "Sargento momipnotizado",
@@ -1032,6 +1118,7 @@
     "isArchi": false
   },
   {
+    "id": 4052,
     "fr": "Crokdurr d'attaque",
     "en": "Attack Bythard",
     "es": "Mordeduro de ataque",
@@ -1044,6 +1131,7 @@
     "isArchi": false
   },
   {
+    "id": 4053,
     "fr": "Mékan-0 Momidifé",
     "en": "Mummidified Mechan-0",
     "es": "Mekan-0 momidificado",
@@ -1056,6 +1144,7 @@
     "isArchi": false
   },
   {
+    "id": 4020,
     "fr": "Pâti Impériâl",
     "en": "Imperiäl Skäte",
     "es": "Torrejä imperiäl",
@@ -1068,6 +1157,7 @@
     "isArchi": false
   },
   {
+    "id": 4648,
     "fr": "Jadarme",
     "en": "Jadarmed",
     "es": "Jadarmado",
@@ -1080,6 +1170,7 @@
     "isArchi": false
   },
   {
+    "id": 4650,
     "fr": "Agathank",
     "en": "Agatank",
     "es": "Agatank",
@@ -1092,6 +1183,7 @@
     "isArchi": false
   },
   {
+    "id": 4649,
     "fr": "Emeraldin",
     "en": "Emeraldin",
     "es": "Esmeraldín",
@@ -1104,6 +1196,7 @@
     "isArchi": false
   },
   {
+    "id": 1187,
     "fr": "Piou Royal",
     "en": "Royal Piwi",
     "es": "Pío Real",
@@ -1116,6 +1209,7 @@
     "isArchi": false
   },
   {
+    "id": 4098,
     "fr": "Abribus le Protecteur",
     "en": "Abribus the Protector",
     "es": "Marquesino, el Protector",
@@ -1128,6 +1222,7 @@
     "isArchi": true
   },
   {
+    "id": 4100,
     "fr": "Pewpew l'Artilleur",
     "en": "Gunner Pewpew",
     "es": "Piupiu, el Artillero",
@@ -1140,6 +1235,7 @@
     "isArchi": true
   },
   {
+    "id": 4512,
     "fr": "Craqueboule",
     "en": "Crackrock",
     "es": "Crujibola",
@@ -1152,6 +1248,7 @@
     "isArchi": false
   },
   {
+    "id": 4880,
     "fr": "Craqueboule de la Mine",
     "en": "Mine Crackrock",
     "es": "Crujibola de la mina",
@@ -1164,6 +1261,7 @@
     "isArchi": false
   },
   {
+    "id": 3216,
     "fr": "Morfor",
     "en": "Morfor",
     "es": "Morfor",
@@ -1176,6 +1274,7 @@
     "isArchi": false
   },
   {
+    "id": 4755,
     "fr": "Moomouche",
     "en": "Moofly",
     "es": "Muuumusca",
@@ -1188,6 +1287,7 @@
     "isArchi": false
   },
   {
+    "id": 5374,
     "fr": "Flibustier d'Asse",
     "en": "Asse Buccaneer",
     "es": "Filibustero de Rano",
@@ -1200,6 +1300,7 @@
     "isArchi": false
   },
   {
+    "id": 135,
     "fr": "Pissenlion",
     "en": "Dandy Lion",
     "es": "Mala semilla de girasol",
@@ -1212,6 +1313,7 @@
     "isArchi": false
   },
   {
+    "id": 4107,
     "fr": "Abraknelle",
     "en": "Treechnell",
     "es": "Abraknela",
@@ -1224,6 +1326,7 @@
     "isArchi": false
   },
   {
+    "id": 4021,
     "fr": "Château de Sâble",
     "en": "Sänd Cästle",
     "es": "Cästillo Enhärenädo",
@@ -1236,6 +1339,7 @@
     "isArchi": false
   },
   {
+    "id": 95,
     "fr": "Rose Démoniaque",
     "en": "Demonic Rose",
     "es": "Rosa demoníaca",
@@ -1248,6 +1352,7 @@
     "isArchi": false
   },
   {
+    "id": 1275,
     "fr": "Glouton Epineux",
     "en": "Spiny Glutton",
     "es": "Glotón espinoso",
@@ -1260,6 +1365,7 @@
     "isArchi": false
   },
   {
+    "id": 5373,
     "fr": "Soeur de la côte",
     "en": "Sister of the Coast",
     "es": "Hermana de la costa",
@@ -1272,6 +1378,7 @@
     "isArchi": false
   },
   {
+    "id": 5380,
     "fr": "Nimbrasier",
     "en": "Infernyob",
     "es": "Taponcendio",
@@ -1284,6 +1391,7 @@
     "isArchi": false
   },
   {
+    "id": 5862,
     "fr": "Moogrr 3",
     "en": "Moogrr 3",
     "es": "Muuugresa 3",
@@ -1296,6 +1404,7 @@
     "isArchi": false
   },
   {
+    "id": 5859,
     "fr": "Moogrr 1",
     "en": "Moogrr 1",
     "es": "Muuugresa 1",
@@ -1308,6 +1417,7 @@
     "isArchi": false
   },
   {
+    "id": 5861,
     "fr": "Moogrr 2",
     "en": "Moogrr 2",
     "es": "Muuugresa 2",
@@ -1320,6 +1430,7 @@
     "isArchi": false
   },
   {
+    "id": 5379,
     "fr": "Bwork brûlé",
     "en": "Burned Bwork",
     "es": "Bwork incinerado",
@@ -1332,6 +1443,7 @@
     "isArchi": false
   },
   {
+    "id": 4544,
     "fr": "Rose Ténébreuse",
     "en": "Darkover Rose",
     "es": "Rosa tenebrosa",
@@ -1344,6 +1456,7 @@
     "isArchi": false
   },
   {
+    "id": 4756,
     "fr": "Moogrron",
     "en": "Moogrroon",
     "es": "Muuugritón",
@@ -1356,6 +1469,7 @@
     "isArchi": false
   },
   {
+    "id": 4511,
     "fr": "Craqueleur",
     "en": "Crackler",
     "es": "Crujidor",
@@ -1368,6 +1482,7 @@
     "isArchi": false
   },
   {
+    "id": 4757,
     "fr": "Moogrr",
     "en": "Moogrr",
     "es": "Muuugresa",
@@ -1380,6 +1495,7 @@
     "isArchi": false
   },
   {
+    "id": 4879,
     "fr": "Craqueleur de la Mine",
     "en": "Mine Crackler",
     "es": "Crujidor de la mina",
@@ -1392,6 +1508,7 @@
     "isArchi": false
   },
   {
+    "id": 1167,
     "fr": "Malopo",
     "en": "Badskin",
     "es": "Malapiel",
@@ -1404,6 +1521,7 @@
     "isArchi": false
   },
   {
+    "id": 4878,
     "fr": "Craqueleur de la Mine Ancestral",
     "en": "Ancestral Mine Crackler",
     "es": "Crujidor ancestral de la mina",
@@ -1416,6 +1534,7 @@
     "isArchi": false
   },
   {
+    "id": 5375,
     "fr": "Bataillard des mers",
     "en": "Ocean Brawler",
     "es": "Batallante de los mares",
@@ -1428,6 +1547,7 @@
     "isArchi": false
   },
   {
+    "id": 1274,
     "fr": "Tournesol Eclatant",
     "en": "Exploding Sunflower",
     "es": "Girasol explosivo",
@@ -1440,6 +1560,7 @@
     "isArchi": false
   },
   {
+    "id": 5377,
     "fr": "Forban Kahl",
     "en": "Clumsy Corsair",
     "es": "Cojorsario",
@@ -1452,6 +1573,7 @@
     "isArchi": false
   },
   {
+    "id": 5381,
     "fr": "Défunéraire",
     "en": "Tombstomp",
     "es": "Difunerario",
@@ -1464,6 +1586,7 @@
     "isArchi": false
   },
   {
+    "id": 5383,
     "fr": "Mort-brûlé dominant",
     "en": "Dominant Deathburn",
     "es": "Fallecinerado dominante",
@@ -1476,6 +1599,7 @@
     "isArchi": false
   },
   {
+    "id": 94,
     "fr": "Pissenlit Diabolique",
     "en": "Evil Dandelion",
     "es": "Diente de león diabólico",
@@ -1488,6 +1612,7 @@
     "isArchi": false
   },
   {
+    "id": 4510,
     "fr": "Craqueleur Ancestral",
     "en": "Ancestral Crackler",
     "es": "Crujidor ancestral",
@@ -1500,6 +1625,7 @@
     "isArchi": false
   },
   {
+    "id": 4054,
     "fr": "Kroutânkharton",
     "en": "Tutaur'Kama",
     "es": "Totankemón",
@@ -1512,6 +1638,7 @@
     "isArchi": false
   },
   {
+    "id": 4252,
     "fr": "Prisonnier Slek",
     "en": "Schnek Prisoner",
     "es": "Prisionero brizlón",
@@ -1524,6 +1651,7 @@
     "isArchi": false
   },
   {
+    "id": 4843,
     "fr": "Plante Contaminée",
     "en": "Contaminated Plant",
     "es": "Planta contaminada",
@@ -1536,6 +1664,7 @@
     "isArchi": false
   },
   {
+    "id": 1636,
     "fr": "Pissdane l'Insipide",
     "en": "Dandel the Boy",
     "es": "Diente de Lennon, el Universal",
@@ -1548,6 +1677,7 @@
     "isArchi": false
   },
   {
+    "id": 3591,
     "fr": "Passeur",
     "en": "Passer",
     "es": "Pasador",
@@ -1560,6 +1690,7 @@
     "isArchi": false
   },
   {
+    "id": 1168,
     "fr": "Malobouc",
     "en": "Badgoat",
     "es": "Malajeta",
@@ -1572,6 +1703,7 @@
     "isArchi": false
   },
   {
+    "id": 2122,
     "fr": "Plante Dominante",
     "en": "Dominant Plant",
     "es": "Planta dominante",
@@ -1584,6 +1716,7 @@
     "isArchi": false
   },
   {
+    "id": 2118,
     "fr": "Moogrron Dominant",
     "en": "Dominant Moogrroon",
     "es": "Muuugritón dominante",
@@ -1596,6 +1729,7 @@
     "isArchi": false
   },
   {
+    "id": 4369,
     "fr": "Craqueleur Dominant",
     "en": "Dominant Crackler",
     "es": "Crujidor dominante",
@@ -1608,6 +1742,7 @@
     "isArchi": false
   },
   {
+    "id": 1169,
     "fr": "Malocac",
     "en": "Badaclocom",
     "es": "Malcac",
@@ -1620,6 +1755,7 @@
     "isArchi": false
   },
   {
+    "id": 2765,
     "fr": "Bouftou Sauvage",
     "en": "Wild Gobball",
     "es": "Jalató salvaje",
@@ -1632,6 +1768,7 @@
     "isArchi": false
   },
   {
+    "id": 4022,
     "fr": "Pâti Noir",
     "en": "Bläck Skäte",
     "es": "Pätinojäldre",
@@ -1644,6 +1781,7 @@
     "isArchi": false
   },
   {
+    "id": 4033,
     "fr": "Clone du Pâti Noir",
     "en": "Bläck Skäte Clone",
     "es": "Clon del pätinojäldre",
@@ -1656,6 +1794,7 @@
     "isArchi": false
   },
   {
+    "id": 4748,
     "fr": "Surimi",
     "en": "Surimi",
     "es": "Surimi",
@@ -1668,6 +1807,7 @@
     "isArchi": false
   },
   {
+    "id": 4749,
     "fr": "Cwalbator",
     "en": "Cwablock",
     "es": "Don Kangwejus",
@@ -1680,6 +1820,7 @@
     "isArchi": false
   },
   {
+    "id": 2766,
     "fr": "Boufette Chamane",
     "en": "Shaman Gobbette",
     "es": "Jalalínea chamana",
@@ -1692,6 +1833,7 @@
     "isArchi": false
   },
   {
+    "id": 1726,
     "fr": "Plante Carnivore",
     "en": "Carnivorous Plant",
     "es": "Planta Carnívora",
@@ -1704,6 +1846,7 @@
     "isArchi": false
   },
   {
+    "id": 4239,
     "fr": "Kralamour",
     "en": "Kralove",
     "es": "Kralamar",
@@ -1716,6 +1859,7 @@
     "isArchi": false
   },
   {
+    "id": 5376,
     "fr": "Pohl le poulpe",
     "en": "Pohl the Octopus",
     "es": "Pohl el Pulpo",
@@ -1728,6 +1872,7 @@
     "isArchi": false
   },
   {
+    "id": 5382,
     "fr": "Hark Saniss, Dernier géant",
     "en": "Hark Saniss, the Last Giant",
     "es": "Hark Saniss, Último gigante",
@@ -1740,6 +1885,7 @@
     "isArchi": false
   },
   {
+    "id": 5416,
     "fr": "Cire Momore",
     "en": "Cire Momore",
     "es": "Cire Momore",
@@ -1752,6 +1898,7 @@
     "isArchi": false
   },
   {
+    "id": 4368,
     "fr": "Craqnoix le Gêneur",
     "en": "Cracknut the Nuisance",
     "es": "Crujenueces el Molesto",
@@ -1764,6 +1911,7 @@
     "isArchi": false
   },
   {
+    "id": 1632,
     "fr": "Moumoute la Postiche",
     "en": "Moothane the Gas",
     "es": "Pacmuuungr la Hambrienta",
@@ -1776,6 +1924,7 @@
     "isArchi": false
   },
   {
+    "id": 4519,
     "fr": "Craqueleur Royal",
     "en": "Royal Crackler",
     "es": "Crujidor Real",
@@ -1788,6 +1937,7 @@
     "isArchi": false
   },
   {
+    "id": 4758,
     "fr": "Moogrr Royale",
     "en": "Royal Moogrr",
     "es": "Muuugresa Real",
@@ -1800,6 +1950,7 @@
     "isArchi": false
   },
   {
+    "id": 5386,
     "fr": "Parrapuits",
     "en": "Burrumbrilla",
     "es": "Parraguás",
@@ -1812,6 +1963,7 @@
     "isArchi": false
   },
   {
+    "id": 4730,
     "fr": "Tikoko",
     "en": "Tikoko",
     "es": "Pekekoko",
@@ -1824,6 +1976,7 @@
     "isArchi": false
   },
   {
+    "id": 4241,
     "fr": "Skoualinou",
     "en": "Sweetlachii",
     "es": "Eskualindroso",
@@ -1836,6 +1989,7 @@
     "isArchi": false
   },
   {
+    "id": 4651,
     "fr": "Agonie la Déterrée",
     "en": "Unearthed Agony",
     "es": "Agonía la Desenterrada",
@@ -1848,6 +2002,7 @@
     "isArchi": false
   },
   {
+    "id": 5005,
     "fr": "Rosée la matinale",
     "en": "Dew the Early Riser",
     "es": "Rocío la Matinal",
@@ -1860,6 +2015,7 @@
     "isArchi": false
   },
   {
+    "id": 2767,
     "fr": "Boufton sauvage",
     "en": "Wild Gobbly",
     "es": "Jalatín salvaje",
@@ -1872,6 +2028,7 @@
     "isArchi": false
   },
   {
+    "id": 4242,
     "fr": "Skouale Marteau",
     "en": "Hammer Selachii",
     "es": "Eskualo martillo",
@@ -1884,6 +2041,7 @@
     "isArchi": false
   },
   {
+    "id": 2764,
     "fr": "Chef de Guerre Sauvage",
     "en": "Wild War Chief",
     "es": "Jefe de guerra salvaje",
@@ -1896,6 +2054,7 @@
     "isArchi": false
   },
   {
+    "id": 4237,
     "fr": "Dark Moule",
     "en": "Darth Mussel",
     "es": "Dark Maulusco",
@@ -1908,6 +2067,7 @@
     "isArchi": false
   },
   {
+    "id": 4319,
     "fr": "Gallerie",
     "en": "Gallery",
     "es": "Galería",
@@ -1920,6 +2080,7 @@
     "isArchi": false
   },
   {
+    "id": 4729,
     "fr": "Kokoko",
     "en": "Kokoko",
     "es": "Kokoko",
@@ -1932,6 +2093,7 @@
     "isArchi": false
   },
   {
+    "id": 5385,
     "fr": "Marthos",
     "en": "Hemmyr",
     "es": "Marthos",
@@ -1944,6 +2106,7 @@
     "isArchi": false
   },
   {
+    "id": 2770,
     "fr": "Mineur Bwork",
     "en": "Bwork Miner",
     "es": "Minero bwork",
@@ -1956,6 +2119,7 @@
     "isArchi": false
   },
   {
+    "id": 4751,
     "fr": "Salbatroce",
     "en": "Albatrocious",
     "es": "Albatroz",
@@ -1968,6 +2132,7 @@
     "isArchi": false
   },
   {
+    "id": 2771,
     "fr": "Bomber Bwork",
     "en": "Bwork Bomber",
     "es": "Bomber bwork",
@@ -1980,6 +2145,7 @@
     "isArchi": false
   },
   {
+    "id": 4243,
     "fr": "Skouale Lancier",
     "en": "Spear Selachii",
     "es": "Eskualo lancero",
@@ -1992,6 +2158,7 @@
     "isArchi": false
   },
   {
+    "id": 4728,
     "fr": "Grokoko",
     "en": "Rokoko",
     "es": "Gorkoko",
@@ -2004,6 +2171,7 @@
     "isArchi": false
   },
   {
+    "id": 4238,
     "fr": "Kaskargo",
     "en": "Snailmet",
     "es": "Kasrakol",
@@ -2016,6 +2184,7 @@
     "isArchi": false
   },
   {
+    "id": 2772,
     "fr": "Guerrier Bwork",
     "en": "Bwork Warrior",
     "es": "Guerrero bwork",
@@ -2028,6 +2197,7 @@
     "isArchi": false
   },
   {
+    "id": 5387,
     "fr": "Bouclihash",
     "en": "Axshield",
     "es": "Escudacha",
@@ -2040,6 +2210,7 @@
     "isArchi": false
   },
   {
+    "id": 4140,
     "fr": "Gankr",
     "en": "Gankr",
     "es": "Gankr",
@@ -2052,6 +2223,7 @@
     "isArchi": false
   },
   {
+    "id": 4750,
     "fr": "Père Cwabtor",
     "en": "Father Cwabstix",
     "es": "Kangwejator",
@@ -2064,6 +2236,7 @@
     "isArchi": false
   },
   {
+    "id": 2773,
     "fr": "Cybwork",
     "en": "Cybwork",
     "es": "Cybwork",
@@ -2076,6 +2249,7 @@
     "isArchi": false
   },
   {
+    "id": 5389,
     "fr": "Marteau-Aigri dominant",
     "en": "Dominant Bitter-Hammer",
     "es": "Martilloseco dominante",
@@ -2088,6 +2262,7 @@
     "isArchi": false
   },
   {
+    "id": 4268,
     "fr": "Skoualala",
     "en": "Selachii",
     "es": "Eskualoco",
@@ -2100,6 +2275,7 @@
     "isArchi": false
   },
   {
+    "id": 4753,
     "fr": "Cwabe Dominant",
     "en": "Dominant Cwab",
     "es": "Cangwejo dominante",
@@ -2112,6 +2288,7 @@
     "isArchi": false
   },
   {
+    "id": 4738,
     "fr": "Kokoko Dominant",
     "en": "Dominant Kokoko",
     "es": "Kokoko dominante",
@@ -2124,6 +2301,7 @@
     "isArchi": false
   },
   {
+    "id": 4256,
     "fr": "Vertigo",
     "en": "Vertigo",
     "es": "Vértigo",
@@ -2136,6 +2314,7 @@
     "isArchi": false
   },
   {
+    "id": 4401,
     "fr": "Boufalobil le Chevaucheur",
     "en": "Buffaloble the Rider",
     "es": "Jalatobill, el Cabalgador",
@@ -2148,6 +2327,7 @@
     "isArchi": false
   },
   {
+    "id": 1784,
     "fr": "Corbacassin",
     "en": "Croboar",
     "es": "Cuerbakesino",
@@ -2160,6 +2340,7 @@
     "isArchi": false
   },
   {
+    "id": 3596,
     "fr": "Malopo",
     "en": "Badskin",
     "es": "Malapiel",
@@ -2172,6 +2353,7 @@
     "isArchi": false
   },
   {
+    "id": 3595,
     "fr": "Malocac",
     "en": "Badaclocom",
     "es": "Malcac",
@@ -2184,6 +2366,7 @@
     "isArchi": false
   },
   {
+    "id": 5450,
     "fr": "Armoire",
     "en": "Cupboard",
     "es": "Armario",
@@ -2196,6 +2379,7 @@
     "isArchi": false
   },
   {
+    "id": 3597,
     "fr": "Malobouc",
     "en": "Badgoat",
     "es": "Malajeta",
@@ -2208,6 +2392,7 @@
     "isArchi": false
   },
   {
+    "id": 5445,
     "fr": "Lela",
     "en": "Lela",
     "es": "Leila",
@@ -2220,6 +2405,7 @@
     "isArchi": false
   },
   {
+    "id": 2768,
     "fr": "Grand Bouftou Sauvage",
     "en": "Great Wild Gobball",
     "es": "Gran Jalató Salvaje",
@@ -2232,6 +2418,7 @@
     "isArchi": false
   },
   {
+    "id": 5457,
     "fr": "Gobgob",
     "en": "Gobgob",
     "es": "Jamajam",
@@ -2244,6 +2431,7 @@
     "isArchi": false
   },
   {
+    "id": 4760,
     "fr": "Marcassinet",
     "en": "Young Wild Sow",
     "es": "Jabatillo",
@@ -2256,6 +2444,7 @@
     "isArchi": false
   },
   {
+    "id": 3573,
     "fr": "Korbelle",
     "en": "Krobelle",
     "es": "Grala",
@@ -2268,6 +2457,7 @@
     "isArchi": false
   },
   {
+    "id": 4255,
     "fr": "Kraken",
     "en": "Kraken",
     "es": "Kraken",
@@ -2280,6 +2470,7 @@
     "isArchi": false
   },
   {
+    "id": 4737,
     "fr": "Kokoblong le Vertical",
     "en": "Kokoblong the Vertical",
     "es": "Kokoblongo el Vertical",
@@ -2292,6 +2483,7 @@
     "isArchi": false
   },
   {
+    "id": 4867,
     "fr": "Truche",
     "en": "Strich",
     "es": "Pestruz",
@@ -2304,6 +2496,7 @@
     "isArchi": false
   },
   {
+    "id": 4916,
     "fr": "Moskito",
     "en": "Moskito",
     "es": "Moskito",
@@ -2316,6 +2509,7 @@
     "isArchi": false
   },
   {
+    "id": 5447,
     "fr": "Erpel",
     "en": "Ysorpel",
     "es": "Arpel",
@@ -2328,6 +2522,7 @@
     "isArchi": false
   },
   {
+    "id": 5453,
     "fr": "Crapaud Ydalipe",
     "en": "Chimera Ydalipe",
     "es": "Sapo Ydalipe",
@@ -2340,6 +2535,7 @@
     "isArchi": false
   },
   {
+    "id": 4240,
     "fr": "Kralaboss",
     "en": "Kralaboss",
     "es": "Kralaboss",
@@ -2352,6 +2548,7 @@
     "isArchi": false
   },
   {
+    "id": 4267,
     "fr": "Requinoa",
     "en": "Sharkinoa",
     "es": "Tiburobusto",
@@ -2364,6 +2561,7 @@
     "isArchi": false
   },
   {
+    "id": 4371,
     "fr": "Bouflaquette le Chevelu",
     "en": "Gobpuddlet the Hairy",
     "es": "Jalapatillas, el Greñudo",
@@ -2376,6 +2574,7 @@
     "isArchi": false
   },
   {
+    "id": 5113,
     "fr": "Milimulou",
     "en": "Miliboowolf",
     "es": "Minilubo",
@@ -2388,6 +2587,7 @@
     "isArchi": false
   },
   {
+    "id": 5449,
     "fr": "Crapaud Lela",
     "en": "Chimera Lela",
     "es": "Sapo Leila",
@@ -2400,6 +2600,7 @@
     "isArchi": false
   },
   {
+    "id": 4731,
     "fr": "Grokokolantha",
     "en": "Lokoko",
     "es": "Gorkokolost",
@@ -2412,6 +2613,7 @@
     "isArchi": false
   },
   {
+    "id": 4752,
     "fr": "Cwalbinos le Blafard",
     "en": "Sebastian Cwabtellanos",
     "es": "Kangwalbino el Pálido",
@@ -2424,6 +2626,7 @@
     "isArchi": false
   },
   {
+    "id": 5446,
     "fr": "Eenca",
     "en": "Enca",
     "es": "Enca",
@@ -2436,6 +2639,7 @@
     "isArchi": false
   },
   {
+    "id": 5451,
     "fr": "Crapaud Eenca",
     "en": "Chimera Enca",
     "es": "Sapo Enca",
@@ -2448,6 +2652,7 @@
     "isArchi": false
   },
   {
+    "id": 4754,
     "fr": "Cwabe Royal",
     "en": "Royal Cwab",
     "es": "Cangwejo Real",
@@ -2460,6 +2665,7 @@
     "isArchi": false
   },
   {
+    "id": 5448,
     "fr": "Ydalipe",
     "en": "Ydalipe",
     "es": "Ydalipe",
@@ -2472,6 +2678,7 @@
     "isArchi": false
   },
   {
+    "id": 5452,
     "fr": "Crapaud Erpel",
     "en": "Chimera Ysorpel",
     "es": "Sapo Arpel",
@@ -2484,6 +2691,7 @@
     "isArchi": false
   },
   {
+    "id": 4244,
     "fr": "Royal Skouale",
     "en": "Royal Selachii",
     "es": "Eskualo Real",
@@ -2496,6 +2704,7 @@
     "isArchi": false
   },
   {
+    "id": 4766,
     "fr": "Gligli",
     "en": "Prespic",
     "es": "Prespic",
@@ -2508,6 +2717,7 @@
     "isArchi": false
   },
   {
+    "id": 5388,
     "fr": "Goël le golem",
     "en": "Joel the Golem",
     "es": "Goel el Gólem",
@@ -2520,6 +2730,7 @@
     "isArchi": false
   },
   {
+    "id": 1152,
     "fr": "Corbac",
     "en": "Crobak",
     "es": "Cuerbok",
@@ -2532,6 +2743,7 @@
     "isArchi": false
   },
   {
+    "id": 4761,
     "fr": "Glaie",
     "en": "Glai",
     "es": "Jabalina",
@@ -2544,6 +2756,7 @@
     "isArchi": false
   },
   {
+    "id": 1787,
     "fr": "Ratchitik",
     "en": "Accelerat",
     "es": "Ratíquita",
@@ -2556,6 +2769,7 @@
     "isArchi": false
   },
   {
+    "id": 5111,
     "fr": "Mulou",
     "en": "Boowolf",
     "es": "Milubo",
@@ -2568,6 +2782,7 @@
     "isArchi": false
   },
   {
+    "id": 3712,
     "fr": "Porteur de Caisse",
     "en": "Case Carrier",
     "es": "Portador de caja",
@@ -2580,6 +2795,7 @@
     "isArchi": false
   },
   {
+    "id": 4915,
     "fr": "Gros Boo",
     "en": "Big Mushd",
     "es": "Gran boo",
@@ -2592,6 +2808,7 @@
     "isArchi": false
   },
   {
+    "id": 2774,
     "fr": "Throll",
     "en": "Thork",
     "es": "Throll",
@@ -2604,6 +2821,7 @@
     "isArchi": false
   },
   {
+    "id": 3568,
     "fr": "Kroamagnon",
     "en": "Krawmagnon",
     "es": "Gramañón",
@@ -2616,6 +2834,7 @@
     "isArchi": false
   },
   {
+    "id": 3711,
     "fr": "Porteur de Caisse",
     "en": "Box Carrier",
     "es": "Portador de caja",
@@ -2628,6 +2847,7 @@
     "isArchi": false
   },
   {
+    "id": 5104,
     "fr": "Arakne Poilue",
     "en": "Hairy Arachnee",
     "es": "Arakna peluda",
@@ -2640,6 +2860,7 @@
     "isArchi": false
   },
   {
+    "id": 4868,
     "fr": "Truchon",
     "en": "Strichon",
     "es": "Pestruzillo",
@@ -2652,6 +2873,7 @@
     "isArchi": false
   },
   {
+    "id": 1153,
     "fr": "Corbic",
     "en": "Crobeak",
     "es": "Cuerbik",
@@ -2664,6 +2886,7 @@
     "isArchi": false
   },
   {
+    "id": 1789,
     "fr": "Rat'Os",
     "en": "Rattler",
     "es": "Ratuesa",
@@ -2676,6 +2899,7 @@
     "isArchi": false
   },
   {
+    "id": 5106,
     "fr": "Arakne Mineure",
     "en": "Minor Arachnee",
     "es": "Arakna menor",
@@ -2688,6 +2912,7 @@
     "isArchi": false
   },
   {
+    "id": 4869,
     "fr": "Truchemuche",
     "en": "Thingamastrich",
     "es": "Pestruzkito",
@@ -2700,6 +2925,7 @@
     "isArchi": false
   },
   {
+    "id": 4762,
     "fr": "Gligli Agressif",
     "en": "Aggressive Blibli",
     "es": "Balí agresivo",
@@ -2712,6 +2938,7 @@
     "isArchi": false
   },
   {
+    "id": 4917,
     "fr": "Sangsuce Tsu Tsu",
     "en": "Bloodsucker Tsu Tsu",
     "es": "Sanguijuela Tsu Tsu",
@@ -2724,6 +2951,7 @@
     "isArchi": false
   },
   {
+    "id": 3571,
     "fr": "Krocky",
     "en": "Krocky",
     "es": "Gracky",
@@ -2736,6 +2964,7 @@
     "isArchi": false
   },
   {
+    "id": 5110,
     "fr": "Petite Arakne",
     "en": "Small Arachnee",
     "es": "Araknita",
@@ -2748,6 +2977,7 @@
     "isArchi": false
   },
   {
+    "id": 5105,
     "fr": "Arakne Majeure",
     "en": "Major Arachnee",
     "es": "Arakna mayor",
@@ -2760,6 +2990,7 @@
     "isArchi": false
   },
   {
+    "id": 5112,
     "fr": "Muloune",
     "en": "Boowolfine",
     "es": "Miluba",
@@ -2772,6 +3003,7 @@
     "isArchi": false
   },
   {
+    "id": 1790,
     "fr": "Ratgnagna",
     "en": "Blimprat",
     "es": "Ratocina",
@@ -2784,6 +3016,7 @@
     "isArchi": false
   },
   {
+    "id": 5108,
     "fr": "Arakne Dominante",
     "en": "Dominant Arachnee",
     "es": "Arakna dominante",
@@ -2796,6 +3029,7 @@
     "isArchi": false
   },
   {
+    "id": 1155,
     "fr": "Corbac Chef",
     "en": "Crobak Chief",
     "es": "Jefe cuerbok",
@@ -2808,6 +3042,7 @@
     "isArchi": false
   },
   {
+    "id": 3708,
     "fr": "Araknoméka",
     "en": "Araknomecha",
     "es": "Araknomeka",
@@ -2820,6 +3055,7 @@
     "isArchi": false
   },
   {
+    "id": 3709,
     "fr": "Korbot K-200",
     "en": "Korbot K-800",
     "es": "Corbot C-200",
@@ -2832,6 +3068,7 @@
     "isArchi": false
   },
   {
+    "id": 3713,
     "fr": "Chauffe-Souris",
     "en": "Borbat",
     "es": "Murciego",
@@ -2844,6 +3081,7 @@
     "isArchi": false
   },
   {
+    "id": 2126,
     "fr": "Truche Dominante",
     "en": "Dominant Strich",
     "es": "Pestruz dominante",
@@ -2856,6 +3094,7 @@
     "isArchi": false
   },
   {
+    "id": 4764,
     "fr": "Gligli Dominant",
     "en": "Dominant Blibli",
     "es": "Balí dominante",
@@ -2868,6 +3107,7 @@
     "isArchi": false
   },
   {
+    "id": 2129,
     "fr": "Ratagasd le Marron",
     "en": "Ratagasd the Brown",
     "es": "Ratagasd, el Marrón",
@@ -2880,6 +3120,7 @@
     "isArchi": false
   },
   {
+    "id": 3702,
     "fr": "Korbelle Boloss",
     "en": "Krobelle Adonni",
     "es": "Korbengralas",
@@ -2892,6 +3133,7 @@
     "isArchi": false
   },
   {
+    "id": 2120,
     "fr": "Boo Dominant",
     "en": "Dominant Mushd",
     "es": "Boo dominante",
@@ -2904,6 +3146,7 @@
     "isArchi": false
   },
   {
+    "id": 2132,
     "fr": "Corbiyar le Passeur",
     "en": "Corbiyar the Smuggler",
     "es": "Cuervocaso, el Barquero",
@@ -2916,6 +3159,7 @@
     "isArchi": false
   },
   {
+    "id": 1986,
     "fr": "Excarnus",
     "en": "Excarnus",
     "es": "Excarnus",
@@ -2928,6 +3172,7 @@
     "isArchi": false
   },
   {
+    "id": 3696,
     "fr": "Korbot K-800",
     "en": "Korbot K-800",
     "es": "Corbot C-800",
@@ -2940,6 +3185,7 @@
     "isArchi": false
   },
   {
+    "id": 3707,
     "fr": "Kroac-Gyver",
     "en": "Kraw-gyver",
     "es": "Grac Gyver",
@@ -2952,6 +3198,7 @@
     "isArchi": false
   },
   {
+    "id": 4249,
     "fr": "Oeuf Slek",
     "en": "Schnek Egg",
     "es": "Huevo brizlón",
@@ -2964,6 +3211,7 @@
     "isArchi": false
   },
   {
+    "id": 5115,
     "fr": "Lune",
     "en": "Moon",
     "es": "Luna",
@@ -2976,6 +3224,7 @@
     "isArchi": false
   },
   {
+    "id": 4910,
     "fr": "Scarafon",
     "en": "Scarafly",
     "es": "Escaramosca",
@@ -2988,6 +3237,7 @@
     "isArchi": false
   },
   {
+    "id": 4245,
     "fr": "Mini Slek",
     "en": "Mini Schnek",
     "es": "Minibrizlón",
@@ -3000,6 +3250,7 @@
     "isArchi": false
   },
   {
+    "id": 4912,
     "fr": "Scarabruni",
     "en": "Scaralady",
     "es": "Escarabela",
@@ -3012,6 +3263,7 @@
     "isArchi": false
   },
   {
+    "id": 1778,
     "fr": "Grimm Beurguen",
     "en": "Skidmonk",
     "es": "Grimm Berruguen",
@@ -3024,6 +3276,7 @@
     "isArchi": false
   },
   {
+    "id": 1829,
     "fr": "Chauffe-Souris",
     "en": "Borbat",
     "es": "Murciego",
@@ -3036,6 +3289,7 @@
     "isArchi": false
   },
   {
+    "id": 2462,
     "fr": "Ver Moulé Immature",
     "en": "Baby Sludgeworm",
     "es": "Gusano cherniego inmaduro",
@@ -3048,6 +3302,7 @@
     "isArchi": false
   },
   {
+    "id": 3733,
     "fr": "Gore-Gone",
     "en": "Gore-Goner",
     "es": "Kadavérica",
@@ -3060,6 +3315,7 @@
     "isArchi": false
   },
   {
+    "id": 4370,
     "fr": "Orrokimarou le Rampant",
     "en": "Orrokimaru the Creeper",
     "es": "Orroquimaru, el Rastrero",
@@ -3072,6 +3328,7 @@
     "isArchi": false
   },
   {
+    "id": 4763,
     "fr": "Gligli Royal",
     "en": "Royal Blibli",
     "es": "Balí Real",
@@ -3084,6 +3341,7 @@
     "isArchi": false
   },
   {
+    "id": 4918,
     "fr": "Tsar Tsu Tsu",
     "en": "Tsu Tsu Tsar",
     "es": "Zar Tsu Tsu",
@@ -3096,6 +3354,7 @@
     "isArchi": false
   },
   {
+    "id": 5114,
     "fr": "Lune Géante",
     "en": "Giant Moon",
     "es": "Luna Gigante",
@@ -3108,6 +3367,7 @@
     "isArchi": false
   },
   {
+    "id": 1631,
     "fr": "Truduk le Rondouillard",
     "en": "Stodgy the Podgy",
     "es": "Pestrunks el Viajante",
@@ -3120,6 +3380,7 @@
     "isArchi": false
   },
   {
+    "id": 3701,
     "fr": "Smisse Tigri",
     "en": "Tigri Smisse",
     "es": "Tigris Smis",
@@ -3132,6 +3393,7 @@
     "isArchi": false
   },
   {
+    "id": 4248,
     "fr": "Crasslek",
     "en": "Gunky Schnek",
     "es": "Brizlochino",
@@ -3144,6 +3406,7 @@
     "isArchi": false
   },
   {
+    "id": 4481,
     "fr": "Ratafia le Titubant",
     "en": "Ratafia the Unsteady",
     "es": "Ratafeo, el Tambaleante",
@@ -3156,6 +3419,7 @@
     "isArchi": false
   },
   {
+    "id": 4871,
     "fr": "Hongrue, Haute Truche",
     "en": "Her Highstrichness Ungaria O'Stricha",
     "es": "Ausgría, Thor Pestruz",
@@ -3168,6 +3432,7 @@
     "isArchi": false
   },
   {
+    "id": 5109,
     "fr": "Abrakne Kadabrakne la Magicienne",
     "en": "Mahgik Trichnee the Magician",
     "es": "Abrakno Kadabrakno la maga",
@@ -3180,6 +3445,7 @@
     "isArchi": false
   },
   {
+    "id": 1639,
     "fr": "Boorboopoopoo",
     "en": "Mushdmallow",
     "es": "Chamboo el Samurái",
@@ -3192,6 +3458,7 @@
     "isArchi": false
   },
   {
+    "id": 4389,
     "fr": "Ju Pilaire",
     "en": "Kronin Berg",
     "es": "Joseju Piler",
@@ -3204,6 +3471,7 @@
     "isArchi": false
   },
   {
+    "id": 4742,
     "fr": "Chafer Lancier",
     "en": "Chafer Lancer",
     "es": "Chafer lancero",
@@ -3216,6 +3484,7 @@
     "isArchi": false
   },
   {
+    "id": 4883,
     "fr": "Chafer Lancier de la Mine",
     "en": "Mine Chafer Lancer",
     "es": "Chafer lancero de la mina",
@@ -3228,6 +3497,7 @@
     "isArchi": false
   },
   {
+    "id": 2442,
     "fr": "Rey Mystroolrio",
     "en": "Rey Mystroolrio",
     "es": "Rey Mystroolrio",
@@ -3240,6 +3510,7 @@
     "isArchi": false
   },
   {
+    "id": 4765,
     "fr": "Sangria le Fruité",
     "en": "Boarnigen the Damasker",
     "es": "Jabachlí el Casto",
@@ -3252,6 +3523,7 @@
     "isArchi": false
   },
   {
+    "id": 5107,
     "fr": "Veuve Noire",
     "en": "Black Widow",
     "es": "Viuda Negra",
@@ -3264,6 +3536,7 @@
     "isArchi": false
   },
   {
+    "id": 5126,
     "fr": "Mulou-Garou Roux Grisonnant",
     "en": "Grizzled Auburn Boowerewolf",
     "es": "Hombre milubo pelirrojo con canas",
@@ -3276,6 +3549,7 @@
     "isArchi": false
   },
   {
+    "id": 5127,
     "fr": "Muligane le Défaussé",
     "en": "Mulligan the Discarded",
     "es": "Mulligan, el Descartador",
@@ -3288,6 +3562,7 @@
     "isArchi": false
   },
   {
+    "id": 2313,
     "fr": "Ratachouille",
     "en": "Ratical",
     "es": "Ratafiés",
@@ -3300,6 +3575,7 @@
     "isArchi": false
   },
   {
+    "id": 1777,
     "fr": "Raymond Garden",
     "en": "Grim Preacher",
     "es": "Juanpi Ylsen",
@@ -3312,6 +3588,7 @@
     "isArchi": false
   },
   {
+    "id": 1827,
     "fr": "Goule",
     "en": "Ghoul",
     "es": "Ghul",
@@ -3324,6 +3601,7 @@
     "isArchi": false
   },
   {
+    "id": 3587,
     "fr": "Grand Orrok",
     "en": "Grand Orrok",
     "es": "Gran Orrok",
@@ -3336,6 +3614,7 @@
     "isArchi": false
   },
   {
+    "id": 3734,
     "fr": "Gargrouilleur",
     "en": "Gargrowler",
     "es": "Gárgolo",
@@ -3348,6 +3627,7 @@
     "isArchi": false
   },
   {
+    "id": 2463,
     "fr": "Ver Moulé Vorace",
     "en": "Vermicious Sludgeworm",
     "es": "Gusano cherniego voraz",
@@ -3360,6 +3640,7 @@
     "isArchi": false
   },
   {
+    "id": 4247,
     "fr": "Long Brick",
     "en": "Slith",
     "es": "Long Brizlón",
@@ -3372,6 +3653,7 @@
     "isArchi": false
   },
   {
+    "id": 4250,
     "fr": "Tête de Slek",
     "en": "Schnek Head",
     "es": "Cabeza de brizlón",
@@ -3384,6 +3666,7 @@
     "isArchi": false
   },
   {
+    "id": 2441,
     "fr": "The Undertroolker",
     "en": "The Undertroolker",
     "es": "The Undertroolker",
@@ -3396,6 +3679,7 @@
     "isArchi": false
   },
   {
+    "id": 4881,
     "fr": "Chafer Archer de la Mine",
     "en": "Mine Chafer Archer",
     "es": "Chafer arquero de la mina",
@@ -3408,6 +3692,7 @@
     "isArchi": false
   },
   {
+    "id": 1825,
     "fr": "Chauffe-Souris Dodue",
     "en": "Beefy Borbat",
     "es": "Murciego rechoncho",
@@ -3420,6 +3705,7 @@
     "isArchi": false
   },
   {
+    "id": 2460,
     "fr": "El Moulstacho",
     "en": "Muss Tashio",
     "es": "Alfombrini",
@@ -3432,6 +3718,7 @@
     "isArchi": false
   },
   {
+    "id": 4740,
     "fr": "Chafer Archer",
     "en": "Chafer Archer",
     "es": "Chafer arquero",
@@ -3444,6 +3731,7 @@
     "isArchi": false
   },
   {
+    "id": 4909,
     "fr": "Scaraboss",
     "en": "Scaraboss",
     "es": "Escaraboss",
@@ -3456,6 +3744,7 @@
     "isArchi": false
   },
   {
+    "id": 2440,
     "fr": "Troolk Hoogan",
     "en": "Troolk Hoogan",
     "es": "Troolk Hoogan",
@@ -3468,6 +3757,7 @@
     "isArchi": false
   },
   {
+    "id": 4246,
     "fr": "Magislek",
     "en": "Magischnek",
     "es": "Brizlón mágico",
@@ -3480,6 +3770,7 @@
     "isArchi": false
   },
   {
+    "id": 5020,
     "fr": "Chafer Dominant",
     "en": "Dominant Chafer",
     "es": "Chafer dominante",
@@ -3492,6 +3783,7 @@
     "isArchi": false
   },
   {
+    "id": 1779,
     "fr": "Gros Nambourg",
     "en": "Friar Tubs",
     "es": "Gran Bayotoro",
@@ -3504,6 +3796,7 @@
     "isArchi": false
   },
   {
+    "id": 2461,
     "fr": "Requin Moularteau",
     "en": "Clammer Shark",
     "es": "Tiburón maraquillo",
@@ -3516,6 +3809,7 @@
     "isArchi": false
   },
   {
+    "id": 3732,
     "fr": "Aplâtissier",
     "en": "Flatissier",
     "es": "Aplastelero",
@@ -3528,6 +3822,7 @@
     "isArchi": false
   },
   {
+    "id": 4882,
     "fr": "Chafer Elite de la Mine",
     "en": "Elite Mine Chafer",
     "es": "Chafer de élite de la mina",
@@ -3540,6 +3835,7 @@
     "isArchi": false
   },
   {
+    "id": 1828,
     "fr": "Gouloutony",
     "en": "Ghourmand",
     "es": "Ghulotony",
@@ -3552,6 +3848,7 @@
     "isArchi": false
   },
   {
+    "id": 4911,
     "fr": "Scaramel",
     "en": "Scaramel",
     "es": "Escaramelo",
@@ -3564,6 +3861,7 @@
     "isArchi": false
   },
   {
+    "id": 2133,
     "fr": "Strygidaire la Froide",
     "en": "Refrighteration the Cold",
     "es": "Estirgélida, la Fría",
@@ -3576,6 +3874,7 @@
     "isArchi": false
   },
   {
+    "id": 4741,
     "fr": "Chafer Elite",
     "en": "Elite Chafer",
     "es": "Chafer de élite",
@@ -3588,6 +3887,7 @@
     "isArchi": false
   },
   {
+    "id": 2125,
     "fr": "Scara Dominant",
     "en": "Dominant Scara",
     "es": "Escara dominante",
@@ -3600,6 +3900,7 @@
     "isArchi": false
   },
   {
+    "id": 4281,
     "fr": "Slekzébuth",
     "en": "Schnekzebub",
     "es": "Belcebrizlón",
@@ -3612,6 +3913,7 @@
     "isArchi": false
   },
   {
+    "id": 1750,
     "fr": "Chafalfer l'Optimiste",
     "en": "Chafaldrag the Charming",
     "es": "Chafo, el del Ocho",
@@ -3624,6 +3926,7 @@
     "isArchi": false
   },
   {
+    "id": 1836,
     "fr": "Vampyro",
     "en": "Vampyro",
     "es": "Vampyro",
@@ -3636,6 +3939,7 @@
     "isArchi": false
   },
   {
+    "id": 1987,
     "fr": "Milkar le Meulou",
     "en": "Milkar the Moowolf",
     "es": "Milkar, el Maxilubo",
@@ -3648,6 +3952,7 @@
     "isArchi": false
   },
   {
+    "id": 5008,
     "fr": "Magik Riktus Dominant",
     "en": "Dominant Magik Riktus",
     "es": "Magik Riktus dominante",
@@ -3660,6 +3965,7 @@
     "isArchi": false
   },
   {
+    "id": 1166,
     "fr": "Maluss",
     "en": "Badenalty",
     "es": "Maltrahzero",
@@ -3672,6 +3978,7 @@
     "isArchi": false
   },
   {
+    "id": 2359,
     "fr": "Glaglawi",
     "en": "Brrrbliwi",
     "es": "Glalito",
@@ -3684,6 +3991,7 @@
     "isArchi": false
   },
   {
+    "id": 2464,
     "fr": "Bilbymoule Nacrée",
     "en": "Pearly Bilbimussel",
     "es": "Bilbylmeja Nacarada",
@@ -3696,6 +4004,7 @@
     "isArchi": false
   },
   {
+    "id": 1749,
     "fr": "Scaramel le Fondant",
     "en": "Scaramel the Melty",
     "es": "Escaramelo el Derretido",
@@ -3708,6 +4017,7 @@
     "isArchi": false
   },
   {
+    "id": 2083,
     "fr": "Craqueboule Chuchoté",
     "en": "Whispered Crackrock",
     "es": "Crujibola susurrado",
@@ -3720,6 +4030,7 @@
     "isArchi": false
   },
   {
+    "id": 3735,
     "fr": "Viktoria-France Kenstein",
     "en": "Viktoria-Franka Enstein",
     "es": "Viktoria Franka Enstein",
@@ -3732,6 +4043,7 @@
     "isArchi": false
   },
   {
+    "id": 2075,
     "fr": "Chuchoteurs Arbalétriers",
     "en": "Crossbow Whisperers",
     "es": "Susurradores ballesteros",
@@ -3744,6 +4056,7 @@
     "isArchi": false
   },
   {
+    "id": 2364,
     "fr": "Corbamouth",
     "en": "Crobamoth",
     "es": "Cuermut",
@@ -3756,6 +4069,7 @@
     "isArchi": false
   },
   {
+    "id": 2443,
     "fr": "El Pochito",
     "en": "El Pochito",
     "es": "Trool del Río",
@@ -3768,6 +4082,7 @@
     "isArchi": false
   },
   {
+    "id": 4280,
     "fr": "Le Slek Sy",
     "en": "Schnek Sy",
     "es": "Brizgalán",
@@ -3780,6 +4095,7 @@
     "isArchi": false
   },
   {
+    "id": 4913,
     "fr": "Scarador",
     "en": "Scarador",
     "es": "Escaradoro",
@@ -3792,6 +4108,7 @@
     "isArchi": false
   },
   {
+    "id": 4251,
     "fr": "Reine Slek",
     "en": "Queen Schnek",
     "es": "Reina Brizlona",
@@ -3804,6 +4121,7 @@
     "isArchi": false
   },
   {
+    "id": 5019,
     "fr": "Chaférimé le dépassé",
     "en": "Chaferime the Slow",
     "es": "Chaferrancio el Anticuado",
@@ -3816,6 +4134,7 @@
     "isArchi": false
   },
   {
+    "id": 1786,
     "fr": "Nonne",
     "en": "Nun",
     "es": "Monja",
@@ -3828,6 +4147,7 @@
     "isArchi": false
   },
   {
+    "id": 4388,
     "fr": "Alf Iguem",
     "en": "Rack Istley",
     "es": "Bir Alffiguem",
@@ -3840,6 +4160,7 @@
     "isArchi": false
   },
   {
+    "id": 4393,
     "fr": "La Dame Blanche",
     "en": "The White Lady",
     "es": "La Dama Blanca",
@@ -3852,6 +4173,7 @@
     "isArchi": false
   },
   {
+    "id": 4739,
     "fr": "Chaferfu, roi Chafer",
     "en": "Chaferfu, Chafer King",
     "es": "Chaferloko, Rey Chafer",
@@ -3864,6 +4186,7 @@
     "isArchi": false
   },
   {
+    "id": 1358,
     "fr": "Gelée Citron",
     "en": "Lemon Jelly",
     "es": "Gelatina de limón",
@@ -3876,6 +4199,7 @@
     "isArchi": false
   },
   {
+    "id": 2360,
     "fr": "Glagla",
     "en": "Brrrbli",
     "es": "Glalí",
@@ -3888,6 +4212,7 @@
     "isArchi": false
   },
   {
+    "id": 3606,
     "fr": "Etnop - Méryde des oeufs",
     "en": "Etnop - the Meridia of Eggs",
     "es": "Etnop, el santo de los huevos",
@@ -3900,6 +4225,7 @@
     "isArchi": false
   },
   {
+    "id": 4042,
     "fr": "Raklur Tranchemoëlle",
     "en": "Skrapur Kutmairo",
     "es": "Raklur Decidemeollo",
@@ -3912,6 +4238,7 @@
     "isArchi": false
   },
   {
+    "id": 4044,
     "fr": "Vilelangue Labouche",
     "en": "Tonguetwist LaMouth",
     "es": "Malalengua Laboca",
@@ -3924,6 +4251,7 @@
     "isArchi": false
   },
   {
+    "id": 1339,
     "fr": "Gelée Framboise",
     "en": "Blue Raspberry Jelly",
     "es": "Gelatina de frambuesa",
@@ -3936,6 +4264,7 @@
     "isArchi": false
   },
   {
+    "id": 2078,
     "fr": "Craqueleur Chuchoté",
     "en": "Whispered Crackler",
     "es": "Crujidor susurrado",
@@ -3948,6 +4277,7 @@
     "isArchi": false
   },
   {
+    "id": 2088,
     "fr": "Le Sussoteur",
     "en": "The Lisper",
     "es": "Zuzurrador",
@@ -3960,6 +4290,7 @@
     "isArchi": false
   },
   {
+    "id": 2465,
     "fr": "Bilbyboy Framboise",
     "en": "Blue Raspberry Bilbiboy",
     "es": "Bilbyboy de frambuesa",
@@ -3972,6 +4303,7 @@
     "isArchi": false
   },
   {
+    "id": 2466,
     "fr": "Bilbygirl Menthe",
     "en": "Mint Bilbigirl",
     "es": "Bilbygirl de menta",
@@ -3984,6 +4316,7 @@
     "isArchi": false
   },
   {
+    "id": 2468,
     "fr": "Bilbygirl Citron",
     "en": "Lemon Bilbigirl",
     "es": "Bilbygirl de limón",
@@ -3996,6 +4329,7 @@
     "isArchi": false
   },
   {
+    "id": 2362,
     "fr": "Glagla Cornegivre",
     "en": "Frozenhorn Brrrbli",
     "es": "Glalí cornelado",
@@ -4008,6 +4342,7 @@
     "isArchi": false
   },
   {
+    "id": 2467,
     "fr": "Bilbyboy Fraise",
     "en": "Strawberry Bilbiboy",
     "es": "Bilbyboy de fresa",
@@ -4020,6 +4355,7 @@
     "isArchi": false
   },
   {
+    "id": 1340,
     "fr": "Gelée Menthe",
     "en": "Mint Jelly",
     "es": "Gelatina de menta",
@@ -4032,6 +4368,7 @@
     "isArchi": false
   },
   {
+    "id": 1341,
     "fr": "Gelée Fraise",
     "en": "Strawberry Jelly",
     "es": "Gelatina de fresa",
@@ -4044,6 +4381,7 @@
     "isArchi": false
   },
   {
+    "id": 2076,
     "fr": "Chuchoteur Porte-Etendard",
     "en": "Standard-Bearing Whisperer",
     "es": "Susurrador abanderado",
@@ -4056,6 +4394,7 @@
     "isArchi": false
   },
   {
+    "id": 2366,
     "fr": "Mulmoune",
     "en": "Boohemoon",
     "es": "Mamiluba",
@@ -4068,6 +4407,7 @@
     "isArchi": false
   },
   {
+    "id": 4016,
     "fr": "Gnat - Méryde des coquillages",
     "en": "Gnat - Meridia of Shells",
     "es": "Gnat, santo de las caracolas",
@@ -4080,6 +4420,7 @@
     "isArchi": false
   },
   {
+    "id": 4040,
     "fr": "Coussin à croquette mécanisé",
     "en": "Mechanical Biscuit Cushion",
     "es": "Cojín para pienso mecanizado",
@@ -4092,6 +4433,7 @@
     "isArchi": false
   },
   {
+    "id": 4043,
     "fr": "Savhanna la Soyeuse",
     "en": "Savhanna the Silky",
     "es": "Savhanna, la Sedosa",
@@ -4104,6 +4446,7 @@
     "isArchi": false
   },
   {
+    "id": 5820,
     "fr": "Néo-Moine",
     "en": "Neo Monk",
     "es": "Neomonje",
@@ -4116,6 +4459,7 @@
     "isArchi": false
   },
   {
+    "id": 2365,
     "fr": "Cormoune",
     "en": "Crobamoon",
     "es": "Cuerbela",
@@ -4128,6 +4472,7 @@
     "isArchi": false
   },
   {
+    "id": 4032,
     "fr": "Sœur Paty",
     "en": "Sister Kate",
     "es": "Lerä Pästy",
@@ -4140,6 +4485,7 @@
     "isArchi": false
   },
   {
+    "id": 4039,
     "fr": "Charles-Aigri de La Vileardente",
     "en": "Charles-Henri of Vileardent",
     "es": "Carlo Agrio de la Vilardiente",
@@ -4152,6 +4498,7 @@
     "isArchi": false
   },
   {
+    "id": 4045,
     "fr": "Garde du corps",
     "en": "Bodyguard",
     "es": "Guardaespaldas",
@@ -4164,6 +4511,7 @@
     "isArchi": false
   },
   {
+    "id": 5819,
     "fr": "Néo-Lieutenant",
     "en": "Neo Lieutenant",
     "es": "Neoteniente",
@@ -4176,6 +4524,7 @@
     "isArchi": false
   },
   {
+    "id": 2074,
     "fr": "Chuchoteurs Fantassins",
     "en": "Infantry Whisperers",
     "es": "Susurradores de infantería",
@@ -4188,6 +4537,7 @@
     "isArchi": false
   },
   {
+    "id": 2084,
     "fr": "Grand Craqueleur Chuchoté",
     "en": "Big Whispered Crackler",
     "es": "Gran crujidor susurrado",
@@ -4200,6 +4550,7 @@
     "isArchi": false
   },
   {
+    "id": 2361,
     "fr": "Glagla Froidacier",
     "en": "Steely Brrrbli",
     "es": "Glalí enmasquelado",
@@ -4212,6 +4563,7 @@
     "isArchi": false
   },
   {
+    "id": 2367,
     "fr": "Mulmouth Enragé",
     "en": "Enraged Boohemoth",
     "es": "Mimut rabioso",
@@ -4224,6 +4576,7 @@
     "isArchi": false
   },
   {
+    "id": 2372,
     "fr": "PumGlagla",
     "en": "Pumbrrr",
     "es": "Pumgla",
@@ -4236,6 +4589,7 @@
     "isArchi": false
   },
   {
+    "id": 2475,
     "fr": "Gelée Réglisse",
     "en": "Licorice Jelly",
     "es": "Gelatina de regaliz",
@@ -4248,6 +4602,7 @@
     "isArchi": false
   },
   {
+    "id": 2134,
     "fr": "Chuchen l'Indépendant",
     "en": "Chuchen the Independent",
     "es": "Chuchen, el Independiente",
@@ -4260,6 +4615,7 @@
     "isArchi": false
   },
   {
+    "id": 4500,
     "fr": "Corberg la Naufrageuse",
     "en": "Corberg the Treasure Diver",
     "es": "Cuerberg, la Hundidora",
@@ -4272,6 +4628,7 @@
     "isArchi": false
   },
   {
+    "id": 4716,
     "fr": "Ti' Flaqueux",
     "en": "Dinky Puddly",
     "es": "Peke charcoso",
@@ -4284,6 +4641,7 @@
     "isArchi": false
   },
   {
+    "id": 42,
     "fr": "Magmog le Boufrog",
     "en": "Magmog the Gobbalrog",
     "es": "Magmog, el Jálrog",
@@ -4296,6 +4654,7 @@
     "isArchi": false
   },
   {
+    "id": 1988,
     "fr": "Corbeau Noir",
     "en": "Black Crow",
     "es": "Cuervo Negro",
@@ -4308,6 +4667,7 @@
     "isArchi": false
   },
   {
+    "id": 2350,
     "fr": "Mékabra",
     "en": "Mechabra",
     "es": "Mekabra",
@@ -4320,6 +4680,7 @@
     "isArchi": false
   },
   {
+    "id": 5848,
     "fr": "Esprit vengeur",
     "en": "Vengeful Spirit",
     "es": "Espíritu vengativo",
@@ -4332,6 +4693,7 @@
     "isArchi": false
   },
   {
+    "id": 2368,
     "fr": "Yech'Ti'Wawa",
     "en": "YeCh'Ti'Wawa",
     "es": "Yech'Ti'Wawa",
@@ -4344,6 +4706,7 @@
     "isArchi": false
   },
   {
+    "id": 2489,
     "fr": "Chuchoteur Chachatophile",
     "en": "Bow Meow Loving Whisperer",
     "es": "Susurrador Miaumiaulófilo",
@@ -4356,6 +4719,7 @@
     "isArchi": false
   },
   {
+    "id": 2709,
     "fr": "Kralaman",
     "en": "Kralaman",
     "es": "Kralaman",
@@ -4368,6 +4732,7 @@
     "isArchi": false
   },
   {
+    "id": 2714,
     "fr": "Lardevil",
     "en": "Lardevil",
     "es": "Puerkevil",
@@ -4380,6 +4745,7 @@
     "isArchi": false
   },
   {
+    "id": 5010,
     "fr": "Chapoto l'amical",
     "en": "Chapoto the Friendly",
     "es": "Amigorro el Amable",
@@ -4392,6 +4758,7 @@
     "isArchi": false
   },
   {
+    "id": 2384,
     "fr": "Fhenris le Mulmouth Solitaire",
     "en": "Fhenris the Lone Boohemoth",
     "es": "Fhenris, el Mimut Solitario",
@@ -4404,6 +4771,7 @@
     "isArchi": false
   },
   {
+    "id": 3007,
     "fr": "Musclaure",
     "en": "Shiemahn",
     "es": "Jyman",
@@ -4416,6 +4784,7 @@
     "isArchi": false
   },
   {
+    "id": 4390,
     "fr": "Prince Gelu",
     "en": "Prince Jellu",
     "es": "Príncipe Gelú",
@@ -4428,6 +4797,7 @@
     "isArchi": false
   },
   {
+    "id": 4520,
     "fr": "Chapo Magik",
     "en": "Magik Hat",
     "es": "Sombrero Mágiko",
@@ -4440,6 +4810,7 @@
     "isArchi": false
   },
   {
+    "id": 2339,
     "fr": "Crakmite",
     "en": "Crackmite",
     "es": "Crugmita",
@@ -4452,6 +4823,7 @@
     "isArchi": false
   },
   {
+    "id": 2346,
     "fr": "Archer du Nord",
     "en": "Northern Archer",
     "es": "Arquero norteño",
@@ -4464,6 +4836,7 @@
     "isArchi": false
   },
   {
+    "id": 2363,
     "fr": "Lady Glagla",
     "en": "Brrrbley Spears",
     "es": "Lady Glalí",
@@ -4476,6 +4849,7 @@
     "isArchi": false
   },
   {
+    "id": 2469,
     "fr": "Bilby Queen",
     "en": "Bilby Queen",
     "es": "Bilby Queen",
@@ -4488,6 +4862,7 @@
     "isArchi": false
   },
   {
+    "id": 2708,
     "fr": "Merkator",
     "en": "Merkator",
     "es": "Merkator",
@@ -4500,6 +4875,7 @@
     "isArchi": false
   },
   {
+    "id": 4718,
     "fr": "Guerrier Flaqueux",
     "en": "Puddly Warrior",
     "es": "Guerrero charcoso",
@@ -4512,6 +4888,7 @@
     "isArchi": false
   },
   {
+    "id": 2710,
     "fr": "Mégathon",
     "en": "Decepticod",
     "es": "Megatún",
@@ -4524,6 +4901,7 @@
     "isArchi": false
   },
   {
+    "id": 4228,
     "fr": "Smarmot",
     "en": "Whirlikid",
     "es": "Samaracito",
@@ -4536,6 +4914,7 @@
     "isArchi": false
   },
   {
+    "id": 4381,
     "fr": "Glaglaviot le Raclé",
     "en": "Robrrrt the Brrrave",
     "es": "Glalipazo, el Carraspeado",
@@ -4548,6 +4927,7 @@
     "isArchi": false
   },
   {
+    "id": 4726,
     "fr": "Bernardo dé la Carpett",
     "en": "Bernardo dia Reya",
     "es": "Pez alfombra",
@@ -4560,6 +4940,7 @@
     "isArchi": false
   },
   {
+    "id": 2351,
     "fr": "Mékarbac",
     "en": "Mechrobak",
     "es": "Mekarbok",
@@ -4572,6 +4953,7 @@
     "isArchi": false
   },
   {
+    "id": 2340,
     "fr": "Crakeurn Polaire",
     "en": "Polar Crackern",
     "es": "Cruken polar",
@@ -4584,6 +4966,7 @@
     "isArchi": false
   },
   {
+    "id": 4725,
     "fr": "Don Rascaillès",
     "en": "Don Puffnando",
     "es": "Chusmerluza",
@@ -4596,6 +4979,7 @@
     "isArchi": false
   },
   {
+    "id": 4230,
     "fr": "Smare Couatique",
     "en": "Whirly Cuatic",
     "es": "Sámara cuático",
@@ -4608,6 +4992,7 @@
     "isArchi": false
   },
   {
+    "id": 2341,
     "fr": "Craktite",
     "en": "Cracktite",
     "es": "Cructita",
@@ -4620,6 +5005,7 @@
     "isArchi": false
   },
   {
+    "id": 2345,
     "fr": "Garde du Nord",
     "en": "Northern Guard",
     "es": "Guarda norteño",
@@ -4632,6 +5018,7 @@
     "isArchi": false
   },
   {
+    "id": 2967,
     "fr": "Scorpique",
     "en": "Schanker",
     "es": "Escorpico",
@@ -4644,6 +5031,7 @@
     "isArchi": false
   },
   {
+    "id": 3008,
     "fr": "Ocushus",
     "en": "Ocushu",
     "es": "Okhlar",
@@ -4656,6 +5044,7 @@
     "isArchi": false
   },
   {
+    "id": 4719,
     "fr": "Mama Flaqueuse",
     "en": "Mama Puddly",
     "es": "Mamá charcosa",
@@ -4668,6 +5057,7 @@
     "isArchi": false
   },
   {
+    "id": 2344,
     "fr": "Brute du Nord",
     "en": "Northern Brute",
     "es": "Bárbaro norteño",
@@ -4680,6 +5070,7 @@
     "isArchi": false
   },
   {
+    "id": 4723,
     "fr": "Zespadon",
     "en": "Zordfish",
     "es": "Pez zespadín",
@@ -4692,6 +5083,7 @@
     "isArchi": false
   },
   {
+    "id": 2352,
     "fr": "Mékanistro",
     "en": "Mechanistro",
     "es": "Mekanistro",
@@ -4704,6 +5096,7 @@
     "isArchi": false
   },
   {
+    "id": 2968,
     "fr": "Tartanque",
     "en": "Moloch",
     "es": "Slashand",
@@ -4716,6 +5109,7 @@
     "isArchi": false
   },
   {
+    "id": 1345,
     "fr": "Empereur Gelax",
     "en": "Emperor Jellix",
     "es": "Emperador Gelax",
@@ -4728,6 +5122,7 @@
     "isArchi": false
   },
   {
+    "id": 2342,
     "fr": "Crarte d’Or",
     "en": "Crackchok",
     "es": "Cruji d’Or",
@@ -4740,6 +5135,7 @@
     "isArchi": false
   },
   {
+    "id": 2969,
     "fr": "Cactiflore",
     "en": "Castupod",
     "es": "Cactifloro",
@@ -4752,6 +5148,7 @@
     "isArchi": false
   },
   {
+    "id": 4717,
     "fr": "Chef Flaqueux",
     "en": "Puddly Chief",
     "es": "Jefe charcoso",
@@ -4764,6 +5161,7 @@
     "isArchi": false
   },
   {
+    "id": 4229,
     "fr": "Gros Smare",
     "en": "Whirlibig",
     "es": "Sámara gordinflón",
@@ -4776,6 +5174,7 @@
     "isArchi": false
   },
   {
+    "id": 4724,
     "fr": "Sergent Poiscaille",
     "en": "Sergeant Izungry",
     "es": "Pez muertambre",
@@ -4788,6 +5187,7 @@
     "isArchi": false
   },
   {
+    "id": 2559,
     "fr": "Black Ti Wabbit",
     "en": "Black Tiwabbit",
     "es": "Black pekewabbit",
@@ -4800,6 +5200,7 @@
     "isArchi": false
   },
   {
+    "id": 2100,
     "fr": "Maître Chuchoku",
     "en": "Master Shhhudoku",
     "es": "Susurrón I",
@@ -4812,6 +5213,7 @@
     "isArchi": false
   },
   {
+    "id": 2353,
     "fr": "Mékazerker",
     "en": "Mechazerker",
     "es": "Mekazerker",
@@ -4824,6 +5226,7 @@
     "isArchi": false
   },
   {
+    "id": 2970,
     "fr": "Pampactus",
     "en": "Pampastuc",
     "es": "Pampactus",
@@ -4836,6 +5239,7 @@
     "isArchi": false
   },
   {
+    "id": 2560,
     "fr": "Black Wabbit",
     "en": "Black Wabbit",
     "es": "Black wabbit",
@@ -4848,6 +5252,7 @@
     "isArchi": false
   },
   {
+    "id": 4384,
     "fr": "Mékazord le Combiné",
     "en": "Mechazord the Combined",
     "es": "Mekazord, el Combinado",
@@ -4860,6 +5265,7 @@
     "isArchi": false
   },
   {
+    "id": 2123,
     "fr": "Flaqueux Dominant",
     "en": "Dominant Puddly",
     "es": "Charcoso dominante",
@@ -4872,6 +5278,7 @@
     "isArchi": false
   },
   {
+    "id": 2983,
     "fr": "Esprit Ancestral",
     "en": "Ancestral Spirit",
     "es": "Espíritu ancestral",
@@ -4884,6 +5291,7 @@
     "isArchi": false
   },
   {
+    "id": 4392,
     "fr": "Victim le Frappé",
     "en": "Victim the Whacky",
     "es": "Victim, el Frappé",
@@ -4896,6 +5304,7 @@
     "isArchi": false
   },
   {
+    "id": 2114,
     "fr": "Pichon Dominant",
     "en": "Dominant Snapper",
     "es": "Pischis dominante",
@@ -4908,6 +5317,7 @@
     "isArchi": false
   },
   {
+    "id": 2971,
     "fr": "Cactoblong",
     "en": "Saguaro",
     "es": "Cactoblongo",
@@ -4920,6 +5330,7 @@
     "isArchi": false
   },
   {
+    "id": 4236,
     "fr": "Smarbon",
     "en": "Whirlcoal",
     "es": "Samarbón",
@@ -4932,6 +5343,7 @@
     "isArchi": false
   },
   {
+    "id": 4382,
     "fr": "Crakéduslip le Givré",
     "en": "Frozenuts",
     "es": "Avalancho, el Ido",
@@ -4944,6 +5356,7 @@
     "isArchi": false
   },
   {
+    "id": 5544,
     "fr": "Fan le Radi",
     "en": "Bradish",
     "es": "Fan el Rábano",
@@ -4956,6 +5369,7 @@
     "isArchi": false
   },
   {
+    "id": 5543,
     "fr": "Kaviar l'Aubergine",
     "en": "Kaviar the Eggplant",
     "es": "Kaviar la Berenjena",
@@ -4968,6 +5382,7 @@
     "isArchi": false
   },
   {
+    "id": 2347,
     "fr": "Traqueur du Nord",
     "en": "Northern Tracker",
     "es": "Rastreador norteño",
@@ -4980,6 +5395,7 @@
     "isArchi": false
   },
   {
+    "id": 4889,
     "fr": "Léviathon",
     "en": "Leviatun",
     "es": "Leviatún",
@@ -4992,6 +5408,7 @@
     "isArchi": false
   },
   {
+    "id": 2975,
     "fr": "Coulemellanche Sauteur",
     "en": "Leaping Coprinus",
     "es": "Matacando saltarín",
@@ -5004,6 +5421,7 @@
     "isArchi": false
   },
   {
+    "id": 2562,
     "fr": "Black Gwand Pa Wabbit",
     "en": "Black Gwandpa Wabbit",
     "es": "Black awelito wabbit",
@@ -5016,6 +5434,7 @@
     "isArchi": false
   },
   {
+    "id": 2430,
     "fr": "Dragon-Cochon",
     "en": "Dragon Pig",
     "es": "Dragocerdo",
@@ -5028,6 +5447,7 @@
     "isArchi": false
   },
   {
+    "id": 2974,
     "fr": "Amionite Bicéphaloïde",
     "en": "Bicephalous Amionite",
     "es": "Amenita bicéfala",
@@ -5040,6 +5460,7 @@
     "isArchi": false
   },
   {
+    "id": 3051,
     "fr": "Tsubo",
     "en": "Tsubo",
     "es": "Tsubo",
@@ -5052,6 +5473,7 @@
     "isArchi": false
   },
   {
+    "id": 4223,
     "fr": "Bébé Phorreur",
     "en": "Young Drheller",
     "es": "Bebé perforatroz",
@@ -5064,6 +5486,7 @@
     "isArchi": false
   },
   {
+    "id": 4235,
     "fr": "Keskon Smare",
     "en": "Whirlaugh",
     "es": "Chistosámara",
@@ -5076,6 +5499,7 @@
     "isArchi": false
   },
   {
+    "id": 4727,
     "fr": "Zespadon Noir",
     "en": "Black Zordfish",
     "es": "Zespadín Negro",
@@ -5088,6 +5512,7 @@
     "isArchi": false
   },
   {
+    "id": 4480,
     "fr": "Image du Comte Harebourg",
     "en": "Count Harebourg's Image",
     "es": "Imagen del conde Kontatrás",
@@ -5100,6 +5525,7 @@
     "isArchi": false
   },
   {
+    "id": 1633,
     "fr": "FlacFlic le Ponctuel",
     "en": "Puddleton the Bare",
     "es": "LeChark el Pirata",
@@ -5112,6 +5538,7 @@
     "isArchi": false
   },
   {
+    "id": 2343,
     "fr": "Hagën-Glass",
     "en": "Hagen Daz",
     "es": "Crújian Jerry",
@@ -5124,6 +5551,7 @@
     "isArchi": false
   },
   {
+    "id": 2348,
     "fr": "Kya, Missiz Frizz",
     "en": "Kya, Missiz Freezz",
     "es": "Kya, Mizz Frizz",
@@ -5136,6 +5564,7 @@
     "isArchi": false
   },
   {
+    "id": 1638,
     "fr": "Pichakoté le Dégoûtant",
     "en": "Snappy the Fishfrier",
     "es": "Gazpischos el Refrescante",
@@ -5148,6 +5577,7 @@
     "isArchi": false
   },
   {
+    "id": 2565,
     "fr": "Ti Wabbit",
     "en": "Tiwabbit",
     "es": "Pekewabbit",
@@ -5160,6 +5590,7 @@
     "isArchi": false
   },
   {
+    "id": 2992,
     "fr": "Troolgrodyte",
     "en": "Troolgodyte",
     "es": "Troolglodita",
@@ -5172,6 +5603,7 @@
     "isArchi": false
   },
   {
+    "id": 4391,
     "fr": "Mihmosa le Fleuri",
     "en": "Mihmosa the Flowery",
     "es": "Mihmosa, el Florido",
@@ -5184,6 +5616,7 @@
     "isArchi": false
   },
   {
+    "id": 4720,
     "fr": "Flaque Royale",
     "en": "Royal Puddly",
     "es": "Charcoso Real",
@@ -5196,6 +5629,7 @@
     "isArchi": false
   },
   {
+    "id": 2553,
     "fr": "Glonald",
     "en": "Bignald",
     "es": "Zollo goldo",
@@ -5208,6 +5642,7 @@
     "isArchi": false
   },
   {
+    "id": 2561,
     "fr": "Black Wo Wabbit",
     "en": "Black Wo Wabbit",
     "es": "Black wabbit wodo",
@@ -5220,6 +5655,7 @@
     "isArchi": false
   },
   {
+    "id": 2827,
     "fr": "Spectrex le Tourmenteur",
     "en": "Spectrex the Tormentor",
     "es": "Espectrex, el Atormentador",
@@ -5232,6 +5668,7 @@
     "isArchi": false
   },
   {
+    "id": 4231,
     "fr": "Smarillion",
     "en": "Silmawhirly",
     "es": "Samarilion",
@@ -5244,6 +5681,7 @@
     "isArchi": false
   },
   {
+    "id": 4888,
     "fr": "Abraknyde Sombre",
     "en": "Dark Treechnid",
     "es": "Abráknido oscuro",
@@ -5256,6 +5694,7 @@
     "isArchi": false
   },
   {
+    "id": 5470,
     "fr": "Mégalo-Gnon",
     "en": "Megalunyin",
     "es": "Cegalobolla",
@@ -5268,6 +5707,7 @@
     "isArchi": false
   },
   {
+    "id": 2354,
     "fr": "Sylargh",
     "en": "Sylargh",
     "es": "Sylargh",
@@ -5280,6 +5720,7 @@
     "isArchi": false
   },
   {
+    "id": 4221,
     "fr": "Phorreur Domestique",
     "en": "Pet Drheller",
     "es": "Perforatroz doméstico",
@@ -5292,6 +5733,7 @@
     "isArchi": false
   },
   {
+    "id": 5468,
     "fr": "Poirrocculte",
     "en": "Leekult",
     "es": "Puerroculto",
@@ -5304,6 +5746,7 @@
     "isArchi": false
   },
   {
+    "id": 2566,
     "fr": "Wabbit",
     "en": "Wabbits",
     "es": "Wabbit",
@@ -5316,6 +5759,7 @@
     "isArchi": false
   },
   {
+    "id": 2551,
     "fr": "Lenald",
     "en": "Lenald",
     "es": "Zollo",
@@ -5328,6 +5772,7 @@
     "isArchi": false
   },
   {
+    "id": 2860,
     "fr": "Vieillard Lenald Aveugle",
     "en": "Blind Old Lenald",
     "es": "Viejo zollo ciego",
@@ -5340,6 +5785,7 @@
     "isArchi": false
   },
   {
+    "id": 3043,
     "fr": "Victus",
     "en": "Victus",
     "es": "Victus",
@@ -5352,6 +5798,7 @@
     "isArchi": false
   },
   {
+    "id": 4887,
     "fr": "Tronknyde Sombre",
     "en": "Dark Trunknid",
     "es": "Tronkónido oscuro",
@@ -5364,6 +5811,7 @@
     "isArchi": false
   },
   {
+    "id": 2973,
     "fr": "Haploïde Sporulateur",
     "en": "Haploid Sporelator",
     "es": "Haploide esporulador",
@@ -5376,6 +5824,7 @@
     "isArchi": false
   },
   {
+    "id": 2567,
     "fr": "Wo Wabbit",
     "en": "Wo Wabbit",
     "es": "Wabbit wodo",
@@ -5388,6 +5837,7 @@
     "isArchi": false
   },
   {
+    "id": 2550,
     "fr": "Lenald Juniol",
     "en": "Juniolenald",
     "es": "Zollo Juniol",
@@ -5400,6 +5850,7 @@
     "isArchi": false
   },
   {
+    "id": 5469,
     "fr": "Zarmaïs",
     "en": "Mutakorn",
     "es": "Mazorcapo",
@@ -5412,6 +5863,7 @@
     "isArchi": false
   },
   {
+    "id": 4886,
     "fr": "Abraknyde Ancestral",
     "en": "Ancestral Treechnid",
     "es": "Abráknido Ancestral",
@@ -5424,6 +5876,7 @@
     "isArchi": false
   },
   {
+    "id": 2552,
     "fr": "Vieux Lenald",
     "en": "Old Lenald",
     "es": "Zollo viejo",
@@ -5436,6 +5889,7 @@
     "isArchi": false
   },
   {
+    "id": 3050,
     "fr": "Hexaku",
     "en": "Hexaku",
     "es": "Hexaku",
@@ -5448,6 +5902,7 @@
     "isArchi": false
   },
   {
+    "id": 2568,
     "fr": "Gwand Pa Wabbit",
     "en": "Gwandpa Wabbit",
     "es": "Awelito wabbit",
@@ -5460,6 +5915,7 @@
     "isArchi": false
   },
   {
+    "id": 4064,
     "fr": "Serprieuse",
     "en": "Serprieuse",
     "es": "Hozpriora",
@@ -5472,6 +5928,7 @@
     "isArchi": false
   },
   {
+    "id": 2988,
     "fr": "Cêpolourpode Ecrasant",
     "en": "Crushing Hyphalump",
     "es": "Caniofaro aplastante",
@@ -5484,6 +5941,7 @@
     "isArchi": false
   },
   {
+    "id": 4222,
     "fr": "Phorreur Entraîné",
     "en": "Trained Drheller",
     "es": "Perforatroz entrenado",
@@ -5496,6 +5954,7 @@
     "isArchi": false
   },
   {
+    "id": 5474,
     "fr": "Cawotte Zombie",
     "en": "Zombie Cawwot",
     "es": "Zanahowia zombi",
@@ -5508,6 +5967,7 @@
     "isArchi": false
   },
   {
+    "id": 2972,
     "fr": "Piktus",
     "en": "Ponktius",
     "es": "Piktus",
@@ -5520,6 +5980,7 @@
     "isArchi": false
   },
   {
+    "id": 4063,
     "fr": "Papy Crate",
     "en": "Grampycrat",
     "es": "Don Peleón",
@@ -5532,6 +5993,7 @@
     "isArchi": false
   },
   {
+    "id": 2121,
     "fr": "Abraknyde Dominant",
     "en": "Dominant Treechnid",
     "es": "Abráknido dominante",
@@ -5544,6 +6006,7 @@
     "isArchi": false
   },
   {
+    "id": 4270,
     "fr": "Phourniqué le Propageur",
     "en": "Firedrhell the Untimely",
     "es": "Perfonan, el Bárbaro",
@@ -5556,6 +6019,7 @@
     "isArchi": false
   },
   {
+    "id": 4373,
     "fr": "Hapipop l’Eclatant",
     "en": "Hoppipop the Radiant",
     "es": "Hapipop, el Agitador",
@@ -5568,6 +6032,7 @@
     "isArchi": false
   },
   {
+    "id": 4385,
     "fr": "Le Lenald Glis",
     "en": "The Glay Lenald",
     "es": "Zollo Glis",
@@ -5580,6 +6045,7 @@
     "isArchi": false
   },
   {
+    "id": 4541,
     "fr": "Wambo",
     "en": "Wambo",
     "es": "Wambo",
@@ -5592,6 +6058,7 @@
     "isArchi": false
   },
   {
+    "id": 4062,
     "fr": "Mamie Lésime",
     "en": "Mama Lenyal",
     "es": "Doña Borgoña",
@@ -5604,6 +6071,7 @@
     "isArchi": false
   },
   {
+    "id": 5472,
     "fr": "Parasicawotte Dominante",
     "en": "Dominant Parasicawwot",
     "es": "Parasizanahowia dominante",
@@ -5616,6 +6084,7 @@
     "isArchi": false
   },
   {
+    "id": 3147,
     "fr": "Soigneur d'Ombre",
     "en": "Shadow Healer",
     "es": "Curador de Sombra",
@@ -5628,6 +6097,7 @@
     "isArchi": false
   },
   {
+    "id": 3143,
     "fr": "Guerrier d'Ombre",
     "en": "Shadow Warrior",
     "es": "Guerrero de Sombra",
@@ -5640,6 +6110,7 @@
     "isArchi": false
   },
   {
+    "id": 3146,
     "fr": "Protecteur d'Ombre",
     "en": "Shadow Protector",
     "es": "Protector de Sombra",
@@ -5652,6 +6123,7 @@
     "isArchi": false
   },
   {
+    "id": 3926,
     "fr": "Vilenya",
     "en": "Vilenya",
     "es": "Vilenya",
@@ -5664,6 +6136,7 @@
     "isArchi": false
   },
   {
+    "id": 3145,
     "fr": "Motivateur d'Ombre",
     "en": "Shadow Motivator",
     "es": "Motivador de Sombra",
@@ -5676,6 +6149,7 @@
     "isArchi": false
   },
   {
+    "id": 3144,
     "fr": "Archer d'Ombre",
     "en": "Shadow Archer",
     "es": "Arquero de Sombra",
@@ -5688,6 +6162,7 @@
     "isArchi": false
   },
   {
+    "id": 4060,
     "fr": "Grande Prêtresse Sydonia",
     "en": "High Priestess Sydonia",
     "es": "Suma sacerdotisa Sydonia",
@@ -5700,6 +6175,7 @@
     "isArchi": false
   },
   {
+    "id": 4061,
     "fr": "Dranipoch",
     "en": "Drainacask",
     "es": "Copampino",
@@ -5712,6 +6188,7 @@
     "isArchi": false
   },
   {
+    "id": 2556,
     "fr": "Lin Shi, Empeleul Lenald",
     "en": "Lenald Empelol Lin Shi",
     "es": "Lin Shi, Empeladol Zollo",
@@ -5724,6 +6201,7 @@
     "isArchi": false
   },
   {
+    "id": 2570,
     "fr": "Gwand Viziw Wabbit",
     "en": "Gwand Viziew Wabbit",
     "es": "Gwan Visiw Wabbit",
@@ -5736,6 +6214,7 @@
     "isArchi": false
   },
   {
+    "id": 4269,
     "fr": "Gris XIII",
     "en": "Gray XIII",
     "es": "Gris XIII",
@@ -5748,6 +6227,7 @@
     "isArchi": false
   },
   {
+    "id": 4874,
     "fr": "Chêne Mou",
     "en": "Soft Oak",
     "es": "Roble Blando",
@@ -5760,6 +6240,7 @@
     "isArchi": false
   },
   {
+    "id": 4998,
     "fr": "Abrasif le décapant",
     "en": "Caustic Abrasive",
     "es": "Abrasivo el Decapante",
@@ -5772,6 +6253,7 @@
     "isArchi": false
   },
   {
+    "id": 5473,
     "fr": "Ougiptien le maudit",
     "en": "Ougyptian the Cursed",
     "es": "Ugipcio el Maldito",
@@ -5784,6 +6266,7 @@
     "isArchi": false
   },
   {
+    "id": 3090,
     "fr": "Malozaure",
     "en": "Badosaurus",
     "es": "Cofrosaurio",
@@ -5796,6 +6279,7 @@
     "isArchi": false
   },
   {
+    "id": 4254,
     "fr": "Fripon",
     "en": "Rascal",
     "es": "Perfowarrior",
@@ -5808,6 +6292,7 @@
     "isArchi": false
   },
   {
+    "id": 2579,
     "fr": "Gawde Wabbit",
     "en": "Wabbit Guawd",
     "es": "Guawdia wabbit",
@@ -5820,6 +6305,7 @@
     "isArchi": false
   },
   {
+    "id": 4372,
     "fr": "Cêpomwé l'Innocent",
     "en": "Issnotmee the Innocent",
     "es": "Yonoesío, el Inocente",
@@ -5832,6 +6318,7 @@
     "isArchi": false
   },
   {
+    "id": 5036,
     "fr": "Bulbuisson",
     "en": "Bulbush",
     "es": "Bulbomatorral",
@@ -5844,6 +6331,7 @@
     "isArchi": false
   },
   {
+    "id": 5477,
     "fr": "Pillheurt",
     "en": "Looterbug",
     "es": "Chaqueador",
@@ -5856,6 +6344,7 @@
     "isArchi": false
   },
   {
+    "id": 5532,
     "fr": "Jafaw le génie",
     "en": "Jafaw the Genie",
     "es": "Jafaw el Genio",
@@ -5868,6 +6357,7 @@
     "isArchi": false
   },
   {
+    "id": 2606,
     "fr": "Ti Wabbit Tados",
     "en": "Boney Tiwabbit",
     "es": "Pekewabbit huesudo",
@@ -5880,6 +6370,7 @@
     "isArchi": false
   },
   {
+    "id": 3048,
     "fr": "Mihmol l'Empaleur",
     "en": "Flaxhid the Impaler",
     "es": "Mihmol, el Empalador",
@@ -5892,6 +6383,7 @@
     "isArchi": false
   },
   {
+    "id": 4777,
     "fr": "Blop Flûtiste",
     "en": "Flute-Playing Blop",
     "es": "Blop flautista",
@@ -5904,6 +6396,7 @@
     "isArchi": false
   },
   {
+    "id": 2630,
     "fr": "Lenaldix",
     "en": "Lenaldix",
     "es": "Zollix",
@@ -5916,6 +6409,7 @@
     "isArchi": false
   },
   {
+    "id": 3076,
     "fr": "Bulldague Nain",
     "en": "Dwarf Bulldagger",
     "es": "Bulldaga enano",
@@ -5928,6 +6422,7 @@
     "isArchi": false
   },
   {
+    "id": 5471,
     "fr": "Potofeu, Grand maître culinaire",
     "en": "Culinary Grand Master Zomkin",
     "es": "Calabaciflor, Gran maestro culinario",
@@ -5940,6 +6435,7 @@
     "isArchi": false
   },
   {
+    "id": 2604,
     "fr": "Wabbit Tados",
     "en": "Boney Wabbit",
     "es": "Wabbit huesudo",
@@ -5952,6 +6448,7 @@
     "isArchi": false
   },
   {
+    "id": 2977,
     "fr": "Telob le Champmane",
     "en": "Sugnuf of Gillamush",
     "es": "Ates, el Challampano",
@@ -5964,6 +6461,7 @@
     "isArchi": false
   },
   {
+    "id": 3077,
     "fr": "Dresseur Longuelames",
     "en": "Longblade Trainer",
     "es": "Adiestrador hojalarga",
@@ -5976,6 +6474,7 @@
     "isArchi": false
   },
   {
+    "id": 5035,
     "fr": "Bulbiflore",
     "en": "Bulbiflor",
     "es": "Bulbiflor",
@@ -5988,6 +6487,7 @@
     "isArchi": false
   },
   {
+    "id": 5475,
     "fr": "Mantueuse",
     "en": "Killer Mantis",
     "es": "Mantisesina",
@@ -6000,6 +6500,7 @@
     "isArchi": false
   },
   {
+    "id": 3091,
     "fr": "Chevalancier",
     "en": "Stalliance",
     "es": "Caballanza",
@@ -6012,6 +6513,7 @@
     "isArchi": false
   },
   {
+    "id": 4778,
     "fr": "Blop Dylan",
     "en": "Blop Dylan",
     "es": "Blop Dylan",
@@ -6024,6 +6526,7 @@
     "isArchi": false
   },
   {
+    "id": 3141,
     "fr": "Malowouaire",
     "en": "Badomain",
     "es": "Cofre malicioso",
@@ -6036,6 +6539,7 @@
     "isArchi": false
   },
   {
+    "id": 3078,
     "fr": "Apothicaire Macchabrant",
     "en": "Cadaverous Apothecary",
     "es": "Apotecario macabrasivo",
@@ -6048,6 +6552,7 @@
     "isArchi": false
   },
   {
+    "id": 2578,
     "fr": "Chevaliew Wabbit",
     "en": "Wabbit Cavaliew",
     "es": "Caballewo wabbit",
@@ -6060,6 +6565,7 @@
     "isArchi": false
   },
   {
+    "id": 2580,
     "fr": "Wobot",
     "en": "Wobot",
     "es": "Wobot",
@@ -6072,6 +6578,7 @@
     "isArchi": false
   },
   {
+    "id": 2608,
     "fr": "Wo Zwombbit",
     "en": "Wo Zwombbit",
     "es": "Zombbit wodo",
@@ -6084,6 +6591,7 @@
     "isArchi": false
   },
   {
+    "id": 2581,
     "fr": "Wobot en Chef",
     "en": "Wobot in Chief",
     "es": "Jefe wobot",
@@ -6096,6 +6604,7 @@
     "isArchi": false
   },
   {
+    "id": 3092,
     "fr": "Enutroffre-Fort",
     "en": "Enucoffer Safe",
     "es": "Anucofre",
@@ -6108,6 +6617,7 @@
     "isArchi": false
   },
   {
+    "id": 5476,
     "fr": "Scaravageur",
     "en": "Scaravager",
     "es": "Escarabasto",
@@ -6120,6 +6630,7 @@
     "isArchi": false
   },
   {
+    "id": 2607,
     "fr": "Gwand Pa Zwombbit Bandé",
     "en": "Bandaged Gwandpa Zwombbit",
     "es": "Awelito zombbit vendado",
@@ -6132,6 +6643,7 @@
     "isArchi": false
   },
   {
+    "id": 5037,
     "fr": "Bulbambou",
     "en": "Bulbamboo",
     "es": "Bulbambú",
@@ -6144,6 +6656,7 @@
     "isArchi": false
   },
   {
+    "id": 3079,
     "fr": "Sramva",
     "en": "Sramva",
     "es": "Sramva",
@@ -6156,6 +6669,7 @@
     "isArchi": false
   },
   {
+    "id": 3180,
     "fr": "Chevalancier de Troa",
     "en": "Stalliance of Troa",
     "es": "Caballanza de trola",
@@ -6168,6 +6682,7 @@
     "isArchi": false
   },
   {
+    "id": 2577,
     "fr": "Tiwallieuw Wabbit",
     "en": "Wabbit Shawpshootew",
     "es": "Tiwadow wabbit",
@@ -6180,6 +6695,7 @@
     "isArchi": false
   },
   {
+    "id": 3093,
     "fr": "Kamarachnide",
     "en": "Kamarachnid",
     "es": "Kamarácnido",
@@ -6192,6 +6708,7 @@
     "isArchi": false
   },
   {
+    "id": 4779,
     "fr": "Blop Tambourrin",
     "en": "Drumble Blop",
     "es": "Blop tamborrudo",
@@ -6204,6 +6721,7 @@
     "isArchi": false
   },
   {
+    "id": 3516,
     "fr": "Krosmoglob de Sécurité",
     "en": "Security Krosmoglob",
     "es": "Krosmoglob de seguridad",
@@ -6216,6 +6734,7 @@
     "isArchi": false
   },
   {
+    "id": 3530,
     "fr": "Sbire de l'Eminence",
     "en": "His Eminence's Henchman",
     "es": "Esbirro de la eminencia",
@@ -6228,6 +6747,7 @@
     "isArchi": false
   },
   {
+    "id": 3519,
     "fr": "Méga Krosmo",
     "en": "Mega-Krosmo",
     "es": "Megakrosmo",
@@ -6240,6 +6760,7 @@
     "isArchi": false
   },
   {
+    "id": 3515,
     "fr": "Krosmogolem Désynchronisé",
     "en": "Unsynchronized Krosmogolem",
     "es": "Krosmogólem desincronizado",
@@ -6252,6 +6773,7 @@
     "isArchi": false
   },
   {
+    "id": 3514,
     "fr": "Krosmoglob Désynchronisé",
     "en": "Unsynchronized Krosmoglob",
     "es": "Krosmoglob desincronizado",
@@ -6264,6 +6786,7 @@
     "isArchi": false
   },
   {
+    "id": 3508,
     "fr": "Eclaireur de l'Eminence",
     "en": "His Eminence's Scout",
     "es": "Explorador de la eminencia",
@@ -6276,6 +6799,7 @@
     "isArchi": false
   },
   {
+    "id": 3518,
     "fr": "Krosmogolem de Sécurité",
     "en": "Security Krosmogolem",
     "es": "Krosmogólem de seguridad",
@@ -6288,6 +6812,7 @@
     "isArchi": false
   },
   {
+    "id": 4781,
     "fr": "Blop Dominant",
     "en": "Dominant Blop",
     "es": "Blop dominante",
@@ -6300,6 +6825,7 @@
     "isArchi": false
   },
   {
+    "id": 3179,
     "fr": "Enutrojan",
     "en": "Enutrojan",
     "es": "Anutrolano",
@@ -6312,6 +6838,7 @@
     "isArchi": false
   },
   {
+    "id": 4375,
     "fr": "Kamarad la Partageuse",
     "en": "Komrad the Sharer",
     "es": "Kamarada, la Espléndida",
@@ -6324,6 +6851,7 @@
     "isArchi": false
   },
   {
+    "id": 4387,
     "fr": "Le Chevaliew Noiw",
     "en": "The Dawk Knight",
     "es": "Caballewo Negwo",
@@ -6336,6 +6864,7 @@
     "isArchi": false
   },
   {
+    "id": 5479,
     "fr": "Scarazur Dominant",
     "en": "Dominant Scarazure",
     "es": "Escarazur dominante",
@@ -6348,6 +6877,7 @@
     "isArchi": false
   },
   {
+    "id": 4374,
     "fr": "Sramoné le Chemineur",
     "en": "Sweepney the Chim",
     "es": "Sramollín, el Chimeneador",
@@ -6360,6 +6890,7 @@
     "isArchi": false
   },
   {
+    "id": 5038,
     "fr": "Plantala Dominant",
     "en": "Dominant Plantala",
     "es": "Plantala dominante",
@@ -6372,6 +6903,7 @@
     "isArchi": false
   },
   {
+    "id": 4386,
     "fr": "Igow le Souffwe-Douleuw",
     "en": "Igow the Whipping Boy",
     "es": "Igow, el Cabeza de Tuwco",
@@ -6384,6 +6916,7 @@
     "isArchi": false
   },
   {
+    "id": 5500,
     "fr": "Tal Kasha",
     "en": "Tal Kasha",
     "es": "Tal Kasha",
@@ -6396,6 +6929,7 @@
     "isArchi": false
   },
   {
+    "id": 5501,
     "fr": "Rykaon",
     "en": "Sneerena",
     "es": "Rykaón",
@@ -6408,6 +6942,7 @@
     "isArchi": false
   },
   {
+    "id": 5502,
     "fr": "Pyramide élémentaire",
     "en": "Elemental Pyramid",
     "es": "Pirámide elemental",
@@ -6420,6 +6955,7 @@
     "isArchi": false
   },
   {
+    "id": 3178,
     "fr": "Kamarameçonnage",
     "en": "Kamarammasing",
     "es": "Fraudokama",
@@ -6432,6 +6968,7 @@
     "isArchi": false
   },
   {
+    "id": 4536,
     "fr": "Elitendard",
     "en": "Elite Standard",
     "es": "Elitandarte",
@@ -6444,6 +6981,7 @@
     "isArchi": false
   },
   {
+    "id": 4537,
     "fr": "Magilite",
     "en": "Magility",
     "es": "Elitechizo",
@@ -6456,6 +6994,7 @@
     "isArchi": false
   },
   {
+    "id": 4768,
     "fr": "Mage Encapuchonné",
     "en": "Hoodlum Mage",
     "es": "Mago encapuchado",
@@ -6468,6 +7007,7 @@
     "isArchi": false
   },
   {
+    "id": 4767,
     "fr": "Assassin Encapuchonné",
     "en": "Hoodlum Assassin",
     "es": "Asesino encapuchado",
@@ -6480,6 +7020,7 @@
     "isArchi": false
   },
   {
+    "id": 4534,
     "fr": "Elitir",
     "en": "Elite Shooter",
     "es": "Elitiro",
@@ -6492,6 +7033,7 @@
     "isArchi": false
   },
   {
+    "id": 4535,
     "fr": "Epélite",
     "en": "Elite Sword",
     "es": "Elitespada",
@@ -6504,6 +7046,7 @@
     "isArchi": false
   },
   {
+    "id": 4769,
     "fr": "Protecteur Encapuchonné",
     "en": "Hoodlum Protector",
     "es": "Protector encapuchado",
@@ -6516,6 +7059,7 @@
     "isArchi": false
   },
   {
+    "id": 5011,
     "fr": "Riktus Elite Dominant",
     "en": "Dominant Elite Riktus",
     "es": "Riktus de Élite dominante",
@@ -6528,6 +7072,7 @@
     "isArchi": false
   },
   {
+    "id": 2583,
     "fr": "Wipley la Suwvivante",
     "en": "Wipley the Suwvivow",
     "es": "Wipley, la Supewviviente",
@@ -6540,6 +7085,7 @@
     "isArchi": false
   },
   {
+    "id": 4780,
     "fr": "Blopgang Amadeus Blopzart",
     "en": "Blopgang Amadeus Blopzart",
     "es": "Blopgang Amadeus Blopzart",
@@ -6552,6 +7098,7 @@
     "isArchi": false
   },
   {
+    "id": 2015,
     "fr": "Roublard Alard Amasse",
     "en": "Rogue Rob Ludgeon",
     "es": "Tymador desbordado",
@@ -6564,6 +7111,7 @@
     "isArchi": false
   },
   {
+    "id": 3094,
     "fr": "Jamall'Auneth le Porte-clés",
     "en": "Cledus 'Onist the Key-Keeper",
     "es": "Andy Sonesto, el Llavero",
@@ -6576,6 +7124,7 @@
     "isArchi": false
   },
   {
+    "id": 4782,
     "fr": "Blopale le scintillant",
     "en": "Blopal the Resplendent",
     "es": "Blop el Centelleante",
@@ -6588,6 +7137,7 @@
     "isArchi": false
   },
   {
+    "id": 2605,
     "fr": "Gwand Wabbit GM",
     "en": "Gweat GM Wabbit",
     "es": "Gwan Wabbit GM",
@@ -6600,6 +7150,7 @@
     "isArchi": false
   },
   {
+    "id": 3080,
     "fr": "Venâme le Mangelombre",
     "en": "Solkrupt the Shadow-Eater",
     "es": "Venonusto, el Devorasombras",
@@ -6612,6 +7163,7 @@
     "isArchi": false
   },
   {
+    "id": 3175,
     "fr": "Sir Urh le Renfermé",
     "en": "Sir Urh the Recluse",
     "es": "Sir Adura, el Encerrado",
@@ -6624,6 +7176,7 @@
     "isArchi": false
   },
   {
+    "id": 4920,
     "fr": "Patapikot",
     "en": "Stalagnome",
     "es": "Patapikot",
@@ -6636,6 +7189,7 @@
     "isArchi": false
   },
   {
+    "id": 5040,
     "fr": "Bulbrute",
     "en": "Bulbrute",
     "es": "Bulbruto",
@@ -6648,6 +7202,7 @@
     "isArchi": false
   },
   {
+    "id": 5478,
     "fr": "Bombyxolite endoptérygote",
     "en": "Endopterygotic Bombyxolite",
     "es": "Bombyxolita Endopterígota",
@@ -6660,6 +7215,7 @@
     "isArchi": false
   },
   {
+    "id": 2743,
     "fr": "Zombowabbit le putréfié",
     "en": "Zombowabbit the Putrefied",
     "es": "Zombowabbit el Putrefacto",
@@ -6672,6 +7228,7 @@
     "isArchi": false
   },
   {
+    "id": 3395,
     "fr": "Orda Gova",
     "en": "Orda Gova",
     "es": "Ordagova",
@@ -6684,6 +7241,7 @@
     "isArchi": false
   },
   {
+    "id": 5480,
     "fr": "Archéobombyx l'épicé",
     "en": "Archeobombyx the Spicy",
     "es": "Arqueobombyx el Especial",
@@ -6696,6 +7254,7 @@
     "isArchi": false
   },
   {
+    "id": 2582,
     "fr": "Wa Wabbit",
     "en": "Wa Wabbit",
     "es": "Wey Wabbit",
@@ -6708,6 +7267,7 @@
     "isArchi": false
   },
   {
+    "id": 3098,
     "fr": "Disciple de Raval",
     "en": "Raval Disciple",
     "es": "Discípulo de Raval",
@@ -6720,6 +7280,7 @@
     "isArchi": false
   },
   {
+    "id": 3392,
     "fr": "Poz",
     "en": "Poz",
     "es": "Mento",
@@ -6732,6 +7293,7 @@
     "isArchi": false
   },
   {
+    "id": 5039,
     "fr": "Zarbi l'inhabituel",
     "en": "Saurbabul the Strange",
     "es": "Azur el Bulboso",
@@ -6744,6 +7306,7 @@
     "isArchi": false
   },
   {
+    "id": 4215,
     "fr": "Tankoeur",
     "en": "Tankheart",
     "es": "Tankorazón",
@@ -6756,6 +7319,7 @@
     "isArchi": false
   },
   {
+    "id": 2013,
     "fr": "Blar le Roux",
     "en": "Rouge Rogue",
     "es": "Tym Adorrojo",
@@ -6768,6 +7332,7 @@
     "isArchi": false
   },
   {
+    "id": 4216,
     "fr": "Ensaigneur",
     "en": "Hemogluru",
     "es": "Sangrocente",
@@ -6780,6 +7345,7 @@
     "isArchi": false
   },
   {
+    "id": 4921,
     "fr": "Patator",
     "en": "Stalagawk",
     "es": "Patator",
@@ -6792,6 +7358,7 @@
     "isArchi": false
   },
   {
+    "id": 3393,
     "fr": "Lairdavan",
     "en": "Culler of the Wind",
     "es": "Loradante",
@@ -6804,6 +7371,7 @@
     "isArchi": false
   },
   {
+    "id": 3397,
     "fr": "Grorlog",
     "en": "Crolk",
     "es": "Goreloj",
@@ -6816,6 +7384,7 @@
     "isArchi": false
   },
   {
+    "id": 4214,
     "fr": "Soeur Zerker",
     "en": "Sistzerker",
     "es": "Berserkermana",
@@ -6828,6 +7397,7 @@
     "isArchi": false
   },
   {
+    "id": 3394,
     "fr": "Syclick",
     "en": "Syclick",
     "es": "Siclick",
@@ -6840,6 +7410,7 @@
     "isArchi": false
   },
   {
+    "id": 2014,
     "fr": "Roublard Tiste",
     "en": "Rogue Rtist",
     "es": "Tymadortista",
@@ -6852,6 +7423,7 @@
     "isArchi": false
   },
   {
+    "id": 3396,
     "fr": "Laps",
     "en": "Lapse",
     "es": "Lapso",
@@ -6864,6 +7436,7 @@
     "isArchi": false
   },
   {
+    "id": 4922,
     "fr": "Patapattes",
     "en": "Stalaguar",
     "es": "Patapatas",
@@ -6876,6 +7449,7 @@
     "isArchi": false
   },
   {
+    "id": 4344,
     "fr": "Fouirox Blessé",
     "en": "Wounded Badgeroxxor",
     "es": "Rastrejón herido",
@@ -6888,6 +7462,7 @@
     "isArchi": false
   },
   {
+    "id": 2127,
     "fr": "Patapoutre Dominant",
     "en": "Dominant Stalagmote",
     "es": "Patapinxo dominante",
@@ -6900,6 +7475,7 @@
     "isArchi": false
   },
   {
+    "id": 4356,
     "fr": "Saunic le Supersonique",
     "en": "Saunic the Supersonic",
     "es": "Soniquete, el Supersónico",
@@ -6912,6 +7488,7 @@
     "isArchi": false
   },
   {
+    "id": 5018,
     "fr": "Roublard Dominant",
     "en": "Dominant Rogue",
     "es": "Tymador dominante",
@@ -6924,6 +7501,7 @@
     "isArchi": false
   },
   {
+    "id": 5016,
     "fr": "Encapuchonné Dominant",
     "en": "Dominant Hoodlum",
     "es": "Encapuchado dominante",
@@ -6936,6 +7514,7 @@
     "isArchi": false
   },
   {
+    "id": 4355,
     "fr": "Lav'Haus le Chronométré",
     "en": "Lavoose the Chronologically Triggered",
     "es": "Lav'Hos, el Cronometrado",
@@ -6948,6 +7527,7 @@
     "isArchi": false
   },
   {
+    "id": 3582,
     "fr": "Serre d'Acier",
     "en": "Steel Beak",
     "es": "Garras de Acero",
@@ -6960,6 +7540,7 @@
     "isArchi": false
   },
   {
+    "id": 3398,
     "fr": "Vertox l'Intemporel",
     "en": "Vertox the Timeless",
     "es": "Vertox, el Intemporal",
@@ -6972,6 +7553,7 @@
     "isArchi": false
   },
   {
+    "id": 3399,
     "fr": "Raipiode l'Infréquençable",
     "en": "Robowl the Outcast",
     "es": "Rapyodo, el Infrecuenciable",
@@ -6984,6 +7566,7 @@
     "isArchi": false
   },
   {
+    "id": 4304,
     "fr": "Soeur Soudeuse la Fondue",
     "en": "Sister Solder the Melted",
     "es": "Soldadermana, la Fundida",
@@ -6996,6 +7579,7 @@
     "isArchi": false
   },
   {
+    "id": 5015,
     "fr": "Capuchino l'énergisant",
     "en": "Energizing Cappuccino",
     "es": "Capuchino el Energizante",
@@ -7008,6 +7592,7 @@
     "isArchi": false
   },
   {
+    "id": 5128,
     "fr": "Bébé Gerbouille",
     "en": "Baby Gerbean",
     "es": "Bebé gerbilinda",
@@ -7020,6 +7605,7 @@
     "isArchi": false
   },
   {
+    "id": 2018,
     "fr": "Remington Smisse",
     "en": "Remington Smisse",
     "es": "Remington Smis",
@@ -7032,6 +7618,7 @@
     "isArchi": false
   },
   {
+    "id": 3857,
     "fr": "Kanniboul Voodoo",
     "en": "Voodoo Kanniball",
     "es": "Kaníbola vudú",
@@ -7044,6 +7631,7 @@
     "isArchi": false
   },
   {
+    "id": 3862,
     "fr": "Dionatrape",
     "en": "Dionatrap",
     "es": "Dionatrapa",
@@ -7056,6 +7644,7 @@
     "isArchi": false
   },
   {
+    "id": 4357,
     "fr": "Rib'Eri le Routourneur",
     "en": "Roonaldo the Returner",
     "es": "Rib'Eri, el Chilenoso",
@@ -7068,6 +7657,7 @@
     "isArchi": false
   },
   {
+    "id": 4923,
     "fr": "Mamapoutre",
     "en": "Mamagmote",
     "es": "Mamapinxo",
@@ -7080,6 +7670,7 @@
     "isArchi": false
   },
   {
+    "id": 2016,
     "fr": "Brise-Tibias",
     "en": "Tibia-Thrasher",
     "es": "Rompetibias",
@@ -7092,6 +7683,7 @@
     "isArchi": false
   },
   {
+    "id": 3858,
     "fr": "Psykoko",
     "en": "Psykoko",
     "es": "Psikokópata",
@@ -7104,6 +7696,7 @@
     "isArchi": false
   },
   {
+    "id": 4232,
     "fr": "Boully le Racketteur",
     "en": "Bully the Racketeer",
     "es": "Buly, el Extorsionador",
@@ -7116,6 +7709,7 @@
     "isArchi": false
   },
   {
+    "id": 4358,
     "fr": "L'Oiseau du Temps",
     "en": "The Time-Bird",
     "es": "Pájaro del Tiempo",
@@ -7128,6 +7722,7 @@
     "isArchi": false
   },
   {
+    "id": 5012,
     "fr": "Rictus l'expressif",
     "en": "Rictus the Expressive",
     "es": "Rictus el Expresivo",
@@ -7140,6 +7735,7 @@
     "isArchi": false
   },
   {
+    "id": 5017,
     "fr": "Rouflaket le Gentleman",
     "en": "Rouflacket the Gentleman",
     "es": "Archimonstruo Patkilla el Caballero",
@@ -7152,6 +7748,7 @@
     "isArchi": false
   },
   {
+    "id": 3968,
     "fr": "Chasseur Dunîl",
     "en": "Nyl Hunter",
     "es": "Cazador Delnilo",
@@ -7164,6 +7761,7 @@
     "isArchi": false
   },
   {
+    "id": 4217,
     "fr": "Kali",
     "en": "Kali",
     "es": "Kali",
@@ -7176,6 +7774,7 @@
     "isArchi": false
   },
   {
+    "id": 4538,
     "fr": "Le Riktus Masqué",
     "en": "The Masked Riktus",
     "es": "Riktus Enmascarado",
@@ -7188,6 +7787,7 @@
     "isArchi": false
   },
   {
+    "id": 4853,
     "fr": "Papapoutre le Rigide",
     "en": "Stalagmonarch the Rigid",
     "es": "Papapinxo el Rígido",
@@ -7200,6 +7800,7 @@
     "isArchi": false
   },
   {
+    "id": 4924,
     "fr": "Javého",
     "en": "Hoodfella",
     "es": "Javeho",
@@ -7212,6 +7813,7 @@
     "isArchi": false
   },
   {
+    "id": 5043,
     "fr": "Pandou",
     "en": "Pandoo",
     "es": "Pandócil",
@@ -7224,6 +7826,7 @@
     "isArchi": false
   },
   {
+    "id": 3863,
     "fr": "Tropiliane",
     "en": "Tropilian",
     "es": "Tropiliana",
@@ -7236,6 +7839,7 @@
     "isArchi": false
   },
   {
+    "id": 3860,
     "fr": "Kokolosse",
     "en": "Kokoloss",
     "es": "Kokoloso",
@@ -7248,6 +7852,7 @@
     "isArchi": false
   },
   {
+    "id": 3856,
     "fr": "Kanniboul Ette",
     "en": "Kanniball Et",
     "es": "Kaníbola zeprot",
@@ -7260,6 +7865,7 @@
     "isArchi": false
   },
   {
+    "id": 3970,
     "fr": "Shaman Dunîl",
     "en": "Nyl Shaman",
     "es": "Shamán Delnilo",
@@ -7272,6 +7878,7 @@
     "isArchi": false
   },
   {
+    "id": 5041,
     "fr": "Pandikaze",
     "en": "Pandikaze",
     "es": "Pandikaze",
@@ -7284,6 +7891,7 @@
     "isArchi": false
   },
   {
+    "id": 5129,
     "fr": "Gerbouille",
     "en": "Gerbean",
     "es": "Gerbilinda",
@@ -7296,6 +7904,7 @@
     "isArchi": false
   },
   {
+    "id": 3861,
     "fr": "Phéromane",
     "en": "Pheromaniac",
     "es": "Feramona",
@@ -7308,6 +7917,7 @@
     "isArchi": false
   },
   {
+    "id": 5130,
     "fr": "Pépé Gerbouille",
     "en": "Grandpa Gerbean",
     "es": "Abuelito gerbilinda",
@@ -7320,6 +7930,7 @@
     "isArchi": false
   },
   {
+    "id": 3855,
     "fr": "Kanniboul Lymi",
     "en": "Kanniball Lymi",
     "es": "Kaníbola lug",
@@ -7332,6 +7943,7 @@
     "isArchi": false
   },
   {
+    "id": 5042,
     "fr": "Pandit",
     "en": "Pandit",
     "es": "Pandido",
@@ -7344,6 +7956,7 @@
     "isArchi": false
   },
   {
+    "id": 3859,
     "fr": "Kokolérik",
     "en": "Kokoleric",
     "es": "Kokolériko",
@@ -7356,6 +7969,7 @@
     "isArchi": false
   },
   {
+    "id": 3969,
     "fr": "Eventreur Dunîl",
     "en": "Nyl Ripper",
     "es": "Destripador Delnilo",
@@ -7368,6 +7982,7 @@
     "isArchi": false
   },
   {
+    "id": 4316,
     "fr": "Roc Chaud",
     "en": "Hot Rock",
     "es": "Rocaliente",
@@ -7380,6 +7995,7 @@
     "isArchi": false
   },
   {
+    "id": 4317,
     "fr": "Roc Froid",
     "en": "Cold Rock",
     "es": "Rocarámbano",
@@ -7392,6 +8008,7 @@
     "isArchi": false
   },
   {
+    "id": 4351,
     "fr": "Kanniboulombre",
     "en": "Kanniballshadow",
     "es": "Kanibolasombra",
@@ -7404,6 +8021,7 @@
     "isArchi": false
   },
   {
+    "id": 5132,
     "fr": "Gerbouille Dominante",
     "en": "Dominant Gerbean",
     "es": "Gerbilinda dominante",
@@ -7416,6 +8034,7 @@
     "isArchi": false
   },
   {
+    "id": 4354,
     "fr": "Ben'Koko",
     "en": "Ken'Koko",
     "es": "Ekoko",
@@ -7428,6 +8047,7 @@
     "isArchi": false
   },
   {
+    "id": 5044,
     "fr": "Pandissidan Dominant",
     "en": "Dominant Pandissident",
     "es": "Pandisidente dominante",
@@ -7440,6 +8060,7 @@
     "isArchi": false
   },
   {
+    "id": 4352,
     "fr": "Alecro Crocro",
     "en": "Rick Croc",
     "es": "Coco Ensurrío",
@@ -7452,6 +8073,7 @@
     "isArchi": false
   },
   {
+    "id": 4353,
     "fr": "Toxik la plante Magik",
     "en": "Toxik the Magik Plant",
     "es": "Tóxica, la Planta Mágica",
@@ -7464,6 +8086,7 @@
     "isArchi": false
   },
   {
+    "id": 3870,
     "fr": "Foul Moon",
     "en": "Sham Moon",
     "es": "Ful Moon",
@@ -7476,6 +8099,7 @@
     "isArchi": false
   },
   {
+    "id": 4203,
     "fr": "Fouirox",
     "en": "Badgeroxxor",
     "es": "Rastrejón",
@@ -7488,6 +8112,7 @@
     "isArchi": false
   },
   {
+    "id": 4326,
     "fr": "War'Hg Magmatique",
     "en": "Magmatic War'Hg",
     "es": "War'Hg magmático",
@@ -7500,6 +8125,7 @@
     "isArchi": false
   },
   {
+    "id": 4661,
     "fr": "Jadarme",
     "en": "Jadarmed",
     "es": "Jadarmado",
@@ -7512,6 +8138,7 @@
     "isArchi": false
   },
   {
+    "id": 4662,
     "fr": "Emeraldin",
     "en": "Emeraldin",
     "es": "Esmeraldín",
@@ -7524,6 +8151,7 @@
     "isArchi": false
   },
   {
+    "id": 4324,
     "fr": "Bolrag du Dor'Mor",
     "en": "Bolrag of Dor'Mor",
     "es": "Bolrag de Dor'Mor",
@@ -7536,6 +8164,7 @@
     "isArchi": false
   },
   {
+    "id": 4325,
     "fr": "Gulnaz du Dor'Mor",
     "en": "Gulnaz of Dor'Mor",
     "es": "Gulnaz de Dor'Mor",
@@ -7548,6 +8177,7 @@
     "isArchi": false
   },
   {
+    "id": 4205,
     "fr": "Blérours",
     "en": "Beardger",
     "es": "Tejoso",
@@ -7560,6 +8190,7 @@
     "isArchi": false
   },
   {
+    "id": 4204,
     "fr": "Blérage",
     "en": "Badgerage",
     "es": "Tejardor",
@@ -7572,6 +8203,7 @@
     "isArchi": false
   },
   {
+    "id": 4663,
     "fr": "Agathank",
     "en": "Agatank",
     "es": "Agatank",
@@ -7584,6 +8216,7 @@
     "isArchi": false
   },
   {
+    "id": 3865,
     "fr": "Koko le Nutt",
     "en": "Koko the Nutt",
     "es": "Koko, el Kolgado",
@@ -7596,6 +8229,7 @@
     "isArchi": false
   },
   {
+    "id": 3867,
     "fr": "Hem Kokora",
     "en": "Koko Riko",
     "es": "Barbakó Kokonan",
@@ -7608,6 +8242,7 @@
     "isArchi": false
   },
   {
+    "id": 3971,
     "fr": "Roi Dunîl",
     "en": "Nyl King",
     "es": "Rey Delnilo",
@@ -7620,6 +8255,7 @@
     "isArchi": false
   },
   {
+    "id": 5055,
     "fr": "Fantôme Tanuki-Chan",
     "en": "Tanuki-Chan Ghost",
     "es": "Fantasma de tanuki chan",
@@ -7632,6 +8268,7 @@
     "isArchi": false
   },
   {
+    "id": 5056,
     "fr": "Fantôme Yokaï",
     "en": "Yokai Ghost",
     "es": "Fantasma de yokai",
@@ -7644,6 +8281,7 @@
     "isArchi": false
   },
   {
+    "id": 5131,
     "fr": "Maman Gerbouille",
     "en": "Mama Gerbean",
     "es": "Mamá Gerbilinda",
@@ -7656,6 +8294,7 @@
     "isArchi": false
   },
   {
+    "id": 3866,
     "fr": "Grozépine",
     "en": "Grozepin",
     "es": "Espinanta",
@@ -7668,6 +8307,7 @@
     "isArchi": false
   },
   {
+    "id": 3879,
     "fr": "Darkli Moon",
     "en": "Darkli Moon",
     "es": "Darkli Moon",
@@ -7680,6 +8320,7 @@
     "isArchi": false
   },
   {
+    "id": 5049,
     "fr": "Flétide",
     "en": "Blightoxious",
     "es": "Plaguétido",
@@ -7692,6 +8333,7 @@
     "isArchi": false
   },
   {
+    "id": 3972,
     "fr": "Croc-Môssieur, le Dandy",
     "en": "Dandy Mos Croc",
     "es": "Míster Coco, el Dandy",
@@ -7704,6 +8346,7 @@
     "isArchi": false
   },
   {
+    "id": 4208,
     "fr": "Dragoeu'r",
     "en": "Dregger",
     "es": "Dragoloso",
@@ -7716,6 +8359,7 @@
     "isArchi": false
   },
   {
+    "id": 5046,
     "fr": "Pandore",
     "en": "Pandora",
     "es": "Pandora",
@@ -7728,6 +8372,7 @@
     "isArchi": false
   },
   {
+    "id": 5133,
     "fr": "Pic-à-choux l'électrique",
     "en": "Electric Pick-and-Chew",
     "es": "Pic Achú el eléctrico",
@@ -7740,6 +8385,7 @@
     "isArchi": false
   },
   {
+    "id": 3864,
     "fr": "Kannistère",
     "en": "Kannilooni",
     "es": "Kanibolístero",
@@ -7752,6 +8398,7 @@
     "isArchi": false
   },
   {
+    "id": 3868,
     "fr": "Gengas Kin",
     "en": "Gengas Kin",
     "es": "Gengas Kin",
@@ -7764,6 +8411,7 @@
     "isArchi": false
   },
   {
+    "id": 4258,
     "fr": "Ammaniaque",
     "en": "Ammaniac",
     "es": "Amaníaco",
@@ -7776,6 +8424,7 @@
     "isArchi": false
   },
   {
+    "id": 5045,
     "fr": "Pandémik le Malade",
     "en": "Pandamik the Ill",
     "es": "Pandémiko el Enfermo",
@@ -7788,6 +8437,7 @@
     "isArchi": false
   },
   {
+    "id": 4168,
     "fr": "Dragonnet Vivace",
     "en": "Hardy Wyrmling",
     "es": "Dragonito vivaz",
@@ -7800,6 +8450,7 @@
     "isArchi": false
   },
   {
+    "id": 4259,
     "fr": "Sulfurie",
     "en": "Sulfury",
     "es": "Sulfurado",
@@ -7812,6 +8463,7 @@
     "isArchi": false
   },
   {
+    "id": 5054,
     "fr": "Fantôme Pandule",
     "en": "Pandulum Ghost",
     "es": "Fantasma de pandulo",
@@ -7824,6 +8476,7 @@
     "isArchi": false
   },
   {
+    "id": 5048,
     "fr": "Flémard",
     "en": "Blightobum",
     "es": "Plagandul",
@@ -7836,6 +8489,7 @@
     "isArchi": false
   },
   {
+    "id": 5136,
     "fr": "Gentibourg",
     "en": "Noicebubourg",
     "es": "Gentilbúho",
@@ -7848,6 +8502,7 @@
     "isArchi": false
   },
   {
+    "id": 4167,
     "fr": "Dragonnet Féroce",
     "en": "Ferocious Wyrmling",
     "es": "Dragonito feroz",
@@ -7860,6 +8515,7 @@
     "isArchi": false
   },
   {
+    "id": 5134,
     "fr": "Minibourg",
     "en": "Minibubourg",
     "es": "Minibuhatrás",
@@ -7872,6 +8528,7 @@
     "isArchi": false
   },
   {
+    "id": 4210,
     "fr": "Dragoeuf Guerrier",
     "en": "Dreggon Warrior",
     "es": "Dragohuevo guerrero",
@@ -7884,6 +8541,7 @@
     "isArchi": false
   },
   {
+    "id": 4257,
     "fr": "Schistérique",
     "en": "Schisterical",
     "es": "Esquistérico",
@@ -7896,6 +8554,7 @@
     "isArchi": false
   },
   {
+    "id": 5135,
     "fr": "Mage Hibourg",
     "en": "Bubourg Mage",
     "es": "Mago buhatrás",
@@ -7908,6 +8567,7 @@
     "isArchi": false
   },
   {
+    "id": 4209,
     "fr": "Dragoeuf à la coque",
     "en": "Soft-Boiled Dreggon",
     "es": "Dragohuevo cocido",
@@ -7920,6 +8580,7 @@
     "isArchi": false
   },
   {
+    "id": 5047,
     "fr": "Fléroce",
     "en": "Blightrocioius",
     "es": "Plagueroz",
@@ -7932,6 +8593,7 @@
     "isArchi": false
   },
   {
+    "id": 5053,
     "fr": "Fantôme Pandit",
     "en": "Pandit Ghost",
     "es": "Fantasma de pandido",
@@ -7944,6 +8606,7 @@
     "isArchi": false
   },
   {
+    "id": 4188,
     "fr": "Dragonnet Prismatique",
     "en": "Prismatic Wyrmling",
     "es": "Dragonito prismático",
@@ -7956,6 +8619,7 @@
     "isArchi": false
   },
   {
+    "id": 4218,
     "fr": "Dragoeuf Bis'Oeufale",
     "en": "Biceggphalous Dreggon",
     "es": "Dragohuevo Bicéfalo",
@@ -7968,6 +8632,7 @@
     "isArchi": false
   },
   {
+    "id": 5138,
     "fr": "Hibourg Dominant",
     "en": "Dominant Bubourg",
     "es": "Buhatrás dominante",
@@ -7980,6 +8645,7 @@
     "isArchi": false
   },
   {
+    "id": 4328,
     "fr": "Eyeliner la Blérageuse",
     "en": "Eyeliner the Badgerager",
     "es": "Eyeliner, la Tejardorosa",
@@ -7992,6 +8658,7 @@
     "isArchi": false
   },
   {
+    "id": 4331,
     "fr": "War'Hg Gardien du Dor'Mor",
     "en": "War'Hg, Guardian of Dor'Mor",
     "es": "War'Hg guardián de Dor'Mor",
@@ -8004,6 +8671,7 @@
     "isArchi": false
   },
   {
+    "id": 5050,
     "fr": "Fléocculte",
     "en": "Blightoccult",
     "es": "Plagoculto",
@@ -8016,6 +8684,7 @@
     "isArchi": false
   },
   {
+    "id": 5057,
     "fr": "Fantôme de Pandala Dominant",
     "en": "Dominant Pandala Ghost",
     "es": "Fantasma de Pandala dominante",
@@ -8028,6 +8697,7 @@
     "isArchi": false
   },
   {
+    "id": 4262,
     "fr": "Schistophrène",
     "en": "Schistophrenic",
     "es": "Esquistofrénico",
@@ -8040,6 +8710,7 @@
     "isArchi": false
   },
   {
+    "id": 4795,
     "fr": "Cracheur Volant",
     "en": "Flying Spitter",
     "es": "Escupidor volador",
@@ -8052,6 +8723,7 @@
     "isArchi": false
   },
   {
+    "id": 5099,
     "fr": "Soiffard",
     "en": "Thirster",
     "es": "Sedentor",
@@ -8064,6 +8736,7 @@
     "isArchi": false
   },
   {
+    "id": 5100,
     "fr": "Tanuki-Chan",
     "en": "Tanuki-Chan",
     "es": "Tanuki chan",
@@ -8076,6 +8749,7 @@
     "isArchi": false
   },
   {
+    "id": 5155,
     "fr": "Comte Harebourg",
     "en": "Count Harebourg",
     "es": "Conde Kontatrás",
@@ -8088,6 +8762,7 @@
     "isArchi": false
   },
   {
+    "id": 5101,
     "fr": "Yokaï Firefoux",
     "en": "Yokai Firefoux",
     "es": "Yokai Firefux",
@@ -8100,6 +8775,7 @@
     "isArchi": false
   },
   {
+    "id": 5816,
     "fr": "Néo-Géror",
     "en": "Neo Jonk",
     "es": "Neogerar",
@@ -8112,6 +8788,7 @@
     "isArchi": false
   },
   {
+    "id": 3433,
     "fr": "Nogord l'Ezarélé",
     "en": "Nogord Wungleezared",
     "es": "Nogord, el Alado",
@@ -8124,6 +8801,7 @@
     "isArchi": false
   },
   {
+    "id": 4770,
     "fr": "Ombrage",
     "en": "Shadofang",
     "es": "Sombría",
@@ -8136,6 +8814,7 @@
     "isArchi": false
   },
   {
+    "id": 5102,
     "fr": "Tanukouï-San",
     "en": "Tanukouï San",
     "es": "Tanukui San",
@@ -8148,6 +8827,7 @@
     "isArchi": false
   },
   {
+    "id": 5165,
     "fr": "Aguabrial",
     "en": "Aguabrial",
     "es": "Aguabrial",
@@ -8160,6 +8840,7 @@
     "isArchi": false
   },
   {
+    "id": 5847,
     "fr": "Roc",
     "en": "Roc",
     "es": "Roca",
@@ -8172,6 +8853,7 @@
     "isArchi": false
   },
   {
+    "id": 4791,
     "fr": "Ombre d'Ombrage",
     "en": "Shadofang's Shadow",
     "es": "Sombra de Sombría",
@@ -8184,6 +8866,7 @@
     "isArchi": false
   },
   {
+    "id": 4796,
     "fr": "Destructeur",
     "en": "Destroyer",
     "es": "Destructor",
@@ -8196,6 +8879,7 @@
     "isArchi": false
   },
   {
+    "id": 5226,
     "fr": "Jadarme",
     "en": "Jadarmed",
     "es": "Jadarmado",
@@ -8208,6 +8892,7 @@
     "isArchi": false
   },
   {
+    "id": 5228,
     "fr": "Agathank",
     "en": "Agatank",
     "es": "Agatank",
@@ -8220,6 +8905,7 @@
     "isArchi": false
   },
   {
+    "id": 5227,
     "fr": "Emeraldin",
     "en": "Emeraldin",
     "es": "Esmeraldín",
@@ -8232,6 +8918,7 @@
     "isArchi": false
   },
   {
+    "id": 4260,
     "fr": "Cendragon",
     "en": "Ashdragon",
     "es": "Cendragón",
@@ -8244,6 +8931,7 @@
     "isArchi": false
   },
   {
+    "id": 4318,
     "fr": "Blérwitch le Furax",
     "en": "Badgwitch the Furiox",
     "es": "Tejónidas el Furioso",
@@ -8256,6 +8944,7 @@
     "isArchi": false
   },
   {
+    "id": 4400,
     "fr": "Oeuf Antique",
     "en": "Ancient Egg",
     "es": "Huevo antiguo",
@@ -8268,6 +8957,7 @@
     "isArchi": false
   },
   {
+    "id": 5058,
     "fr": "Fléorripilant le Fantôme Fléopard",
     "en": "Mighty Blighty the Blightopard Ghost",
     "es": "Plagorripilante, el Fantasma Plaguepardo",
@@ -8280,6 +8970,7 @@
     "isArchi": false
   },
   {
+    "id": 4261,
     "fr": "Fréonctueux le Gaz pas chaud",
     "en": "Freonctuous the Gaspacho",
     "es": "Freontuoso, el Gaspachote",
@@ -8292,6 +8983,7 @@
     "isArchi": false
   },
   {
+    "id": 4327,
     "fr": "Sor'Hon, Seigneur de la Flamme",
     "en": "Sor'Hon, Lord of the Flame",
     "es": "Saur'Hon, el Señor de la Llama",
@@ -8304,6 +8996,7 @@
     "isArchi": false
   },
   {
+    "id": 4664,
     "fr": "Agonie Coeur-Cristal",
     "en": "Crystal-Heart Agony",
     "es": "Agonía Corazón Cristalino",
@@ -8316,6 +9009,7 @@
     "isArchi": false
   },
   {
+    "id": 5052,
     "fr": "Fléogre",
     "en": "Blightogre",
     "es": "Plagogro",
@@ -8328,6 +9022,7 @@
     "isArchi": false
   },
   {
+    "id": 5137,
     "fr": "Granduk Hibourg",
     "en": "Bubotron Bubourg",
     "es": "Bubobubo Buhatrás",
@@ -8340,6 +9035,7 @@
     "isArchi": false
   },
   {
+    "id": 5168,
     "fr": "Uto-pic",
     "en": "Uto-Pike",
     "es": "Pinchusorio",
@@ -8352,6 +9048,7 @@
     "isArchi": false
   },
   {
+    "id": 4220,
     "fr": "Minibuliette",
     "en": "Minibuliette",
     "es": "Minibulieta",
@@ -8364,6 +9061,7 @@
     "isArchi": false
   },
   {
+    "id": 4330,
     "fr": "Sar'Houmane le Prêtre de la Flamme",
     "en": "Sore'Hooman the Priest of the Flame",
     "es": "Zar Humán, el Sacerdote de la Llama",
@@ -8376,6 +9074,7 @@
     "isArchi": false
   },
   {
+    "id": 5059,
     "fr": "Fantôme Tanukouï-San",
     "en": "Ghost Tanukouï San",
     "es": "Fantasma de Tanukui San",
@@ -8388,6 +9087,7 @@
     "isArchi": false
   },
   {
+    "id": 5139,
     "fr": "Archibourg l'Archimonstre Hibourg",
     "en": "Superb Owl",
     "es": "Archibuhatrás el archimonstruo buhatrás",
@@ -8400,6 +9100,7 @@
     "isArchi": false
   },
   {
+    "id": 5175,
     "fr": "Carabajoie",
     "en": "Carapudgeon",
     "es": "Caparrabias",
@@ -8412,6 +9113,7 @@
     "isArchi": false
   },
   {
+    "id": 5187,
     "fr": "Renard Valo",
     "en": "Prefoxterous",
     "es": "Zorrofrénico",
@@ -8424,6 +9126,7 @@
     "isArchi": false
   },
   {
+    "id": 5246,
     "fr": "Manchot Kola",
     "en": "Chocguin",
     "es": "Chocogüino",
@@ -8436,6 +9139,7 @@
     "isArchi": false
   },
   {
+    "id": 4329,
     "fr": "Uhu Le Mielleux",
     "en": "Uhu the Honeyed",
     "es": "Uhu, el Meloso",
@@ -8448,6 +9152,7 @@
     "isArchi": false
   },
   {
+    "id": 5179,
     "fr": "Cwabotteur",
     "en": "Cwabplaner",
     "es": "Cangwepillo",
@@ -8460,6 +9165,7 @@
     "isArchi": false
   },
   {
+    "id": 5051,
     "fr": "Fléomérique le Poète",
     "en": "Blightomeric the Poet",
     "es": "Plagomérico el Poeta",
@@ -8472,6 +9178,7 @@
     "isArchi": false
   },
   {
+    "id": 5234,
     "fr": "Torturbulent",
     "en": "Torturbulent",
     "es": "Torturbulento",
@@ -8484,6 +9191,7 @@
     "isArchi": false
   },
   {
+    "id": 5240,
     "fr": "Koung Fours",
     "en": "Kung Fursa",
     "es": "Kungfoso",
@@ -8496,6 +9204,7 @@
     "isArchi": false
   },
   {
+    "id": 5186,
     "fr": "Loupin",
     "en": "Wolfix",
     "es": "Lobín",
@@ -8508,6 +9217,7 @@
     "isArchi": false
   },
   {
+    "id": 5233,
     "fr": "Caméléhombre",
     "en": "Chamelehombre",
     "es": "Camalehombre",
@@ -8520,6 +9230,7 @@
     "isArchi": false
   },
   {
+    "id": 5245,
     "fr": "Manchopine",
     "en": "Gluguin",
     "es": "Botelligüino",
@@ -8532,6 +9243,7 @@
     "isArchi": false
   },
   {
+    "id": 5181,
     "fr": "Pinsulaire",
     "en": "Pinsular",
     "es": "Pinsular",
@@ -8544,6 +9256,7 @@
     "isArchi": false
   },
   {
+    "id": 5169,
     "fr": "Assassinge",
     "en": "Apessassin",
     "es": "Asesimio",
@@ -8556,6 +9269,7 @@
     "isArchi": false
   },
   {
+    "id": 5174,
     "fr": "Tatourbillon",
     "en": "Tattoorlwind",
     "es": "Tatorbellino",
@@ -8568,6 +9282,7 @@
     "isArchi": false
   },
   {
+    "id": 5239,
     "fr": "Boursouflé",
     "en": "Ursawollen",
     "es": "Abosotargado",
@@ -8580,6 +9295,7 @@
     "isArchi": false
   },
   {
+    "id": 5167,
     "fr": "Boiseux",
     "en": "Antlerus",
     "es": "Ciervofante",
@@ -8592,6 +9308,7 @@
     "isArchi": false
   },
   {
+    "id": 5180,
     "fr": "Pincision",
     "en": "Pincision",
     "es": "Pincisión",
@@ -8604,6 +9321,7 @@
     "isArchi": false
   },
   {
+    "id": 5232,
     "fr": "Dragonorrhée",
     "en": "Dragonorrhea",
     "es": "Dragolfo",
@@ -8616,6 +9334,7 @@
     "isArchi": false
   },
   {
+    "id": 5173,
     "fr": "Castorbital",
     "en": "Castorbital",
     "es": "Castorbital",
@@ -8628,6 +9347,7 @@
     "isArchi": false
   },
   {
+    "id": 5238,
     "fr": "Oursonge",
     "en": "Illursary",
     "es": "Osuezño",
@@ -8640,6 +9360,7 @@
     "isArchi": false
   },
   {
+    "id": 5244,
     "fr": "Manchômage",
     "en": "Lazeguin",
     "es": "Desemplegüino",
@@ -8652,6 +9373,7 @@
     "isArchi": false
   },
   {
+    "id": 5185,
     "fr": "Tigris",
     "en": "Tigray",
     "es": "Tigris",
@@ -8664,6 +9386,7 @@
     "isArchi": false
   },
   {
+    "id": 5248,
     "fr": "Mansot Dominant",
     "en": "Dominant Pingwin",
     "es": "Güino dominante",
@@ -8676,6 +9399,7 @@
     "isArchi": false
   },
   {
+    "id": 5236,
     "fr": "Carapatte Dominant",
     "en": "Dominant Scramshell",
     "es": "Escapatarazón dominante",
@@ -8688,6 +9412,7 @@
     "isArchi": false
   },
   {
+    "id": 5177,
     "fr": "Cagnardeur Dominant",
     "en": "Dominant Sunsloth",
     "es": "Solgazán dominante",
@@ -8700,6 +9425,7 @@
     "isArchi": false
   },
   {
+    "id": 5189,
     "fr": "Toundrasoir dominant",
     "en": "Dominant Tundrazor",
     "es": "Nievaja dominante",
@@ -8712,6 +9438,7 @@
     "isArchi": false
   },
   {
+    "id": 5171,
     "fr": "Vandaliéné dominant",
     "en": "Dominant Vandalophrenic",
     "es": "Vandalienado dominante",
@@ -8724,6 +9451,7 @@
     "isArchi": false
   },
   {
+    "id": 5183,
     "fr": "Crustargneux Dominant",
     "en": "Dominant Crabstacean",
     "es": "Crustarisco dominante",
@@ -8736,6 +9464,7 @@
     "isArchi": false
   },
   {
+    "id": 5242,
     "fr": "Plantigarde Dominant",
     "en": "Dominant Plantiguard",
     "es": "Plantiguardia dominante",
@@ -8748,6 +9477,7 @@
     "isArchi": false
   },
   {
+    "id": 5190,
     "fr": "Imbuffle l'égocentrique",
     "en": "Imbuffullo the Egotistical",
     "es": "Bufalólatra el Egocéntrico",
@@ -8760,6 +9490,7 @@
     "isArchi": false
   },
   {
+    "id": 5229,
     "fr": "Agonie, Nécromancienne livide",
     "en": "Agony, Livid Necromancer",
     "es": "Agonía, Nigromante Lívida",
@@ -8772,6 +9503,7 @@
     "isArchi": false
   },
   {
+    "id": 5397,
     "fr": "Mékano",
     "en": "Mechano",
     "es": "Mekano",
@@ -8784,6 +9516,7 @@
     "isArchi": false
   },
   {
+    "id": 5172,
     "fr": "Vandaltonien le malvoyant",
     "en": "Vandalopia the Unseeing",
     "es": "Vandaltónico el Invidente",
@@ -8796,6 +9529,7 @@
     "isArchi": false
   },
   {
+    "id": 5178,
     "fr": "Scorpitre le blagueur",
     "en": "Scorprank the Joker",
     "es": "Escorpayaso el Chistoso",
@@ -8808,6 +9542,7 @@
     "isArchi": false
   },
   {
+    "id": 5235,
     "fr": "Tortumulte",
     "en": "Tortumult",
     "es": "Tortumulto",
@@ -8820,6 +9555,7 @@
     "isArchi": false
   },
   {
+    "id": 5237,
     "fr": "Torturpide le vil",
     "en": "Torturpid the Vile",
     "es": "Tortumillante el vil",
@@ -8832,6 +9568,7 @@
     "isArchi": false
   },
   {
+    "id": 5282,
     "fr": "Chrysavide",
     "en": "Chrysavoid",
     "es": "Crisálivacío",
@@ -8844,6 +9581,7 @@
     "isArchi": false
   },
   {
+    "id": 5391,
     "fr": "Petit-poisseux",
     "en": "Jeeper Creeper",
     "es": "Pequeño pezgajoso",
@@ -8856,6 +9594,7 @@
     "isArchi": false
   },
   {
+    "id": 5170,
     "fr": "Phacochemar",
     "en": "Hogincubus",
     "es": "Jabalirio",
@@ -8868,6 +9607,7 @@
     "isArchi": false
   },
   {
+    "id": 5184,
     "fr": "Pinsoumis le rebelle",
     "en": "Pinsurbordinate the Rebel",
     "es": "Pinzumiso el Rebelde",
@@ -8880,6 +9620,7 @@
     "isArchi": false
   },
   {
+    "id": 5247,
     "fr": "Sumorse",
     "en": "Sumorse",
     "es": "Sumorsa",
@@ -8892,6 +9633,7 @@
     "isArchi": false
   },
   {
+    "id": 5249,
     "fr": "Lacrymorse le Larmoyant",
     "en": "Morsnivel the Tearful",
     "es": "Lacrimorsa el Lloroso",
@@ -8904,6 +9646,7 @@
     "isArchi": false
   },
   {
+    "id": 5288,
     "fr": "Condamnateur",
     "en": "Condemner",
     "es": "Condenador",
@@ -8916,6 +9659,7 @@
     "isArchi": false
   },
   {
+    "id": 5176,
     "fr": "Scorpiétineur",
     "en": "Stompion",
     "es": "Escorpisoteador",
@@ -8928,6 +9672,7 @@
     "isArchi": false
   },
   {
+    "id": 5182,
     "fr": "Crustacérébro",
     "en": "Cerebratacean",
     "es": "Crustacerebro",
@@ -8940,6 +9685,7 @@
     "isArchi": false
   },
   {
+    "id": 5188,
     "fr": "Bufflamboyant",
     "en": "Flamboyffalo",
     "es": "Bufaluciente",
@@ -8952,6 +9698,7 @@
     "isArchi": false
   },
   {
+    "id": 5276,
     "fr": "Virescent",
     "en": "Virescent",
     "es": "Virescente",
@@ -8964,6 +9711,7 @@
     "isArchi": false
   },
   {
+    "id": 5294,
     "fr": "CeEvroaint",
     "en": "CeEvroaint",
     "es": "CeEvroaint",
@@ -8976,6 +9724,7 @@
     "isArchi": false
   },
   {
+    "id": 5300,
     "fr": "Maître des ténèbres",
     "en": "Master of Darkness",
     "es": "Maestro de las tinieblas",
@@ -8988,6 +9737,7 @@
     "isArchi": false
   },
   {
+    "id": 5241,
     "fr": "Casse-Cours",
     "en": "Bearkneck",
     "es": "Temerarioso",
@@ -9000,6 +9750,7 @@
     "isArchi": false
   },
   {
+    "id": 5243,
     "fr": "Scoubidours le Morfalours",
     "en": "Scoobidursa the Gluttonursa",
     "es": "Scoobidoso el Comiloso",
@@ -9012,6 +9763,7 @@
     "isArchi": false
   },
   {
+    "id": 5393,
     "fr": "Assassirène",
     "en": "Assassiren",
     "es": "Asesirena",
@@ -9024,6 +9776,7 @@
     "isArchi": false
   },
   {
+    "id": 5287,
     "fr": "Rapace dépeceur",
     "en": "Dismembering Raptor",
     "es": "Rapaz despedazador",
@@ -9036,6 +9789,7 @@
     "isArchi": false
   },
   {
+    "id": 5399,
     "fr": "Unité stasificatrice",
     "en": "Stasification Unit",
     "es": "Unidad stasificadora",
@@ -9048,6 +9802,7 @@
     "isArchi": false
   },
   {
+    "id": 5281,
     "fr": "Inanite",
     "en": "Inanite",
     "es": "Inanido",
@@ -9060,6 +9815,7 @@
     "isArchi": false
   },
   {
+    "id": 5293,
     "fr": "Ésrevni",
     "en": "Detrevni",
     "es": "Oditrevni",
@@ -9072,6 +9828,7 @@
     "isArchi": false
   },
   {
+    "id": 5275,
     "fr": "Champidiable",
     "en": "Devilshroom",
     "es": "Champidiablo",
@@ -9084,6 +9841,7 @@
     "isArchi": false
   },
   {
+    "id": 5299,
     "fr": "Druidre",
     "en": "Druidre",
     "es": "Druidra",
@@ -9096,6 +9854,7 @@
     "isArchi": false
   },
   {
+    "id": 5284,
     "fr": "Vidéant Dominant",
     "en": "Dominant Voidivion",
     "es": "Vaciante dominante",
@@ -9108,6 +9867,7 @@
     "isArchi": false
   },
   {
+    "id": 5274,
     "fr": "Méristhaine",
     "en": "Meristenmity",
     "es": "Meristodio",
@@ -9120,6 +9880,7 @@
     "isArchi": false
   },
   {
+    "id": 5280,
     "fr": "Echinoidéant",
     "en": "Echivoidea",
     "es": "Vaciequinoideo",
@@ -9132,6 +9893,7 @@
     "isArchi": false
   },
   {
+    "id": 5401,
     "fr": "Steamer dominant",
     "en": "Dominant Foggernaut",
     "es": "Steamer dominante",
@@ -9144,6 +9906,7 @@
     "isArchi": false
   },
   {
+    "id": 5286,
     "fr": "Sangsure",
     "en": "Bloodcensor",
     "es": "Saguijueveto",
@@ -9156,6 +9919,7 @@
     "isArchi": false
   },
   {
+    "id": 5290,
     "fr": "Démhorrible Dominant",
     "en": "Dominant Horridemon",
     "es": "Demorrible dominante",
@@ -9168,6 +9932,7 @@
     "isArchi": false
   },
   {
+    "id": 5392,
     "fr": "Cogneur abyssal",
     "en": "Abyssal Slugger",
     "es": "Golpeador abisal",
@@ -9180,6 +9945,7 @@
     "isArchi": false
   },
   {
+    "id": 5292,
     "fr": "Réman'hante",
     "en": "Reman'haunt",
     "es": "Remanagobiante",
@@ -9192,6 +9958,7 @@
     "isArchi": false
   },
   {
+    "id": 5296,
     "fr": "Égaré Dominant",
     "en": "Dominant Streye",
     "es": "Ido dominante",
@@ -9204,6 +9971,7 @@
     "isArchi": false
   },
   {
+    "id": 5298,
     "fr": "Glouto",
     "en": "Greedo",
     "es": "Zamparrón",
@@ -9216,6 +9984,7 @@
     "isArchi": false
   },
   {
+    "id": 5395,
     "fr": "Poisseux dominant",
     "en": "Dominant Creeper",
     "es": "Pezgajoso dominante",
@@ -9228,6 +9997,7 @@
     "isArchi": false
   },
   {
+    "id": 5398,
     "fr": "Artilleur d'élite",
     "en": "Elite Gunner",
     "es": "Artillero de élite",
@@ -9240,6 +10010,7 @@
     "isArchi": false
   },
   {
+    "id": 5302,
     "fr": "Glutonny",
     "en": "Glutonny",
     "es": "Glutonny",
@@ -9252,6 +10023,7 @@
     "isArchi": false
   },
   {
+    "id": 5278,
     "fr": "Phytomorphe dominant",
     "en": "Dominant Phytomorph",
     "es": "Fitoforme dominante",
@@ -9264,6 +10036,7 @@
     "isArchi": false
   },
   {
+    "id": 5306,
     "fr": "Rushu",
     "en": "Rushu",
     "es": "Rushu",
@@ -9276,6 +10049,7 @@
     "isArchi": false
   },
   {
+    "id": 5305,
     "fr": "Anathar",
     "en": "Anathar",
     "es": "Anathar",
@@ -9288,6 +10062,7 @@
     "isArchi": false
   },
   {
+    "id": 4378,
     "fr": "Ogrest",
     "en": "Ogrest",
     "es": "Ogrest",
@@ -9300,6 +10075,7 @@
     "isArchi": false
   },
   {
+    "id": 5277,
     "fr": "Vaal'Enthia, Reine-démone",
     "en": "Vaal'Enthia, Demon Queen",
     "es": "Vaal'Enthia, reina demonio",
@@ -9312,6 +10088,7 @@
     "isArchi": false
   },
   {
+    "id": 5279,
     "fr": "Viil l'Incorruptible",
     "en": "Viil the Incorruptible",
     "es": "Viil el Incorruptible",
@@ -9324,6 +10101,7 @@
     "isArchi": false
   },
   {
+    "id": 5285,
     "fr": "Ar'Manthe la Religieuse",
     "en": "Ar'Manthe the Religious",
     "es": "Ar'Mantis la Religiosa",
@@ -9336,6 +10114,7 @@
     "isArchi": false
   },
   {
+    "id": 5297,
     "fr": "~`hd#@! l'Incompris",
     "en": "~`hd#@! the Misunderstood",
     "es": "~`hd#@! el Incomprendido",
@@ -9348,6 +10127,7 @@
     "isArchi": false
   },
   {
+    "id": 5378,
     "fr": "Protopoulpe",
     "en": "Protoctopus",
     "es": "Protopulpo",
@@ -9360,6 +10140,7 @@
     "isArchi": false
   },
   {
+    "id": 5295,
     "fr": "!@#dh`~",
     "en": "!@#dh`~",
     "es": "!@#dh`~",
@@ -9372,6 +10153,7 @@
     "isArchi": false
   },
   {
+    "id": 5384,
     "fr": "Protosquelette",
     "en": "Protoskeleton",
     "es": "Protoesqueleto",
@@ -9384,6 +10166,7 @@
     "isArchi": false
   },
   {
+    "id": 5396,
     "fr": "Cire Momoriss",
     "en": "Cire Momoriss",
     "es": "Cire Momoriss",
@@ -9396,6 +10179,7 @@
     "isArchi": false
   },
   {
+    "id": 5589,
     "fr": "Toross Mordal",
     "en": "Toross Mordal",
     "es": "Toross Mordal",
@@ -9408,6 +10192,7 @@
     "isArchi": false
   },
   {
+    "id": 5623,
     "fr": "Vélociraptueur",
     "en": "Veloslayraptor",
     "es": "Velocisesino",
@@ -9420,6 +10205,7 @@
     "isArchi": false
   },
   {
+    "id": 5630,
     "fr": "Terronite",
     "en": "Terronite",
     "es": "Terronita",
@@ -9432,6 +10218,7 @@
     "isArchi": false
   },
   {
+    "id": 5637,
     "fr": "Chimère veilleuse",
     "en": "Marvelous Chimera",
     "es": "Quimera vigilante",
@@ -9444,6 +10231,7 @@
     "isArchi": false
   },
   {
+    "id": 5648,
     "fr": "Noxilte",
     "en": "Noxilt",
     "es": "Noxaraña",
@@ -9456,6 +10244,7 @@
     "isArchi": false
   },
   {
+    "id": 5289,
     "fr": "Cratéros, Bourreau de la fin",
     "en": "Crateros, Ending Executioner",
     "es": "Crateros, verdugo del fin",
@@ -9468,6 +10257,7 @@
     "isArchi": false
   },
   {
+    "id": 5400,
     "fr": "Sir Comte Flex",
     "en": "Sire Flexington",
     "es": "Sir Kurn Flex",
@@ -9480,6 +10270,7 @@
     "isArchi": false
   },
   {
+    "id": 5301,
     "fr": "K'abah'al, Gardien de la route des morts",
     "en": "K'abah'al, Guardian of the Route of the Dead",
     "es": "K'abah'al, guardián del camino de los muertos",
@@ -9492,6 +10283,7 @@
     "isArchi": false
   },
   {
+    "id": 5303,
     "fr": "Constant l'Éternel",
     "en": "Constant the Eternal",
     "es": "Constant el Eterno",
@@ -9504,6 +10296,7 @@
     "isArchi": false
   },
   {
+    "id": 5390,
     "fr": "Protogolem",
     "en": "Protogolem",
     "es": "Protogólem",
@@ -9516,6 +10309,7 @@
     "isArchi": false
   },
   {
+    "id": 5394,
     "fr": "Raeliss",
     "en": "Raeliss",
     "es": "Raeliss",
@@ -9528,6 +10322,7 @@
     "isArchi": false
   },
   {
+    "id": 5402,
     "fr": "Stork l'Ingénieux",
     "en": "Stork the Ingenious",
     "es": "Stork el Ingenioso",
@@ -9540,6 +10335,7 @@
     "isArchi": false
   },
   {
+    "id": 5643,
     "fr": "Vieillarde Bwork",
     "en": "Old Bwork Woman",
     "es": "Vieja bwork",
@@ -9552,6 +10348,7 @@
     "isArchi": false
   },
   {
+    "id": 5283,
     "fr": "Ar'Nan, Augure du néant",
     "en": "Ar'Nan, Omen of the Void",
     "es": "Ar'Nan, augurio del vacío",
@@ -9564,6 +10361,7 @@
     "isArchi": false
   },
   {
+    "id": 5291,
     "fr": "Archibald l'Effroyable",
     "en": "Archibald the Frightful",
     "es": "Archibald el Espeluznante",
@@ -9576,6 +10374,7 @@
     "isArchi": false
   },
   {
+    "id": 5716,
     "fr": "Frisco",
     "en": "Frisco",
     "es": "Frisco",
@@ -9588,6 +10387,7 @@
     "isArchi": false
   },
   {
+    "id": 5624,
     "fr": "Nabuchodonosaur",
     "en": "Nebuchadnesaurus",
     "es": "Nabucodonosaurio",
@@ -9600,6 +10400,7 @@
     "isArchi": false
   },
   {
+    "id": 5649,
     "fr": "Noxelanste",
     "en": "Noximpetus",
     "es": "Noxbriz",
@@ -9612,6 +10413,7 @@
     "isArchi": false
   },
   {
+    "id": 5642,
     "fr": "Big Mama Bwork",
     "en": "Big Mama Bwork",
     "es": "Gran mamá bwork",
@@ -9624,6 +10426,7 @@
     "isArchi": false
   },
   {
+    "id": 5629,
     "fr": "Teralonyx",
     "en": "Teralonyx",
     "es": "Teralónix",
@@ -9636,6 +10439,7 @@
     "isArchi": false
   },
   {
+    "id": 5717,
     "fr": "Tartufo",
     "en": "Tartufo",
     "es": "Tartufo",
@@ -9648,6 +10452,7 @@
     "isArchi": false
   },
   {
+    "id": 5636,
     "fr": "Astrompe",
     "en": "Astrunk",
     "es": "Astrompa",
@@ -9660,6 +10465,7 @@
     "isArchi": false
   },
   {
+    "id": 5715,
     "fr": "Marama",
     "en": "Marama",
     "es": "Marama",
@@ -9672,6 +10478,7 @@
     "isArchi": false
   },
   {
+    "id": 5631,
     "fr": "Rhinocéroc",
     "en": "Rhinocerock",
     "es": "Rocaceronte",
@@ -9684,6 +10491,7 @@
     "isArchi": false
   },
   {
+    "id": 5625,
     "fr": "Avalodon",
     "en": "Swalodon",
     "es": "Tragalodón",
@@ -9696,6 +10504,7 @@
     "isArchi": false
   },
   {
+    "id": 5635,
     "fr": "Mâle luné",
     "en": "Moody Male",
     "es": "Machumorado",
@@ -9708,6 +10517,7 @@
     "isArchi": false
   },
   {
+    "id": 5641,
     "fr": "Mama Bwork",
     "en": "Mama Bwork",
     "es": "Mamá bwork",
@@ -9720,6 +10530,7 @@
     "isArchi": false
   },
   {
+    "id": 5647,
     "fr": "Noxus IV",
     "en": "Noxus IV",
     "es": "Noxus IV",
@@ -9732,6 +10543,7 @@
     "isArchi": false
   },
   {
+    "id": 5639,
     "fr": "Savanastral Dominant",
     "en": "Dominant Starvannah",
     "es": "Sabanastral dominante",
@@ -9744,6 +10556,7 @@
     "isArchi": false
   },
   {
+    "id": 5651,
     "fr": "Machines de Nox Dominante",
     "en": "Dominant Nox Machines",
     "es": "Máquinas de Nox dominantes",
@@ -9756,6 +10569,7 @@
     "isArchi": false
   },
   {
+    "id": 5633,
     "fr": "Primassif Dominant",
     "en": "Dominant Primount",
     "es": "Primacizo dominante",
@@ -9768,6 +10582,7 @@
     "isArchi": false
   },
   {
+    "id": 5627,
     "fr": "Denver",
     "en": "Denver",
     "es": "Denver",
@@ -9780,6 +10595,7 @@
     "isArchi": false
   },
   {
+    "id": 5645,
     "fr": "Membre du clan de Bworkana Dominant",
     "en": "Dominant Bworkana Clan Member",
     "es": "Miembro del clan de Bworkana dominante",
@@ -9792,6 +10608,7 @@
     "isArchi": false
   },
   {
+    "id": 5755,
     "fr": "Golem des Marécages Bwork",
     "en": "Bwork Swamps Golem",
     "es": "Gólem de los pantanos bworks",
@@ -9804,6 +10621,7 @@
     "isArchi": false
   },
   {
+    "id": 5756,
     "fr": "Golem de la Désolation des Grouilleux",
     "en": "Grambos' Desolation Golem",
     "es": "Gólem de la desolación de los esbirrios",
@@ -9816,6 +10634,7 @@
     "isArchi": false
   },
   {
+    "id": 5664,
     "fr": "Nox",
     "en": "Nox",
     "es": "Nox",
@@ -9828,6 +10647,7 @@
     "isArchi": false
   },
   {
+    "id": 5753,
     "fr": "Golem du Cosmo-Canyon",
     "en": "Cosmo Canyon Golem",
     "es": "Gólem del Cosmo Cañón",
@@ -9840,6 +10660,7 @@
     "isArchi": false
   },
   {
+    "id": 5754,
     "fr": "Golem de la Savane",
     "en": "Savannah Golem",
     "es": "Gólem de la sabana",
@@ -9852,6 +10673,7 @@
     "isArchi": false
   },
   {
+    "id": 5663,
     "fr": "Golem de la Forêt Primaire",
     "en": "Primal Forest Golem",
     "es": "Gólem del bosque primario",
@@ -9864,6 +10686,7 @@
     "isArchi": false
   },
   {
+    "id": 5632,
     "fr": "Imagori",
     "en": "Imagorila",
     "es": "Imagori",
@@ -9876,6 +10699,7 @@
     "isArchi": false
   },
   {
+    "id": 5650,
     "fr": "Protozortemps",
     "en": "Protozetime",
     "es": "Protozortiempo",
@@ -9888,6 +10712,7 @@
     "isArchi": false
   },
   {
+    "id": 5626,
     "fr": "Fulgurosaure",
     "en": "Dazzlosaurus",
     "es": "Fulgurosaurio",
@@ -9900,6 +10725,7 @@
     "isArchi": false
   },
   {
+    "id": 5638,
     "fr": "Timö le possédé",
     "en": "Timo the Possessed",
     "es": "Timó el Poseído",
@@ -9912,6 +10738,7 @@
     "isArchi": false
   },
   {
+    "id": 5644,
     "fr": "Zulnara, cheffe de guerre",
     "en": "War Chief Zulnara",
     "es": "Zulnara, jefa de guerra",
