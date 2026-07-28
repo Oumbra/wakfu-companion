@@ -5,6 +5,15 @@
   <title>Wakfu Companion</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
+  <!-- Le build standalone (déployé tel quel sur GitHub Pages, voir
+       .github/workflows/deploy-*.yml) est un unique fichier index.html non
+       versionné (pas de nom de fichier hashé comme pour un build web
+       classique) : sans ces en-têtes, le navigateur peut continuer à servir
+       une version mise en cache après un nouveau déploiement, donnant
+       l'impression qu'un correctif "revient en arrière". -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
