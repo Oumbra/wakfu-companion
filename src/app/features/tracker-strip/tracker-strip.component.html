@@ -41,7 +41,12 @@
           }}</span>
         </span>
         <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
-        <button class="kpi-reset" [title]="'tracker.reset' | t" (click)="resetCount(entry.name)">
+        <button
+          class="kpi-reset"
+          draggable="false"
+          [title]="'tracker.reset' | t"
+          (click)="resetCount(entry.name)"
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -55,7 +60,12 @@
           </svg>
         </button>
         <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
-        <button class="kpi-del" [title]="'tracker.remove' | t" (click)="requestDelete($event, entry.name)">
+        <button
+          class="kpi-del"
+          draggable="false"
+          [title]="'tracker.remove' | t"
+          (click)="requestDelete($event, entry.name)"
+        >
           ×
         </button>
       </div>
