@@ -36,6 +36,7 @@
         (drop)="onDrop(i)"
         (mouseenter)="onTileEnter($event, entry.name)"
         (mouseleave)="onTileLeave(entry.name)"
+        (click)="onTileClick($event, entry.name)"
       >
         @if (entry.kind === 'enemy') {
           <app-entity-icon [name]="entry.name" side="enemy" class="kpi-icon" [size]="30" />
@@ -52,7 +53,7 @@
           class="kpi-reset"
           draggable="false"
           [title]="'tracker.reset' | t"
-          (click)="resetCount(entry.name)"
+          (click)="resetCount($event, entry.name)"
         >
           <svg
             viewBox="0 0 24 24"
@@ -85,7 +86,7 @@
   <div
     class="confirm-popover"
     [style.right.px]="confirmPopoverPos()?.right"
-    [style.bottom.px]="confirmPopoverPos()?.bottom"
+    [style.top.px]="confirmPopoverPos()?.top"
   >
     {{ 'tracker.confirmDelete' | t }}
     <button class="confirm-yes" (click)="confirmDelete($event, name)">
