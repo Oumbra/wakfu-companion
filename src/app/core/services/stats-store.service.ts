@@ -62,6 +62,26 @@ export interface PurchaseRecord {
   fullTimestampMs: number;
 }
 
+export interface TradeItemRow {
+  name: string;
+  quantity: number;
+}
+
+/** Un échange individuel avec un autre joueur (objets acquis/cédés) — voir
+ * `tradeHistory` ; aucun parser n'alimente encore ce signal (log Wakfu pas
+ * encore décodé pour les échanges), il reste vide jusqu'à son ajout.
+ * `characterName` désigne le personnage EN FACE : jamais un personnage du
+ * compte courant (voir CharacterRosterService, persistance localStorage) —
+ * cette exclusion est à la charge du futur parser au moment de la
+ * construction de l'enregistrement, pas d'un filtrage à l'affichage. */
+export interface TradeRecord {
+  id: number;
+  characterName: string;
+  fullTimestampMs: number;
+  acquired: TradeItemRow[];
+  given: TradeItemRow[];
+}
+
 export interface FightRecord {
   id: number;
   time: string;
@@ -112,6 +132,8 @@ export class StatsStoreService {
   readonly fightHistory = signal<FightRecord[]>([]);
   /** Historique des achats — vide tant qu'aucun parser ne l'alimente (voir PurchaseRecord). */
   readonly purchaseHistory = signal<PurchaseRecord[]>([]);
+  /** Historique des échanges — vide tant qu'aucun parser ne l'alimente (voir TradeRecord). */
+  readonly tradeHistory = signal<TradeRecord[]>([]);
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
   /** Suivi fusionné (ennemis vaincus + ressources obtenues), distingué par `kind`. */
   readonly watchlist = signal<WatchlistEntry[]>([]);
@@ -122,6 +144,7 @@ export class StatsStoreService {
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
   private readonly purchaseHistoryList: PurchaseRecord[] = [];
+  private readonly tradeHistoryList: TradeRecord[] = [];
   /** Butin accumulé depuis le début du combat en cours (les lignes "ramassé" arrivent avant la détection de fin de combat, pas après). */
   private currentFightLoot: LootRow[] = [];
   private currentFightStartTime: string | null = null;
@@ -258,6 +281,7 @@ export class StatsStoreService {
 
     this.fightHistoryList.length = 0;
     this.purchaseHistoryList.length = 0;
+    this.tradeHistoryList.length = 0;
     this.currentFightLoot = [];
     this.currentFightStartTime = null;
     this.lastLineTime = null;
@@ -516,6 +540,7 @@ export class StatsStoreService {
     );
     this.fightHistory.set([...this.fightHistoryList]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
+    this.tradeHistory.set([...this.tradeHistoryList]);
     this.chatMessages.set([...this.chatBuffer]);
   }
 

@@ -74,6 +74,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.sortNewestFirst': 'Plus récent en premier',
     'purchases.sortOldestFirst': 'Plus ancien en premier',
 
+    'trades.header': 'Échanges',
+    'trades.searchPlaceholder': 'Rechercher un objet, une date ou un personnage...',
+    'trades.empty': 'Aucun échange enregistré.',
+    'trades.acquired': 'Acquis',
+    'trades.given': 'Cédés',
+
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
     'profile.back': 'Retour',
@@ -205,6 +211,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.sortNewestFirst': 'Newest first',
     'purchases.sortOldestFirst': 'Oldest first',
 
+    'trades.header': 'Trades',
+    'trades.searchPlaceholder': 'Search an item, a date or a character...',
+    'trades.empty': 'No trade recorded.',
+    'trades.acquired': 'Received',
+    'trades.given': 'Given',
+
     'profile.button': 'Profile',
     'profile.title': 'My profile',
     'profile.back': 'Back',
@@ -333,6 +345,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'Ninguna compra registrada.',
     'purchases.sortNewestFirst': 'Más reciente primero',
     'purchases.sortOldestFirst': 'Más antiguo primero',
+
+    'trades.header': 'Intercambios',
+    'trades.searchPlaceholder': 'Buscar un objeto, una fecha o un personaje...',
+    'trades.empty': 'Ningún intercambio registrado.',
+    'trades.acquired': 'Adquiridos',
+    'trades.given': 'Cedidos',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -464,6 +482,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'Nenhuma compra registrada.',
     'purchases.sortNewestFirst': 'Mais recente primeiro',
     'purchases.sortOldestFirst': 'Mais antigo primeiro',
+
+    'trades.header': 'Trocas',
+    'trades.searchPlaceholder': 'Pesquisar um item, uma data ou um personagem...',
+    'trades.empty': 'Nenhuma troca registrada.',
+    'trades.acquired': 'Adquiridos',
+    'trades.given': 'Cedidos',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',

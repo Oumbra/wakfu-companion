@@ -32,11 +32,20 @@
     >
       {{ 'purchases.header' | t }}
     </button>
+    <button
+      class="meter-tab"
+      [class.active]="activeTab() === 'trades'"
+      (click)="activeTab.set('trades')"
+    >
+      {{ 'trades.header' | t }}
+    </button>
   </div>
 
   @if (activeTab() === 'combats') {
     <app-fight-history />
-  } @else {
+  } @else if (activeTab() === 'purchases') {
     <app-purchases />
+  } @else {
+    <app-trades />
   }
 </div>

@@ -1,0 +1,103 @@
+import { Component, computed, inject, signal } from '@angular/core';
+import { TradeRecord, StatsStoreService } from '../../core/services/stats-store.service';
+import { I18nService } from '../../core/services/i18n.service';
+import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { TranslatePipe } from '../../shared/translate.pipe';
+import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
+import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+
+type TradeSortOrder = 'desc' | 'asc';
+
+/** Un jour d'échanges : échanges individuels (voir StatsStoreService.tradeHistory),
+ * triés selon le même ordre que les groupes (`TradesComponent.sortOrder`). */
+interface TradeDateGroup {
+  dateKey: string;
+  records: TradeRecord[];
+}
+
+/**
+ * Historique des échanges, regroupé par jour (en-têtes repliables) — même
+ * principe que PurchasesComponent. Aucun parser n'alimente encore
+ * `StatsStoreService.tradeHistory` (le log Wakfu n'est pas encore décodé
+ * pour les échanges) : ce composant est fonctionnel dès aujourd'hui
+ * (recherche, tri, repli) mais affiche l'état vide tant que ce signal reste
+ * à `[]`.
+ */
+@Component({
+  selector: 'app-trades',
+  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent],
+  templateUrl: './trades.component.html',
+  styleUrl: './trades.component.css',
+})
+export class TradesComponent {
+  protected readonly stats = inject(StatsStoreService);
+  protected readonly i18n = inject(I18nService);
+
+  protected readonly searchQuery = signal('');
+  protected readonly sortOrder = signal<TradeSortOrder>('desc');
+  /** Clés de date (voir `TradeDateGroup.dateKey`) actuellement repliées — vide par défaut (tout déplié). */
+  private readonly collapsedDates = signal<ReadonlySet<string>>(new Set());
+
+  protected readonly groups = computed<TradeDateGroup[]>(() => {
+    const query = normalizeWakfuName(this.searchQuery().trim());
+    const order = this.sortOrder();
+
+    const filtered = this.stats.tradeHistory().filter((record) => {
+      if (!query) return true;
+      const character = normalizeWakfuName(record.characterName);
+      const dateLabel = normalizeWakfuName(this.i18n.formatDate(record.fullTimestampMs));
+      const itemMatch = [...record.acquired, ...record.given].some((item) =>
+        normalizeWakfuName(this.i18n.translateItemName(item.name)).includes(query),
+      );
+      return character.includes(query) || dateLabel.includes(query) || itemMatch;
+    });
+
+    const byDate = new Map<string, TradeRecord[]>();
+    for (const record of filtered) {
+      const key = this.i18n.formatDate(record.fullTimestampMs);
+      const list = byDate.get(key);
+      if (list) list.push(record);
+      else byDate.set(key, [record]);
+    }
+
+    const groups: TradeDateGroup[] = [...byDate.entries()].map(([dateKey, records]) => ({
+      dateKey,
+      records: records.sort((a, b) =>
+        order === 'desc'
+          ? b.fullTimestampMs - a.fullTimestampMs
+          : a.fullTimestampMs - b.fullTimestampMs,
+      ),
+    }));
+
+    groups.sort((a, b) => {
+      const aTime = a.records[0]?.fullTimestampMs ?? 0;
+      const bTime = b.records[0]?.fullTimestampMs ?? 0;
+      return order === 'desc' ? bTime - aTime : aTime - bTime;
+    });
+    return groups;
+  });
+
+  protected isCollapsed(dateKey: string): boolean {
+    return this.collapsedDates().has(dateKey);
+  }
+
+  protected toggleGroup(dateKey: string): void {
+    const updated = new Set(this.collapsedDates());
+    if (updated.has(dateKey)) updated.delete(dateKey);
+    else updated.add(dateKey);
+    this.collapsedDates.set(updated);
+  }
+
+  protected setSortOrder(order: TradeSortOrder): void {
+    this.sortOrder.set(order);
+  }
+
+  protected setSearchQuery(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  protected rarityClass(name: string): string {
+    return `rarity-${getWakfuItemRarity(name)}`;
+  }
+}

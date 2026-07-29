@@ -1,0 +1,115 @@
+<div class="controls-row">
+  <div class="search-wrap">
+    <svg
+      class="search-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+    <input
+      type="text"
+      class="search-input"
+      [placeholder]="'trades.searchPlaceholder' | t"
+      [value]="searchQuery()"
+      (input)="setSearchQuery($any($event.target).value)"
+    />
+  </div>
+  <div class="sort-switch">
+    <span class="sort-switch-highlight" [class.is-asc]="sortOrder() === 'asc'"></span>
+    <button
+      type="button"
+      class="sort-switch-option tooltip-below tooltip-align-right"
+      [class.selected]="sortOrder() === 'desc'"
+      [title]="'purchases.sortNewestFirst' | t"
+      (click)="setSortOrder('desc')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 19V5M5 12l7-7 7 7" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="sort-switch-option tooltip-below tooltip-align-right"
+      [class.selected]="sortOrder() === 'asc'"
+      [title]="'purchases.sortOldestFirst' | t"
+      (click)="setSortOrder('asc')"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M19 12l-7 7-7-7" />
+      </svg>
+    </button>
+  </div>
+</div>
+
+<div class="panel-body">
+  @if (groups().length === 0) {
+    <div class="empty-state">{{ 'trades.empty' | t }}</div>
+  } @else {
+    @for (group of groups(); track group.dateKey; let firstGroup = $first) {
+      <div class="date-group">
+        <div class="date-group-header" (click)="toggleGroup(group.dateKey)">
+          <span class="date-group-date">{{ group.dateKey }}</span>
+          <div class="date-group-right">
+            <span class="date-group-count">{{ group.records.length }}</span>
+            <span class="date-group-caret" [class.expanded]="!isCollapsed(group.dateKey)">▸</span>
+          </div>
+        </div>
+        @if (!isCollapsed(group.dateKey)) {
+          @for (record of group.records; track record.id; let firstRecord = $first) {
+            <div class="trade-entry">
+              <div class="trade-header">
+                <span
+                  class="trade-clock tooltip-align-left"
+                  [class.tooltip-below]="firstGroup && firstRecord"
+                  [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3.5 3.5" />
+                  </svg>
+                </span>
+                <span class="trade-character">{{ record.characterName }}</span>
+              </div>
+              <div class="trade-sections">
+                <div class="trade-section">
+                  <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>
+                  @if (record.acquired.length === 0) {
+                    <div class="trade-section-empty">—</div>
+                  } @else {
+                    @for (item of record.acquired; track item.name) {
+                      <div class="trade-item-row" [class]="rarityClass(item.name)">
+                        <app-item-icon [name]="item.name" [size]="20" />
+                        <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
+                        <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                      </div>
+                    }
+                  }
+                </div>
+                <div class="trade-section">
+                  <span class="trade-section-label given">{{ 'trades.given' | t }}</span>
+                  @if (record.given.length === 0) {
+                    <div class="trade-section-empty">—</div>
+                  } @else {
+                    @for (item of record.given; track item.name) {
+                      <div class="trade-item-row" [class]="rarityClass(item.name)">
+                        <app-item-icon [name]="item.name" [size]="20" />
+                        <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
+                        <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>
