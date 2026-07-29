@@ -675,9 +675,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 .roster-character-row {
   padding: 3px 0;
+}
+/* Lisibilité : fond alterné une ligne sur deux (vue liste uniquement — la
+   vue grille n'a pas de "lignes"). `[style.*]` côté template gère le reste
+   des différences liste/grille (voir profile-page.component.html) : seule
+   l'alternance nécessite un vrai sélecteur CSS (`:nth-child`, impossible à
+   exprimer en style inline). */
+.roster-character-list:not(.is-grid) .roster-character-row:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
 }
 .roster-character-actions {
   display: flex;
@@ -687,24 +696,6 @@
    inline, fond sombre au focus) plutôt que de dupliquer ces règles. */
 .roster-character-edit-input {
   width: auto;
-}
-
-/* Vue grille (4 colonnes max) : `minmax(150px, 1fr)` + le `max-width: 720px`
-   de `.profile-field-wide` bornent naturellement à 4 colonnes sur la largeur
-   la plus large possible (même technique que `.sound-item-grid`, voir plus
-   haut) — pas besoin de fixer `repeat(4, ...)` en dur. */
-.roster-character-list.is-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 8px;
-}
-.roster-character-list.is-grid .roster-character-row {
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px;
-}
-.roster-character-list.is-grid .roster-character-edit-input {
-  width: 100%;
 }
 .roster-account-label-input {
   flex-grow: 1;

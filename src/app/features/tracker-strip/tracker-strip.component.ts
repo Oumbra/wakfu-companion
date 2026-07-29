@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -52,6 +52,7 @@ export class TrackerStripComponent {
   );
 
   protected readonly addOpen = signal(false);
+  private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
   /** Nom de l'entrée dont la popover de confirmation de suppression est actuellement ouverte (une seule à la fois). */
   protected readonly confirmDeleteName = signal<string | null>(null);
   /** Position (right/top, relative au host) de la popover ouverte — voir `hostRelativePos`. */
@@ -85,6 +86,14 @@ export class TrackerStripComponent {
 
   /** Voir tracker.component.ts : mêmes règles de détection de troncature. */
   private readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
+
+  constructor() {
+    // Focus automatique du champ de recherche à l'ouverture (clic sur "+") —
+    // `autocomplete()` ne résout qu'une fois `@else` rendu dans le template.
+    effect(() => {
+      if (this.addOpen()) this.autocomplete()?.focus();
+    });
+  }
 
   protected rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';

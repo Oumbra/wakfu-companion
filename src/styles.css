@@ -142,6 +142,19 @@ button.icon-btn:hover {
   border-color: var(--accent);
 }
 
+/* Badge rond à cheval sur la bordure d'un conteneur positionné (voir
+   `.kpi-del` dans tracker-strip, même principe) — combiner avec `.icon-btn`/
+   `.reset-btn` pour la couleur/le survol, cette classe ne pose que la
+   position/taille. */
+button.badge-close-btn {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+}
+
 /* Switch à 2 options avec icônes (fond glissant), générique — même mécanisme
    que .gender-switch/.sort-switch/.loot-sort-switch (dupliqués par composant
    pour 3 options), factorisé ici pour un cas à 2 options réutilisable sans

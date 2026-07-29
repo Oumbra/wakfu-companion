@@ -13,6 +13,7 @@
     [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
     [value]="name()"
     (input)="setName($any($event.target).value)"
+    (keydown.enter)="commit(); $event.preventDefault()"
   />
   <button
     class="icon-btn"
