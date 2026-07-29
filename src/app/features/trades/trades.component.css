@@ -1,0 +1,273 @@
+/* Plus de `.tool-panel`/`.panel-header` propre : embarqué comme contenu du
+   sous-onglet "Échanges" de HistoryComponent (voir history.component.html),
+   qui porte déjà son propre `.tool-panel` — même principe que
+   PurchasesComponent/FightHistoryComponent. */
+:host {
+  display: contents;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #222;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.search-wrap {
+  position: relative;
+  flex-grow: 1;
+  min-width: 0;
+  display: flex;
+}
+.search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: #777;
+  pointer-events: none;
+}
+.search-input {
+  flex-grow: 1;
+  min-width: 0;
+  background: #151515;
+  border: 1px solid #444;
+  color: var(--text-color);
+  padding: 6px 10px 6px 30px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.82rem;
+}
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Interrupteur de tri (plus récent / plus ancien en premier) : même principe
+   que `.gender-switch` du class-picker (fond glissant translateX). */
+.sort-switch {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  width: 52px;
+  height: 26px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.sort-switch-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.sort-switch-highlight.is-asc {
+  transform: translateX(100%);
+}
+.sort-switch-option {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #999;
+}
+.sort-switch-option.selected {
+  color: #04222a;
+}
+.sort-switch-option svg {
+  width: 14px;
+  height: 14px;
+}
+
+.panel-body {
+  padding: 0;
+}
+
+.date-group {
+  border-bottom: 1px solid #2a2a2a;
+}
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+.date-group-header:hover {
+  background: #232323;
+}
+.date-group-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.date-group-date {
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ccc;
+}
+.date-group-count {
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.date-group-caret {
+  font-size: 0.7em;
+  color: #666;
+  transition: transform 0.2s;
+}
+.date-group-caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.trade-entry {
+  border-bottom: 1px solid #2a2a2a;
+  padding: 10px 15px;
+}
+.trade-entry:nth-child(odd) {
+  background-color: #1a1a1a;
+}
+.trade-entry:nth-child(even) {
+  background-color: #30303080;
+}
+
+.trade-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.trade-clock {
+  flex-shrink: 0;
+  display: flex;
+  color: #888;
+}
+.trade-clock svg {
+  width: 15px;
+  height: 15px;
+}
+.trade-character {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #ccc;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trade-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.trade-section {
+  min-width: 0;
+  background: #161616;
+  border-radius: 6px;
+  padding: 8px;
+}
+.trade-section-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.trade-section-label.acquired {
+  color: var(--btn-active-green);
+}
+.trade-section-label.given {
+  color: var(--btn-active-red);
+}
+.trade-section-empty {
+  color: #555;
+  font-style: italic;
+  font-size: 0.76rem;
+  padding: 3px 0;
+}
+
+/* Ligne d'objet acquis/cédé : même principe que `.loot-row` (dégradé de
+   fond + bordure gauche par rareté via --rarity-color), en plus compact
+   pour tenir dans une colonne étroite. */
+.trade-item-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: #ccc;
+  padding: 3px 6px;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+.trade-item-row:not(:last-child) {
+  margin-bottom: 2px;
+}
+.trade-item-row.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.trade-item-row.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.trade-item-row.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.trade-item-row.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.trade-item-row.rarity-souvenir {
+  --rarity-color: #1f97e0;
+}
+.trade-item-row.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.trade-item-row.rarity-relic {
+  --rarity-color: #9450d9;
+}
+.trade-item-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 30%, #222), #222 75%);
+}
+.trade-item-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.trade-item-qty {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+/* En dessous de 480px (panneau Historique étroit), deux colonnes serrées
+   deviennent illisibles (icône+nom+quantité tronqués à l'excès) : on
+   empile Acquis/Cédés verticalement. */
+@media (max-width: 480px) {
+  .trade-sections {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
