@@ -142,6 +142,53 @@ button.icon-btn:hover {
   border-color: var(--accent);
 }
 
+/* Switch à 2 options avec icônes (fond glissant), générique — même mécanisme
+   que .gender-switch/.sort-switch/.loot-sort-switch (dupliqués par composant
+   pour 3 options), factorisé ici pour un cas à 2 options réutilisable sans
+   alourdir le budget CSS par composant. Largeur à définir par l'appelant. */
+.icon-switch {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.icon-switch-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.icon-switch-highlight.is-right {
+  transform: translateX(100%);
+}
+.icon-switch-option {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #999;
+}
+.icon-switch-option.selected {
+  color: #04222a;
+}
+.icon-switch-option svg {
+  width: 13px;
+  height: 13px;
+}
+
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,
    bordure grise) ; le rouge n'apparaît qu'au survol. */

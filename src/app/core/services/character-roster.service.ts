@@ -111,6 +111,44 @@ export class CharacterRosterService {
     this.persist();
   }
 
+  /** Renomme un personnage en conservant sa position dans la liste (voir
+   * `reorderCharacters`) — un simple filtre+push casserait un ordre choisi
+   * manuellement. Écrase silencieusement un autre personnage homonyme du
+   * même compte, comme `addCharacter`. */
+  renameCharacter(accountId: string, oldName: string, newName: string): void {
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const newKey = normalizeWakfuName(trimmed);
+    this.accounts.update((list) =>
+      list.map((a) => {
+        if (a.id !== accountId) return a;
+        if (!a.characters.some((c) => c.name === oldName)) return a;
+        const withoutDup = a.characters.filter(
+          (c) => c.name === oldName || normalizeWakfuName(c.name) !== newKey,
+        );
+        return {
+          ...a,
+          characters: withoutDup.map((c) => (c.name === oldName ? { ...c, name: trimmed } : c)),
+        };
+      }),
+    );
+    this.persist();
+  }
+
+  reorderCharacters(accountId: string, fromIndex: number, toIndex: number): void {
+    this.accounts.update((list) =>
+      list.map((a) => {
+        if (a.id !== accountId) return a;
+        const characters = a.characters.slice();
+        const [moved] = characters.splice(fromIndex, 1);
+        if (!moved) return a;
+        characters.splice(toIndex, 0, moved);
+        return { ...a, characters };
+      }),
+    );
+    this.persist();
+  }
+
   private persist(): void {
     this.persistence.setJson(ROSTER_KEY, this.accounts());
   }

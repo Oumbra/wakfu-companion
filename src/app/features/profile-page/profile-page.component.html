@@ -334,19 +334,86 @@
           }
 
           @if (account.characters.length > 0) {
-            <div class="roster-character-list">
-              @for (char of account.characters; track char.name) {
-                <div class="roster-character-row">
+            <div class="icon-switch" style="align-self: flex-end; width: 52px">
+              <span
+                class="icon-switch-highlight"
+                [class.is-right]="characterViewMode() === 'grid'"
+              ></span>
+              <button
+                type="button"
+                class="icon-switch-option"
+                [class.selected]="characterViewMode() === 'list'"
+                [title]="'profile.rosterViewList' | t"
+                (click)="characterViewMode.set('list')"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="4" y1="6" x2="20" y2="6" />
+                  <line x1="4" y1="12" x2="20" y2="12" />
+                  <line x1="4" y1="18" x2="20" y2="18" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="icon-switch-option"
+                [class.selected]="characterViewMode() === 'grid'"
+                [title]="'profile.rosterViewGrid' | t"
+                (click)="characterViewMode.set('grid')"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="roster-character-list" [class.is-grid]="characterViewMode() === 'grid'">
+              @for (char of account.characters; track char.name; let i = $index) {
+                <div
+                  class="roster-character-row"
+                  draggable="true"
+                  (dragstart)="onCharDragStart(i)"
+                  (dragover)="$event.preventDefault()"
+                  (drop)="onCharDrop(account.id, i)"
+                >
                   <img [src]="characterIcon(char)" class="roster-character-icon" alt="" />
-                  <span class="roster-character-name">{{ char.name }}</span>
-                  <button
-                    class="icon-btn reset-btn tooltip-align-right"
-                    type="button"
-                    [title]="'tracker.remove' | t"
-                    (click)="removeCharacter(account.id, char.name)"
-                  >
-                    ×
-                  </button>
+                  @if (isEditingCharacter(account.id, char.name)) {
+                    <input
+                      #charEditInput
+                      type="text"
+                      class="pseudo-edit-input roster-character-edit-input"
+                      style="flex-grow: 1; text-align: left"
+                      [value]="char.name"
+                      (blur)="commitCharacterRename(account.id, char.name, $any($event.target).value)"
+                      (keydown)="onCharacterRenameKeydown($event, account.id, char.name)"
+                    />
+                  } @else {
+                    <span class="roster-character-name">{{ char.name }}</span>
+                  }
+                  <div class="roster-character-actions">
+                    <button
+                      class="icon-btn pseudo-edit-btn"
+                      type="button"
+                      draggable="false"
+                      [title]="'profile.rosterRenameCharacter' | t"
+                      (click)="startEditCharacter(account.id, char.name)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                      </svg>
+                    </button>
+                    <button
+                      class="icon-btn reset-btn tooltip-align-right"
+                      type="button"
+                      draggable="false"
+                      [title]="'tracker.remove' | t"
+                      (click)="removeCharacter(account.id, char.name)"
+                    >
+                      ×
+                    </button>
+                  </div>
                 </div>
               }
             </div>
