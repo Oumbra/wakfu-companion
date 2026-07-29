@@ -6,8 +6,8 @@
   position: fixed;
   left: 0;
   top: 160px;
-  width: 40px;
-  height: 64px;
+  width: 44px;
+  height: 48px;
   background: var(--panel-header-bg);
   border: 1px solid var(--border);
   border-left: none;
@@ -20,17 +20,19 @@
   box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
   padding: 0;
 }
-.combat-edge-tab svg {
-  width: 20px;
-  height: 20px;
-  color: var(--accent);
+.combat-edge-tab-icon {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
 }
+/* Même principe que `.kpi-del` (tracker-strip) : le badge chevauche la
+   bordure au lieu de rester posé à plat dedans. */
 .notif-dot {
   position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 9px;
-  height: 9px;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--accent);
   border: 2px solid var(--panel-header-bg);

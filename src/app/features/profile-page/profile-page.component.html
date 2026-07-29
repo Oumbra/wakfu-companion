@@ -18,7 +18,37 @@
       <span>{{ 'profile.back' | t }}</span>
     </button>
     <span class="profile-page-title">{{ 'profile.title' | t }}</span>
-    <span class="profile-page-spacer"></span>
+    <div class="profile-page-actions" style="min-width: 78px">
+      <button
+        class="icon-btn tooltip-below tooltip-align-right"
+        type="button"
+        [title]="'profile.exportData' | t"
+        (click)="exportData()"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v12M7 10l5 5 5-5" />
+          <path d="M4 19h16" />
+        </svg>
+      </button>
+      <button
+        class="icon-btn tooltip-below tooltip-align-right"
+        type="button"
+        [title]="'profile.importData' | t"
+        (click)="triggerImport(importFileInput)"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 15V3M7 8l5-5 5 5" />
+          <path d="M4 19h16" />
+        </svg>
+      </button>
+      <input
+        #importFileInput
+        type="file"
+        accept="application/json"
+        style="display: none"
+        (change)="onImportFileSelected($event)"
+      />
+    </div>
   </header>
 
   <div class="profile-page-body">

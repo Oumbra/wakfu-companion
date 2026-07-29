@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { TranslatePipe } from '../translate.pipe';
+import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 
 /**
  * Petit onglet collé au bord gauche de l'écran, visible quand le panneau
@@ -19,6 +20,7 @@ import { TranslatePipe } from '../translate.pipe';
 })
 export class CombatEdgeTabComponent {
   protected readonly combatPanel = inject(CombatPanelService);
+  protected readonly icon = HEADER_ICON_COMBAT_DATA_URI;
 
   protected expand(): void {
     this.combatPanel.setCollapsed(false);

@@ -10,6 +10,7 @@ import {
   viewChildren,
 } from '@angular/core';
 import { ProfileService } from '../../core/services/profile.service';
+import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
@@ -50,6 +51,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
   protected readonly roster = inject(CharacterRosterService);
+  private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
 
@@ -332,5 +334,42 @@ export class ProfilePageComponent implements OnDestroy {
       this.roster.reorderCharacters(accountId, this.charDragIndex, index);
     }
     this.charDragIndex = null;
+  }
+
+  /** Déclenche le téléchargement d'un instantané JSON de toutes les données
+   * locales (voir AppDataExportService) — nom de fichier horodaté pour
+   * distinguer plusieurs exports. */
+  protected exportData(): void {
+    const payload = this.dataExport.buildExport();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `wakfu-companion-export-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected triggerImport(input: HTMLInputElement): void {
+    input.click();
+  }
+
+  /** Un import réécrit directement le `localStorage` (voir
+   * AppDataExportService) : recharger la page est le moyen le plus sûr de
+   * refléter le résultat partout (chaque service/composant se réinitialise
+   * proprement depuis les nouvelles valeurs, sans risquer d'oublier de
+   * resynchroniser un signal en mémoire quelque part). */
+  protected async onImportFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      const raw = JSON.parse(await file.text());
+      this.dataExport.applyImport(raw);
+      window.location.reload();
+    } catch {
+      window.alert(this.i18n.t('profile.importError'));
+    }
   }
 }

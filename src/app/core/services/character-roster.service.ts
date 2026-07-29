@@ -3,7 +3,7 @@ import { PersistenceService } from './persistence.service';
 import { Gender } from '../data/class-icons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 
-const ROSTER_KEY = 'wakfu-character-roster';
+export const ROSTER_KEY = 'wakfu-character-roster';
 
 export interface RosterCharacter {
   name: string;
