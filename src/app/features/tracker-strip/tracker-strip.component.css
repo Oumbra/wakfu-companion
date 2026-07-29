@@ -237,7 +237,7 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 0.7rem;
-  color: #ccc;
+  color: var(--accent);
   white-space: nowrap;
 }
 
@@ -328,11 +328,12 @@
   inset: 0;
   z-index: 4;
 }
-/* `right`/`bottom` posés dynamiquement en JS (voir tracker-strip.component.ts
-   `hostRelativePos`) plutôt qu'ancrés en CSS pur sur la tuile : `.kpi-strip`
-   a `overflow-y:hidden`, qui rognerait sinon la popover d'une tuile de la
-   rangée (aucune place au-dessus dans ce cas, contrairement à un
-   `.tool-panel` classique). */
+/* `right`/`top` posés dynamiquement en JS (voir tracker-strip.component.ts
+   `hostRelativePos`), ancrés sur le bouton de suppression lui-même (pas sur
+   toute la tuile) et positionnés EN DESSOUS de celui-ci : `.kpi-strip` a
+   `overflow-y:hidden`, qui rognerait sinon la popover d'une tuile de la
+   rangée si elle s'affichait au-dessus (aucune place dans ce cas,
+   contrairement à un `.tool-panel` classique). */
 .confirm-popover {
   position: absolute;
   background: #000;
@@ -349,10 +350,10 @@
 .confirm-popover::after {
   content: '';
   position: absolute;
-  top: 100%;
+  bottom: 100%;
   right: 12px;
   border: 5px solid transparent;
-  border-top-color: #000;
+  border-bottom-color: #000;
 }
 .confirm-popover button {
   padding: 2px 7px;

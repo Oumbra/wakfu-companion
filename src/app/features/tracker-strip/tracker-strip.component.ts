@@ -54,8 +54,8 @@ export class TrackerStripComponent {
   protected readonly addOpen = signal(false);
   /** Nom de l'entrée dont la popover de confirmation de suppression est actuellement ouverte (une seule à la fois). */
   protected readonly confirmDeleteName = signal<string | null>(null);
-  /** Position (right/bottom, relative au host) de la popover ouverte — voir `hostRelativePos`. */
-  protected readonly confirmPopoverPos = signal<{ right: number; bottom: number } | null>(null);
+  /** Position (right/top, relative au host) de la popover ouverte — voir `hostRelativePos`. */
+  protected readonly confirmPopoverPos = signal<{ right: number; top: number } | null>(null);
   /** Tooltip du nom tronqué actuellement survolé (texte + position relative au host) — voir
    * `hostRelativePos` : ne peut pas être un simple `[title]`/`[data-tooltip]` CSS ici, la classe
    * globale `[title]::after` (styles.css) serait de toute façon rognée par `.kpi-strip`
@@ -124,9 +124,32 @@ export class TrackerStripComponent {
 
   protected onTileLeave(name: string): void {
     this.clearHoverTimer();
+    // Le rétrécissement de la tuile ne doit pas se produire pendant que sa
+    // popover de confirmation de suppression est ouverte : l'apparition de
+    // `.confirm-backdrop` (position:fixed, plein écran) juste sous le
+    // curseur déclenche un `mouseleave` synthétique sur la tuile côté
+    // Chromium (le pointeur n'a pourtant pas bougé), ce qui refermait la
+    // tuile alors que la popover, elle, restait positionnée d'après sa
+    // géométrie déployée — décalage visible signalé par l'utilisateur.
+    if (this.confirmDeleteName() === name) return;
     if (this.activeName() !== name) return;
     this.activeName.set(null);
     this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
+  }
+
+  /** Ouverture/fermeture au clic, en plus du survol (délai ignoré). Les
+   * clics sur les boutons reset/suppression internes stoppent leur propre
+   * propagation (voir `resetCount`/`requestDelete`) et n'atteignent donc
+   * jamais ce handler. */
+  protected onTileClick(event: MouseEvent, name: string): void {
+    this.clearHoverTimer();
+    if (this.activeName() === name) {
+      this.activeName.set(null);
+      this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
+      return;
+    }
+    this.activeName.set(name);
+    this.scrollTileIntoView(event.currentTarget as HTMLElement);
   }
 
   private clearHoverTimer(): void {
@@ -161,12 +184,18 @@ export class TrackerStripComponent {
    * ancrer en `position:fixed` (le host vit sous `.view-slider`, qui porte un `transform` :
    * `position:fixed` s'y positionnerait relativement à cet ancêtre, pas au viewport — voir
    * CLAUDE.md). `:host{position:relative}`, sans overflow, sert donc de containing block. */
-  private hostRelativePos(target: HTMLElement, gap: number): { right: number; bottom: number } {
+  private hostRelativePos(
+    target: HTMLElement,
+    gap: number,
+  ): { right: number; top: number; bottom: number } {
     const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
     const targetRect = target.getBoundingClientRect();
     return {
       right: hostRect.right - targetRect.right - gap,
+      // Au-dessus de `target` (tooltip de nom).
       bottom: hostRect.bottom - targetRect.top + gap,
+      // En dessous de `target` (popover de suppression).
+      top: targetRect.bottom - hostRect.top + gap,
     };
   }
 
@@ -175,11 +204,11 @@ export class TrackerStripComponent {
       this.nameTooltip.set(null);
       return;
     }
-    const tile = nameEl.closest('.kpi') as HTMLElement;
-    this.nameTooltip.set({
-      text: this.displayName(entry),
-      ...this.hostRelativePos(tile, 8),
-    });
+    // Positionné par rapport au libellé lui-même (pas toute la tuile) pour
+    // s'afficher juste au-dessus du texte, quelle que soit la largeur réelle
+    // de la tuile déployée.
+    const { right, bottom } = this.hostRelativePos(nameEl, 8);
+    this.nameTooltip.set({ text: this.displayName(entry), right, bottom });
   }
 
   protected onNameLeave(): void {
@@ -192,14 +221,18 @@ export class TrackerStripComponent {
     this.addOpen.set(false);
   }
 
-  protected resetCount(name: string): void {
+  protected resetCount(event: Event, name: string): void {
+    event.stopPropagation();
     this.stats.resetWatchedCount(name);
   }
 
   protected requestDelete(event: Event, name: string): void {
     event.stopPropagation();
-    const tile = (event.currentTarget as HTMLElement).closest('.kpi') as HTMLElement;
-    this.confirmPopoverPos.set(this.hostRelativePos(tile, 8));
+    // Ancré sur le bouton × lui-même (pas toute la tuile) : la popover
+    // s'affiche juste en dessous de la croix, alignée sur sa droite.
+    const button = event.currentTarget as HTMLElement;
+    const { right, top } = this.hostRelativePos(button, 8);
+    this.confirmPopoverPos.set({ right, top });
     this.confirmDeleteName.set(name);
   }
 
