@@ -7,7 +7,7 @@ import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
 
-const WATCHLIST_KEY = 'wakfu-watchlist';
+export const WATCHLIST_KEY = 'wakfu-watchlist';
 /** Anciennes clés (listes séparées), lues une seule fois pour migrer vers la liste fusionnée si besoin. */
 const LEGACY_ENEMY_WATCHLIST_KEY = 'wakfu-enemy-watchlist';
 const LEGACY_ITEM_WATCHLIST_KEY = 'wakfu-item-watchlist';

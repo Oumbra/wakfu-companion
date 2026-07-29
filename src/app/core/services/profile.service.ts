@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { PersistenceService } from './persistence.service';
 
-const PROFILE_KEY = 'wakfu-profile';
+export const PROFILE_KEY = 'wakfu-profile';
 
 export interface SoundItemEntry {
   name: string;
