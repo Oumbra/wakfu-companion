@@ -1,7 +1,20 @@
+/* Hauteur FIXE + `flex-shrink:0` (jamais compressible) : `.dashboard`
+   (flex-column, voir dashboard.component.css) peut manquer de place
+   verticale sur certains appareils (tablette en paysage, barre d'adresse
+   du navigateur imposante) et, sans ce verrou, l'algorithme flex compresse
+   ce conteneur. Les tuiles elles-mêmes (`.kpi`, `position:absolute`,
+   ignorent la taille de leur conteneur) continuaient alors de s'afficher en
+   pleine taille et chevauchaient la section suivante (Historique), tandis
+   que le bouton "+" (en flux normal, lui, subit la compression) devenait
+   quasi invisible — bug réel observé sur appareil réel, non reproductible
+   dans cet environnement de test (la pression verticale nécessaire n'y est
+   jamais atteinte). Une hauteur fixe élimine la cause plutôt que de
+   compter sur l'algorithme de répartition du flex-shrink. */
 :host {
   position: relative;
   display: flex;
-  min-height: 0;
+  flex-shrink: 0;
+  height: 84px;
 }
 
 /* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :
