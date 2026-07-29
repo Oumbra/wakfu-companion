@@ -114,6 +114,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterPickClass': 'Choisir la classe',
     'profile.rosterDefaultAccountLabel': 'Principal',
     'profile.rosterUnnamedAccount': 'Compte {{index}}',
+    'profile.rosterRenameCharacter': 'Renommer ce personnage',
+    'profile.rosterViewList': 'Vue liste',
+    'profile.rosterViewGrid': 'Vue grille',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrer les messages...',
@@ -249,6 +252,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterPickClass': 'Choose class',
     'profile.rosterDefaultAccountLabel': 'Main',
     'profile.rosterUnnamedAccount': 'Account {{index}}',
+    'profile.rosterRenameCharacter': 'Rename this character',
+    'profile.rosterViewList': 'List view',
+    'profile.rosterViewGrid': 'Grid view',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filter messages...',
@@ -386,6 +392,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterPickClass': 'Elegir la clase',
     'profile.rosterDefaultAccountLabel': 'Principal',
     'profile.rosterUnnamedAccount': 'Cuenta {{index}}',
+    'profile.rosterRenameCharacter': 'Renombrar este personaje',
+    'profile.rosterViewList': 'Vista de lista',
+    'profile.rosterViewGrid': 'Vista de cuadrícula',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
@@ -521,6 +530,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterPickClass': 'Escolher a classe',
     'profile.rosterDefaultAccountLabel': 'Principal',
     'profile.rosterUnnamedAccount': 'Conta {{index}}',
+    'profile.rosterRenameCharacter': 'Renomear este personagem',
+    'profile.rosterViewList': 'Vista em lista',
+    'profile.rosterViewGrid': 'Vista em grade',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensagens...',

@@ -65,6 +65,17 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
 
+  /** Affichage de la liste des personnages (voir `.roster-character-list` /
+   * `.is-grid` en CSS) — en mémoire seulement, comme `activeTab`/
+   * `selectedAccountId` ci-dessous. */
+  protected readonly characterViewMode = signal<'list' | 'grid'>('list');
+
+  /** Personnage actuellement en cours de renommage (un seul à la fois, tous
+   * comptes confondus) — même principe que `editingPseudo`/`pseudoEditInput`. */
+  protected readonly editingCharacter = signal<{ accountId: string; name: string } | null>(null);
+  private readonly charEditInput = viewChild<ElementRef<HTMLInputElement>>('charEditInput');
+  private charDragIndex: number | null = null;
+
   /** Onglets de la page profil (Avatar/Alertes/Personnages), même principe
    * que la barre d'onglets mobile du dashboard : 3 largeurs égales, fond +
    * bordure glissants en CSS pur via `--active-tab-index` (voir
@@ -109,6 +120,14 @@ export class ProfilePageComponent implements OnDestroy {
     effect(() => {
       const input = this.pseudoEditInput();
       if (this.editingPseudo() && input) {
+        input.nativeElement.focus();
+        input.nativeElement.select();
+      }
+    });
+
+    effect(() => {
+      const input = this.charEditInput();
+      if (this.editingCharacter() && input) {
         input.nativeElement.focus();
         input.nativeElement.select();
       }
@@ -279,5 +298,39 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected addCharacterFromForm(accountId: string, character: NewRosterCharacter): void {
     this.roster.addCharacter(accountId, character.name, character.className, character.gender);
+  }
+
+  protected isEditingCharacter(accountId: string, name: string): boolean {
+    const editing = this.editingCharacter();
+    return editing?.accountId === accountId && editing?.name === name;
+  }
+
+  protected startEditCharacter(accountId: string, name: string): void {
+    this.editingCharacter.set({ accountId, name });
+  }
+
+  protected commitCharacterRename(accountId: string, oldName: string, value: string): void {
+    const trimmed = value.trim();
+    if (trimmed && trimmed !== oldName) this.roster.renameCharacter(accountId, oldName, trimmed);
+    this.editingCharacter.set(null);
+  }
+
+  protected onCharacterRenameKeydown(event: KeyboardEvent, accountId: string, oldName: string): void {
+    if (event.key === 'Enter') {
+      this.commitCharacterRename(accountId, oldName, (event.target as HTMLInputElement).value);
+    } else if (event.key === 'Escape') {
+      this.editingCharacter.set(null);
+    }
+  }
+
+  protected onCharDragStart(index: number): void {
+    this.charDragIndex = index;
+  }
+
+  protected onCharDrop(accountId: string, index: number): void {
+    if (this.charDragIndex !== null && this.charDragIndex !== index) {
+      this.roster.reorderCharacters(accountId, this.charDragIndex, index);
+    }
+    this.charDragIndex = null;
   }
 }
