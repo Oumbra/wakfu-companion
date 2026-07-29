@@ -9,6 +9,22 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 
+/** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
+ * parasite en balayant la bande du regard/de la souris. Seul point à
+ * modifier pour ajuster ce réglage (répercuté en JS ici et en CSS via la
+ * variable `--kpi-expand-duration`, voir template). */
+const KPI_HOVER_INTENT_DELAY_MS = 500;
+/** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
+ * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
+ * rester parfaitement synchronisés (voir tracker-strip.component.css). */
+const KPI_EXPAND_DURATION_MS = 320;
+/** Largeur cible (px) d'un KPI déployé — utilisée à la fois en CSS
+ * (min-width) et pour calculer la position de défilement cible (voir
+ * `scrollTileIntoView`, qui ne peut pas se fier à la largeur réelle au
+ * moment du calcul : elle vaut encore 58px avant que la transition ne
+ * démarre). */
+const KPI_EXPANDED_WIDTH_PX = 210;
+
 /**
  * Suivi (desktop) : bande horizontale de KPI compacts au-dessus de la ligne
  * de panneaux (voir dashboard.component.html), sans fond ni bordure propres
@@ -26,6 +42,10 @@ export class TrackerStripComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+
+  protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
+  protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
+  protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
 
   protected readonly existingNames = computed(() =>
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
@@ -45,6 +65,27 @@ export class TrackerStripComponent {
     null,
   );
 
+  /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en
+   * JS (pas de simple `:hover` CSS) pour pouvoir imposer un délai avant
+   * ouverture ET un verrou anti-cascade (voir `onTileEnter`/`onTileLeave`) :
+   * avec un déploiement qui repousse réellement les tuiles voisines, une
+   * fermeture peut faire reculer une autre tuile sous une souris restée
+   * immobile, qui se retrouve alors "survolée" sans mouvement réel — un vrai
+   * effet de cascade en chaîne, identifié en analysant une vidéo image par
+   * image (voir historique du projet). */
+  protected readonly activeName = signal<string | null>(null);
+  private hoverTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Horodatage jusqu'auquel un nouveau survol est ignoré, le temps que la
+   * tuile qui vient de se refermer termine son animation — c'est ce délai
+   * qui neutralise le risque de cascade décrit ci-dessus : tant que le
+   * repli n'est pas terminé, aucune nouvelle tuile ne peut démarrer son
+   * propre délai de survol, quel que soit ce qui se retrouve sous la souris
+   * entre-temps. */
+  private blockedUntilMs = 0;
+
+  /** Voir tracker.component.ts : mêmes règles de détection de troncature. */
+  private readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
+
   protected rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
   }
@@ -53,6 +94,66 @@ export class TrackerStripComponent {
     return entry.kind === 'item'
       ? this.i18n.translateItemName(entry.name)
       : this.i18n.translateMonsterName(entry.name);
+  }
+
+  protected isTruncated(name: string): boolean {
+    return this.truncatedNames().has(name);
+  }
+
+  protected checkTruncation(el: HTMLElement, name: string): void {
+    const isTruncated = el.scrollWidth > el.clientWidth;
+    const current = this.truncatedNames();
+    if (isTruncated === current.has(name)) return;
+    const updated = new Set(current);
+    if (isTruncated) updated.add(name);
+    else updated.delete(name);
+    this.truncatedNames.set(updated);
+  }
+
+  protected onTileEnter(event: MouseEvent, name: string): void {
+    if (Date.now() < this.blockedUntilMs) return;
+    if (this.activeName() !== null && this.activeName() !== name) return;
+    this.clearHoverTimer();
+    const tile = event.currentTarget as HTMLElement;
+    this.hoverTimer = setTimeout(() => {
+      this.hoverTimer = null;
+      this.activeName.set(name);
+      this.scrollTileIntoView(tile);
+    }, KPI_HOVER_INTENT_DELAY_MS);
+  }
+
+  protected onTileLeave(name: string): void {
+    this.clearHoverTimer();
+    if (this.activeName() !== name) return;
+    this.activeName.set(null);
+    this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
+  }
+
+  private clearHoverTimer(): void {
+    if (this.hoverTimer !== null) {
+      clearTimeout(this.hoverTimer);
+      this.hoverTimer = null;
+    }
+  }
+
+  /** Fait défiler la bande pour amener la tuile déployée au centre — ou, si
+   * elle est trop proche de la fin de la liste pour être centrée, la
+   * rapproche au maximum du bord droit (la cible est simplement bornée par
+   * le scroll maximal disponible, ce qui couvre les deux cas demandés en un
+   * seul calcul). */
+  private scrollTileIntoView(tile: HTMLElement): void {
+    const strip = this.elementRef.nativeElement.querySelector('.kpi-strip') as HTMLElement | null;
+    if (!strip) return;
+    const stripRect = strip.getBoundingClientRect();
+    const tileRect = tile.getBoundingClientRect();
+    const tileLeftInStrip = tileRect.left - stripRect.left + strip.scrollLeft;
+    const expandedCenter = tileLeftInStrip + KPI_EXPANDED_WIDTH_PX / 2;
+    const targetScrollLeft = expandedCenter - strip.clientWidth / 2;
+    const maxScrollLeft = strip.scrollWidth - strip.clientWidth;
+    strip.scrollTo({
+      left: Math.max(0, Math.min(targetScrollLeft, maxScrollLeft)),
+      behavior: 'smooth',
+    });
   }
 
   /** Position (right/bottom en px) d'un élément relativement au host — sert à sortir les
@@ -106,6 +207,7 @@ export class TrackerStripComponent {
     event.stopPropagation();
     this.stats.removeWatched(name);
     this.confirmDeleteName.set(null);
+    if (this.activeName() === name) this.activeName.set(null);
   }
 
   protected cancelDelete(event: Event): void {
@@ -138,6 +240,11 @@ export class TrackerStripComponent {
   }
 
   protected onDragStart(index: number, event: DragEvent): void {
+    // Le drag démarre parfois sans mouseleave fiable (comportement natif du
+    // navigateur) : on referme explicitement plutôt que de risquer une
+    // tuile restée "déployée" alors qu'elle est en train d'être déplacée.
+    this.clearHoverTimer();
+    this.activeName.set(null);
     this.dragIndex = index;
     const tile = event.currentTarget as HTMLElement;
     const ghost = this.buildDragGhost(tile);
