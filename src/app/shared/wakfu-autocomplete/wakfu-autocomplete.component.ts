@@ -7,6 +7,7 @@ import {
   input,
   output,
   signal,
+  viewChild,
   viewChildren,
 } from '@angular/core';
 import {
@@ -65,6 +66,13 @@ export class WakfuAutocompleteComponent {
   protected readonly activeIndex = signal(0);
 
   private readonly itemButtons = viewChildren<ElementRef<HTMLButtonElement>>('itemButton');
+  private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
+
+  /** Donne le focus au champ de saisie — appelé par le parent juste après
+   * l'ouverture d'un formulaire d'ajout (voir tracker-strip.component.ts). */
+  focus(): void {
+    this.inputEl()?.nativeElement.focus();
+  }
 
   private readonly existingSet = computed(
     () => new Set(this.existingNames().map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`)),
