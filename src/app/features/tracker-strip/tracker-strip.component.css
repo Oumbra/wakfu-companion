@@ -101,24 +101,18 @@
   flex-shrink: 0;
 }
 
-/* `.kpi-wrap` : conteneur de mise en page, TAILLE FIXE — c'est lui, et lui
-   seul, qui est un item flex de `.kpi-strip` (voir commentaire détaillé côté
-   HTML). Ne change jamais de taille, quel que soit l'état de survol. */
-.kpi-wrap {
-  position: relative;
-  width: 58px;
-  height: 58px;
-  flex-shrink: 0;
-  cursor: grab;
-}
-.kpi-wrap:active {
-  cursor: grabbing;
-}
-
+/* Refoulement RÉEL : `.kpi` reste un item flex normal de `.kpi-strip` (pas de
+   `position:absolute`/superposition) — une tuile qui se déploie pousse donc
+   réellement ses voisines au lieu de s'afficher par-dessus elles. L'ancien
+   effet de cascade que cette approche provoquait (le repli d'une tuile fait
+   reculer les suivantes sous une souris restée immobile, qui se retrouve
+   "survolée" sans mouvement réel, et ainsi de suite) est neutralisé côté
+   TypeScript (`activeName`/`blockedUntilMs`, voir tracker-strip.component.ts)
+   plutôt qu'en CSS : une seule tuile peut être déployée à la fois, pilotée
+   par la classe `.expanded` (pas par `:hover` directement), avec un délai
+   avant ouverture ET un verrou après fermeture. */
 .kpi {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   display: flex;
   align-items: center;
   width: 58px;
@@ -132,14 +126,20 @@
      en maquette : overflow:hidden posé au mauvais niveau). */
   overflow: visible;
   justify-content: center;
-  z-index: 1;
-  /* Délai avant déclenchement (1s) + durée d'animation (1s), dans les deux
-     sens (ouverture ET fermeture) : ce déploiement est déclenché par un
-     simple survol, une transition instantanée/rapide rendait le bouton de
-     suppression difficile à atteindre (il se referme avant que la souris
-     n'ait eu le temps de l'atteindre) et donnait un effet de clignotement
-     désagréable en balayant la bande du regard/de la souris. */
-  transition: width 1s ease 1s, padding 1s ease 1s;
+  flex-shrink: 0;
+  cursor: grab;
+  /* Durée pilotée par une variable CSS (voir template, `--kpi-expand-duration`
+     posée depuis la constante TS `KPI_EXPAND_DURATION_MS`) : un seul endroit
+     à modifier pour ajuster la vitesse. Le DÉLAI avant ouverture n'est plus
+     géré ici (c'est `onTileEnter`, côté TS, qui attend avant de poser la
+     classe `.expanded` — la transition CSS n'a donc plus besoin de
+     `transition-delay`, ce qui permet en prime de garder largeur et contenu
+     parfaitement synchronisés dès le début de l'animation). */
+  transition: width var(--kpi-expand-duration, 320ms) cubic-bezier(0.16, 1, 0.3, 1),
+    padding var(--kpi-expand-duration, 320ms) cubic-bezier(0.16, 1, 0.3, 1);
+}
+.kpi:active {
+  cursor: grabbing;
 }
 .kpi-icon {
   flex-shrink: 0;
@@ -153,7 +153,7 @@
   white-space: nowrap;
   font-weight: 600;
   font-size: 0.8rem;
-  transition: max-width 1s ease 1s, opacity 0.8s ease 1s;
+  transition: max-width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-name > span {
   display: block;
@@ -169,7 +169,8 @@
   font-weight: 700;
   font-size: 0.8rem;
   color: #ccc;
-  transition: max-width 1s ease 1s, opacity 0.8s ease 1s, color 0.3s ease 1s, font-size 0.3s ease 1s;
+  transition: max-width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
+    color var(--kpi-expand-duration, 320ms) ease, font-size var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-reset {
   width: 0;
@@ -180,7 +181,7 @@
   background: transparent;
   border: none;
   padding: 0;
-  transition: width 1s ease 1s, opacity 0.8s ease 1s;
+  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-reset svg {
   width: 15px;
@@ -190,26 +191,21 @@
   color: var(--accent);
 }
 
-/* Survol de `.kpi-wrap` (pas de `.kpi` directement) : c'est le conteneur de
-   taille fixe qui reçoit le hover, `.kpi` (son enfant, positionné en
-   absolute) réagit — voir commentaire détaillé en haut de fichier. `z-index`
-   passe devant les tuiles voisines dès le début du survol (immédiat, pas de
-   délai) pour que la tuile qui grandit se dessine par-dessus elles pendant
-   toute l'animation plutôt que de zigzaguer derrière/devant. */
-.kpi-wrap:hover .kpi {
+/* Déploiement piloté par la classe `.expanded` (posée en JS via `activeName`,
+   pas par `:hover` — voir commentaire en tête de fichier). */
+.kpi.expanded {
   width: auto;
-  min-width: 210px;
+  min-width: var(--kpi-expanded-width, 210px);
   justify-content: flex-start;
   padding: 0 12px;
-  z-index: 3;
 }
-.kpi-wrap:hover .kpi-icon {
+.kpi.expanded .kpi-icon {
   margin-right: 2px;
 }
-.kpi-wrap:hover .kpi-count-badge {
+.kpi.expanded .kpi-count-badge {
   display: none;
 }
-.kpi-wrap:hover .kpi-name {
+.kpi.expanded .kpi-name {
   max-width: 140px;
   opacity: 1;
   flex-grow: 1;
@@ -217,14 +213,14 @@
 }
 /* Compteur mis en avant une fois le KPI déployé : bleu accent + plus grand
    (au repos, dans le badge replié, il reste discret en gris). */
-.kpi-wrap:hover .kpi-count-inline {
+.kpi.expanded .kpi-count-inline {
   max-width: 40px;
   opacity: 1;
   margin-left: 6px;
   color: var(--accent);
   font-size: 0.95rem;
 }
-.kpi-wrap:hover .kpi-reset {
+.kpi.expanded .kpi-reset {
   width: 18px;
   opacity: 1;
   margin-left: 6px;
@@ -308,13 +304,13 @@
    produisant un scintillement très visible le temps que la tuile s'élargit
    — bug réel observé à l'usage. Une taille fixe (largeur max déployée) fait
    que le dégradé ne fait que se "révéler" progressivement, sans se redessiner. */
-.kpi-wrap:hover .kpi[class*='rarity-'] {
+.kpi.expanded[class*='rarity-'] {
   background-image: linear-gradient(
     to right,
     color-mix(in srgb, var(--rarity-color) 30%, var(--panel-header-bg)),
     var(--panel-header-bg)
   );
-  background-size: 210px 100%;
+  background-size: var(--kpi-expanded-width, 210px) 100%;
   background-position: left center;
   background-repeat: no-repeat;
 }
@@ -323,7 +319,7 @@
   border-color: #888;
   background: transparent;
 }
-.kpi-wrap:hover .kpi.is-monster {
+.kpi.expanded.is-monster {
   background: transparent;
 }
 
