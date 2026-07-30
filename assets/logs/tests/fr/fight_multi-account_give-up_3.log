@@ -1,0 +1,101 @@
+ INFO 15:12:12,245 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:12:12,252 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:12:12,252 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:12:12,285 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez rejoint automatiquement un combat.
+ INFO 15:12:12,288 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 11039312
+ INFO 15:12:12,296 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 8934075
+ INFO 15:12:12,353 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:12:12,354 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Tambourrin breed : 4779 [-1741626405551714] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (91, -206, -78)}
+ INFO 15:12:12,354 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551717] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (79, -212, -78)}
+ INFO 15:12:12,354 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551718] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (82, -209, -78)}
+ INFO 15:12:12,355 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Tambourrin breed : 4779 [-1741626405551713] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (86, -211, -78)}
+ INFO 15:12:12,355 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Dylan breed : 4778 [-1741626405551715] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (86, -205, -78)}
+ INFO 15:12:12,355 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551716] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (89, -206, -78)}
+ INFO 15:12:12,359 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (87, -210, -78)}
+ INFO 15:12:12,391 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:12:12,391 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:12:12,391 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:12:12,441 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:12:12,502 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:12:12,502 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Tambourrin breed : 4779 [-1741626405551714] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (91, -206, -78)}
+ INFO 15:12:12,503 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551717] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (79, -212, -78)}
+ INFO 15:12:12,503 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551718] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (82, -209, -78)}
+ INFO 15:12:12,503 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Tambourrin breed : 4779 [-1741626405551713] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (86, -211, -78)}
+ INFO 15:12:12,504 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Dylan breed : 4778 [-1741626405551715] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (86, -205, -78)}
+ INFO 15:12:12,504 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Blop Flûtiste breed : 4777 [-1741626405551716] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (89, -206, -78)}
+ INFO 15:12:12,505 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (87, -210, -78)}
+ INFO 15:12:12,506 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (81, -213, -78)}
+ INFO 15:12:12,510 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (80, -212, -78)}
+ INFO 15:12:12,511 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (79, -211, -78)}
+ INFO 15:12:12,640 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:12:13,006 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (38, -160, 1)}
+ INFO 15:12:13,064 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (42, -153, -1)}
+ INFO 15:12:13,181 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (44, -158, 0)}
+ INFO 15:12:13,299 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (41, -155, -1)}
+ INFO 15:12:13,328 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (80, -212, -78)}
+ INFO 15:12:13,357 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : 10 join the fight at {Point3 : (86, -216, -78)}
+ INFO 15:12:13,560 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117372 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : 11 join the fight at {Point3 : (85, -213, -78)}
+ INFO 15:12:15,923 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 15:12:15,936 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:12:15,938 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 15:12:15,950 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 15:12:15,952 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:12:16,026 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 15:12:16,035 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:12:16,043 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:12:16,060 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 15:12:16,095 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 15:12:16,106 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:12:16,112 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:12:16,121 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:12:16,126 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:12:16,135 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,140 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,143 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,144 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:12:16,146 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,148 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:12:16,149 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:12:16,151 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ WARN 15:12:16,205 [AWT-EventQueue-0] (WL:619) - MapInstance is null for parameters : worldId=1137, pos=[39;-159], InstanceUid=0
+ INFO 15:12:16,217 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:12:16,220 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:12:16,223 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,226 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,229 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,234 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:12:16,243 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:12:16,245 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:12:16,247 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:12:16,249 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:12:21,429 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus est KO !
+ INFO 15:12:21,446 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus est KO !
+ INFO 15:12:21,794 [AWT-EventQueue-0] (cho:460) - Demande de début ou de fin d'occupation (death) pour un joueur non connu
+ INFO 15:12:21,800 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Caliburnus Iop
+ INFO 15:12:22,415 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est KO !
+ INFO 15:12:22,430 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est KO !
+ INFO 15:12:22,777 [AWT-EventQueue-0] (cho:460) - Demande de début ou de fin d'occupation (death) pour un joueur non connu
+ INFO 15:12:22,821 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Ebenus Sagittarius Crâ
+ INFO 15:12:23,397 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 15:12:23,480 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 15:12:23,726 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 15:12:23,891 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117372
+ INFO 15:12:23,902 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:12:23,911 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 15:12:23,912 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:12:24,363 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum est KO !
+ INFO 15:12:24,568 [AWT-EventQueue-0] (aVY:58) - Removing character Pugio Letalis from manager
+ INFO 15:12:24,570 [AWT-EventQueue-0] (aVY:58) - Removing character Sagitta Tenebrarum from manager
+ INFO 15:12:24,577 [AWT-EventQueue-0] (cho:460) - Demande de début ou de fin d'occupation (death) pour un joueur non connu
+ INFO 15:12:24,578 [AWT-EventQueue-0] (cho:460) - Demande de début ou de fin d'occupation (death) pour un joueur non connu
+ INFO 15:12:24,579 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Lucis Crâ
+ INFO 15:12:24,751 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Tenebrarum Crâ
+ INFO 15:12:25,330 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis est KO !
+ INFO 15:12:25,725 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Pugio Letalis Sram
+ INFO 15:12:26,296 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis est KO !
+ INFO 15:12:26,630 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Lucis Crâ
+ INFO 15:12:26,630 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117372
+ INFO 15:12:26,632 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:12:26,836 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:12:27,271 [AWT-EventQueue-0] (aPV:174) - [Commerce] Rassionnel : Achète Portail BVV ou 4C ou poubelle mp moi prix
+ INFO 15:12:27,280 [AWT-EventQueue-0] (aPV:174) - [Commerce] Rassionnel : Achète Portail BVV ou 4C ou poubelle mp moi prix

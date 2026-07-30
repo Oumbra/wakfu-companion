@@ -1,0 +1,31 @@
+ INFO 12:07:18,545 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 12:07:18,546 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:07:18,546 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:07:18,653 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 12:07:18,653 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283630 Chacha Angora breed : 2598 [-1776810778122513] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (0, 156, 0)}
+ INFO 12:07:18,654 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283630 Chacha Blanc breed : 2617 [-1776810778122514] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-3, 152, 0)}
+ INFO 12:07:18,658 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283630 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-5, 153, 0)}
+ INFO 12:07:18,754 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 12:07:19,299 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283630 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (14, -155, 40)}
+ INFO 12:07:19,371 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283630 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (17, -154, 40)}
+ INFO 12:07:20,607 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 4x Pain Complet .
+ INFO 12:07:20,608 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 24x Petits Sâblés .
+ INFO 12:07:20,608 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 25983
+ INFO 12:07:20,704 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28467
+ INFO 12:07:20,757 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 27385
+ INFO 12:07:20,824 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 12:07:20,828 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 12:07:20,832 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 12:07:20,834 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 12:07:20,856 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 12:07:20,857 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 12:07:20,857 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 12:07:24,946 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 12:07:25,337 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 12:07:25,338 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11558499 from {Nation id=0} after a disconnection but he's not in it
+ INFO 12:07:26,298 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Ebenus Sagittarius Crâ
+ INFO 12:07:27,231 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Oumbra Sram
+ INFO 12:07:27,232 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1616283630
+ INFO 12:07:27,233 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 12:07:27,326 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 12:07:27,766 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11557578 from {Nation id=0} after a disconnection but he's not in it

@@ -1,0 +1,307 @@
+ INFO 15:18:35,066 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez rejoint automatiquement un combat.
+ INFO 15:18:35,070 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 10625777
+ INFO 15:18:35,074 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 5750213
+ INFO 15:18:35,082 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:18:35,089 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:18:35,089 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:18:35,174 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:18:35,175 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:18:35,175 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:18:35,199 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:18:35,200 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Schistérique breed : 4257 [-1724034209588762] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-4, -127, 20)}
+ INFO 15:18:35,201 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sulfurie breed : 4259 [-1724034209588757] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-4, -122, 20)}
+ INFO 15:18:35,201 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sulfurie breed : 4259 [-1724034209588758] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-2, -125, 20)}
+ INFO 15:18:35,202 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ammaniaque breed : 4258 [-1724034209588759] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-5, -122, 20)}
+ INFO 15:18:35,202 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ammaniaque breed : 4258 [-1724034209588760] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-5, -131, 20)}
+ INFO 15:18:35,202 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Schistérique breed : 4257 [-1724034209588761] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (3, -127, 20)}
+ INFO 15:18:35,206 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-8, -130, 20)}
+ INFO 15:18:35,288 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:18:35,289 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Schistérique breed : 4257 [-1724034209588762] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-4, -127, 20)}
+ INFO 15:18:35,290 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sulfurie breed : 4259 [-1724034209588757] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-4, -122, 20)}
+ INFO 15:18:35,290 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sulfurie breed : 4259 [-1724034209588758] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-2, -125, 20)}
+ INFO 15:18:35,290 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ammaniaque breed : 4258 [-1724034209588759] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-5, -122, 20)}
+ INFO 15:18:35,290 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ammaniaque breed : 4258 [-1724034209588760] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-5, -131, 20)}
+ INFO 15:18:35,291 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Schistérique breed : 4257 [-1724034209588761] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (3, -127, 20)}
+ INFO 15:18:35,291 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-8, -130, 20)}
+ INFO 15:18:35,292 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-7, -130, 20)}
+ INFO 15:18:35,292 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-6, -132, 20)}
+ INFO 15:18:35,294 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-8, -125, 20)}
+ INFO 15:18:35,307 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:18:35,402 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:18:35,747 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-8, -11, 20)}
+ INFO 15:18:35,849 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-11, -13, 21)}
+ INFO 15:18:36,048 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-5, -9, 20)}
+ INFO 15:18:36,114 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-9, -10, 20)}
+ INFO 15:18:36,164 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-8, -125, 20)}
+ INFO 15:18:36,199 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : 10 join the fight at {Point3 : (-6, -126, 20)}
+ INFO 15:18:36,241 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568304489 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : 11 join the fight at {Point3 : (-5, -126, 20)}
+ INFO 15:18:48,254 [AWT-EventQueue-0] (aPV:174) - [Commerce] Gokuu : achete reiem 4 c 3 rouge mp
+ INFO 15:18:48,266 [AWT-EventQueue-0] (aPV:174) - [Commerce] Gokuu : achete reiem 4 c 3 rouge mp
+ INFO 15:18:48,599 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 15:18:48,605 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 15:18:48,614 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:18:48,615 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:18:48,632 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 15:18:48,648 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:18:48,677 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 15:18:48,713 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 15:18:48,754 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:18:48,765 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 15:18:48,769 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:18:48,777 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:18:48,797 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,799 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:18:48,810 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,811 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:18:48,813 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,815 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:18:48,817 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,821 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:18:48,822 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:18:48,824 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:18:48,872 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,874 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:18:48,876 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,877 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:18:48,882 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,886 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:18:48,895 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:18:48,899 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:18:48,901 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:18:48,904 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:18:50,509 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 40 % Dommages infligés (Insaisissable)
+ INFO 15:18:50,510 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:18:50,513 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:18:50,516 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:18:50,524 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 40 % Dommages infligés (Insaisissable)
+ INFO 15:18:50,525 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:18:50,527 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:18:50,529 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:18:51,916 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:18:51,926 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:18:52,573 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2251808397230100
+ INFO 15:18:52,668 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -2 292 PV (Terre)
+ INFO 15:18:52,684 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -2 292 PV (Terre)
+ INFO 15:18:52,875 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 4 cases
+ INFO 15:18:52,896 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 4 cases
+ INFO 15:18:53,630 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus est KO !
+ INFO 15:18:53,646 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus est KO !
+ INFO 15:18:53,670 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -835 PV (Terre)
+ INFO 15:18:53,672 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -859 PV (Terre)
+ INFO 15:18:53,687 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -835 PV (Terre)
+ INFO 15:18:53,689 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -859 PV (Terre)
+ INFO 15:18:54,290 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis est KO !
+ INFO 15:18:54,294 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis est KO !
+ INFO 15:18:54,324 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 PM
+ INFO 15:18:54,325 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PA
+ INFO 15:18:54,326 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:18:54,327 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 PM
+ INFO 15:18:54,327 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PA
+ INFO 15:18:54,328 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:18:56,769 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:18:56,771 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 20 % Dommages infligés (Insaisissable)
+ INFO 15:18:56,772 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:18:56,773 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:18:56,773 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 20 % Dommages infligés (Insaisissable)
+ INFO 15:18:56,775 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 15:18:56,907 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme (Critiques)
+ INFO 15:18:56,910 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme (Critiques)
+ INFO 15:18:58,277 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 408 PV  (Feu)
+ INFO 15:18:58,294 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 408 PV  (Feu)
+ INFO 15:18:58,927 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:18:58,928 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:00,339 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 299 PV (Feu)
+ INFO 15:19:00,341 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 299 PV (Feu)
+ INFO 15:19:00,779 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Feu) (Rebond)
+ INFO 15:19:00,782 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Feu) (Rebond)
+ INFO 15:19:02,085 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:02,094 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:03,393 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -932 PV (Feu)
+ INFO 15:19:03,525 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -932 PV (Feu)
+ INFO 15:19:03,832 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -1 PV  (Feu) (Rebond)
+ INFO 15:19:03,952 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -1 PV  (Feu) (Rebond)
+ INFO 15:19:06,209 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:06,211 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 20 % Dommages infligés (Insaisissable)
+ INFO 15:19:06,213 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 65 secondes reportées pour le tour suivant.
+ INFO 15:19:06,225 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:06,226 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 20 % Dommages infligés (Insaisissable)
+ INFO 15:19:06,228 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 65 secondes reportées pour le tour suivant.
+ INFO 15:19:06,338 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:19:06,348 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:19:07,292 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:07,314 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:07,942 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 2 cases
+ INFO 15:19:07,956 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 2 cases
+ INFO 15:19:08,059 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 218 PV (Terre)
+ INFO 15:19:08,076 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 218 PV (Terre)
+ INFO 15:19:08,382 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 PM
+ INFO 15:19:08,391 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 PM
+ INFO 15:19:09,358 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane (Critiques)
+ INFO 15:19:09,374 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane (Critiques)
+ INFO 15:19:09,903 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 1 case
+ INFO 15:19:09,917 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 1 case
+ INFO 15:19:10,111 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Terre)
+ INFO 15:19:10,113 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 078 PV (Terre)
+ INFO 15:19:10,114 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -1 PV (Terre)
+ INFO 15:19:10,135 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Terre)
+ INFO 15:19:10,137 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 078 PV (Terre)
+ INFO 15:19:10,139 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -1 PV (Terre)
+ INFO 15:19:10,440 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 PM
+ INFO 15:19:10,454 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 PM
+ INFO 15:19:10,564 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:10,575 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:11,961 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 786 PV (Eau)
+ INFO 15:19:11,973 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 786 PV (Eau)
+ INFO 15:19:12,285 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:12,286 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:12,299 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:12,299 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:13,709 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 362 PV  (Eau)
+ INFO 15:19:13,709 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 362 PV  (Eau)
+ INFO 15:19:14,029 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:14,034 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:15,966 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:15,969 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:17,376 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -941 PV (Feu)
+ INFO 15:19:17,377 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -941 PV (Feu)
+ INFO 15:19:17,378 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Chaîne d'éclairs
+ INFO 15:19:17,379 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Chaîne d'éclairs
+ INFO 15:19:18,446 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 177 PV (Feu)
+ INFO 15:19:18,456 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 177 PV (Feu)
+ INFO 15:19:19,969 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:20,068 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:21,361 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 084 PV (Feu)
+ INFO 15:19:21,469 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 084 PV (Feu)
+ INFO 15:19:21,785 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Feu) (Rebond)
+ INFO 15:19:21,904 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -1 PV (Feu) (Rebond)
+ INFO 15:19:22,339 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 10 % Coup critique
+ INFO 15:19:22,342 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 10 % Coup critique
+ INFO 15:19:22,644 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez été vaincu(e) !
+ INFO 15:19:22,762 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus est hors-combat !
+ INFO 15:19:26,637 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:26,638 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 20 % Dommages infligés (Insaisissable)
+ INFO 15:19:26,638 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Sédentaire" a échoué.
+ INFO 15:19:26,639 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 63 secondes reportées pour le tour suivant.
+ INFO 15:19:26,699 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:26,701 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 20 % Dommages infligés (Insaisissable)
+ INFO 15:19:26,702 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Sédentaire" a échoué.
+ INFO 15:19:26,704 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 63 secondes reportées pour le tour suivant.
+ INFO 15:19:28,252 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:28,313 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:29,658 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 133 PV (Eau)
+ INFO 15:19:29,724 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 133 PV (Eau)
+ INFO 15:19:29,981 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:29,982 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:30,040 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:30,041 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:31,457 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 546 PV (Eau)
+ INFO 15:19:31,457 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 546 PV (Eau)
+ INFO 15:19:31,781 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:31,782 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:31,786 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:31,787 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:33,199 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -1 053 PV (Eau)
+ INFO 15:19:33,205 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -1 053 PV (Eau)
+ INFO 15:19:34,179 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 15:19:34,182 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 15:19:34,209 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:34,216 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:34,945 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:34,950 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:35,156 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis est hors-combat !
+ INFO 15:19:35,157 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez été vaincu(e) !
+ INFO 15:19:35,484 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 1 case
+ INFO 15:19:35,487 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 1 case
+ INFO 15:19:35,705 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -836 PV (Terre)
+ INFO 15:19:35,706 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -836 PV (Terre)
+ INFO 15:19:36,035 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 PM
+ INFO 15:19:36,036 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PA
+ INFO 15:19:36,036 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:19:36,039 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 PM
+ INFO 15:19:36,039 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PA
+ INFO 15:19:36,040 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: -1 PM
+ INFO 15:19:37,345 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:37,346 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:19:37,996 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 2 cases
+ INFO 15:19:37,996 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 2 cases
+ INFO 15:19:38,097 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 261 PV (Terre)
+ INFO 15:19:38,099 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 261 PV (Terre)
+ INFO 15:19:38,430 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 PM
+ INFO 15:19:38,431 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -2 PM
+ INFO 15:19:43,961 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:43,962 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Insaisissable)
+ INFO 15:19:43,963 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:19:43,963 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Insaisissable)
+ INFO 15:19:43,964 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 103 secondes reportées pour le tour suivant.
+ INFO 15:19:43,965 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 103 secondes reportées pour le tour suivant.
+ INFO 15:19:44,093 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:44,094 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:45,431 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 616 PV (Feu)
+ INFO 15:19:45,496 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: -1 616 PV (Feu)
+ INFO 15:19:46,077 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum est KO !
+ INFO 15:19:46,104 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme (Critiques)
+ INFO 15:19:46,136 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum est KO !
+ INFO 15:19:46,162 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme (Critiques)
+ INFO 15:19:46,836 [AWT-EventQueue-0] (aPV:174) - [Commerce] Yaannko : achète sublimation démésuré 3M
+ INFO 15:19:46,900 [AWT-EventQueue-0] (aPV:174) - [Commerce] Yaannko : achète sublimation démésuré 3M
+ INFO 15:19:47,496 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 797 PV  (Feu)
+ INFO 15:19:47,557 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 797 PV  (Feu)
+ INFO 15:19:48,143 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est KO !
+ INFO 15:19:48,143 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est KO !
+ INFO 15:19:48,168 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:48,172 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Tourbiflamme
+ INFO 15:19:49,555 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -932 PV (Feu)
+ INFO 15:19:49,556 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -932 PV (Feu)
+ INFO 15:19:53,802 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:53,803 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial (Critiques)
+ INFO 15:19:55,196 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 240 PV (Eau)
+ INFO 15:19:55,200 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 240 PV (Eau)
+ INFO 15:19:55,524 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:55,524 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:19:59,105 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:59,109 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque lance le sort Vent glacial
+ INFO 15:19:59,649 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Quête échouée: "Solo : Smaraudeurs"
+ INFO 15:20:00,516 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -878 PV (Eau)
+ INFO 15:20:00,517 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -878 PV (Eau)
+ INFO 15:20:00,841 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:20:00,848 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ammaniaque: +0 PV (Neutre - Vol de vie)
+ INFO 15:20:02,492 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:20:02,497 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique lance le sort Méthatane
+ INFO 15:20:03,228 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -692 PV (Terre)
+ INFO 15:20:03,233 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -692 PV (Terre)
+ INFO 15:20:03,335 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 3 cases
+ INFO 15:20:03,335 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Schistérique: Se rapproche de 3 cases
+ INFO 15:20:03,554 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -2 PM
+ INFO 15:20:03,558 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -2 PM
+ INFO 15:20:08,139 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:20:08,143 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 123 secondes reportées pour le tour suivant.
+ INFO 15:20:08,155 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 15:20:08,157 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 124 secondes reportées pour le tour suivant.
+ INFO 15:20:09,859 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Chaîne d'éclairs
+ INFO 15:20:09,872 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sulfurie lance le sort Chaîne d'éclairs
+ INFO 15:20:10,936 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 282 PV (Feu)
+ INFO 15:20:10,964 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -1 282 PV (Feu)
+ INFO 15:20:11,585 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis est KO !
+ INFO 15:20:11,602 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis est KO !
+ INFO 15:20:12,461 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis est hors-combat !
+ INFO 15:20:12,555 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez été vaincu(e) !
+ INFO 15:20:13,006 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez été vaincu(e) !
+ INFO 15:20:13,089 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est hors-combat !
+ INFO 15:20:13,119 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 15:20:13,121 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Lucis Crâ
+ INFO 15:20:13,123 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Caliburnus Iop
+ INFO 15:20:13,127 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Ebenus Sagittarius Crâ
+ INFO 15:20:13,128 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Pugio Letalis Sram
+ INFO 15:20:13,129 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Tenebrarum Crâ
+ INFO 15:20:13,131 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:20:13,140 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1568304489
+ INFO 15:20:13,141 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:20:13,204 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 15:20:13,213 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Lucis Crâ
+ INFO 15:20:13,215 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Caliburnus Iop
+ INFO 15:20:13,216 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Ebenus Sagittarius Crâ
+ INFO 15:20:13,219 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Pugio Letalis Sram
+ INFO 15:20:13,223 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagitta Tenebrarum Crâ
+ INFO 15:20:13,224 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1568304489
+ INFO 15:20:13,224 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:20:13,549 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 

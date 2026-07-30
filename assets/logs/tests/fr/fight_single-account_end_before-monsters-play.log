@@ -1,0 +1,27 @@
+ INFO 11:50:19,562 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:50:19,562 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:50:19,635 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 11:50:19,644 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283436 Pâti Impériâl breed : 4020 [-1776810778265943] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-230, -43, 0)}
+ INFO 11:50:19,664 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283436 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-227, -52, 0)}
+ INFO 11:50:19,821 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 11:50:20,425 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283436 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (0, 0, 0)}
+ INFO 11:50:20,519 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283436 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (0, 0, 0)}
+ INFO 11:50:22,404 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 9x Pain Complet .
+ INFO 11:50:22,405 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 11x Petits Sâblés .
+ INFO 11:50:22,408 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 27599
+ INFO 11:50:22,497 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28263
+ INFO 11:50:22,555 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29065
+ INFO 11:50:22,707 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 11:50:22,718 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 11:50:22,730 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 11:50:22,737 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 11:50:22,779 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 11:50:22,782 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 11:50:22,783 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 11:50:24,300 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 11:50:24,316 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 5x Plâjeton .
+ INFO 11:50:24,317 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Sâble Fin .
+ INFO 11:50:24,318 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Sâble Fin .
+ INFO 11:50:24,319 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Sâble Fin .
+ INFO 11:50:24,327 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 11:50:25,055 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl: -10 696 PV (Feu)

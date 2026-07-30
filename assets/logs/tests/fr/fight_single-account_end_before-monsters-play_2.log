@@ -1,0 +1,59 @@
+ INFO 11:53:15,426 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:53:15,426 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:53:15,539 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 11:53:15,540 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Abraknyde breed : 4076 [-1776810778132968] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-161, 55, 0)}
+ INFO 11:53:15,540 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Abraknyde breed : 4076 [-1776810778132969] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-165, 58, 0)}
+ INFO 11:53:15,540 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Arakne Brodeuse breed : 4078 [-1776810778132966] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-157, 66, 0)}
+ INFO 11:53:15,540 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Abragland breed : 4077 [-1776810778132967] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-160, 54, 0)}
+ INFO 11:53:15,544 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-162, 62, 0)}
+ INFO 11:53:15,626 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 11:53:16,188 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-227, -44, 0)}
+ INFO 11:53:16,274 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-227, -47, 0)}
+ INFO 11:53:20,786 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 26426
+ INFO 11:53:20,846 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 25780
+ INFO 11:53:20,925 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 27174
+ INFO 11:53:20,995 [AWT-EventQueue-0] (eXG:105) - Instanciation d'une nouvelle invocation avec un id de -1776810778114841
+ INFO 11:53:20,996 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Larme d'Ogrest breed : 4539 [-1776810778114841] isControlledByAI=true obstacleId : 7 join the fight at {Point3 : (-165, 60, 0)}
+ INFO 11:53:21,020 [AWT-EventQueue-0] (eXG:105) - Instanciation d'une nouvelle invocation avec un id de -1776810778114839
+ INFO 11:53:21,022 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283470 Larme d'Ogrest breed : 4539 [-1776810778114839] isControlledByAI=true obstacleId : 8 join the fight at {Point3 : (-154, 66, 0)}
+ INFO 11:53:21,046 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 11:53:21,050 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 11:53:21,067 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 11:53:21,072 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 11:53:21,103 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 11:53:21,104 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 11:53:21,105 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 11:53:24,004 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 11:53:24,748 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Abragland: -10 024 PV (Feu)
+ INFO 11:53:25,066 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Abraknyde: -10 024 PV (Feu)
+ INFO 11:53:25,392 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+20 Niv.)
+ INFO 11:53:25,393 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+20 Niv.)
+ INFO 11:53:25,494 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 11:53:25,822 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Abragland est hors-combat !
+ INFO 11:53:26,362 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Arakne Brodeuse: -9 993 PV (Feu)
+ INFO 11:53:26,379 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Abraknyde est hors-combat !
+ INFO 11:53:26,677 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+50 Niv.)
+ INFO 11:53:26,679 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+50 Niv.)
+ INFO 11:53:26,890 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Arakne Brodeuse est hors-combat !
+ INFO 11:53:32,406 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche explosive (Critiques)
+ INFO 11:53:32,408 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 4 % Dommages infligés (Puissance brute)
+ INFO 11:53:32,414 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Branchopatte .
+ INFO 11:53:32,415 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 3x Branchopatte .
+ INFO 11:53:32,415 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Branchopatte .
+ INFO 11:53:32,416 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Ceinture de l'Aventurier .
+ INFO 11:53:32,417 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Sève d'Abrakne .
+ INFO 11:53:32,418 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Branchopatte .
+ INFO 11:53:32,426 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 11:53:33,594 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Abraknyde: -29 559 PV (Feu)
+ INFO 11:53:33,605 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Réunification" a échoué.
+ INFO 11:53:34,569 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+110 Niv.)
+ INFO 11:53:34,570 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PW
+ INFO 11:53:34,573 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: La Pointe affûtée est prête !
+ INFO 11:53:34,575 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Balise affûtée (+1 Niv.)
+ INFO 11:53:34,577 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Flèche lumineuse (+1 Niv.) (Archer Futé)
+ INFO 11:53:34,581 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -2 PA max (Parti pris)
+ INFO 11:53:34,583 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 2 PM (Parti pris)
+ INFO 11:53:34,585 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+110 Niv.)
+ INFO 11:53:34,604 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1616283470
+ INFO 11:53:34,606 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 11:53:34,879 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 

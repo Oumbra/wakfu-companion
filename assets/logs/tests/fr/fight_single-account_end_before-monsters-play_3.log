@@ -1,0 +1,59 @@
+ INFO 11:56:36,261 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:56:36,262 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 11:56:36,362 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 11:56:36,362 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Larve Violette breed : 785 [-1776810778213015] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-48, 14, 4)}
+ INFO 11:56:36,363 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Larve Blanche breed : 735 [-1776810778213011] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-43, 7, 1)}
+ INFO 11:56:36,363 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Larve Blanche breed : 735 [-1776810778213012] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-37, 16, 0)}
+ INFO 11:56:36,363 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Larve Orange breed : 124 [-1776810778213013] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-40, 5, 0)}
+ INFO 11:56:36,363 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Larve Bleue breed : 123 [-1776810778213014] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-37, 15, 0)}
+ INFO 11:56:36,366 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-41, 14, 0)}
+ INFO 11:56:36,447 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 11:56:37,014 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-7, 9, 0)}
+ INFO 11:56:37,100 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283507 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (6, 14, 0)}
+ INFO 11:56:37,765 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11237498 from {Nation id=0} after a disconnection but he's not in it
+ INFO 11:56:44,494 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 25780
+ INFO 11:56:44,572 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 26426
+ INFO 11:56:44,627 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 27174
+ INFO 11:56:44,698 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 11:56:44,700 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 11:56:44,705 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 11:56:44,709 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 11:56:44,739 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 11:56:44,740 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 11:56:44,741 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 11:56:46,636 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 11:56:47,387 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Blanche: -12 197 PV  (Feu)
+ INFO 11:56:47,713 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Bleue: -15 247 PV  (Feu)
+ INFO 11:56:48,033 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+20 Niv.)
+ INFO 11:56:48,035 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+20 Niv.)
+ INFO 11:56:48,269 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11237498 from {Nation id=0} after a disconnection but he's not in it
+ INFO 11:56:48,269 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Blanche est hors-combat !
+ INFO 11:56:49,000 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Bleue est hors-combat !
+ INFO 11:56:49,107 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche chercheuse (Critiques)
+ INFO 11:56:49,971 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Blanche: -8 619 PV (Air)
+ INFO 11:56:50,295 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.)
+ INFO 11:56:50,297 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+40 Niv.)
+ INFO 11:56:50,298 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche chercheuse (Critiques)
+ INFO 11:56:50,726 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Peau de Larve .
+ INFO 11:56:50,727 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Bottes Larvesques Vaseuses .
+ INFO 11:56:50,729 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Epaulettes Larvesques Vaseuses .
+ INFO 11:56:50,730 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 4x Peau de Larve .
+ INFO 11:56:50,731 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Peau de Nutellarve .
+ INFO 11:56:50,732 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 3x Peau de Larve .
+ INFO 11:56:50,732 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 3x Peau de Larve .
+ INFO 11:56:50,733 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Peau de Larve .
+ INFO 11:56:50,733 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Peau de Larve .
+ INFO 11:56:50,740 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 11:56:50,836 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Blanche est hors-combat !
+ INFO 11:56:51,164 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Orange: -7 836 PV (Air)
+ INFO 11:56:51,480 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 11:56:51,482 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 11:56:51,483 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche chercheuse (Critiques)
+ INFO 11:56:52,346 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Violette: -7 831 PV (Air)
+ INFO 11:56:52,445 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Larve Orange est hors-combat !
+ INFO 11:56:52,663 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+80 Niv.)
+ INFO 11:56:52,665 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+80 Niv.)
+ INFO 11:56:52,666 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Nomade" est réussi.
+ INFO 11:56:52,683 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 11:56:52,690 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1616283507
+ INFO 11:56:52,691 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed

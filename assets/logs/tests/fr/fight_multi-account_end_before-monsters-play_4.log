@@ -1,0 +1,125 @@
+ INFO 14:59:26,418 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez rejoint automatiquement un combat.
+ INFO 14:59:26,457 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 14:59:26,465 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 14:59:26,465 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 14:59:26,528 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 8934075
+ INFO 14:59:26,532 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 11039312
+ INFO 14:59:26,535 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 14:59:26,541 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 14:59:26,542 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 14:59:26,578 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 14:59:26,578 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Flûtiste breed : 4777 [-1741626406065843] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (78, -208, -78)}
+ INFO 14:59:26,578 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Dylan breed : 4778 [-1741626406065839] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (80, -210, -78)}
+ INFO 14:59:26,578 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Dylan breed : 4778 [-1741626406065840] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (83, -210, -78)}
+ INFO 14:59:26,582 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (85, -209, -78)}
+ INFO 14:59:26,656 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 14:59:26,722 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 14:59:26,723 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Flûtiste breed : 4777 [-1741626406065843] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (78, -208, -78)}
+ INFO 14:59:26,726 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Dylan breed : 4778 [-1741626406065839] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (80, -210, -78)}
+ INFO 14:59:26,726 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Blop Dylan breed : 4778 [-1741626406065840] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (83, -210, -78)}
+ INFO 14:59:26,727 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (85, -209, -78)}
+ INFO 14:59:26,728 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (80, -209, -78)}
+ INFO 14:59:26,733 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (85, -211, -78)}
+ INFO 14:59:26,738 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (79, -208, -78)}
+ INFO 14:59:27,066 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 14:59:27,254 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (55, -229, 3)}
+ INFO 14:59:27,352 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (52, -233, 0)}
+ INFO 14:59:27,536 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (85, -211, -78)}
+ INFO 14:59:27,567 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : 7 join the fight at {Point3 : (85, -214, -78)}
+ INFO 14:59:27,600 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (50, -232, 0)}
+ INFO 14:59:27,610 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : 8 join the fight at {Point3 : (85, -212, -78)}
+ INFO 14:59:27,699 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117310 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (45, -233, 6)}
+ INFO 14:59:36,956 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 14:59:36,968 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 14:59:36,981 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 14:59:37,025 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 14:59:37,042 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 14:59:37,057 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 14:59:37,061 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9351
+ INFO 14:59:37,069 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23164
+ INFO 14:59:37,071 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 14:59:37,085 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 14:59:37,127 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 14:59:37,170 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,171 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 14:59:37,173 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,178 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,179 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 14:59:37,183 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 14:59:37,185 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 14:59:37,192 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,200 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 14:59:37,202 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 14:59:37,204 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 14:59:37,205 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,209 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 14:59:37,221 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,228 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,230 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 14:59:37,233 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 14:59:37,237 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 14:59:37,246 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 14:59:37,247 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 14:59:37,248 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 14:59:37,248 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 14:59:37,249 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 14:59:37,251 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 14:59:37,301 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 14:59:37,302 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 14:59:37,303 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 14:59:40,357 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:40,365 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:41,064 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan: -8 760 PV (Feu)
+ INFO 14:59:41,066 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Fourberie" a échoué.
+ INFO 14:59:41,077 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan: -8 760 PV (Feu)
+ INFO 14:59:41,081 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Fourberie" a échoué.
+ INFO 14:59:41,360 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+30 Niv.)
+ INFO 14:59:41,363 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+30 Niv.)
+ INFO 14:59:41,365 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:41,381 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+30 Niv.)
+ INFO 14:59:41,383 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+30 Niv.)
+ INFO 14:59:41,385 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:41,762 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Fausse note .
+ INFO 14:59:41,764 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Fausse note .
+ INFO 14:59:41,765 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Fragment de Coiffe de Goultard .
+ INFO 14:59:41,766 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Les Maracapes .
+ INFO 14:59:41,767 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Fausse note .
+ INFO 14:59:41,767 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Fausse note .
+ INFO 14:59:41,785 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Fausse note .
+ INFO 14:59:41,786 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Fausse note .
+ INFO 14:59:41,787 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Les Maracapes .
+ INFO 14:59:41,788 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Fausse note .
+ INFO 14:59:41,789 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Fausse note .
+ INFO 14:59:41,790 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 14:59:41,797 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 14:59:42,165 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Flûtiste: -5 840 PV (Feu)
+ INFO 14:59:42,180 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Flûtiste: -5 840 PV (Feu)
+ INFO 14:59:42,471 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 14:59:42,473 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 14:59:42,476 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:42,486 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 14:59:42,488 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 14:59:42,489 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 14:59:43,283 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan: -7 139 PV (Feu) (Parade !)
+ INFO 14:59:43,298 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan: -7 139 PV (Feu) (Parade !)
+ INFO 14:59:43,578 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+90 Niv.)
+ INFO 14:59:43,581 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+90 Niv.)
+ INFO 14:59:43,583 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 4 kamas.
+ INFO 14:59:43,584 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus : +7 527 201 points d'XP.  Prochain niveau dans : 4 367 263 982.
+ INFO 14:59:43,607 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+90 Niv.)
+ INFO 14:59:43,610 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+90 Niv.)
+ INFO 14:59:43,612 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis : +2 509 067 points d'XP.  Prochain niveau dans : 16 781 237 453.
+ INFO 14:59:43,613 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum : +6 272 668 points d'XP.  Prochain niveau dans : 10 202 162 174.
+ INFO 14:59:43,614 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis : +3 763 601 points d'XP.  Prochain niveau dans : 11 527 176 601.
+ INFO 14:59:43,776 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan est hors-combat !
+ INFO 14:59:43,807 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan est hors-combat !
+ INFO 14:59:45,009 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Flûtiste est hors-combat !
+ INFO 14:59:45,084 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Flûtiste est hors-combat !
+ INFO 14:59:45,993 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan est hors-combat !
+ INFO 14:59:46,013 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Blop Dylan est hors-combat !
+ INFO 14:59:46,098 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 14:59:46,108 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117310
+ INFO 14:59:46,112 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 14:59:46,217 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117310
+ INFO 14:59:46,221 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 14:59:46,589 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 

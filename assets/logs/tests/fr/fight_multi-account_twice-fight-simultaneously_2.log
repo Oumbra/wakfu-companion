@@ -1,0 +1,87 @@
+ INFO 15:36:41,246 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:36:41,251 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:36:41,251 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:36:41,364 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:36:41,364 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Bellaphone breed : 4962 [-1741626405075010] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (76, -249, -78)}
+ INFO 15:36:41,364 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Bellaphone breed : 4962 [-1741626405075011] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (76, -245, -78)}
+ INFO 15:36:41,364 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Bellaphone breed : 4962 [-1741626405075009] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (71, -249, -78)}
+ INFO 15:36:41,367 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (81, -245, -78)}
+ INFO 15:36:41,445 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:36:42,012 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (84, -222, -78)}
+ INFO 15:36:42,088 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117484 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (82, -224, -78)}
+ INFO 15:36:45,252 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:36:45,255 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:36:45,255 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:36:45,367 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:36:45,368 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Bellaphone breed : 4962 [-1741626405075064] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (87, -208, -78)}
+ INFO 15:36:45,368 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Bellaphone breed : 4962 [-1741626405075065] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (94, -205, -78)}
+ INFO 15:36:45,368 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Bellaphone breed : 4962 [-1741626405075066] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (88, -209, -78)}
+ INFO 15:36:45,371 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (94, -207, -78)}
+ INFO 15:36:45,489 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:36:45,828 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/130001477.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 15:36:45,829 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/130001477.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 15:36:45,833 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/130001477.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 15:36:45,845 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/130001477.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 15:36:45,857 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/130001477.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 15:36:46,015 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (93, -205, -78)}
+ INFO 15:36:46,103 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117485 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (89, -206, -78)}
+ INFO 15:36:47,221 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 27598
+ INFO 15:36:47,352 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28262
+ INFO 15:36:47,408 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 28948
+ INFO 15:36:47,484 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:36:47,487 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:36:47,492 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:36:47,495 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 15:36:50,038 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28262
+ INFO 15:36:50,111 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 23171
+ INFO 15:36:50,159 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:36:50,219 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:36:50,230 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:36:50,234 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:36:50,235 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:36:50,238 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:36:50,240 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:36:50,241 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:36:52,147 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis lance le sort Flèche fulminante (Critiques)
+ INFO 15:36:52,912 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -10 025 PV (Feu)
+ INFO 15:36:53,234 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+30 Niv.)
+ INFO 15:36:53,236 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+30 Niv.)
+ INFO 15:36:53,238 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis lance le sort Flèche fulminante (Critiques)
+ INFO 15:36:53,995 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone est hors-combat !
+ INFO 15:36:54,015 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -8 020 PV (Feu) (Parade !)
+ INFO 15:36:54,317 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+60 Niv.)
+ INFO 15:36:54,320 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+60 Niv.)
+ INFO 15:36:54,803 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 15:36:55,086 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone est hors-combat !
+ INFO 15:36:56,213 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -6 474 PV (Feu)
+ INFO 15:36:56,543 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -6 474 PV (Feu)
+ INFO 15:36:56,861 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -4 286 PV  (Feu)
+ INFO 15:36:56,864 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+20 Niv.)
+ INFO 15:36:56,866 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+20 Niv.)
+ INFO 15:36:57,292 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone est hors-combat !
+ INFO 15:36:57,628 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone est hors-combat !
+ INFO 15:36:58,818 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche fulminante (Critiques)
+ INFO 15:36:58,829 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 15:36:58,833 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 15:36:59,579 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -10 631 PV (Feu)
+ INFO 15:36:59,899 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+50 Niv.)
+ INFO 15:36:59,900 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+50 Niv.)
+ INFO 15:36:59,902 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Archer" est réussi.
+ INFO 15:36:59,905 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 43 kamas.
+ INFO 15:36:59,924 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117485
+ INFO 15:36:59,926 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:37:00,179 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis lance le sort Flèche fulminante (Critiques)
+ INFO 15:37:00,184 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 5x Plâjeton .
+ INFO 15:37:00,186 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 15:37:00,201 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:37:00,940 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Bellaphone: -10 025 PV (Feu)
+ INFO 15:37:01,270 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+90 Niv.)
+ INFO 15:37:01,273 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+90 Niv.)
+ INFO 15:37:01,275 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Séparation" est réussi.
+ INFO 15:37:01,278 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 49 kamas.
+ INFO 15:37:01,281 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis : +5 049 096 points d'XP.  Prochain niveau dans : 16 760 875 426.
+ INFO 15:37:01,281 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum : +12 622 739 points d'XP.  Prochain niveau dans : 10 166 011 818.
+ INFO 15:37:01,281 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis : +7 573 644 points d'XP.  Prochain niveau dans : 11 501 551 798.
+ INFO 15:37:01,293 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:37:01,305 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117484
+ INFO 15:37:01,307 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed

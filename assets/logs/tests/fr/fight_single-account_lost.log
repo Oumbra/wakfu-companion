@@ -1,0 +1,62 @@
+ INFO 12:14:26,656 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 12:14:26,763 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:14:26,763 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:14:26,765 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 12:14:26,766 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Dragoeu'r breed : 4208 [-1724034209664236] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-3, -13, 20)}
+ INFO 12:14:26,766 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Dragoeuf à la coque breed : 4209 [-1724034209664234] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-6, -21, 20)}
+ INFO 12:14:26,767 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Dragoeuf à la coque breed : 4209 [-1724034209664235] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-8, -12, 20)}
+ INFO 12:14:26,767 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Dragoeu'r breed : 4208 [-1724034209664237] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-9, -18, 21)}
+ INFO 12:14:26,769 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-6, -17, 20)}
+ INFO 12:14:26,821 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 12:14:27,129 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/186704208.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 12:14:27,130 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/186704208.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 12:14:27,134 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/186704208.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 12:14:27,150 [AWT-EventQueue-0] (ZN:1080) - Boucle infinie dans le process de l'anm jar:file:./contents/animations/npcs/npcs.jar!/186704208.anm animation courante=AnimStatique (probléme dans l'enchainement des goto ?)
+ INFO 12:14:27,410 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-3, -158, 40)}
+ INFO 12:14:27,448 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1568301891 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-5, -155, 40)}
+ INFO 12:14:29,142 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 9465
+ INFO 12:14:29,188 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 9624
+ INFO 12:14:29,206 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 9387
+ INFO 12:14:29,229 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 12:14:29,232 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 12:14:29,234 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 12:14:29,256 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeu'r: 4 PA (Motivation)
+ INFO 12:14:30,535 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeu'r lance le sort Gravité
+ INFO 12:14:31,403 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: -4 323 PV (Eau)
+ INFO 12:14:32,046 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra est KO !
+ INFO 12:14:36,910 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation
+ INFO 12:14:37,665 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeu'r: -2 PV (Feu) (Parade !)
+ INFO 12:14:37,667 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+20 Niv.)
+ INFO 12:14:37,668 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+20 Niv.)
+ INFO 12:14:37,989 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 40 % Dommages infligés (Insaisissable)
+ INFO 12:14:37,990 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.) (Insaisissable)
+ INFO 12:14:37,991 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.) (Insaisissable)
+ INFO 12:14:37,992 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 59 secondes reportées pour le tour suivant.
+ INFO 12:14:38,108 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque lance le sort Renforcement
+ INFO 12:14:38,640 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque: 90 Résistance Élémentaire (Motivation)
+ INFO 12:14:43,383 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius lance le sort Flèche enflammée
+ INFO 12:14:44,467 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque: -5 PV (Feu) (Parade !)
+ INFO 12:14:44,468 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque: Echaudé (Niv. 3)
+ INFO 12:14:44,470 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Affûtage (+40 Niv.)
+ INFO 12:14:44,471 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Précision (+40 Niv.)
+ INFO 12:14:44,473 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 40 % Dommages infligés (Insaisissable)
+ INFO 12:14:44,474 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Affûtage (+80 Niv.) (Insaisissable)
+ INFO 12:14:44,475 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Précision (+80 Niv.) (Insaisissable)
+ INFO 12:14:44,476 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Nomade" a échoué.
+ INFO 12:14:44,477 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 60 secondes reportées pour le tour suivant.
+ INFO 12:14:44,584 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque lance le sort Renforcement
+ INFO 12:14:45,119 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque: 90 Résistance Élémentaire (Motivation)
+ INFO 12:14:46,416 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeuf à la coque lance le sort Balayage
+ INFO 12:14:47,283 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -2 525 PV (Terre)
+ INFO 12:14:47,940 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius est KO !
+ INFO 12:14:48,040 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeu'r: 4 PA (Motivation)
+ INFO 12:14:48,041 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Dragoeu'r lance le sort Silence
+ INFO 12:14:49,442 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -1 913 PV (Air)
+ INFO 12:14:50,093 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus est KO !
+ INFO 12:14:50,959 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez été vaincu(e) !
+ INFO 12:14:51,069 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Oumbra Sram
+ INFO 12:14:51,072 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Ebenus Sagittarius Crâ
+ INFO 12:14:51,073 [AWT-EventQueue-0] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Sagittarius Caecus Crâ
+ INFO 12:14:51,073 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1568301891
+ INFO 12:14:51,074 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 12:14:51,229 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 

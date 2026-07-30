@@ -1,0 +1,77 @@
+ INFO 12:01:12,380 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11558085 from {Nation id=0} after a disconnection but he's not in it
+ INFO 12:01:14,215 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 12:01:14,219 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:01:14,219 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 12:01:14,322 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 12:01:14,322 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283555 Pâti Impériâl breed : 4020 [-1776810778148672] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-169, 41, 0)}
+ INFO 12:01:14,323 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283555 Mimi Pâti breed : 4018 [-1776810778148673] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (-167, 39, 0)}
+ INFO 12:01:14,325 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283555 Oumbra breed : 4 [11039330] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-166, 40, 0)}
+ INFO 12:01:14,443 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 12:01:15,080 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283555 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-42, 15, 0)}
+ INFO 12:01:15,148 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1616283555 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (-40, 16, 0)}
+ INFO 12:01:17,131 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039330, byte size : 25780
+ INFO 12:01:17,249 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 26426
+ INFO 12:01:17,299 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 27174
+ INFO 12:01:17,370 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 12:01:17,374 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 12:01:17,379 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 12:01:17,382 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+50 Niv.)
+ INFO 12:01:17,405 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 12:01:17,405 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 12:01:17,407 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 12:01:18,623 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: n'est plus sous l'emprise de 'Insaisissable'
+ INFO 12:01:18,624 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 20 % Dommages infligés (Insaisissable)
+ INFO 12:01:18,625 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 12:01:18,743 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl lance le sort Ensâblement
+ INFO 12:01:19,057 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 10668991 from {Nation id=0} after a disconnection but he's not in it
+ INFO 12:01:19,378 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -13 PV (Terre)
+ INFO 12:01:20,241 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -1 PM
+ INFO 12:01:20,242 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl lance le sort C'est Pâti !
+ INFO 12:01:21,205 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11558085 from {Nation id=0} after a disconnection but he's not in it
+ INFO 12:01:21,424 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl: 80 Maîtrise Dos
+ INFO 12:01:21,426 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Mimi Pâti: 80 Maîtrise Dos
+ INFO 12:01:21,856 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl: -1 PA
+ INFO 12:01:21,857 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl: -2 PM
+ INFO 12:01:22,174 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl lance le sort Ensâblement
+ INFO 12:01:22,821 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -14 PV (Terre)
+ INFO 12:01:22,932 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11531143 from {Nation id=0} after a disconnection but he's not in it
+ INFO 12:01:23,685 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -1 PM
+ INFO 12:01:24,446 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 1 PA (Force vitale)
+ INFO 12:01:24,447 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 12:01:24,448 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 12:01:25,411 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 40 % Dommages infligés (Insaisissable)
+ INFO 12:01:25,412 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 12:01:25,414 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Précision (+40 Niv.) (Insaisissable)
+ INFO 12:01:25,417 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 66 secondes reportées pour le tour suivant.
+ INFO 12:01:25,526 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Mimi Pâti lance le sort Bond à Pâti
+ INFO 12:01:25,842 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Mimi Pâti: se téléporte
+ INFO 12:01:26,806 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -13 PV (Terre)
+ INFO 12:01:27,557 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Mimi Pâti lance le sort Bâffe à Sâble (Critiques)
+ INFO 12:01:27,995 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -14 PV (Terre)
+ INFO 12:01:28,544 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: 1 PA (Force vitale)
+ INFO 12:01:28,546 [AWT-EventQueue-0] (chJ:254) - Challenge courant : -991 (dans 0s)
+ INFO 12:01:29,191 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra: Point Faible (+100 Niv.) (Assassin squelettique)
+ INFO 12:01:29,193 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 12:01:29,314 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 12:01:29,315 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 12:01:29,316 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 12:01:30,699 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche explosive (Critiques)
+ INFO 12:01:30,702 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 4 % Dommages infligés (Puissance brute)
+ INFO 12:01:30,704 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Sâble Fin .
+ INFO 12:01:30,705 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Clef du Pâlais Mârin .
+ INFO 12:01:30,705 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 5x Plâjeton .
+ INFO 12:01:30,706 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Sâble Fin .
+ INFO 12:01:30,706 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Clef du Pâlais Mârin .
+ INFO 12:01:30,706 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Clef du Pâlais Mârin .
+ INFO 12:01:30,707 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Sâble Fin .
+ INFO 12:01:30,707 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x La Bâgue Scélérâte .
+ INFO 12:01:30,708 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 5x Plâjeton .
+ INFO 12:01:30,715 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 12:01:32,530 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pâti Impériâl: -27 441 PV (Feu)
+ INFO 12:01:32,860 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Mimi Pâti: -18 332 PV (Feu)
+ INFO 12:01:33,181 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 12:01:33,182 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 12:01:33,184 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Doublé" est réussi.
+ INFO 12:01:33,203 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1616283555
+ INFO 12:01:33,205 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 12:01:33,447 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 

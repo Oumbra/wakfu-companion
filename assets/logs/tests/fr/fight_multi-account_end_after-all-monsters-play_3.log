@@ -1,0 +1,258 @@
+ INFO 15:07:53,227 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:07:53,241 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:07:53,241 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:07:53,282 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Vous avez rejoint automatiquement un combat.
+ INFO 15:07:53,288 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 10625777
+ INFO 15:07:53,294 [AWT-EventQueue-0] (cko:37) - Starting join procedure for 5750213
+ INFO 15:07:53,326 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:07:53,327 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Éclaireuse breed : 5021 [-1741626405092441] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (33, -150, 0)}
+ INFO 15:07:53,328 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Assassin breed : 5023 [-1741626405092442] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (32, -158, 5)}
+ INFO 15:07:53,328 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Assassin breed : 5023 [-1741626405092443] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (31, -155, 0)}
+ INFO 15:07:53,329 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof de Soigneuse breed : 5022 [-1741626405092444] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (35, -152, -1)}
+ INFO 15:07:53,333 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (36, -153, -1)}
+ INFO 15:07:53,392 [AWT-EventQueue-0] (UP:73) - WakfuGameCalendar : adding periodic ClimateUpdateEvent event, period= 12 minutes 
+ INFO 15:07:53,393 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:07:53,393 [AWT-EventQueue-0] (ciD:117) - NetInFight Added
+ INFO 15:07:53,455 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:07:53,507 [AWT-EventQueue-0] (aXI:47) - CREATION DU COMBAT
+ INFO 15:07:53,508 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Éclaireuse breed : 5021 [-1741626405092441] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (33, -150, 0)}
+ INFO 15:07:53,508 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Assassin breed : 5023 [-1741626405092442] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (32, -158, 5)}
+ INFO 15:07:53,508 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof d'Assassin breed : 5023 [-1741626405092443] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (31, -155, 0)}
+ INFO 15:07:53,509 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Gostof de Soigneuse breed : 5022 [-1741626405092444] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (35, -152, -1)}
+ INFO 15:07:53,509 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagitta Lucis breed : 9 [5738009] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (36, -153, -1)}
+ INFO 15:07:53,510 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (32, -151, 0)}
+ INFO 15:07:53,510 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (37, -154, -1)}
+ INFO 15:07:53,514 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (32, -156, 4)}
+ INFO 15:07:53,624 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Votre combat est verrouillé, ce qui empêche d'autres joueurs de vous rejoindre.
+ INFO 15:07:54,100 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagitta Tenebrarum breed : 9 [10625777] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (135, -101, -78)}
+ INFO 15:07:54,174 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Pugio Letalis breed : 4 [5750213] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (132, -102, -78)}
+ INFO 15:07:54,267 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (135, -105, -78)}
+ INFO 15:07:54,315 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (133, -104, -78)}
+ INFO 15:07:54,426 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Sagittarius Caecus breed : 9 [5749864] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (32, -156, 4)}
+ INFO 15:07:54,453 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Caliburnus breed : 8 [11039312] isControlledByAI=false obstacleId : 8 join the fight at {Point3 : (32, -150, 0)}
+ INFO 15:07:54,491 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=1584117350 Ebenus Sagittarius breed : 9 [8934075] isControlledByAI=false obstacleId : 9 join the fight at {Point3 : (37, -156, -1)}
+ INFO 15:08:05,837 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 21616
+ INFO 15:08:05,844 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 10625777, byte size : 21616
+ INFO 15:08:05,853 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:08:05,882 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9315
+ INFO 15:08:05,902 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:08:05,905 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5738009, byte size : 28378
+ INFO 15:08:05,919 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28226
+ INFO 15:08:06,012 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:08:06,032 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 11039312, byte size : 9315
+ INFO 15:08:06,041 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5750213, byte size : 27130
+ INFO 15:08:06,092 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,094 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:08:06,097 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,102 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:08:06,107 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:08:06,110 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 5749864, byte size : 28226
+ INFO 15:08:06,120 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,126 [AWT-EventQueue-0] (cjr:53) - Unserializing effects for fighter 8934075, byte size : 29064
+ INFO 15:08:06,128 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,134 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:08:06,135 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:08:06,137 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:08:06,145 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,151 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 24 % Dommages infligés (Poids plume)
+ INFO 15:08:06,164 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,169 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 12 % Dommages infligés (Poids plume)
+ INFO 15:08:06,173 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 24 % Dommages infligés (Poids plume)
+ INFO 15:08:06,176 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,180 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 30 % Dommages infligés (Insaisissable)
+ INFO 15:08:06,187 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -2 PM max
+ INFO 15:08:06,188 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 2 PA
+ INFO 15:08:06,190 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+50 Niv.)
+ INFO 15:08:06,192 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 15:08:06,194 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:06,195 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:06,230 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 15:08:06,231 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:06,231 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:07,863 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:07,864 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:07,866 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:07,868 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 15:08:07,869 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:07,871 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:07,872 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:07,876 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 15:08:09,732 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PA (Force vitale)
+ INFO 15:08:09,734 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:09,735 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:09,739 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PA (Force vitale)
+ INFO 15:08:09,740 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:09,741 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:10,356 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:10,357 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:10,357 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:10,358 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:10,358 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:10,360 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 70 secondes reportées pour le tour suivant.
+ INFO 15:08:10,360 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:10,364 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 70 secondes reportées pour le tour suivant.
+ INFO 15:08:11,871 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse lance le sort Flèche criblante
+ INFO 15:08:11,877 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse lance le sort Flèche criblante
+ INFO 15:08:12,635 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -62 PV (Terre)
+ INFO 15:08:12,635 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: -62 PV (Terre)
+ INFO 15:08:12,637 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Criblé (Niv. 5)
+ INFO 15:08:12,637 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Criblé (Niv. 5)
+ INFO 15:08:12,963 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse lance le sort Flèche criblante
+ INFO 15:08:12,965 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse lance le sort Flèche criblante
+ INFO 15:08:13,716 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -55 PV (Terre)
+ INFO 15:08:13,716 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -55 PV (Terre)
+ INFO 15:08:13,717 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Criblé (Niv. 5)
+ INFO 15:08:13,719 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Criblé (Niv. 5)
+ INFO 15:08:13,860 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 1 PA (Force vitale)
+ INFO 15:08:13,860 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 1 PA (Force vitale)
+ INFO 15:08:13,861 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:13,861 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:13,862 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:13,862 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:14,479 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:14,481 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:14,482 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:14,484 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 15:08:14,508 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:14,510 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:14,511 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Ebenus Sagittarius: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:14,513 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 68 secondes reportées pour le tour suivant.
+ INFO 15:08:16,113 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin lance le sort Kleptosram
+ INFO 15:08:16,247 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin lance le sort Kleptosram
+ INFO 15:08:16,436 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -164 PV (Eau)
+ INFO 15:08:16,578 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -164 PV (Eau)
+ INFO 15:08:16,978 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: Point Faible (+10 Niv.)
+ INFO 15:08:16,980 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin lance le sort Attaque mortelle
+ INFO 15:08:17,114 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: Point Faible (+10 Niv.)
+ INFO 15:08:17,114 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin lance le sort Attaque mortelle
+ INFO 15:08:17,306 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -411 PV (Eau)
+ INFO 15:08:17,445 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: -411 PV (Eau)
+ INFO 15:08:17,740 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: Point Faible (+35 Niv.)
+ INFO 15:08:17,879 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: Point Faible (+35 Niv.)
+ INFO 15:08:18,609 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: n'est plus sous l'emprise de 'Puissance' (Iop isolé)
+ INFO 15:08:18,612 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 63 secondes reportées pour le tour suivant.
+ INFO 15:08:18,640 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus: n'est plus sous l'emprise de 'Puissance' (Iop isolé)
+ INFO 15:08:18,642 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 63 secondes reportées pour le tour suivant.
+ INFO 15:08:20,354 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 20 % Dommages infligés (Pétillance)
+ INFO 15:08:20,355 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 20 % Coup critique
+ INFO 15:08:20,355 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 1 PA (Force vitale)
+ INFO 15:08:20,389 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 20 % Dommages infligés (Pétillance)
+ INFO 15:08:20,390 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 20 % Coup critique
+ INFO 15:08:20,390 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: 1 PA (Force vitale)
+ INFO 15:08:21,563 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+100 Niv.) (Assassin squelettique)
+ INFO 15:08:21,565 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:08:21,573 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis: Point Faible (+100 Niv.) (Assassin squelettique)
+ INFO 15:08:21,576 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:08:21,677 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 10 % Coup critique
+ INFO 15:08:21,690 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 10 % Coup critique
+ INFO 15:08:22,874 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:22,875 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:22,878 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:22,880 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:08:22,893 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: 40 % Dommages infligés (Insaisissable)
+ INFO 15:08:22,894 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: Affûtage (+40 Niv.) (Insaisissable)
+ INFO 15:08:22,895 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum: Précision (+40 Niv.) (Insaisissable)
+ INFO 15:08:22,898 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 67 secondes reportées pour le tour suivant.
+ INFO 15:08:23,033 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 15:08:23,034 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:23,035 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:23,047 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PA (Force vitale)
+ INFO 15:08:23,048 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:23,049 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:29,061 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 15:08:29,093 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche d'immolation (Critiques)
+ INFO 15:08:29,815 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: -5 902 PV (Feu)
+ INFO 15:08:29,816 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Fourberie" a échoué.
+ INFO 15:08:29,849 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: -5 902 PV (Feu)
+ INFO 15:08:29,850 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Fourberie" a échoué.
+ INFO 15:08:30,787 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 15:08:30,789 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 15:08:30,791 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche explosive (Critiques)
+ INFO 15:08:30,792 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 4 % Dommages infligés (Puissance brute)
+ INFO 15:08:30,815 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+60 Niv.)
+ INFO 15:08:30,818 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+60 Niv.)
+ INFO 15:08:30,819 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche explosive (Critiques)
+ INFO 15:08:30,821 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 4 % Dommages infligés (Puissance brute)
+ INFO 15:08:31,437 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin est hors-combat !
+ INFO 15:08:31,466 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin est hors-combat !
+ INFO 15:08:31,972 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: -22 980 PV (Feu)
+ INFO 15:08:32,011 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin: -22 980 PV (Feu)
+ INFO 15:08:32,947 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+120 Niv.)
+ INFO 15:08:32,948 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PW
+ INFO 15:08:32,950 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: La Pointe affûtée est prête !
+ INFO 15:08:32,952 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Balise affûtée (+1 Niv.)
+ INFO 15:08:32,953 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Flèche lumineuse (+1 Niv.) (Archer Futé)
+ INFO 15:08:32,956 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -2 PA max (Parti pris)
+ INFO 15:08:32,958 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 2 PM (Parti pris)
+ INFO 15:08:32,960 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+120 Niv.)
+ INFO 15:08:32,961 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche chercheuse (Critiques)
+ INFO 15:08:32,979 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+120 Niv.)
+ INFO 15:08:32,980 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 1 PW
+ INFO 15:08:32,982 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: La Pointe affûtée est prête !
+ INFO 15:08:32,984 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Balise affûtée (+1 Niv.)
+ INFO 15:08:32,986 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Flèche lumineuse (+1 Niv.) (Archer Futé)
+ INFO 15:08:32,990 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: -2 PA max (Parti pris)
+ INFO 15:08:32,992 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 2 PM (Parti pris)
+ INFO 15:08:33,128 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+120 Niv.)
+ INFO 15:08:33,131 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus lance le sort Flèche chercheuse (Critiques)
+ INFO 15:08:33,562 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin est hors-combat !
+ INFO 15:08:33,590 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Assassin est hors-combat !
+ INFO 15:08:33,816 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof de Soigneuse: -7 474 PV (Air)
+ INFO 15:08:33,999 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof de Soigneuse: -7 474 PV (Air)
+ INFO 15:08:34,785 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.)
+ INFO 15:08:34,787 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+140 Niv.)
+ INFO 15:08:34,789 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Consomme Pointe affûtée
+ INFO 15:08:34,966 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+40 Niv.)
+ INFO 15:08:34,969 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+140 Niv.)
+ INFO 15:08:34,970 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Consomme Pointe affûtée
+ INFO 15:08:35,285 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 50 % Dommages infligés (Insaisissable)
+ INFO 15:08:35,287 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+90 Niv.) (Insaisissable)
+ INFO 15:08:35,289 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+190 Niv.) (Insaisissable)
+ INFO 15:08:35,296 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 96 secondes reportées pour le tour suivant.
+ INFO 15:08:35,317 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: 50 % Dommages infligés (Insaisissable)
+ INFO 15:08:35,319 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Affûtage (+90 Niv.) (Insaisissable)
+ INFO 15:08:35,321 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagittarius Caecus: Précision (+190 Niv.) (Insaisissable)
+ INFO 15:08:35,323 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] 95 secondes reportées pour le tour suivant.
+ INFO 15:08:35,424 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PA (Force vitale)
+ INFO 15:08:35,424 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:35,425 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:35,428 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof de Soigneuse est hors-combat !
+ INFO 15:08:35,480 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PA (Force vitale)
+ INFO 15:08:35,481 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -50 Résistance Élémentaire (Pacte d'Anathar V)
+ INFO 15:08:35,482 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 10 % Dommages infligés (Pacte d'Anathar V)
+ INFO 15:08:35,621 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof de Soigneuse est hors-combat !
+ INFO 15:08:37,338 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis lance le sort Flèche explosive (Critiques)
+ INFO 15:08:37,339 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 4 % Dommages infligés (Puissance brute)
+ INFO 15:08:37,345 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 5x Plâjeton .
+ INFO 15:08:37,384 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis lance le sort Flèche explosive (Critiques)
+ INFO 15:08:37,388 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 4 % Dommages infligés (Puissance brute)
+ INFO 15:08:37,396 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 15:08:37,479 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous venez de faire gagner 2 points à votre guilde !
+ INFO 15:08:38,529 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse: -23 338 PV (Feu)
+ INFO 15:08:38,566 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Gostof d'Éclaireuse: -23 338 PV (Feu)
+ INFO 15:08:39,485 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+100 Niv.)
+ INFO 15:08:39,487 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PW
+ INFO 15:08:39,488 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: La Pointe affûtée est prête !
+ INFO 15:08:39,489 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Balise affûtée (+1 Niv.)
+ INFO 15:08:39,491 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Flèche lumineuse (+1 Niv.) (Archer Futé)
+ INFO 15:08:39,493 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -2 PA max (Parti pris)
+ INFO 15:08:39,493 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 2 PM (Parti pris)
+ INFO 15:08:39,495 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+100 Niv.)
+ INFO 15:08:39,495 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Caliburnus : +1 430 572 points d'XP.  Prochain niveau dans : 4 357 762 879.
+ INFO 15:08:39,512 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
+ INFO 15:08:39,520 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117350
+ INFO 15:08:39,522 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:08:39,540 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Affûtage (+100 Niv.)
+ INFO 15:08:39,542 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 1 PW
+ INFO 15:08:39,543 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: La Pointe affûtée est prête !
+ INFO 15:08:39,545 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Balise affûtée (+1 Niv.)
+ INFO 15:08:39,545 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Flèche lumineuse (+1 Niv.) (Archer Futé)
+ INFO 15:08:39,549 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: -2 PA max (Parti pris)
+ INFO 15:08:39,552 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: 2 PM (Parti pris)
+ INFO 15:08:39,555 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis: Précision (+100 Niv.)
+ INFO 15:08:39,557 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Lucis : +476 857 points d'XP.  Prochain niveau dans : 16 778 070 419.
+ INFO 15:08:39,557 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Sagitta Tenebrarum : +1 192 144 points d'XP.  Prochain niveau dans : 10 194 244 587.
+ INFO 15:08:39,558 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Pugio Letalis : +715 286 points d'XP.  Prochain niveau dans : 11 522 426 049.
+ INFO 15:08:39,574 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 1584117350
+ INFO 15:08:39,575 [AWT-EventQueue-0] (ciD:122) - NetInFight Removed
+ INFO 15:08:39,912 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Combat terminé, cliquez ici pour rouvrir l'écran de fin de combat. 
