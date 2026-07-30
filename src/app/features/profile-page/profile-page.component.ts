@@ -14,6 +14,7 @@ import { AppDataExportService } from '../../core/services/app-data-export.servic
 import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
+import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -58,6 +59,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
+  private readonly confirmDelete = inject(ConfirmDeleteService);
 
   protected readonly avatarIndexes = Array.from(
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
@@ -326,8 +328,12 @@ export class ProfilePageComponent implements OnDestroy {
     return account.label.trim() || this.i18n.t('profile.rosterUnnamedAccount', { index: index + 1 });
   }
 
-  protected removeCharacter(accountId: string, name: string): void {
-    this.roster.removeCharacter(accountId, name);
+  protected requestRemoveCharacter(event: Event, accountId: string, name: string): void {
+    event.stopPropagation();
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('profile.confirmDeleteCharacter'), () => {
+      this.roster.removeCharacter(accountId, name);
+    });
   }
 
   protected addCharacterFromForm(accountId: string, character: NewRosterCharacter): void {
