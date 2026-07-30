@@ -13,6 +13,7 @@ import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { TranslatePipe } from './shared/translate.pipe';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
+import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
@@ -30,6 +31,7 @@ import { Gender } from './core/data/class-icons.data';
     ProfilePageComponent,
     LootAlertComponent,
     ClassPickerComponent,
+    ConfirmDeletePopoverComponent,
     CombatEdgeTabComponent,
     TranslatePipe,
   ],
