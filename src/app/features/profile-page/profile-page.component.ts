@@ -60,6 +60,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   protected readonly avatarIndexes = Array.from(
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
@@ -288,6 +289,33 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected characterIcon(char: RosterCharacter): string {
     return getClassIconUri(char.className, char.gender);
+  }
+
+  /** Tooltip JS des noms de personnage tronqués (liste et grille) — même
+   * principe que `.kpi-name-tooltip` dans tracker-strip (mutualisé en
+   * `.floating-name-tooltip`, styles.css) : un `[title]` classique serait
+   * rogné par `overflow` de `.roster-character-scroll`. */
+  protected readonly nameTooltip = signal<{ text: string; right: number; bottom: number } | null>(
+    null,
+  );
+
+  protected onNameHover(nameEl: HTMLElement, name: string): void {
+    if (nameEl.scrollWidth <= nameEl.clientWidth) {
+      this.nameTooltip.set(null);
+      return;
+    }
+    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
+    const targetRect = nameEl.getBoundingClientRect();
+    const gap = 6;
+    this.nameTooltip.set({
+      text: name,
+      right: hostRect.right - targetRect.right - gap,
+      bottom: hostRect.bottom - targetRect.top + gap,
+    });
+  }
+
+  protected onNameLeave(): void {
+    this.nameTooltip.set(null);
   }
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
