@@ -293,6 +293,52 @@ button.reset-btn:hover {
   max-width: 220px;
 }
 
+/* Tooltip positionnée en JS (pas `[title]`/`[data-tooltip]` ci-dessus) pour
+   les libellés tronqués dans un conteneur à `overflow` qui rognerait sinon
+   le `::after` générique (voir `.kpi-name-tooltip` dans tracker-strip,
+   première implémentation de ce besoin — mutualisée ici pour tout autre
+   composant dans le même cas, ex. profile-page). L'appelant calcule
+   `right`/`bottom` (ou `top`) relativement à un ancêtre positionné qui
+   n'a pas lui-même d'`overflow` coupant. */
+.floating-name-tooltip {
+  position: absolute;
+  background: #000;
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Portrait de la vue grille des personnages (profile-page) : placée ici
+   (plutôt que dans profile-page.component.css) pour rester sous le budget
+   `anyComponentStyle` par composant, déjà serré sur cette page. */
+.roster-character-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #111;
+}
+@media (max-width: 800px) {
+  /* Vue grille mobile : portrait plein cadre, nom aligné à gauche. */
+  .roster-character-tile {
+    padding: 0;
+    background: none;
+  }
+  .roster-character-avatar {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+  .roster-character-tile .profile-preview-name-row {
+    justify-content: flex-start;
+  }
+}
+
 /* --- Panneaux --- */
 .tool-panel {
   position: relative;
