@@ -502,16 +502,20 @@
   gap: 8px;
 }
 
-.sound-item-grid {
+.sound-item-grid,
+.roster-character-list.is-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
+}
+.sound-item-grid {
   max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 2px;
 }
-.sound-item-tile {
+.sound-item-tile,
+.roster-character-tile {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -519,8 +523,10 @@
   gap: 4px;
   padding: 26px 6px 8px;
   border-radius: 8px;
-  border: 2px solid transparent;
   background: #202020;
+}
+.sound-item-tile {
+  border: 2px solid transparent;
   text-align: center;
 }
 .sound-item-name {
@@ -680,12 +686,13 @@
 .roster-character-row {
   padding: 3px 0;
 }
-/* Lisibilité : fond alterné une ligne sur deux (vue liste uniquement — la
-   vue grille n'a pas de "lignes"). `[style.*]` côté template gère le reste
-   des différences liste/grille (voir profile-page.component.html) : seule
-   l'alternance nécessite un vrai sélecteur CSS (`:nth-child`, impossible à
-   exprimer en style inline). */
-.roster-character-list:not(.is-grid) .roster-character-row:nth-child(even) {
+/* Glisser-déposer dispo sur chaque ligne/tuile : la main le rend visible. */
+.roster-character-row,
+.roster-character-tile {
+  cursor: grab;
+}
+/* Fond alterné une ligne sur deux, vue liste uniquement. */
+.roster-character-row:nth-child(even) {
   background: rgba(255, 255, 255, 0.03);
 }
 .roster-character-actions {

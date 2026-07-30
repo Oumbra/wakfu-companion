@@ -17,7 +17,11 @@ import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
-import { BREEDS_SPRITE_COLS, BREEDS_SPRITE_ROWS } from '../../core/data/class-breeds.data';
+import {
+  BREEDS_SPRITE_COLS,
+  BREEDS_SPRITE_ROWS,
+  getBreedAvatarIndex,
+} from '../../core/data/class-breeds.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
@@ -67,11 +71,6 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
 
-  /** Affichage de la liste des personnages (voir `.roster-character-list` /
-   * `.is-grid` en CSS) — en mémoire seulement, comme `activeTab`/
-   * `selectedAccountId` ci-dessous. */
-  protected readonly characterViewMode = signal<'list' | 'grid'>('list');
-
   /** Personnage actuellement en cours de renommage (un seul à la fois, tous
    * comptes confondus) — même principe que `editingPseudo`/`pseudoEditInput`. */
   protected readonly editingCharacter = signal<{ accountId: string; name: string } | null>(null);
@@ -101,6 +100,15 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly soundGrid = viewChild<ElementRef<HTMLDivElement>>('soundGrid');
   protected readonly soundGridColumns = signal(1);
   private soundGridResizeObserver?: ResizeObserver;
+
+  /** Même principe que `soundGridColumns` ci-dessus, pour la vue grille des
+   * personnages (voir `.roster-character-list.is-grid` en CSS — valeurs à
+   * garder synchronisées avec `CHAR_GRID_GAP`/`CHAR_GRID_MIN_COL`). */
+  private static readonly CHAR_GRID_GAP = 8;
+  private static readonly CHAR_GRID_MIN_COL = 120;
+  private readonly charGrid = viewChild<ElementRef<HTMLDivElement>>('charGrid');
+  protected readonly charGridColumns = signal(1);
+  private charGridResizeObserver?: ResizeObserver;
 
   /** Onglet de compte actif (voir `.roster-tab-bar`, même principe que les
    * onglets Combat/Suivi/Chat du dashboard mobile) — signal en mémoire
@@ -144,6 +152,15 @@ export class ProfilePageComponent implements OnDestroy {
       this.updateSoundGridColumns(el);
     });
 
+    effect(() => {
+      const el = this.charGrid()?.nativeElement;
+      this.charGridResizeObserver?.disconnect();
+      if (!el) return;
+      this.charGridResizeObserver = new ResizeObserver(() => this.updateCharGridColumns(el));
+      this.charGridResizeObserver.observe(el);
+      this.updateCharGridColumns(el);
+    });
+
     // Sélectionne le compte principal (ou le 1er) à l'initialisation, et
     // recorrige si le compte sélectionné a été supprimé entretemps.
     effect(() => {
@@ -177,6 +194,7 @@ export class ProfilePageComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.soundGridResizeObserver?.disconnect();
+    this.charGridResizeObserver?.disconnect();
     this.tabBarResizeObserver?.disconnect();
   }
 
@@ -194,6 +212,15 @@ export class ProfilePageComponent implements OnDestroy {
     const { SOUND_GRID_GAP: gap, SOUND_GRID_MIN_COL: minCol } = ProfilePageComponent;
     const columns = Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
     this.soundGridColumns.set(columns);
+  }
+
+  private updateCharGridColumns(el: HTMLElement): void {
+    const style = getComputedStyle(el);
+    const contentWidth =
+      el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+    const { CHAR_GRID_GAP: gap, CHAR_GRID_MIN_COL: minCol } = ProfilePageComponent;
+    const columns = Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
+    this.charGridColumns.set(columns);
   }
 
   protected goBack(): void {
@@ -259,6 +286,11 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected characterIcon(char: RosterCharacter): string {
     return getClassIconUri(char.className, char.gender);
+  }
+
+  /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
+  protected avatarIndexForChar(char: RosterCharacter): number {
+    return getBreedAvatarIndex(char.className, char.gender);
   }
 
   protected addAccount(): void {

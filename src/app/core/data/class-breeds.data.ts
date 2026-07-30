@@ -8,3 +8,36 @@ export const BREEDS_SPRITE_DATA_URI = 'data:image/jpeg;base64,/9j/4QAYRXhpZgAASU
 export const BREEDS_SPRITE_COLS = 18;
 export const BREEDS_SPRITE_ROWS = 2;
 export const BREEDS_SPRITE_CELL_SIZE = 35;
+
+/**
+ * Colonne (classe) de chaque case de la planche, retrouvée par comparaison
+ * visuelle avec les icônes de classe (class-icons.data.ts) : Ankama ne
+ * documente l'ordre nulle part. Ligne 1 (sexe='m') = variante visible dans
+ * CLASS_ICON_DATA_URI (icônes masculines) ; ligne 0 = variante alternative.
+ */
+const BREED_CLASS_COLUMNS: Readonly<Record<string, number>> = {
+  eliotrope: 0,
+  osamodas: 1,
+  ecaflip: 2,
+  sram: 3,
+  xelor: 4,
+  ouginak: 5,
+  eniripsa: 6,
+  iop: 7,
+  cra: 8,
+  sadida: 9,
+  sacrier: 10,
+  pandawa: 11,
+  feca: 12,
+  zobal: 13,
+  foggernaut: 14,
+  huppermage: 15,
+  enutrof: 16,
+  rogue: 17,
+};
+
+/** Index (0-35) dans la planche pour une classe+sexe donnés (voir AvatarIconComponent) — classe inconnue -> 1ère case. */
+export function getBreedAvatarIndex(className: string | undefined, gender: 'm' | 'f'): number {
+  const col = (className ? BREED_CLASS_COLUMNS[className] : undefined) ?? 0;
+  return (gender === 'm' ? 1 : 0) * BREEDS_SPRITE_COLS + col;
+}
