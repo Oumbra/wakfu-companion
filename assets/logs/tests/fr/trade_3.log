@@ -1,0 +1,10 @@
+ INFO 11:28:36,451 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Anonyme-Joueur2 (id=90001047) and Anonyme-Sram1 (id=90000007)
+ INFO 11:28:55,872 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
+ INFO 11:29:12,814 [AWT-EventQueue-0] (buN:172) - [Trade] Le joueur Anonyme-Joueur2 ajoute 1xLes Doigts d'Enutrof (refId=12634)
+ INFO 11:29:25,192 [AWT-EventQueue-0] (buN:164) - [Trade] Le joueur Anonyme-Joueur2 mets la somme de kamas à 10
+ INFO 11:29:47,782 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 10 kamas.
+ INFO 11:29:47,783 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
+ INFO 11:29:47,783 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Anonyme-Sram1 donne : 0K ; 
+le joueur Anonyme-Joueur2 donne : 10K ; 1xLes Doigts d'Enutrof (refId=12634) 
+ INFO 11:29:47,784 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
+ INFO 11:29:47,784 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Anonyme-Joueur2 (id=90001047) and Anonyme-Sram1 (id=90000007)
