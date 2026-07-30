@@ -289,195 +289,253 @@
     </div>
 
     <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
-    <div class="panel-body">
+    <div class="panel-body roster-panel-body">
     <div class="profile-field profile-field-wide">
       <div class="profile-label-row roster-label-row-desktop">
         <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
       </div>
 
-      <div class="roster-tab-bar" #tabBar>
-        <span
-          class="roster-tab-slider"
-          [style.left.px]="tabSliderRect().left"
-          [style.width.px]="tabSliderRect().width"
-        ></span>
-        @for (account of roster.accounts(); track account.id; let i = $index) {
-          <button
-            #tabBtn
-            class="roster-tab-btn"
-            [class.active]="account.id === selectedAccountId()"
-            [title]="tabLabel(account, i)"
-            (click)="selectAccount(account.id)"
-          >
-            <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
-            @if (!account.isDefault && account.id === selectedAccountId()) {
-              <span
-                class="roster-tab-remove"
-                [title]="'profile.rosterRemoveAccount' | t"
-                (click)="removeAccountFromTab($event, account.id)"
-              >
-                ×
-              </span>
-            }
-          </button>
-        }
-        <button
-          class="icon-btn roster-add-account-btn"
-          type="button"
-          [title]="'profile.rosterAddAccount' | t"
-          (click)="addAccount()"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-        </button>
-      </div>
-
-      @if (selectedAccount(); as account) {
-        <div class="roster-account-panel">
-          @if (!account.isDefault) {
-            <div class="roster-account-header">
-              <input
-                type="text"
-                class="roster-account-label-input"
-                [value]="account.label"
-                [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                (change)="renameAccount(account.id, $any($event.target).value)"
-              />
-              <button
-                class="icon-btn reset-btn tooltip-align-right"
-                type="button"
-                [title]="'profile.rosterRemoveAccount' | t"
-                (click)="removeAccount(account.id)"
-              >
-                ×
-              </button>
-            </div>
+      <div class="roster-tabs-wrapper">
+        <div class="roster-tab-bar" #tabBar>
+          <span
+            class="roster-tab-slider"
+            [style.left.px]="tabSliderRect().left"
+            [style.width.px]="tabSliderRect().width"
+          ></span>
+          @for (account of roster.accounts(); track account.id; let i = $index) {
+            <button
+              #tabBtn
+              class="roster-tab-btn"
+              [class.active]="account.id === selectedAccountId()"
+              [title]="tabLabel(account, i)"
+              (click)="selectAccount(account.id)"
+            >
+              <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
+              @if (!account.isDefault && account.id === selectedAccountId()) {
+                <span
+                  class="roster-tab-remove"
+                  [title]="'profile.rosterRemoveAccount' | t"
+                  (click)="removeAccountFromTab($event, account.id)"
+                >
+                  ×
+                </span>
+              }
+            </button>
           }
+          <button
+            class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
+            type="button"
+            [title]="'profile.rosterAddAccount' | t"
+            (click)="addAccount()"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+          </button>
+        </div>
 
-          @if (account.characters.length > 0) {
-            <div class="icon-switch" style="align-self: flex-end; width: 52px">
-              <span
-                class="icon-switch-highlight"
-                [class.is-right]="characterViewMode() === 'grid'"
-              ></span>
-              <button
-                type="button"
-                class="icon-switch-option"
-                [class.selected]="characterViewMode() === 'list'"
-                [title]="'profile.rosterViewList' | t"
-                (click)="characterViewMode.set('list')"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="4" y1="6" x2="20" y2="6" />
-                  <line x1="4" y1="12" x2="20" y2="12" />
-                  <line x1="4" y1="18" x2="20" y2="18" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                class="icon-switch-option"
-                [class.selected]="characterViewMode() === 'grid'"
-                [title]="'profile.rosterViewGrid' | t"
-                (click)="characterViewMode.set('grid')"
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect x="4" y="4" width="7" height="7" rx="1.5" />
-                  <rect x="13" y="4" width="7" height="7" rx="1.5" />
-                  <rect x="4" y="13" width="7" height="7" rx="1.5" />
-                  <rect x="13" y="13" width="7" height="7" rx="1.5" />
-                </svg>
-              </button>
-            </div>
+        @if (selectedAccount(); as account) {
+          <div class="roster-account-panel">
+            @if (!account.isDefault) {
+              <div class="roster-account-header">
+                <input
+                  type="text"
+                  class="roster-account-label-input"
+                  [value]="account.label"
+                  [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                  (change)="renameAccount(account.id, $any($event.target).value)"
+                />
+                <button
+                  class="icon-btn reset-btn tooltip-align-right"
+                  type="button"
+                  [title]="'profile.rosterRemoveAccount' | t"
+                  (click)="removeAccount(account.id)"
+                >
+                  ×
+                </button>
+              </div>
+            }
 
-            <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden">
+            @if (account.characters.length > 0) {
+              <div class="icon-switch" style="align-self: flex-end; width: 52px">
+                <span
+                  class="icon-switch-highlight"
+                  [class.is-right]="profile.characterViewMode() === 'grid'"
+                ></span>
+                <button
+                  type="button"
+                  class="icon-switch-option"
+                  [class.selected]="profile.characterViewMode() === 'list'"
+                  [title]="'profile.rosterViewList' | t"
+                  (click)="profile.setCharacterViewMode('list')"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="6" x2="20" y2="6" />
+                    <line x1="4" y1="12" x2="20" y2="12" />
+                    <line x1="4" y1="18" x2="20" y2="18" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="icon-switch-option"
+                  [class.selected]="profile.characterViewMode() === 'grid'"
+                  [title]="'profile.rosterViewGrid' | t"
+                  (click)="profile.setCharacterViewMode('grid')"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                  </svg>
+                </button>
+              </div>
+
               <div
-                class="roster-character-list"
-                [class.is-grid]="characterViewMode() === 'grid'"
-                [style.display]="characterViewMode() === 'grid' ? 'grid' : null"
-                [style.grid-template-columns]="
-                  characterViewMode() === 'grid' ? 'repeat(auto-fill, minmax(150px, 1fr))' : null
-                "
-                [style.gap.px]="characterViewMode() === 'grid' ? 8 : null"
+                class="roster-character-scroll"
+                style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding: 14px 12px 4px"
               >
-                @for (char of account.characters; track char.name; let i = $index) {
-                  <div
-                    class="roster-character-row"
-                    draggable="true"
-                    (dragstart)="onCharDragStart(i)"
-                    (dragover)="$event.preventDefault()"
-                    (drop)="onCharDrop(account.id, i)"
-                    [style.flex-direction]="characterViewMode() === 'grid' ? 'column' : null"
-                    [style.gap.px]="characterViewMode() === 'grid' ? 4 : null"
-                    [style.padding]="characterViewMode() === 'grid' ? '8px' : null"
-                  >
-                    <img
-                      [src]="characterIcon(char)"
-                      class="roster-character-icon"
-                      alt=""
-                      [style.width.px]="characterViewMode() === 'grid' ? 64 : null"
-                      [style.height.px]="characterViewMode() === 'grid' ? 64 : null"
-                    />
-                    <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0">
-                      @if (isEditingCharacter(account.id, char.name)) {
-                        <input
-                          #charEditInput
-                          type="text"
-                          class="pseudo-edit-input roster-character-edit-input"
-                          style="flex-grow: 1; text-align: left"
-                          [style.width.%]="characterViewMode() === 'grid' ? 100 : null"
-                          [value]="char.name"
-                          (blur)="commitCharacterRename(account.id, char.name, $any($event.target).value)"
-                          (keydown)="onCharacterRenameKeydown($event, account.id, char.name)"
-                        />
-                      } @else {
-                        <span class="roster-character-name">{{ char.name }}</span>
-                      }
-                      <div class="roster-character-actions">
+                <div
+                  #charGrid
+                  class="roster-character-list"
+                  [class.is-grid]="profile.characterViewMode() === 'grid'"
+                >
+                  @for (char of account.characters; track char.name; let i = $index) {
+                    @if (profile.characterViewMode() === 'grid') {
+                      <div
+                        class="roster-character-tile"
+                        draggable="true"
+                        (dragstart)="onCharDragStart(i)"
+                        (dragover)="$event.preventDefault()"
+                        (drop)="onCharDrop(account.id, i)"
+                      >
                         <button
-                          class="icon-btn pseudo-edit-btn"
+                          class="icon-btn reset-btn badge-close-btn tooltip-align-right"
+                          [class.tooltip-below]="i < charGridColumns()"
                           type="button"
                           draggable="false"
-                          [title]="'profile.rosterRenameCharacter' | t"
-                          (click)="startEditCharacter(account.id, char.name)"
-                        >
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 20h9" />
-                            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                          </svg>
-                        </button>
-                        <button
-                          class="icon-btn reset-btn tooltip-align-right"
-                          type="button"
-                          draggable="false"
-                          [class.badge-close-btn]="characterViewMode() === 'grid'"
-                          [title]="'tracker.remove' | t"
-                          (click)="removeCharacter(account.id, char.name)"
+                          [title]="'profile.rosterRemoveCharacter' | t"
+                          (click)="requestRemoveCharacter($event, account.id, char.name)"
                         >
                           ×
                         </button>
+                        <div class="roster-character-avatar">
+                          <app-avatar-icon [index]="avatarIndexForChar(char)" style="width: 100%; height: 100%" />
+                        </div>
+                        @if (isEditingCharacter(account.id, char.name)) {
+                          <input
+                            #charEditInput
+                            type="text"
+                            class="pseudo-edit-input"
+                            [value]="char.name"
+                            (blur)="commitCharacterRename(account.id, char.name, $any($event.target).value)"
+                            (keydown)="onCharacterRenameKeydown($event, account.id, char.name)"
+                          />
+                        } @else {
+                          <div class="profile-preview-name-row">
+                            <span
+                              #nameEl
+                              class="roster-character-name"
+                              (mouseenter)="onNameHover(nameEl, char.name)"
+                              (mouseleave)="onNameLeave()"
+                              >{{ char.name }}</span
+                            >
+                            <button
+                              class="icon-btn pseudo-edit-btn plain-icon-btn"
+                              type="button"
+                              draggable="false"
+                              [title]="'profile.rosterRenameCharacter' | t"
+                              (click)="startEditCharacter(account.id, char.name)"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                              </svg>
+                            </button>
+                          </div>
+                        }
                       </div>
-                    </div>
-                  </div>
-                }
+                    } @else {
+                      <div
+                        class="roster-character-row"
+                        draggable="true"
+                        (dragstart)="onCharDragStart(i)"
+                        (dragover)="$event.preventDefault()"
+                        (drop)="onCharDrop(account.id, i)"
+                      >
+                        <img [src]="characterIcon(char)" class="roster-character-icon" alt="" />
+                        <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1; min-width: 0">
+                          @if (isEditingCharacter(account.id, char.name)) {
+                            <input
+                              #charEditInput
+                              type="text"
+                              class="pseudo-edit-input roster-character-edit-input"
+                              style="flex-grow: 1; text-align: left"
+                              [value]="char.name"
+                              (blur)="commitCharacterRename(account.id, char.name, $any($event.target).value)"
+                              (keydown)="onCharacterRenameKeydown($event, account.id, char.name)"
+                            />
+                          } @else {
+                            <span
+                              #nameEl
+                              class="roster-character-name"
+                              (mouseenter)="onNameHover(nameEl, char.name)"
+                              (mouseleave)="onNameLeave()"
+                              >{{ char.name }}</span
+                            >
+                          }
+                          <div class="roster-character-actions">
+                            <button
+                              class="icon-btn pseudo-edit-btn"
+                              type="button"
+                              draggable="false"
+                              [title]="'profile.rosterRenameCharacter' | t"
+                              (click)="startEditCharacter(account.id, char.name)"
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 20h9" />
+                                <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                              </svg>
+                            </button>
+                            <button
+                              class="icon-btn reset-btn tooltip-align-right"
+                              type="button"
+                              draggable="false"
+                              [title]="'profile.rosterRemoveCharacter' | t"
+                              (click)="requestRemoveCharacter($event, account.id, char.name)"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  }
+                </div>
               </div>
-            </div>
-          }
+            }
 
-          <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
-        </div>
-      }
+            <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
+          </div>
+        }
+      </div>
     </div>
     </div>
     </div>
     </div>
   </div>
+
+  @if (nameTooltip(); as tip) {
+    <div class="floating-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
+      {{ tip.text }}
+    </div>
+  }
 </div>

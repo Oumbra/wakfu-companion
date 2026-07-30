@@ -142,10 +142,21 @@ button.icon-btn:hover {
   border-color: var(--accent);
 }
 
+/* Variante sans boîte (pas de fond/bordure, même au survol) : juste l'icône, voir vue grille du profil. */
+button.icon-btn.plain-icon-btn,
+button.icon-btn.plain-icon-btn:hover {
+  background: none;
+  border-color: transparent;
+}
+button.icon-btn.plain-icon-btn:hover {
+  color: var(--accent);
+}
+
 /* Badge rond à cheval sur la bordure d'un conteneur positionné (voir
    `.kpi-del` dans tracker-strip, même principe) — combiner avec `.icon-btn`/
    `.reset-btn` pour la couleur/le survol, cette classe ne pose que la
-   position/taille. */
+   position/taille. Centrage du glyphe "×" explicite : la taille de police
+   par défaut de `.icon-btn` (0.9rem) déborde visuellement d'un rond de 19px. */
 button.badge-close-btn {
   position: absolute;
   top: -9px;
@@ -153,6 +164,11 @@ button.badge-close-btn {
   width: 19px;
   height: 19px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 /* Switch à 2 options avec icônes (fond glissant), générique — même mécanisme
@@ -275,6 +291,61 @@ button.reset-btn:hover {
   white-space: normal;
   width: max-content;
   max-width: 220px;
+}
+
+/* Tooltip positionnée en JS (pas `[title]`/`[data-tooltip]` ci-dessus) pour
+   les libellés tronqués dans un conteneur à `overflow` qui rognerait sinon
+   le `::after` générique (voir `.kpi-name-tooltip` dans tracker-strip,
+   première implémentation de ce besoin — mutualisée ici pour tout autre
+   composant dans le même cas, ex. profile-page). L'appelant calcule
+   `right`/`bottom` (ou `top`) relativement à un ancêtre positionné qui
+   n'a pas lui-même d'`overflow` coupant. */
+.floating-name-tooltip {
+  position: absolute;
+  background: #000;
+  color: #fff;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #333;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Portrait de la vue grille des personnages (profile-page) : placée ici
+   (plutôt que dans profile-page.component.css) pour rester sous le budget
+   `anyComponentStyle` par composant, déjà serré sur cette page. */
+.roster-character-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #111;
+}
+@media (max-width: 800px) {
+  /* Vue grille mobile : portrait sans carte/fond autour (taille inchangée, 64x64). */
+  .roster-character-tile {
+    padding: 0;
+    background: none;
+  }
+  /* Panneau Personnages mobile en rendu bord à bord : `.panel-body` est
+     partagé par les 3 onglets (Avatar/Alertes/Personnages), d'où le hook
+     `.roster-panel-body` pour ne cibler que celui-ci. Spécificité à 3
+     classes : Angular réécrit `.panel-body` en `.panel-body[_ngcontent-x]`
+     (0,2,0) côté composant, un sélecteur global à 2 classes serait à égalité
+     et dépendrait de l'ordre d'injection des feuilles (piège déjà documenté
+     dans CLAUDE.md pour .alert-timing-control/.switch-hand-icon). */
+  .panels-row .panel-body.roster-panel-body {
+    padding: 0 0 var(--mobile-bottom-safe);
+  }
+  .panels-row .roster-tabs-wrapper {
+    padding: 10px 10px 4px 0;
+  }
+  .panels-row .roster-tabs-wrapper .roster-tab-bar {
+    border-radius: 0;
+    overflow-y: hidden;
+  }
 }
 
 /* --- Panneaux --- */
