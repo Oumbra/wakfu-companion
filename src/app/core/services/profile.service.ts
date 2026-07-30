@@ -10,6 +10,8 @@ export interface SoundItemEntry {
   isDefault: boolean;
 }
 
+export type CharacterViewMode = 'list' | 'grid';
+
 interface StoredProfile {
   pseudo: string;
   avatarIndex: number | null;
@@ -18,6 +20,8 @@ interface StoredProfile {
   alertDurationSeconds: number;
   /** Si vrai, le toast d'alerte sonore ne se ferme plus qu'à la main (voir le bouton de fermeture du toast). */
   alertManualClose: boolean;
+  /** Affichage de la liste des personnages (page profil, onglet Personnages). */
+  characterViewMode: CharacterViewMode;
 }
 
 const DEFAULT_ALERT_DURATION_SECONDS = 3.5;
@@ -42,6 +46,8 @@ export class ProfileService {
   readonly soundItems = signal<SoundItemEntry[]>([]);
   readonly alertDurationSeconds = signal(DEFAULT_ALERT_DURATION_SECONDS);
   readonly alertManualClose = signal(false);
+  /** Tout interrupteur/switch de l'application doit être persisté ici plutôt que gardé en mémoire (voir setCharacterViewMode). */
+  readonly characterViewMode = signal<CharacterViewMode>('list');
 
   constructor() {
     const stored = this.persistence.getJson<StoredProfile>(PROFILE_KEY);
@@ -59,6 +65,7 @@ export class ProfileService {
       this.alertDurationSeconds.set(stored?.alertDurationSeconds ?? DEFAULT_ALERT_DURATION_SECONDS);
       this.alertManualClose.set(stored?.alertManualClose ?? false);
     }
+    this.characterViewMode.set(stored?.characterViewMode ?? 'list');
   }
 
   setPseudo(value: string): void {
@@ -78,6 +85,11 @@ export class ProfileService {
 
   setAlertManualClose(value: boolean): void {
     this.alertManualClose.set(value);
+    this.persist();
+  }
+
+  setCharacterViewMode(value: CharacterViewMode): void {
+    this.characterViewMode.set(value);
     this.persist();
   }
 
@@ -116,6 +128,7 @@ export class ProfileService {
       soundItems: this.soundItems(),
       alertDurationSeconds: this.alertDurationSeconds(),
       alertManualClose: this.alertManualClose(),
+      characterViewMode: this.characterViewMode(),
     };
     this.persistence.setJson(PROFILE_KEY, value);
   }
