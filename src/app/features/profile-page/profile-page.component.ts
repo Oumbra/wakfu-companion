@@ -9,6 +9,7 @@ import {
   viewChild,
   viewChildren,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { ProfileService } from '../../core/services/profile.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -48,7 +49,8 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
     TranslatePipe,
     WakfuAutocompleteComponent,
     CharacterAddFormComponent,
-  ],
+    NgClass
+],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
