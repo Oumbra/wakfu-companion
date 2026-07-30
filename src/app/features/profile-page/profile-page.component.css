@@ -452,6 +452,7 @@
     flex-wrap: nowrap;
     gap: 5px;
     padding: 8px 8px;
+    background: #131313 !important;
   }
   .alert-timing-actions {
     flex-wrap: nowrap;
@@ -615,6 +616,7 @@
   border-bottom: none;
   border-radius: 8px 8px 0 0;
   padding: 6px 6px 0;
+  overflow-y: hidden;
 }
 .roster-tab-slider {
   position: absolute;

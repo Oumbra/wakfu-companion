@@ -329,22 +329,31 @@ button.reset-btn:hover {
     padding: 0;
     background: none;
   }
-  /* Panneau Personnages mobile en rendu bord à bord : `.panel-body` est
-     partagé par les 3 onglets (Avatar/Alertes/Personnages), d'où le hook
-     `.roster-panel-body` pour ne cibler que celui-ci. Spécificité à 3
-     classes : Angular réécrit `.panel-body` en `.panel-body[_ngcontent-x]`
-     (0,2,0) côté composant, un sélecteur global à 2 classes serait à égalité
-     et dépendrait de l'ordre d'injection des feuilles (piège déjà documenté
-     dans CLAUDE.md pour .alert-timing-control/.switch-hand-icon). */
   .panels-row .panel-body.roster-panel-body {
-    padding: 0 0 var(--mobile-bottom-safe);
+    padding: 0;
+    overflow-x: hidden;
   }
   .panels-row .roster-tabs-wrapper {
-    padding: 10px 10px 4px 0;
+    padding: 0;
   }
   .panels-row .roster-tabs-wrapper .roster-tab-bar {
     border-radius: 0;
-    overflow-y: hidden;
+  }
+  .panels-row .roster-account-panel {
+    border: none !important;
+  }
+  .panels-row .roster-character-scroll {
+    max-height: none !important;
+    padding: 10px 10px 0 0 !important;
+  }
+  .panels-row .roster-character-scroll.roster-account-default {
+    height: calc(100vh - 250px);
+  }
+  .panels-row .roster-character-scroll:not(.roster-account-default) {
+    height: calc(100vh - 290px);
+  }
+  .panels-row .roster-character-row .pseudo-edit-input {
+    width: calc(100% - 62px) !important;
   }
 }
 
