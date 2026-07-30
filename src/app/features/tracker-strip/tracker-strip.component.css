@@ -322,60 +322,12 @@
   background: transparent;
 }
 
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 4;
-}
-/* `right`/`top` posés dynamiquement en JS (voir tracker-strip.component.ts
-   `hostRelativePos`), ancrés sur le bouton de suppression lui-même (pas sur
-   toute la tuile) et positionnés EN DESSOUS de celui-ci : `.kpi-strip` a
-   `overflow-y:hidden`, qui rognerait sinon la popover d'une tuile de la
-   rangée si elle s'affichait au-dessus (aucune place dans ce cas,
-   contrairement à un `.tool-panel` classique). */
-.confirm-popover {
-  position: absolute;
-  background: #000;
-  border: 1px solid #444;
-  border-radius: 5px;
-  padding: 6px 7px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 5;
-}
-.confirm-popover::after {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  right: 12px;
-  border: 5px solid transparent;
-  border-bottom-color: #000;
-}
-.confirm-popover button {
-  padding: 2px 7px;
-  height: auto;
-  font-size: 0.68rem;
-  border-radius: 3px;
-  border: none;
-  cursor: pointer;
-}
-.confirm-yes {
-  background: #b33939;
-  color: #fff;
-}
-.confirm-no {
-  background: #333;
-  color: #ccc;
-}
-
-/* Tooltip du nom tronqué — même raison que `.confirm-popover` ci-dessus
-   (positionné en JS, voir `nameTooltip`/`hostRelativePos`) : reprend le
-   style visuel du système de tooltip générique (styles.css) sans pouvoir en
-   réutiliser le mécanisme CSS pur (`[title]::after`), rogné ici par
-   `.kpi-strip`. */
+/* Tooltip du nom tronqué — positionné en JS (voir `nameTooltip`/
+   `hostRelativePos`) : reprend le style visuel du système de tooltip
+   générique (styles.css) sans pouvoir en réutiliser le mécanisme CSS pur
+   (`[title]::after`), rogné ici par `.kpi-strip`. La popover de suppression
+   elle-même n'est plus locale : voir ConfirmDeleteService/
+   ConfirmDeletePopoverComponent (mutualisée avec le profil). */
 .kpi-name-tooltip {
   position: absolute;
   background: #000;

@@ -142,10 +142,21 @@ button.icon-btn:hover {
   border-color: var(--accent);
 }
 
+/* Variante sans boîte (pas de fond/bordure, même au survol) : juste l'icône, voir vue grille du profil. */
+button.icon-btn.plain-icon-btn,
+button.icon-btn.plain-icon-btn:hover {
+  background: none;
+  border-color: transparent;
+}
+button.icon-btn.plain-icon-btn:hover {
+  color: var(--accent);
+}
+
 /* Badge rond à cheval sur la bordure d'un conteneur positionné (voir
    `.kpi-del` dans tracker-strip, même principe) — combiner avec `.icon-btn`/
    `.reset-btn` pour la couleur/le survol, cette classe ne pose que la
-   position/taille. */
+   position/taille. Centrage du glyphe "×" explicite : la taille de police
+   par défaut de `.icon-btn` (0.9rem) déborde visuellement d'un rond de 19px. */
 button.badge-close-btn {
   position: absolute;
   top: -9px;
@@ -153,6 +164,11 @@ button.badge-close-btn {
   width: 19px;
   height: 19px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  line-height: 1;
 }
 
 /* Switch à 2 options avec icônes (fond glissant), générique — même mécanisme

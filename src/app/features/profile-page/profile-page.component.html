@@ -323,7 +323,7 @@
             </button>
           }
           <button
-            class="icon-btn roster-add-account-btn"
+            class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
             type="button"
             [title]="'profile.rosterAddAccount' | t"
             (click)="addAccount()"
@@ -423,7 +423,7 @@
                           type="button"
                           draggable="false"
                           [title]="'profile.rosterRemoveCharacter' | t"
-                          (click)="removeCharacter(account.id, char.name)"
+                          (click)="requestRemoveCharacter($event, account.id, char.name)"
                         >
                           ×
                         </button>
@@ -444,9 +444,9 @@
                           />
                         } @else {
                           <div class="profile-preview-name-row">
-                            <span class="roster-character-name">{{ char.name }}</span>
+                            <span class="roster-character-name" [title]="char.name">{{ char.name }}</span>
                             <button
-                              class="icon-btn pseudo-edit-btn"
+                              class="icon-btn pseudo-edit-btn plain-icon-btn"
                               type="button"
                               draggable="false"
                               [title]="'profile.rosterRenameCharacter' | t"
@@ -481,7 +481,7 @@
                               (keydown)="onCharacterRenameKeydown($event, account.id, char.name)"
                             />
                           } @else {
-                            <span class="roster-character-name">{{ char.name }}</span>
+                            <span class="roster-character-name" [title]="char.name">{{ char.name }}</span>
                           }
                           <div class="roster-character-actions">
                             <button
@@ -501,7 +501,7 @@
                               type="button"
                               draggable="false"
                               [title]="'profile.rosterRemoveCharacter' | t"
-                              (click)="removeCharacter(account.id, char.name)"
+                              (click)="requestRemoveCharacter($event, account.id, char.name)"
                             >
                               ×
                             </button>

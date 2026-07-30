@@ -8,6 +8,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -41,6 +42,7 @@ const KPI_EXPANDED_WIDTH_PX = 210;
 export class TrackerStripComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
@@ -53,10 +55,10 @@ export class TrackerStripComponent {
 
   protected readonly addOpen = signal(false);
   private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
-  /** Nom de l'entrée dont la popover de confirmation de suppression est actuellement ouverte (une seule à la fois). */
-  protected readonly confirmDeleteName = signal<string | null>(null);
-  /** Position (right/top, relative au host) de la popover ouverte — voir `hostRelativePos`. */
-  protected readonly confirmPopoverPos = signal<{ right: number; top: number } | null>(null);
+  /** Nom du KPI dont la popover de suppression partagée (ConfirmDeleteService) est actuellement
+   * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
+   * la popover elle-même vit au niveau racine, hors de ce composant. */
+  protected readonly confirmDeleteOpenFor = signal<string | null>(null);
   /** Tooltip du nom tronqué actuellement survolé (texte + position relative au host) — voir
    * `hostRelativePos` : ne peut pas être un simple `[title]`/`[data-tooltip]` CSS ici, la classe
    * globale `[title]::after` (styles.css) serait de toute façon rognée par `.kpi-strip`
@@ -92,6 +94,10 @@ export class TrackerStripComponent {
     // `autocomplete()` ne résout qu'une fois `@else` rendu dans le template.
     effect(() => {
       if (this.addOpen()) this.autocomplete()?.focus();
+    });
+
+    effect(() => {
+      if (!this.confirmDelete.request()) this.confirmDeleteOpenFor.set(null);
     });
   }
 
@@ -135,12 +141,12 @@ export class TrackerStripComponent {
     this.clearHoverTimer();
     // Le rétrécissement de la tuile ne doit pas se produire pendant que sa
     // popover de confirmation de suppression est ouverte : l'apparition de
-    // `.confirm-backdrop` (position:fixed, plein écran) juste sous le
+    // `.confirm-delete-backdrop` (position:fixed, plein écran) juste sous le
     // curseur déclenche un `mouseleave` synthétique sur la tuile côté
     // Chromium (le pointeur n'a pourtant pas bougé), ce qui refermait la
     // tuile alors que la popover, elle, restait positionnée d'après sa
     // géométrie déployée — décalage visible signalé par l'utilisateur.
-    if (this.confirmDeleteName() === name) return;
+    if (this.confirmDeleteOpenFor() === name) return;
     if (this.activeName() !== name) return;
     this.activeName.set(null);
     this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
@@ -237,24 +243,12 @@ export class TrackerStripComponent {
 
   protected requestDelete(event: Event, name: string): void {
     event.stopPropagation();
-    // Ancré sur le bouton × lui-même (pas toute la tuile) : la popover
-    // s'affiche juste en dessous de la croix, alignée sur sa droite.
+    this.confirmDeleteOpenFor.set(name);
     const button = event.currentTarget as HTMLElement;
-    const { right, top } = this.hostRelativePos(button, 8);
-    this.confirmPopoverPos.set({ right, top });
-    this.confirmDeleteName.set(name);
-  }
-
-  protected confirmDelete(event: Event, name: string): void {
-    event.stopPropagation();
-    this.stats.removeWatched(name);
-    this.confirmDeleteName.set(null);
-    if (this.activeName() === name) this.activeName.set(null);
-  }
-
-  protected cancelDelete(event: Event): void {
-    event.stopPropagation();
-    this.confirmDeleteName.set(null);
+    this.confirmDelete.open(button, this.i18n.t('tracker.confirmDelete'), () => {
+      this.stats.removeWatched(name);
+      if (this.activeName() === name) this.activeName.set(null);
+    });
   }
 
   private dragIndex: number | null = null;

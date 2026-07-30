@@ -81,22 +81,6 @@
   </div>
 </div>
 
-@if (confirmDeleteName(); as name) {
-  <div class="confirm-backdrop" (click)="cancelDelete($event)"></div>
-  <div
-    class="confirm-popover"
-    [style.right.px]="confirmPopoverPos()?.right"
-    [style.top.px]="confirmPopoverPos()?.top"
-  >
-    {{ 'tracker.confirmDelete' | t }}
-    <button class="confirm-yes" (click)="confirmDelete($event, name)">
-      {{ 'tracker.confirmYes' | t }}
-    </button>
-    <button class="confirm-no" (click)="cancelDelete($event)">
-      {{ 'tracker.confirmNo' | t }}
-    </button>
-  </div>
-}
 
 @if (nameTooltip(); as tip) {
   <div class="kpi-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
