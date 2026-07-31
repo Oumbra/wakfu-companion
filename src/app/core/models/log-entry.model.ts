@@ -49,6 +49,8 @@ export interface XpGainEntry {
   time: string;
   character: string;
   amount: number;
+  /** Combat auquel rattacher ce gain d'XP (voir Fight.exp), `null` si hors combat ou combat non résolu. */
+  fightId: number | null;
 }
 
 export interface SpellCastEntry {
@@ -67,17 +69,22 @@ export interface DamageEntry {
   spell: string;
   element: DamageElement;
   amount: number;
+  /** Combat auquel rattacher ce dégât, résolu via l'appartenance de `attacker` à un combat en cours (voir LogParser). */
+  fightId: number | null;
 }
 
+/** KO d'un combattant, allié ("... est KO !") ou n'importe qui ("... est hors-combat !", diffusé à tous les participants). */
 export interface EnemyDefeatedEntry {
   kind: 'enemy-defeated';
   time: string;
   name: string;
+  fightId: number | null;
 }
 
 export interface CombatDefeatMarkerEntry {
   kind: 'combat-defeat-marker';
   time: string;
+  fightId: number | null;
 }
 
 export interface CombatStartEntry {
@@ -88,6 +95,7 @@ export interface CombatStartEntry {
 export interface CombatEndEntry {
   kind: 'combat-end';
   time: string;
+  fightId: number;
   result: 'won' | 'lost';
 }
 
@@ -96,12 +104,15 @@ export interface LootEntry {
   time: string;
   item: string;
   quantity: number;
+  /** Combat en cours au moment du ramassage, `null` si hors combat (ex. récolte en extérieur) — dans ce cas l'objet n'alimente aucun Fight.loots. */
+  fightId: number | null;
 }
 
 /** Marqueur fiable de changement de tour ("N secondes reportées pour le tour suivant"), émis une fois par transition. */
 export interface TurnMarkerEntry {
   kind: 'turn-marker';
   time: string;
+  fightId: number | null;
 }
 
 export interface ChallengeResultEntry {
@@ -122,8 +133,25 @@ export interface ChallengeResultEntry {
 export interface FighterJoinedEntry {
   kind: 'fighter-joined';
   time: string;
+  fightId: number;
   name: string;
+  /** Classe (alliés) ou espèce (ennemis) — voir Fight.allies/enemies. */
+  breed: number;
+  /** Identifiant du combattant pour cette instance de combat (valeur entre crochets). */
+  fighterId: number;
   isControlledByAI: boolean;
+}
+
+export interface TradeSide {
+  playerName: string;
+  items: { name: string; quantity: number }[];
+}
+
+/** Résumé final d'un échange ("[Trade] le joueur X donne : ... / le joueur Y donne : ..."), les deux côtés étant toujours présents. */
+export interface TradeCompletedEntry {
+  kind: 'trade-completed';
+  time: string;
+  sides: [TradeSide, TradeSide];
 }
 
 export type LogEntry =
@@ -140,4 +168,5 @@ export type LogEntry =
   | LootEntry
   | TurnMarkerEntry
   | ChallengeResultEntry
-  | FighterJoinedEntry;
+  | FighterJoinedEntry
+  | TradeCompletedEntry;

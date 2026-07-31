@@ -1,5 +1,9 @@
-import { computed, Injectable, signal, WritableSignal } from '@angular/core';
+import { computed, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
+import { Fight } from '../models/fight.model';
+import { WAKFU_ITEMS_FR } from '../data/wakfu-items.data';
+import { normalizeWakfuName } from '../utils/wakfu-name.util';
+import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { LogParser } from './log-parser';
@@ -13,6 +17,8 @@ const LEGACY_ENEMY_WATCHLIST_KEY = 'wakfu-enemy-watchlist';
 const LEGACY_ITEM_WATCHLIST_KEY = 'wakfu-item-watchlist';
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
+/** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. */
+const PURCHASE_WINDOW_MS = 2000;
 
 interface SpellAgg {
   total: number;
@@ -51,9 +57,7 @@ export interface LootRow {
   quantity: number;
 }
 
-/** Un achat individuel (objet, quantité, coût total, horodatage) — voir
- * `purchaseHistory` ; aucun parser n'alimente encore ce signal (log Wakfu
- * pas encore décodé pour les achats), il reste vide jusqu'à son ajout. */
+/** Un achat individuel (objet, quantité, coût total, horodatage) : détecté quand une perte de kamas est immédiatement suivie d'un ramassage d'objet (voir registerPurchase). */
 export interface PurchaseRecord {
   id: number;
   item: string;
@@ -67,13 +71,7 @@ export interface TradeItemRow {
   quantity: number;
 }
 
-/** Un échange individuel avec un autre joueur (objets acquis/cédés) — voir
- * `tradeHistory` ; aucun parser n'alimente encore ce signal (log Wakfu pas
- * encore décodé pour les échanges), il reste vide jusqu'à son ajout.
- * `characterName` désigne le personnage EN FACE : jamais un personnage du
- * compte courant (voir CharacterRosterService, persistance localStorage) —
- * cette exclusion est à la charge du futur parser au moment de la
- * construction de l'enregistrement, pas d'un filtrage à l'affichage. */
+/** Un échange individuel avec un autre joueur (objets acquis/cédés). `characterName` désigne le personnage EN FACE : jamais un personnage du compte courant (roster déclaré en page profil, voir CharacterRosterService). */
 export interface TradeRecord {
   id: number;
   characterName: string;
@@ -95,16 +93,26 @@ export interface FightRecord {
   xp: XpRow[];
 }
 
+/** État de travail d'un combat en cours, indexé par fightId — voir Fight (core/models/fight.model.ts). Isoler cet état par combat (plutôt qu'un unique état global) permet à plusieurs combats concurrents (multi-compte) de ne jamais se corrompre l'un l'autre. */
+interface FightWorking {
+  fight: Fight;
+  attackerMap: Map<string, Map<string, SpellAgg>>;
+  defeatedNames: Set<string>;
+  /** fighterId déjà vus (voir FighterJoinedEntry) : une jointure répétée (doublon multi-compte, resynchronisation) ne doit pas dupliquer l'entrée dans allies/enemies. */
+  fighterIdsSeen: Set<number>;
+}
+
 /**
  * État agrégé de la session courante. Consomme les lots de lignes émis par
  * LogFileAccessService, les fait passer par LogParser, et republie des
  * signaux déjà triés/prêts pour l'affichage après chaque lot (pas ligne par
  * ligne, pour rester fluide même sur la lecture initiale d'un gros fichier).
  *
- * Le méter de dégâts se fige et se réinitialise à chaque fin de combat : la
- * vue "Combat en cours" ne montre que le combat en jeu, et un instantané est
- * archivé dans `fightHistory`. Les stats de session (kamas/xp/combats) restent
- * cumulatives sur toute la session.
+ * Chaque combat en cours est suivi indépendamment (voir FightWorking, indexé
+ * par fightId) : la vue "Combat en cours" affiche le dernier combat actif
+ * touché, mais les autres combats concurrents continuent d'accumuler leurs
+ * propres dégâts/butin/tours en arrière-plan sans être écrasés. Les stats de
+ * session (kamas/xp/combats) restent cumulatives sur toute la session.
  */
 @Injectable({ providedIn: 'root' })
 export class StatsStoreService {
@@ -123,43 +131,41 @@ export class StatsStoreService {
   readonly challengesPassed = signal(0);
   readonly challengesFailed = signal(0);
 
-  /** Nombre de tours et durée écoulée du combat en cours (vue "Combat en cours"), recalculés à chaque lot de lignes traité. */
+  /** Nombre de tours et durée écoulée du combat en cours affiché (voir currentDisplayFightId), recalculés à chaque lot de lignes traité. */
   readonly currentFightTurns = signal(1);
   readonly currentFightDurationMs = signal(0);
 
   readonly xpByCharacter = signal<XpRow[]>([]);
   readonly damageByAttacker = signal<EntityDamageRow[]>([]);
   readonly fightHistory = signal<FightRecord[]>([]);
-  /** Historique des achats — vide tant qu'aucun parser ne l'alimente (voir PurchaseRecord). */
   readonly purchaseHistory = signal<PurchaseRecord[]>([]);
-  /** Historique des échanges — vide tant qu'aucun parser ne l'alimente (voir TradeRecord). */
   readonly tradeHistory = signal<TradeRecord[]>([]);
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
   /** Suivi fusionné (ennemis vaincus + ressources obtenues), distingué par `kind`. */
   readonly watchlist = signal<WatchlistEntry[]>([]);
 
   private readonly xpMap = new Map<string, number>();
-  private readonly attackerMap = new Map<string, Map<string, SpellAgg>>();
-  private readonly currentFightXpMap = new Map<string, number>();
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
   private readonly purchaseHistoryList: PurchaseRecord[] = [];
   private readonly tradeHistoryList: TradeRecord[] = [];
-  /** Butin accumulé depuis le début du combat en cours (les lignes "ramassé" arrivent avant la détection de fin de combat, pas après). */
-  private currentFightLoot: LootRow[] = [];
-  private currentFightStartTime: string | null = null;
-  /** Horodatage de la dernière ligne traitée : sert à calculer la durée écoulée du combat en cours. */
+  /** Combats actuellement en cours, par fightId — voir FightWorking. */
+  private readonly activeFights = new Map<number, FightWorking>();
+  /** Combat affiché par la vue "Combat en cours" : le dernier combat actif touché par un événement. */
+  private currentDisplayFightId: number | null = null;
+  /** Horodatage de la dernière ligne traitée : sert à calculer la durée écoulée du combat affiché. */
   private lastLineTime: string | null = null;
-  /** Noms (en minuscules) déjà mis KO ce combat-ci : évite un double comptage du suivi des ennemis à la conclusion du combat, et alimente le badge KO affiché sur la ligne. */
-  private readonly currentFightDefeatedNames = new Set<string>();
   /** Vrai pendant le traitement du tout premier lot de lignes d'une connexion (contenu déjà présent dans le fichier) : les compteurs de suivi ne doivent pas être incrémentés pour cet historique déjà vécu. */
   private currentBatchIsInitialLoad = false;
+  private nextPurchaseId = 1;
+  private nextTradeId = 1;
+  /** Perte de kamas en attente d'un ramassage d'objet immédiat (signature d'un achat) — voir registerLoot. */
+  private pendingPurchase: { amount: number; timeMs: number } | null = null;
 
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
     return this.currentBatchIsInitialLoad;
   }
-  private nextFightId = 1;
 
   constructor(
     private readonly logFileAccess: LogFileAccessService,
@@ -167,6 +173,7 @@ export class StatsStoreService {
     private readonly classifier: EntityClassifierService,
     private readonly profile: ProfileService,
     private readonly lootAlert: LootAlertService,
+    private readonly roster: CharacterRosterService,
   ) {
     this.watchlist.set(this.loadWatchlist());
     this.logFileAccess.newLines$.subscribe(({ lines, isInitialLoad }) =>
@@ -252,6 +259,11 @@ export class StatsStoreService {
       const entry = this.parser.parseLine(line);
       if (entry) this.apply(entry);
     }
+    // La toute dernière ligne d'un lot peut être le début d'un enregistrement
+    // multi-lignes encore en attente (voir LogParser) : la traiter tout de
+    // suite plutôt que d'attendre un futur lot qui peut tarder à arriver.
+    const flushed = this.parser.flush();
+    if (flushed) this.apply(flushed);
     this.classifier.commit();
     this.publish();
   }
@@ -275,75 +287,70 @@ export class StatsStoreService {
     this.currentFightTurns.set(1);
 
     this.xpMap.clear();
-    this.currentFightXpMap.clear();
-
-    this.attackerMap.clear();
 
     this.fightHistoryList.length = 0;
     this.purchaseHistoryList.length = 0;
     this.tradeHistoryList.length = 0;
-    this.currentFightLoot = [];
-    this.currentFightStartTime = null;
+    this.activeFights.clear();
+    this.currentDisplayFightId = null;
     this.lastLineTime = null;
-    this.currentFightDefeatedNames.clear();
-    this.nextFightId = 1;
+    this.nextPurchaseId = 1;
+    this.nextTradeId = 1;
+    this.pendingPurchase = null;
 
     this.chatBuffer.length = 0;
+    this.parser.reset();
   }
 
   private apply(entry: LogEntry): void {
     this.lastLineTime = entry.time;
+
+    // Une perte de kamas immédiatement suivie d'un ramassage d'objet est la
+    // signature d'un achat (marchand/HDV) : on l'enregistre en plus du
+    // traitement habituel de la perte/du ramassage, sans le modifier.
+    if (
+      entry.kind === 'loot' &&
+      this.pendingPurchase &&
+      this.timeToMs(entry.time) - this.pendingPurchase.timeMs <= PURCHASE_WINDOW_MS
+    ) {
+      this.registerPurchase(this.pendingPurchase.amount, entry.item, entry.quantity, entry.time);
+    }
+    if (entry.kind !== 'kama-loss') this.pendingPurchase = null;
+
     switch (entry.kind) {
       case 'kama-gain':
         this.kamasEarned.update((v) => v + entry.amount);
         break;
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
+        this.pendingPurchase = { amount: entry.amount, timeMs: this.timeToMs(entry.time) };
         break;
       case 'xp-gain':
         this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
-        this.currentFightXpMap.set(
-          entry.character,
-          (this.currentFightXpMap.get(entry.character) ?? 0) + entry.amount,
-        );
+        this.registerFightXp(entry.fightId, entry.character, entry.amount);
         break;
       case 'combat-start':
-        if (this.attackerMap.size > 0) {
-          // Filet de sécurité : le marqueur de fin du combat précédent n'a
-          // pas été reçu (ex. ligne perdue lors d'une rotation du fichier de
-          // log). On le clôture quand même plutôt que de fusionner ses
-          // dégâts avec ceux du nouveau combat qui démarre.
-          this.concludeFight(entry.time, 'won');
-          this.combatsWon.update((v) => v + 1);
-        }
-        this.currentFightLoot = [];
-        this.currentFightTurns.set(1);
-        this.currentFightStartTime = entry.time;
         break;
-      case 'combat-end': {
-        const result = this.resolveFightResult(entry.result);
-        this.concludeFight(entry.time, result);
-        if (result === 'won') this.combatsWon.update((v) => v + 1);
-        else this.combatsLost.update((v) => v + 1);
+      case 'combat-end':
+        this.finalizeFight(entry.fightId, entry.time, entry.result);
         break;
-      }
       case 'enemy-defeated':
-        this.registerDefeat(entry.name);
-        this.currentFightDefeatedNames.add(entry.name.toLowerCase());
-        // Un personnage mis KO sans avoir infligé de dégât doit quand même
-        // apparaître dans le combat (à 0 dégât), pas seulement les attaquants.
-        this.ensurePresent(this.attackerMap, entry.name);
+        this.registerFightDefeat(entry.fightId, entry.name);
         break;
-      case 'damage':
-        this.addDamage(this.attackerMap, entry.attacker, entry);
+      case 'damage': {
+        const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
+        if (working) this.addDamage(working.attackerMap, entry.attacker, entry);
         this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
+      }
       case 'loot':
-        this.registerLoot(entry.item, entry.quantity);
+        this.registerLoot(entry.item, entry.quantity, entry.fightId);
         break;
-      case 'turn-marker':
-        this.currentFightTurns.update((v) => v + 1);
+      case 'turn-marker': {
+        const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
+        if (working) working.fight.turnCount += 1;
         break;
+      }
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
         else this.challengesFailed.update((v) => v + 1);
@@ -358,75 +365,121 @@ export class StatsStoreService {
         this.classifier.registerSpellCast(entry.caster, entry.spell);
         break;
       case 'fighter-joined':
-        this.classifier.registerFighterJoin(entry.name, entry.isControlledByAI);
-        // Un combattant qui ne prend/inflige jamais de dégâts (ex. tué en un
-        // coup avant d'avoir pu jouer) doit quand même apparaître dans le
-        // combat, comme pour une mise KO sans dégât infligé (voir ci-dessus).
-        this.ensurePresent(this.attackerMap, entry.name);
+        this.registerFighterJoin(entry.fightId, entry.name, entry.breed, entry.fighterId, entry.isControlledByAI);
+        break;
+      case 'trade-completed':
+        this.registerTrade(entry.time, entry.sides);
         break;
       case 'combat-defeat-marker':
         break;
     }
   }
 
+  private getOrCreateFight(fightId: number, time: string): FightWorking {
+    let working = this.activeFights.get(fightId);
+    if (!working) {
+      working = {
+        fight: new Fight(fightId, new Date(this.buildFullTimestampMs(time))),
+        attackerMap: new Map(),
+        defeatedNames: new Set(),
+        fighterIdsSeen: new Set(),
+      };
+      this.activeFights.set(fightId, working);
+    }
+    this.currentDisplayFightId = fightId;
+    return working;
+  }
+
+  private registerFighterJoin(
+    fightId: number,
+    name: string,
+    breed: number,
+    fighterId: number,
+    isControlledByAI: boolean,
+  ): void {
+    const working = this.getOrCreateFight(fightId, this.lastLineTime ?? '00:00:00,000');
+    if (!working.fighterIdsSeen.has(fighterId)) {
+      working.fighterIdsSeen.add(fighterId);
+      if (isControlledByAI) working.fight.enemies.push({ name, id: fighterId });
+      else working.fight.allies.push({ name, breed });
+    }
+    this.classifier.registerFighterJoin(name, isControlledByAI);
+    this.ensurePresent(working.attackerMap, name);
+  }
+
+  private registerFightXp(fightId: number | null, character: string, amount: number): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    const existing = working.fight.exp.find((e) => e.name === character);
+    if (existing) existing.quantity += amount;
+    else working.fight.exp.push({ name: character, quantity: amount });
+  }
+
+  private registerFightDefeat(fightId: number | null, name: string): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    const key = name.toLowerCase();
+    if (!working || working.defeatedNames.has(key)) return;
+    working.defeatedNames.add(key);
+    this.registerDefeat(name);
+    this.ensurePresent(working.attackerMap, name);
+  }
+
   /**
-   * Le marqueur explicite "Vous avez été vaincu(e) !" n'apparaît pas toujours
-   * (ex. combat en multi-compte où le client n'affiche pas cet écran) : si
-   * tous les alliés ayant participé au combat sont KO à la fin, c'est une
-   * défaite quoi qu'en dise ce marqueur.
+   * Le marqueur explicite "Vous avez été vaincu(e) !"/"Lancement de
+   * l'occupation" n'apparaît pas toujours (ex. entraînement contre un
+   * mannequin) : si tous les alliés ayant rejoint le combat sont KO à la fin,
+   * c'est une défaite quoi qu'en dise ce marqueur.
    */
-  private resolveFightResult(parsedResult: 'won' | 'lost'): 'won' | 'lost' {
+  private resolveFightResult(parsedResult: 'won' | 'lost', working: FightWorking): 'won' | 'lost' {
     if (parsedResult === 'lost') return 'lost';
-    const allies = [...this.attackerMap.keys()].filter(
-      (name) => this.classifier.classify(name) === 'ally',
-    );
+    const allies = working.fight.allies;
     const allAlliesDefeated =
       allies.length > 0 &&
-      allies.every((name) => this.currentFightDefeatedNames.has(name.toLowerCase()));
+      allies.every((a) => working.defeatedNames.has(a.name.toLowerCase()));
     return allAlliesDefeated ? 'lost' : 'won';
   }
 
-  private concludeFight(time: string, result: 'won' | 'lost'): void {
+  private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
+    const working = this.activeFights.get(fightId);
+    if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien à clôturer.
+
+    const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
       // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
-      // le combat se termine et n'a alors pas droit à sa propre ligne "est KO !"
-      // (contrairement aux adds tués en cours de route) : sans ce filet, il
-      // n'est jamais crédité dans le suivi des ennemis vaincus. Un combat gagné
-      // implique que tous les ennemis ayant combattu sont morts.
-      for (const name of this.attackerMap.keys()) {
-        if (
-          this.classifier.classify(name) === 'enemy' &&
-          !this.currentFightDefeatedNames.has(name.toLowerCase())
-        ) {
-          this.registerDefeat(name);
-          this.currentFightDefeatedNames.add(name.toLowerCase());
-        }
+      // le combat se termine et n'a alors pas toujours droit à sa propre ligne
+      // de mise hors-combat : sans ce filet, il n'est jamais crédité dans le
+      // suivi des ennemis vaincus. Un combat gagné implique que tous les
+      // ennemis ayant rejoint le combat sont morts.
+      for (const enemy of working.fight.enemies) {
+        this.registerFightDefeat(fightId, enemy.name);
       }
+      this.combatsWon.update((v) => v + 1);
+    } else {
+      this.combatsLost.update((v) => v + 1);
     }
 
+    working.fight.endDate = new Date(this.buildFullTimestampMs(time));
     const record: FightRecord = {
-      id: this.nextFightId++,
+      id: fightId,
       time,
-      fullTimestampMs: this.buildFullTimestampMs(time),
+      fullTimestampMs: working.fight.startDate.getTime(),
       result,
-      rows: this.buildEntityDamageRows(this.attackerMap, this.currentFightDefeatedNames),
-      loot: this.currentFightLoot,
-      turns: this.currentFightTurns(),
-      durationMs: this.currentFightStartTime
-        ? this.computeDurationMs(this.currentFightStartTime, time)
-        : 0,
-      xp: [...this.currentFightXpMap.entries()]
-        .map(([name, amount]) => ({ name, amount }))
+      rows: this.buildEntityDamageRows(working.attackerMap, working.defeatedNames),
+      loot: working.fight.loots.map((l) => ({ name: l.name, quantity: l.quantity })),
+      turns: working.fight.turnCount,
+      durationMs: Math.max(0, working.fight.endDate.getTime() - working.fight.startDate.getTime()),
+      xp: working.fight.exp
+        .map((e) => ({ name: e.name, amount: e.quantity }))
         .sort((a, b) => b.amount - a.amount),
     };
     this.fightHistoryList.unshift(record);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
-    this.attackerMap.clear();
-    this.currentFightLoot = [];
-    this.currentFightTurns.set(1);
-    this.currentFightStartTime = null;
-    this.currentFightDefeatedNames.clear();
-    this.currentFightXpMap.clear();
+
+    this.activeFights.delete(fightId);
+    if (this.currentDisplayFightId === fightId) {
+      const remaining = [...this.activeFights.keys()];
+      this.currentDisplayFightId = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+    }
   }
 
   /** Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) : on la combine à la date système, le fichier étant lu en direct au fil de l'eau. */
@@ -444,11 +497,6 @@ export class StatsStoreService {
       +s,
       +ms,
     ).getTime();
-  }
-
-  private computeDurationMs(startTime: string, endTime: string): number {
-    const diff = this.timeToMs(endTime) - this.timeToMs(startTime);
-    return diff >= 0 ? diff : diff + 24 * 60 * 60 * 1000;
   }
 
   private timeToMs(time: string): number {
@@ -489,18 +537,56 @@ export class StatsStoreService {
     this.incrementWatched(name);
   }
 
-  private registerLoot(item: string, quantity: number): void {
+  private registerLoot(item: string, quantity: number, fightId: number | null): void {
     if (!this.currentBatchIsInitialLoad) {
       this.incrementWatched(item, quantity);
       const soundEntry = this.profile.findEnabledSoundItem(item);
       if (soundEntry) this.lootAlert.trigger(item, quantity);
     }
 
-    const existing = this.currentFightLoot.find(
-      (l) => l.name.toLowerCase() === item.toLowerCase(),
-    );
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
     if (existing) existing.quantity += quantity;
-    else this.currentFightLoot.push({ name: item, quantity });
+    else working.fight.loots.push({ name: item, id: this.lookupItemGfxId(item), quantity });
+  }
+
+  private lookupItemGfxId(name: string): number {
+    return WAKFU_ITEMS_FR[normalizeWakfuName(name)]?.gfxId ?? 0;
+  }
+
+  /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
+  private registerPurchase(amount: number, item: string, quantity: number, time: string): void {
+    this.purchaseHistoryList.unshift({
+      id: this.nextPurchaseId++,
+      item,
+      quantity,
+      totalCost: amount,
+      fullTimestampMs: this.buildFullTimestampMs(time),
+    });
+  }
+
+  private registerTrade(
+    time: string,
+    sides: readonly [
+      { playerName: string; items: TradeItemRow[] },
+      { playerName: string; items: TradeItemRow[] },
+    ],
+  ): void {
+    const [a, b] = sides;
+    const aIsSelf = this.roster.hasCharacter(a.playerName);
+    const bIsSelf = this.roster.hasCharacter(b.playerName);
+    // Le personnage EN FACE est celui qui n'appartient pas au compte courant
+    // (roster déclaré en page profil) ; en cas d'ambiguïté (aucun ou les deux
+    // reconnus), on garde un choix stable plutôt que de ne rien enregistrer.
+    const [self, other] = bIsSelf && !aIsSelf ? [b, a] : [a, b];
+    this.tradeHistoryList.unshift({
+      id: this.nextTradeId++,
+      characterName: other.playerName,
+      fullTimestampMs: this.buildFullTimestampMs(time),
+      acquired: other.items,
+      given: self.items,
+    });
   }
 
   private addWatched(rawName: string, kind: WatchlistKind): void {
@@ -525,9 +611,15 @@ export class StatsStoreService {
   }
 
   private publish(): void {
+    const displayWorking =
+      this.currentDisplayFightId !== null ? this.activeFights.get(this.currentDisplayFightId) : undefined;
+    this.currentFightTurns.set(displayWorking?.fight.turnCount ?? 1);
     this.currentFightDurationMs.set(
-      this.currentFightStartTime && this.lastLineTime
-        ? this.computeDurationMs(this.currentFightStartTime, this.lastLineTime)
+      displayWorking && this.lastLineTime
+        ? Math.max(
+            0,
+            this.buildFullTimestampMs(this.lastLineTime) - displayWorking.fight.startDate.getTime(),
+          )
         : 0,
     );
     this.xpByCharacter.set(
@@ -536,7 +628,9 @@ export class StatsStoreService {
         .sort((a, b) => b.amount - a.amount),
     );
     this.damageByAttacker.set(
-      this.buildEntityDamageRows(this.attackerMap, this.currentFightDefeatedNames),
+      displayWorking
+        ? this.buildEntityDamageRows(displayWorking.attackerMap, displayWorking.defeatedNames)
+        : [],
     );
     this.fightHistory.set([...this.fightHistoryList]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
