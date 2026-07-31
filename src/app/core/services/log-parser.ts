@@ -86,7 +86,7 @@ const STATUS_REMOVE_RE = /^(.+?): n'est plus sous l'emprise de '(.+?)'\.?$/;
 /** Purement informatif (le coup a été paré) : jamais une source de dégâts. */
 const IGNORED_TAG = 'Parade !';
 /** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
-const TRADE_DONNE_RE = /le joueur (.+?) donne\s*:\s*\d+\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
+const TRADE_DONNE_RE = /le joueur (.+?) donne\s*:\s*(\d+)\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
 const TRADE_ITEM_RE = /(\d+)\s*x\s*(.+?)\s*\(refId=-?\d+\)/g;
 
 const DAMAGE_ELEMENTS = new Set<string>([
@@ -276,12 +276,13 @@ export class LogParser {
     TRADE_DONNE_RE.lastIndex = 0;
     for (const match of content.matchAll(TRADE_DONNE_RE)) {
       const playerName = match[1].trim();
-      const itemsText = match[2];
+      const kamas = Number(match[2]);
+      const itemsText = match[3];
       const items: { name: string; quantity: number }[] = [];
       for (const itemMatch of itemsText.matchAll(TRADE_ITEM_RE)) {
         items.push({ quantity: Number(itemMatch[1]), name: itemMatch[2].trim() });
       }
-      sides.push({ playerName, items });
+      sides.push({ playerName, items, kamas });
     }
     if (sides.length !== 2) return null;
     return { kind: 'trade-completed', time, sides: [sides[0], sides[1]] };
@@ -512,11 +513,19 @@ export class LogParser {
     return null;
   }
 
-  /** Ignore les doublons stricts (même type d'événement, mêmes champs hors horodatage) survenant dans un intervalle très court — signature d'une observation multi-compte d'un même combat, où chaque compte connecté loggue sa propre copie du flux serveur. */
+  /** Ignore les doublons stricts (même type d'événement, mêmes champs hors horodatage) survenant dans un intervalle très court — signature d'une observation multi-compte d'un même combat/échange, où chaque compte connecté loggue sa propre copie du flux serveur. */
   private isDuplicate(entry: LogEntry): boolean {
     if (DEDUPE_EXEMPT_KINDS.has(entry.kind)) return false;
     const { time, ...rest } = entry as unknown as Record<string, unknown>;
     void time;
+    if (entry.kind === 'trade-completed') {
+      // Le résumé final d'un échange est réémis une fois par confirmation
+      // (une par participant) avec les deux "donne" dans l'ordre inverse :
+      // trier par nom pour que les deux émissions produisent la même signature.
+      (rest as { sides: TradeSide[] }).sides = [...(rest as { sides: TradeSide[] }).sides].sort(
+        (a, b) => a.playerName.localeCompare(b.playerName),
+      );
+    }
     const signature = `${entry.kind}|${JSON.stringify(rest)}`;
     const nowMs = this.timeToMs(entry.time);
     const previous = this.recentSignatures.get(signature);

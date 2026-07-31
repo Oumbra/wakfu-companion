@@ -186,4 +186,32 @@ describe('LogParser — échanges multi-lignes', () => {
       ],
     });
   });
+
+  it('capture les kamas échangés de chaque côté', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 13:46:13,012 [T] (buN:252) - [Trade] le joueur Suuke donne : 20K ; ',
+      'le joueur Oumbra donne : 0K ; ',
+    ];
+    const entries = parseAll(parser, lines);
+    const trade = entries.find((e) => e.kind === 'trade-completed');
+    expect(trade).toMatchObject({
+      sides: [
+        { playerName: 'Suuke', kamas: 20, items: [] },
+        { playerName: 'Oumbra', kamas: 0, items: [] },
+      ],
+    });
+  });
+
+  it('ignore le résumé final réémis avec les deux "donne" dans l\'ordre inverse (doublon multi-compte)', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 13:46:13,012 [T] (buN:252) - [Trade] le joueur Suuke donne : 20K ; ',
+      'le joueur Oumbra donne : 0K ; ',
+      ' INFO 13:46:13,014 [T] (buN:252) - [Trade] le joueur Oumbra donne : 0K ; ',
+      'le joueur Suuke donne : 20K ; ',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries.filter((e) => e.kind === 'trade-completed')).toHaveLength(1);
+  });
 });

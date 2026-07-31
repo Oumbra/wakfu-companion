@@ -122,9 +122,12 @@ describe('StatsStoreService', () => {
 
       const trades = stats.tradeHistory();
       expect(trades).toHaveLength(1);
+      expect(trades[0].selfName).toBe('Oumbra');
       expect(trades[0].characterName).toBe('Briggitt');
       expect(trades[0].acquired).toEqual([{ name: "Les Doigts d'Enutrof", quantity: 1 }]);
-      // Les 10 kamas gagnés sont comptés séparément (kamasEarned), pas dans TradeRecord (qui ne porte que des objets).
+      expect(trades[0].kamasAcquired).toBe(10);
+      expect(trades[0].kamasGiven).toBe(0);
+      // Les 10 kamas gagnés sont comptés séparément (kamasEarned), en plus du détail sur le TradeRecord.
       expect(stats.kamasEarned()).toBe(10);
     });
 
@@ -136,6 +139,18 @@ describe('StatsStoreService', () => {
 
       const names = stats.tradeHistory().map((t) => t.characterName);
       expect(names).not.toContain('Oumbra');
+    });
+
+    it('ignore un échange entre deux personnages du roster déclaré (et non plus dès qu\'un seul y figure)', () => {
+      const roster = TestBed.inject(CharacterRosterService);
+      const accountId = roster.accounts()[0].id;
+      roster.addCharacter(accountId, 'Oumbra', 'Sram', 'm');
+      roster.addCharacter(accountId, 'Suuke', 'Iop', 'm');
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('trade.log'));
+
+      expect(stats.tradeHistory()).toHaveLength(0);
     });
 
     it('tolère des lignes de chat/multi-compte intercalées dans la négociation', () => {
@@ -150,6 +165,56 @@ describe('StatsStoreService', () => {
       ];
       feed(access, noisyLines);
       expect(stats.tradeHistory()).toHaveLength(1);
+    });
+
+    it("n'enregistre l'échange qu'une seule fois quand le résumé final est réémis avec l'ordre des deux \"donne\" inversé (observation multi-compte, cas réel signalé)", () => {
+      withOumbraRoster();
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 13:45:55,483 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
+        ' INFO 13:46:13,009 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 20 kamas.',
+        ' INFO 13:46:13,009 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l\'échange',
+        ' INFO 13:46:13,012 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Suuke donne : 20K ; ',
+        'le joueur Oumbra donne : 0K ; ',
+        ' INFO 13:46:13,012 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 20 kamas.',
+        ' INFO 13:46:13,013 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l\'échange',
+        ' INFO 13:46:13,013 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L\'échange s\'est correctement terminé.',
+        ' INFO 13:46:13,013 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
+        ' INFO 13:46:13,014 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 0K ; ',
+        'le joueur Suuke donne : 20K ; ',
+        ' INFO 13:46:13,015 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L\'échange s\'est correctement terminé.',
+        ' INFO 13:46:13,016 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
+      ]);
+
+      const trades = stats.tradeHistory();
+      expect(trades).toHaveLength(1);
+      expect(trades[0].kamasAcquired).toBe(20);
+      expect(trades[0].kamasGiven).toBe(0);
+      expect(trades[0].characterName).toBe('Suuke');
+      expect(trades[0].selfName).toBe('Oumbra');
+    });
+
+    it('rejoue le cas réel signalé (deux échanges dans un log multi-compte bruyant) sans doublon (trade_multi-account.log)', () => {
+      withOumbraRoster();
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('trade_multi-account.log'));
+
+      const trades = stats.tradeHistory();
+      expect(trades).toHaveLength(2);
+      // Le plus récent en tête : l'échange de 13:48 (Oumbra donne 10K + Poudre) puis celui de 13:46 (Oumbra reçoit 20K).
+      expect(trades[0].selfName).toBe('Oumbra');
+      expect(trades[0].characterName).toBe('Suuke');
+      expect(trades[0].kamasGiven).toBe(10);
+      expect(trades[0].kamasAcquired).toBe(0);
+      expect(trades[0].given).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].acquired).toEqual([]);
+
+      expect(trades[1].kamasAcquired).toBe(20);
+      expect(trades[1].kamasGiven).toBe(0);
+      expect(trades[1].given).toEqual([]);
+      expect(trades[1].acquired).toEqual([]);
     });
   });
 
@@ -251,8 +316,8 @@ describe('StatsStoreService', () => {
   });
 
   describe('Robustesse : tous les jeux de test se parsent sans erreur', () => {
-    it('ingère chaque fichier fight*.log sans exception', () => {
-      for (const file of readdirSync(FIXTURES_DIR).filter((f) => f.startsWith('fight'))) {
+    it('ingère chaque fichier fight*.log/trade*.log/purchase*.log sans exception', () => {
+      for (const file of readdirSync(FIXTURES_DIR)) {
         TestBed.resetTestingModule();
         TestBed.configureTestingModule({});
         const stats = TestBed.inject(StatsStoreService);

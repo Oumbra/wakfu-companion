@@ -1,0 +1,91 @@
+ INFO 13:45:55,483 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:45:55,533 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:45:57,856 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
+ INFO 13:45:57,897 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
+ WARN 13:45:57,916 [AWT-EventQueue-0] (aVt:481) - Impossible de trouver l'icone d'URL jar:file:./contents/gui_jar/gui.jar!/icons/items/64/2182175.tga
+ WARN 13:45:57,984 [AWT-EventQueue-0] (aVt:481) - Impossible de trouver l'icone d'URL jar:file:./contents/gui_jar/gui.jar!/icons/items/64/2182175.tga
+ WARN 13:45:59,355 [AWT-EventQueue-0] (aVt:481) - Impossible de trouver l'icone d'URL jar:file:./contents/gui_jar/gui.jar!/miscellaneous/itemTypes/296.tga
+ WARN 13:45:59,463 [AWT-EventQueue-0] (aVt:481) - Impossible de trouver l'icone d'URL jar:file:./contents/gui_jar/gui.jar!/miscellaneous/itemTypes/543.tga
+ INFO 13:46:02,624 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11559340 from {Nation id=0} after a disconnection but he's not in it
+ INFO 13:46:02,684 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11559340 from {Nation id=0} after a disconnection but he's not in it
+ INFO 13:46:04,307 [AWT-EventQueue-0] (aPV:174) - [Commerce] Darkbeast Paarl : Epée Eternelle  Casque Hazieff  Retour PA II AV
+ INFO 13:46:04,345 [AWT-EventQueue-0] (aPV:174) - [Commerce] Darkbeast Paarl : Epée Eternelle  Casque Hazieff  Retour PA II AV
+ INFO 13:46:06,454 [AWT-EventQueue-0] (buN:164) - [Trade] Le joueur Suuke mets la somme de kamas à 20
+ INFO 13:46:06,456 [AWT-EventQueue-0] (buN:164) - [Trade] Le joueur Suuke mets la somme de kamas à 20
+ INFO 13:46:13,009 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 20 kamas.
+ INFO 13:46:13,009 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
+ INFO 13:46:13,012 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Suuke donne : 20K ;
+le joueur Oumbra donne : 0K ;
+ INFO 13:46:13,012 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 20 kamas.
+ INFO 13:46:13,013 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
+ INFO 13:46:13,013 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
+ INFO 13:46:13,013 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:46:13,014 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 0K ;
+le joueur Suuke donne : 20K ;
+ INFO 13:46:13,015 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
+ INFO 13:46:13,016 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:46:29,214 [AWT-EventQueue-0] (aPV:174) - [Communauté (FR)] Celeb : 33
+ INFO 13:46:36,030 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233357
+ INFO 13:46:36,247 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233354
+ INFO 13:46:36,247 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233356
+ INFO 13:46:36,682 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102536
+ INFO 13:46:36,683 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102536
+ INFO 13:46:36,897 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102534
+ INFO 13:46:36,897 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102534
+ INFO 13:46:37,005 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971717
+ INFO 13:46:37,005 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102533
+ INFO 13:46:37,330 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971714
+ INFO 13:46:37,330 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971714
+ INFO 13:46:38,413 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11488301 from {Nation id=0} after a disconnection but he's not in it
+ INFO 13:46:38,413 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11488301 from {Nation id=0} after a disconnection but he's not in it
+ INFO 13:46:45,659 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252237900840892
+ INFO 13:46:45,974 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252237900906428
+ INFO 13:46:45,983 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252237900840896
+ INFO 13:46:46,383 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971713
+ INFO 13:46:46,716 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220721037252
+ INFO 13:46:46,741 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220721037250
+ INFO 13:46:46,741 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220721037250
+ INFO 13:46:46,824 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220721037253
+ INFO 13:46:46,958 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220721037252
+ INFO 13:46:47,259 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541168072
+ INFO 13:46:47,366 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361298889
+ INFO 13:46:47,391 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541168073
+ INFO 13:46:49,942 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252048922214350
+ INFO 13:47:09,197 [AWT-EventQueue-0] (aPV:174) - [Commerce] Watzeufeuk : Achete influ wakfu II x3, force vitale x1, 3 ravages III
+ INFO 13:47:09,213 [AWT-EventQueue-0] (aPV:174) - [Commerce] Watzeufeuk : Achete influ wakfu II x3, force vitale x1, 3 ravages III
+ INFO 13:47:13,183 [AWT-EventQueue-0] (aPV:174) - [Commerce] Psalm Glassy : Vend Rupture Violente II X10 moins chère que HDV mp :)
+ INFO 13:47:13,261 [AWT-EventQueue-0] (aPV:174) - [Commerce] Psalm Glassy : Vend Rupture Violente II X10 moins chère que HDV mp :)
+ INFO 13:47:14,340 [AWT-EventQueue-0] (aPV:174) - [Commerce] Pedro'Elmouche : vend Epée de Brâkmar   RJRV & Pierre ultime   et achete Arête empoisonnée   en masse mp moi
+ INFO 13:47:14,364 [AWT-EventQueue-0] (aPV:174) - [Commerce] Pedro'Elmouche : vend Epée de Brâkmar   RJRV & Pierre ultime   et achete Arête empoisonnée   en masse mp moi
+ INFO 13:47:28,368 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:47:28,385 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:47:31,177 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
+ INFO 13:47:31,186 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
+ INFO 13:47:34,103 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2251945843982286
+ INFO 13:47:41,894 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233356
+ INFO 13:47:41,905 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233356
+ INFO 13:47:42,108 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252186361233354
+ INFO 13:47:42,339 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102536
+ INFO 13:47:42,437 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102534
+ INFO 13:47:42,547 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102533
+ INFO 13:47:42,555 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252203541102534
+ INFO 13:47:42,772 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971716
+ INFO 13:47:42,865 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971714
+ INFO 13:47:42,997 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252220720971714
+ INFO 13:47:43,085 [AWT-EventQueue-0] (Tc:407) - Invalid start cell for pathfind search : doesn't exist. HASHCODE : 2252237900840896
+ INFO 13:47:49,910 [AWT-EventQueue-0] (buN:172) - [Trade] Le joueur Oumbra ajoute 1xPoudre (refId=27093)
+ INFO 13:47:49,921 [AWT-EventQueue-0] (buN:172) - [Trade] Le joueur Oumbra ajoute 1xPoudre (refId=27093)
+ INFO 13:47:56,400 [AWT-EventQueue-0] (buN:164) - [Trade] Le joueur Oumbra mets la somme de kamas à 10
+ INFO 13:47:56,467 [AWT-EventQueue-0] (buN:164) - [Trade] Le joueur Oumbra mets la somme de kamas à 10
+ INFO 13:48:03,136 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 10 kamas.
+ INFO 13:48:03,136 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
+ INFO 13:48:03,137 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 10K ; 1xPoudre (refId=27093)
+le joueur Suuke donne : 0K ;
+ INFO 13:48:03,137 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
+ INFO 13:48:03,137 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)
+ INFO 13:48:03,185 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 10 kamas.
+ INFO 13:48:03,186 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
+ INFO 13:48:03,190 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Suuke donne : 0K ;
+le joueur Oumbra donne : 10K ; 1xPoudre (refId=27093)
+ INFO 13:48:03,190 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
+ INFO 13:48:03,190 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)
