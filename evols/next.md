@@ -1,3 +1,4 @@
 # Features
 
-- Détection de double comptes (lorsque les messages du chat sont en double)
+- Consolider le référentiel des dj
+- Détection des images de combats (dj, breche, archi, dominant, etc...)
