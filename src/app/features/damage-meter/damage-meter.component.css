@@ -63,6 +63,35 @@
   flex-shrink: 0;
 }
 
+/* Plusieurs combats concurrents (multi-compte) : un onglet par combat,
+   affiché au-dessus du nombre de tours (voir CLAUDE.md, gating par fightId). */
+.fight-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid #2a2a2a;
+  flex-shrink: 0;
+}
+.fight-tab {
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #999;
+  background: #222;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+}
+.fight-tab:hover {
+  background: #2c2c2c;
+  color: #fff;
+}
+.fight-tab.selected {
+  background: color-mix(in srgb, var(--accent) 20%, #222);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .fight-stats-row {
   display: flex;
   align-items: baseline;

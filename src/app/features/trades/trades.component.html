@@ -87,36 +87,37 @@
                   }
                 </div>
               }
-              <div class="trade-sections">
-                <div class="trade-section">
-                  <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>
-                  @if (record.acquired.length === 0) {
-                    <div class="trade-section-empty">—</div>
-                  } @else {
-                    @for (item of record.acquired; track item.name) {
-                      <div class="trade-item-row" [class]="rarityClass(item.name)">
-                        <app-item-icon [name]="item.name" [size]="20" />
-                        <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
-                        <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
-                      </div>
-                    }
+              @if (record.acquired.length > 0 || record.given.length > 0) {
+                <div
+                  class="trade-sections"
+                  [class.single-column]="record.acquired.length === 0 || record.given.length === 0"
+                >
+                  @if (record.acquired.length > 0) {
+                    <div class="trade-section">
+                      <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>
+                      @for (item of record.acquired; track item.name) {
+                        <div class="trade-item-row" [class]="rarityClass(item.name)">
+                          <app-item-icon [name]="item.name" [size]="20" />
+                          <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
+                          <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (record.given.length > 0) {
+                    <div class="trade-section">
+                      <span class="trade-section-label given">{{ 'trades.given' | t }}</span>
+                      @for (item of record.given; track item.name) {
+                        <div class="trade-item-row" [class]="rarityClass(item.name)">
+                          <app-item-icon [name]="item.name" [size]="20" />
+                          <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
+                          <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                        </div>
+                      }
+                    </div>
                   }
                 </div>
-                <div class="trade-section">
-                  <span class="trade-section-label given">{{ 'trades.given' | t }}</span>
-                  @if (record.given.length === 0) {
-                    <div class="trade-section-empty">—</div>
-                  } @else {
-                    @for (item of record.given; track item.name) {
-                      <div class="trade-item-row" [class]="rarityClass(item.name)">
-                        <app-item-icon [name]="item.name" [size]="20" />
-                        <span class="trade-item-name">{{ i18n.translateItemName(item.name) }}</span>
-                        <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
-                      </div>
-                    }
-                  }
-                </div>
-              </div>
+              }
             </div>
           }
         }

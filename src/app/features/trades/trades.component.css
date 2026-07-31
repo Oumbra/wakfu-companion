@@ -206,6 +206,10 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
+/* Un seul des deux blocs (acquis/cédés) a des objets à afficher : autant lui laisser toute la largeur. */
+.trade-sections.single-column {
+  grid-template-columns: minmax(0, 1fr);
+}
 .trade-section {
   min-width: 0;
   background: #161616;
@@ -226,13 +230,6 @@
 .trade-section-label.given {
   color: var(--btn-active-red);
 }
-.trade-section-empty {
-  color: #555;
-  font-style: italic;
-  font-size: 0.76rem;
-  padding: 3px 0;
-}
-
 /* Ligne d'objet acquis/cédé : même principe que `.loot-row` (dégradé de
    fond + bordure gauche par rareté via --rarity-color), en plus compact
    pour tenir dans une colonne étroite. */

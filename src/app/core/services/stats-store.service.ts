@@ -134,9 +134,15 @@ export class StatsStoreService {
   readonly challengesPassed = signal(0);
   readonly challengesFailed = signal(0);
 
-  /** Nombre de tours et durée écoulée du combat en cours affiché (voir currentDisplayFightId), recalculés à chaque lot de lignes traité. */
+  /** Nombre de tours et durée écoulée du combat en cours affiché (voir displayedFightId), recalculés à chaque lot de lignes traité. */
   readonly currentFightTurns = signal(1);
   readonly currentFightDurationMs = signal(0);
+  /** fightId de tous les combats actuellement en cours, dans l'ordre où ils ont démarré — voir selectDisplayedFight() pour permettre à l'utilisateur de choisir lequel afficher quand plusieurs sont concurrents (multi-compte). */
+  readonly activeFightIds = signal<number[]>([]);
+  /** Choix explicite de l'utilisateur (onglets du panneau Combat) ; `null` = suivre automatiquement le dernier combat actif touché. Retombe silencieusement sur le suivi automatique si le combat choisi se termine. */
+  readonly selectedFightId = signal<number | null>(null);
+  /** Combat effectivement affiché par la vue "Combat en cours" (choix explicite s'il est toujours actif, sinon suivi automatique) — source de vérité pour currentFightTurns/currentFightDurationMs/damageByAttacker ET pour surligner l'onglet actif côté UI. */
+  readonly displayedFightId = signal<number | null>(null);
 
   readonly xpByCharacter = signal<XpRow[]>([]);
   readonly damageByAttacker = signal<EntityDamageRow[]>([]);
@@ -168,6 +174,12 @@ export class StatsStoreService {
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
     return this.currentBatchIsInitialLoad;
+  }
+
+  /** Choix explicite du combat à afficher (clic sur un onglet du panneau Combat) — `null` pour revenir au suivi automatique. */
+  selectDisplayedFight(fightId: number | null): void {
+    this.selectedFightId.set(fightId);
+    this.publish();
   }
 
   constructor(
@@ -296,6 +308,7 @@ export class StatsStoreService {
     this.tradeHistoryList.length = 0;
     this.activeFights.clear();
     this.currentDisplayFightId = null;
+    this.selectedFightId.set(null);
     this.lastLineTime = null;
     this.nextPurchaseId = 1;
     this.nextTradeId = 1;
@@ -620,9 +633,18 @@ export class StatsStoreService {
     this.persistence.setJson(WATCHLIST_KEY, updated);
   }
 
+  /** Combat à afficher : le choix explicite de l'utilisateur (onglets) tant qu'il reste actif, sinon le suivi automatique (dernier combat touché). */
+  private resolveDisplayFightId(): number | null {
+    const selected = this.selectedFightId();
+    if (selected !== null && this.activeFights.has(selected)) return selected;
+    return this.currentDisplayFightId;
+  }
+
   private publish(): void {
-    const displayWorking =
-      this.currentDisplayFightId !== null ? this.activeFights.get(this.currentDisplayFightId) : undefined;
+    const displayFightId = this.resolveDisplayFightId();
+    this.displayedFightId.set(displayFightId);
+    this.activeFightIds.set([...this.activeFights.keys()]);
+    const displayWorking = displayFightId !== null ? this.activeFights.get(displayFightId) : undefined;
     this.currentFightTurns.set(displayWorking?.fight.turnCount ?? 1);
     this.currentFightDurationMs.set(
       displayWorking && this.lastLineTime

@@ -101,8 +101,8 @@ const DAMAGE_ELEMENTS = new Set<string>([
 
 /** Au-delà de cette fenêtre, deux lignes de contenu identique sont considérées comme deux événements distincts, pas un doublon multi-compte. */
 const DEDUPE_WINDOW_MS = 1000;
-/** Types de ligne pour lesquels un contenu identique répété est plausible sans être un doublon d'observation (chat, butin farmé en boucle) : jamais dédoublonnés. */
-const DEDUPE_EXEMPT_KINDS = new Set<string>(['loot', 'chat', 'fighter-joined']);
+/** Types de ligne pour lesquels un contenu identique répété est plausible sans être un doublon d'observation (butin farmé en boucle) : jamais dédoublonnés. */
+const DEDUPE_EXEMPT_KINDS = new Set<string>(['loot', 'fighter-joined']);
 
 /**
  * Suivi d'un effet à stacks (statut/passif type Enflammé, Hachure, Force
@@ -133,7 +133,7 @@ interface EffectOwnership {
  * combat encore ouvert (bug historique). Un contenu strictement identique
  * répété en moins d'une seconde (observé quand plusieurs comptes participent
  * au même combat, chacun logguant sa propre copie du flux) est ignoré comme
- * doublon — sauf butin/chat, où une répétition légitime est plausible.
+ * doublon — sauf le butin, où une répétition légitime est plausible (farm).
  */
 export class LogParser {
   private lastCast: { caster: string; spell: string } | null = null;

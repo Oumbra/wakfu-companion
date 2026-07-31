@@ -1,4 +1,4 @@
 <button class="combat-edge-tab" [title]="'damageMeter.expandHint' | t" (click)="expand()">
   <img [src]="icon" class="combat-edge-tab-icon" alt="" />
-  <span class="notif-dot"></span>
+  <span class="notif-dot">{{ combatPanel.activeFightCount() }}</span>
 </button>

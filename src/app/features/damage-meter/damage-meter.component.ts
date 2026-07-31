@@ -41,11 +41,22 @@ export class DamageMeterComponent {
 
   protected readonly currentFightTurns = this.stats.currentFightTurns;
   protected readonly currentFightDurationMs = this.stats.currentFightDurationMs;
+  /** Plusieurs combats concurrents (multi-compte) : un onglet par combat, affiché au-dessus du nombre de tours. */
+  protected readonly activeFightIds = this.stats.activeFightIds;
+  protected readonly displayedFightId = this.stats.displayedFightId;
 
   protected formatDuration(durationMs: number): string {
     const totalSeconds = Math.max(0, Math.round(durationMs / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${minutes} ${this.i18n.t('damageMeter.minutes')} ${seconds}${this.i18n.t('damageMeter.seconds')}`;
+  }
+
+  protected tabLabel(index: number): string {
+    return this.i18n.t('damageMeter.combatTab', { n: index + 1 });
+  }
+
+  protected selectFight(fightId: number): void {
+    this.stats.selectDisplayedFight(fightId);
   }
 }
