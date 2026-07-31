@@ -23,6 +23,20 @@
   </div>
 
   <div class="panel-body meter-body">
+    @if (activeFightIds().length > 1) {
+      <div class="fight-tabs-row">
+        @for (id of activeFightIds(); track id; let i = $index) {
+          <button
+            type="button"
+            class="fight-tab"
+            [class.selected]="id === displayedFightId()"
+            (click)="selectFight(id)"
+          >
+            {{ tabLabel(i) }}
+          </button>
+        }
+      </div>
+    }
     @if (hasCurrentFight()) {
       <div class="fight-stats-row">
         <span class="fight-turns"

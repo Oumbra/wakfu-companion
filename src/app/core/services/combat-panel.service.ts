@@ -22,6 +22,8 @@ export class CombatPanelService {
     this.persistence.getJson<boolean>(COMBAT_PANEL_COLLAPSED_KEY) ?? false,
   );
   readonly hasActiveFight = computed(() => this.stats.damageByAttacker().length > 0);
+  /** Nombre de combats en cours (multi-compte) — affiché dans le rond de notification de l'onglet replié. */
+  readonly activeFightCount = computed(() => this.stats.activeFightIds().length);
 
   setCollapsed(value: boolean): void {
     this.collapsed.set(value);

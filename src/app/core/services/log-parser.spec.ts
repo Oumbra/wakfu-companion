@@ -165,6 +165,25 @@ describe('LogParser — dédoublonnage multi-compte', () => {
     const entries = parseAll(parser, lines);
     expect(entries.filter((e) => e.kind === 'damage')).toHaveLength(2);
   });
+
+  it('dédoublonne un message de chat répété en multi-compte (même auteur, même message, moins d\'1s)', () => {
+    const parser = new LogParser();
+    const lines = Array.from({ length: 10 }, (_, i) =>
+      ` INFO 15:16:23,0${i}0 [T] (a:1) - [Proximité] Bob : Coucou`,
+    );
+    const entries = parseAll(parser, lines);
+    expect(entries.filter((e) => e.kind === 'chat')).toHaveLength(1);
+  });
+
+  it('ne dédoublonne pas deux messages de chat différents envoyés à quelques ms d\'écart', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 15:16:23,000 [T] (a:1) - [Proximité] Bob : Coucou',
+      ' INFO 15:16:23,010 [T] (a:1) - [Proximité] Alice : Salut',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries.filter((e) => e.kind === 'chat')).toHaveLength(2);
+  });
 });
 
 describe('LogParser — échanges multi-lignes', () => {

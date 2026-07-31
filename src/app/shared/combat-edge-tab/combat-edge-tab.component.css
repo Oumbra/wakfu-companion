@@ -26,16 +26,26 @@
   object-fit: contain;
 }
 /* Même principe que `.kpi-del` (tracker-strip) : le badge chevauche la
-   bordure au lieu de rester posé à plat dedans. */
+   bordure au lieu de rester posé à plat dedans. Affiche le nombre de combats
+   en cours (multi-compte) plutôt qu'un simple point. */
 .notif-dot {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
   background: var(--accent);
   border: 2px solid var(--panel-header-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.62rem;
+  line-height: 1;
 }
 
 /* Mobile n'a pas de notion de repli desktop (voir CombatPanelService.collapsed,

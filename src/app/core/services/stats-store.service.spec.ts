@@ -17,6 +17,11 @@ function feed(access: LogFileAccessService, lines: string[]): void {
   access.newLines$.next({ lines, isInitialLoad: true });
 }
 
+/** Simule un nouveau lot de lignes sur une connexion déjà active (isInitialLoad=false), sans réinitialiser la session — contrairement à `feed`. */
+function feedMore(access: LogFileAccessService, lines: string[]): void {
+  access.newLines$.next({ lines, isInitialLoad: false });
+}
+
 describe('StatsStoreService', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -274,6 +279,41 @@ describe('StatsStoreService', () => {
         expect(fight.rows.length).toBeGreaterThan(0);
       }
       expect(stats.combatsWon()).toBe(2);
+    });
+
+    it('expose les combats actifs pour les onglets et permet de choisir lequel afficher', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+
+      // Deux combats démarrent (fightId 1 puis 2), tous deux encore en cours.
+      feed(access, [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Chafer breed : 4742 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ]);
+
+      expect(stats.activeFightIds()).toEqual([1, 2]);
+      // Suivi automatique : le dernier combat touché (2, le plus récent).
+      expect(stats.displayedFightId()).toBe(2);
+      expect(stats.damageByAttacker().map((r) => r.name).sort()).toEqual(['Caliburnus', 'Chafer']);
+
+      // L'utilisateur choisit explicitement l'onglet du combat 1.
+      stats.selectDisplayedFight(1);
+      expect(stats.displayedFightId()).toBe(1);
+      expect(stats.damageByAttacker().map((r) => r.name).sort()).toEqual(['Blop', 'Oumbra']);
+
+      // De nouvelles lignes touchant le combat 2 ne doivent pas faire perdre le choix explicite.
+      feedMore(access, [
+        ' INFO 10:00:10,000 [T] (a:1) - [Information (combat)] Caliburnus lance le sort Frappe',
+        ' INFO 10:00:10,500 [T] (a:1) - [Information (combat)] Chafer: -100 PV (Terre)',
+      ]);
+      expect(stats.displayedFightId()).toBe(1);
+
+      // Le combat 1 se termine : le choix explicite n'est plus valide, retour au suivi automatique (combat 2).
+      feedMore(access, [' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1']);
+      expect(stats.activeFightIds()).toEqual([2]);
+      expect(stats.displayedFightId()).toBe(2);
     });
 
     it('combat multi-compte perdu : les dégâts dupliqués par les deux comptes ne sont comptés qu\'une fois (fight_multi-account_lost.log)', () => {
