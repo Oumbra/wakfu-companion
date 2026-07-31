@@ -145,6 +145,7 @@ export interface FighterJoinedEntry {
 export interface TradeSide {
   playerName: string;
   items: { name: string; quantity: number }[];
+  kamas: number;
 }
 
 /** Résumé final d'un échange ("[Trade] le joueur X donne : ... / le joueur Y donne : ..."), les deux côtés étant toujours présents. */

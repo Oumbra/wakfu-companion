@@ -79,6 +79,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.empty': 'Aucun échange enregistré.',
     'trades.acquired': 'Acquis',
     'trades.given': 'Cédés',
+    'trades.kamas': 'Kamas',
 
     'profile.button': 'Profil',
     'profile.title': 'Mon profil',
@@ -224,6 +225,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.empty': 'No trade recorded.',
     'trades.acquired': 'Received',
     'trades.given': 'Given',
+    'trades.kamas': 'Kamas',
 
     'profile.button': 'Profile',
     'profile.title': 'My profile',
@@ -367,6 +369,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.empty': 'Ningún intercambio registrado.',
     'trades.acquired': 'Adquiridos',
     'trades.given': 'Cedidos',
+    'trades.kamas': 'Kamas',
 
     'profile.button': 'Perfil',
     'profile.title': 'Mi perfil',
@@ -512,6 +515,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.empty': 'Nenhuma troca registrada.',
     'trades.acquired': 'Adquiridos',
     'trades.given': 'Cedidos',
+    'trades.kamas': 'Kamas',
 
     'profile.button': 'Perfil',
     'profile.title': 'Meu perfil',

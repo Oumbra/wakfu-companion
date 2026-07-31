@@ -74,8 +74,19 @@
                     <path d="M12 7v5l3.5 3.5" />
                   </svg>
                 </span>
-                <span class="trade-character">{{ record.characterName }}</span>
+                <span class="trade-character">{{ record.selfName }} ⇄ {{ record.characterName }}</span>
               </div>
+              @if (record.kamasAcquired > 0 || record.kamasGiven > 0) {
+                <div class="trade-kamas-row">
+                  <span class="trade-kamas-label">{{ 'trades.kamas' | t }}</span>
+                  @if (record.kamasAcquired > 0) {
+                    <span class="trade-kamas-value acquired">+{{ record.kamasAcquired | numberFr }} ₭</span>
+                  }
+                  @if (record.kamasGiven > 0) {
+                    <span class="trade-kamas-value given">-{{ record.kamasGiven | numberFr }} ₭</span>
+                  }
+                </div>
+              }
               <div class="trade-sections">
                 <div class="trade-section">
                   <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>

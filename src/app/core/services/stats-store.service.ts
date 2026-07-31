@@ -71,13 +71,16 @@ export interface TradeItemRow {
   quantity: number;
 }
 
-/** Un échange individuel avec un autre joueur (objets acquis/cédés). `characterName` désigne le personnage EN FACE : jamais un personnage du compte courant (roster déclaré en page profil, voir CharacterRosterService). */
+/** Un échange individuel avec un autre joueur (objets/kamas acquis/cédés). `characterName` désigne le personnage EN FACE, `selfName` le personnage du compte courant (roster déclaré en page profil, voir CharacterRosterService) — un échange entre deux personnages du roster est ignoré (voir registerTrade), il n'y a donc jamais d'ambiguïté sur lequel des deux est "en face". */
 export interface TradeRecord {
   id: number;
   characterName: string;
+  selfName: string;
   fullTimestampMs: number;
   acquired: TradeItemRow[];
   given: TradeItemRow[];
+  kamasAcquired: number;
+  kamasGiven: number;
 }
 
 export interface FightRecord {
@@ -569,23 +572,30 @@ export class StatsStoreService {
   private registerTrade(
     time: string,
     sides: readonly [
-      { playerName: string; items: TradeItemRow[] },
-      { playerName: string; items: TradeItemRow[] },
+      { playerName: string; items: TradeItemRow[]; kamas: number },
+      { playerName: string; items: TradeItemRow[]; kamas: number },
     ],
   ): void {
     const [a, b] = sides;
     const aIsSelf = this.roster.hasCharacter(a.playerName);
     const bIsSelf = this.roster.hasCharacter(b.playerName);
+    // Un échange entre deux personnages du roster déclaré (deux de ses
+    // propres comptes) n'est pas un vrai échange avec un autre joueur : on
+    // l'ignore plutôt que de l'enregistrer avec un "characterName" arbitraire.
+    if (aIsSelf && bIsSelf) return;
     // Le personnage EN FACE est celui qui n'appartient pas au compte courant
-    // (roster déclaré en page profil) ; en cas d'ambiguïté (aucun ou les deux
-    // reconnus), on garde un choix stable plutôt que de ne rien enregistrer.
-    const [self, other] = bIsSelf && !aIsSelf ? [b, a] : [a, b];
+    // (roster déclaré en page profil) ; si aucun des deux n'est reconnu, on
+    // garde un choix stable plutôt que de ne rien enregistrer.
+    const [self, other] = bIsSelf ? [b, a] : [a, b];
     this.tradeHistoryList.unshift({
       id: this.nextTradeId++,
       characterName: other.playerName,
+      selfName: self.playerName,
       fullTimestampMs: this.buildFullTimestampMs(time),
       acquired: other.items,
       given: self.items,
+      kamasAcquired: other.kamas,
+      kamasGiven: self.kamas,
     });
   }
 
