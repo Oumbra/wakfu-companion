@@ -365,38 +365,41 @@
             }
 
             @if (account.characters.length > 0) {
-              <div class="icon-switch" style="align-self: flex-end; width: 52px">
-                <span
-                  class="icon-switch-highlight"
-                  [class.is-right]="profile.characterViewMode() === 'grid'"
-                ></span>
-                <button
-                  type="button"
-                  class="icon-switch-option"
-                  [class.selected]="profile.characterViewMode() === 'list'"
-                  [title]="'profile.rosterViewList' | t"
-                  (click)="profile.setCharacterViewMode('list')"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="4" y1="6" x2="20" y2="6" />
-                    <line x1="4" y1="12" x2="20" y2="12" />
-                    <line x1="4" y1="18" x2="20" y2="18" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  class="icon-switch-option"
-                  [class.selected]="profile.characterViewMode() === 'grid'"
-                  [title]="'profile.rosterViewGrid' | t"
-                  (click)="profile.setCharacterViewMode('grid')"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="4" y="4" width="7" height="7" rx="1.5" />
-                    <rect x="13" y="4" width="7" height="7" rx="1.5" />
-                    <rect x="4" y="13" width="7" height="7" rx="1.5" />
-                    <rect x="13" y="13" width="7" height="7" rx="1.5" />
-                  </svg>
-                </button>
+              <div class="roster-view-row">
+                <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                <div class="icon-switch" style="width: 52px">
+                  <span
+                    class="icon-switch-highlight"
+                    [class.is-right]="profile.characterViewMode() === 'grid'"
+                  ></span>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="profile.characterViewMode() === 'list'"
+                    [title]="'profile.rosterViewList' | t"
+                    (click)="profile.setCharacterViewMode('list')"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="4" y1="6" x2="20" y2="6" />
+                      <line x1="4" y1="12" x2="20" y2="12" />
+                      <line x1="4" y1="18" x2="20" y2="18" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="profile.characterViewMode() === 'grid'"
+                    [title]="'profile.rosterViewGrid' | t"
+                    (click)="profile.setCharacterViewMode('grid')"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                      <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                      <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                    </svg>
+                  </button>
+                </div>
               </div>
 
               <div

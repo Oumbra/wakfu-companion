@@ -109,6 +109,26 @@ describe('LogParser — multi-combat (fightId)', () => {
     expect(ends.map((e: any) => e.fightId)).toEqual([2, 1]);
   });
 
+  it("rattache le butin au combat restant quand un combat concurrent vient de se terminer sans qu'aucun sort/dégât n'ait ré-ancré le combat courant (bug réel : butin de fin de combat manquant)", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Piou breed : 87 [1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Sagitta breed : 9 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Bouftou breed : 1 [3] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Oumbra breed : 4 [4] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      // Un sort/XP ancre currentFightId sur le combat 1 (Piou) juste avant sa fin.
+      ' INFO 10:00:10,000 [T] (a:1) - [Information (combat)] Sagitta : +100 points d\'XP. ',
+      ' INFO 10:00:11,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      // Entre la fin du combat 1 et ce butin, AUCUNE ligne à nom résolvable (seulement des statuts) :
+      // avant le fix, currentFightId restait à null et ce butin (du combat 2, encore actif) se perdait.
+      ' INFO 10:00:12,000 [T] (a:1) - [Information (combat)] Oumbra: 1 PA (Force vitale)',
+      ' INFO 10:00:13,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Peau de Bouftou .',
+    ];
+    const entries = parseAll(parser, lines);
+    const loot = entries.find((e) => e.kind === 'loot');
+    expect(loot).toEqual({ kind: 'loot', time: '10:00:13,000', item: 'Peau de Bouftou', quantity: 1, fightId: 2 });
+  });
+
   it('déclare une défaite via "Lancement de l\'occupation" même sans marqueur "vaincu(e)"', () => {
     const parser = new LogParser();
     const lines = [

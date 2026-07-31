@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import {
   EntityDamageRow,
   FightRecord,
@@ -18,7 +18,7 @@ import {
   HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
-import { RARITY_ICON_BASE_DATA_URI, RARITY_SORT_ICON_DATA_URI } from '../../core/data/rarity-icon.data';
+import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 
 type LootSort = 'name' | 'quantity' | 'rarity';
 
@@ -46,10 +46,8 @@ export class FightHistoryComponent {
 
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   protected readonly lootSort = signal<LootSort>('name');
-  /** Gemme grise au repos, cyan (`--accent`) une fois le tri par rareté actif — même logique que `.loot-sort-btn.active`. */
-  protected readonly rarityIcon = computed(() =>
-    this.lootSort() === 'rarity' ? RARITY_SORT_ICON_DATA_URI : RARITY_ICON_BASE_DATA_URI,
-  );
+  /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
+  protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
 

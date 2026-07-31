@@ -124,6 +124,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.confirmDeleteCharacter': 'Supprimer ce personnage ?',
     'profile.rosterViewList': 'Vue liste',
     'profile.rosterViewGrid': 'Vue grille',
+    'profile.rosterCharacterCountOne': '{{n}} Personnage',
+    'profile.rosterCharacterCountMany': '{{n}} Personnages',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrer les messages...',
@@ -269,6 +271,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.confirmDeleteCharacter': 'Delete this character?',
     'profile.rosterViewList': 'List view',
     'profile.rosterViewGrid': 'Grid view',
+    'profile.rosterCharacterCountOne': '{{n}} Character',
+    'profile.rosterCharacterCountMany': '{{n}} Characters',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filter messages...',
@@ -416,6 +420,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.confirmDeleteCharacter': '¿Eliminar este personaje?',
     'profile.rosterViewList': 'Vista de lista',
     'profile.rosterViewGrid': 'Vista de cuadrícula',
+    'profile.rosterCharacterCountOne': '{{n}} Personaje',
+    'profile.rosterCharacterCountMany': '{{n}} Personajes',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
@@ -561,6 +567,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.confirmDeleteCharacter': 'Remover este personagem?',
     'profile.rosterViewList': 'Vista em lista',
     'profile.rosterViewGrid': 'Vista em grade',
+    'profile.rosterCharacterCountOne': '{{n}} Personagem',
+    'profile.rosterCharacterCountMany': '{{n}} Personagens',
 
     'chat.header': 'Chat',
     'chat.filterPlaceholder': 'Filtrar mensagens...',
