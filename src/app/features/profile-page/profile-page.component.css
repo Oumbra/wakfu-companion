@@ -664,6 +664,19 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Nombre de personnages du compte affiché, sur la même ligne que le switch liste/grille. */
+.roster-view-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+.roster-character-count {
+  display: flex;
+  align-items: flex-end;
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: #888;
+}
 .roster-account-panel {
   display: flex;
   flex-direction: column;

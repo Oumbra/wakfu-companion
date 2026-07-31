@@ -316,6 +316,33 @@ describe('StatsStoreService', () => {
       expect(stats.displayedFightId()).toBe(2);
     });
 
+    it('rejoue le cas réel signalé : le butin de fin de combat n\'est plus perdu quand un combat concurrent vient de se terminer sans ligne à nom résolvable entre les deux (fight_multi-account_loot-after-concurrent-end.log)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('fight_multi-account_loot-after-concurrent-end.log'));
+
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(4);
+
+      // Combat 1616298256 (Bouftou) : son butin arrive juste après la fin du combat concurrent
+      // 1616298253 (Piou), sans qu'aucune ligne à nom résolvable ne s'intercale — c'était le cas cassé.
+      const bouftouFight = fights.find((f) => f.id === 1616298256);
+      expect(bouftouFight).toBeTruthy();
+      const bouftouLoot = new Map(bouftouFight!.loot.map((l) => [l.name, l.quantity]));
+      expect(bouftouLoot.get('Peau de Bouftou')).toBe(19);
+      expect(bouftouLoot.get('Amulette du Bouftou')).toBe(3);
+      expect(bouftouLoot.get('Boufmarteau')).toBe(1);
+      expect(bouftouLoot.get('Corne de Bouftou')).toBe(1);
+      expect(bouftouLoot.get('Havre-Gemme Marchande')).toBe(1);
+
+      // Le combat concurrent (Piou) garde bien son propre butin, non mélangé avec celui du Bouftou.
+      const piouFight = fights.find((f) => f.id === 1616298253);
+      expect(piouFight).toBeTruthy();
+      const piouLootNames = piouFight!.loot.map((l) => l.name);
+      expect(piouLootNames).not.toContain('Peau de Bouftou');
+      expect(piouLootNames).toContain('Bec de Piou');
+    });
+
     it('combat multi-compte perdu : les dégâts dupliqués par les deux comptes ne sont comptés qu\'une fois (fight_multi-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);

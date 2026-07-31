@@ -358,6 +358,12 @@ export class ProfilePageComponent implements OnDestroy {
     return account.label.trim() || this.i18n.t('profile.rosterUnnamedAccount', { index: index + 1 });
   }
 
+  /** Pas de pluralisation ICU dans cette app (voir CLAUDE.md) : clé singulier/pluriel distincte selon le nombre de personnages du compte affiché. */
+  protected characterCountLabel(count: number): string {
+    const key = count === 1 ? 'profile.rosterCharacterCountOne' : 'profile.rosterCharacterCountMany';
+    return this.i18n.t(key, { n: count });
+  }
+
   protected requestRemoveCharacter(event: Event, accountId: string, name: string): void {
     event.stopPropagation();
     const button = event.currentTarget as HTMLElement;

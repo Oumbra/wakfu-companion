@@ -330,14 +330,15 @@ export class LogParser {
     if (this.currentFightId === fightId) this.currentFightId = null;
   }
 
-  /** Résout le combat d'un combattant nommé : sans ambiguïté si ce nom n'appartient qu'à un seul combat actif, sinon repli sur le dernier combat résolu. */
+  /** Résout le combat d'un combattant nommé : sans ambiguïté si ce nom n'appartient qu'à un seul combat actif, sinon repli sur le dernier combat résolu (voir resolveCurrentFightId). */
   private resolveFightIdForName(name: string): number | null {
     const ids = this.nameToFightIds.get(name);
     if (ids && ids.size === 1) {
       const [id] = ids;
       this.currentFightId = id;
+      return id;
     }
-    return this.currentFightId;
+    return this.resolveCurrentFightId();
   }
 
   /** "Lancement de l'occupation pour le joueur {nom} {classe}" : le nom du combattant est un préfixe du texte capturé (la classe suit, ex. "Crâ", "Sram"). */
@@ -351,8 +352,31 @@ export class LogParser {
         resolved = id;
       }
     }
-    if (ambiguous) return this.currentFightId;
-    return resolved ?? this.currentFightId;
+    if (ambiguous) return this.resolveCurrentFightId();
+    return resolved ?? this.resolveCurrentFightId();
+  }
+
+  /**
+   * Repli utilisé pour les lignes sans nom de combattant exploitable (butin,
+   * changement de tour, marqueur de défaite "vaincu(e)") : le dernier combat
+   * résolu sans ambiguïté, s'il est toujours actif — sinon, s'il ne reste
+   * plus qu'UN SEUL combat actif, ce dernier ne peut être que le bon (plus
+   * d'ambiguïté possible). Sans ce second repli, la fin d'un premier combat
+   * concurrent laissait `currentFightId` à `null` jusqu'à la prochaine ligne
+   * à nom résolvable, et tout butin ramassé entre-temps pour l'unique combat
+   * restant se perdait (bug réel : butin de fin de combat manquant en
+   * multi-compte, voir tests).
+   */
+  private resolveCurrentFightId(): number | null {
+    if (this.currentFightId !== null && this.fightMemberNames.has(this.currentFightId)) {
+      return this.currentFightId;
+    }
+    if (this.fightMemberNames.size === 1) {
+      const [onlyId] = this.fightMemberNames.keys();
+      this.currentFightId = onlyId;
+      return onlyId;
+    }
+    return null;
   }
 
   private parseGameLine(time: string, content: string): LogEntry | null {
@@ -371,7 +395,7 @@ export class LogParser {
         time,
         item: loot[2].trim(),
         quantity: parseFrenchNumber(loot[1]),
-        fightId: this.currentFightId,
+        fightId: this.resolveCurrentFightId(),
       };
     }
     const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
@@ -387,8 +411,9 @@ export class LogParser {
 
   private parseCombatLine(time: string, content: string): LogEntry | null {
     if (DEFEAT_MARKER_RE.test(content)) {
-      if (this.currentFightId !== null) this.fightLostFlags.set(this.currentFightId, true);
-      return { kind: 'combat-defeat-marker', time, fightId: this.currentFightId };
+      const fightId = this.resolveCurrentFightId();
+      if (fightId !== null) this.fightLostFlags.set(fightId, true);
+      return { kind: 'combat-defeat-marker', time, fightId };
     }
 
     const ko = KO_RE.exec(content);
@@ -404,7 +429,7 @@ export class LogParser {
     }
 
     if (TURN_CARRY_RE.test(content)) {
-      return { kind: 'turn-marker', time, fightId: this.currentFightId };
+      return { kind: 'turn-marker', time, fightId: this.resolveCurrentFightId() };
     }
 
     const cast = SPELL_CAST_RE.exec(content);
