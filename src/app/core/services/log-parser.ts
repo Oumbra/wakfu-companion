@@ -3,6 +3,7 @@ import {
   ChatChannelKey,
   DamageElement,
   LogEntry,
+  TradeSide,
 } from '../models/log-entry.model';
 
 /** Liste ordonnée des canaux de chat affichés dans le panneau Chat. */
@@ -41,10 +42,11 @@ const NUM = '[\\d \\u00A0\\u202F]+';
  * wakfu.log encapsule chaque ligne dans le log technique du client Java :
  * "LEVEL HH:MM:SS,mmm [thread] (classe:ligne) - contenu". Le contenu utile
  * (chat, combat, marqueurs de combat) est identique à l'ancien wakfu_chat.log,
- * une fois cette enveloppe retirée.
+ * une fois cette enveloppe retirée. Seul le niveau INFO est traité ; WARN et
+ * ERROR sont systématiquement ignorés (voir parseLine).
  */
-const LOG_LINE_RE =
-  /^\s*(?:INFO|WARN|ERROR)\s+(\d{2}:\d{2}:\d{2},\d{3})\s+\[[^\]]*\]\s+\([^)]*\)\s+-\s+(.*)$/;
+const HEADER_RE =
+  /^\s*(INFO|WARN|ERROR)\s+(\d{2}:\d{2}:\d{2},\d{3})\s+\[[^\]]*\]\s+\([^)]*\)\s+-\s+(.*)$/;
 const BRACKET_RE = /^\[([^\]]+)\] ?(.*)$/;
 const CHAT_CONTENT_RE = /^(.+?) : (.*)$/;
 const KAMA_GAIN_RE = new RegExp(`^Vous avez gagné (${NUM}) kamas\\.?$`);
@@ -55,12 +57,17 @@ const CHALLENGE_FAIL_RE = /^Le challenge "(.+?)" a échoué\.?$/;
 const XP_RE = new RegExp(`^(.+?) : \\+(${NUM}) points d'XP\\.`);
 const SPELL_CAST_RE = /^(.+?) lance le sort (.+)$/;
 const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
+/** Marqueur personnel ("vous"/vos alliés) : n'est émis que pour un personnage joueur, jamais pour un monstre. */
 const KO_RE = /^(.+?) est KO !$/;
+/** Diffusion générale de mise hors-combat, émise pour N'IMPORTE QUEL combattant (allié ou ennemi) — contrairement à KO_RE, réservé aux alliés. Signal principal pour détecter la mort d'un ennemi. */
+const HORS_COMBAT_RE = /^(.+?) est hors-combat !$/;
 /** Émis une fois par transition de tour (jamais pour le premier tour d'un combat) : sert à compter les tours. */
 const TURN_CARRY_RE = /^\d+ secondes? reportées? pour le tour suivant\.$/;
 const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
-/** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). */
-const FIGHT_END_RE = /^\[FIGHT\] End fight with id -?\d+$/;
+/** Diffusée à chaque allié mis KO (y compris via abandon de combat, où "est KO !"/"est hors-combat !" peuvent manquer) : signal de défaite le plus fiable, y compris en multi-compte. */
+const OCCUPATION_RE = /^Lancement de l'occupation pour le joueur (.+)$/;
+/** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). Capture l'id pour distinguer plusieurs combats concurrents (multi-compte). */
+const FIGHT_END_RE = /^\[FIGHT\] End fight with id (-?\d+)$/;
 const COMBAT_START_MARKER = 'CREATION DU COMBAT';
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
@@ -70,7 +77,7 @@ const COMBAT_START_MARKER = 'CREATION DU COMBAT';
  * personnage à classer allié/ennemi.
  */
 const FIGHTER_JOIN_RE =
-  /^fightId=-?\d+ (.+?) breed : \d+ \[-?\d+\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
+  /^fightId=(-?\d+) (.+?) breed : (\d+) \[(-?\d+)\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
 const DAMAGE_RE = new RegExp(`^(.+?): ([+-])(${NUM}) PV\\b(.*)$`);
 const TAG_RE = /\(([^)]+)\)/g;
 /** Application/rafraîchissement d'un effet à stacks : "Personnage: NomEffet (Niv. N)" ou "(+N Niv.)". */
@@ -78,6 +85,9 @@ const STATUS_EFFECT_RE = /^(.+?): (.+?) \((?:Niv\. \d+|\+\d+ Niv\.)\)$/;
 const STATUS_REMOVE_RE = /^(.+?): n'est plus sous l'emprise de '(.+?)'\.?$/;
 /** Purement informatif (le coup a été paré) : jamais une source de dégâts. */
 const IGNORED_TAG = 'Parade !';
+/** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
+const TRADE_DONNE_RE = /le joueur (.+?) donne\s*:\s*\d+\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
+const TRADE_ITEM_RE = /(\d+)\s*x\s*(.+?)\s*\(refId=-?\d+\)/g;
 
 const DAMAGE_ELEMENTS = new Set<string>([
   'Neutre',
@@ -88,6 +98,11 @@ const DAMAGE_ELEMENTS = new Set<string>([
   'Lumière',
   'Stasis',
 ]);
+
+/** Au-delà de cette fenêtre, deux lignes de contenu identique sont considérées comme deux événements distincts, pas un doublon multi-compte. */
+const DEDUPE_WINDOW_MS = 1000;
+/** Types de ligne pour lesquels un contenu identique répété est plausible sans être un doublon d'observation (chat, butin farmé en boucle) : jamais dédoublonnés. */
+const DEDUPE_EXEMPT_KINDS = new Set<string>(['loot', 'chat', 'fighter-joined']);
 
 /**
  * Suivi d'un effet à stacks (statut/passif type Enflammé, Hachure, Force
@@ -109,32 +124,102 @@ interface EffectOwnership {
  * Parseur à état du log Wakfu (wakfu.log). Doit recevoir les lignes dans
  * l'ordre chronologique : l'attribution des dégâts au bon sort/attaquant et
  * la détection victoire/défaite dépendent du contexte des lignes précédentes.
+ *
+ * Gère nativement plusieurs combats concurrents (multi-compte, plusieurs
+ * combattants d'un même compte engagés simultanément) : chaque combattant
+ * connu ("[_FL_] ... join the fight") est rattaché à son fightId, ce qui
+ * permet de router dégâts/tours/butin/XP/KO vers le bon combat sans qu'un
+ * second "CREATION DU COMBAT" ne vienne écraser la progression d'un premier
+ * combat encore ouvert (bug historique). Un contenu strictement identique
+ * répété en moins d'une seconde (observé quand plusieurs comptes participent
+ * au même combat, chacun logguant sa propre copie du flux) est ignoré comme
+ * doublon — sauf butin/chat, où une répétition légitime est plausible.
  */
 export class LogParser {
   private lastCast: { caster: string; spell: string } | null = null;
   private lastDamage: { attacker: string; target: string } | null = null;
-  private combatLostFlag = false;
   private readonly effectOwners = new Map<string, EffectOwnership>();
   /** Dernier lanceur connu de chaque sort (persiste au-delà du tour, pour les glyphes/zones posés une fois et qui tapent bien plus tard, ex. "Canine"). */
   private readonly spellCasters = new Map<string, string>();
+
+  /** Combats connus pour un nom de combattant donné — un nom peut appartenir à plusieurs combats concurrents si le même monstre apparaît dans deux combats simultanés (multi-compte). */
+  private readonly nameToFightIds = new Map<string, Set<number>>();
+  /** Inverse de nameToFightIds, pour retirer proprement un combat terminé (évite qu'un nom de monstre très courant reste ambigu pour de futurs combats sans rapport). */
+  private readonly fightMemberNames = new Map<number, Set<string>>();
+  private readonly fightLostFlags = new Map<number, boolean>();
+  /** Dernier combat résolu sans ambiguïté : repli pour les lignes sans nom exploitable (tour, butin) ou dont le nom est ambigu. */
+  private currentFightId: number | null = null;
+
+  /** Ligne en cours d'accumulation : un enregistrement Java peut s'étaler sur plusieurs lignes physiques (ex. résumé d'échange), la suite n'ayant pas d'en-tête LEVEL/horodatage. */
+  private pending: { time: string; parts: string[] } | null = null;
+
+  /** Horodatage (ms depuis minuit) de la dernière occurrence de chaque signature d'événement, pour ignorer les doublons multi-compte. */
+  private readonly recentSignatures = new Map<string, number>();
 
   parseLine(rawLine: string): LogEntry | null {
     const line = rawLine.replace(/\r$/, '');
     if (!line.trim()) return null;
 
-    const lineMatch = LOG_LINE_RE.exec(line);
-    if (!lineMatch) return null;
-    const [, time, contentRaw] = lineMatch;
-    const content = contentRaw.trim();
+    const headerMatch = HEADER_RE.exec(line);
+    if (headerMatch) {
+      const flushed = this.flushPending();
+      const [, level, time, firstPart] = headerMatch;
+      // WARN/ERROR toujours ignorées : on ne les bufferise même pas.
+      this.pending = level === 'INFO' ? { time, parts: [firstPart] } : null;
+      return flushed;
+    }
 
-    if (FIGHT_END_RE.test(content)) {
-      const result: 'won' | 'lost' = this.combatLostFlag ? 'lost' : 'won';
-      this.resetFightState();
-      return { kind: 'combat-end', time, result };
+    // Suite d'un enregistrement multi-lignes (ex. résumé d'échange) : pas d'en-tête sur cette ligne.
+    this.pending?.parts.push(line.trim());
+    return null;
+  }
+
+  /**
+   * Un enregistrement peut s'étaler sur plusieurs lignes physiques (voir
+   * parseLine) : celui de la toute dernière ligne d'un lot n'est donc traité
+   * qu'à la ligne suivante, pour savoir s'il continue. À appeler après avoir
+   * traité un lot complet de lignes, pour ne pas laisser la dernière en
+   * attente indéfiniment si aucune nouvelle ligne n'arrive avant longtemps.
+   */
+  flush(): LogEntry | null {
+    return this.flushPending();
+  }
+
+  /** Réinitialise tout l'état interne (à appeler à chaque reconnexion/relecture complète du fichier). */
+  reset(): void {
+    this.lastCast = null;
+    this.lastDamage = null;
+    this.effectOwners.clear();
+    this.spellCasters.clear();
+    this.nameToFightIds.clear();
+    this.fightMemberNames.clear();
+    this.fightLostFlags.clear();
+    this.currentFightId = null;
+    this.pending = null;
+    this.recentSignatures.clear();
+  }
+
+  private flushPending(): LogEntry | null {
+    if (!this.pending) return null;
+    const { time, parts } = this.pending;
+    this.pending = null;
+    const content = parts.join(' ').trim();
+    if (!content) return null;
+    const entry = this.parseContent(time, content);
+    if (!entry) return null;
+    return this.isDuplicate(entry) ? null : entry;
+  }
+
+  private parseContent(time: string, content: string): LogEntry | null {
+    const fightEnd = FIGHT_END_RE.exec(content);
+    if (fightEnd) {
+      const fightId = Number(fightEnd[1]);
+      const lost = this.fightLostFlags.get(fightId) ?? false;
+      this.forgetFight(fightId);
+      return { kind: 'combat-end', time, fightId, result: lost ? 'lost' : 'won' };
     }
 
     if (content === COMBAT_START_MARKER) {
-      this.resetFightState();
       return { kind: 'combat-start', time };
     }
 
@@ -166,28 +251,107 @@ export class LogParser {
     }
 
     if (category === '_FL_') {
-      const join = FIGHTER_JOIN_RE.exec(bracketContent);
-      if (join && join[3] === '-1') {
-        return {
-          kind: 'fighter-joined',
-          time,
-          name: join[1].trim(),
-          isControlledByAI: join[2] === 'true',
-        };
+      return this.parseFighterJoin(time, bracketContent);
+    }
+
+    if (category === 'DEATH') {
+      const occupation = OCCUPATION_RE.exec(bracketContent);
+      if (occupation) {
+        const fightId = this.resolveFightIdForOccupation(occupation[1].trim());
+        if (fightId !== null) this.fightLostFlags.set(fightId, true);
+        return { kind: 'combat-defeat-marker', time, fightId };
       }
       return null;
+    }
+
+    if (category === 'Trade') {
+      return this.parseTradeLine(bracketContent, time);
     }
 
     return null;
   }
 
-  /** Réinitialise l'état propre à un combat (statuts, dernier sort, flag de défaite). */
-  private resetFightState(): void {
-    this.combatLostFlag = false;
-    this.lastCast = null;
-    this.lastDamage = null;
-    this.effectOwners.clear();
-    this.spellCasters.clear();
+  private parseTradeLine(content: string, time: string): LogEntry | null {
+    const sides: TradeSide[] = [];
+    TRADE_DONNE_RE.lastIndex = 0;
+    for (const match of content.matchAll(TRADE_DONNE_RE)) {
+      const playerName = match[1].trim();
+      const itemsText = match[2];
+      const items: { name: string; quantity: number }[] = [];
+      for (const itemMatch of itemsText.matchAll(TRADE_ITEM_RE)) {
+        items.push({ quantity: Number(itemMatch[1]), name: itemMatch[2].trim() });
+      }
+      sides.push({ playerName, items });
+    }
+    if (sides.length !== 2) return null;
+    return { kind: 'trade-completed', time, sides: [sides[0], sides[1]] };
+  }
+
+  private parseFighterJoin(time: string, content: string): LogEntry | null {
+    const join = FIGHTER_JOIN_RE.exec(content);
+    if (!join || join[6] !== '-1') return null;
+    const fightId = Number(join[1]);
+    const name = join[2].trim();
+    const breed = Number(join[3]);
+    const fighterId = Number(join[4]);
+    const isControlledByAI = join[5] === 'true';
+
+    let fightIds = this.nameToFightIds.get(name);
+    if (!fightIds) {
+      fightIds = new Set();
+      this.nameToFightIds.set(name, fightIds);
+    }
+    fightIds.add(fightId);
+    let members = this.fightMemberNames.get(fightId);
+    if (!members) {
+      members = new Set();
+      this.fightMemberNames.set(fightId, members);
+    }
+    members.add(name);
+    this.currentFightId = fightId;
+
+    return { kind: 'fighter-joined', time, fightId, name, breed, fighterId, isControlledByAI };
+  }
+
+  /** Oublie un combat terminé : libère les noms de combattants qui n'appartiennent à aucun autre combat actif, pour éviter qu'un nom de monstre courant reste faussement ambigu pour un futur combat sans rapport. */
+  private forgetFight(fightId: number): void {
+    const members = this.fightMemberNames.get(fightId);
+    if (members) {
+      for (const name of members) {
+        const ids = this.nameToFightIds.get(name);
+        if (!ids) continue;
+        ids.delete(fightId);
+        if (ids.size === 0) this.nameToFightIds.delete(name);
+      }
+    }
+    this.fightMemberNames.delete(fightId);
+    this.fightLostFlags.delete(fightId);
+    if (this.currentFightId === fightId) this.currentFightId = null;
+  }
+
+  /** Résout le combat d'un combattant nommé : sans ambiguïté si ce nom n'appartient qu'à un seul combat actif, sinon repli sur le dernier combat résolu. */
+  private resolveFightIdForName(name: string): number | null {
+    const ids = this.nameToFightIds.get(name);
+    if (ids && ids.size === 1) {
+      const [id] = ids;
+      this.currentFightId = id;
+    }
+    return this.currentFightId;
+  }
+
+  /** "Lancement de l'occupation pour le joueur {nom} {classe}" : le nom du combattant est un préfixe du texte capturé (la classe suit, ex. "Crâ", "Sram"). */
+  private resolveFightIdForOccupation(rawName: string): number | null {
+    let resolved: number | null = null;
+    let ambiguous = false;
+    for (const [name, ids] of this.nameToFightIds) {
+      if (rawName !== name && !rawName.startsWith(`${name} `)) continue;
+      for (const id of ids) {
+        if (resolved !== null && resolved !== id) ambiguous = true;
+        resolved = id;
+      }
+    }
+    if (ambiguous) return this.currentFightId;
+    return resolved ?? this.currentFightId;
   }
 
   private parseGameLine(time: string, content: string): LogEntry | null {
@@ -206,6 +370,7 @@ export class LogParser {
         time,
         item: loot[2].trim(),
         quantity: parseFrenchNumber(loot[1]),
+        fightId: this.currentFightId,
       };
     }
     const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
@@ -221,17 +386,24 @@ export class LogParser {
 
   private parseCombatLine(time: string, content: string): LogEntry | null {
     if (DEFEAT_MARKER_RE.test(content)) {
-      this.combatLostFlag = true;
-      return { kind: 'combat-defeat-marker', time };
+      if (this.currentFightId !== null) this.fightLostFlags.set(this.currentFightId, true);
+      return { kind: 'combat-defeat-marker', time, fightId: this.currentFightId };
     }
 
     const ko = KO_RE.exec(content);
     if (ko) {
-      return { kind: 'enemy-defeated', time, name: ko[1].trim() };
+      const name = ko[1].trim();
+      return { kind: 'enemy-defeated', time, name, fightId: this.resolveFightIdForName(name) };
+    }
+
+    const horsCombat = HORS_COMBAT_RE.exec(content);
+    if (horsCombat) {
+      const name = horsCombat[1].trim();
+      return { kind: 'enemy-defeated', time, name, fightId: this.resolveFightIdForName(name) };
     }
 
     if (TURN_CARRY_RE.test(content)) {
-      return { kind: 'turn-marker', time };
+      return { kind: 'turn-marker', time, fightId: this.currentFightId };
     }
 
     const cast = SPELL_CAST_RE.exec(content);
@@ -246,6 +418,7 @@ export class LogParser {
       }
       this.lastCast = { caster, spell };
       this.spellCasters.set(spell.toLowerCase(), caster);
+      this.resolveFightIdForName(caster);
       return { kind: 'spell-cast', time, caster, spell, critical };
     }
 
@@ -268,11 +441,13 @@ export class LogParser {
 
     const xp = XP_RE.exec(content);
     if (xp) {
+      const character = xp[1].trim();
       return {
         kind: 'xp-gain',
         time,
-        character: xp[1].trim(),
+        character,
         amount: parseFrenchNumber(xp[2]),
+        fightId: this.resolveFightIdForName(character),
       };
     }
 
@@ -330,10 +505,37 @@ export class LogParser {
         spell,
         element,
         amount,
+        fightId: this.resolveFightIdForName(attacker),
       };
     }
 
     return null;
+  }
+
+  /** Ignore les doublons stricts (même type d'événement, mêmes champs hors horodatage) survenant dans un intervalle très court — signature d'une observation multi-compte d'un même combat, où chaque compte connecté loggue sa propre copie du flux serveur. */
+  private isDuplicate(entry: LogEntry): boolean {
+    if (DEDUPE_EXEMPT_KINDS.has(entry.kind)) return false;
+    const { time, ...rest } = entry as unknown as Record<string, unknown>;
+    void time;
+    const signature = `${entry.kind}|${JSON.stringify(rest)}`;
+    const nowMs = this.timeToMs(entry.time);
+    const previous = this.recentSignatures.get(signature);
+    this.recentSignatures.set(signature, nowMs);
+    if (this.recentSignatures.size > 500) this.pruneSignatures(nowMs);
+    return previous !== undefined && nowMs - previous >= 0 && nowMs - previous <= DEDUPE_WINDOW_MS;
+  }
+
+  private pruneSignatures(nowMs: number): void {
+    for (const [key, seenAt] of this.recentSignatures) {
+      if (nowMs - seenAt > DEDUPE_WINDOW_MS) this.recentSignatures.delete(key);
+    }
+  }
+
+  private timeToMs(time: string): number {
+    const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
+    if (!match) return 0;
+    const [, h, m, s, ms] = match;
+    return ((+h * 60 + +m) * 60 + +s) * 1000 + +ms;
   }
 }
 
