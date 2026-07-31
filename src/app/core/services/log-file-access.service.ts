@@ -13,6 +13,8 @@ export type LogFileStatus =
 const STORAGE_KEY = 'wakfu-log-handle';
 const POLL_INTERVAL_MS = 1000;
 const EXPECTED_FILE_NAME_RE = /^wakfu\.log$/i;
+/** Nombre de sondages consécutifs en échec « NotReadableError » tolérés avant de basculer en erreur visible. */
+const MAX_TRANSIENT_READ_FAILURES = 5;
 
 /**
  * Ouvre `wakfu.log` via la File System Access API (Chrome/Edge/Opera) et le
@@ -54,6 +56,7 @@ export class LogFileAccessService {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private readonly decoder = new TextDecoder('utf-8');
   private isFirstRead = true;
+  private consecutiveTransientReadFailures = 0;
 
   isSupported(): boolean {
     return typeof window !== 'undefined' && 'showOpenFilePicker' in window;
@@ -174,6 +177,7 @@ export class LogFileAccessService {
     this.lastOffset = 0;
     this.carry = '';
     this.isFirstRead = true;
+    this.consecutiveTransientReadFailures = 0;
     this.status.set('idle');
     this.fileName.set(null);
     this.fileSize.set(0);
@@ -186,6 +190,7 @@ export class LogFileAccessService {
     this.lastOffset = 0;
     this.carry = '';
     this.isFirstRead = true;
+    this.consecutiveTransientReadFailures = 0;
     this.errorMessage.set(null);
     this.status.set('connected');
     this.stopPolling();
@@ -197,11 +202,28 @@ export class LogFileAccessService {
     if (!this.handle) return;
     try {
       const file = await this.handle.getFile();
+      this.consecutiveTransientReadFailures = 0;
+      if (this.status() === 'error') {
+        this.status.set('connected');
+        this.errorMessage.set(null);
+      }
       await this.processFile(file);
     } catch (err) {
+      if (this.isTransientReadError(err)) {
+        this.consecutiveTransientReadFailures++;
+        if (this.consecutiveTransientReadFailures <= MAX_TRANSIENT_READ_FAILURES) {
+          // Fichier momentanément verrouillé (écriture concurrente du jeu) : le sondage
+          // suivant (déjà planifié, ~1s) réessaiera de lui-même sans interrompre l'utilisateur.
+          return;
+        }
+      }
       this.setError(err);
       this.stopPolling();
     }
+  }
+
+  private isTransientReadError(err: unknown): boolean {
+    return err instanceof DOMException && err.name === 'NotReadableError';
   }
 
   /** Découpe/décode la portion nouvellement écrite d'un fichier (depuis `lastOffset`) et publie les lignes complètes. */
