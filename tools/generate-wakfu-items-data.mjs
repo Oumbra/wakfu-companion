@@ -11,6 +11,14 @@
  * entrée rencontrée dans le référentiel est conservée, pour rester cohérent
  * avec le comportement historique du fichier généré à la main qu'il
  * remplace.
+ *
+ * Exclusion des objets "old" (rareté Ankama 0, "Qualité commune" côté
+ * gamedata brut, traduite "Ancien" en jeu) : ce sont des objets historiques
+ * retirés du jeu, identifiés manuellement via les captures
+ * assets/old-items/*.png (voir session du 2026-08-02) — ils ne sont jamais
+ * exclus du référentiel JSON (source de vérité), seulement de cette table
+ * de lookup utilisée par l'UI, pour ne jamais faire remonter leur icône/nom
+ * dans le tracker/butin à la place d'un objet actuel homonyme.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -21,14 +29,20 @@ const REFERENTIEL_PATH = path.join(projectRoot, 'referentiel', 'items_wakfu.json
 const OUTPUT_PATH = path.join(projectRoot, 'src', 'app', 'core', 'data', 'wakfu-items.data.ts');
 
 const VALID_RARITIES = new Set([
+  'old',
   'common',
   'rare',
   'mythical',
   'legendary',
-  'souvenir',
+  'memory',
   'epic',
   'relic',
 ]);
+
+/** Résidu d'anciens exports référentiel non normalisés (voir wakfu-item-rarity.data.ts). */
+const RAW_RARITY_FALLBACK = {
+  'Qualité commune': 'old',
+};
 
 /** Doit rester identique à src/app/core/utils/wakfu-name.util.ts. */
 function normalizeWakfuName(name) {
@@ -38,14 +52,17 @@ function normalizeWakfuName(name) {
     .replace(/[’‘]/g, "'");
 }
 
+function normalizeRarity(item) {
+  if (VALID_RARITIES.has(item.rarity)) return item.rarity;
+  if (RAW_RARITY_FALLBACK[item.rarity]) return RAW_RARITY_FALLBACK[item.rarity];
+  console.warn(
+    `[generate-wakfu-items-data] rareté "${item.rarity}" invalide pour l'objet id=${item.id ?? '?'} "${item.fr}" -> repli sur "common".`,
+  );
+  return 'common';
+}
+
 function buildEntry(item) {
-  let rarity = item.rarity;
-  if (!VALID_RARITIES.has(rarity)) {
-    console.warn(
-      `[generate-wakfu-items-data] rareté "${rarity}" invalide pour l'objet id=${item.id ?? '?'} "${item.fr}" -> repli sur "common".`,
-    );
-    rarity = 'common';
-  }
+  const rarity = normalizeRarity(item);
   return {
     fr: item.fr,
     gfxId: Number(item.gfxId),
@@ -60,9 +77,12 @@ function buildEntry(item) {
 }
 
 function generateFileContent(items) {
+  const oldCount = items.filter((item) => normalizeRarity(item) === 'old').length;
+  const included = items.filter((item) => normalizeRarity(item) !== 'old');
+
   const table = {};
   let duplicateCount = 0;
-  for (const item of items) {
+  for (const item of included) {
     const key = normalizeWakfuName(item.fr);
     if (Object.prototype.hasOwnProperty.call(table, key)) {
       duplicateCount++;
@@ -71,7 +91,7 @@ function generateFileContent(items) {
     table[key] = buildEntry(item);
   }
   console.log(
-    `[generate-wakfu-items-data] ${items.length} objets lus, ${Object.keys(table).length} clés uniques (${duplicateCount} doublons de nom ignorés).`,
+    `[generate-wakfu-items-data] ${items.length} objets lus, ${oldCount} objets "old" exclus, ${Object.keys(table).length} clés uniques (${duplicateCount} doublons de nom ignorés).`,
   );
 
   return `/**
@@ -79,9 +99,10 @@ function generateFileContent(items) {
  * en apostrophe droite via normalizeWakfuName) -> nom FR affichable (casse
  * d'origine) + gfxId + noms EN/ES/PT + rareté + image officielle, générée
  * depuis referentiel/items_wakfu.json (référentiel complet Ankama,
- * ${items.length} objets). En cas de nom en double dans le référentiel
- * source (avant ou après normalisation des apostrophes), la première entrée
- * rencontrée est conservée. \`wakassetsAvailable\`/\`wakfuAvailable\` indiquent
+ * ${items.length} objets, dont ${oldCount} exclus car rareté "old"). En cas
+ * de nom en double dans le référentiel source (avant ou après normalisation
+ * des apostrophes), la première entrée rencontrée est conservée.
+ * \`wakassetsAvailable\`/\`wakfuAvailable\` indiquent
  * quelles sources d'image sont valides pour cet objet (voir
  * shared/item-icon) : certains objets n'ont pas d'image sur l'un des deux
  * CDN. Le champ \`fr\` sert à l'autocomplétion (shared/wakfu-autocomplete)
@@ -111,7 +132,7 @@ export const WAKFU_ITEMS_FR: Readonly<Record<string, WakfuItemEntry>> = ${JSON.s
 
 /**
  * Index inverse EN/ES/PT -> entrée, construit une seule fois au chargement
- * du module (~${items.length} objets, coût négligeable) : les noms lus dans wakfu.log
+ * du module (~${Object.keys(table).length} objets, coût négligeable) : les noms lus dans wakfu.log
  * sont dans la langue du client Wakfu de l'utilisateur, pas nécessairement
  * le français, contrairement à la clé de WAKFU_ITEMS_FR qui n'indexe que le
  * nom FR. En cas de collision entre 2 objets pour une langue donnée (rare,

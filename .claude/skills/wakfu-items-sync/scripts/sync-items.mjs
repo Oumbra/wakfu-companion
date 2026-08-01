@@ -26,19 +26,27 @@ const WAKASSETS_ITEMS_BASE = 'https://vertylo.github.io/wakassets/items';
 const WAKFU_STATIC_ITEM_BASE = 'https://static.ankama.com/wakfu/portal/game/item/42';
 
 /**
- * Vote majoritaire déduit en croisant jobsItems.json avec les ~3800 entrées
- * déjà présentes dans le référentiel partageant le même id (voir historique
- * de session). 0 (objets "de qualité", sans palier réel en jeu) est replié
- * sur "common" faute de palier dédié dans WakfuRarity.
+ * Table de rareté brute Ankama (`definition.rarity` dans items.json /
+ * jobsItems.json) -> WakfuRarity. Confirmée le 2026-08-02 en croisant le
+ * catalogue actif `items.json` : les 17 objets qui y portent encore
+ * `rarity: 0` ("Qualité commune" côté gamedata) sont tous des objets retirés
+ * du jeu, affichés "Ancien" sur l'encyclopédie officielle — d'où le mapping
+ * vers `old` (jamais `common`, contrairement à une version antérieure de ce
+ * script). Pour 1-7 la correspondance reste un vote majoritaire déduit du
+ * croisement id-à-id avec le référentiel existant (voir historique de
+ * session) : quelques objets historiques (ex. costumes "du Sage"/Wabbit
+ * Rider) portent une rareté numérique qui ne correspond plus à leur palier
+ * affiché en jeu. C'est pour ça que ce script n'écrase JAMAIS une entrée déjà
+ * présente dans le référentiel (voir plus haut).
  */
 const RARITY_MAP = {
-  0: 'common',
+  0: 'old',
   1: 'common',
   2: 'rare',
   3: 'mythical',
   4: 'legendary',
   5: 'relic',
-  6: 'souvenir',
+  6: 'memory',
   7: 'epic',
 };
 
