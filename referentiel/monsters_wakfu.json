@@ -3168,7 +3168,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/138901819.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -3948,7 +3948,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/105501794.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -4650,7 +4650,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/100200042.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -4663,7 +4663,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/101101150.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -5443,7 +5443,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/143602430.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -6925,7 +6925,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/109605000.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -7536,7 +7536,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/143603582.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -8095,7 +8095,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/143603870.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -8797,7 +8797,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/143603433.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -8810,7 +8810,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/143604770.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -10071,7 +10071,7 @@
     "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/1300060.png",
     "wakassets_available": true,
     "wakfu_available": true,
-    "isBoss": false,
+    "isBoss": true,
     "isArchi": false
   },
   {
@@ -10647,13 +10647,26 @@
     "isArchi": false
   },
   {
+    "id": 5718,
+    "fr": "Nox",
+    "en": "Nox",
+    "es": "Nox",
+    "pt": "Nox",
+    "gfxId": "1115005718",
+    "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/1115005718.png",
+    "wakassets_available": true,
+    "wakfu_available": true,
+    "isBoss": true,
+    "isArchi": false
+  },
+  {
     "id": 5753,
     "fr": "Golem du Cosmo-Canyon",
     "en": "Cosmo Canyon Golem",
     "es": "Gólem del Cosmo Cañón",
     "pt": "Golem do Cosmo-Cânion",
     "gfxId": "1114705663",
-    "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/42/1114705663.png",
+    "picture_url": "https://static.ankama.com/wakfu/portal/game/monster/200/1115005718.w133h.png",
     "wakassets_available": true,
     "wakfu_available": true,
     "isBoss": false,

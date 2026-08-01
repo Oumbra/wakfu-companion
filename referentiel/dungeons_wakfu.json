@@ -9,7 +9,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1987,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/3.png",
     "wakassets_available": true
   },
@@ -23,7 +23,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1986,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/4.png",
     "wakassets_available": true
   },
@@ -37,7 +37,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1988,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/5.png",
     "wakassets_available": true
   },
@@ -51,7 +51,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 42,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/6.png",
     "wakassets_available": true
   },
@@ -79,7 +79,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2348,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/9.png",
     "wakassets_available": true
   },
@@ -93,7 +93,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2354,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/10.png",
     "wakassets_available": true
   },
@@ -107,7 +107,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2469,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/11.png",
     "wakassets_available": true
   },
@@ -121,7 +121,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2313,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/12.png",
     "wakassets_available": true
   },
@@ -135,7 +135,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2443,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/13.png",
     "wakassets_available": true
   },
@@ -149,7 +149,7 @@
     "tranche": 35,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1726,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/25.png",
     "wakassets_available": true
   },
@@ -177,7 +177,7 @@
     "tranche": 0,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1259,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/27.png",
     "wakassets_available": true
   },
@@ -191,7 +191,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4240,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/34.png",
     "wakassets_available": true
   },
@@ -219,7 +219,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5107,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/46.png",
     "wakassets_available": true
   },
@@ -233,7 +233,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5114,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/47.png",
     "wakassets_available": true
   },
@@ -247,7 +247,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1786,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/48.png",
     "wakassets_available": true
   },
@@ -261,7 +261,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1836,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/49.png",
     "wakassets_available": true
   },
@@ -275,7 +275,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2100,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/53.png",
     "wakassets_available": true
   },
@@ -289,7 +289,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2430,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/57.png",
     "wakassets_available": true
   },
@@ -345,7 +345,7 @@
     "tranche": 125,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2570,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/67.png",
     "wakassets_available": true
   },
@@ -359,7 +359,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2464,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/68.png",
     "wakassets_available": true
   },
@@ -373,7 +373,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 1345,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/69.png",
     "wakassets_available": true
   },
@@ -387,7 +387,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2582,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/72.png",
     "wakassets_available": true
   },
@@ -415,7 +415,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2605,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/74.png",
     "wakassets_available": true
   },
@@ -429,7 +429,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2708,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/79.png",
     "wakassets_available": true
   },
@@ -443,7 +443,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2774,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/80.png",
     "wakassets_available": true
   },
@@ -457,7 +457,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2768,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/81.png",
     "wakassets_available": true
   },
@@ -485,7 +485,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2972,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/83.png",
     "wakassets_available": true
   },
@@ -499,7 +499,7 @@
     "tranche": 125,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2977,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/84.png",
     "wakassets_available": true
   },
@@ -527,7 +527,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3080,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/86.png",
     "wakassets_available": true
   },
@@ -541,7 +541,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3094,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/87.png",
     "wakassets_available": true
   },
@@ -555,7 +555,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3696,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/88.png",
     "wakassets_available": true
   },
@@ -569,7 +569,7 @@
     "tranche": 20,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3216,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/89.png",
     "wakassets_available": true
   },
@@ -583,7 +583,7 @@
     "tranche": 0,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 44,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/90.png",
     "wakassets_available": true
   },
@@ -597,7 +597,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3398,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/95.png",
     "wakassets_available": true
   },
@@ -611,7 +611,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3399,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/96.png",
     "wakassets_available": true
   },
@@ -639,7 +639,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3582,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/100.png",
     "wakassets_available": true
   },
@@ -653,7 +653,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3735,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/101.png",
     "wakassets_available": true
   },
@@ -667,7 +667,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3865,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/104.png",
     "wakassets_available": true
   },
@@ -681,7 +681,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3864,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/106.png",
     "wakassets_available": true
   },
@@ -695,7 +695,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3866,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/109.png",
     "wakassets_available": true
   },
@@ -709,7 +709,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3971,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/110.png",
     "wakassets_available": true
   },
@@ -723,7 +723,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3870,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/111.png",
     "wakassets_available": true
   },
@@ -737,7 +737,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4060,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/115.png",
     "wakassets_available": true
   },
@@ -751,7 +751,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 3433,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/117.png",
     "wakassets_available": true
   },
@@ -779,7 +779,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4251,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/122.png",
     "wakassets_available": true
   },
@@ -793,7 +793,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4231,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/123.png",
     "wakassets_available": true
   },
@@ -807,7 +807,7 @@
     "tranche": 125,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4254,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/124.png",
     "wakassets_available": true
   },
@@ -821,7 +821,7 @@
     "tranche": 20,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4107,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/125.png",
     "wakassets_available": true
   },
@@ -835,7 +835,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4318,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/126.png",
     "wakassets_available": true
   },
@@ -849,7 +849,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4327,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/127.png",
     "wakassets_available": true
   },
@@ -863,7 +863,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4260,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/128.png",
     "wakassets_available": true
   },
@@ -877,7 +877,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4400,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/129.png",
     "wakassets_available": true
   },
@@ -891,7 +891,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4378,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/131.png",
     "wakassets_available": true
   },
@@ -905,7 +905,7 @@
     "tranche": 35,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4651,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/133.png",
     "wakassets_available": true
   },
@@ -919,7 +919,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4664,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/134.png",
     "wakassets_available": true
   },
@@ -933,7 +933,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4770,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/135.png",
     "wakassets_available": true
   },
@@ -947,7 +947,7 @@
     "tranche": 35,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4519,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/136.png",
     "wakassets_available": true
   },
@@ -961,7 +961,7 @@
     "tranche": 35,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4758,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/137.png",
     "wakassets_available": true
   },
@@ -975,7 +975,7 @@
     "tranche": 95,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4520,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/138.png",
     "wakassets_available": true
   },
@@ -1017,7 +1017,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4731,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/141.png",
     "wakassets_available": true
   },
@@ -1045,7 +1045,7 @@
     "tranche": 110,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4727,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/143.png",
     "wakassets_available": true
   },
@@ -1059,7 +1059,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 2018,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/144.png",
     "wakassets_available": true
   },
@@ -1073,7 +1073,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4763,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/145.png",
     "wakassets_available": true
   },
@@ -1087,7 +1087,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4871,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/146.png",
     "wakassets_available": true
   },
@@ -1101,7 +1101,7 @@
     "tranche": 65,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4918,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/147.png",
     "wakassets_available": true
   },
@@ -1115,7 +1115,7 @@
     "tranche": 125,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4874,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/148.png",
     "wakassets_available": true
   },
@@ -1129,7 +1129,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4924,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/149.png",
     "wakassets_available": true
   },
@@ -1143,7 +1143,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4739,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/150.png",
     "wakassets_available": true
   },
@@ -1157,7 +1157,7 @@
     "tranche": 80,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4913,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/151.png",
     "wakassets_available": true
   },
@@ -1171,7 +1171,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4780,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/152.png",
     "wakassets_available": true
   },
@@ -1185,7 +1185,7 @@
     "tranche": 155,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 4923,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/153.png",
     "wakassets_available": true
   },
@@ -1199,7 +1199,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5040,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/154.png",
     "wakassets_available": true
   },
@@ -1213,7 +1213,7 @@
     "tranche": 170,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5046,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/155.png",
     "wakassets_available": true
   },
@@ -1227,7 +1227,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5052,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/156.png",
     "wakassets_available": true
   },
@@ -1241,7 +1241,7 @@
     "tranche": 185,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5059,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/157.png",
     "wakassets_available": true
   },
@@ -1283,7 +1283,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5170,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/160.png",
     "wakassets_available": true
   },
@@ -1297,7 +1297,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5176,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/161.png",
     "wakassets_available": true
   },
@@ -1311,7 +1311,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5182,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/162.png",
     "wakassets_available": true
   },
@@ -1325,7 +1325,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5188,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/163.png",
     "wakassets_available": true
   },
@@ -1339,7 +1339,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5229,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/164.png",
     "wakassets_available": true
   },
@@ -1353,7 +1353,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5235,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/165.png",
     "wakassets_available": true
   },
@@ -1367,7 +1367,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5241,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/166.png",
     "wakassets_available": true
   },
@@ -1381,7 +1381,7 @@
     "tranche": 200,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5247,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/167.png",
     "wakassets_available": true
   },
@@ -1421,8 +1421,8 @@
     "pt": "falha dimensional de frigost",
     "level": 111,
     "tranche": 110,
-    "isBreach": true,
-    "isUltimateBreach": false,
+    "isBreach": false,
+    "isUltimateBreach": true,
     "bossMonsterId": null,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/default.png",
     "wakassets_available": false
@@ -1463,8 +1463,8 @@
     "pt": "falha dimensional do monte zinit",
     "level": 201,
     "tranche": 200,
-    "isBreach": true,
-    "isUltimateBreach": false,
+    "isBreach": false,
+    "isUltimateBreach": true,
     "bossMonsterId": null,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/default.png",
     "wakassets_available": false
@@ -1507,7 +1507,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5277,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/176.png",
     "wakassets_available": true
   },
@@ -1521,7 +1521,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5283,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/177.png",
     "wakassets_available": true
   },
@@ -1535,7 +1535,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5289,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/178.png",
     "wakassets_available": true
   },
@@ -1549,7 +1549,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5295,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/179.png",
     "wakassets_available": true
   },
@@ -1563,7 +1563,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5301,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/180.png",
     "wakassets_available": true
   },
@@ -1577,7 +1577,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5306,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/181.png",
     "wakassets_available": true
   },
@@ -1603,7 +1603,7 @@
     "pt": "falha dimensional suprema da shukrute",
     "level": 216,
     "tranche": 215,
-    "isBreach": true,
+    "isBreach": false,
     "isUltimateBreach": true,
     "bossMonsterId": null,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/default.png",
@@ -1633,7 +1633,7 @@
     "tranche": 35,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5382,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/185.png",
     "wakassets_available": true
   },
@@ -1647,7 +1647,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5388,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/186.png",
     "wakassets_available": true
   },
@@ -1661,7 +1661,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5394,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/187.png",
     "wakassets_available": true
   },
@@ -1675,7 +1675,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5400,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/188.png",
     "wakassets_available": true
   },
@@ -1689,7 +1689,7 @@
     "tranche": 50,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5445,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/189.png",
     "wakassets_available": true
   },
@@ -1703,7 +1703,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5478,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/192.png",
     "wakassets_available": true
   },
@@ -1731,7 +1731,7 @@
     "tranche": 140,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5500,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/194.png",
     "wakassets_available": true
   },
@@ -1745,7 +1745,7 @@
     "tranche": 215,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5589,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/196.png",
     "wakassets_available": true
   },
@@ -1759,7 +1759,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5626,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/197.png",
     "wakassets_available": true
   },
@@ -1773,7 +1773,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5632,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/198.png",
     "wakassets_available": true
   },
@@ -1787,7 +1787,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5638,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/199.png",
     "wakassets_available": true
   },
@@ -1801,7 +1801,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5644,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/200.png",
     "wakassets_available": true
   },
@@ -1815,7 +1815,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5718,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/201.png",
     "wakassets_available": true
   },
@@ -1829,7 +1829,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": 3398,
+    "bossMonsterId": 5718,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/202.png",
     "wakassets_available": true
   },
@@ -1843,7 +1843,7 @@
     "tranche": 230,
     "isBreach": false,
     "isUltimateBreach": false,
-    "bossMonsterId": null,
+    "bossMonsterId": 5664,
     "picture_url": "https://vertylo.github.io/wakassets/bossIllustrations/203.png",
     "wakassets_available": true
   },
