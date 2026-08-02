@@ -33,11 +33,25 @@ export interface RecipeTrackingRequest {
 export class RecipeTrackingService {
   readonly request = signal<RecipeTrackingRequest | null>(null);
 
+  /** Incrémenté à chaque validation réussie de la modale (voir `confirm()`) — permet à
+   * WakfuAutocompleteComponent de réagir spécifiquement à une validation (pour réinitialiser le
+   * formulaire d'ajout au suivi qui l'a ouverte, voir `recipeConfirmed`), par opposition à une
+   * simple fermeture (bouton ×, clic sur le fond, voir `close()`) qui ne doit rien réinitialiser. */
+  readonly confirmedAt = signal(0);
+
   open(request: RecipeTrackingRequest): void {
     this.request.set(request);
   }
 
+  /** Ferme la modale sans validation (bouton ×, clic sur le fond) — voir `confirm()` pour la
+   * fermeture suite à une validation réussie. */
   close(): void {
+    this.request.set(null);
+  }
+
+  /** Ferme la modale suite à une validation réussie (voir RecipeQuantityModalComponent.confirm()). */
+  confirm(): void {
+    this.confirmedAt.update((v) => v + 1);
     this.request.set(null);
   }
 }
