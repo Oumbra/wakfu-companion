@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { WAKFU_ITEMS_FR } from '../data/wakfu-items.data';
+import { WAKFU_ITEMS } from '../data/wakfu-items.data';
 import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { AppLocale, I18nService } from './i18n.service';
@@ -15,6 +15,10 @@ export interface WakfuSearchResult {
   /** Vrai pour un objet ayant une recette de métier connue (voir wakfu-items.data.ts) — toujours
    * faux pour un monstre. Pilote l'icône "suivre les objets de la recette" de l'autocomplétion. */
   hasRecipe: boolean;
+  /** `id` Ankama de l'objet/monstre (`null` pour les rares objets historiques sans id, voir
+   * wakfu-items.data.ts) — résolution non ambiguë en cas d'homonymes (ex. un objet existant en
+   * plusieurs raretés), notamment pour ouvrir la bonne recette (findWakfuItemEntryById). */
+  id: number | null;
 }
 
 interface LocalizedEntry {
@@ -22,7 +26,8 @@ interface LocalizedEntry {
   en: string;
   es: string;
   pt: string;
-  /** Absent des entrées monstre (WAKFU_MONSTERS_FR) — voir WakfuSearchResult.hasRecipe. */
+  id: number | null;
+  /** Absent des entrées monstre — voir WakfuSearchResult.hasRecipe. */
   hasRecipe?: boolean;
 }
 
@@ -33,21 +38,21 @@ interface SearchEntry {
   label: string;
   kind: WakfuSearchKind;
   hasRecipe: boolean;
+  id: number | null;
 }
 
 function localizedName(entry: LocalizedEntry, locale: AppLocale): string {
   return locale === 'fr' ? entry.fr : entry[locale];
 }
 
-function searchTable(
-  table: Readonly<Record<string, LocalizedEntry>>,
+function searchEntries(
+  entries: Iterable<LocalizedEntry>,
   kind: WakfuSearchKind,
   query: string,
   locale: AppLocale,
 ): SearchEntry[] {
   const results: SearchEntry[] = [];
-  for (const key in table) {
-    const entry = table[key];
+  for (const entry of entries) {
     const label = localizedName(entry, locale);
     const normalizedLabel = normalizeWakfuName(label);
     if (!normalizedLabel.includes(query)) continue;
@@ -56,6 +61,7 @@ function searchTable(
       label,
       kind,
       hasRecipe: entry.hasRecipe ?? false,
+      id: entry.id,
     });
   }
   return results;
@@ -88,26 +94,26 @@ export class WakfuSearchService {
   }
 
   private matchedItems(query: string): SearchEntry[] {
-    return this.matchedSearch(WAKFU_ITEMS_FR, 'item', query);
+    return this.matchedSearch(WAKFU_ITEMS, 'item', query);
   }
 
   private matchedEnemies(query: string): SearchEntry[] {
-    return this.matchedSearch(WAKFU_MONSTERS_FR, 'enemy', query);
+    return this.matchedSearch(Object.values(WAKFU_MONSTERS_FR), 'enemy', query);
   }
 
   private matchedSearch(
-    table: Readonly<Record<string, LocalizedEntry>>,
+    entries: Iterable<LocalizedEntry>,
     kind: WakfuSearchKind,
     query: string,
   ): SearchEntry[] {
     const normalized = normalizeWakfuName(query);
     if (normalized.length < MIN_QUERY_LENGTH) return [];
-    return searchTable(table, kind, normalized, this.i18n.locale());
+    return searchEntries(entries, kind, normalized, this.i18n.locale());
   }
 
   private sortAlphabetically(entries: SearchEntry[]): WakfuSearchResult[] {
     return entries
       .sort((a, b) => a.label.localeCompare(b.label, this.i18n.locale()))
-      .map((r) => ({ name: r.fr, label: r.label, kind: r.kind, hasRecipe: r.hasRecipe }));
+      .map((r) => ({ name: r.fr, label: r.label, kind: r.kind, hasRecipe: r.hasRecipe, id: r.id }));
   }
 }

@@ -18,7 +18,10 @@ import {
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
-import { findWakfuItemEntry, resolveRecipeIngredientNames } from '../../core/data/wakfu-items.data';
+import {
+  findWakfuItemEntryById,
+  resolveRecipeIngredientNames,
+} from '../../core/data/wakfu-items.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 import { TranslatePipe } from '../translate.pipe';
@@ -154,7 +157,8 @@ export class WakfuAutocompleteComponent {
    * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. */
   protected openRecipe(event: Event, entry: WakfuAutocompleteOption): void {
     event.stopPropagation();
-    const itemEntry = findWakfuItemEntry(entry.name);
+    if (entry.id === null) return;
+    const itemEntry = findWakfuItemEntryById(entry.id);
     if (!itemEntry) return;
     const ingredients = resolveRecipeIngredientNames(itemEntry);
     if (ingredients.length === 0) return;
