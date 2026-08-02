@@ -4,7 +4,10 @@
       <header class="app-header">
         <div class="app-header-left">
           <img [src]="appLogo" class="app-logo" alt="" />
-          <div class="app-title">Wakfu Companion</div>
+          <div class="app-title">
+            Wakfu Companion
+            <span class="app-title-badge">beta</span>
+          </div>
           @if (logFileAccess.status() === 'connected') {
             <div class="app-header-file-group">
               <span class="file-chip">{{ logFileAccess.fileName() }}</span>

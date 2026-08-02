@@ -19,8 +19,15 @@
               <path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </span>
-          @if (topEnemyFor(record); as bossName) {
-            <app-entity-icon [name]="bossName" side="enemy" />
+          @if (fightImageUrl(record); as imageUrl) {
+            <img
+              class="fight-image"
+              [src]="imageUrl"
+              referrerpolicy="no-referrer"
+              draggable="false"
+              (error)="onFightImageError($event)"
+              alt=""
+            />
           }
           <span
             class="fight-badge"

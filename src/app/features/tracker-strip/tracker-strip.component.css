@@ -285,7 +285,7 @@
   --rarity-color: #c7d400;
   border-color: var(--rarity-color);
 }
-.kpi.rarity-souvenir {
+.kpi.rarity-memory {
   --rarity-color: #1f97e0;
   border-color: var(--rarity-color);
 }
