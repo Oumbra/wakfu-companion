@@ -33,6 +33,7 @@ function normalizeWakfuName(name) {
 
 function buildEntry(monster) {
   return {
+    id: monster.id,
     fr: monster.fr,
     gfxId: monster.gfxId,
     en: monster.en,
@@ -79,7 +80,9 @@ function generateFileContent(monsters) {
  * ce monstre drop respectivement un Jeton/une Pierre (boss de donjon), un
  * Reliquâme/Archiemblème (archimonstre), ou un Masque (dominant) sur
  * l'encyclopédie Ankama. Le champ \`fr\` sert à l'autocomplétion
- * (shared/wakfu-autocomplete).
+ * (shared/wakfu-autocomplete). \`id\` est l'identifiant Ankama du monstre,
+ * utilisé pour croiser \`bossMonsterId\` de referentiel/dungeons_wakfu.json
+ * (voir core/data/wakfu-dungeons.data.ts et core/utils/fight-image.util.ts).
  *
  * FICHIER GÉNÉRÉ — ne pas éditer à la main, les modifications seraient
  * écrasées au prochain build/serve. Éditer referentiel/monsters_wakfu.json
@@ -89,6 +92,7 @@ function generateFileContent(monsters) {
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 
 export interface WakfuMonsterEntry {
+  id: number;
   fr: string;
   gfxId: string;
   en: string;

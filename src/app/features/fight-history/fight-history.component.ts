@@ -19,6 +19,7 @@ import {
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
+import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageUrl } from '../../core/utils/fight-image.util';
 
 type LootSort = 'name' | 'quantity' | 'rarity';
 
@@ -94,9 +95,14 @@ export class FightHistoryComponent {
     return record.rows.filter((r) => this.classifier.classify(r.name) === 'enemy');
   }
 
-  /** Ennemi ayant infligé le plus de dégâts durant ce combat (rows est déjà trié par total décroissant). */
-  protected topEnemyFor(record: FightRecord): string | null {
-    return this.enemyRowsFor(record)[0]?.name ?? null;
+  /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir resolveFightImageUrl. */
+  protected fightImageUrl(record: FightRecord): string | null {
+    return resolveFightImageUrl(this.enemyRowsFor(record).map((row) => row.name));
+  }
+
+  protected onFightImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    if (img.src !== DEFAULT_FIGHT_IMAGE_URL) img.src = DEFAULT_FIGHT_IMAGE_URL;
   }
 
   protected formatDuration(durationMs: number): string {
