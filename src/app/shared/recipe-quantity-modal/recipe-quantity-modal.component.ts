@@ -119,7 +119,7 @@ export class RecipeQuantityModalComponent {
       this.stats.setWatchlistMode(name, 'down');
       this.stats.setWatchlistCountdownTarget(name, target);
     }
-    this.recipeTracking.close();
+    this.recipeTracking.confirm();
   }
 
   protected close(): void {
