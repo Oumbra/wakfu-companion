@@ -34,6 +34,14 @@
         ▼
       </button>
     </div>
+    <button
+      type="button"
+      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
+      [attr.data-tooltip]="'help.tooltip' | t"
+      (click)="helpModal.open('tracker')"
+    >
+      ?
+    </button>
   </div>
 
   <div class="panel-body">
