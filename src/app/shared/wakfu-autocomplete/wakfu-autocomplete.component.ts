@@ -2,6 +2,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   input,
@@ -65,6 +66,12 @@ export class WakfuAutocompleteComponent {
   readonly existingNames = input<readonly WakfuAutocompleteExisting[]>([]);
 
   readonly selected = output<WakfuSearchResult>();
+  /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
+   * validée (voir RecipeTrackingService.confirm()) — permet à un parent doté d'un formulaire
+   * d'ajout repliable (voir tracker-strip.component.ts) de se refermer, comme si l'utilisateur
+   * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond)
+   * n'émet volontairement rien. */
+  readonly recipeConfirmed = output<void>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
   protected readonly rarityIconUrl = wakfuRarityIconUrl;
@@ -106,6 +113,14 @@ export class WakfuAutocompleteComponent {
     }));
   });
 
+  /** Vrai tant qu'une recette ouverte par CETTE instance (voir `openRecipe`) est en attente —
+   * distingue, dans l'effect ci-dessous, une validation qui nous concerne d'une validation
+   * déclenchée par une autre instance d'autocomplétion (ex. tracker mobile vs tracker-strip
+   * desktop, tous deux montés simultanément, voir app.html). Effacé aussi bien par une validation
+   * que par une simple fermeture (× de la modale), pour ne pas faire passer une validation
+   * ultérieure déclenchée ailleurs pour la nôtre. */
+  private awaitingOwnRecipeConfirm = false;
+
   constructor() {
     const onDocumentClick = (event: MouseEvent): void => {
       if (!this.elementRef.nativeElement.contains(event.target as Node)) {
@@ -114,6 +129,17 @@ export class WakfuAutocompleteComponent {
     };
     document.addEventListener('click', onDocumentClick);
     inject(DestroyRef).onDestroy(() => document.removeEventListener('click', onDocumentClick));
+
+    let lastConfirmedAt: number | null = null;
+    effect(() => {
+      const confirmedAt = this.recipeTracking.confirmedAt();
+      const requestClosed = this.recipeTracking.request() === null;
+      const didConfirm = lastConfirmedAt !== null && confirmedAt !== lastConfirmedAt;
+      lastConfirmedAt = confirmedAt;
+      if (!requestClosed || !this.awaitingOwnRecipeConfirm) return;
+      this.awaitingOwnRecipeConfirm = false;
+      if (didConfirm) this.recipeConfirmed.emit();
+    });
   }
 
   protected onInput(value: string): void {
@@ -164,6 +190,7 @@ export class WakfuAutocompleteComponent {
     if (!itemEntry) return;
     const ingredients = resolveRecipeIngredientNames(itemEntry);
     if (ingredients.length === 0) return;
+    this.awaitingOwnRecipeConfirm = true;
     this.recipeTracking.open({
       itemName: entry.name,
       itemLabel: entry.label,

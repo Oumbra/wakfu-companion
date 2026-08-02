@@ -8,6 +8,7 @@
         [placeholder]="'tracker.searchPlaceholder' | t"
         [existingNames]="existingNames()"
         (selected)="add($event)"
+        (recipeConfirmed)="closeAdd()"
       />
       <div class="icon-switch kpi-add-mode-switch">
         <span class="icon-switch-highlight" [class.is-right]="addMode() === 'down'"></span>
