@@ -65,6 +65,13 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
+.fight-image {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
 .fight-clock {
   display: flex;
   align-items: center;
