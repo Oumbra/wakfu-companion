@@ -164,6 +164,11 @@ export class WakfuAutocompleteComponent {
     if (!itemEntry) return;
     const ingredients = resolveRecipeIngredientNames(itemEntry);
     if (ingredients.length === 0) return;
-    this.recipeTracking.open({ itemLabel: entry.label, ingredients });
+    this.recipeTracking.open({
+      itemName: entry.name,
+      itemLabel: entry.label,
+      itemRarity: itemEntry.rarity,
+      ingredients,
+    });
   }
 }

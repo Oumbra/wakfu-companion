@@ -119,35 +119,46 @@ export function findWakfuItemEntryById(id: number): WakfuItemEntry | undefined {
 export interface WakfuResolvedIngredient {
   name: string;
   quantity: number;
-  /** Vrai si cet ingrédient a lui-même une recette connue — pilote l'icône "imbriquer les
-   * ingrédients de cet objet" de la modale de suivi de recette. */
+  /** Vrai si cet ingrédient a lui-même une recette connue ET résolue sans cycle détecté (voir
+   * `ancestorIds` ci-dessous) — pilote l'icône "imbriquer les ingrédients de cet objet" de la
+   * modale de suivi de recette, en cascade sur autant de niveaux que la recette en comporte. */
   hasRecipe: boolean;
-  /** Ingrédients de la recette de CET ingrédient (1 seul niveau, jamais récursif plus profond) —
-   * vide si `hasRecipe` est faux. Affiché uniquement quand l'utilisateur imbrique la ligne. */
-  recipeIngredients: readonly { name: string; quantity: number }[];
+  /** Ingrédients de la recette de CET ingrédient, résolus récursivement (cascade) — vide si
+   * `hasRecipe` est faux. Affiché uniquement quand l'utilisateur imbrique la ligne. */
+  recipeIngredients: readonly WakfuResolvedIngredient[];
 }
 
-/** Résout les ingrédients de la recette d'un objet (`entry.recipe`) vers leur nom FR affichable
- * + quantité requise — voir suivi > "suivre les objets de la recette". Un ingrédient dont
- * l'`itemId` ne résout à aucune entrée connue (voir WAKFU_ITEMS_BY_ID) est silencieusement omis
- * plutôt que de produire une ligne sans nom. Résout aussi, pour chaque ingrédient ayant
- * lui-même une recette, la liste (non récursive) de SES propres ingrédients. */
-export function resolveRecipeIngredientNames(entry: WakfuItemEntry): WakfuResolvedIngredient[] {
+/** Résout, récursivement (cascade sur tous les niveaux de la recette), les ingrédients d'un objet
+ * (`entry.recipe`) vers leur nom FR affichable + quantité requise — voir suivi > "suivre les
+ * objets de la recette". Un ingrédient dont l'`itemId` ne résout à aucune entrée connue (voir
+ * WAKFU_ITEMS_BY_ID) est silencieusement omis plutôt que de produire une ligne sans nom.
+ *
+ * `ancestorIds` protège contre une boucle infinie si le référentiel contient un cycle (objet
+ * ingrédient de lui-même, directement ou via une chaîne plus longue — cas réel rencontré : la
+ * recette d'un "Coiffe Primitive" liste un autre "Coiffe Primitive" comme ingrédient) : un
+ * ingrédient dont l'id est déjà un ancêtre dans la chaîne en cours est résolu avec
+ * `hasRecipe: false` (la ligne reste affichée normalement, seule sa propre recette n'est pas
+ * développée davantage). */
+export function resolveRecipeIngredientNames(
+  entry: WakfuItemEntry,
+  ancestorIds: ReadonlySet<number> = entry.id !== null ? new Set([entry.id]) : new Set(),
+): WakfuResolvedIngredient[] {
   const resolved: WakfuResolvedIngredient[] = [];
   for (const ingredient of entry.recipe) {
     const target = WAKFU_ITEMS_BY_ID.get(ingredient.itemId);
     if (!target) continue;
-    const recipeIngredients: { name: string; quantity: number }[] = [];
-    if (target.hasRecipe) {
-      for (const subIngredient of target.recipe) {
-        const subTarget = WAKFU_ITEMS_BY_ID.get(subIngredient.itemId);
-        if (subTarget) recipeIngredients.push({ name: subTarget.fr, quantity: subIngredient.quantity });
-      }
-    }
+    const isCycle = target.id !== null && ancestorIds.has(target.id);
+    const hasRecipe = target.hasRecipe && !isCycle;
+    const recipeIngredients = hasRecipe
+      ? resolveRecipeIngredientNames(
+          target,
+          target.id !== null ? new Set([...ancestorIds, target.id]) : ancestorIds,
+        )
+      : [];
     resolved.push({
       name: target.fr,
       quantity: ingredient.quantity,
-      hasRecipe: target.hasRecipe,
+      hasRecipe,
       recipeIngredients,
     });
   }
