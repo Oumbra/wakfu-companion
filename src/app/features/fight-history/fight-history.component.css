@@ -65,6 +65,15 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
+/* `<img>` est un élément remplacé : les navigateurs ne génèrent pas de
+   pseudo-élément `::after` dessus (vérifié — le `[data-tooltip]::after`
+   générique de styles.css calcule bien un style mais ne s'affiche jamais à
+   l'écran). Le tooltip est donc porté par ce wrapper `<span>`, pas par l'img
+   elle-même. */
+.fight-image-wrap {
+  display: inline-flex;
+  flex-shrink: 0;
+}
 .fight-image {
   width: 48px;
   height: 48px;

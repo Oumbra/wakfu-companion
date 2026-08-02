@@ -38,6 +38,15 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+/* Switch incrémental/décompte déterminant le mode du KPI créé — voir
+   `.kpi-card-mode-switch` (même mécanisme, une fois le KPI créé). */
+.tracker-add-mode-switch {
+  width: 34px;
+  flex-shrink: 0;
+}
+.tracker-add-mode-switch .icon-switch-option {
+  font-size: 0.55rem;
+}
 
 /* `.panel-body` (classe globale, styles.css) passe en overflow-x/y:auto dès
    que overflow-y:auto est posé (règle d'interop CSS : un axe non-`visible`

@@ -13,6 +13,27 @@
       [existingNames]="existingNames()"
       (selected)="add($event)"
     />
+    <div class="icon-switch tracker-add-mode-switch">
+      <span class="icon-switch-highlight" [class.is-right]="addMode() === 'down'"></span>
+      <button
+        type="button"
+        class="icon-switch-option"
+        [class.selected]="addMode() === 'up'"
+        [attr.data-tooltip]="'tracker.countUpMode' | t"
+        (click)="setAddMode('up')"
+      >
+        ▲
+      </button>
+      <button
+        type="button"
+        class="icon-switch-option"
+        [class.selected]="addMode() === 'down'"
+        [attr.data-tooltip]="'tracker.countDownMode' | t"
+        (click)="setAddMode('down')"
+      >
+        ▼
+      </button>
+    </div>
   </div>
 
   <div class="panel-body">
@@ -49,9 +70,11 @@
                     class="kpi-card-count kpi-card-countdown-input"
                     type="text"
                     inputmode="numeric"
+                    pattern="[0-9]*"
                     [value]="entry.count"
                     [attr.data-tooltip]="'tracker.countdownTargetHint' | t"
                     (click)="$event.stopPropagation()"
+                    (keydown)="onCountdownKeydown($event, entry)"
                     (change)="onCountdownInput($event, entry.name)"
                   />
                 } @else {
