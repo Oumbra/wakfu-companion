@@ -48,11 +48,20 @@
 }
 
 .recipe-modal-body {
+  height: 100%;
   padding: 14px 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   gap: 12px;
+}
+
+.recipe-modal-body-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100% - 40px);
 }
 
 .recipe-modal-item-name {
@@ -95,8 +104,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 250px;
+  max-height: calc(100% - 24px - 20px - 27px - 26px);
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 4px;
 }
 
@@ -194,4 +204,10 @@
 
 .recipe-modal-confirm {
   width: 100%;
+}
+
+@media (max-width: 800px) {
+  .recipe-modal {
+    height: 100%;
+  }
 }
