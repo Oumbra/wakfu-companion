@@ -16,7 +16,6 @@
   transform: translate(-50%, -50%);
   z-index: 601;
   width: 400px;
-  height: 450px;
   max-width: calc(100vw - 32px);
   max-height: 80vh;
   display: flex;
