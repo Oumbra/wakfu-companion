@@ -103,6 +103,12 @@
   height: auto;
   flex-shrink: 0;
 }
+.wakfu-autocomplete-item-rarity {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 .wakfu-autocomplete-item-name {
   flex-grow: 1;
   min-width: 0;

@@ -41,3 +41,21 @@ export const RARITY_SORT_ORDER: Readonly<Record<WakfuRarity, number>> = {
   epic: 6,
   relic: 7,
 };
+
+/** Numéro d'icône de rareté Ankama (voir wakassets/rarities/{n}.png) — correspond à la rareté
+ * numérique brute d'Ankama, voir le tableau de correspondance en tête de fichier. */
+const RARITY_ICON_NUMBER: Readonly<Record<WakfuRarity, number>> = {
+  old: 0,
+  common: 1,
+  rare: 2,
+  mythical: 3,
+  legendary: 4,
+  relic: 5,
+  memory: 6,
+  epic: 7,
+};
+
+/** URL de l'icône de rareté (wakassets, même CDN que les icônes d'objets/monstres). */
+export function wakfuRarityIconUrl(rarity: WakfuRarity): string {
+  return `https://vertylo.github.io/wakassets/rarities/${RARITY_ICON_NUMBER[rarity]}.png`;
+}

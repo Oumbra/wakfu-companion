@@ -33,6 +33,9 @@
                 <app-entity-icon [name]="r.name" side="enemy" [size]="24" />
               }
             </span>
+            @if (r.rarity) {
+              <img class="wakfu-autocomplete-item-rarity" [src]="rarityIconUrl(r.rarity)" alt="" />
+            }
             <span
               class="wakfu-autocomplete-item-name tooltip-align-left"
               [class.tooltip-below]="i === 0"

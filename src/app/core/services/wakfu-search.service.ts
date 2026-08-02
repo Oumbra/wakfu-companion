@@ -1,6 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { WAKFU_ITEMS } from '../data/wakfu-items.data';
 import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
+import { WakfuRarity } from '../data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { AppLocale, I18nService } from './i18n.service';
 
@@ -19,6 +20,9 @@ export interface WakfuSearchResult {
    * wakfu-items.data.ts) — résolution non ambiguë en cas d'homonymes (ex. un objet existant en
    * plusieurs raretés), notamment pour ouvrir la bonne recette (findWakfuItemEntryById). */
   id: number | null;
+  /** Rareté de l'objet (voir wakfu-item-rarity.data.ts), `null` pour un monstre — pilote l'icône
+   * de rareté affichée devant le nom dans l'autocomplétion. */
+  rarity: WakfuRarity | null;
 }
 
 interface LocalizedEntry {
@@ -29,6 +33,8 @@ interface LocalizedEntry {
   id: number | null;
   /** Absent des entrées monstre — voir WakfuSearchResult.hasRecipe. */
   hasRecipe?: boolean;
+  /** Absent des entrées monstre — voir WakfuSearchResult.rarity. */
+  rarity?: WakfuRarity;
 }
 
 const MIN_QUERY_LENGTH = 3;
@@ -39,6 +45,7 @@ interface SearchEntry {
   kind: WakfuSearchKind;
   hasRecipe: boolean;
   id: number | null;
+  rarity: WakfuRarity | null;
 }
 
 function localizedName(entry: LocalizedEntry, locale: AppLocale): string {
@@ -62,6 +69,7 @@ function searchEntries(
       kind,
       hasRecipe: entry.hasRecipe ?? false,
       id: entry.id,
+      rarity: entry.rarity ?? null,
     });
   }
   return results;
@@ -114,6 +122,13 @@ export class WakfuSearchService {
   private sortAlphabetically(entries: SearchEntry[]): WakfuSearchResult[] {
     return entries
       .sort((a, b) => a.label.localeCompare(b.label, this.i18n.locale()))
-      .map((r) => ({ name: r.fr, label: r.label, kind: r.kind, hasRecipe: r.hasRecipe, id: r.id }));
+      .map((r) => ({
+        name: r.fr,
+        label: r.label,
+        kind: r.kind,
+        hasRecipe: r.hasRecipe,
+        id: r.id,
+        rarity: r.rarity,
+      }));
   }
 }
