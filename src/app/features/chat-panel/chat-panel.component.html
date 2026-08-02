@@ -24,6 +24,17 @@
         {{ channelLabelKey(channel.key) | t }}
       </button>
     }
+    <!-- Repli mobile : .panel-header (et son icône "?") est masqué en dessous de 800px, la
+         barre d'onglets du dashboard le remplace visuellement (voir styles.css) — cette icône,
+         visible uniquement en mobile, reste le seul accès à l'aide sur cet écran. -->
+    <button
+      type="button"
+      class="icon-btn help-icon-btn tooltip-below tooltip-align-right chat-mobile-help-btn"
+      [attr.data-tooltip]="'help.tooltip' | t"
+      (click)="helpModal.open('chat')"
+    >
+      ?
+    </button>
   </div>
 
   <div class="search-bar">
