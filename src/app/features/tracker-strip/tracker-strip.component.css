@@ -226,6 +226,56 @@
   margin-left: 6px;
 }
 
+/* Édition directe de la valeur de départ du décompte (mode 'down') : même
+   emplacement/taille que `.kpi-count-inline` en lecture seule (mode 'up'),
+   mais éditable — voir `[attr.inputmode]="numeric"` côté template. Redéfinit
+   le style `input[type='text']` global (styles.css, padding 6px 10px) trop
+   large pour ce contexte compact. */
+.kpi-countdown-input {
+  width: 40px;
+  max-width: 40px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-align: center;
+  opacity: 0;
+  margin-left: 6px;
+  transition: opacity var(--kpi-expand-duration, 320ms) ease;
+}
+.kpi.expanded .kpi-countdown-input {
+  opacity: 1;
+}
+.kpi-countdown-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* Switch comptage croissant/décompte — voir `.icon-switch` (styles.css,
+   générique) pour le mécanisme (fond glissant), largeur propre à ce
+   contexte compact. Replié par défaut comme `.kpi-reset` (même timing). */
+.kpi-mode-switch {
+  width: 0;
+  opacity: 0;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: 0;
+  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
+    margin-left var(--kpi-expand-duration, 320ms) ease;
+}
+.kpi.expanded .kpi-mode-switch {
+  width: 34px;
+  opacity: 1;
+  margin-left: 6px;
+}
+.kpi-mode-switch .icon-switch-option {
+  font-size: 0.55rem;
+}
+
 .kpi-count-badge {
   position: absolute;
   bottom: -7px;

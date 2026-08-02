@@ -2,7 +2,7 @@
   <button
     class="icon-btn roster-class-pick-btn"
     type="button"
-    [title]="'profile.rosterPickClass' | t"
+    [attr.data-tooltip]="'profile.rosterPickClass' | t"
     (click)="openClassPicker($event)"
   >
     <img [src]="icon()" alt="" class="roster-class-pick-icon" />
@@ -19,7 +19,7 @@
     class="icon-btn"
     type="button"
     [disabled]="!canAdd()"
-    [title]="'tracker.add' | t"
+    [attr.data-tooltip]="'tracker.add' | t"
     (click)="commit()"
   >
     +

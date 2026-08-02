@@ -45,11 +45,20 @@ export interface XpRow {
 
 export type WatchlistKind = 'enemy' | 'item';
 
+/** 'up' (défaut, comportement historique) : `count` part de 0 et s'incrémente à chaque
+ * occurrence. 'down' : `count` part de `countdownTarget` et décompte vers 0 à chaque occurrence —
+ * déclenche l'alerte (son + toast + confettis, voir LootAlertService) au moment où il atteint 0. */
+export type WatchlistCounterMode = 'up' | 'down';
+
 /** Entrée de suivi générique : ennemi vaincu ou ressource/objet obtenu, distingués par `kind`. */
 export interface WatchlistEntry {
   name: string;
   count: number;
   kind: WatchlistKind;
+  mode: WatchlistCounterMode;
+  /** Valeur de départ du décompte en mode 'down' (ignorée en mode 'up') — aussi la valeur
+   * restaurée par resetWatchedCount() dans ce mode. */
+  countdownTarget: number;
 }
 
 export interface LootRow {
@@ -147,6 +156,9 @@ export class StatsStoreService {
   readonly xpByCharacter = signal<XpRow[]>([]);
   readonly damageByAttacker = signal<EntityDamageRow[]>([]);
   readonly fightHistory = signal<FightRecord[]>([]);
+  /** Butin cumulé de tous les combats gagnés de la session (contrairement à `fightHistory`, pas
+   * plafonné à MAX_FIGHT_HISTORY) — alimente la section butin de la modale recap de session. */
+  readonly sessionLoot = signal<LootRow[]>([]);
   readonly purchaseHistory = signal<PurchaseRecord[]>([]);
   readonly tradeHistory = signal<TradeRecord[]>([]);
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
@@ -154,6 +166,8 @@ export class StatsStoreService {
   readonly watchlist = signal<WatchlistEntry[]>([]);
 
   private readonly xpMap = new Map<string, number>();
+  /** Accumulateur du butin de session (clé = nom en minuscule) — voir sessionLoot. */
+  private readonly sessionLootMap = new Map<string, LootRow>();
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
   private readonly purchaseHistoryList: PurchaseRecord[] = [];
@@ -198,7 +212,7 @@ export class StatsStoreService {
 
   private loadWatchlist(): WatchlistEntry[] {
     const stored = this.persistence.getJson<WatchlistEntry[]>(WATCHLIST_KEY);
-    if (stored) return stored;
+    if (stored) return stored.map((w) => this.normalizeWatchlistEntry(w));
     // Migration ponctuelle depuis les deux anciennes listes séparées.
     const legacyEnemies = this.persistence.getJson<{ name: string; count: number }[]>(
       LEGACY_ENEMY_WATCHLIST_KEY,
@@ -208,11 +222,25 @@ export class StatsStoreService {
     );
     if (!legacyEnemies && !legacyItems) return [];
     const migrated: WatchlistEntry[] = [
-      ...(legacyEnemies ?? []).map((w) => ({ ...w, kind: 'enemy' as const })),
-      ...(legacyItems ?? []).map((w) => ({ ...w, kind: 'item' as const })),
+      ...(legacyEnemies ?? []).map((w) => this.normalizeWatchlistEntry({ ...w, kind: 'enemy' as const })),
+      ...(legacyItems ?? []).map((w) => this.normalizeWatchlistEntry({ ...w, kind: 'item' as const })),
     ];
     this.persistence.setJson(WATCHLIST_KEY, migrated);
     return migrated;
+  }
+
+  /** Complète les entrées persistées avant l'introduction du mode décompte (`mode`/`countdownTarget`
+   * absents du JSON stocké, y compris pour la migration ponctuelle depuis les anciennes listes
+   * séparées) — traitées comme le comportement historique ('up'). */
+  private normalizeWatchlistEntry(
+    entry: Partial<Pick<WatchlistEntry, 'mode' | 'countdownTarget'>> &
+      Omit<WatchlistEntry, 'mode' | 'countdownTarget'>,
+  ): WatchlistEntry {
+    return {
+      ...entry,
+      mode: entry.mode ?? 'up',
+      countdownTarget: entry.countdownTarget ?? 0,
+    };
   }
 
   addWatchedEnemy(rawName: string): void {
@@ -235,11 +263,41 @@ export class StatsStoreService {
     this.persistence.setJson(WATCHLIST_KEY, updated);
   }
 
-  /** Remet à zéro le compteur d'une seule entrée suivie (sans la retirer de la liste). */
+  /** Remet le compteur d'une seule entrée suivie à sa valeur de départ (0 en mode 'up',
+   * `countdownTarget` en mode 'down') — sans la retirer de la liste. */
   resetWatchedCount(name: string): void {
-    const updated = this.watchlist().map((w) => (w.name === name ? { ...w, count: 0 } : w));
+    const updated = this.watchlist().map((w) =>
+      w.name === name ? { ...w, count: this.startingCount(w) } : w,
+    );
     this.watchlist.set(updated);
     this.persistence.setJson(WATCHLIST_KEY, updated);
+  }
+
+  /** Bascule le mode de comptage d'une entrée suivie ('up' <-> 'down') et réinitialise son
+   * compteur à la valeur de départ correspondante — voir WatchlistCounterMode. */
+  setWatchlistMode(name: string, mode: WatchlistCounterMode): void {
+    const updated = this.watchlist().map((w) => {
+      if (w.name !== name || w.mode === mode) return w;
+      const next = { ...w, mode };
+      return { ...next, count: this.startingCount(next) };
+    });
+    this.watchlist.set(updated);
+    this.persistence.setJson(WATCHLIST_KEY, updated);
+  }
+
+  /** Change la valeur de départ du décompte d'une entrée suivie (mode 'down') et réinitialise
+   * aussitôt son compteur courant sur cette nouvelle valeur. */
+  setWatchlistCountdownTarget(name: string, target: number): void {
+    const clamped = Math.max(0, Math.floor(Number.isFinite(target) ? target : 0));
+    const updated = this.watchlist().map((w) =>
+      w.name === name ? { ...w, countdownTarget: clamped, count: clamped } : w,
+    );
+    this.watchlist.set(updated);
+    this.persistence.setJson(WATCHLIST_KEY, updated);
+  }
+
+  private startingCount(entry: WatchlistEntry): number {
+    return entry.mode === 'down' ? entry.countdownTarget : 0;
   }
 
   reorderWatchlist(fromIndex: number, toIndex: number): void {
@@ -256,7 +314,7 @@ export class StatsStoreService {
     this.resetSessionState();
     this.publish();
 
-    const resetCounts = this.watchlist().map((w) => ({ ...w, count: 0 }));
+    const resetCounts = this.watchlist().map((w) => ({ ...w, count: this.startingCount(w) }));
     this.watchlist.set(resetCounts);
     this.persistence.setJson(WATCHLIST_KEY, resetCounts);
   }
@@ -302,6 +360,7 @@ export class StatsStoreService {
     this.currentFightTurns.set(1);
 
     this.xpMap.clear();
+    this.sessionLootMap.clear();
 
     this.fightHistoryList.length = 0;
     this.purchaseHistoryList.length = 0;
@@ -470,6 +529,12 @@ export class StatsStoreService {
         this.registerFightDefeat(fightId, enemy.name);
       }
       this.combatsWon.update((v) => v + 1);
+      for (const loot of working.fight.loots) {
+        const key = loot.name.toLowerCase();
+        const existing = this.sessionLootMap.get(key);
+        if (existing) existing.quantity += loot.quantity;
+        else this.sessionLootMap.set(key, { name: loot.name, quantity: loot.quantity });
+      }
     } else {
       this.combatsLost.update((v) => v + 1);
     }
@@ -617,18 +682,34 @@ export class StatsStoreService {
     if (!name) return;
     const current = this.watchlist();
     if (current.some((w) => w.name.toLowerCase() === name.toLowerCase())) return;
-    const updated = [...current, { name, count: 0, kind }];
+    const updated = [...current, { name, count: 0, kind, mode: 'up' as const, countdownTarget: 0 }];
     this.watchlist.set(updated);
     this.persistence.setJson(WATCHLIST_KEY, updated);
   }
 
+  /**
+   * En mode 'up' (défaut) : incrémente le compteur, comportement historique inchangé. En mode
+   * 'down' : décrémente vers 0 et déclenche l'alerte de suivi (son + toast + confettis, voir
+   * LootAlertService/LootAlertComponent) exactement au moment où le compteur atteint 0 — jamais en
+   * dessous (une entrée déjà à 0 en 'down' n'alerte plus tant qu'elle n'a pas été remontée via
+   * resetWatchedCount/setWatchlistCountdownTarget).
+   */
   private incrementWatched(name: string, by = 1): void {
     const normalized = name.trim().toLowerCase();
     const current = this.watchlist();
     const idx = current.findIndex((w) => w.name.toLowerCase() === normalized);
     if (idx === -1) return;
+    const entry = current[idx];
     const updated = current.slice();
-    updated[idx] = { ...updated[idx], count: updated[idx].count + by };
+    if (entry.mode === 'down') {
+      const next = Math.max(0, entry.count - by);
+      updated[idx] = { ...entry, count: next };
+      if (entry.count > 0 && next === 0) {
+        this.lootAlert.trigger(entry.name, 0, { kind: entry.kind, reason: 'countdown' });
+      }
+    } else {
+      updated[idx] = { ...entry, count: entry.count + by };
+    }
     this.watchlist.set(updated);
     this.persistence.setJson(WATCHLIST_KEY, updated);
   }
@@ -665,6 +746,7 @@ export class StatsStoreService {
         : [],
     );
     this.fightHistory.set([...this.fightHistoryList]);
+    this.sessionLoot.set([...this.sessionLootMap.values()]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
     this.tradeHistory.set([...this.tradeHistoryList]);
     this.chatMessages.set([...this.chatBuffer]);

@@ -29,8 +29,13 @@
           <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
         } @else {
           <div class="xp-list" #xpList [class.expanded]="xpExpanded()">
-            @for (row of stats.xpByCharacter(); track row.name) {
-              <div class="xp-row" (contextmenu)="onXpNameContextMenu($event, row.name)">
+            @for (row of stats.xpByCharacter(); track row.name; let first = $first) {
+              <div
+                class="xp-row"
+                [class.tooltip-below]="first"
+                [attr.data-tooltip]="'damageMeter.classHint' | t"
+                (contextmenu)="onXpNameContextMenu($event, row.name)"
+              >
                 <app-entity-icon [name]="row.name" side="ally" />
                 <span class="xp-name">{{ row.name }}</span>
                 <span class="xp-amount">+{{ row.amount | numberFr }}</span>
@@ -104,6 +109,82 @@
                   <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
                 </div>
               </div>
+            </div>
+
+            <div class="recap-loot-block">
+              <div class="loot-header-row" (click)="toggleLoot()">
+                <div class="loot-header-main">
+                  <div class="loot-header-left">
+                    <img [src]="lootIcon" class="collapsible-icon" alt="" />
+                    <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
+                    @if (stats.sessionLoot().length > 0) {
+                      <span class="loot-count"
+                        >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
+                      >
+                    }
+                  </div>
+                  @if (stats.sessionLoot().length > 1) {
+                    <div class="loot-sort-switch" (click)="$event.stopPropagation()">
+                      <span
+                        class="loot-sort-switch-highlight"
+                        [class.is-quantity]="lootSort() === 'quantity'"
+                        [class.is-rarity]="lootSort() === 'rarity'"
+                      ></span>
+                      <button
+                        type="button"
+                        class="loot-sort-switch-option"
+                        [class.selected]="lootSort() === 'name'"
+                        [attr.data-tooltip]="'damageMeter.sortName' | t"
+                        (click)="setLootSort('name')"
+                      >
+                        Az
+                      </button>
+                      <button
+                        type="button"
+                        class="loot-sort-switch-option"
+                        [class.selected]="lootSort() === 'quantity'"
+                        [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
+                        (click)="setLootSort('quantity')"
+                      >
+                        Nb
+                      </button>
+                      <button
+                        type="button"
+                        class="loot-sort-switch-option"
+                        [class.selected]="lootSort() === 'rarity'"
+                        [attr.data-tooltip]="'damageMeter.sortRarity' | t"
+                        (click)="setLootSort('rarity')"
+                      >
+                        <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                      </button>
+                    </div>
+                  }
+                </div>
+                <span class="section-caret" [class.expanded]="lootExpanded()">▸</span>
+              </div>
+              @if (lootExpanded()) {
+                <div class="loot-body">
+                  @if (stats.sessionLoot().length === 0) {
+                    <div class="empty-state small">{{ 'damageMeter.noLoot' | t }}</div>
+                  } @else {
+                    <div class="loot-list" [class.scrollable]="stats.sessionLoot().length > 5">
+                      @for (item of sortedLoot(); track item.name; let first = $first) {
+                        <div
+                          class="loot-row"
+                          [class]="rarityClass(item.name)"
+                          [class.tooltip-below]="first"
+                          [attr.data-tooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+                          (contextmenu)="onLootContextMenu($event, item.name)"
+                        >
+                          <app-item-icon [name]="item.name" />
+                          <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
+                          <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
             </div>
           </div>
         }

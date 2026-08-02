@@ -24,7 +24,7 @@
           <div class="kpi-card" [class]="rarityClass(entry)" [class.is-monster]="entry.kind === 'enemy'">
             <button
               class="kpi-card-del"
-              [title]="'tracker.remove' | t"
+              [attr.data-tooltip]="'tracker.remove' | t"
               (click)="requestDelete($event, entry.name)"
             >
               ×
@@ -37,17 +37,50 @@
             <div class="kpi-card-info">
               <span
                 class="kpi-card-name"
-                [attr.title]="truncatedNames().has(entry.name) ? displayName(entry) : null"
+                [attr.data-tooltip]="truncatedNames().has(entry.name) ? displayName(entry) : null"
               >
                 <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{
                   displayName(entry)
                 }}</span>
               </span>
               <div class="kpi-card-count-row">
-                <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
+                @if (entry.mode === 'down') {
+                  <input
+                    class="kpi-card-count kpi-card-countdown-input"
+                    type="text"
+                    inputmode="numeric"
+                    [value]="entry.count"
+                    [attr.data-tooltip]="'tracker.countdownTargetHint' | t"
+                    (click)="$event.stopPropagation()"
+                    (change)="onCountdownInput($event, entry.name)"
+                  />
+                } @else {
+                  <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
+                }
+                <div class="icon-switch kpi-card-mode-switch">
+                  <span class="icon-switch-highlight" [class.is-right]="entry.mode === 'down'"></span>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="entry.mode === 'up'"
+                    [attr.data-tooltip]="'tracker.countUpMode' | t"
+                    (click)="setMode(entry.name, 'up')"
+                  >
+                    ▲
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="entry.mode === 'down'"
+                    [attr.data-tooltip]="'tracker.countDownMode' | t"
+                    (click)="setMode(entry.name, 'down')"
+                  >
+                    ▼
+                  </button>
+                </div>
                 <button
                   class="kpi-card-reset"
-                  [title]="'tracker.reset' | t"
+                  [attr.data-tooltip]="'tracker.reset' | t"
                   (click)="resetCount(entry.name)"
                 >
                   <svg

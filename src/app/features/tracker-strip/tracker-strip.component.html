@@ -1,7 +1,7 @@
 <div class="kpi-row">
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
-      <button class="kpi-add-btn" [title]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
+      <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
     } @else {
       <app-wakfu-autocomplete
         domain="both"
@@ -11,7 +11,7 @@
       />
       <button
         class="icon-btn kpi-add-close"
-        [title]="'tracker.closeSearch' | t"
+        [attr.data-tooltip]="'tracker.closeSearch' | t"
         (click)="addOpen.set(false)"
       >
         ×
@@ -48,11 +48,44 @@
             displayName(entry)
           }}</span>
         </span>
-        <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
+        @if (entry.mode === 'down') {
+          <input
+            class="kpi-count-inline kpi-countdown-input"
+            type="text"
+            inputmode="numeric"
+            [value]="entry.count"
+            [attr.data-tooltip]="'tracker.countdownTargetHint' | t"
+            (click)="$event.stopPropagation()"
+            (change)="onCountdownInput($event, entry.name)"
+          />
+        } @else {
+          <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
+        }
+        <div class="icon-switch kpi-mode-switch" (click)="$event.stopPropagation()">
+          <span class="icon-switch-highlight" [class.is-right]="entry.mode === 'down'"></span>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="entry.mode === 'up'"
+            [attr.data-tooltip]="'tracker.countUpMode' | t"
+            (click)="setMode($event, entry.name, 'up')"
+          >
+            ▲
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="entry.mode === 'down'"
+            [attr.data-tooltip]="'tracker.countDownMode' | t"
+            (click)="setMode($event, entry.name, 'down')"
+          >
+            ▼
+          </button>
+        </div>
         <button
           class="kpi-reset"
           draggable="false"
-          [title]="'tracker.reset' | t"
+          [attr.data-tooltip]="'tracker.reset' | t"
           (click)="resetCount($event, entry.name)"
         >
           <svg
@@ -71,7 +104,7 @@
         <button
           class="kpi-del"
           draggable="false"
-          [title]="'tracker.remove' | t"
+          [attr.data-tooltip]="'tracker.remove' | t"
           (click)="requestDelete($event, entry.name)"
         >
           ×

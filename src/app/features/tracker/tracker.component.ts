@@ -1,5 +1,9 @@
 import { Component, computed, ElementRef, inject, signal } from '@angular/core';
-import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
+import {
+  StatsStoreService,
+  WatchlistCounterMode,
+  WatchlistEntry,
+} from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -74,6 +78,16 @@ export class TrackerComponent {
 
   protected resetCount(name: string): void {
     this.stats.resetWatchedCount(name);
+  }
+
+  protected setMode(name: string, mode: WatchlistCounterMode): void {
+    this.stats.setWatchlistMode(name, mode);
+  }
+
+  /** Édition directe de la valeur de départ du décompte (mode 'down') — voir `.kpi-card-countdown-input`. */
+  protected onCountdownInput(event: Event, name: string): void {
+    const value = Number((event.target as HTMLInputElement).value);
+    this.stats.setWatchlistCountdownTarget(name, value);
   }
 
   protected requestDelete(event: Event, name: string): void {
