@@ -4,7 +4,7 @@
     <div class="recipe-modal-header">
       <span class="recipe-modal-title">{{ 'tracker.recipeModalTitle' | t }}</span>
       <button
-        class="icon-btn recipe-modal-close"
+        class="icon-btn recipe-modal-close tooltip-below tooltip-align-right"
         type="button"
         [attr.data-tooltip]="'profile.closeToast' | t"
         (click)="close()"
@@ -31,10 +31,15 @@
       </label>
 
       <div class="recipe-modal-ingredients">
-        @for (ing of preview(); track ing.name) {
+        @for (ing of preview(); track ing.name; let first = $first) {
           <div class="recipe-modal-ingredient-row">
             <app-item-icon [name]="ing.name" [size]="22" />
-            <span class="recipe-modal-ingredient-name">{{ ing.name }}</span>
+            <span
+              class="recipe-modal-ingredient-name"
+              [class.tooltip-below]="first"
+              [attr.data-tooltip]="ing.name"
+              >{{ ing.name }}</span
+            >
             <span class="recipe-modal-ingredient-qty">{{ ing.target }}</span>
           </div>
         }
