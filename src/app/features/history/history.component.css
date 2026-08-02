@@ -26,14 +26,19 @@
   flex-shrink: 0;
   background: #222;
 }
-.tab-header-help-btn {
-  flex-shrink: 0;
-  margin: 0 8px;
-}
+/* `.meter-tab` est un conteneur flex (pas un `<button>`, voir CLAUDE.md — un
+   bouton ne peut pas imbriquer un autre bouton) : le libellé cliquable
+   (`.meter-tab-label`) et l'icône d'aide propre à cet onglet
+   (`.meter-tab-help-btn`) sont deux enfants directs en `justify-content:
+   space-between`, chacun avec sa propre zone de clic. */
 .meter-tab {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
   height: auto;
-  padding: 10px;
+  padding: 6px 8px 6px 14px;
   font-size: 0.8rem;
   font-weight: 700;
   color: #888;
@@ -49,4 +54,17 @@
   background: #333;
   color: var(--accent);
   border-bottom-color: var(--accent);
+}
+.meter-tab-label {
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  border: none;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.meter-tab-help-btn {
+  flex-shrink: 0;
 }
