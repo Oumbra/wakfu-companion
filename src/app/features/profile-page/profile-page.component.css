@@ -804,8 +804,11 @@
   .profile-inline-label {
     display: block;
   }
-  .profile-label,
-  .roster-label-row-desktop {
+  /* Seul le libellé texte est masqué (redondant avec le titre d'onglet "PERSONNAGES" déjà visible
+     dans la barre d'onglets) — la ligne elle-même reste affichée, sinon son icône d'aide "?"
+     (voir helpModal.open('profileCharacters')) disparaîtrait entièrement en mobile, comme pour
+     l'onglet Alertes qui suit exactement le même principe (seul .profile-label y est masqué). */
+  .profile-label {
     display: none;
   }
 }

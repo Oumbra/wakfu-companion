@@ -169,6 +169,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.combat.title': 'Combat en cours',
     'help.combat.body':
       "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).",
+    'help.tracker.title': 'Suivi',
+    'help.tracker.body':
+      "Suit un compteur pour chaque objet ou ennemi ajouté : nombre ramassé/vaincu depuis la connexion, incrémenté automatiquement à chaque ramassage/victoire.\n\nLe switch ▲/▼ bascule entre comptage incrémental (part de 0, monte) et décompte (part d'une cible que vous saisissez, descend jusqu'à 0 puis déclenche une alerte).\n\nL'icône recette (objets ayant une recette de métier connue) crée en un clic un décompte pour chaque ingrédient, multiplié par la quantité souhaitée — y compris pour les ingrédients ayant eux-mêmes une recette, imbricable en cascade.",
     'help.fightHistory.title': 'Historique > Combats',
     'help.fightHistory.body':
       "Conserve les 30 derniers combats de la session : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.",
@@ -349,6 +352,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.combat.title': 'Current Fight',
     'help.combat.body':
       "This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).",
+    'help.tracker.title': 'Tracker',
+    'help.tracker.body':
+      "Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe ▲/▼ switch toggles between count-up mode (starts at 0, goes up) and countdown mode (starts from a target you enter, goes down to 0 then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.",
     'help.fightHistory.title': 'History > Fights',
     'help.fightHistory.body':
       'Keeps the last 30 fights of the session: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.',
@@ -531,6 +537,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.combat.title': 'Combate en curso',
     'help.combat.body':
       'Este panel muestra en tiempo real el daño infligido por cada aliado y enemigo, leído directamente de wakfu.log durante el combate.\n\nCuando hay varios combates simultáneos (multicuenta), unas pestañas permiten elegir cuál mostrar.\n\nHaz clic en un nombre para desplegar el detalle de daño por hechizo y elemento.\n\nArrastra un nombre de un lado a otro para corregir un aliado/enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento (Seguimiento).',
+    'help.tracker.title': 'Seguimiento',
+    'help.tracker.body':
+      'Sigue un contador para cada objeto o enemigo añadido: cantidad recogida/derrotada desde la conexión, incrementada automáticamente en cada recogida/victoria.\n\nEl interruptor ▲/▼ alterna entre conteo incremental (empieza en 0, sube) y cuenta atrás (empieza desde un objetivo que introduces, baja hasta 0 y entonces dispara una alerta).\n\nEl icono de receta (objetos con una receta de oficio conocida) crea con un clic una cuenta atrás para cada ingrediente, multiplicada por la cantidad deseada — incluidos los ingredientes que tienen su propia receta, anidable en cascada.',
     'help.fightHistory.title': 'Historial > Combates',
     'help.fightHistory.body':
       'Conserva los últimos 30 combates de la sesión: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.',
@@ -711,6 +720,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.combat.title': 'Combate em curso',
     'help.combat.body':
       'Este painel mostra em tempo real o dano causado por cada aliado e inimigo, lido diretamente do wakfu.log durante o combate.\n\nQuando há vários combates simultâneos (multiconta), abas permitem escolher qual exibir.\n\nClique em um nome para expandir o detalhe de dano por feitiço e elemento.\n\nArraste um nome de um lado para o outro para corrigir um aliado/inimigo mal classificado.\n\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em um inimigo: adicioná-lo ao acompanhamento (Acompanhamento).',
+    'help.tracker.title': 'Acompanhamento',
+    'help.tracker.body':
+      'Acompanha um contador para cada item ou inimigo adicionado: quantidade coletada/derrotada desde a conexão, incrementada automaticamente a cada coleta/vitória.\n\nO interruptor ▲/▼ alterna entre contagem crescente (começa em 0, sobe) e contagem regressiva (começa de um alvo que você define, desce até 0 e então dispara um alerta).\n\nO ícone de receita (itens com uma receita de profissão conhecida) cria com um clique uma contagem regressiva para cada ingrediente, multiplicada pela quantidade desejada — incluindo ingredientes que têm sua própria receita, aninhável em cascata.',
     'help.fightHistory.title': 'Histórico > Combates',
     'help.fightHistory.body':
       'Guarda os últimos 30 combates da sessão: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.',
