@@ -17,6 +17,7 @@ import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/c
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
+import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
 import { Gender } from './core/data/class-icons.data';
@@ -35,6 +36,7 @@ import { Gender } from './core/data/class-icons.data';
     ConfirmDeletePopoverComponent,
     CombatEdgeTabComponent,
     HelpModalComponent,
+    RecipeQuantityModalComponent,
     TranslatePipe,
   ],
   templateUrl: './app.html',

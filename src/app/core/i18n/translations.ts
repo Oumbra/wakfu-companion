@@ -70,6 +70,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.confirmYes': 'Oui',
     'tracker.confirmNo': 'Non',
     'tracker.closeSearch': 'Fermer',
+    'tracker.recipeTooltip': 'Suivre les objets de la recette',
+    'tracker.recipeModalTitle': 'Suivre les objets de la recette',
+    'tracker.recipeQuantityLabel': 'Quantité',
+    'tracker.recipeConfirm': 'Valider',
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
@@ -247,6 +251,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.confirmYes': 'Yes',
     'tracker.confirmNo': 'No',
     'tracker.closeSearch': 'Close',
+    'tracker.recipeTooltip': "Track the recipe's items",
+    'tracker.recipeModalTitle': "Track the recipe's items",
+    'tracker.recipeQuantityLabel': 'Quantity',
+    'tracker.recipeConfirm': 'Confirm',
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
@@ -422,6 +430,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.confirmYes': 'Sí',
     'tracker.confirmNo': 'No',
     'tracker.closeSearch': 'Cerrar',
+    'tracker.recipeTooltip': 'Seguir los objetos de la receta',
+    'tracker.recipeModalTitle': 'Seguir los objetos de la receta',
+    'tracker.recipeQuantityLabel': 'Cantidad',
+    'tracker.recipeConfirm': 'Confirmar',
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
@@ -599,6 +611,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.confirmYes': 'Sim',
     'tracker.confirmNo': 'Não',
     'tracker.closeSearch': 'Fechar',
+    'tracker.recipeTooltip': 'Acompanhar os itens da receita',
+    'tracker.recipeModalTitle': 'Acompanhar os itens da receita',
+    'tracker.recipeQuantityLabel': 'Quantidade',
+    'tracker.recipeConfirm': 'Confirmar',
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',

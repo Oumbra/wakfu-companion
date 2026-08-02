@@ -18,6 +18,10 @@ import {
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+import { findWakfuItemEntry, resolveRecipeIngredientNames } from '../../core/data/wakfu-items.data';
+import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
+import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
+import { TranslatePipe } from '../translate.pipe';
 
 export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
 
@@ -46,7 +50,7 @@ export interface WakfuAutocompleteOption extends WakfuSearchResult {
  */
 @Component({
   selector: 'app-wakfu-autocomplete',
-  imports: [ItemIconComponent, EntityIconComponent],
+  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe],
   templateUrl: './wakfu-autocomplete.component.html',
   styleUrl: './wakfu-autocomplete.component.css',
 })
@@ -58,8 +62,11 @@ export class WakfuAutocompleteComponent {
 
   readonly selected = output<WakfuSearchResult>();
 
+  protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
+
   private readonly search = inject(WakfuSearchService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly recipeTracking = inject(RecipeTrackingService);
 
   protected readonly query = signal('');
   protected readonly open = signal(false);
@@ -141,5 +148,16 @@ export class WakfuAutocompleteComponent {
 
   protected close(): void {
     this.open.set(false);
+  }
+
+  /** Ouvre la modale "suivre les objets de la recette" (voir RecipeTrackingService) — indépendant
+   * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. */
+  protected openRecipe(event: Event, entry: WakfuAutocompleteOption): void {
+    event.stopPropagation();
+    const itemEntry = findWakfuItemEntry(entry.name);
+    if (!itemEntry) return;
+    const ingredients = resolveRecipeIngredientNames(itemEntry);
+    if (ingredients.length === 0) return;
+    this.recipeTracking.open({ itemLabel: entry.label, ingredients });
   }
 }

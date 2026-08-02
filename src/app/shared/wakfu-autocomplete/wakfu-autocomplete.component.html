@@ -14,29 +14,44 @@
   @if (open() && results().length > 0) {
     <div class="wakfu-autocomplete-list">
       @for (r of results(); track r.kind + ':' + r.name; let i = $index) {
-        <button
-          #itemButton
-          type="button"
+        <div
           class="wakfu-autocomplete-item"
           [class.active]="i === activeIndex() && !r.disabled"
           [class.disabled]="r.disabled"
-          [disabled]="r.disabled"
-          (click)="select(r)"
         >
-          <span class="wakfu-autocomplete-item-icon">
-            @if (r.kind === 'item') {
-              <app-item-icon [name]="r.name" [size]="24" />
-            } @else {
-              <app-entity-icon [name]="r.name" side="enemy" [size]="24" />
-            }
-          </span>
-          <span
-            class="wakfu-autocomplete-item-name tooltip-align-left"
-            [class.tooltip-below]="i === 0"
-            [attr.data-tooltip]="r.label"
-            >{{ r.label }}</span
+          <button
+            #itemButton
+            type="button"
+            class="wakfu-autocomplete-item-main"
+            [disabled]="r.disabled"
+            (click)="select(r)"
           >
-        </button>
+            <span class="wakfu-autocomplete-item-icon">
+              @if (r.kind === 'item') {
+                <app-item-icon [name]="r.name" [size]="24" />
+              } @else {
+                <app-entity-icon [name]="r.name" side="enemy" [size]="24" />
+              }
+            </span>
+            <span
+              class="wakfu-autocomplete-item-name tooltip-align-left"
+              [class.tooltip-below]="i === 0"
+              [attr.data-tooltip]="r.label"
+              >{{ r.label }}</span
+            >
+          </button>
+          @if (r.kind === 'item' && r.hasRecipe) {
+            <button
+              type="button"
+              class="wakfu-autocomplete-recipe-btn tooltip-align-right"
+              [class.tooltip-below]="i === 0"
+              [attr.data-tooltip]="'tracker.recipeTooltip' | t"
+              (click)="openRecipe($event, r)"
+            >
+              <img [src]="recipeIcon" alt="" />
+            </button>
+          }
+        </div>
       }
     </div>
   }
