@@ -99,11 +99,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 50px;
+  width: 30px;
   height: auto;
   flex-shrink: 0;
+  margin-left: 20px;
 }
 .wakfu-autocomplete-item-rarity {
+  position: absolute;
+  left: 10px;
   width: 14px;
   height: 14px;
   object-fit: contain;
