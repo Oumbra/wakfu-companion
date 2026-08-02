@@ -21,8 +21,14 @@
 
 .tab-header {
   display: flex;
+  align-items: center;
   gap: 0;
   flex-shrink: 0;
+  background: #222;
+}
+.tab-header-help-btn {
+  flex-shrink: 0;
+  margin: 0 8px;
 }
 .meter-tab {
   flex: 1;

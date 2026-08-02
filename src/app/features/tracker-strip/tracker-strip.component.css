@@ -94,11 +94,23 @@
   color: var(--accent);
 }
 .kpi-add.expanded {
-  width: 260px;
+  /* +34px par rapport aux 260px d'origine : laisse la place au switch
+     incrémental/décompte (voir `.kpi-add-mode-switch`) sans réduire d'autant
+     la largeur utile du champ de recherche. */
+  width: 294px;
   gap: 6px;
 }
 .kpi-add-close {
   flex-shrink: 0;
+}
+/* Switch incrémental/décompte déterminant le mode du KPI créé — voir
+   `.kpi-mode-switch` (même mécanisme, une fois le KPI créé). */
+.kpi-add-mode-switch {
+  width: 34px;
+  flex-shrink: 0;
+}
+.kpi-add-mode-switch .icon-switch-option {
+  font-size: 0.55rem;
 }
 
 /* Refoulement RÉEL : `.kpi` reste un item flex normal de `.kpi-strip` (pas de
@@ -232,10 +244,17 @@
    le style `input[type='text']` global (styles.css, padding 6px 10px) trop
    large pour ce contexte compact. */
 .kpi-countdown-input {
-  width: 40px;
-  max-width: 40px;
-  padding: 1px 4px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  width: 0;
+  max-width: 0;
+  padding: 1px 0;
+  /* `border-width:0` (pas seulement `border-color:transparent`) : avec
+     `box-sizing:border-box` (reset global), une bordure non nulle sur une
+     boîte à `width:0` reste rendue (le contenu ne peut pas devenir négatif),
+     ce qui décale de quelques pixels l'icône centrée du KPI replié en mode
+     décompte — bug réel observé (icône visiblement pas centrée à 58x58). */
+  border-width: 0;
+  border-style: solid;
+  border-color: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.06);
   font-family: monospace;
@@ -244,11 +263,20 @@
   color: var(--accent);
   text-align: center;
   opacity: 0;
-  margin-left: 6px;
-  transition: opacity var(--kpi-expand-duration, 320ms) ease;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin-left: 0;
+  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
+    margin-left var(--kpi-expand-duration, 320ms) ease, padding var(--kpi-expand-duration, 320ms) ease,
+    border-width var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi.expanded .kpi-countdown-input {
+  width: 40px;
+  max-width: 40px;
+  padding: 1px 4px;
+  border-width: 1px;
   opacity: 1;
+  margin-left: 6px;
 }
 .kpi-countdown-input:focus {
   outline: none;
@@ -257,18 +285,24 @@
 
 /* Switch comptage croissant/décompte — voir `.icon-switch` (styles.css,
    générique) pour le mécanisme (fond glissant), largeur propre à ce
-   contexte compact. Replié par défaut comme `.kpi-reset` (même timing). */
+   contexte compact. Replié par défaut comme `.kpi-reset` (même timing).
+   `border-width:0` replié : `.icon-switch` pose une bordure fixe de 1px
+   (styles.css) qui, avec `box-sizing:border-box` (reset global) et
+   `width:0`, reste rendue et décale l'icône centrée du KPI replié — même
+   bug que `.kpi-countdown-input` ci-dessus. */
 .kpi-mode-switch {
   width: 0;
+  border-width: 0;
   opacity: 0;
   overflow: hidden;
   flex-shrink: 0;
   margin-left: 0;
   transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
-    margin-left var(--kpi-expand-duration, 320ms) ease;
+    margin-left var(--kpi-expand-duration, 320ms) ease, border-width var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi.expanded .kpi-mode-switch {
   width: 34px;
+  border-width: 1px;
   opacity: 1;
   margin-left: 6px;
 }

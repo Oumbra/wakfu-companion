@@ -52,7 +52,6 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly kamasExpanded = signal(false);
   protected readonly xpExpanded = signal(false);
   protected readonly combatsExpanded = signal(false);
-  protected readonly lootExpanded = signal(false);
   protected readonly lootSort = signal<LootSort>('name');
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
@@ -101,10 +100,6 @@ export class SessionRecapComponent implements OnDestroy {
 
   toggleCombats(): void {
     this.combatsExpanded.update((v) => !v);
-  }
-
-  toggleLoot(): void {
-    this.lootExpanded.update((v) => !v);
   }
 
   protected setLootSort(mode: LootSort): void {

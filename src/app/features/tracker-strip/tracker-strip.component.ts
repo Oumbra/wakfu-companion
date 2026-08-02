@@ -13,6 +13,7 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
+import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -59,6 +60,9 @@ export class TrackerStripComponent {
   );
 
   protected readonly addOpen = signal(false);
+  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
+   * WatchlistCounterMode). Réinitialisé à 'up' à chaque fermeture de la recherche. */
+  protected readonly addMode = signal<WatchlistCounterMode>('up');
   private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
   /** Nom du KPI dont la popover de suppression partagée (ConfirmDeleteService) est actuellement
    * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
@@ -238,7 +242,18 @@ export class TrackerStripComponent {
   protected add(result: WakfuSearchResult): void {
     if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name);
     else this.stats.addWatchedItem(result.name);
+    if (this.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
+    this.closeAdd();
+  }
+
+  protected setAddMode(event: Event, mode: WatchlistCounterMode): void {
+    event.stopPropagation();
+    this.addMode.set(mode);
+  }
+
+  protected closeAdd(): void {
     this.addOpen.set(false);
+    this.addMode.set('up');
   }
 
   protected resetCount(event: Event, name: string): void {
@@ -256,6 +271,22 @@ export class TrackerStripComponent {
     event.stopPropagation();
     const value = Number((event.target as HTMLInputElement).value);
     this.stats.setWatchlistCountdownTarget(name, value);
+  }
+
+  /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
+   * resolveNumericKeyAction. */
+  protected onCountdownKeydown(event: KeyboardEvent, entry: WatchlistEntry): void {
+    event.stopPropagation();
+    const action = resolveNumericKeyAction(event);
+    if (action === 'block') {
+      event.preventDefault();
+    } else if (action === 'increment') {
+      event.preventDefault();
+      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1);
+    } else if (action === 'decrement') {
+      event.preventDefault();
+      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1));
+    }
   }
 
   protected requestDelete(event: Event, name: string): void {

@@ -13,6 +13,7 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { HEADER_ICON_SUIVI_DATA_URI } from '../../core/data/header-icons.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -48,6 +49,10 @@ export class TrackerComponent {
    * la tooltip que quand le nom complet n'est pas déjà visible. */
   protected readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
 
+  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
+   * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout. */
+  protected readonly addMode = signal<WatchlistCounterMode>('up');
+
   protected rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
   }
@@ -74,6 +79,12 @@ export class TrackerComponent {
     } else {
       this.stats.addWatchedItem(result.name);
     }
+    if (this.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
+    this.addMode.set('up');
+  }
+
+  protected setAddMode(mode: WatchlistCounterMode): void {
+    this.addMode.set(mode);
   }
 
   protected resetCount(name: string): void {
@@ -88,6 +99,21 @@ export class TrackerComponent {
   protected onCountdownInput(event: Event, name: string): void {
     const value = Number((event.target as HTMLInputElement).value);
     this.stats.setWatchlistCountdownTarget(name, value);
+  }
+
+  /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
+   * resolveNumericKeyAction. */
+  protected onCountdownKeydown(event: KeyboardEvent, entry: WatchlistEntry): void {
+    const action = resolveNumericKeyAction(event);
+    if (action === 'block') {
+      event.preventDefault();
+    } else if (action === 'increment') {
+      event.preventDefault();
+      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1);
+    } else if (action === 'decrement') {
+      event.preventDefault();
+      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1));
+    }
   }
 
   protected requestDelete(event: Event, name: string): void {

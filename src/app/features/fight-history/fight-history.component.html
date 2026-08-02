@@ -20,16 +20,20 @@
             </svg>
           </span>
           @if (fightImageUrl(record); as imageUrl) {
-            <img
-              class="fight-image"
+            <span
+              class="fight-image-wrap"
               [class.tooltip-below]="first"
-              [src]="imageUrl"
               [attr.data-tooltip]="fightImageTooltip(record)"
-              referrerpolicy="no-referrer"
-              draggable="false"
-              (error)="onFightImageError($event)"
-              alt=""
-            />
+            >
+              <img
+                class="fight-image"
+                [src]="imageUrl"
+                referrerpolicy="no-referrer"
+                draggable="false"
+                (error)="onFightImageError($event)"
+                alt=""
+              />
+            </span>
           }
           <span
             class="fight-badge"
