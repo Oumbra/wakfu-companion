@@ -1,6 +1,6 @@
 ---
 name: wakfu-items-sync
-description: Récupérer ou mettre à jour dans `referentiel/items_wakfu.json` les objets liés aux métiers de Wakfu (ressources récoltées et résultats de recette), à partir du gamedata officiel Ankama. À utiliser quand l'utilisateur demande d'ajouter/actualiser des objets d'un métier, de compléter le référentiel d'objets, ou après une grosse mise à jour du jeu (nouveaux objets de métier).
+description: Récupérer ou mettre à jour dans `referentiel/items_wakfu.json` les objets liés aux métiers de Wakfu (ressources récoltées et résultats de recette), à partir du gamedata officiel Ankama. Gère aussi `referentiel/recipes_wakfu.json` (recettes) et la propriété `hasRecipe`. À utiliser quand l'utilisateur demande d'ajouter/actualiser des objets d'un métier, de compléter le référentiel d'objets ou de recettes, ou après une grosse mise à jour du jeu (nouveaux objets/recettes de métier).
 ---
 
 # Synchroniser le référentiel d'objets de métiers Wakfu
@@ -42,6 +42,52 @@ Le script :
 4. Ajoute les nouvelles entrées triées par `id` à la fin du fichier (le référentiel existant n'est pas globalement trié — c'est une suite de lots ajoutés au fil des sessions — donc ne pas re-trier tout le fichier).
 
 ~4800-9600 requêtes HTTP HEAD selon le nombre d'objets manquants : compter 1-3 minutes avec une concurrence de 20. Lancer en arrière-plan si l'agent orchestrateur le permet.
+
+## Recettes (`referentiel/recipes_wakfu.json` + `hasRecipe`)
+
+Construit `referentiel/recipes_wakfu.json` (liste `{ itemId, recipe: [{ itemId, quantity }] }`,
+un objet produit -> ses ingrédients) et ajoute/actualise la propriété `hasRecipe` (booléen) sur
+chaque entrée de `referentiel/items_wakfu.json`, à partir de deux fichiers gamedata Ankama liés
+par `recipeId` :
+
+```
+https://wakfu.cdn.ankama.com/gamedata/{version}/recipeResults.json      -> [{ recipeId, productedItemId, productOrder, productedItemQuantity }]
+https://wakfu.cdn.ankama.com/gamedata/{version}/recipeIngredients.json  -> [{ recipeId, itemId, quantity, ingredientOrder }]
+```
+
+```bash
+node .claude/skills/wakfu-items-sync/scripts/sync-recipes.mjs --dry-run   # aperçu, aucune écriture
+node .claude/skills/wakfu-items-sync/scripts/sync-recipes.mjs             # écrit recipes_wakfu.json + items_wakfu.json
+```
+
+**Repli fichiers locaux** (`--results=<path> --ingredients=<path>`) : si `wakfu.cdn.ankama.com`
+n'est pas joignable depuis la session (constaté le 2026-08-02 dans un environnement Claude Code
+cloud — domaine hors allowlist réseau du sandbox, alors que ce même gamedata est accessible sans
+problème depuis un poste normal, cf. `sync-items.mjs`), demander directement les 2 fichiers à
+l'utilisateur (téléchargés depuis les URLs ci-dessus) et les passer en local avec ces 2 flags.
+
+**Un même objet produit peut avoir plusieurs recettes alternatives** (73 cas constatés le
+2026-08-02 sur l'export vérifié, ex. id 21040 : `recipeId` 4351/5034/9172) : seule la recette au
+`recipeId` le plus bas (première définie) est conservée par objet — même convention "premier
+gagne" que `referentiel/dungeons_wakfu.json` (`bossMonsterId` partagé entre plusieurs donjons).
+
+**Couverture vérifiée le 2026-08-02** : sur l'export de référence (5615 recettes, 34825 lignes
+d'ingrédients), 100% des `productedItemId` et des `itemId` d'ingrédients étaient déjà présents
+dans `referentiel/items_wakfu.json` (aucun id orphelin) — 5380 objets avec recette au final (235
+`recipeId` sans ligne d'ingrédient correspondante, filtrés). Si une resynchronisation future
+révèle des ids orphelins (nouveaux objets de métier ajoutés au gamedata avant `jobsItems.json`),
+relancer d'abord `sync-items.mjs` pour combler `items_wakfu.json`.
+
+`hasRecipe` est recalculé pour **toutes** les entrées de `items_wakfu.json` à chaque run (pas
+seulement les nouvelles, contrairement à `sync-items.mjs`) : une recette retirée du gamedata doit
+repasser l'objet à `hasRecipe: false`. Les autres champs de chaque entrée ne sont jamais modifiés.
+
+Runtime (voir `tools/generate-wakfu-items-data.mjs`) : `WakfuItemEntry` expose `id`, `hasRecipe`
+et `recipe` (ingrédients croisés via `recipes_wakfu.json` par `id`), plus `resolveRecipeIngredientNames()`
+pour résoudre chaque `itemId` d'ingrédient vers son nom FR via un index `WAKFU_ITEMS_BY_ID` généré
+dans le même fichier. Consommé par `shared/wakfu-autocomplete` (icône recette) et la modale de
+suivi par recette (`core/services/recipe-tracking.service.ts` ou équivalent, voir le composant
+d'autocomplétion).
 
 ## Mapping de rareté (numérique Ankama -> `WakfuRarity`)
 
@@ -109,6 +155,9 @@ Certains objets n'apparaissent dans **aucune** des sources ci-dessus : ni `jobsI
 
 Reprend exactement le schéma existant de `referentiel/items_wakfu.json` :
 `id`, `fr`, `en`, `es`, `pt`, `rarity`, `gfxId` (string), `picture_url`, `wakassets_available`, `wakfu_available`.
+Ne pose pas `hasRecipe` sur les nouvelles entrées (propriété gérée séparément par
+`sync-recipes.mjs`, voir plus haut) : relancer `sync-recipes.mjs` après `sync-items.mjs` si de
+nouveaux objets viennent d'être ajoutés, pour que leur `hasRecipe` soit correctement calculé.
 
 ## Après une synchronisation
 
