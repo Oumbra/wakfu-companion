@@ -34,6 +34,18 @@
   background: color-mix(in srgb, var(--ch) 18%, transparent);
 }
 
+/* Masqué par défaut (l'icône "?" du .panel-header suffit en desktop) — voir le commentaire dans
+   le HTML pour la raison d'être en mobile uniquement. */
+.chat-mobile-help-btn {
+  display: none;
+  margin-left: auto;
+}
+@media (max-width: 800px) {
+  .chat-mobile-help-btn {
+    display: flex;
+  }
+}
+
 .search-bar {
   padding: 8px 10px;
   background: #151515;

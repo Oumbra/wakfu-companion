@@ -4,6 +4,7 @@ import { Injectable, signal } from '@angular/core';
  * sert aussi de préfixe i18n (`help.<section>.title`/`help.<section>.body`). */
 export type HelpSection =
   | 'combat'
+  | 'tracker'
   | 'fightHistory'
   | 'purchases'
   | 'trades'
