@@ -1,18 +1,22 @@
 import { Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
-import { StatsStoreService } from '../../core/services/stats-store.service';
+import { LootRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
+import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import {
   HEADER_ICON_CHALLENGES_DATA_URI,
   HEADER_ICON_COMBAT_DATA_URI,
   HEADER_ICON_KAMAS_DATA_URI,
+  HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
+import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
+import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -21,7 +25,7 @@ import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent],
+  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, ItemIconComponent],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
@@ -31,6 +35,9 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly kamasIcon = HEADER_ICON_KAMAS_DATA_URI;
   protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
   protected readonly challengesIcon = HEADER_ICON_CHALLENGES_DATA_URI;
+  protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
+  /** Toujours grise, que le tri par rareté soit actif ou non — voir FightHistoryComponent (même switch). */
+  protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
 
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
@@ -45,6 +52,8 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly kamasExpanded = signal(false);
   protected readonly xpExpanded = signal(false);
   protected readonly combatsExpanded = signal(false);
+  protected readonly lootExpanded = signal(false);
+  protected readonly lootSort = signal<LootSort>('name');
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
   private dragStartMouse = { x: 0, y: 0 };
@@ -92,6 +101,31 @@ export class SessionRecapComponent implements OnDestroy {
 
   toggleCombats(): void {
     this.combatsExpanded.update((v) => !v);
+  }
+
+  toggleLoot(): void {
+    this.lootExpanded.update((v) => !v);
+  }
+
+  protected setLootSort(mode: LootSort): void {
+    this.lootSort.set(mode);
+  }
+
+  protected sortedLoot(): LootRow[] {
+    return sortLootRows(this.stats.sessionLoot(), this.lootSort());
+  }
+
+  protected rarityClass(name: string): string {
+    return lootRarityClass(name);
+  }
+
+  protected isWatched(name: string): boolean {
+    return this.stats.isWatched(name);
+  }
+
+  protected onLootContextMenu(event: MouseEvent, name: string): void {
+    event.preventDefault();
+    this.stats.addWatchedItem(name);
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {

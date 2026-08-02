@@ -34,7 +34,11 @@
             [class.no-toggle]="row.total === 0"
             [class.ko-zero]="row.total === 0 && row.defeated"
             [class.tooltip-below]="first"
-            [attr.title]="side() === 'enemy' && !isTracked(row.name) ? ('damageMeter.trackHint' | t) : null"
+            [attr.data-tooltip]="
+              side() === 'enemy'
+                ? (!isTracked(row.name) ? ('damageMeter.trackHint' | t) : null)
+                : ('damageMeter.classHint' | t)
+            "
             [attr.draggable]="interactive() ? 'true' : null"
             (dragstart)="onDragStart($event, row.name)"
             (click)="toggle(row)"
@@ -46,7 +50,7 @@
               [style.width]="barWidth(row.total)"
             ></div>
             @if (row.defeated) {
-              <span class="ko-icon" [class.tooltip-below]="first" [title]="'damageMeter.koTitle' | t">
+              <span class="ko-icon" [class.tooltip-below]="first" [attr.data-tooltip]="'damageMeter.koTitle' | t">
                 <app-ko-icon />
               </span>
             }

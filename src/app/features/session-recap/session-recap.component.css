@@ -316,3 +316,160 @@
   color: #666;
   justify-content: flex-start;
 }
+
+/* Section butin de la modale recap : réplique le design/actions/tri de la
+   section historique > combat > butin (voir FightHistoryComponent), adaptée
+   aux séparateurs en pointillés déjà utilisés dans ce panneau (voir
+   .challenges-sep) plutôt qu'aux bordures pleines de fight-history. */
+.recap-loot-block {
+  margin-top: 4px;
+  padding-top: 8px;
+  border-top: 1px dashed #333;
+}
+.loot-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.loot-header-row:hover {
+  filter: brightness(1.15);
+}
+.loot-header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-grow: 1;
+  min-width: 0;
+}
+.loot-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.loot-count {
+  font-family: monospace;
+  font-size: 0.68rem;
+  color: #888;
+}
+.collapsible-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+.loot-sort-switch {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  width: 78px;
+  height: 22px;
+  border-radius: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+  text-transform: none;
+}
+.loot-sort-switch-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 33.334%;
+  height: 100%;
+  background: var(--accent);
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.loot-sort-switch-highlight.is-quantity {
+  transform: translateX(100%);
+}
+.loot-sort-switch-highlight.is-rarity {
+  transform: translateX(200%);
+}
+.loot-sort-switch-option {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #999;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+.loot-sort-switch-option.selected {
+  color: #04222a;
+}
+.loot-sort-rarity-icon {
+  width: 9px;
+  height: 14px;
+  object-fit: contain;
+}
+.loot-body {
+  padding-top: 6px;
+}
+.loot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.loot-list.scrollable {
+  max-height: 130px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.loot-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: #ccc;
+  padding: 3px 8px;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+}
+.loot-row.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.loot-row.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.loot-row.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.loot-row.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.loot-row.rarity-memory {
+  --rarity-color: #1f97e0;
+}
+.loot-row.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.loot-row.rarity-relic {
+  --rarity-color: #9450d9;
+}
+.loot-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
+}
+.loot-row[class*='rarity-']::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(to right, var(--rarity-color), transparent 70%);
+  pointer-events: none;
+}
+.loot-name {
+  flex-grow: 1;
+}
+.loot-qty {
+  font-family: monospace;
+  color: var(--kama-color);
+}

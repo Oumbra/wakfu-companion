@@ -3,7 +3,7 @@
     <button
       class="back-btn tooltip-align-left tooltip-below"
       (click)="goBack()"
-      [title]="'profile.back' | t"
+      [attr.data-tooltip]="'profile.back' | t"
     >
       <svg
         viewBox="0 0 24 24"
@@ -22,7 +22,7 @@
       <button
         class="icon-btn tooltip-below tooltip-align-right"
         type="button"
-        [title]="'profile.exportData' | t"
+        [attr.data-tooltip]="'profile.exportData' | t"
         (click)="exportData()"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -33,7 +33,7 @@
       <button
         class="icon-btn tooltip-below tooltip-align-right"
         type="button"
-        [title]="'profile.importData' | t"
+        [attr.data-tooltip]="'profile.importData' | t"
         (click)="triggerImport(importFileInput)"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -105,7 +105,7 @@
             <button
               class="icon-btn pseudo-edit-btn"
               type="button"
-              [title]="'profile.editPseudo' | t"
+              [attr.data-tooltip]="'profile.editPseudo' | t"
               (click)="startEditPseudo()"
             >
               <svg
@@ -147,11 +147,19 @@
     <div class="profile-field profile-field-wide">
       <div class="profile-label-row">
         <label class="profile-label">{{ 'profile.soundItemsLabel' | t }}</label>
+        <button
+          type="button"
+          class="icon-btn help-icon-btn"
+          [attr.data-tooltip]="'help.tooltip' | t"
+          (click)="helpModal.open('profileAlerts')"
+        >
+          ?
+        </button>
         <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
         <button
           class="icon-btn test-sound-btn"
           type="button"
-          [title]="'profile.testSound' | t"
+          [attr.data-tooltip]="'profile.testSound' | t"
           (click)="testAlertSound()"
         >
           <svg
@@ -239,7 +247,7 @@
             <button
               class="sound-toggle-btn tooltip-align-left"
               [class.tooltip-below]="i < soundGridColumns()"
-              [title]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
+              [attr.data-tooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
               (click)="toggleSound(entry.name)"
             >
               @if (entry.enabled) {
@@ -273,7 +281,7 @@
               <button
                 class="remove-btn tooltip-align-right"
                 [class.tooltip-below]="i < soundGridColumns()"
-                [title]="'tracker.remove' | t"
+                [attr.data-tooltip]="'tracker.remove' | t"
                 (click)="removeSoundItem(entry.name)"
               >
                 ×
@@ -293,6 +301,14 @@
     <div class="profile-field profile-field-wide">
       <div class="profile-label-row roster-label-row-desktop">
         <label class="profile-label">{{ 'profile.rosterLabel' | t }}</label>
+        <button
+          type="button"
+          class="icon-btn help-icon-btn"
+          [attr.data-tooltip]="'help.tooltip' | t"
+          (click)="helpModal.open('profileCharacters')"
+        >
+          ?
+        </button>
       </div>
 
       <div class="roster-tabs-wrapper">
@@ -307,14 +323,14 @@
               #tabBtn
               class="roster-tab-btn"
               [class.active]="account.id === selectedAccountId()"
-              [title]="tabLabel(account, i)"
+              [attr.data-tooltip]="tabLabel(account, i)"
               (click)="selectAccount(account.id)"
             >
               <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
               @if (!account.isDefault && account.id === selectedAccountId()) {
                 <span
                   class="roster-tab-remove"
-                  [title]="'profile.rosterRemoveAccount' | t"
+                  [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
                   (click)="removeAccountFromTab($event, account.id)"
                 >
                   ×
@@ -325,7 +341,7 @@
           <button
             class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
             type="button"
-            [title]="'profile.rosterAddAccount' | t"
+            [attr.data-tooltip]="'profile.rosterAddAccount' | t"
             (click)="addAccount()"
           >
             <svg
@@ -356,7 +372,7 @@
                 <button
                   class="icon-btn reset-btn tooltip-align-right"
                   type="button"
-                  [title]="'profile.rosterRemoveAccount' | t"
+                  [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
                   (click)="removeAccount(account.id)"
                 >
                   ×
@@ -376,7 +392,7 @@
                     type="button"
                     class="icon-switch-option"
                     [class.selected]="profile.characterViewMode() === 'list'"
-                    [title]="'profile.rosterViewList' | t"
+                    [attr.data-tooltip]="'profile.rosterViewList' | t"
                     (click)="profile.setCharacterViewMode('list')"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -389,7 +405,7 @@
                     type="button"
                     class="icon-switch-option"
                     [class.selected]="profile.characterViewMode() === 'grid'"
-                    [title]="'profile.rosterViewGrid' | t"
+                    [attr.data-tooltip]="'profile.rosterViewGrid' | t"
                     (click)="profile.setCharacterViewMode('grid')"
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -426,7 +442,7 @@
                           [class.tooltip-below]="i < charGridColumns()"
                           type="button"
                           draggable="false"
-                          [title]="'profile.rosterRemoveCharacter' | t"
+                          [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
                           (click)="requestRemoveCharacter($event, account.id, char.name)"
                         >
                           ×
@@ -456,7 +472,7 @@
                               class="icon-btn pseudo-edit-btn plain-icon-btn"
                               type="button"
                               draggable="false"
-                              [title]="'profile.rosterRenameCharacter' | t"
+                              [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
                               (click)="startEditCharacter(account.id, char.name)"
                             >
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -501,7 +517,7 @@
                               class="icon-btn pseudo-edit-btn"
                               type="button"
                               draggable="false"
-                              [title]="'profile.rosterRenameCharacter' | t"
+                              [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
                               (click)="startEditCharacter(account.id, char.name)"
                             >
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -513,7 +529,7 @@
                               class="icon-btn reset-btn tooltip-align-right"
                               type="button"
                               draggable="false"
-                              [title]="'profile.rosterRemoveCharacter' | t"
+                              [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
                               (click)="requestRemoveCharacter($event, account.id, char.name)"
                             >
                               ×

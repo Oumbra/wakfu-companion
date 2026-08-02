@@ -13,14 +13,14 @@
               <span class="file-chip">{{ logFileAccess.fileName() }}</span>
               <button
                 class="icon-btn tooltip-below"
-                [title]="'app.changeFile' | t"
+                [attr.data-tooltip]="'app.changeFile' | t"
                 (click)="onChangeFile()"
               >
                 ⇄
               </button>
               <button
                 class="icon-btn reset-btn tooltip-below"
-                [title]="'app.reset' | t"
+                [attr.data-tooltip]="'app.reset' | t"
                 (click)="onReset()"
               >
                 ↺
@@ -32,7 +32,7 @@
           @if (logFileAccess.status() === 'connected') {
             <button
               class="icon-btn session-recap-btn tooltip-below"
-              [title]="'app.sessionRecap' | t"
+              [attr.data-tooltip]="'app.sessionRecap' | t"
               (click)="sessionRecap.toggle()"
             >
               <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
@@ -47,7 +47,7 @@
         <div class="app-header-burger">
           <button
             class="icon-btn tooltip-below tooltip-align-right"
-            [title]="'app.menu' | t"
+            [attr.data-tooltip]="'app.menu' | t"
             (click)="toggleMobileMenu()"
           >
             <svg
@@ -114,4 +114,5 @@
   }
 
   <app-confirm-delete-popover />
+  <app-help-modal />
 </div>

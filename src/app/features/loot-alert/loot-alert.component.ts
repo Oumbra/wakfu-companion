@@ -3,6 +3,7 @@ import { LootAlertService } from '../../core/services/loot-alert.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
+import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../../shared/translate.pipe';
 
@@ -34,7 +35,7 @@ const CONFETTI_PIECE_COUNT = 28;
  */
 @Component({
   selector: 'app-loot-alert',
-  imports: [ItemIconComponent, TranslatePipe],
+  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe],
   templateUrl: './loot-alert.component.html',
   styleUrl: './loot-alert.component.css',
 })
@@ -47,6 +48,8 @@ export class LootAlertComponent {
   protected readonly visible = signal(false);
   protected readonly itemName = signal('');
   protected readonly quantity = signal(1);
+  protected readonly kind = signal<'item' | 'enemy'>('item');
+  protected readonly reason = signal<'loot' | 'countdown'>('loot');
   protected readonly confetti = signal<ConfettiPiece[]>([]);
 
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
@@ -55,13 +58,15 @@ export class LootAlertComponent {
     effect(() => {
       const event = this.lootAlertService.current();
       if (!event) return;
-      this.show(event.name, event.quantity);
+      this.show(event.name, event.quantity, event.kind, event.reason);
     });
   }
 
-  private show(name: string, quantity: number): void {
+  private show(name: string, quantity: number, kind: 'item' | 'enemy', reason: 'loot' | 'countdown'): void {
     this.itemName.set(name);
     this.quantity.set(quantity);
+    this.kind.set(kind);
+    this.reason.set(reason);
     this.confetti.set(this.buildConfetti());
     this.visible.set(true);
     this.alertSound.play();
