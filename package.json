@@ -4,11 +4,13 @@
   "scripts": {
     "ng": "ng",
     "generate:items": "node tools/generate-wakfu-items-data.mjs",
-    "start": "npm run generate:items && ng serve",
-    "build": "npm run generate:items && ng build",
-    "watch": "npm run generate:items && ng build --watch --configuration development",
+    "generate:monsters": "node tools/generate-wakfu-monsters-data.mjs",
+    "generate": "npm run generate:items && npm run generate:monsters",
+    "start": "npm run generate && ng serve",
+    "build": "npm run generate && ng build",
+    "watch": "npm run generate && ng build --watch --configuration development",
     "test": "ng test",
-    "build:standalone:compile": "npm run generate:items && ng build --configuration production,standalone",
+    "build:standalone:compile": "npm run generate && ng build --configuration production,standalone",
     "build:standalone": "npm run build:standalone:compile && node tools/build-standalone.mjs"
   },
   "private": true,
