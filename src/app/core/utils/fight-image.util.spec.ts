@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageUrl } from './fight-image.util';
+import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo, resolveFightImageUrl } from './fight-image.util';
 import { findWakfuMonsterEntry } from '../data/wakfu-monsters.data';
 import { findWakfuDungeonByBossMonsterId } from '../data/wakfu-dungeons.data';
 
@@ -80,5 +80,43 @@ describe('resolveFightImageUrl', () => {
     const result = resolveFightImageUrl(['Un Monstre Totalement Inconnu']);
 
     expect(result).toBeNull();
+  });
+});
+
+describe('resolveFightImageInfo (tooltip)', () => {
+  it('boss avec donjon référencé -> tooltipSource de type donjon (nom localisé du donjon)', () => {
+    const boss = findWakfuMonsterEntry('Magmog le Boufrog')!;
+    const dungeon = findWakfuDungeonByBossMonsterId(boss.id)!;
+
+    const info = resolveFightImageInfo(['Bouftou', 'Magmog le Boufrog']);
+
+    expect(info.tooltipSource).toEqual({ kind: 'dungeon', names: dungeon });
+  });
+
+  it('boss sans donjon référencé -> tooltipSource de type monstre (le boss lui-même)', () => {
+    const boss = findWakfuMonsterEntry('Lardevil')!;
+
+    const info = resolveFightImageInfo(['Bouftou', 'Lardevil']);
+
+    expect(info.tooltipSource).toEqual({ kind: 'monster', names: boss });
+  });
+
+  it('illustration générique (horde hétérogène) -> aucune tooltip', () => {
+    const info = resolveFightImageInfo([
+      'Bouftou',
+      'Tofu',
+      'Piou Rouge',
+      'Pissenlit Diabolique',
+      'Larve Bleue',
+    ]);
+
+    expect(info.url).toBe(DEFAULT_FIGHT_IMAGE_URL);
+    expect(info.tooltipSource).toBeNull();
+  });
+
+  it('aucun ennemi connu -> aucune tooltip', () => {
+    const info = resolveFightImageInfo(['Un Monstre Totalement Inconnu']);
+
+    expect(info.tooltipSource).toBeNull();
   });
 });

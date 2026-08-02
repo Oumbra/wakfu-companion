@@ -13,15 +13,13 @@ import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.compon
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
-import { getWakfuItemRarity, RARITY_SORT_ORDER } from '../../core/data/wakfu-item-rarity.data';
 import {
   HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
-import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageUrl } from '../../core/utils/fight-image.util';
-
-type LootSort = 'name' | 'quantity' | 'rarity';
+import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
+import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 
 /**
  * Historique des combats (liste repliable, butin, XP) — extrait de
@@ -95,9 +93,16 @@ export class FightHistoryComponent {
     return record.rows.filter((r) => this.classifier.classify(r.name) === 'enemy');
   }
 
-  /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir resolveFightImageUrl. */
+  /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir resolveFightImageInfo. */
   protected fightImageUrl(record: FightRecord): string | null {
-    return resolveFightImageUrl(this.enemyRowsFor(record).map((row) => row.name));
+    return resolveFightImageInfo(this.enemyRowsFor(record).map((row) => row.name)).url;
+  }
+
+  /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
+  protected fightImageTooltip(record: FightRecord): string | null {
+    const source = resolveFightImageInfo(this.enemyRowsFor(record).map((row) => row.name))
+      .tooltipSource;
+    return source ? source.names[this.i18n.locale()] : null;
   }
 
   protected onFightImageError(event: Event): void {
@@ -117,17 +122,7 @@ export class FightHistoryComponent {
   }
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
-    const sort = this.lootSort();
-    if (sort === 'quantity') return [...loot].sort((a, b) => b.quantity - a.quantity);
-    if (sort === 'rarity') {
-      return [...loot].sort((a, b) => {
-        const diff =
-          RARITY_SORT_ORDER[getWakfuItemRarity(b.name)] -
-          RARITY_SORT_ORDER[getWakfuItemRarity(a.name)];
-        return diff !== 0 ? diff : a.name.localeCompare(b.name, 'fr');
-      });
-    }
-    return [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
+    return sortLootRows(loot, this.lootSort());
   }
 
   protected onLootContextMenu(event: MouseEvent, name: string): void {
@@ -136,7 +131,7 @@ export class FightHistoryComponent {
   }
 
   protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(name)}`;
+    return lootRarityClass(name);
   }
 
   protected isWatched(name: string): boolean {

@@ -13,17 +13,23 @@
       }
     </div>
     <div class="loot-alert-card">
-      <app-item-icon [name]="itemName()" [size]="34" />
+      @if (kind() === 'enemy') {
+        <app-entity-icon [name]="itemName()" side="enemy" [size]="34" />
+      } @else {
+        <app-item-icon [name]="itemName()" [size]="34" />
+      }
       <div class="loot-alert-text">
-        <span class="loot-alert-title">{{ 'profile.lootAlertTitle' | t }}</span>
+        <span class="loot-alert-title">{{
+          (reason() === 'countdown' ? 'tracker.countdownAlertTitle' : 'profile.lootAlertTitle') | t
+        }}</span>
         <span class="loot-alert-name">
-          {{ i18n.translateItemName(itemName()) }}
+          {{ kind() === 'enemy' ? i18n.translateMonsterName(itemName()) : i18n.translateItemName(itemName()) }}
           @if (quantity() > 1) {
             × {{ quantity() }}
           }
         </span>
       </div>
-      <button class="loot-alert-close" [title]="'profile.closeToast' | t" (click)="close()">
+      <button class="loot-alert-close" [attr.data-tooltip]="'profile.closeToast' | t" (click)="close()">
         ×
       </button>
     </div>

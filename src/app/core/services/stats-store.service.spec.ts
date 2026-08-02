@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { StatsStoreService } from './stats-store.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { CharacterRosterService } from './character-roster.service';
+import { LootAlertService } from './loot-alert.service';
 
 const FIXTURES_DIR = join(process.cwd(), 'assets/logs/tests/fr');
 
@@ -392,6 +393,103 @@ describe('StatsStoreService', () => {
         expect(() => feed(access, readFixture(file)), file).not.toThrow();
         void stats;
       }
+    });
+  });
+
+  describe('Suivi (watchlist) : mode décompte', () => {
+    it("une entrée nouvellement suivie démarre en mode 'up' (comportement historique inchangé)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem('Laine de Bouftou');
+
+      const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
+      expect(entry.mode).toBe('up');
+      expect(entry.count).toBe(0);
+    });
+
+    it("basculer en mode 'down' initialise le compteur à countdownTarget (fixé via setWatchlistCountdownTarget)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 5);
+      stats.setWatchlistMode('Laine de Bouftou', 'down');
+
+      const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
+      expect(entry.mode).toBe('down');
+      expect(entry.count).toBe(5);
+      expect(entry.countdownTarget).toBe(5);
+    });
+
+    it("un ramassage décrémente le compteur en mode 'down' au lieu de l'incrémenter", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 5);
+      stats.setWatchlistMode('Laine de Bouftou', 'down');
+
+      // isInitialLoad=false : simule un ramassage après une connexion déjà active (voir
+      // gating isInitialLoad, CLAUDE.md) — `feed` (isInitialLoad=true) ne doit rien décrémenter.
+      feedMore(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+      ]);
+
+      const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
+      expect(entry.count).toBe(3);
+    });
+
+    it("déclenche l'alerte (LootAlertService, reason 'countdown') exactement quand le compteur atteint 0, jamais en dessous", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      const lootAlert = TestBed.inject(LootAlertService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 2);
+      stats.setWatchlistMode('Laine de Bouftou', 'down');
+
+      feed(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
+      ]);
+      expect(lootAlert.current()).toBeNull();
+
+      feedMore(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
+        "INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
+      ]);
+
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(0);
+      expect(lootAlert.current()).toEqual({
+        name: 'Laine de Bouftou',
+        quantity: 0,
+        kind: 'item',
+        reason: 'countdown',
+      });
+    });
+
+    it("resetWatchedCount restaure countdownTarget (pas 0) pour une entrée en mode 'down'", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 3);
+      stats.setWatchlistMode('Laine de Bouftou', 'down');
+      feedMore(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+      ]);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(1);
+
+      stats.resetWatchedCount('Laine de Bouftou');
+
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(3);
+    });
+
+    it("le contenu déjà présent au premier chargement (isInitialLoad) ne décrémente pas le compteur", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 5);
+      stats.setWatchlistMode('Laine de Bouftou', 'down');
+
+      feed(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+      ]);
+
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(5);
     });
   });
 });

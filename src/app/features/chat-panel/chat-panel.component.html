@@ -4,6 +4,14 @@
       <img [src]="headerIcon" class="header-icon" alt="" />
       {{ 'chat.header' | t }}
     </span>
+    <button
+      type="button"
+      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
+      [attr.data-tooltip]="'help.tooltip' | t"
+      (click)="helpModal.open('chat')"
+    >
+      ?
+    </button>
   </div>
 
   <div class="channel-filters">
@@ -45,12 +53,12 @@
           <span
             class="filter-chip"
             [style.--ch]="filterChannelColorVar(filter.channel)"
-            [title]="filterChannelLabelKey(filter.channel) | t"
+            [attr.data-tooltip]="filterChannelLabelKey(filter.channel) | t"
           >
             {{ filter.text }}
             <button
               class="icon-btn reset-btn chip-remove-btn"
-              [title]="'tracker.remove' | t"
+              [attr.data-tooltip]="'tracker.remove' | t"
               (click)="removeFilter(filter)"
             >
               ×
