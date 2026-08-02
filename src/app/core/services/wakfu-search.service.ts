@@ -12,6 +12,9 @@ export interface WakfuSearchResult {
   /** Nom dans la langue actuelle de l'utilisateur, pour l'affichage dans la liste. */
   label: string;
   kind: WakfuSearchKind;
+  /** Vrai pour un objet ayant une recette de métier connue (voir wakfu-items.data.ts) — toujours
+   * faux pour un monstre. Pilote l'icône "suivre les objets de la recette" de l'autocomplétion. */
+  hasRecipe: boolean;
 }
 
 interface LocalizedEntry {
@@ -19,6 +22,8 @@ interface LocalizedEntry {
   en: string;
   es: string;
   pt: string;
+  /** Absent des entrées monstre (WAKFU_MONSTERS_FR) — voir WakfuSearchResult.hasRecipe. */
+  hasRecipe?: boolean;
 }
 
 const MIN_QUERY_LENGTH = 3;
@@ -27,6 +32,7 @@ interface SearchEntry {
   fr: string;
   label: string;
   kind: WakfuSearchKind;
+  hasRecipe: boolean;
 }
 
 function localizedName(entry: LocalizedEntry, locale: AppLocale): string {
@@ -49,6 +55,7 @@ function searchTable(
       fr: entry.fr,
       label,
       kind,
+      hasRecipe: entry.hasRecipe ?? false,
     });
   }
   return results;
@@ -101,6 +108,6 @@ export class WakfuSearchService {
   private sortAlphabetically(entries: SearchEntry[]): WakfuSearchResult[] {
     return entries
       .sort((a, b) => a.label.localeCompare(b.label, this.i18n.locale()))
-      .map((r) => ({ name: r.fr, label: r.label, kind: r.kind }));
+      .map((r) => ({ name: r.fr, label: r.label, kind: r.kind, hasRecipe: r.hasRecipe }));
   }
 }

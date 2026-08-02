@@ -26,23 +26,22 @@
   overflow-y: auto;
   z-index: 20;
 }
+/* `.wakfu-autocomplete-item` est un conteneur flex (pas un `<button>`, voir
+   CLAUDE.md — un bouton ne peut pas imbriquer un autre bouton) : le résultat
+   cliquable (`.wakfu-autocomplete-item-main`, icône+nom) et l'icône recette
+   (`.wakfu-autocomplete-recipe-btn`, action indépendante — voir
+   openRecipe()) sont deux enfants distincts, chacun sa propre zone de clic.
+   Couleur/fond (repos, survol, actif, désactivé) restent posés ici et
+   hérités par les boutons enfants (`color: inherit`). */
 .wakfu-autocomplete-item {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
   width: 100%;
   /* Le `button { height: 28px }` global doit être écrasé, sinon la ligne
      ne respecte pas la hauteur voulue ici. */
   height: 35px;
   flex-shrink: 0;
-  padding: 0 10px;
-  background: transparent;
-  border: none;
   color: #ddd;
-  font-size: 0.82rem;
-  text-align: left;
-  cursor: pointer;
 }
 .wakfu-autocomplete-item.active,
 .wakfu-autocomplete-item:hover:not(.disabled) {
@@ -52,7 +51,49 @@
 .wakfu-autocomplete-item.disabled {
   background: #2a2a2a;
   color: #777;
+}
+.wakfu-autocomplete-item-main {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-grow: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+.wakfu-autocomplete-item.disabled .wakfu-autocomplete-item-main {
   cursor: default;
+}
+/* Icône "recette" (voir RECIPE_ICON_DATA_URI) : action indépendante de la
+   sélection, toujours cliquable même si `r` est déjà présent dans la liste
+   cible (`.disabled`) — suivre les ingrédients d'un objet déjà suivi
+   lui-même reste un besoin valide. Padding 10px demandé explicitement. */
+.wakfu-autocomplete-recipe-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+.wakfu-autocomplete-recipe-btn img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  opacity: 0.75;
+}
+.wakfu-autocomplete-recipe-btn:hover img {
+  opacity: 1;
 }
 .wakfu-autocomplete-item-icon {
   display: flex;

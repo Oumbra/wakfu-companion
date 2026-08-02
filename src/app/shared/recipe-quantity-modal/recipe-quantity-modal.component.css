@@ -1,0 +1,129 @@
+:host {
+  display: contents;
+}
+
+.recipe-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 600;
+}
+
+.recipe-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 601;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: fadeIn 0.15s;
+}
+
+.recipe-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 15px;
+  background: var(--panel-header-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.recipe-modal-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.recipe-modal-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.recipe-modal-item-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.recipe-modal-qty-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.recipe-modal-qty-label {
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.recipe-modal-qty-input {
+  width: 64px;
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-align: center;
+}
+.recipe-modal-qty-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.recipe-modal-ingredients {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.recipe-modal-ingredient-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: #ccc;
+  padding: 3px 6px;
+  background: #1a1a1a;
+  border-radius: 4px;
+}
+
+.recipe-modal-ingredient-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipe-modal-ingredient-qty {
+  font-family: monospace;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.recipe-modal-confirm {
+  width: 100%;
+}

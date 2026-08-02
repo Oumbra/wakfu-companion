@@ -1,0 +1,48 @@
+@if (recipeTracking.request(); as req) {
+  <div class="recipe-modal-backdrop" (click)="close()"></div>
+  <div class="recipe-modal">
+    <div class="recipe-modal-header">
+      <span class="recipe-modal-title">{{ 'tracker.recipeModalTitle' | t }}</span>
+      <button
+        class="icon-btn recipe-modal-close"
+        type="button"
+        [attr.data-tooltip]="'profile.closeToast' | t"
+        (click)="close()"
+      >
+        ×
+      </button>
+    </div>
+    <div class="recipe-modal-body">
+      <div class="recipe-modal-item-name">{{ req.itemLabel }}</div>
+
+      <label class="recipe-modal-qty-row">
+        <span class="recipe-modal-qty-label">{{ 'tracker.recipeQuantityLabel' | t }}</span>
+        <input
+          #quantityInput
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          class="recipe-modal-qty-input"
+          [value]="quantity()"
+          (keydown)="onKeydown($event)"
+          (keydown.enter)="confirm()"
+          (change)="onInput($event)"
+        />
+      </label>
+
+      <div class="recipe-modal-ingredients">
+        @for (ing of preview(); track ing.name) {
+          <div class="recipe-modal-ingredient-row">
+            <app-item-icon [name]="ing.name" [size]="22" />
+            <span class="recipe-modal-ingredient-name">{{ ing.name }}</span>
+            <span class="recipe-modal-ingredient-qty">{{ ing.target }}</span>
+          </div>
+        }
+      </div>
+
+      <button type="button" class="primary-btn recipe-modal-confirm" (click)="confirm()">
+        {{ 'tracker.recipeConfirm' | t }}
+      </button>
+    </div>
+  </div>
+}

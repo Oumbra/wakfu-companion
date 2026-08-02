@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 
 const projectRoot = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const REFERENTIEL_PATH = path.join(projectRoot, 'referentiel', 'items_wakfu.json');
+const RECIPES_PATH = path.join(projectRoot, 'referentiel', 'recipes_wakfu.json');
 const OUTPUT_PATH = path.join(projectRoot, 'src', 'app', 'core', 'data', 'wakfu-items.data.ts');
 
 const VALID_RARITIES = new Set([
@@ -61,9 +62,11 @@ function normalizeRarity(item) {
   return 'common';
 }
 
-function buildEntry(item) {
+function buildEntry(item, recipesByItemId) {
   const rarity = normalizeRarity(item);
+  const id = typeof item.id === 'number' ? item.id : null;
   return {
+    id,
     fr: item.fr,
     gfxId: Number(item.gfxId),
     en: item.en,
@@ -73,10 +76,14 @@ function buildEntry(item) {
     pictureUrl: item.picture_url,
     wakassetsAvailable: item.wakassets_available,
     wakfuAvailable: item.wakfu_available,
+    hasRecipe: item.hasRecipe === true,
+    recipe: (id !== null && recipesByItemId.get(id)) || [],
   };
 }
 
-function generateFileContent(items) {
+function generateFileContent(items, recipes) {
+  const recipesByItemId = new Map(recipes.map((r) => [r.itemId, r.recipe]));
+
   const oldCount = items.filter((item) => normalizeRarity(item) === 'old').length;
   const included = items.filter((item) => normalizeRarity(item) !== 'old');
 
@@ -88,7 +95,7 @@ function generateFileContent(items) {
       duplicateCount++;
       continue;
     }
-    table[key] = buildEntry(item);
+    table[key] = buildEntry(item, recipesByItemId);
   }
   console.log(
     `[generate-wakfu-items-data] ${items.length} objets lus, ${oldCount} objets "old" exclus, ${Object.keys(table).length} clés uniques (${duplicateCount} doublons de nom ignorés).`,
@@ -107,6 +114,10 @@ function generateFileContent(items) {
  * shared/item-icon) : certains objets n'ont pas d'image sur l'un des deux
  * CDN. Le champ \`fr\` sert à l'autocomplétion (shared/wakfu-autocomplete)
  * et au recours d'affichage si la traduction demandée est absente.
+ * \`recipe\` croise referentiel/recipes_wakfu.json par \`id\` (voir
+ * .claude/skills/wakfu-items-sync/scripts/sync-recipes.mjs) — vide si
+ * \`hasRecipe\` est faux ou si \`id\` est absent du référentiel (142 entrées
+ * historiques sans \`id\`, voir SKILL.md).
  *
  * FICHIER GÉNÉRÉ — ne pas éditer à la main, les modifications seraient
  * écrasées au prochain build/serve. Éditer referentiel/items_wakfu.json puis
@@ -116,7 +127,16 @@ function generateFileContent(items) {
 import type { WakfuRarity } from './wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 
+export interface WakfuRecipeIngredient {
+  itemId: number;
+  quantity: number;
+}
+
 export interface WakfuItemEntry {
+  /** \`id\` Ankama, \`null\` pour les 142 entrées historiques du référentiel qui n'en ont pas
+   * (voir SKILL.md) — ces objets ne peuvent alors jamais apparaître comme ingrédient résolu
+   * (voir resolveRecipeIngredientNames) ni comme objet à recette. */
+  id: number | null;
   fr: string;
   gfxId: number;
   en: string;
@@ -126,6 +146,8 @@ export interface WakfuItemEntry {
   pictureUrl: string;
   wakassetsAvailable: boolean;
   wakfuAvailable: boolean;
+  hasRecipe: boolean;
+  recipe: readonly WakfuRecipeIngredient[];
 }
 
 export const WAKFU_ITEMS_FR: Readonly<Record<string, WakfuItemEntry>> = ${JSON.stringify(table)};
@@ -154,12 +176,46 @@ export function findWakfuItemEntry(name: string): WakfuItemEntry | undefined {
   const key = normalizeWakfuName(name);
   return WAKFU_ITEMS_FR[key] ?? WAKFU_ITEMS_BY_OTHER_LOCALE.get(key);
 }
+
+/** Index \`id\` Ankama -> entrée, construit une seule fois au chargement du module — sert à
+ * résoudre les \`itemId\` d'ingrédients de \`WakfuItemEntry.recipe\` (voir
+ * resolveRecipeIngredientNames). Un objet absent de WAKFU_ITEMS_FR (doublon de nom écrasé, voir
+ * plus haut) n'y apparaît pas non plus : ses éventuelles recettes/usages en ingrédient ne sont
+ * alors pas résolvables, même limite que partout ailleurs dans l'app. */
+const WAKFU_ITEMS_BY_ID: ReadonlyMap<number, WakfuItemEntry> = (() => {
+  const map = new Map<number, WakfuItemEntry>();
+  for (const entry of Object.values(WAKFU_ITEMS_FR)) {
+    if (entry.id !== null && !map.has(entry.id)) map.set(entry.id, entry);
+  }
+  return map;
+})();
+
+/** Recherche un objet par \`id\` Ankama. */
+export function findWakfuItemEntryById(id: number): WakfuItemEntry | undefined {
+  return WAKFU_ITEMS_BY_ID.get(id);
+}
+
+/** Résout les ingrédients de la recette d'un objet (\`entry.recipe\`) vers leur nom FR affichable
+ * + quantité requise — voir suivi > "suivre les objets de la recette". Un ingrédient dont
+ * l'\`itemId\` ne résout à aucune entrée connue (voir WAKFU_ITEMS_BY_ID) est silencieusement omis
+ * plutôt que de produire une ligne sans nom. */
+export function resolveRecipeIngredientNames(
+  entry: WakfuItemEntry,
+): { name: string; quantity: number }[] {
+  const resolved: { name: string; quantity: number }[] = [];
+  for (const ingredient of entry.recipe) {
+    const target = WAKFU_ITEMS_BY_ID.get(ingredient.itemId);
+    if (target) resolved.push({ name: target.fr, quantity: ingredient.quantity });
+  }
+  return resolved;
+}
 `;
 }
 
 async function main() {
   const referentiel = JSON.parse(await readFile(REFERENTIEL_PATH, 'utf-8'));
-  const content = generateFileContent(referentiel);
+  const recipes = JSON.parse(await readFile(RECIPES_PATH, 'utf-8'));
+  const content = generateFileContent(referentiel, recipes);
   await writeFile(OUTPUT_PATH, content, 'utf-8');
   console.log(`[generate-wakfu-items-data] ${OUTPUT_PATH} régénéré.`);
 }
