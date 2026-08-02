@@ -15,14 +15,6 @@
       </svg>
       {{ 'history.header' | t }}
     </span>
-    <button
-      type="button"
-      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
-      [attr.data-tooltip]="'help.tooltip' | t"
-      (click)="openHelp()"
-    >
-      ?
-    </button>
   </div>
 
   <div class="tab-header">
@@ -46,6 +38,14 @@
       (click)="activeTab.set('trades')"
     >
       {{ 'trades.header' | t }}
+    </button>
+    <button
+      type="button"
+      class="icon-btn help-icon-btn tooltip-below tooltip-align-right tab-header-help-btn"
+      [attr.data-tooltip]="'help.tooltip' | t"
+      (click)="openHelp()"
+    >
+      ?
     </button>
   </div>
 
