@@ -330,10 +330,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  cursor: pointer;
-}
-.loot-header-row:hover {
-  filter: brightness(1.15);
 }
 .loot-header-main {
   display: flex;
