@@ -150,9 +150,11 @@
                 </div>
                 @if (isFightXpExpanded(record.id)) {
                   <div class="collapsible-body">
-                    @for (row of record.xp; track row.name) {
+                    @for (row of record.xp; track row.name; let first = $first) {
                       <div
                         class="fight-xp-row"
+                        [class.tooltip-below]="first"
+                        [attr.data-tooltip]="'damageMeter.classHint' | t"
                         (contextmenu)="onXpContextMenu($event, row.name)"
                       >
                         <app-entity-icon [name]="row.name" side="ally" />

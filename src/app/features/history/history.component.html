@@ -18,35 +18,45 @@
   </div>
 
   <div class="tab-header">
-    <button
-      class="meter-tab"
-      [class.active]="activeTab() === 'combats'"
-      (click)="activeTab.set('combats')"
-    >
-      {{ 'history.tabCombats' | t }}
-    </button>
-    <button
-      class="meter-tab"
-      [class.active]="activeTab() === 'purchases'"
-      (click)="activeTab.set('purchases')"
-    >
-      {{ 'purchases.header' | t }}
-    </button>
-    <button
-      class="meter-tab"
-      [class.active]="activeTab() === 'trades'"
-      (click)="activeTab.set('trades')"
-    >
-      {{ 'trades.header' | t }}
-    </button>
-    <button
-      type="button"
-      class="icon-btn help-icon-btn tooltip-below tooltip-align-right tab-header-help-btn"
-      [attr.data-tooltip]="'help.tooltip' | t"
-      (click)="openHelp()"
-    >
-      ?
-    </button>
+    <div class="meter-tab" [class.active]="activeTab() === 'combats'">
+      <button type="button" class="meter-tab-label" (click)="activeTab.set('combats')">
+        {{ 'history.tabCombats' | t }}
+      </button>
+      <button
+        type="button"
+        class="icon-btn help-icon-btn meter-tab-help-btn tooltip-below"
+        [attr.data-tooltip]="'help.tooltip' | t"
+        (click)="helpModal.open('fightHistory')"
+      >
+        ?
+      </button>
+    </div>
+    <div class="meter-tab" [class.active]="activeTab() === 'purchases'">
+      <button type="button" class="meter-tab-label" (click)="activeTab.set('purchases')">
+        {{ 'purchases.header' | t }}
+      </button>
+      <button
+        type="button"
+        class="icon-btn help-icon-btn meter-tab-help-btn tooltip-below"
+        [attr.data-tooltip]="'help.tooltip' | t"
+        (click)="helpModal.open('purchases')"
+      >
+        ?
+      </button>
+    </div>
+    <div class="meter-tab" [class.active]="activeTab() === 'trades'">
+      <button type="button" class="meter-tab-label" (click)="activeTab.set('trades')">
+        {{ 'trades.header' | t }}
+      </button>
+      <button
+        type="button"
+        class="icon-btn help-icon-btn meter-tab-help-btn tooltip-below tooltip-align-right"
+        [attr.data-tooltip]="'help.tooltip' | t"
+        (click)="helpModal.open('trades')"
+      >
+        ?
+      </button>
+    </div>
   </div>
 
   @if (activeTab() === 'combats') {
