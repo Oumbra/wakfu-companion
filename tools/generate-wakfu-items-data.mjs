@@ -6,11 +6,11 @@
  * que la table utilisée par l'UI (icônes objets, autocomplétion, rareté)
  * reste synchronisée avec le référentiel sans étape manuelle.
  *
- * Dédoublonnage : à normalisation de nom égale (voir normalizeWakfuName —
- * minuscule + apostrophes typographiques uniformisées), seule la PREMIÈRE
- * entrée rencontrée dans le référentiel est conservée, pour rester cohérent
- * avec le comportement historique du fichier généré à la main qu'il
- * remplace.
+ * Pas de dédoublonnage par nom : la table primaire (WAKFU_ITEMS) conserve
+ * TOUS les objets du référentiel (hors "old"), y compris les homonymes de
+ * rareté différente, indexés par leur \`id\` Ankama (unique) plutôt que par
+ * nom (voir normalizeWakfuName pour la normalisation encore utilisée par les
+ * index de repli par nom, eux dédupliqués "premier gagne").
  *
  * Exclusion des objets "old" (rareté Ankama 0, "Qualité commune" côté
  * gamedata brut, traduite "Ancien" en jeu) : ce sont des objets historiques
@@ -87,37 +87,37 @@ function generateFileContent(items, recipes) {
   const oldCount = items.filter((item) => normalizeRarity(item) === 'old').length;
   const included = items.filter((item) => normalizeRarity(item) !== 'old');
 
-  const table = {};
-  let duplicateCount = 0;
-  for (const item of included) {
-    const key = normalizeWakfuName(item.fr);
-    if (Object.prototype.hasOwnProperty.call(table, key)) {
-      duplicateCount++;
-      continue;
-    }
-    table[key] = buildEntry(item, recipesByItemId);
+  const list = included.map((item) => buildEntry(item, recipesByItemId));
+
+  let idCollisionCount = 0;
+  const seenIds = new Set();
+  for (const entry of list) {
+    if (entry.id === null) continue;
+    if (seenIds.has(entry.id)) idCollisionCount++;
+    else seenIds.add(entry.id);
   }
+  const withoutId = list.filter((entry) => entry.id === null).length;
+
   console.log(
-    `[generate-wakfu-items-data] ${items.length} objets lus, ${oldCount} objets "old" exclus, ${Object.keys(table).length} clés uniques (${duplicateCount} doublons de nom ignorés).`,
+    `[generate-wakfu-items-data] ${items.length} objets lus, ${oldCount} objets "old" exclus, ${list.length} objets conservés (${withoutId} sans id, ${idCollisionCount} collisions d'id ignorées).`,
   );
 
   return `/**
- * Table nom d'objet (FR, minuscule, apostrophes typographiques normalisées
- * en apostrophe droite via normalizeWakfuName) -> nom FR affichable (casse
- * d'origine) + gfxId + noms EN/ES/PT + rareté + image officielle, générée
- * depuis referentiel/items_wakfu.json (référentiel complet Ankama,
- * ${items.length} objets, dont ${oldCount} exclus car rareté "old"). En cas
- * de nom en double dans le référentiel source (avant ou après normalisation
- * des apostrophes), la première entrée rencontrée est conservée.
- * \`wakassetsAvailable\`/\`wakfuAvailable\` indiquent
- * quelles sources d'image sont valides pour cet objet (voir
- * shared/item-icon) : certains objets n'ont pas d'image sur l'un des deux
- * CDN. Le champ \`fr\` sert à l'autocomplétion (shared/wakfu-autocomplete)
- * et au recours d'affichage si la traduction demandée est absente.
- * \`recipe\` croise referentiel/recipes_wakfu.json par \`id\` (voir
+ * Liste de TOUS les objets (hors rareté "old"), générée depuis
+ * referentiel/items_wakfu.json (référentiel complet Ankama, ${items.length}
+ * objets, dont ${oldCount} exclus car rareté "old") — SANS dédoublonnage par
+ * nom : deux objets homonymes de raretés différentes (ex. une même coiffe
+ * existant en légendaire et en mythique) apparaissent chacun individuellement,
+ * indexés par leur \`id\` Ankama (clé stable et unique, contrairement au nom
+ * FR). \`wakassetsAvailable\`/\`wakfuAvailable\` indiquent quelles sources
+ * d'image sont valides pour cet objet (voir shared/item-icon) : certains
+ * objets n'ont pas d'image sur l'un des deux CDN. Le champ \`fr\` sert à
+ * l'autocomplétion (shared/wakfu-autocomplete) et au recours d'affichage si
+ * la traduction demandée est absente. \`recipe\` croise
+ * referentiel/recipes_wakfu.json par \`id\` (voir
  * .claude/skills/wakfu-items-sync/scripts/sync-recipes.mjs) — vide si
- * \`hasRecipe\` est faux ou si \`id\` est absent du référentiel (142 entrées
- * historiques sans \`id\`, voir SKILL.md).
+ * \`hasRecipe\` est faux ou si \`id\` est absent du référentiel (${withoutId}
+ * entrées historiques sans \`id\`, voir SKILL.md).
  *
  * FICHIER GÉNÉRÉ — ne pas éditer à la main, les modifications seraient
  * écrasées au prochain build/serve. Éditer referentiel/items_wakfu.json puis
@@ -133,9 +133,10 @@ export interface WakfuRecipeIngredient {
 }
 
 export interface WakfuItemEntry {
-  /** \`id\` Ankama, \`null\` pour les 142 entrées historiques du référentiel qui n'en ont pas
-   * (voir SKILL.md) — ces objets ne peuvent alors jamais apparaître comme ingrédient résolu
-   * (voir resolveRecipeIngredientNames) ni comme objet à recette. */
+  /** \`id\` Ankama, \`null\` pour les ${withoutId} entrées historiques du référentiel qui n'en ont
+   * pas (voir SKILL.md) — ces objets ne peuvent alors jamais apparaître comme ingrédient résolu
+   * (voir resolveRecipeIngredientNames) ni comme objet à recette, et ne sont accessibles que via
+   * un nom (findWakfuItemEntry), jamais via findWakfuItemEntryById. */
   id: number | null;
   fr: string;
   gfxId: number;
@@ -150,19 +151,29 @@ export interface WakfuItemEntry {
   recipe: readonly WakfuRecipeIngredient[];
 }
 
-export const WAKFU_ITEMS_FR: Readonly<Record<string, WakfuItemEntry>> = ${JSON.stringify(table)};
+/** Littéral non typé : une annotation directe (\`: readonly WakfuItemEntry[]\`) sur un littéral de
+ * ${list.length} objets fait échouer la compilation (TS2590 "union type too complex to
+ * represent") — le cast ci-dessous sur WAKFU_ITEMS l'évite en laissant TS inférer un type élargi
+ * avant de le recaster vers l'interface publique. */
+const WAKFU_ITEMS_RAW = ${JSON.stringify(list)};
+
+/** Table primaire, sans perte : chaque objet du référentiel (hors "old") est présent
+ * individuellement, y compris les homonymes de rareté différente — voir findWakfuItemEntryById
+ * pour un accès direct par id, ou searchItems (WakfuSearchService) pour l'autocomplétion qui
+ * itère cette liste en entier (contrairement à l'ancienne table dédupliquée par nom). */
+export const WAKFU_ITEMS = WAKFU_ITEMS_RAW as readonly WakfuItemEntry[];
 
 /**
  * Index inverse EN/ES/PT -> entrée, construit une seule fois au chargement
- * du module (~${Object.keys(table).length} objets, coût négligeable) : les noms lus dans wakfu.log
+ * du module (~${list.length} objets, coût négligeable) : les noms lus dans wakfu.log
  * sont dans la langue du client Wakfu de l'utilisateur, pas nécessairement
- * le français, contrairement à la clé de WAKFU_ITEMS_FR qui n'indexe que le
- * nom FR. En cas de collision entre 2 objets pour une langue donnée (rare,
- * traductions partagées), la première entrée rencontrée est conservée.
+ * le français. En cas de collision entre 2 objets pour une langue donnée
+ * (nom en double, homonymes...), la première entrée rencontrée est conservée
+ * — même limite que findWakfuItemEntry côté FR.
  */
 const WAKFU_ITEMS_BY_OTHER_LOCALE: ReadonlyMap<string, WakfuItemEntry> = (() => {
   const map = new Map<string, WakfuItemEntry>();
-  for (const entry of Object.values(WAKFU_ITEMS_FR)) {
+  for (const entry of WAKFU_ITEMS) {
     for (const localizedName of [entry.en, entry.es, entry.pt]) {
       const key = normalizeWakfuName(localizedName);
       if (!map.has(key)) map.set(key, entry);
@@ -171,20 +182,34 @@ const WAKFU_ITEMS_BY_OTHER_LOCALE: ReadonlyMap<string, WakfuItemEntry> = (() => 
   return map;
 })();
 
-/** Recherche un objet par nom, quelle que soit sa langue (FR/EN/ES/PT). */
+/** Index nom FR normalisé -> entrée, première entrée rencontrée conservée en cas de doublon de
+ * nom (voir WAKFU_ITEMS pour la table complète sans perte) — sert de repli nom -> objet pour les
+ * usages qui ne peuvent pas raisonner par id (parsing des logs, qui ne contiennent que des noms). */
+const WAKFU_ITEMS_BY_FR_NAME: ReadonlyMap<string, WakfuItemEntry> = (() => {
+  const map = new Map<string, WakfuItemEntry>();
+  for (const entry of WAKFU_ITEMS) {
+    const key = normalizeWakfuName(entry.fr);
+    if (!map.has(key)) map.set(key, entry);
+  }
+  return map;
+})();
+
+/** Recherche un objet par nom, quelle que soit sa langue (FR/EN/ES/PT) — en cas d'homonymes,
+ * renvoie la première entrée rencontrée dans le référentiel (voir findWakfuItemEntryById pour une
+ * résolution non ambiguë par id). */
 export function findWakfuItemEntry(name: string): WakfuItemEntry | undefined {
   const key = normalizeWakfuName(name);
-  return WAKFU_ITEMS_FR[key] ?? WAKFU_ITEMS_BY_OTHER_LOCALE.get(key);
+  return WAKFU_ITEMS_BY_FR_NAME.get(key) ?? WAKFU_ITEMS_BY_OTHER_LOCALE.get(key);
 }
 
 /** Index \`id\` Ankama -> entrée, construit une seule fois au chargement du module — sert à
  * résoudre les \`itemId\` d'ingrédients de \`WakfuItemEntry.recipe\` (voir
- * resolveRecipeIngredientNames). Un objet absent de WAKFU_ITEMS_FR (doublon de nom écrasé, voir
- * plus haut) n'y apparaît pas non plus : ses éventuelles recettes/usages en ingrédient ne sont
- * alors pas résolvables, même limite que partout ailleurs dans l'app. */
+ * resolveRecipeIngredientNames) ainsi qu'à la résolution non ambiguë d'une entrée d'autocomplétion
+ * (voir WakfuSearchResult.id). Contrairement à l'ancienne table dédupliquée par nom, aucun objet
+ * ayant un id n'est perdu ici. */
 const WAKFU_ITEMS_BY_ID: ReadonlyMap<number, WakfuItemEntry> = (() => {
   const map = new Map<number, WakfuItemEntry>();
-  for (const entry of Object.values(WAKFU_ITEMS_FR)) {
+  for (const entry of WAKFU_ITEMS) {
     if (entry.id !== null && !map.has(entry.id)) map.set(entry.id, entry);
   }
   return map;

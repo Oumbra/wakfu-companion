@@ -1,8 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
 import { Fight } from '../models/fight.model';
-import { WAKFU_ITEMS_FR } from '../data/wakfu-items.data';
-import { normalizeWakfuName } from '../utils/wakfu-name.util';
+import { findWakfuItemEntry } from '../data/wakfu-items.data';
 import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { LogFileAccessService } from './log-file-access.service';
@@ -633,7 +632,7 @@ export class StatsStoreService {
   }
 
   private lookupItemGfxId(name: string): number {
-    return WAKFU_ITEMS_FR[normalizeWakfuName(name)]?.gfxId ?? 0;
+    return findWakfuItemEntry(name)?.gfxId ?? 0;
   }
 
   /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
