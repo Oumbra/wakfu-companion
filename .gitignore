@@ -49,4 +49,3 @@ Thumbs.db
 
 # Build standalone (régénéré via `npm run build:standalone`)
 /wakfu-companion.standalone.html
-/assets/old-items/*
