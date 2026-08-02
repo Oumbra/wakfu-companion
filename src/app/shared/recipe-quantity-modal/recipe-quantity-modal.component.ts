@@ -26,20 +26,52 @@ export class RecipeQuantityModalComponent {
   protected readonly quantity = signal(1);
   private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
 
-  /** Aperçu des quantités réellement appliquées à chaque ingrédient si l'utilisateur valide maintenant. */
+  /** Noms des ingrédients actuellement imbriqués (collapse ouvert, voir toggleNested) — un
+   * ingrédient imbriqué n'est lui-même plus suivi à la validation, seuls ses propres ingrédients
+   * le sont (voir confirm()). */
+  private readonly nestedIngredients = signal<ReadonlySet<string>>(new Set());
+
+  /** Aperçu des quantités réellement appliquées à chaque ingrédient si l'utilisateur valide
+   * maintenant, avec le détail des sous-ingrédients pour toute ligne actuellement imbriquée. */
   protected readonly preview = computed(() => {
     const req = this.recipeTracking.request();
     const multiplier = this.quantity();
+    const nested = this.nestedIngredients();
     if (!req) return [];
-    return req.ingredients.map((ing) => ({ name: ing.name, target: ing.quantity * multiplier }));
+    return req.ingredients.map((ing) => {
+      const target = ing.quantity * multiplier;
+      const isNested = ing.hasRecipe && nested.has(ing.name);
+      return {
+        name: ing.name,
+        target,
+        hasRecipe: ing.hasRecipe,
+        nested: isNested,
+        subIngredients: isNested
+          ? ing.recipeIngredients.map((sub) => ({ name: sub.name, target: sub.quantity * target }))
+          : [],
+      };
+    });
   });
 
   constructor() {
     effect(() => {
       if (this.recipeTracking.request()) {
         this.quantity.set(1);
+        this.nestedIngredients.set(new Set());
         queueMicrotask(() => this.quantityInput()?.nativeElement.focus());
       }
+    });
+  }
+
+  /** Bascule l'imbrication d'une ligne d'ingrédient (collapse ouvert <-> ligne standard) —
+   * ignoré si l'ingrédient n'a pas de recette (icône masquée dans ce cas, voir template). */
+  protected toggleNested(name: string, hasRecipe: boolean): void {
+    if (!hasRecipe) return;
+    this.nestedIngredients.update((set) => {
+      const next = new Set(set);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
     });
   }
 
@@ -65,10 +97,31 @@ export class RecipeQuantityModalComponent {
     const req = this.recipeTracking.request();
     if (!req) return;
     const multiplier = this.quantity();
+    const nested = this.nestedIngredients();
+
+    /** Cible cumulée par nom d'objet final : un même objet peut apparaître à la fois comme
+     * ingrédient direct et comme sous-ingrédient d'une ligne imbriquée (ou dans plusieurs lignes
+     * imbriquées) — les quantités doivent alors s'additionner plutôt que s'écraser. */
+    const targets = new Map<string, number>();
+    const addTarget = (name: string, amount: number): void => {
+      targets.set(name, (targets.get(name) ?? 0) + amount);
+    };
+
     for (const ingredient of req.ingredients) {
-      this.stats.addWatchedItem(ingredient.name);
-      this.stats.setWatchlistMode(ingredient.name, 'down');
-      this.stats.setWatchlistCountdownTarget(ingredient.name, ingredient.quantity * multiplier);
+      const target = ingredient.quantity * multiplier;
+      if (ingredient.hasRecipe && nested.has(ingredient.name)) {
+        for (const sub of ingredient.recipeIngredients) {
+          addTarget(sub.name, sub.quantity * target);
+        }
+      } else {
+        addTarget(ingredient.name, target);
+      }
+    }
+
+    for (const [name, target] of targets) {
+      this.stats.addWatchedItem(name);
+      this.stats.setWatchlistMode(name, 'down');
+      this.stats.setWatchlistCountdownTarget(name, target);
     }
     this.recipeTracking.close();
   }

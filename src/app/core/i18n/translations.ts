@@ -74,6 +74,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeModalTitle': 'Suivre les objets de la recette',
     'tracker.recipeQuantityLabel': 'Quantité',
     'tracker.recipeConfirm': 'Valider',
+    'tracker.recipeNestTooltip': "Suivre les ingrédients de cet objet plutôt que l'objet lui-même",
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
@@ -255,6 +256,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeModalTitle': "Track the recipe's items",
     'tracker.recipeQuantityLabel': 'Quantity',
     'tracker.recipeConfirm': 'Confirm',
+    'tracker.recipeNestTooltip': "Track this item's own ingredients instead of the item itself",
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
@@ -434,6 +436,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeModalTitle': 'Seguir los objetos de la receta',
     'tracker.recipeQuantityLabel': 'Cantidad',
     'tracker.recipeConfirm': 'Confirmar',
+    'tracker.recipeNestTooltip': 'Seguir los ingredientes de este objeto en lugar del objeto en sí',
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
@@ -615,6 +618,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeModalTitle': 'Acompanhar os itens da receita',
     'tracker.recipeQuantityLabel': 'Quantidade',
     'tracker.recipeConfirm': 'Confirmar',
+    'tracker.recipeNestTooltip': 'Acompanhar os ingredientes deste item em vez do item em si',
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
