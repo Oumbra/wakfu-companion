@@ -49,3 +49,6 @@ Thumbs.db
 
 # Build standalone (régénéré via `npm run build:standalone`)
 /wakfu-companion.standalone.html
+/src/app/core/data/wakfu-items.data.ts
+/src/app/core/data/wakfu-dungeons.data.ts
+/src/app/core/data/wakfu-monsters.data.ts
