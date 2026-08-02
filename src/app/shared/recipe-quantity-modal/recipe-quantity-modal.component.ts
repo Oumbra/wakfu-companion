@@ -1,5 +1,9 @@
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
+import { Component, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
+import {
+  RecipeTrackingIngredient,
+  RecipeTrackingService,
+} from '../../core/services/recipe-tracking.service';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { TranslatePipe } from '../translate.pipe';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
@@ -12,10 +16,16 @@ import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
  * (multiplicateur, min 1, comportement identique à l'input décompte des KPI — voir
  * resolveNumericKeyAction) puis validation (bouton ou Entrée) : crée ou met à jour un KPI en
  * mode décompte pour chaque ingrédient de la recette, valeur = quantité recette × multiplicateur.
+ *
+ * Un ingrédient ayant lui-même une recette peut être "imbriqué" (voir toggleNested/nestedPaths) :
+ * sa ligne devient un collapse listant SES propres ingrédients, en cascade sur autant de niveaux
+ * que la recette en comporte (rendu récursif via le template \`#ingredientRow\`, voir le HTML).
+ * Chaque ligne est identifiée par un chemin d'index stable ("0", "0.2", "0.2.1"...) plutôt que par
+ * son nom, pour distinguer 2 occurrences homonymes à des positions différentes de l'arbre.
  */
 @Component({
   selector: 'app-recipe-quantity-modal',
-  imports: [TranslatePipe, ItemIconComponent],
+  imports: [TranslatePipe, ItemIconComponent, NgTemplateOutlet],
   templateUrl: './recipe-quantity-modal.component.html',
   styleUrl: './recipe-quantity-modal.component.css',
 })
@@ -26,38 +36,16 @@ export class RecipeQuantityModalComponent {
   protected readonly quantity = signal(1);
   private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
 
-  /** Noms des ingrédients actuellement imbriqués (collapse ouvert, voir toggleNested) — un
-   * ingrédient imbriqué n'est lui-même plus suivi à la validation, seuls ses propres ingrédients
-   * le sont (voir confirm()). */
-  private readonly nestedIngredients = signal<ReadonlySet<string>>(new Set());
-
-  /** Aperçu des quantités réellement appliquées à chaque ingrédient si l'utilisateur valide
-   * maintenant, avec le détail des sous-ingrédients pour toute ligne actuellement imbriquée. */
-  protected readonly preview = computed(() => {
-    const req = this.recipeTracking.request();
-    const multiplier = this.quantity();
-    const nested = this.nestedIngredients();
-    if (!req) return [];
-    return req.ingredients.map((ing) => {
-      const target = ing.quantity * multiplier;
-      const isNested = ing.hasRecipe && nested.has(ing.name);
-      return {
-        name: ing.name,
-        target,
-        hasRecipe: ing.hasRecipe,
-        nested: isNested,
-        subIngredients: isNested
-          ? ing.recipeIngredients.map((sub) => ({ name: sub.name, target: sub.quantity * target }))
-          : [],
-      };
-    });
-  });
+  /** Chemins (voir doc de classe) des lignes actuellement imbriquées (collapse ouvert, voir
+   * toggleNested) — un ingrédient imbriqué n'est lui-même plus suivi à la validation, seuls ses
+   * propres ingrédients le sont (voir confirm()). */
+  protected readonly nestedPaths = signal<ReadonlySet<string>>(new Set());
 
   constructor() {
     effect(() => {
       if (this.recipeTracking.request()) {
         this.quantity.set(1);
-        this.nestedIngredients.set(new Set());
+        this.nestedPaths.set(new Set());
         queueMicrotask(() => this.quantityInput()?.nativeElement.focus());
       }
     });
@@ -65,12 +53,12 @@ export class RecipeQuantityModalComponent {
 
   /** Bascule l'imbrication d'une ligne d'ingrédient (collapse ouvert <-> ligne standard) —
    * ignoré si l'ingrédient n'a pas de recette (icône masquée dans ce cas, voir template). */
-  protected toggleNested(name: string, hasRecipe: boolean): void {
+  protected toggleNested(path: string, hasRecipe: boolean): void {
     if (!hasRecipe) return;
-    this.nestedIngredients.update((set) => {
+    this.nestedPaths.update((set) => {
       const next = new Set(set);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
       return next;
     });
   }
@@ -97,26 +85,34 @@ export class RecipeQuantityModalComponent {
     const req = this.recipeTracking.request();
     if (!req) return;
     const multiplier = this.quantity();
-    const nested = this.nestedIngredients();
+    const nested = this.nestedPaths();
 
     /** Cible cumulée par nom d'objet final : un même objet peut apparaître à la fois comme
-     * ingrédient direct et comme sous-ingrédient d'une ligne imbriquée (ou dans plusieurs lignes
-     * imbriquées) — les quantités doivent alors s'additionner plutôt que s'écraser. */
+     * ingrédient direct et comme (sous-)ingrédient d'une ou plusieurs lignes imbriquées à
+     * différents niveaux — les quantités doivent alors s'additionner plutôt que s'écraser. */
     const targets = new Map<string, number>();
     const addTarget = (name: string, amount: number): void => {
       targets.set(name, (targets.get(name) ?? 0) + amount);
     };
 
-    for (const ingredient of req.ingredients) {
-      const target = ingredient.quantity * multiplier;
-      if (ingredient.hasRecipe && nested.has(ingredient.name)) {
-        for (const sub of ingredient.recipeIngredients) {
-          addTarget(sub.name, sub.quantity * target);
+    /** Descend récursivement dans l'arbre tant qu'une ligne est imbriquée : seules les feuilles
+     * (ingrédient non imbriqué, qu'il ait ou non une recette) contribuent au suivi final. */
+    const walk = (
+      ingredients: readonly RecipeTrackingIngredient[],
+      parentMultiplier: number,
+      parentPath: string,
+    ): void => {
+      ingredients.forEach((ingredient, index) => {
+        const path = parentPath === '' ? `${index}` : `${parentPath}.${index}`;
+        const target = ingredient.quantity * parentMultiplier;
+        if (ingredient.hasRecipe && nested.has(path)) {
+          walk(ingredient.recipeIngredients, target, path);
+        } else {
+          addTarget(ingredient.name, target);
         }
-      } else {
-        addTarget(ingredient.name, target);
-      }
-    }
+      });
+    };
+    walk(req.ingredients, multiplier, '');
 
     for (const [name, target] of targets) {
       this.stats.addWatchedItem(name);

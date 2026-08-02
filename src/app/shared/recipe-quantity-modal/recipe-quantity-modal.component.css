@@ -28,6 +28,22 @@
   animation: fadeIn 0.15s;
 }
 
+/* Même géométrie mobile que .recap-panel (session-recap.component.css) : plutôt qu'une fenêtre
+   flottante centrée à taille fixe, le panneau occupe toute la zone disponible sous le header. */
+@media (max-width: 800px) {
+  .recipe-modal {
+    top: 60px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    width: auto;
+    height: auto;
+    max-width: none;
+    max-height: none;
+    transform: none;
+  }
+}
+
 .recipe-modal-header {
   display: flex;
   align-items: center;
@@ -63,11 +79,46 @@
   height: calc(100% - 40px);
 }
 
+/* Bandeau objet source : icône + nom sur fond en dégradé selon la rareté — même palette et même
+   principe que .loot-row (fight-history.component.css), voir --rarity-color. */
+.recipe-modal-item-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+}
+.recipe-modal-item-block.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.recipe-modal-item-block.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.recipe-modal-item-block.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.recipe-modal-item-block.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.recipe-modal-item-block.rarity-memory {
+  --rarity-color: #1f97e0;
+}
+.recipe-modal-item-block.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.recipe-modal-item-block.rarity-relic {
+  --rarity-color: #9450d9;
+}
+.recipe-modal-item-block[class*='rarity-'] {
+  border-color: color-mix(in srgb, var(--rarity-color) 45%, transparent);
+  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 45%, #1a1a1a), #1a1a1a 85%);
+}
+
 .recipe-modal-item-name {
   font-size: 0.9rem;
   font-weight: 700;
   color: #fff;
-  text-align: center;
 }
 
 .recipe-modal-qty-row {
@@ -169,44 +220,18 @@
   pointer-events: none;
 }
 
+/* Conteneur d'indentation d'un niveau d'imbrication — les mêmes classes de ligne
+   (.recipe-modal-ingredient-row et consorts) sont réutilisées à chaque niveau (rendu récursif,
+   voir #ingredientRow dans le HTML), donc l'indentation s'accumule naturellement d'un niveau à
+   l'autre sans style spécifique à la profondeur. */
 .recipe-modal-sub-ingredients {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  margin-top: 2px;
-  padding: 4px 6px 4px 26px;
-  background: #141414;
-  border-radius: 4px;
-}
-
-.recipe-modal-sub-ingredient-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  color: #999;
-}
-
-.recipe-modal-sub-ingredient-name {
-  flex-grow: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.recipe-modal-sub-ingredient-qty {
-  font-family: monospace;
-  color: var(--accent);
-  flex-shrink: 0;
+  gap: 4px;
+  margin-top: 4px;
+  padding-left: 18px;
 }
 
 .recipe-modal-confirm {
   width: 100%;
-}
-
-@media (max-width: 800px) {
-  .recipe-modal {
-    height: 100%;
-  }
 }
