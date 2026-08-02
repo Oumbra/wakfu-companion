@@ -22,7 +22,9 @@
           @if (fightImageUrl(record); as imageUrl) {
             <img
               class="fight-image"
+              [class.tooltip-below]="first"
               [src]="imageUrl"
+              [attr.data-tooltip]="fightImageTooltip(record)"
               referrerpolicy="no-referrer"
               draggable="false"
               (error)="onFightImageError($event)"
@@ -82,7 +84,7 @@
                           type="button"
                           class="loot-sort-switch-option"
                           [class.selected]="lootSort() === 'name'"
-                          [title]="'damageMeter.sortName' | t"
+                          [attr.data-tooltip]="'damageMeter.sortName' | t"
                           (click)="setLootSort('name')"
                         >
                           Az
@@ -91,7 +93,7 @@
                           type="button"
                           class="loot-sort-switch-option"
                           [class.selected]="lootSort() === 'quantity'"
-                          [title]="'damageMeter.sortQuantity' | t"
+                          [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
                           (click)="setLootSort('quantity')"
                         >
                           Nb
@@ -100,7 +102,7 @@
                           type="button"
                           class="loot-sort-switch-option"
                           [class.selected]="lootSort() === 'rarity'"
-                          [title]="'damageMeter.sortRarity' | t"
+                          [attr.data-tooltip]="'damageMeter.sortRarity' | t"
                           (click)="setLootSort('rarity')"
                         >
                           <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
@@ -121,7 +123,7 @@
                             class="loot-row"
                             [class]="rarityClass(item.name)"
                             [class.tooltip-below]="first"
-                            [attr.title]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+                            [attr.data-tooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
                             (contextmenu)="onLootContextMenu($event, item.name)"
                           >
                             <app-item-icon [name]="item.name" />

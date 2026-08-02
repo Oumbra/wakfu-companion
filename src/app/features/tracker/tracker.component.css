@@ -104,6 +104,7 @@
 }
 .kpi-card-count-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 6px;
@@ -114,6 +115,30 @@
   font-weight: 700;
   color: var(--accent);
   font-size: 0.85rem;
+}
+/* Édition directe de la valeur de départ du décompte (mode 'down') — même
+   emplacement que `.kpi-card-count` en lecture seule (mode 'up'), voir
+   `.kpi-countdown-input` (tracker-strip, même principe desktop). */
+.kpi-card-countdown-input {
+  width: 42px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+.kpi-card-countdown-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* Switch comptage croissant/décompte — voir `.icon-switch` (styles.css) et
+   `.kpi-mode-switch` (tracker-strip, même mécanisme en desktop). */
+.kpi-card-mode-switch {
+  width: 32px;
+  flex-shrink: 0;
+}
+.kpi-card-mode-switch .icon-switch-option {
+  font-size: 0.52rem;
 }
 .kpi-card-reset {
   flex-shrink: 0;

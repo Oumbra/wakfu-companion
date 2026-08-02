@@ -391,6 +391,30 @@ button.reset-btn:hover {
   white-space: nowrap;
 }
 
+/* Regroupe le libellé d'en-tête avec un élément supplémentaire (ex. icône
+   d'aide "?", voir HelpModalService) sans casser l'agencement space-between
+   d'origine de `.panel-header` (label à gauche, action(s) à droite) — même
+   principe que `.loot-header-main`/`.loot-header-left` (damage-meter/
+   fight-history) : un 3e enfant direct de `.panel-header` déplacerait le 2e
+   (ex. bouton replier) vers le centre au lieu de le laisser flush-right. */
+.panel-header-label-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* Icône d'aide "?" (voir HelpModalService/HelpModalComponent) : petit bouton
+   rond réutilisé sur toute section/feature dotée d'une modale explicative —
+   variante de `.icon-btn`, cercle complet plutôt que carré arrondi, glyphe
+   toujours centré indépendamment de la taille de police du texte parent. */
+button.icon-btn.help-icon-btn {
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
 /* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
    sa barre d'onglets fusionne visuellement avec l'en-tête du panneau actif,
    donc l'en-tête propre à chaque panneau (icône + "COMBAT"/"SUIVI"/"CHAT")

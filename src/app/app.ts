@@ -16,6 +16,7 @@ import { ClassPickerService } from './core/services/class-picker.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';
+import { HelpModalComponent } from './shared/help-modal/help-modal.component';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
 import { Gender } from './core/data/class-icons.data';
@@ -33,6 +34,7 @@ import { Gender } from './core/data/class-icons.data';
     ClassPickerComponent,
     ConfirmDeletePopoverComponent,
     CombatEdgeTabComponent,
+    HelpModalComponent,
     TranslatePipe,
   ],
   templateUrl: './app.html',

@@ -6,6 +6,7 @@ import { EntityDamageListComponent } from './entity-damage-list/entity-damage-li
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
+import { HelpModalService } from '../../core/services/help-modal.service';
 
 /**
  * Combat en cours uniquement — l'historique des combats a été extrait vers
@@ -28,6 +29,7 @@ export class DamageMeterComponent {
   private readonly classifier = inject(EntityClassifierService);
   protected readonly combatPanel = inject(CombatPanelService);
   protected readonly i18n = inject(I18nService);
+  protected readonly helpModal = inject(HelpModalService);
 
   protected readonly allyRows = computed<EntityDamageRow[]>(() =>
     this.stats.damageByAttacker().filter((r) => this.classifier.classify(r.name) === 'ally'),

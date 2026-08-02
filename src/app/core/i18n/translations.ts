@@ -43,6 +43,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.loot': 'Butin',
     'damageMeter.noLoot': 'Aucun butin ramassé.',
     'damageMeter.trackHint': 'Clic droit pour suivre',
+    'damageMeter.classHint': 'Clic droit pour changer la classe/sexe',
     'damageMeter.sortName': 'Nom',
     'damageMeter.sortQuantity': 'Quantité',
     'damageMeter.sortRarity': 'Rareté',
@@ -59,6 +60,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Ajoutez un ennemi ou une ressource à suivre.',
     'tracker.remove': 'Retirer',
     'tracker.reset': 'Remettre à zéro',
+    'tracker.countUpMode': 'Comptage croissant',
+    'tracker.countDownMode': 'Décompte (alerte à zéro)',
+    'tracker.countdownTargetHint': 'Valeur de départ du décompte',
+    'tracker.countdownAlertTitle': 'Compteur épuisé !',
     'tracker.monsters': 'Monstres',
     'tracker.items': 'Objets',
     'tracker.confirmDelete': 'Retirer ?',
@@ -154,6 +159,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.challengeFailed': 'Échoué',
     'sessionRecap.showMore': 'Afficher plus',
     'sessionRecap.showLess': 'Réduire',
+
+    'help.tooltip': "Comment ça marche ?",
+    'help.combat.title': 'Combat en cours',
+    'help.combat.body':
+      "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).",
+    'help.fightHistory.title': 'Historique > Combats',
+    'help.fightHistory.body':
+      "Conserve les 30 derniers combats de la session : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.",
+    'help.purchases.title': 'Historique > Achats',
+    'help.purchases.body':
+      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse).",
+    'help.trades.title': 'Historique > Échanges',
+    'help.trades.body':
+      "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse).",
+    'help.chat.title': 'Chat',
+    'help.chat.body':
+      "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes filtres textuels personnalisés (mot-clé + canal) peuvent être ajoutés pour ne suivre que certains messages.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique.",
+    'help.profileAlerts.title': 'Profil > Alertes',
+    'help.profileAlerts.body':
+      "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
+    'help.profileCharacters.title': 'Profil > Personnages',
+    'help.profileCharacters.body':
+      "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte) ; glisser-déposer permet de réordonner les personnages d'un compte.",
   },
   en: {
     'setup.dropTitle': 'DRAG « wakfu.log » HERE',
@@ -192,6 +220,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.loot': 'Loot',
     'damageMeter.noLoot': 'No loot collected.',
     'damageMeter.trackHint': 'Right-click to track',
+    'damageMeter.classHint': 'Right-click to change class/gender',
     'damageMeter.sortName': 'Name',
     'damageMeter.sortQuantity': 'Quantity',
     'damageMeter.sortRarity': 'Rarity',
@@ -208,6 +237,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Add an enemy or a resource to track.',
     'tracker.remove': 'Remove',
     'tracker.reset': 'Reset to zero',
+    'tracker.countUpMode': 'Count up',
+    'tracker.countDownMode': 'Countdown (alert at zero)',
+    'tracker.countdownTargetHint': 'Countdown starting value',
+    'tracker.countdownAlertTitle': 'Counter reached zero!',
     'tracker.monsters': 'Monsters',
     'tracker.items': 'Items',
     'tracker.confirmDelete': 'Remove?',
@@ -301,6 +334,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.challengeFailed': 'Failed',
     'sessionRecap.showMore': 'Show more',
     'sessionRecap.showLess': 'Show less',
+
+    'help.tooltip': 'How does this work?',
+    'help.combat.title': 'Current Fight',
+    'help.combat.body':
+      "This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).",
+    'help.fightHistory.title': 'History > Fights',
+    'help.fightHistory.body':
+      'Keeps the last 30 fights of the session: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.',
+    'help.purchases.title': 'History > Purchases',
+    'help.purchases.body':
+      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item.\n\nGrouped by day, sortable from newest to oldest (or the reverse).',
+    'help.trades.title': 'History > Trades',
+    'help.trades.body':
+      "Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren't real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse).",
+    'help.chat.title': 'Chat',
+    'help.chat.body':
+      'Shows chat messages read from wakfu.log, sorted by channel (Nearby, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you display only certain channels.\n\nCustom text filters (keyword + channel) can be added to track only specific messages.\n\nAuto-scroll stops as soon as you manually scroll back up through the history.',
+    'help.profileAlerts.title': 'Profile > Alerts',
+    'help.profileAlerts.body':
+      "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
+    'help.profileCharacters.title': 'Profile > Characters',
+    'help.profileCharacters.body':
+      "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account); drag and drop reorders a account's characters.",
   },
   es: {
     'setup.dropTitle': 'ARRASTRA « wakfu.log » AQUÍ',
@@ -339,6 +395,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.loot': 'Botín',
     'damageMeter.noLoot': 'Ningún botín recogido.',
     'damageMeter.trackHint': 'Clic derecho para seguir',
+    'damageMeter.classHint': 'Clic derecho para cambiar la clase/sexo',
     'damageMeter.sortName': 'Nombre',
     'damageMeter.sortQuantity': 'Cantidad',
     'damageMeter.sortRarity': 'Rareza',
@@ -355,6 +412,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Añade un enemigo o un recurso a seguir.',
     'tracker.remove': 'Quitar',
     'tracker.reset': 'Reiniciar a cero',
+    'tracker.countUpMode': 'Conteo ascendente',
+    'tracker.countDownMode': 'Cuenta atrás (alerta a cero)',
+    'tracker.countdownTargetHint': 'Valor inicial de la cuenta atrás',
+    'tracker.countdownAlertTitle': '¡Contador a cero!',
     'tracker.monsters': 'Monstruos',
     'tracker.items': 'Objetos',
     'tracker.confirmDelete': '¿Quitar?',
@@ -450,6 +511,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.challengeFailed': 'Fallido',
     'sessionRecap.showMore': 'Mostrar más',
     'sessionRecap.showLess': 'Mostrar menos',
+
+    'help.tooltip': '¿Cómo funciona?',
+    'help.combat.title': 'Combate en curso',
+    'help.combat.body':
+      'Este panel muestra en tiempo real el daño infligido por cada aliado y enemigo, leído directamente de wakfu.log durante el combate.\n\nCuando hay varios combates simultáneos (multicuenta), unas pestañas permiten elegir cuál mostrar.\n\nHaz clic en un nombre para desplegar el detalle de daño por hechizo y elemento.\n\nArrastra un nombre de un lado a otro para corregir un aliado/enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento (Seguimiento).',
+    'help.fightHistory.title': 'Historial > Combates',
+    'help.fightHistory.body':
+      'Conserva los últimos 30 combates de la sesión: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.',
+    'help.purchases.title': 'Historial > Compras',
+    'help.purchases.body':
+      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés).',
+    'help.trades.title': 'Historial > Intercambios',
+    'help.trades.body':
+      'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés).',
+    'help.chat.title': 'Chat',
+    'help.chat.body':
+      'Muestra los mensajes de chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo ciertos canales.\n\nSe pueden añadir filtros de texto personalizados (palabra clave + canal) para seguir solo ciertos mensajes.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente por el historial.',
+    'help.profileAlerts.title': 'Perfil > Alertas',
+    'help.profileAlerts.body':
+      'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
+    'help.profileCharacters.title': 'Perfil > Personajes',
+    'help.profileCharacters.body':
+      'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta); arrastra y suelta para reordenar los personajes de una cuenta.',
   },
   pt: {
     'setup.dropTitle': 'ARRASTE « wakfu.log » AQUI',
@@ -488,6 +572,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.loot': 'Butim',
     'damageMeter.noLoot': 'Nenhum butim coletado.',
     'damageMeter.trackHint': 'Clique com o botão direito para seguir',
+    'damageMeter.classHint': 'Clique com o botão direito para mudar a classe/sexo',
     'damageMeter.sortName': 'Nome',
     'damageMeter.sortQuantity': 'Quantidade',
     'damageMeter.sortRarity': 'Raridade',
@@ -504,6 +589,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.empty': 'Adicione um inimigo ou um recurso a rastrear.',
     'tracker.remove': 'Remover',
     'tracker.reset': 'Reiniciar para zero',
+    'tracker.countUpMode': 'Contagem crescente',
+    'tracker.countDownMode': 'Contagem regressiva (alerta em zero)',
+    'tracker.countdownTargetHint': 'Valor inicial da contagem regressiva',
+    'tracker.countdownAlertTitle': 'Contador zerado!',
     'tracker.monsters': 'Monstros',
     'tracker.items': 'Itens',
     'tracker.confirmDelete': 'Remover?',
@@ -597,5 +686,28 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.challengeFailed': 'Falhou',
     'sessionRecap.showMore': 'Mostrar mais',
     'sessionRecap.showLess': 'Mostrar menos',
+
+    'help.tooltip': 'Como funciona?',
+    'help.combat.title': 'Combate em curso',
+    'help.combat.body':
+      'Este painel mostra em tempo real o dano causado por cada aliado e inimigo, lido diretamente do wakfu.log durante o combate.\n\nQuando há vários combates simultâneos (multiconta), abas permitem escolher qual exibir.\n\nClique em um nome para expandir o detalhe de dano por feitiço e elemento.\n\nArraste um nome de um lado para o outro para corrigir um aliado/inimigo mal classificado.\n\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em um inimigo: adicioná-lo ao acompanhamento (Acompanhamento).',
+    'help.fightHistory.title': 'Histórico > Combates',
+    'help.fightHistory.body':
+      'Guarda os últimos 30 combates da sessão: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.',
+    'help.purchases.title': 'Histórico > Compras',
+    'help.purchases.body':
+      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso).',
+    'help.trades.title': 'Histórico > Trocas',
+    'help.trades.body':
+      'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso).',
+    'help.chat.title': 'Chat',
+    'help.chat.body':
+      'Mostra as mensagens de chat lidas no wakfu.log, organizadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir apenas alguns canais.\n\nFiltros de texto personalizados (palavra-chave + canal) podem ser adicionados para acompanhar apenas certas mensagens.\n\nA rolagem automática para assim que você rola manualmente para cima no histórico.',
+    'help.profileAlerts.title': 'Perfil > Alertas',
+    'help.profileAlerts.body':
+      'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
+    'help.profileCharacters.title': 'Perfil > Personagens',
+    'help.profileCharacters.body':
+      'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta); arraste e solte para reordenar os personagens de uma conta.',
   },
 };

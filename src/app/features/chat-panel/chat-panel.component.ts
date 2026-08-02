@@ -7,6 +7,7 @@ import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.mo
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HEADER_ICON_CHAT_DATA_URI } from '../../core/data/header-icons.data';
+import { HelpModalService } from '../../core/services/help-modal.service';
 
 const ACTIVE_CHANNELS_KEY = 'wakfu-active-chat-channels';
 const CHAT_FILTERS_KEY = 'wakfu-chat-filters';
@@ -64,6 +65,7 @@ export class ChatPanelComponent {
   protected readonly headerIcon = HEADER_ICON_CHAT_DATA_URI;
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  protected readonly helpModal = inject(HelpModalService);
   private readonly persistence = inject(PersistenceService);
   private readonly alertSound = inject(AlertSoundService);
   protected readonly channels = CHAT_CHANNELS;

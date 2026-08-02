@@ -16,6 +16,7 @@ import { NavigationService } from '../../core/services/navigation.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
+import { HelpModalService } from '../../core/services/help-modal.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -58,6 +59,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
   protected readonly roster = inject(CharacterRosterService);
+  protected readonly helpModal = inject(HelpModalService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);

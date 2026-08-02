@@ -15,6 +15,14 @@
       </svg>
       {{ 'history.header' | t }}
     </span>
+    <button
+      type="button"
+      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
+      [attr.data-tooltip]="'help.tooltip' | t"
+      (click)="openHelp()"
+    >
+      ?
+    </button>
   </div>
 
   <div class="tab-header">

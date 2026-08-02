@@ -1,5 +1,9 @@
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
+import {
+  StatsStoreService,
+  WatchlistCounterMode,
+  WatchlistEntry,
+} from '../../core/services/stats-store.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
@@ -23,8 +27,9 @@ const KPI_EXPAND_DURATION_MS = 320;
  * (min-width) et pour calculer la position de défilement cible (voir
  * `scrollTileIntoView`, qui ne peut pas se fier à la largeur réelle au
  * moment du calcul : elle vaut encore 58px avant que la transition ne
- * démarre). */
-const KPI_EXPANDED_WIDTH_PX = 210;
+ * démarre). Élargie de 210 à 250px pour laisser la place au switch
+ * comptage croissant/décompte (voir `.kpi-mode-switch`). */
+const KPI_EXPANDED_WIDTH_PX = 250;
 
 /**
  * Suivi (desktop) : bande horizontale de KPI compacts au-dessus de la ligne
@@ -239,6 +244,18 @@ export class TrackerStripComponent {
   protected resetCount(event: Event, name: string): void {
     event.stopPropagation();
     this.stats.resetWatchedCount(name);
+  }
+
+  protected setMode(event: Event, name: string, mode: WatchlistCounterMode): void {
+    event.stopPropagation();
+    this.stats.setWatchlistMode(name, mode);
+  }
+
+  /** Édition directe de la valeur de départ du décompte (mode 'down') — voir `.kpi-countdown-input`. */
+  protected onCountdownInput(event: Event, name: string): void {
+    event.stopPropagation();
+    const value = Number((event.target as HTMLInputElement).value);
+    this.stats.setWatchlistCountdownTarget(name, value);
   }
 
   protected requestDelete(event: Event, name: string): void {
