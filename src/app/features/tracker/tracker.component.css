@@ -177,7 +177,7 @@
   border-color: var(--rarity-color);
   background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
 }
-.kpi-card.rarity-souvenir {
+.kpi-card.rarity-memory {
   --rarity-color: #1f97e0;
   border-color: var(--rarity-color);
   background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);

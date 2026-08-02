@@ -65,6 +65,13 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
+.fight-image {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
 .fight-clock {
   display: flex;
   align-items: center;
@@ -272,7 +279,7 @@
 .loot-row.rarity-legendary {
   --rarity-color: #c7d400;
 }
-.loot-row.rarity-souvenir {
+.loot-row.rarity-memory {
   --rarity-color: #1f97e0;
 }
 .loot-row.rarity-epic {
