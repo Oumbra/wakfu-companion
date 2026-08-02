@@ -174,7 +174,14 @@ button.badge-close-btn {
 /* Switch à 2 options avec icônes (fond glissant), générique — même mécanisme
    que .gender-switch/.sort-switch/.loot-sort-switch (dupliqués par composant
    pour 3 options), factorisé ici pour un cas à 2 options réutilisable sans
-   alourdir le budget CSS par composant. Largeur à définir par l'appelant. */
+   alourdir le budget CSS par composant. Largeur à définir par l'appelant.
+   PAS d'`overflow:hidden` sur le conteneur : ça clipperait aussi la tooltip
+   (`::after`) des boutons `.icon-switch-option` dès qu'elle dépasse le
+   rectangle de 22px de haut (cas systématique, une tooltip s'affiche
+   toujours au-dessus/en dessous de son élément) — bug réel constaté à
+   l'usage. Le fond glissant est arrondi lui-même (`border-radius` sur
+   `.icon-switch-highlight`, légèrement inférieur à celui du conteneur pour
+   nicher proprement dans sa bordure de 1px) plutôt que clippé par le parent. */
 .icon-switch {
   position: relative;
   display: flex;
@@ -183,7 +190,6 @@ button.badge-close-btn {
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
 }
 .icon-switch-highlight {
   position: absolute;
@@ -191,6 +197,7 @@ button.badge-close-btn {
   left: 0;
   width: 50%;
   height: 100%;
+  border-radius: 4px;
   background: var(--accent);
   transition: transform 0.25s ease;
   pointer-events: none;

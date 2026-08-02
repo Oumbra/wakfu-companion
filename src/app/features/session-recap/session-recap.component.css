@@ -353,6 +353,8 @@
   height: 16px;
   object-fit: contain;
 }
+/* PAS d'`overflow:hidden` : ça clipperait la tooltip des boutons
+   `.loot-sort-switch-option` (voir même correctif sur `.icon-switch`, styles.css). */
 .loot-sort-switch {
   position: relative;
   display: flex;
@@ -362,7 +364,6 @@
   border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
   text-transform: none;
 }
 .loot-sort-switch-highlight {
@@ -371,6 +372,7 @@
   left: 0;
   width: 33.334%;
   height: 100%;
+  border-radius: 4px;
   background: var(--accent);
   transition: transform 0.25s ease;
   pointer-events: none;
