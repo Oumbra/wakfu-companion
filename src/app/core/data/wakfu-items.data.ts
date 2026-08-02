@@ -116,17 +116,40 @@ export function findWakfuItemEntryById(id: number): WakfuItemEntry | undefined {
   return WAKFU_ITEMS_BY_ID.get(id);
 }
 
+export interface WakfuResolvedIngredient {
+  name: string;
+  quantity: number;
+  /** Vrai si cet ingrédient a lui-même une recette connue — pilote l'icône "imbriquer les
+   * ingrédients de cet objet" de la modale de suivi de recette. */
+  hasRecipe: boolean;
+  /** Ingrédients de la recette de CET ingrédient (1 seul niveau, jamais récursif plus profond) —
+   * vide si `hasRecipe` est faux. Affiché uniquement quand l'utilisateur imbrique la ligne. */
+  recipeIngredients: readonly { name: string; quantity: number }[];
+}
+
 /** Résout les ingrédients de la recette d'un objet (`entry.recipe`) vers leur nom FR affichable
  * + quantité requise — voir suivi > "suivre les objets de la recette". Un ingrédient dont
  * l'`itemId` ne résout à aucune entrée connue (voir WAKFU_ITEMS_BY_ID) est silencieusement omis
- * plutôt que de produire une ligne sans nom. */
-export function resolveRecipeIngredientNames(
-  entry: WakfuItemEntry,
-): { name: string; quantity: number }[] {
-  const resolved: { name: string; quantity: number }[] = [];
+ * plutôt que de produire une ligne sans nom. Résout aussi, pour chaque ingrédient ayant
+ * lui-même une recette, la liste (non récursive) de SES propres ingrédients. */
+export function resolveRecipeIngredientNames(entry: WakfuItemEntry): WakfuResolvedIngredient[] {
+  const resolved: WakfuResolvedIngredient[] = [];
   for (const ingredient of entry.recipe) {
     const target = WAKFU_ITEMS_BY_ID.get(ingredient.itemId);
-    if (target) resolved.push({ name: target.fr, quantity: ingredient.quantity });
+    if (!target) continue;
+    const recipeIngredients: { name: string; quantity: number }[] = [];
+    if (target.hasRecipe) {
+      for (const subIngredient of target.recipe) {
+        const subTarget = WAKFU_ITEMS_BY_ID.get(subIngredient.itemId);
+        if (subTarget) recipeIngredients.push({ name: subTarget.fr, quantity: subIngredient.quantity });
+      }
+    }
+    resolved.push({
+      name: target.fr,
+      quantity: ingredient.quantity,
+      hasRecipe: target.hasRecipe,
+      recipeIngredients,
+    });
   }
   return resolved;
 }

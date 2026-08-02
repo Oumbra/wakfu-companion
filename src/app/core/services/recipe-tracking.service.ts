@@ -4,6 +4,11 @@ export interface RecipeTrackingIngredient {
   name: string;
   /** Quantité de cet ingrédient nécessaire pour UNE unité de l'objet source. */
   quantity: number;
+  /** Vrai si cet ingrédient a lui-même une recette connue — voir RecipeQuantityModalComponent
+   * (icône "imbriquer les ingrédients de cet objet"). */
+  hasRecipe: boolean;
+  /** Ingrédients de la recette de CET ingrédient (1 seul niveau) — vide si `hasRecipe` est faux. */
+  recipeIngredients: readonly { name: string; quantity: number }[];
 }
 
 export interface RecipeTrackingRequest {
