@@ -22,6 +22,7 @@ import {
   findWakfuItemEntryById,
   resolveRecipeIngredientNames,
 } from '../../core/data/wakfu-items.data';
+import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 import { TranslatePipe } from '../translate.pipe';
@@ -66,6 +67,7 @@ export class WakfuAutocompleteComponent {
   readonly selected = output<WakfuSearchResult>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
+  protected readonly rarityIconUrl = wakfuRarityIconUrl;
 
   private readonly search = inject(WakfuSearchService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
