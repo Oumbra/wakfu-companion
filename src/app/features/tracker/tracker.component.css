@@ -48,6 +48,60 @@
   font-size: 0.55rem;
 }
 
+/* Bouton "suppression multiple" (mobile) — même mécanisme/gabarit que .icon-btn (26x26, voir
+   styles.css) plutôt que la version desktop 58x58 (tracker-strip.component.css) : cette rangée de
+   contrôles ne fait que 22px de haut ici (.icon-switch), un bouton carré XL la ferait exploser. */
+.kpi-remove-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.kpi-remove-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px dashed #666;
+  color: #999;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.kpi-remove-btn:hover,
+.kpi-remove-btn.active {
+  border-color: #e04b4b;
+  color: #e04b4b;
+}
+.kpi-bulk-delete-btn {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #b33939;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.kpi-bulk-delete-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  right: 8px;
+  border: 5px solid transparent;
+  border-bottom-color: #b33939;
+}
+.kpi-bulk-delete-btn:hover {
+  background: #d14747;
+}
+
 /* `.panel-body` (classe globale, styles.css) passe en overflow-x/y:auto dès
    que overflow-y:auto est posé (règle d'interop CSS : un axe non-`visible`
    force l'autre à `auto` aussi) — sans ce `hidden` explicite, la croix de
@@ -191,6 +245,35 @@
   color: #fff;
 }
 
+/* Même emplacement/gabarit que `.kpi-card-del` (mode sélection multiple, voir `selectMode`) —
+   case à cocher plutôt que croix, coche SVG affichée uniquement à l'état coché (voir template). */
+.kpi-card-select-checkbox {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: #222;
+  border: 1px solid #666;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.kpi-card-select-checkbox svg {
+  width: 11px;
+  height: 11px;
+}
+.kpi-card-select-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04222a;
+}
+
 .kpi-card.rarity-common {
   --rarity-color: #c8c8c8;
   border-color: var(--rarity-color);
@@ -230,6 +313,17 @@
 .kpi-card.is-monster {
   border-color: #888;
   background: transparent;
+}
+
+/* Carte cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
+   rester visible quelle que soit la rareté de l'objet suivi (même principe que tracker-strip).
+   Déclarée APRÈS les règles de rareté ci-dessus : à spécificité égale (2 classes), l'ordre du
+   fichier tranche — un piège déjà rencontré dans ce projet (voir .alert-timing-control,
+   profile-page.component.css) et systématiquement évité en gardant "override après la règle
+   qu'il doit emporter". */
+.kpi-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
 .confirm-backdrop {
