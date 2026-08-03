@@ -76,6 +76,17 @@
   border-radius: 10px;
   transition: width 0.4s ease;
 }
+
+.kpi-add > .help-icon-btn {
+  position: absolute;
+  top: -13px;
+  right: -13px;
+  background: #333333;
+}
+.kpi-add > .help-icon-btn:hover {
+  color: var(--accent)
+}
+
 .kpi-add-btn {
   width: 58px;
   height: 58px;

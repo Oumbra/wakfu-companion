@@ -11,10 +11,8 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
-import { HEADER_ICON_SUIVI_DATA_URI } from '../../core/data/header-icons.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
-import { HelpModalService } from '../../core/services/help-modal.service';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -29,10 +27,8 @@ import { HelpModalService } from '../../core/services/help-modal.service';
   styleUrl: './tracker.component.css',
 })
 export class TrackerComponent {
-  protected readonly headerIcon = HEADER_ICON_SUIVI_DATA_URI;
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
-  protected readonly helpModal = inject(HelpModalService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   protected readonly existingNames = computed(() =>
