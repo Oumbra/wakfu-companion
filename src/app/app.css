@@ -201,6 +201,7 @@
 @media (max-width: 640px) {
   .app-header {
     padding: 8px 10px;
+    gap: 4px;
   }
   .app-header-left {
     gap: 8px;

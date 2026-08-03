@@ -68,3 +68,11 @@
 .meter-tab-help-btn {
   flex-shrink: 0;
 }
+
+@media (max-width: 800px) {
+  .meter-tab > .help-icon-btn {
+    width: 12px;
+    height: 12px;
+    font-size: 9px;
+  }
+}
