@@ -14,6 +14,7 @@ import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
+import { HelpModalService } from '../../core/services/help-modal.service';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -50,6 +51,7 @@ export class TrackerStripComponent {
   protected readonly i18n = inject(I18nService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  protected readonly helpModal = inject(HelpModalService);
 
   protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;

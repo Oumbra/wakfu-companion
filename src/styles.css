@@ -422,6 +422,12 @@ button.icon-btn.help-icon-btn {
   flex-shrink: 0;
 }
 
+.tab-btn > .help-icon-btn {
+  width: 12px;
+  height: 12px;
+  font-size: 9px !important;
+}
+
 /* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
    sa barre d'onglets fusionne visuellement avec l'en-tête du panneau actif,
    donc l'en-tête propre à chaque panneau (icône + "COMBAT"/"SUIVI"/"CHAT")

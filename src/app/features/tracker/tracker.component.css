@@ -115,7 +115,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 6px;
   width: 100%;
 }
@@ -159,8 +159,8 @@
   align-items: center;
 }
 .kpi-card-reset svg {
-  width: 13px;
-  height: 13px;
+  width: 18px;
+  height: 18px;
 }
 .kpi-card-reset:hover {
   color: var(--accent);

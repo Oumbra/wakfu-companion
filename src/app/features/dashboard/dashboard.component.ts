@@ -6,11 +6,7 @@ import { TrackerStripComponent } from '../tracker-strip/tracker-strip.component'
 import { HistoryComponent } from '../history/history.component';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { TranslatePipe } from '../../shared/translate.pipe';
-import {
-  HEADER_ICON_CHAT_DATA_URI,
-  HEADER_ICON_COMBAT_DATA_URI,
-  HEADER_ICON_SUIVI_DATA_URI,
-} from '../../core/data/header-icons.data';
+import { HelpModalService } from '../../core/services/help-modal.service';
 
 type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
 
@@ -35,11 +31,9 @@ type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
 })
 export class DashboardComponent {
   protected readonly combatPanel = inject(CombatPanelService);
+  protected readonly helpModal = inject(HelpModalService);
 
   protected readonly activeTab = signal<DashboardTab>('tracker');
-  protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
-  protected readonly suiviIcon = HEADER_ICON_SUIVI_DATA_URI;
-  protected readonly chatIcon = HEADER_ICON_CHAT_DATA_URI;
 
   /** Ordre des onglets réellement affichés (mobile) : Combat n'y figure que
    * pendant un combat en cours (voir CombatPanelService.hasActiveFight). */
