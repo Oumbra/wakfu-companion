@@ -1,0 +1,55 @@
+:host {
+  display: contents;
+}
+
+/* Bande minimale (une seule ligne visée) : cette app est un tableau de bord temps réel où
+   l'espace vertical est déjà disputé (voir CLAUDE.md, plusieurs bugs historiques liés à un manque
+   de hauteur sur certains appareils) — un footer imposant grignoterait de la place utile sur
+   chaque vue sans apporter de valeur au-delà des 3 liens légaux standard. */
+.app-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 4px 20px;
+  background: #181818;
+  border-top: 1px solid var(--border);
+  font-size: 0.68rem;
+  color: #666;
+}
+
+.app-footer-copyright {
+  white-space: nowrap;
+}
+
+.app-footer-links {
+  display: flex;
+  gap: 14px;
+}
+
+.app-footer-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #666;
+  font-size: 0.68rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.app-footer-link:hover {
+  color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .app-footer {
+    padding: 4px 10px;
+    justify-content: center;
+    text-align: center;
+  }
+  .app-footer-copyright {
+    white-space: normal;
+  }
+}
