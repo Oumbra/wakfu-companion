@@ -66,6 +66,19 @@ export class TrackerStripComponent {
    * WatchlistCounterMode). Réinitialisé à 'up' à chaque fermeture de la recherche. */
   protected readonly addMode = signal<WatchlistCounterMode>('up');
   private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
+
+  /** Mode "sélection multiple" (bouton "-", visible seulement au-delà de 2 KPI suivis) : chaque
+   * tuile affiche une case à cocher à la place de sa croix de suppression individuelle, et un
+   * bouton "Supprimer (N)" apparaît dès qu'au moins une tuile est cochée — suppression immédiate
+   * au clic, sans popover de confirmation (le passage par ce mode dédié + une sélection explicite
+   * tient lieu de confirmation, voir `confirmBulkDelete`). Un second clic sur le bouton "-" quitte
+   * ce mode sans rien supprimer. */
+  protected readonly selectMode = signal(false);
+  protected readonly canBulkDelete = computed(() => this.stats.watchlist().length > 2);
+  protected readonly selectedNames = signal<ReadonlySet<string>>(new Set());
+  protected readonly bulkDeleteLabel = computed(() =>
+    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedNames().size }),
+  );
   /** Nom du KPI dont la popover de suppression partagée (ConfirmDeleteService) est actuellement
    * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
    * la popover elle-même vit au niveau racine, hors de ce composant. */
@@ -137,6 +150,7 @@ export class TrackerStripComponent {
   }
 
   protected onTileEnter(event: MouseEvent, name: string): void {
+    if (this.selectMode()) return;
     if (Date.now() < this.blockedUntilMs) return;
     if (this.activeName() !== null && this.activeName() !== name) return;
     this.clearHoverTimer();
@@ -168,6 +182,10 @@ export class TrackerStripComponent {
    * propagation (voir `resetCount`/`requestDelete`) et n'atteignent donc
    * jamais ce handler. */
   protected onTileClick(event: MouseEvent, name: string): void {
+    if (this.selectMode()) {
+      this.toggleSelected(name);
+      return;
+    }
     this.clearHoverTimer();
     if (this.activeName() === name) {
       this.activeName.set(null);
@@ -256,6 +274,49 @@ export class TrackerStripComponent {
   protected closeAdd(): void {
     this.addOpen.set(false);
     this.addMode.set('up');
+  }
+
+  /** Ouvre le formulaire d'ajout — quitte le mode sélection au passage : les deux modes
+   * (ajout/suppression groupée) n'ont pas de raison d'être actifs simultanément. */
+  protected openAdd(): void {
+    this.exitSelectMode();
+    this.addOpen.set(true);
+  }
+
+  /** Bascule le mode sélection (bouton "-") : un second clic pendant que le mode est actif le
+   * quitte sans rien supprimer, quelle que soit la sélection en cours. */
+  protected toggleSelectMode(): void {
+    if (this.selectMode()) {
+      this.exitSelectMode();
+      return;
+    }
+    this.clearHoverTimer();
+    this.activeName.set(null);
+    this.selectMode.set(true);
+  }
+
+  private exitSelectMode(): void {
+    this.selectMode.set(false);
+    this.selectedNames.set(new Set());
+  }
+
+  protected toggleSelected(name: string): void {
+    this.selectedNames.update((set) => {
+      const next = new Set(set);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  /** Supprime toutes les tuiles cochées en un clic, sans popover de confirmation — le passage par
+   * le mode sélection puis une sélection explicite tiennent lieu de confirmation (même principe
+   * que Gmail/Google Photos). */
+  protected confirmBulkDelete(): void {
+    for (const name of this.selectedNames()) {
+      this.stats.removeWatched(name);
+    }
+    this.exitSelectMode();
   }
 
   protected resetCount(event: Event, name: string): void {

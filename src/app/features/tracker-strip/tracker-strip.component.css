@@ -68,6 +68,10 @@
   position: relative;
   display: flex;
   align-items: center;
+  /* Espace "+"/"-" (voir `.kpi-remove-wrap`) à l'état replié — écrasé par
+     `.kpi-add.expanded` ci-dessous une fois la recherche ouverte (un seul
+     enfant flex-growable à cet instant, donc sans effet visible). */
+  gap: 10px;
   flex-shrink: 0;
   /* Aligné sur le padding-top de `.kpi-strip` (10px, voir plus haut) — même
      repère que les tuiles, indépendamment de la hauteur réelle de la bande. */
@@ -77,13 +81,20 @@
   transition: width 0.4s ease;
 }
 
-.kpi-add > .help-icon-btn {
+/* `position:relative` propre (pas `.kpi-add` directement) : une fois le bouton "-" affiché à côté
+   (voir `.kpi-remove-wrap`, `.kpi-add` s'élargit), le badge d'aide doit rester ancré au coin du
+   bouton "+" lui-même, pas au coin de tout le groupe élargi. */
+.kpi-add-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.kpi-add-wrap > .help-icon-btn {
   position: absolute;
   top: -13px;
   right: -13px;
   background: #333333;
 }
-.kpi-add > .help-icon-btn:hover {
+.kpi-add-wrap > .help-icon-btn:hover {
   color: var(--accent)
 }
 
@@ -104,6 +115,62 @@
   border-color: var(--accent);
   color: var(--accent);
 }
+
+/* `position:relative` : ancre `.kpi-bulk-delete-btn` (position:absolute) juste en dessous du
+   bouton "-", dans le même esprit visuel qu'un tooltip (petite flèche pointant vers le bouton,
+   voir `::before`) mais un VRAI bouton cliquable — un tooltip CSS (`::after`) ne peut pas l'être. */
+.kpi-remove-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+.kpi-remove-btn {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  background: var(--panel-header-bg);
+  border: 2px dashed #555;
+  color: #999;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.kpi-remove-btn:hover,
+.kpi-remove-btn.active {
+  border-color: #e04b4b;
+  color: #e04b4b;
+}
+.kpi-bulk-delete-btn {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #b33939;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.kpi-bulk-delete-btn::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-bottom-color: #b33939;
+}
+.kpi-bulk-delete-btn:hover {
+  background: #d14747;
+}
+
 .kpi-add.expanded {
   /* +34px par rapport aux 260px d'origine : laisse la place au switch
      incrémental/décompte (voir `.kpi-add-mode-switch`) sans réduire d'autant
@@ -353,6 +420,42 @@
   cursor: pointer;
   z-index: 2;
   padding: 0;
+}
+
+/* Même emplacement/gabarit que `.kpi-del` (mode sélection multiple, voir `selectMode`) — case à
+   cocher plutôt que croix, coche SVG affichée uniquement à l'état coché (voir template). */
+.kpi-select-checkbox {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: #222;
+  border: 1px solid #666;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0;
+}
+.kpi-select-checkbox svg {
+  width: 12px;
+  height: 12px;
+}
+.kpi-select-checkbox.checked {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04222a;
+}
+
+/* Tuile cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
+   rester visible quelle que soit la rareté de l'objet suivi. */
+.kpi.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 .kpi-del:hover {
   background: #b33939;
