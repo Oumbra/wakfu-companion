@@ -1,14 +1,8 @@
 <footer class="app-footer">
-  <span class="app-footer-copyright">{{ 'footer.copyright' | t }}</span>
   <nav class="app-footer-links">
-    <button type="button" class="app-footer-link" (click)="legalModal.open('privacy')">
-      {{ 'footer.privacy' | t }}
-    </button>
-    <button type="button" class="app-footer-link" (click)="legalModal.open('terms')">
-      {{ 'footer.terms' | t }}
-    </button>
-    <button type="button" class="app-footer-link" (click)="legalModal.open('notice')">
+    <button type="button" class="app-footer-link" (click)="legalPage.open()">
       {{ 'footer.notice' | t }}
     </button>
   </nav>
+  <span class="app-footer-copyright">{{ 'footer.copyright' | t }}</span>
 </footer>

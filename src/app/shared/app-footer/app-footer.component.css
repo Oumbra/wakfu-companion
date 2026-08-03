@@ -1,27 +1,30 @@
 :host {
-  display: contents;
+  display: flex;
+  justify-content: center;
+  background: #181818;
+  border-top: 1px solid var(--border);
 }
 
-/* Bande minimale (une seule ligne visée) : cette app est un tableau de bord temps réel où
-   l'espace vertical est déjà disputé (voir CLAUDE.md, plusieurs bugs historiques liés à un manque
-   de hauteur sur certains appareils) — un footer imposant grignoterait de la place utile sur
-   chaque vue sans apporter de valeur au-delà des 3 liens légaux standard. */
+/* Bande minimale : cette app est un tableau de bord temps réel où l'espace vertical est déjà
+   disputé (voir CLAUDE.md, plusieurs bugs historiques liés à un manque de hauteur sur certains
+   appareils) — le lien "Mentions légales" et le texte de copyright (mention de marque Ankama,
+   2 lignes fixes via `\n` dans `footer.copyright`) restent volontairement en petite police plutôt
+   que d'imposer un footer imposant. Empilés verticalement et alignés à gauche (lien au-dessus du
+   copyright), pas en ligne : un seul lien restant, l'agencement horizontal d'origine (pensé pour
+   plusieurs liens à droite) n'avait plus de sens. */
 .app-footer {
   flex-shrink: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  padding: 4px 20px;
-  background: #181818;
-  border-top: 1px solid var(--border);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 20px;
   font-size: 0.68rem;
   color: #666;
 }
 
 .app-footer-copyright {
-  white-space: nowrap;
+  white-space: pre-line;
 }
 
 .app-footer-links {
@@ -33,10 +36,9 @@
   background: none;
   border: none;
   padding: 0;
-  color: #666;
-  font-size: 0.68rem;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  color: #ccc;
+  font-weight: 600;
+  font-size: 0.7rem;
   cursor: pointer;
 }
 .app-footer-link:hover {
@@ -45,11 +47,6 @@
 
 @media (max-width: 640px) {
   .app-footer {
-    padding: 4px 10px;
-    justify-content: center;
-    text-align: center;
-  }
-  .app-footer-copyright {
-    white-space: normal;
+    padding: 8px 10px;
   }
 }

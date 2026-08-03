@@ -85,7 +85,9 @@
       </header>
 
       <main class="app-main">
-        @if (logFileAccess.status() === 'connected') {
+        @if (legalPage.isOpen()) {
+          <app-legal-page />
+        } @else if (logFileAccess.status() === 'connected') {
           <app-dashboard />
         } @else {
           <app-setup />
@@ -118,5 +120,4 @@
   <app-confirm-delete-popover />
   <app-help-modal />
   <app-recipe-quantity-modal />
-  <app-legal-modal />
 </div>

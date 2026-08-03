@@ -18,7 +18,8 @@ import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab
 import { CombatPanelService } from './core/services/combat-panel.service';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
 import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
-import { LegalModalComponent } from './shared/legal-modal/legal-modal.component';
+import { LegalPageComponent } from './shared/legal-page/legal-page.component';
+import { LegalPageService } from './core/services/legal-page.service';
 import { AppFooterComponent } from './shared/app-footer/app-footer.component';
 import { APP_LOGO_PURPLE_DATA_URI } from './core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from './core/data/session-recap-icon.data';
@@ -39,7 +40,7 @@ import { Gender } from './core/data/class-icons.data';
     CombatEdgeTabComponent,
     HelpModalComponent,
     RecipeQuantityModalComponent,
-    LegalModalComponent,
+    LegalPageComponent,
     AppFooterComponent,
     TranslatePipe,
   ],
@@ -52,6 +53,7 @@ export class App implements OnInit {
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly combatPanel = inject(CombatPanelService);
+  protected readonly legalPage = inject(LegalPageService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
   protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
