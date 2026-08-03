@@ -1,0 +1,29 @@
+<div class="legal-page">
+  <header class="legal-page-header">
+    <button class="back-btn tooltip-align-left tooltip-below" (click)="legalPage.close()">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      <span>{{ 'profile.back' | t }}</span>
+    </button>
+    <span class="legal-page-title">{{ 'legal.notice.title' | t }}</span>
+    <span class="legal-page-actions"></span>
+  </header>
+
+  <div class="legal-page-body">
+    @for (paragraph of paragraphs(); track $index) {
+      @if (paragraph.isHeading) {
+        <h3 class="legal-page-heading">{{ paragraph.text }}</h3>
+      } @else {
+        <p class="legal-page-paragraph">{{ paragraph.text }}</p>
+      }
+    }
+  </div>
+</div>
