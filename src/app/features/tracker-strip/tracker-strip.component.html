@@ -1,14 +1,34 @@
 <div class="kpi-row">
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
-      <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
-      <button type="button"
-              class="icon-btn help-icon-btn tooltip-align-left"
-              [attr.data-tooltip]="'help.tooltip' | t"
-              (click)="helpModal.open('tracker')"
-      >
-        ?
-      </button>
+      <div class="kpi-add-wrap">
+        <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="openAdd()">+</button>
+        <button type="button"
+                class="icon-btn help-icon-btn tooltip-align-left"
+                [attr.data-tooltip]="'help.tooltip' | t"
+                (click)="helpModal.open('tracker')"
+        >
+          ?
+        </button>
+      </div>
+      @if (canBulkDelete()) {
+        <div class="kpi-remove-wrap">
+          <button
+            type="button"
+            class="kpi-remove-btn"
+            [class.active]="selectMode()"
+            [attr.data-tooltip]="(selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+            (click)="toggleSelectMode()"
+          >
+            −
+          </button>
+          @if (selectMode() && selectedNames().size > 0) {
+            <button type="button" class="kpi-bulk-delete-btn" (click)="confirmBulkDelete()">
+              {{ bulkDeleteLabel() }}
+            </button>
+          }
+        </div>
+      }
     } @else {
       <app-wakfu-autocomplete
         domain="both"
@@ -59,7 +79,8 @@
         [class]="rarityClass(entry)"
         [class.is-monster]="entry.kind === 'enemy'"
         [class.expanded]="activeName() === entry.name"
-        draggable="true"
+        [class.is-selected]="selectMode() && selectedNames().has(entry.name)"
+        [attr.draggable]="!selectMode()"
         (dragstart)="onDragStart(i, $event)"
         (dragover)="$event.preventDefault()"
         (drop)="onDrop(i)"
@@ -132,14 +153,30 @@
           </svg>
         </button>
         <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
-        <button
-          class="kpi-del"
-          draggable="false"
-          [attr.data-tooltip]="'tracker.remove' | t"
-          (click)="requestDelete($event, entry.name)"
-        >
-          ×
-        </button>
+        @if (selectMode()) {
+          <button
+            type="button"
+            class="kpi-select-checkbox"
+            [class.checked]="selectedNames().has(entry.name)"
+            [attr.data-tooltip]="'tracker.bulkDeleteCheckboxTooltip' | t"
+            (click)="$event.stopPropagation(); toggleSelected(entry.name)"
+          >
+            @if (selectedNames().has(entry.name)) {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12l5 5L20 6" />
+              </svg>
+            }
+          </button>
+        } @else {
+          <button
+            class="kpi-del"
+            draggable="false"
+            [attr.data-tooltip]="'tracker.remove' | t"
+            (click)="requestDelete($event, entry.name)"
+          >
+            ×
+          </button>
+        }
       </div>
     }
   </div>
