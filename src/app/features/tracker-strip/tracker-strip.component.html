@@ -2,6 +2,13 @@
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
       <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="addOpen.set(true)">+</button>
+      <button type="button"
+              class="icon-btn help-icon-btn tooltip-align-left"
+              [attr.data-tooltip]="'help.tooltip' | t"
+              (click)="helpModal.open('tracker')"
+      >
+        ?
+      </button>
     } @else {
       <app-wakfu-autocomplete
         domain="both"

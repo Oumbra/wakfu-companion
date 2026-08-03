@@ -231,6 +231,9 @@
   max-width: 720px;
 }
 .profile-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -242,10 +245,6 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
-}
-/* Version courte du libellé, mobile only (voir media query en fin). */
-.profile-inline-label {
-  display: none;
 }
 
 .avatar-grid {
@@ -276,6 +275,12 @@
 .avatar-cell-btn.selected {
   border-color: var(--accent);
   box-shadow: 0 0 8px var(--accent);
+}
+
+.alert-timing-test {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 /* Bloc "quand fermer le toast d'alerte" : icône + libellé + durée (grisée en
@@ -801,14 +806,12 @@
     flex-grow: 1;
     min-height: 0;
   }
-  .profile-inline-label {
-    display: block;
-  }
   /* Seul le libellé texte est masqué (redondant avec le titre d'onglet "PERSONNAGES" déjà visible
      dans la barre d'onglets) — la ligne elle-même reste affichée, sinon son icône d'aide "?"
      (voir helpModal.open('profileCharacters')) disparaîtrait entièrement en mobile, comme pour
      l'onglet Alertes qui suit exactement le même principe (seul .profile-label y est masqué). */
-  .profile-label {
+  .profile-label,
+  .profile-label-row {
     display: none;
   }
 }

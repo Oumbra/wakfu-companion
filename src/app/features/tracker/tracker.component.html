@@ -1,7 +1,6 @@
 <div class="tool-panel">
   <div class="panel-header">
     <span class="header-label">
-      <img [src]="headerIcon" class="header-icon" alt="" />
       {{ 'tracker.header' | t }}
     </span>
   </div>
@@ -34,14 +33,6 @@
         ▼
       </button>
     </div>
-    <button
-      type="button"
-      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
-      [attr.data-tooltip]="'help.tooltip' | t"
-      (click)="helpModal.open('tracker')"
-    >
-      ?
-    </button>
   </div>
 
   <div class="panel-body">
