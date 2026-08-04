@@ -239,7 +239,7 @@
           <div class="sound-item-tile" [class]="rarityClass(entry.name)">
             <button
               class="sound-toggle-btn tooltip-align-left"
-              [class.tooltip-below]="i < soundGridColumns()"
+              [class.tooltip-below]="i < soundGridColumns.columns()"
               [attr.data-tooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
               (click)="toggleSound(entry.name)"
             >
@@ -273,7 +273,7 @@
             @if (!entry.isDefault) {
               <button
                 class="remove-btn tooltip-align-right"
-                [class.tooltip-below]="i < soundGridColumns()"
+                [class.tooltip-below]="i < soundGridColumns.columns()"
                 [attr.data-tooltip]="'tracker.remove' | t"
                 (click)="removeSoundItem(entry.name)"
               >
@@ -432,7 +432,7 @@
                       >
                         <button
                           class="icon-btn reset-btn badge-close-btn tooltip-align-right"
-                          [class.tooltip-below]="i < charGridColumns()"
+                          [class.tooltip-below]="i < charGridColumns.columns()"
                           type="button"
                           draggable="false"
                           [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
