@@ -165,20 +165,3 @@
     }
   </div>
 </div>
-
-@if (confirmDeleteName(); as name) {
-  <div class="confirm-backdrop" (click)="cancelDelete($event)"></div>
-  <div
-    class="confirm-popover"
-    [style.right.px]="confirmPopoverPos()?.right"
-    [style.bottom.px]="confirmPopoverPos()?.bottom"
-  >
-    {{ 'tracker.confirmDelete' | t }}
-    <button class="confirm-yes" (click)="confirmDelete($event, name)">
-      {{ 'tracker.confirmYes' | t }}
-    </button>
-    <button class="confirm-no" (click)="cancelDelete($event)">
-      {{ 'tracker.confirmNo' | t }}
-    </button>
-  </div>
-}

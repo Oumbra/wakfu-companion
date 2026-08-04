@@ -296,52 +296,6 @@
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
 
-.confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 4;
-}
-/* `right`/`bottom` posés dynamiquement en JS (voir tracker.component.ts
-   `confirmPopoverPos`) plutôt qu'ancrés en CSS pur sur la carte — voir
-   commentaire sur `confirmPopoverPos` dans le composant. */
-.confirm-popover {
-  position: absolute;
-  background: #000;
-  border: 1px solid #444;
-  border-radius: 5px;
-  padding: 6px 7px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  z-index: 5;
-}
-.confirm-popover::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  right: 12px;
-  border: 5px solid transparent;
-  border-top-color: #000;
-}
-.confirm-popover button {
-  padding: 2px 7px;
-  height: auto;
-  font-size: 0.68rem;
-  border-radius: 3px;
-  border: none;
-  cursor: pointer;
-}
-.confirm-yes {
-  background: #b33939;
-  color: #fff;
-}
-.confirm-no {
-  background: #333;
-  color: #ccc;
-}
-
 /* Voir --mobile-bottom-safe (styles.css) : marge de secours pour que la
    dernière ligne reste scrollable au-dessus d'une barre d'outils navigateur
    mobile fixe. */
