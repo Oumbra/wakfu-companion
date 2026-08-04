@@ -223,7 +223,7 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected testAlertSound(): void {
-    this.alertSound.play();
+    this.alertSound.playLoot();
   }
 
   protected manualCloseTooltip(): string {

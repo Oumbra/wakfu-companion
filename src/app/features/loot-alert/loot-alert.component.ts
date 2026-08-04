@@ -69,7 +69,8 @@ export class LootAlertComponent {
     this.reason.set(reason);
     this.confetti.set(this.buildConfetti());
     this.visible.set(true);
-    this.alertSound.play();
+    if (reason === 'countdown') this.alertSound.playCountdown();
+    else this.alertSound.playLoot();
     if (this.hideTimer !== null) clearTimeout(this.hideTimer);
     this.hideTimer = null;
     // Fermeture manuelle (voir close()) : pas de minuterie du tout.
