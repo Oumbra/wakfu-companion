@@ -7,17 +7,27 @@ import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
-import { IconComponent } from '../../shared/icon/icon.component';
 
 type PurchaseSortOrder = 'desc' | 'asc';
 
-/** Un jour d'achats : total tous objets confondus + achats individuels
+/** Achats d'un même objet regroupés au sein d'une journée (voir `PurchaseDateGroup`) : quantité et
+ * coût cumulés plutôt qu'une ligne par achat individuel — `lastTimestampMs` (le plus récent des
+ * achats agrégés) sert uniquement de clé de tri au sein du jour, pas affiché tel quel (un objet
+ * racheté plusieurs fois dans la journée n'a plus une heure unique à montrer). */
+interface PurchaseAggregateRow {
+  item: string;
+  quantity: number;
+  totalCost: number;
+  lastTimestampMs: number;
+}
+
+/** Un jour d'achats : total tous objets confondus + achats agrégés par objet
  * (voir StatsStoreService.purchaseHistory), triés selon le même ordre que
  * les groupes (`PurchasesComponent.sortOrder`). */
 interface PurchaseDateGroup {
   dateKey: string;
   totalCost: number;
-  records: PurchaseRecord[];
+  rows: PurchaseAggregateRow[];
 }
 
 /**
@@ -29,7 +39,7 @@ interface PurchaseDateGroup {
  */
 @Component({
   selector: 'app-purchases',
-  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent, IconComponent],
+  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.css',
 })
@@ -61,19 +71,38 @@ export class PurchasesComponent {
       else byDate.set(key, [record]);
     }
 
-    const groups: PurchaseDateGroup[] = [...byDate.entries()].map(([dateKey, records]) => ({
-      dateKey,
-      totalCost: records.reduce((sum, r) => sum + r.totalCost, 0),
-      records: records.sort((a, b) =>
+    const groups: PurchaseDateGroup[] = [...byDate.entries()].map(([dateKey, records]) => {
+      const byItem = new Map<string, PurchaseAggregateRow>();
+      for (const record of records) {
+        const existing = byItem.get(record.item);
+        if (existing) {
+          existing.quantity += record.quantity;
+          existing.totalCost += record.totalCost;
+          existing.lastTimestampMs = Math.max(existing.lastTimestampMs, record.fullTimestampMs);
+        } else {
+          byItem.set(record.item, {
+            item: record.item,
+            quantity: record.quantity,
+            totalCost: record.totalCost,
+            lastTimestampMs: record.fullTimestampMs,
+          });
+        }
+      }
+      const rows = [...byItem.values()].sort((a, b) =>
         order === 'desc'
-          ? b.fullTimestampMs - a.fullTimestampMs
-          : a.fullTimestampMs - b.fullTimestampMs,
-      ),
-    }));
+          ? b.lastTimestampMs - a.lastTimestampMs
+          : a.lastTimestampMs - b.lastTimestampMs,
+      );
+      return {
+        dateKey,
+        totalCost: records.reduce((sum, r) => sum + r.totalCost, 0),
+        rows,
+      };
+    });
 
     groups.sort((a, b) => {
-      const aTime = a.records[0]?.fullTimestampMs ?? 0;
-      const bTime = b.records[0]?.fullTimestampMs ?? 0;
+      const aTime = a.rows[0]?.lastTimestampMs ?? 0;
+      const bTime = b.rows[0]?.lastTimestampMs ?? 0;
       return order === 'desc' ? bTime - aTime : aTime - bTime;
     });
     return groups;
