@@ -38,6 +38,7 @@ import {
   CharacterAddFormComponent,
   NewRosterCharacter,
 } from './character-add-form/character-add-form.component';
+import { AppPageComponent } from '../../shared/app-page/app-page.component';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters';
 
@@ -50,7 +51,8 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
     TranslatePipe,
     WakfuAutocompleteComponent,
     CharacterAddFormComponent,
-    NgClass
+    NgClass,
+    AppPageComponent,
 ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -231,7 +233,7 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected goBack(): void {
-    this.nav.goToMain();
+    this.nav.pop();
   }
 
   protected startEditPseudo(): void {

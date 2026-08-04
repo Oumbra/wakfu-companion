@@ -1,0 +1,34 @@
+<div class="app-page">
+  @if (title(); as pageTitle) {
+    <header class="app-page-header">
+      <button
+        class="back-btn tooltip-align-left tooltip-below"
+        type="button"
+        (click)="back.emit()"
+        [attr.data-tooltip]="'profile.back' | t"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M15 18l-6-6 6-6" />
+        </svg>
+        <span>{{ 'profile.back' | t }}</span>
+      </button>
+      <span class="app-page-title">{{ pageTitle }}</span>
+      <div class="app-page-actions">
+        <ng-content select="[pageActions]" />
+      </div>
+    </header>
+  }
+
+  <div class="app-page-body">
+    <ng-content />
+  </div>
+
+  <app-footer />
+</div>

@@ -1,55 +1,35 @@
-<div class="profile-page">
-  <header class="profile-page-header">
-    <button
-      class="back-btn tooltip-align-left tooltip-below"
-      (click)="goBack()"
-      [attr.data-tooltip]="'profile.back' | t"
-    >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M15 18l-6-6 6-6" />
+<app-page [title]="'profile.title' | t" (back)="goBack()">
+  <ng-container pageActions>
+    <button class="icon-btn tooltip-below tooltip-align-right"
+            type="button"
+            [attr.data-tooltip]="'profile.exportData' | t"
+            (click)="exportData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v12M7 10l5 5 5-5" />
+        <path d="M4 19h16" />
       </svg>
-      <span>{{ 'profile.back' | t }}</span>
     </button>
-    <span class="profile-page-title">{{ 'profile.title' | t }}</span>
-    <div class="profile-page-actions" style="min-width: 78px">
-      <button class="icon-btn tooltip-below tooltip-align-right"
-              type="button"
-              [attr.data-tooltip]="'profile.exportData' | t"
-              (click)="exportData()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3v12M7 10l5 5 5-5" />
-          <path d="M4 19h16" />
-        </svg>
-      </button>
-      <button
-        class="icon-btn tooltip-below tooltip-align-right"
-        type="button"
-        [attr.data-tooltip]="'profile.importData' | t"
-        (click)="triggerImport(importFileInput)"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 15V3M7 8l5-5 5 5" />
-          <path d="M4 19h16" />
-        </svg>
-      </button>
-      <input
-        #importFileInput
-        type="file"
-        accept="application/json"
-        style="display: none"
-        (change)="onImportFileSelected($event)"
-      />
-    </div>
-  </header>
+    <button
+      class="icon-btn tooltip-below tooltip-align-right"
+      type="button"
+      [attr.data-tooltip]="'profile.importData' | t"
+      (click)="triggerImport(importFileInput)"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 15V3M7 8l5-5 5 5" />
+        <path d="M4 19h16" />
+      </svg>
+    </button>
+    <input
+      #importFileInput
+      type="file"
+      accept="application/json"
+      style="display: none"
+      (change)="onImportFileSelected($event)"
+    />
+  </ng-container>
 
-  <div class="profile-page-body">
+  <div class="profile-page-content">
     <div class="tab-bar">
       <span class="tab-slider" [style.--active-tab-index]="activeTabIndex()"></span>
       <button
@@ -565,10 +545,10 @@
     </div>
     </div>
   </div>
+</app-page>
 
-  @if (nameTooltip(); as tip) {
-    <div class="floating-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
-      {{ tip.text }}
-    </div>
-  }
-</div>
+@if (nameTooltip(); as tip) {
+  <div class="floating-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
+    {{ tip.text }}
+  </div>
+}

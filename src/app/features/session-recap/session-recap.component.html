@@ -1,4 +1,4 @@
-@if (visible()) {
+@if (recapService.isOpen()) {
   <div
     class="recap-panel"
     #panel
@@ -11,7 +11,7 @@
         <img [src]="headerIcon" class="recap-icon" alt="" />
         <h3>{{ 'sessionRecap.title' | t }}</h3>
       </div>
-      <button class="close-btn" (click)="close()">×</button>
+      <button class="close-btn" (click)="recapService.close()">×</button>
     </div>
 
     <div class="recap-body">

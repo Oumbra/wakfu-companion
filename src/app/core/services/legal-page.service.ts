@@ -1,26 +1,27 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { NavigationService } from './navigation.service';
 
+export type LegalPageKind = 'notice' | 'privacy';
+
 /**
- * Pilote l'affichage de la page légale (mentions légales, voir LegalPageComponent) : ouverte
- * depuis le lien du footer (AppFooterComponent), rendue comme un 3ᵉ état de `app-main` (aux côtés
- * de `app-dashboard`/`app-setup`, voir app.html) plutôt qu'en modale — header et footer
- * applicatifs restent visibles, comme une vraie page dédiée. Seule la page "Mentions légales"
- * subsiste (confidentialité/conditions retirées à la demande) ; un simple booléen suffit donc,
- * plus besoin d'une union de sections.
+ * Pilote le contenu affiché par la page légale (mentions légales + politique de confidentialité,
+ * voir LegalPageComponent) : ouverte/fermée depuis les liens du footer (AppFooterComponent) via
+ * NavigationService, qui gère l'animation d'entrée/sortie (voir NavigationService.openLegal/pop) —
+ * ce service ne porte plus que le choix du contenu (`kind`), plus d'état ouvert/fermé séparé
+ * (redondant avec `NavigationService.view() === 'legal'`).
  */
 @Injectable({ providedIn: 'root' })
 export class LegalPageService {
   private readonly nav = inject(NavigationService);
 
-  readonly isOpen = signal(false);
+  readonly kind = signal<LegalPageKind>('notice');
 
-  open(): void {
-    this.isOpen.set(true);
-    this.nav.goToMain();
+  open(kind: LegalPageKind = 'notice'): void {
+    this.kind.set(kind);
+    this.nav.openLegal();
   }
 
   close(): void {
-    this.isOpen.set(false);
+    this.nav.pop();
   }
 }
