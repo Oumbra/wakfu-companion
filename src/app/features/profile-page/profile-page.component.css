@@ -5,56 +5,6 @@
   min-height: 0;
 }
 
-.profile-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  background: #161616;
-}
-
-.profile-page-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  background: #181818;
-  border-bottom: 1px solid var(--border);
-}
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: #ccc;
-  font-weight: 600;
-  padding: 6px 10px 6px 6px;
-  border-radius: 6px;
-}
-.back-btn:hover {
-  background: #262626;
-  color: #fff;
-}
-.back-btn svg {
-  width: 18px;
-  height: 18px;
-}
-.profile-page-title {
-  flex-grow: 1;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-size: 1.05rem;
-}
-.profile-page-actions {
-  display: flex;
-  gap: 6px;
-  justify-content: flex-end;
-}
-
 /* Onglets Avatar/Alertes/Personnages : mêmes classes et même CSS que la
    barre d'onglets mobile du dashboard (dashboard.component.css `.tab-bar`/
    `.tab-slider`/`.tab-btn`), copiés ici à l'identique (Angular scope le CSS
@@ -102,10 +52,12 @@
   letter-spacing: 0.5px;
 }
 
-.profile-page-body {
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
+/* Le scroll (desktop) appartient à .app-page-body, l'ancêtre générique (voir AppPageComponent) :
+   ce wrapper ne fait que porter le padding/la mise en page en flux normal, sans overflow propre —
+   sinon la scrollbar apparaîtrait ici plutôt que collée au bord droit de la fenêtre. En mobile
+   (media query plus bas), passe en hauteur 100% + overflow:hidden pour laisser les onglets
+   internes (.panel-body) gérer leur propre scroll dans une zone de hauteur fixe. */
+.profile-page-content {
   padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
@@ -770,7 +722,8 @@
    conflit de cascade avec .identity-row/.profile-field (même spécificité,
    voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
-  .profile-page-body {
+  .profile-page-content {
+    height: 100%;
     padding: 15px;
     overflow: hidden;
   }
