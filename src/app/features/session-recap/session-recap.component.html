@@ -162,25 +162,7 @@
                 </div>
               </div>
               <div class="loot-body">
-                @if (stats.sessionLoot().length === 0) {
-                  <div class="empty-state small">{{ 'damageMeter.noLoot' | t }}</div>
-                } @else {
-                  <div class="loot-list" [class.scrollable]="stats.sessionLoot().length > 5">
-                    @for (item of sortedLoot(); track item.name; let first = $first) {
-                      <div
-                        class="loot-row"
-                        [class]="rarityClass(item.name)"
-                        [class.tooltip-below]="first"
-                        [attr.data-tooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
-                        (contextmenu)="onLootContextMenu($event, item.name)"
-                      >
-                        <app-item-icon [name]="item.name" />
-                        <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
-                        <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
-                      </div>
-                    }
-                  </div>
-                }
+                <app-loot-list [items]="sortedLoot()" emptyVariant="recap" />
               </div>
             </div>
           </div>

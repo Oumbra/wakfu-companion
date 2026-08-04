@@ -10,8 +10,8 @@ import { ClassPickerService } from '../../core/services/class-picker.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityDamageListComponent } from '../damage-meter/entity-damage-list/entity-damage-list.component';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
-import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { LootListComponent } from '../../shared/loot-list/loot-list.component';
 import { I18nService } from '../../core/services/i18n.service';
 import {
   HEADER_ICON_LOOT_DATA_URI,
@@ -19,7 +19,7 @@ import {
 } from '../../core/data/header-icons.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
-import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 
 /**
  * Historique des combats (liste repliable, butin, XP) — extrait de
@@ -30,7 +30,7 @@ import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-s
  */
 @Component({
   selector: 'app-fight-history',
-  imports: [NumberFrPipe, EntityDamageListComponent, EntityIconComponent, ItemIconComponent, TranslatePipe],
+  imports: [NumberFrPipe, EntityDamageListComponent, EntityIconComponent, TranslatePipe, LootListComponent],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
 })
@@ -123,19 +123,6 @@ export class FightHistoryComponent {
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
     return sortLootRows(loot, this.lootSort());
-  }
-
-  protected onLootContextMenu(event: MouseEvent, name: string): void {
-    event.preventDefault();
-    this.stats.addWatchedItem(name);
-  }
-
-  protected rarityClass(name: string): string {
-    return lootRarityClass(name);
-  }
-
-  protected isWatched(name: string): boolean {
-    return this.stats.isWatched(name);
   }
 
   protected onXpContextMenu(event: MouseEvent, name: string): void {
