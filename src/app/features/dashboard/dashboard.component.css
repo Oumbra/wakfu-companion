@@ -16,73 +16,12 @@
   min-height: 0;
 }
 
-/* Barre d'onglets mobile : fusionnée visuellement avec l'en-tête du panneau
-   actif (voir styles.css pour le masquage du .panel-header propre à chaque
-   panneau et l'alignement du haut de .tool-panel) plutôt que d'être une
-   rangée séparée au-dessus — gagne de la hauteur et lit comme un seul bloc. */
-.tab-bar {
-  position: relative;
-  display: none;
-  flex-shrink: 0;
-  gap: 2px;
-  background: var(--panel-header-bg);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  padding: 6px 6px 0;
-}
-
-/* Fond + bordure inférieure de l'onglet actif, glissés plutôt que basculés
-   instantanément (même principe que `.gender-switch-highlight` du
-   class-picker) — positionné en absolute dans le padding-box de `.tab-bar`
-   (même origine que les boutons flex). Formule générique sur `--tab-count`
-   (3 ou 4 selon qu'un combat est en cours, voir dashboard.component.ts) :
-   6px de padding gauche + N tuiles séparées par un gap de 2px. */
-.tab-slider {
-  position: absolute;
-  top: 6px;
-  left: calc(
-    6px + var(--active-tab-index, 0) *
-      ((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3) + 2px)
-  );
-  width: calc((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3));
-  height: 34px;
-  background: var(--panel-bg);
-  border-bottom: 2px solid var(--accent);
-  border-radius: 6px 6px 0 0;
-  transition: left 0.25s ease;
-  pointer-events: none;
-}
-
-.tab-btn {
-  position: relative;
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 8px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 6px 6px 0 0;
-  color: #999;
-  font-weight: 700;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  transition: color 0.25s ease;
-}
-.tab-btn.active {
-  color: var(--accent);
-}
-.tab-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
+/* Barre d'onglets mobile : fusionnée visuellement avec l'en-tête du panneau actif (voir styles.css
+   pour le masquage du .panel-header propre à chaque panneau et l'alignement du haut de
+   .tool-panel) plutôt que d'être une rangée séparée au-dessus — gagne de la hauteur et lit comme
+   un seul bloc. `.tab-bar`/`.tab-slider`/`.tab-btn` (fond+bordure glissants sur `--tab-count`, 3 ou
+   4 selon qu'un combat est en cours) sont définis globalement dans styles.css — mutualisés avec la
+   page profil. */
 
 .panels-row {
   display: grid;
