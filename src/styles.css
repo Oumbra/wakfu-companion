@@ -43,6 +43,34 @@
   --mobile-bottom-safe: 56px;
 }
 
+/* Couleurs de rareté d'objet Wakfu — palette partagée par toute UI qui affiche un objet
+   (butin d'historique/session, achats, échanges, suivi, tuiles d'alerte son du profil...).
+   Chaque template applique une classe .rarity-xxx (voir rarityClass()/loot-sort.util.ts)
+   sur l'élément concerné ; seule la couleur de base --rarity-color est centralisée ici,
+   à charge de chaque composant de définir SA propre formule de bordure/dégradé à partir
+   de var(--rarity-color) (les nuances varient volontairement d'un composant à l'autre). */
+.rarity-common {
+  --rarity-color: #c8c8c8;
+}
+.rarity-rare {
+  --rarity-color: #1dd15f;
+}
+.rarity-mythical {
+  --rarity-color: #d97a00;
+}
+.rarity-legendary {
+  --rarity-color: #c7d400;
+}
+.rarity-memory {
+  --rarity-color: #1f97e0;
+}
+.rarity-epic {
+  --rarity-color: #d84fa0;
+}
+.rarity-relic {
+  --rarity-color: #9450d9;
+}
+
 * {
   box-sizing: border-box;
 }
