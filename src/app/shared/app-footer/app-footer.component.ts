@@ -3,13 +3,12 @@ import { LegalPageService } from '../../core/services/legal-page.service';
 import { TranslatePipe } from '../translate.pipe';
 
 /**
- * Pied de page global (mentions minimales) — rendu une seule fois au niveau racine (voir
- * app.html), visible sur les deux panneaux du slider (principal/profil). Le lien "Mentions
- * légales" ouvre la page légale (voir LegalPageService/LegalPageComponent, rendue comme un 3ᵉ état
- * de `app-main` plutôt qu'une modale) : cette app n'a pas de routeur au sens propre (voir
- * NavigationService), mais `LegalPageService.open()` bascule aussi sur la vue principale
- * (`nav.goToMain()`) pour que la page légale soit visible même si on cliquait depuis le footer
- * affiché sur la vue profil.
+ * Pied de page global — rendu une fois par panneau de navigation (voir AppPageComponent), donc
+ * présent sur la page principale, la page profil ET la page légale. Les liens "Mentions légales" /
+ * "Politique de confidentialité" ouvrent la page légale correspondante (voir
+ * LegalPageService.open, qui délègue l'animation d'entrée à `NavigationService.openLegal()`) :
+ * cette app n'a pas de routeur au sens propre, mais NavigationService anime correctement l'entrée
+ * depuis la page principale OU la page profil (retour au bon endroit via `pop()`).
  */
 @Component({
   selector: 'app-footer',

@@ -18,175 +18,44 @@
   flex-direction: column;
 }
 
-/* Slider deux panneaux (page principale / page profil) : chaque panneau fait
-   50% de la largeur d'un conteneur à 200%, translaté d'exactement un
-   panneau-largeur pour afficher l'autre — anime l'entrée/sortie en "poussant"
-   l'une derrière l'autre plutôt qu'un simple fondu.
-   Note : `transform: translateX(-50%)` se résout par rapport à la largeur de
-   CET élément (200% du viewport), soit un décalage plein écran correct.
-   `left: -50%` se résout par rapport au bloc englobant (100% du viewport) et
-   ne décalait donc que d'un demi-écran — bug corrigé ici (vu en vidéo :
-   affichage à moitié bloqué entre les deux pages). */
+/* `<app-header>` (AppHeaderComponent) est rendu une seule fois ici, HORS de `.view-slider` : le
+   header du site ne doit jamais glisser avec l'animation de navigation, seul le contenu de chaque
+   page (dans `.view-panel`) en fait partie. */
+
+/* Un panneau par vue (main/profile/legal, voir AppView dans NavigationService), tous montés en
+   permanence et empilés en position absolue plutôt qu'alignés côte à côte dans une bande qui
+   glisse en bloc (ancienne approche à 2 panneaux fixes) : chaque panneau anime SON PROPRE
+   `transform` (voir `[style.transform]="nav.panelTransform(...)"` dans app.html), calculé par
+   NavigationService selon la vue courante/précédente/direction plutôt que par une position figée
+   dans la bande — seule façon de faire glisser correctement le contenu "depuis la droite" à
+   l'ouverture ET "depuis la gauche" au retour, quelle que soit la page de départ (ex. légal peut
+   être ouvert depuis la page principale OU la page profil, et doit revenir vers l'une ou l'autre).
+*/
 .view-slider {
-  display: flex;
-  width: 200%;
+  position: relative;
   flex: 1;
   min-height: 0;
-  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateX(0%);
-}
-.view-slider.showing-profile {
-  transform: translateX(-50%);
+  overflow: hidden;
 }
 .view-panel {
-  width: 50%;
-  height: 100%;
-  flex-shrink: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.app-header {
-  position: relative;
-  z-index: 10;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 20px;
-  background: #181818;
-  border-bottom: 1px solid var(--border);
-}
-
-.app-title {
-  position: relative;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-size: 1.05rem;
-}
-
-.app-title-badge {
   position: absolute;
-  top: -10px;
-  right: 0;
-  background: transparent;
-  color: #FFF;
-  text-transform: lowercase;
-  font-size: 10px;
-  font-style: italic;
-}
-
-.app-logo {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
-}
-
-.app-header-left {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.app-header-file-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.app-header-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.app-header-burger {
-  position: relative;
-  display: none;
-}
-
-.mobile-menu-backdrop {
-  position: fixed;
   inset: 0;
-  z-index: 100;
-}
-
-.mobile-menu {
-  position: absolute;
-  z-index: 101;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 200px;
-  background: #1c1c1c;
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  padding: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-}
-
-.mobile-menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  height: 36px;
-  padding: 0 10px;
-  background: #262626;
-  border: none;
-  border-radius: 6px;
-  color: #ccc;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-.mobile-menu-item:hover {
-  background: #2f2f2f;
-  color: #fff;
-}
-.mobile-menu-icon {
-  flex-shrink: 0;
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
-
-.session-recap-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.session-recap-btn:hover {
-  background: transparent;
-  border-color: var(--accent);
-}
-.session-recap-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
-.file-chip {
-  font-family: monospace;
-  color: #aaa;
-  font-size: 0.8rem;
-  background: #000;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #333;
-  max-width: 260px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Contenu de la page principale (dashboard/setup), projeté à l'intérieur de `<app-page>` (voir
+   app.html) : plus un enfant flex direct de `.view-panel` (le header du site s'est intercalé au
+   niveau racine, et `<app-page>` ajoute son propre conteneur de scroll) — `height: 100%` reprend
+   ici le rôle que jouait `flex-grow: 1` quand `.app-main` était directement dans `.view-panel`.
+   `display: flex` (row, par défaut) + `align-items: stretch` (par défaut) suffit à ce que le seul
+   enfant actif (dashboard ou setup, chacun `:host { height: 100% }`) remplisse tout l'espace. */
 .app-main {
-  flex-grow: 1;
+  height: 100%;
   min-height: 0;
   display: flex;
 }
@@ -195,37 +64,4 @@
   flex-grow: 1;
   min-width: 0;
   min-height: 0;
-}
-
-/* Breakpoint mobile (ex. Galaxy S23, 360px de large) : le header horizontal
-   (logo + titre + fichier + session recap + langue + profil) ne tient plus
-   sur une seule ligne sans wrap → on masque le titre et on regroupe
-   session recap/langue/profil dans un menu burger. */
-@media (max-width: 640px) {
-  .app-header {
-    padding: 8px 10px;
-    gap: 4px;
-  }
-  .app-header-left {
-    gap: 8px;
-    min-width: 0;
-  }
-  .app-title {
-    font-size: 0.8rem;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  .app-header-file-group {
-    gap: 4px;
-    min-width: 0;
-  }
-  .file-chip {
-    max-width: 90px;
-  }
-  .app-header-right-desktop {
-    display: none;
-  }
-  .app-header-burger {
-    display: flex;
-  }
 }
