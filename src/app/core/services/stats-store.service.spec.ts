@@ -235,7 +235,10 @@ describe('StatsStoreService', () => {
       const fight = fights[0];
       expect(fight.id).toBe(1616283520);
       expect(fight.result).toBe('won');
-      expect(fight.turns).toBeGreaterThanOrEqual(3);
+      // Tour = round-robin (voir registerFightTurn) : Larve Verte puis Larve Violette puis
+      // Sagittarius Caecus jouent chacun une fois, le combat se termine avant qu'aucun ne rejoue —
+      // le tour reste donc à 1, quel que soit le nombre de sorts lancés par chacun entre-temps.
+      expect(fight.turns).toBe(1);
       const lootNames = fight.loot.map((l) => l.name).sort();
       expect(lootNames).toEqual(
         ['Bottes Larvesques Vaseuses', 'Peau de Larve', 'Peau de Nutellarve', 'Perle', 'Plâjeton'].sort(),
