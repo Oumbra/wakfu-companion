@@ -464,35 +464,11 @@
 }
 
 /* Bordure/dégradé par rareté (objets suivis) — mêmes couleurs que
-   .loot-row/.watch-row. Fond en dégradé uniquement au survol (déployé) :
+   .loot-row/.watch-row (--rarity-color défini globalement dans styles.css
+   par la classe .rarity-xxx). Fond en dégradé uniquement au survol (déployé) :
    au repos, la tuile carrée reste unie (voir consigne : bordure toujours
    colorée, fond en dégradé seulement quand le KPI se déploie). */
-.kpi.rarity-common {
-  --rarity-color: #c8c8c8;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-rare {
-  --rarity-color: #1dd15f;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-mythical {
-  --rarity-color: #d97a00;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-legendary {
-  --rarity-color: #c7d400;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-memory {
-  --rarity-color: #1f97e0;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-epic {
-  --rarity-color: #d84fa0;
-  border-color: var(--rarity-color);
-}
-.kpi.rarity-relic {
-  --rarity-color: #9450d9;
+.kpi[class*='rarity-'] {
   border-color: var(--rarity-color);
 }
 /* `background-size`/`background-position` FIXES (pas de `%` dans le

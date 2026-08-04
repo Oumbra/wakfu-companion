@@ -80,7 +80,8 @@
 }
 
 /* Bandeau objet source : icône + nom sur fond en dégradé selon la rareté — même palette et même
-   principe que .loot-row (fight-history.component.css), voir --rarity-color. */
+   principe que .loot-row (fight-history.component.css), --rarity-color défini globalement
+   dans styles.css par la classe .rarity-xxx. */
 .recipe-modal-item-block {
   display: flex;
   align-items: center;
@@ -88,27 +89,6 @@
   padding: 8px 12px;
   border-radius: 6px;
   border: 1px solid transparent;
-}
-.recipe-modal-item-block.rarity-common {
-  --rarity-color: #c8c8c8;
-}
-.recipe-modal-item-block.rarity-rare {
-  --rarity-color: #1dd15f;
-}
-.recipe-modal-item-block.rarity-mythical {
-  --rarity-color: #d97a00;
-}
-.recipe-modal-item-block.rarity-legendary {
-  --rarity-color: #c7d400;
-}
-.recipe-modal-item-block.rarity-memory {
-  --rarity-color: #1f97e0;
-}
-.recipe-modal-item-block.rarity-epic {
-  --rarity-color: #d84fa0;
-}
-.recipe-modal-item-block.rarity-relic {
-  --rarity-color: #9450d9;
 }
 .recipe-modal-item-block[class*='rarity-'] {
   border-color: color-mix(in srgb, var(--rarity-color) 45%, transparent);
