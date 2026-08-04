@@ -40,6 +40,7 @@ import {
 } from './character-add-form/character-add-form.component';
 import { AppPageComponent } from '../../shared/app-page/app-page.component';
 import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
+import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters';
 
@@ -127,21 +128,11 @@ export class ProfilePageComponent implements OnDestroy {
   private tabBarResizeObserver?: ResizeObserver;
 
   constructor() {
-    effect(() => {
-      const input = this.pseudoEditInput();
-      if (this.editingPseudo() && input) {
-        input.nativeElement.focus();
-        input.nativeElement.select();
-      }
-    });
-
-    effect(() => {
-      const input = this.charEditInput();
-      if (this.editingCharacter() && input) {
-        input.nativeElement.focus();
-        input.nativeElement.select();
-      }
-    });
+    focusInlineEditInput(this.editingPseudo, this.pseudoEditInput);
+    focusInlineEditInput(
+      computed(() => this.editingCharacter() !== null),
+      this.charEditInput,
+    );
 
     effect(() => this.soundGridColumns.observe(this.soundGrid()?.nativeElement));
     effect(() => this.charGridColumns.observe(this.charGrid()?.nativeElement));
@@ -198,7 +189,12 @@ export class ProfilePageComponent implements OnDestroy {
     this.editingPseudo.set(true);
   }
 
+  /** Appelé à la fois par (blur) et par Entrée (voir onPseudoKeydown) — le garde-fou
+   * `!editingPseudo()` évite qu'un blur déclenché par la fermeture du champ (Entrée déjà commitée,
+   * ou Échap qui annule) ne recommite la valeur tapée : Échap doit vraiment annuler, pas juste
+   * fermer le champ pendant qu'un commit résiduel s'exécute derrière. */
   protected commitPseudo(value: string): void {
+    if (!this.editingPseudo()) return;
     this.profile.setPseudo(value.trim());
     this.editingPseudo.set(false);
   }
@@ -206,6 +202,8 @@ export class ProfilePageComponent implements OnDestroy {
   protected onPseudoKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter') {
       this.commitPseudo((event.target as HTMLInputElement).value);
+    } else if (event.key === 'Escape') {
+      this.editingPseudo.set(false);
     }
   }
 
@@ -347,7 +345,12 @@ export class ProfilePageComponent implements OnDestroy {
     this.editingCharacter.set({ accountId, name });
   }
 
+  /** Appelé à la fois par (blur) et par Entrée (voir onCharacterRenameKeydown) — le garde-fou
+   * `isEditingCharacter` évite qu'un blur déclenché par la fermeture du champ (Entrée déjà
+   * commitée, ou Échap qui annule) ne recommite la valeur tapée : Échap doit vraiment annuler, pas
+   * juste fermer le champ pendant qu'un commit résiduel s'exécute derrière. */
   protected commitCharacterRename(accountId: string, oldName: string, value: string): void {
+    if (!this.isEditingCharacter(accountId, oldName)) return;
     const trimmed = value.trim();
     if (trimmed && trimmed !== oldName) this.roster.renameCharacter(accountId, oldName, trimmed);
     this.editingCharacter.set(null);
