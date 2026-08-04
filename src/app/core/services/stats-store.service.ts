@@ -35,6 +35,14 @@ export interface EntityDamageRow {
   total: number;
   spells: SpellBreakdownRow[];
   defeated: boolean;
+  /** Position (1-based) de cette ligne parmi les instances partageant ce nom, et nombre total
+   * d'instances partageant ce nom (voir Fight.enemies/allies — plusieurs monstres, voire alliés,
+   * peuvent porter le même nom). `instanceCount === 1` : une seule ligne pour ce nom, pas de
+   * suffixe à afficher. Le log ne référence les dégâts/sorts que par nom (jamais par instance) :
+   * seule la 1ʳᵉ instance porte le détail agrégé, les suivantes existent pour représenter chaque
+   * combattant réellement rejoint (et son propre statut KO) sans dupliquer le total affiché. */
+  instanceIndex: number;
+  instanceCount: number;
 }
 
 export interface XpRow {
@@ -629,7 +637,7 @@ export class StatsStoreService {
       time,
       fullTimestampMs: working.fight.startDate.getTime(),
       result,
-      rows: this.buildEntityDamageRows(working.attackerMap, working.defeatedNames),
+      rows: this.buildEntityDamageRows(working),
       loot: working.fight.loots.map((l) => ({ name: l.name, quantity: l.quantity })),
       turns: working.fight.turnCount,
       durationMs: Math.max(0, working.fight.endDate.getTime() - working.fight.startDate.getTime()),
@@ -824,11 +832,7 @@ export class StatsStoreService {
         .map(([name, amount]) => ({ name, amount }))
         .sort((a, b) => b.amount - a.amount),
     );
-    this.damageByAttacker.set(
-      displayWorking
-        ? this.buildEntityDamageRows(displayWorking.attackerMap, displayWorking.defeatedNames)
-        : [],
-    );
+    this.damageByAttacker.set(displayWorking ? this.buildEntityDamageRows(displayWorking) : []);
     this.fightHistory.set([...this.fightHistoryList]);
     this.sessionLoot.set([...this.sessionLootMap.values()]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
@@ -836,22 +840,48 @@ export class StatsStoreService {
     this.chatMessages.set([...this.chatBuffer]);
   }
 
-  private buildEntityDamageRows(
-    map: Map<string, Map<string, SpellAgg>>,
-    defeatedNames: ReadonlySet<string>,
-  ): EntityDamageRow[] {
-    return [...map.entries()]
-      .map(([name, spells]) => {
-        const spellRows: SpellBreakdownRow[] = [...spells.entries()]
-          .map(([spell, agg]) => ({
-            spell,
-            total: agg.total,
-            byElement: Object.fromEntries(agg.byElement) as Partial<Record<DamageElement, number>>,
-          }))
-          .sort((a, b) => b.total - a.total);
-        const total = spellRows.reduce((sum, row) => sum + row.total, 0);
-        return { name, total, spells: spellRows, defeated: defeatedNames.has(name.toLowerCase()) };
-      })
-      .sort((a, b) => b.total - a.total);
+  /**
+   * Une ligne par instance réellement rejointe (voir Fight.enemies/allies), pas par nom : plusieurs
+   * monstres (voire alliés) peuvent partager un même nom (voir countNameInstances). Le log ne
+   * référence les dégâts/sorts que par nom, jamais par instance : le détail agrégé est donc porté
+   * par la 1ʳᵉ instance de chaque nom, les suivantes affichées à 0 pour ne pas dupliquer le total
+   * de la section — seul le statut KO (`defeatedInstanceCounts`) est réellement individuel par ligne.
+   */
+  private buildEntityDamageRows(working: FightWorking): EntityDamageRow[] {
+    const instanceCountByName = new Map<string, number>();
+    for (const e of working.fight.enemies) {
+      instanceCountByName.set(e.name, (instanceCountByName.get(e.name) ?? 0) + 1);
+    }
+    for (const a of working.fight.allies) {
+      instanceCountByName.set(a.name, (instanceCountByName.get(a.name) ?? 0) + 1);
+    }
+
+    const rows: EntityDamageRow[] = [];
+    for (const [name, spells] of working.attackerMap) {
+      const spellRows: SpellBreakdownRow[] = [...spells.entries()]
+        .map(([spell, agg]) => ({
+          spell,
+          total: agg.total,
+          byElement: Object.fromEntries(agg.byElement) as Partial<Record<DamageElement, number>>,
+        }))
+        .sort((a, b) => b.total - a.total);
+      const total = spellRows.reduce((sum, row) => sum + row.total, 0);
+      const defeatedCount = working.defeatedInstanceCounts.get(name.toLowerCase()) ?? 0;
+      // Absent de Fight.enemies/allies (ex. invocation d'allié) : traité comme une instance unique,
+      // comportement inchangé par rapport à avant cette évolution.
+      const instanceCount = instanceCountByName.get(name) ?? 1;
+
+      for (let instanceIndex = 1; instanceIndex <= instanceCount; instanceIndex++) {
+        rows.push({
+          name,
+          total: instanceIndex === 1 ? total : 0,
+          spells: instanceIndex === 1 ? spellRows : [],
+          defeated: instanceIndex <= defeatedCount,
+          instanceIndex,
+          instanceCount,
+        });
+      }
+    }
+    return rows.sort((a, b) => b.total - a.total);
   }
 }

@@ -64,9 +64,10 @@ export class EntityDamageListComponent {
   );
 
   protected displayName(row: EntityDamageRow): string {
-    return this.side() === 'enemy'
-      ? this.i18n.translateMonsterName(row.name)
-      : row.name;
+    const base = this.side() === 'enemy' ? this.i18n.translateMonsterName(row.name) : row.name;
+    // Plusieurs monstres (voire alliés) peuvent partager un même nom (voir Fight.enemies/allies) :
+    // suffixe "#i" pour distinguer chaque ligne/instance, uniquement quand il y en a plus d'une.
+    return row.instanceCount > 1 ? `${base} #${row.instanceIndex}` : base;
   }
 
   protected toggle(row: EntityDamageRow): void {
