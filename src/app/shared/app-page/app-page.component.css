@@ -55,12 +55,24 @@
 
 /* Seul bloc scrollable de la page : pleine largeur (pas de max-width ici) pour que la scrollbar
    native reste collée au bord droit de la fenêtre — au contenu projeté de gérer son propre
-   wrapper centré/max-width à l'intérieur si besoin (texte légal, formulaires...). */
+   wrapper centré/max-width à l'intérieur si besoin (texte légal, formulaires...).
+   `display:flex; flex-direction:column` + `.app-page-content { flex: 1 0 auto }` : pattern
+   "sticky footer" classique. Si le contenu est plus court que la hauteur disponible,
+   `flex-grow:1` étire `.app-page-content` pour combler l'espace, ce qui colle le footer au bord
+   bas de la fenêtre SANS scroll. Si le contenu dépasse (page légale, longue liste...),
+   `flex-shrink:0` empêche `.app-page-content` de se comprimer sous sa taille naturelle : le
+   footer se retrouve alors après, hors de la zone visible, et n'apparaît qu'en scrollant jusqu'en
+   bas — voir CLAUDE.md, comportement demandé explicitement (footer jamais fixe comme le header). */
 .app-page-body {
   flex-grow: 1;
   min-height: 0;
   overflow-y: auto;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.app-page-content {
+  flex: 1 0 auto;
 }
 
 @media (max-width: 640px) {
