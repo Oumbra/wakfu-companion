@@ -263,6 +263,61 @@ button.badge-close-btn {
   transform: translateX(200%);
 }
 
+/* Barre d'onglets à fond+bordure glissants (mobile dashboard, page profil) — fusionnée ici
+   (auparavant copiée à l'identique dans dashboard.component.css ET profile-page.component.css,
+   Angular scope le CSS par composant donc ces classes n'étaient pas partageables autrement).
+   Formule générique sur `--tab-count` (posé en JS par chaque appelant, 3 ou 4 selon le nombre
+   d'onglets réellement affichés) : 6px de padding gauche + N tuiles séparées par un gap de 2px. */
+.tab-bar {
+  position: relative;
+  display: none;
+  flex-shrink: 0;
+  gap: 2px;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 6px 0;
+}
+.tab-slider {
+  position: absolute;
+  top: 6px;
+  left: calc(
+    6px + var(--active-tab-index, 0) *
+      ((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3) + 2px)
+  );
+  width: calc((100% - (12px + (var(--tab-count, 3) - 1) * 2px)) / var(--tab-count, 3));
+  height: 34px;
+  background: var(--panel-bg);
+  border-bottom: 2px solid var(--accent);
+  border-radius: 6px 6px 0 0;
+  transition: left 0.25s ease;
+  pointer-events: none;
+}
+.tab-btn {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  color: #999;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.25s ease;
+}
+.tab-btn.active {
+  color: var(--accent);
+}
+
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,
    bordure grise) ; le rouge n'apparaît qu'au survol. */
