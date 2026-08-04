@@ -51,7 +51,14 @@ describe('LogParser — parsing de base (non-régression)', () => {
     ];
     const entries = parseAll(parser, lines);
     expect(entries).toEqual([
-      { kind: 'spell-cast', time: '11:58:32,313', caster: 'Larve Verte', spell: 'Mucus Acide', critical: false },
+      {
+        kind: 'spell-cast',
+        time: '11:58:32,313',
+        caster: 'Larve Verte',
+        spell: 'Mucus Acide',
+        critical: false,
+        fightId: null,
+      },
       {
         kind: 'damage',
         time: '11:58:33,180',

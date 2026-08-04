@@ -61,8 +61,6 @@ const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
 const KO_RE = /^(.+?) est KO !$/;
 /** Diffusion générale de mise hors-combat, émise pour N'IMPORTE QUEL combattant (allié ou ennemi) — contrairement à KO_RE, réservé aux alliés. Signal principal pour détecter la mort d'un ennemi. */
 const HORS_COMBAT_RE = /^(.+?) est hors-combat !$/;
-/** Émis une fois par transition de tour (jamais pour le premier tour d'un combat) : sert à compter les tours. */
-const TURN_CARRY_RE = /^\d+ secondes? reportées? pour le tour suivant\.$/;
 const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
 /** Diffusée à chaque allié mis KO (y compris via abandon de combat, où "est KO !"/"est hors-combat !" peuvent manquer) : signal de défaite le plus fiable, y compris en multi-compte. */
 const OCCUPATION_RE = /^Lancement de l'occupation pour le joueur (.+)$/;
@@ -428,10 +426,6 @@ export class LogParser {
       return { kind: 'enemy-defeated', time, name, fightId: this.resolveFightIdForName(name) };
     }
 
-    if (TURN_CARRY_RE.test(content)) {
-      return { kind: 'turn-marker', time, fightId: this.resolveCurrentFightId() };
-    }
-
     const cast = SPELL_CAST_RE.exec(content);
     if (cast) {
       const caster = cast[1].trim();
@@ -444,8 +438,8 @@ export class LogParser {
       }
       this.lastCast = { caster, spell };
       this.spellCasters.set(spell.toLowerCase(), caster);
-      this.resolveFightIdForName(caster);
-      return { kind: 'spell-cast', time, caster, spell, critical };
+      const fightId = this.resolveFightIdForName(caster);
+      return { kind: 'spell-cast', time, caster, spell, critical, fightId };
     }
 
     const statusRemoval = STATUS_REMOVE_RE.exec(content);
