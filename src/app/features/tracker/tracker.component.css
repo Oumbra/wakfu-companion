@@ -212,10 +212,6 @@
   display: flex;
   align-items: center;
 }
-.kpi-card-reset svg {
-  width: 18px;
-  height: 18px;
-}
 .kpi-card-reset:hover {
   color: var(--accent);
 }
@@ -263,10 +259,6 @@
   cursor: pointer;
   z-index: 2;
   padding: 0;
-}
-.kpi-card-select-checkbox svg {
-  width: 11px;
-  height: 11px;
 }
 .kpi-card-select-checkbox.checked {
   background: var(--accent);

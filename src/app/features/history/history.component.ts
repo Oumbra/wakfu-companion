@@ -4,6 +4,7 @@ import { PurchasesComponent } from '../purchases/purchases.component';
 import { TradesComponent } from '../trades/trades.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 type HistoryTab = 'combats' | 'purchases' | 'trades';
 
@@ -17,7 +18,7 @@ type HistoryTab = 'combats' | 'purchases' | 'trades';
  */
 @Component({
   selector: 'app-history',
-  imports: [FightHistoryComponent, PurchasesComponent, TradesComponent, TranslatePipe],
+  imports: [FightHistoryComponent, PurchasesComponent, TradesComponent, TranslatePipe, IconComponent],
   templateUrl: './history.component.html',
   styleUrl: './history.component.css',
 })

@@ -12,6 +12,7 @@ import { EntityDamageListComponent } from '../damage-meter/entity-damage-list/en
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
+import { IconComponent } from '../../shared/icon/icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import {
   HEADER_ICON_LOOT_DATA_URI,
@@ -30,7 +31,14 @@ import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
  */
 @Component({
   selector: 'app-fight-history',
-  imports: [NumberFrPipe, EntityDamageListComponent, EntityIconComponent, TranslatePipe, LootListComponent],
+  imports: [
+    NumberFrPipe,
+    EntityDamageListComponent,
+    EntityIconComponent,
+    TranslatePipe,
+    LootListComponent,
+    IconComponent,
+  ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
 })

@@ -276,10 +276,6 @@
   flex-shrink: 0;
   transition: opacity 0.15s;
 }
-.alert-timing-icon svg {
-  width: 17px;
-  height: 17px;
-}
 .alert-timing-icon.is-disabled {
   opacity: 0.35;
 }

@@ -7,16 +7,7 @@
         (click)="back.emit()"
         [attr.data-tooltip]="'profile.back' | t"
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
+        <app-icon name="chevron-left" [strokeWidth]="2" [size]="18" />
         <span>{{ 'profile.back' | t }}</span>
       </button>
       <span class="app-page-title">{{ pageTitle }}</span>

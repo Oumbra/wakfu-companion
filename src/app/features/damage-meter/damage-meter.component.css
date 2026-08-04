@@ -39,10 +39,6 @@
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
-.collapse-btn svg {
-  width: 14px;
-  height: 14px;
-}
 @media (max-width: 800px) {
   .collapse-btn {
     display: none;

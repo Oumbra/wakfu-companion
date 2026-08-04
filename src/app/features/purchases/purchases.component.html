@@ -27,10 +27,7 @@
                   [class.tooltip-below]="firstGroup && firstRecord"
                   [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="9" />
-                    <path d="M12 7v5l3.5 3.5" />
-                  </svg>
+                  <app-icon name="clock-long" [strokeWidth]="1.8" [size]="15" />
                 </span>
                 <app-item-icon [name]="record.item" [size]="22" />
                 <span class="purchase-name">{{ i18n.translateItemName(record.item) }}</span>
