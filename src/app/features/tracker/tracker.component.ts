@@ -1,4 +1,4 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   StatsStoreService,
   WatchlistCounterMode,
@@ -13,6 +13,7 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
+import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -29,18 +30,11 @@ import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 export class TrackerComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly confirmDelete = inject(ConfirmDeleteService);
 
   protected readonly existingNames = computed(() =>
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
   );
-
-  protected readonly confirmDeleteName = signal<string | null>(null);
-  /** Voir tracker-strip.component.ts : position calculée en JS relativement au
-   * host (`:host{position:relative}`, sans overflow) plutôt qu'ancrée en CSS
-   * pur sur la carte — `.tool-panel`/`.panel-body` ont `overflow:hidden`/`auto`,
-   * qui rogneraient sinon la popover d'une carte proche du haut de la grille. */
-  protected readonly confirmPopoverPos = signal<{ right: number; bottom: number } | null>(null);
 
   /** Noms actuellement tronqués par l'ellipsis CSS (détecté au survol, voir
    * `checkTruncation`) : seuls ceux-là reçoivent un `title`, pour n'afficher
@@ -169,24 +163,9 @@ export class TrackerComponent {
 
   protected requestDelete(event: Event, name: string): void {
     event.stopPropagation();
-    const card = (event.currentTarget as HTMLElement).closest('.kpi-card') as HTMLElement;
-    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
-    const cardRect = card.getBoundingClientRect();
-    this.confirmPopoverPos.set({
-      right: hostRect.right - cardRect.right - 8,
-      bottom: hostRect.bottom - cardRect.top + 8,
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('tracker.confirmDelete'), () => {
+      this.stats.removeWatched(name);
     });
-    this.confirmDeleteName.set(name);
-  }
-
-  protected confirmDelete(event: Event, name: string): void {
-    event.stopPropagation();
-    this.stats.removeWatched(name);
-    this.confirmDeleteName.set(null);
-  }
-
-  protected cancelDelete(event: Event): void {
-    event.stopPropagation();
-    this.confirmDeleteName.set(null);
   }
 }
