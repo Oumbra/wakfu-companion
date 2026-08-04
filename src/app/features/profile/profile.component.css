@@ -4,8 +4,8 @@
 
 .profile-btn {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   padding: 0;
   border: 1px solid var(--accent);
