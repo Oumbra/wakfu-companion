@@ -9,6 +9,7 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -23,7 +24,14 @@ import { WatchlistTileController } from '../../core/utils/watchlist-tile-control
  */
 @Component({
   selector: 'app-tracker',
-  imports: [NumberFrPipe, EntityIconComponent, ItemIconComponent, TranslatePipe, WakfuAutocompleteComponent],
+  imports: [
+    NumberFrPipe,
+    EntityIconComponent,
+    ItemIconComponent,
+    TranslatePipe,
+    WakfuAutocompleteComponent,
+    IconComponent,
+  ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',
 })

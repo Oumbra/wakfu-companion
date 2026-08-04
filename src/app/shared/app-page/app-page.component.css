@@ -36,10 +36,6 @@
   background: #262626;
   color: #fff;
 }
-.back-btn svg {
-  width: 18px;
-  height: 18px;
-}
 .app-page-title {
   flex-grow: 1;
   text-align: center;

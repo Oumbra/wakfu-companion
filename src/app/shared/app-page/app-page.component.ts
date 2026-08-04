@@ -1,6 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { AppFooterComponent } from '../app-footer/app-footer.component';
 import { TranslatePipe } from '../translate.pipe';
+import { IconComponent } from '../icon/icon.component';
 
 /**
  * Shell générique pour le contenu de toute page — page principale (dashboard/setup), profil,
@@ -26,7 +27,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-page',
-  imports: [AppFooterComponent, TranslatePipe],
+  imports: [AppFooterComponent, TranslatePipe, IconComponent],
   templateUrl: './app-page.component.html',
   styleUrl: './app-page.component.css',
 })

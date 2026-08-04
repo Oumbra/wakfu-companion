@@ -41,6 +41,7 @@ import {
 import { AppPageComponent } from '../../shared/app-page/app-page.component';
 import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
 import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters';
 
@@ -55,6 +56,7 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
     CharacterAddFormComponent,
     NgClass,
     AppPageComponent,
+    IconComponent,
 ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
