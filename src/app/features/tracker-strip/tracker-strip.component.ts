@@ -1,9 +1,5 @@
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
-import {
-  StatsStoreService,
-  WatchlistCounterMode,
-  WatchlistEntry,
-} from '../../core/services/stats-store.service';
+import { StatsStoreService, WatchlistCounterMode, WatchlistEntry } from '../../core/services/stats-store.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
@@ -11,10 +7,9 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
-import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
-import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -39,6 +34,11 @@ const KPI_EXPANDED_WIDTH_PX = 250;
  * — chaque tuile se déploie au survol pour révéler nom + reset. Masqué en
  * dessous du breakpoint mobile (voir CSS) : le mobile garde Suivi comme un
  * onglet à part entière, affiché par TrackerComponent (grille de cartes).
+ *
+ * La logique commune avec TrackerComponent (rareté/nom affiché/troncature, sélection multiple,
+ * reset/mode de comptage, suppression confirmée) vit dans WatchlistTileController — ce composant
+ * ne garde que ce qui est propre à la bande desktop (survol différé/verrou anti-cascade, tooltip
+ * de nom positionné en JS, drag&drop de réordonnancement).
  */
 @Component({
   selector: 'app-tracker-strip',
@@ -53,6 +53,8 @@ export class TrackerStripComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   protected readonly helpModal = inject(HelpModalService);
 
+  protected readonly watchlist = new WatchlistTileController(this.stats, this.i18n, this.confirmDelete);
+
   protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
@@ -62,23 +64,8 @@ export class TrackerStripComponent {
   );
 
   protected readonly addOpen = signal(false);
-  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
-   * WatchlistCounterMode). Réinitialisé à 'up' à chaque fermeture de la recherche. */
-  protected readonly addMode = signal<WatchlistCounterMode>('up');
   private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
 
-  /** Mode "sélection multiple" (bouton "-", visible seulement au-delà de 2 KPI suivis) : chaque
-   * tuile affiche une case à cocher à la place de sa croix de suppression individuelle, et un
-   * bouton "Supprimer (N)" apparaît dès qu'au moins une tuile est cochée — suppression immédiate
-   * au clic, sans popover de confirmation (le passage par ce mode dédié + une sélection explicite
-   * tient lieu de confirmation, voir `confirmBulkDelete`). Un second clic sur le bouton "-" quitte
-   * ce mode sans rien supprimer. */
-  protected readonly selectMode = signal(false);
-  protected readonly canBulkDelete = computed(() => this.stats.watchlist().length > 2);
-  protected readonly selectedNames = signal<ReadonlySet<string>>(new Set());
-  protected readonly bulkDeleteLabel = computed(() =>
-    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedNames().size }),
-  );
   /** Nom du KPI dont la popover de suppression partagée (ConfirmDeleteService) est actuellement
    * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
    * la popover elle-même vit au niveau racine, hors de ce composant. */
@@ -110,9 +97,6 @@ export class TrackerStripComponent {
    * entre-temps. */
   private blockedUntilMs = 0;
 
-  /** Voir tracker.component.ts : mêmes règles de détection de troncature. */
-  private readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
-
   constructor() {
     // Focus automatique du champ de recherche à l'ouverture (clic sur "+") —
     // `autocomplete()` ne résout qu'une fois `@else` rendu dans le template.
@@ -125,32 +109,8 @@ export class TrackerStripComponent {
     });
   }
 
-  protected rarityClass(entry: WatchlistEntry): string {
-    return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
-  }
-
-  protected displayName(entry: WatchlistEntry): string {
-    return entry.kind === 'item'
-      ? this.i18n.translateItemName(entry.name)
-      : this.i18n.translateMonsterName(entry.name);
-  }
-
-  protected isTruncated(name: string): boolean {
-    return this.truncatedNames().has(name);
-  }
-
-  protected checkTruncation(el: HTMLElement, name: string): void {
-    const isTruncated = el.scrollWidth > el.clientWidth;
-    const current = this.truncatedNames();
-    if (isTruncated === current.has(name)) return;
-    const updated = new Set(current);
-    if (isTruncated) updated.add(name);
-    else updated.delete(name);
-    this.truncatedNames.set(updated);
-  }
-
   protected onTileEnter(event: MouseEvent, name: string): void {
-    if (this.selectMode()) return;
+    if (this.watchlist.selectMode()) return;
     if (Date.now() < this.blockedUntilMs) return;
     if (this.activeName() !== null && this.activeName() !== name) return;
     this.clearHoverTimer();
@@ -182,8 +142,8 @@ export class TrackerStripComponent {
    * propagation (voir `resetCount`/`requestDelete`) et n'atteignent donc
    * jamais ce handler. */
   protected onTileClick(event: MouseEvent, name: string): void {
-    if (this.selectMode()) {
-      this.toggleSelected(name);
+    if (this.watchlist.selectMode()) {
+      this.watchlist.toggleSelected(name);
       return;
     }
     this.clearHoverTimer();
@@ -252,7 +212,7 @@ export class TrackerStripComponent {
     // s'afficher juste au-dessus du texte, quelle que soit la largeur réelle
     // de la tuile déployée.
     const { right, bottom } = this.hostRelativePos(nameEl, 8);
-    this.nameTooltip.set({ text: this.displayName(entry), right, bottom });
+    this.nameTooltip.set({ text: this.watchlist.displayName(entry), right, bottom });
   }
 
   protected onNameLeave(): void {
@@ -262,104 +222,48 @@ export class TrackerStripComponent {
   protected add(result: WakfuSearchResult): void {
     if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name);
     else this.stats.addWatchedItem(result.name);
-    if (this.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
+    if (this.watchlist.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
     this.closeAdd();
   }
 
   protected setAddMode(event: Event, mode: WatchlistCounterMode): void {
     event.stopPropagation();
-    this.addMode.set(mode);
+    this.watchlist.addMode.set(mode);
   }
 
   protected closeAdd(): void {
     this.addOpen.set(false);
-    this.addMode.set('up');
+    this.watchlist.addMode.set('up');
   }
 
   /** Ouvre le formulaire d'ajout — quitte le mode sélection au passage : les deux modes
    * (ajout/suppression groupée) n'ont pas de raison d'être actifs simultanément. */
   protected openAdd(): void {
-    this.exitSelectMode();
+    this.watchlist.exitSelectMode();
     this.addOpen.set(true);
   }
 
   /** Bascule le mode sélection (bouton "-") : un second clic pendant que le mode est actif le
    * quitte sans rien supprimer, quelle que soit la sélection en cours. */
   protected toggleSelectMode(): void {
-    if (this.selectMode()) {
-      this.exitSelectMode();
+    if (this.watchlist.selectMode()) {
+      this.watchlist.exitSelectMode();
       return;
     }
     this.clearHoverTimer();
     this.activeName.set(null);
-    this.selectMode.set(true);
-  }
-
-  private exitSelectMode(): void {
-    this.selectMode.set(false);
-    this.selectedNames.set(new Set());
-  }
-
-  protected toggleSelected(name: string): void {
-    this.selectedNames.update((set) => {
-      const next = new Set(set);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
-  }
-
-  /** Supprime toutes les tuiles cochées en un clic, sans popover de confirmation — le passage par
-   * le mode sélection puis une sélection explicite tiennent lieu de confirmation (même principe
-   * que Gmail/Google Photos). */
-  protected confirmBulkDelete(): void {
-    for (const name of this.selectedNames()) {
-      this.stats.removeWatched(name);
-    }
-    this.exitSelectMode();
-  }
-
-  protected resetCount(event: Event, name: string): void {
-    event.stopPropagation();
-    this.stats.resetWatchedCount(name);
-  }
-
-  protected setMode(event: Event, name: string, mode: WatchlistCounterMode): void {
-    event.stopPropagation();
-    this.stats.setWatchlistMode(name, mode);
-  }
-
-  /** Édition directe de la valeur de départ du décompte (mode 'down') — voir `.kpi-countdown-input`. */
-  protected onCountdownInput(event: Event, name: string): void {
-    event.stopPropagation();
-    const value = Number((event.target as HTMLInputElement).value);
-    this.stats.setWatchlistCountdownTarget(name, value);
-  }
-
-  /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
-   * resolveNumericKeyAction. */
-  protected onCountdownKeydown(event: KeyboardEvent, entry: WatchlistEntry): void {
-    event.stopPropagation();
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1);
-    } else if (action === 'decrement') {
-      event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1));
-    }
+    this.watchlist.enterSelectMode();
   }
 
   protected requestDelete(event: Event, name: string): void {
-    event.stopPropagation();
-    this.confirmDeleteOpenFor.set(name);
-    const button = event.currentTarget as HTMLElement;
-    this.confirmDelete.open(button, this.i18n.t('tracker.confirmDelete'), () => {
-      this.stats.removeWatched(name);
-      if (this.activeName() === name) this.activeName.set(null);
-    });
+    this.watchlist.requestDelete(
+      event,
+      name,
+      () => this.confirmDeleteOpenFor.set(name),
+      () => {
+        if (this.activeName() === name) this.activeName.set(null);
+      },
+    );
   }
 
   private dragIndex: number | null = null;
