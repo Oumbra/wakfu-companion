@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 
 type PurchaseSortOrder = 'desc' | 'asc';
 
@@ -27,7 +28,7 @@ interface PurchaseDateGroup {
  */
 @Component({
   selector: 'app-purchases',
-  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent],
+  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.css',
 })
@@ -86,14 +87,6 @@ export class PurchasesComponent {
     if (updated.has(dateKey)) updated.delete(dateKey);
     else updated.add(dateKey);
     this.collapsedDates.set(updated);
-  }
-
-  protected setSortOrder(order: PurchaseSortOrder): void {
-    this.sortOrder.set(order);
-  }
-
-  protected setSearchQuery(value: string): void {
-    this.searchQuery.set(value);
   }
 
   protected rarityClass(name: string): string {
