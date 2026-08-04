@@ -123,7 +123,7 @@ export class ChatPanelComponent {
       if (this.stats.wasLastBatchInitialLoad()) return;
       const newMessages = messages.slice(previousCount);
       if (newMessages.some((m) => messageMatchesAnyFilter(m, filters))) {
-        this.alertSound.play();
+        this.alertSound.playChatFilter();
       }
     });
   }

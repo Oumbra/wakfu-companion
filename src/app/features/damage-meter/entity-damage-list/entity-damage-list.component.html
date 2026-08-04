@@ -27,7 +27,7 @@
     @if (rows().length === 0) {
       <div class="empty-state">{{ emptyMessage() }}</div>
     } @else {
-      @for (row of rows(); track row.name; let first = $first) {
+      @for (row of rows(); track row.name + '#' + row.instanceIndex; let first = $first) {
         <div class="entity-block" [class.expanded]="row.total > 0 && isExpanded(row.name)">
           <div
             class="entity-row"

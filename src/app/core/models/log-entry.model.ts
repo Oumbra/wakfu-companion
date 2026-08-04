@@ -59,6 +59,9 @@ export interface SpellCastEntry {
   caster: string;
   spell: string;
   critical: boolean;
+  /** Combat auquel rattacher ce lancer de sort (voir Fight.turnCount) — seul signal universel
+   * (allié comme monstre) disponible pour détecter les changements de tour, `null` si non résolu. */
+  fightId: number | null;
 }
 
 export interface DamageEntry {
@@ -105,13 +108,6 @@ export interface LootEntry {
   item: string;
   quantity: number;
   /** Combat en cours au moment du ramassage, `null` si hors combat (ex. récolte en extérieur) — dans ce cas l'objet n'alimente aucun Fight.loots. */
-  fightId: number | null;
-}
-
-/** Marqueur fiable de changement de tour ("N secondes reportées pour le tour suivant"), émis une fois par transition. */
-export interface TurnMarkerEntry {
-  kind: 'turn-marker';
-  time: string;
   fightId: number | null;
 }
 
@@ -167,7 +163,6 @@ export type LogEntry =
   | CombatStartEntry
   | CombatEndEntry
   | LootEntry
-  | TurnMarkerEntry
   | ChallengeResultEntry
   | FighterJoinedEntry
   | TradeCompletedEntry;
