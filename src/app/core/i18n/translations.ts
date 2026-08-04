@@ -20,6 +20,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Réinitialiser',
+    'app.confirmReset': 'Réinitialiser la session ?',
     'app.changeFile': 'Changer de fichier',
     'app.menu': 'Menu',
     'app.language': 'Langue',
@@ -220,6 +221,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Reset',
+    'app.confirmReset': 'Reset the session?',
     'app.changeFile': 'Change file',
     'app.menu': 'Menu',
     'app.language': 'Language',
@@ -418,6 +420,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'app.sessionRecap': 'Resumen de sesión',
     'app.reset': 'Reiniciar',
+    'app.confirmReset': '¿Reiniciar la sesión?',
     'app.changeFile': 'Cambiar archivo',
     'app.menu': 'Menú',
     'app.language': 'Idioma',
@@ -618,6 +621,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'app.sessionRecap': 'Resumo da sessão',
     'app.reset': 'Reiniciar',
+    'app.confirmReset': 'Reiniciar a sessão?',
     'app.changeFile': 'Trocar arquivo',
     'app.menu': 'Menu',
     'app.language': 'Idioma',
