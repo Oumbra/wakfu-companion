@@ -108,9 +108,20 @@ export interface FightRecord {
 interface FightWorking {
   fight: Fight;
   attackerMap: Map<string, Map<string, SpellAgg>>;
+  /** Au moins une instance de ce nom (minuscule) a été vue vaincue — utilisé pour le flag "defeated"
+   * par ligne agrégée (UI) et pour le repli "tous les alliés KO" de resolveFightResult(). */
   defeatedNames: Set<string>;
+  /** Nombre d'instances déjà créditées comme vaincues, par nom (minuscule) — plafonné au nombre
+   * réel d'instances de ce nom ayant rejoint le combat (voir Fight.enemies/allies, plusieurs
+   * monstres pouvant partager un même nom). Permet de créditer le watchlist une fois par instance
+   * réellement morte plutôt qu'une seule fois par nom (voir registerFightDefeat). */
+  defeatedInstanceCounts: Map<string, number>;
   /** fighterId déjà vus (voir FighterJoinedEntry) : une jointure répétée (doublon multi-compte, resynchronisation) ne doit pas dupliquer l'entrée dans allies/enemies. */
   fighterIdsSeen: Set<number>;
+  /** Acteurs (nom) ayant déjà lancé un sort au cours du tour courant, et dernier acteur ayant joué —
+   * voir le repli round-robin de comptage des tours dans le handler 'spell-cast'. */
+  turnActorsSeen: Set<string>;
+  lastTurnActor: string | null;
 }
 
 /**
@@ -420,11 +431,6 @@ export class StatsStoreService {
       case 'loot':
         this.registerLoot(entry.item, entry.quantity, entry.fightId);
         break;
-      case 'turn-marker': {
-        const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) working.fight.turnCount += 1;
-        break;
-      }
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
         else this.challengesFailed.update((v) => v + 1);
@@ -437,6 +443,7 @@ export class StatsStoreService {
         break;
       case 'spell-cast':
         this.classifier.registerSpellCast(entry.caster, entry.spell);
+        this.registerFightTurn(entry.fightId, entry.caster);
         break;
       case 'fighter-joined':
         this.registerFighterJoin(entry.fightId, entry.name, entry.breed, entry.fighterId, entry.isControlledByAI);
@@ -456,7 +463,10 @@ export class StatsStoreService {
         fight: new Fight(fightId, new Date(this.buildFullTimestampMs(time))),
         attackerMap: new Map(),
         defeatedNames: new Set(),
+        defeatedInstanceCounts: new Map(),
         fighterIdsSeen: new Set(),
+        turnActorsSeen: new Set(),
+        lastTurnActor: null,
       };
       this.activeFights.set(fightId, working);
     }
@@ -481,6 +491,33 @@ export class StatsStoreService {
     this.ensurePresent(working.attackerMap, name);
   }
 
+  /**
+   * "N secondes reportées pour le tour suivant" ne se déclenche qu'après un tour JOUEUR (jamais un
+   * tour monstre IA) : signal structurellement incomplet pour compter les tours. Seul "X lance le
+   * sort Y" est émis pour n'importe quel acteur (allié comme monstre), on s'en sert donc pour
+   * détecter le cycle des tours au fil de l'eau :
+   *  - un même acteur qui recommence à lancer des sorts sans qu'un autre n'ait joué entre-temps
+   *    reste dans son tour en cours (pas de changement de tour) ;
+   *  - un acteur différent qui prend la main est simplement le tour suivant DE CE round (ajouté à
+   *    l'ensemble des acteurs déjà passés ce round) ;
+   *  - un acteur qui reprend la main alors qu'il avait déjà joué ce round signale que le round a
+   *    bouclé : le tour est incrémenté et l'ensemble redémarre avec ce seul acteur. Un acteur
+   *    sorti du combat (mort) n'apparaît simplement plus jamais dans cet ensemble, donc le round
+   *    boucle naturellement sur le suivant sans traitement particulier à prévoir pour ce cas.
+   */
+  private registerFightTurn(fightId: number | null, actor: string): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    if (working.lastTurnActor === actor) return; // même tour en cours (plusieurs sorts d'affilée).
+
+    if (working.turnActorsSeen.has(actor)) {
+      working.fight.turnCount += 1;
+      working.turnActorsSeen.clear();
+    }
+    working.turnActorsSeen.add(actor);
+    working.lastTurnActor = actor;
+  }
+
   private registerFightXp(fightId: number | null, character: string, amount: number): void {
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
     if (!working) return;
@@ -489,28 +526,76 @@ export class StatsStoreService {
     else working.fight.exp.push({ name: character, quantity: amount });
   }
 
-  private registerFightDefeat(fightId: number | null, name: string): void {
-    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    const key = name.toLowerCase();
-    if (!working || working.defeatedNames.has(key)) return;
-    working.defeatedNames.add(key);
-    this.registerDefeat(name);
-    this.ensurePresent(working.attackerMap, name);
+  /** Nombre d'instances (voir Fight.enemies/allies) portant ce nom (minuscule) parmi les deux camps. */
+  private countNameInstances(working: FightWorking, key: string): number {
+    let count = 0;
+    for (const e of working.fight.enemies) if (e.name.toLowerCase() === key) count++;
+    for (const a of working.fight.allies) if (a.name.toLowerCase() === key) count++;
+    return count;
   }
 
   /**
-   * Le marqueur explicite "Vous avez été vaincu(e) !"/"Lancement de
-   * l'occupation" n'apparaît pas toujours (ex. entraînement contre un
-   * mannequin) : si tous les alliés ayant rejoint le combat sont KO à la fin,
-   * c'est une défaite quoi qu'en dise ce marqueur.
+   * Plusieurs monstres (voire, en théorie, alliés) peuvent partager le même nom : chaque marqueur
+   * "X est KO/hors-combat !" ne doit créditer qu'une instance de ce nom à la fois, jusqu'au nombre
+   * réel d'instances ayant rejoint le combat — au-delà, un marqueur supplémentaire pour ce nom est
+   * considéré redondant (ex. KO puis hors-combat pour la même instance) et ignoré.
+   */
+  private registerFightDefeat(fightId: number | null, name: string): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    const key = name.toLowerCase();
+    working.defeatedNames.add(key);
+    this.ensurePresent(working.attackerMap, name);
+
+    const alreadyCredited = working.defeatedInstanceCounts.get(key) ?? 0;
+    const instanceCount = this.countNameInstances(working, key) || 1;
+    if (alreadyCredited >= instanceCount) return;
+    working.defeatedInstanceCounts.set(key, alreadyCredited + 1);
+    this.registerDefeat(name);
+  }
+
+  /** Vrai si toutes les instances (par nom, voir countNameInstances) de la liste donnée sont créditées comme vaincues. */
+  private allInstancesDefeated(
+    entities: ReadonlyArray<{ name: string }>,
+    working: FightWorking,
+  ): boolean {
+    const perName = new Map<string, number>();
+    for (const e of entities) {
+      const key = e.name.toLowerCase();
+      perName.set(key, (perName.get(key) ?? 0) + 1);
+    }
+    for (const [key, count] of perName) {
+      if ((working.defeatedInstanceCounts.get(key) ?? 0) < count) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Les marqueurs explicites "Vous avez été vaincu(e) !" (transitoire : simple KO, le personnage
+   * peut être relevé) et "Lancement de l'occupation" (diffusé en fin de TOUT combat, gagné ou
+   * perdu) ne suffisent pas à déterminer une défaite. Cascade de signaux, du plus fiable au moins
+   * fiable :
+   *  1) Wakfu ne verse de l'XP de combat qu'en cas de victoire : dès qu'un gain d'XP a été
+   *     enregistré pour ce combat, c'est une victoire.
+   *  2) Repli : tous les ennemis ayant rejoint le combat (par instance, voir Fight.enemies) sont
+   *     morts => victoire, même sans XP (ex. combat n'en accordant pas).
+   *  3) Repli : tous les alliés ayant rejoint le combat sont KO à la fin => défaite, quoi qu'en
+   *     dise le marqueur explicite (absent par ex. en entraînement contre un mannequin).
+   *  4) Dernier repli : le marqueur explicite du parser.
    */
   private resolveFightResult(parsedResult: 'won' | 'lost', working: FightWorking): 'won' | 'lost' {
-    if (parsedResult === 'lost') return 'lost';
+    if (working.fight.exp.length > 0) return 'won';
+
+    const enemies = working.fight.enemies;
+    if (enemies.length > 0 && this.allInstancesDefeated(enemies, working)) return 'won';
+
     const allies = working.fight.allies;
     const allAlliesDefeated =
       allies.length > 0 &&
       allies.every((a) => working.defeatedNames.has(a.name.toLowerCase()));
-    return allAlliesDefeated ? 'lost' : 'won';
+    if (allAlliesDefeated) return 'lost';
+
+    return parsedResult;
   }
 
   private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
