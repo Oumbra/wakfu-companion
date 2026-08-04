@@ -51,6 +51,19 @@ export class TrackerComponent {
    * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout. */
   protected readonly addMode = signal<WatchlistCounterMode>('up');
 
+  /** Mode "sélection multiple" (mobile) — même principe que tracker-strip.component.ts (desktop) :
+   * chaque carte affiche une case à cocher à la place de sa croix de suppression individuelle, et
+   * un bouton "Supprimer (N)" apparaît dès qu'au moins une carte est cochée — suppression
+   * immédiate au clic, sans popover de confirmation (le passage par ce mode dédié + une sélection
+   * explicite tient lieu de confirmation). Un second clic sur le bouton "-" quitte ce mode sans
+   * rien supprimer. */
+  protected readonly selectMode = signal(false);
+  protected readonly canBulkDelete = computed(() => this.stats.watchlist().length > 2);
+  protected readonly selectedNames = signal<ReadonlySet<string>>(new Set());
+  protected readonly bulkDeleteLabel = computed(() =>
+    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedNames().size }),
+  );
+
   protected rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
   }
@@ -83,6 +96,46 @@ export class TrackerComponent {
 
   protected setAddMode(mode: WatchlistCounterMode): void {
     this.addMode.set(mode);
+  }
+
+  /** Bascule le mode sélection (bouton "-") : un second clic pendant que le mode est actif le
+   * quitte sans rien supprimer, quelle que soit la sélection en cours. */
+  protected toggleSelectMode(): void {
+    if (this.selectMode()) {
+      this.exitSelectMode();
+      return;
+    }
+    this.selectMode.set(true);
+  }
+
+  private exitSelectMode(): void {
+    this.selectMode.set(false);
+    this.selectedNames.set(new Set());
+  }
+
+  protected toggleSelected(name: string): void {
+    this.selectedNames.update((set) => {
+      const next = new Set(set);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  /** Clic sur la carte entière (pas seulement la case à cocher) : plus grande zone tactile en
+   * mode sélection — sans effet en mode normal (pas de comportement de survol/dépli sur mobile). */
+  protected onCardClick(name: string): void {
+    if (!this.selectMode()) return;
+    this.toggleSelected(name);
+  }
+
+  /** Supprime toutes les cartes cochées en un clic, sans popover de confirmation — le passage par
+   * le mode sélection puis une sélection explicite tiennent lieu de confirmation. */
+  protected confirmBulkDelete(): void {
+    for (const name of this.selectedNames()) {
+      this.stats.removeWatched(name);
+    }
+    this.exitSelectMode();
   }
 
   protected resetCount(name: string): void {

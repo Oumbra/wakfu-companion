@@ -520,6 +520,16 @@
   background: transparent;
 }
 
+/* Tuile cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
+   rester visible quelle que soit la rareté de l'objet suivi. Déclarée APRÈS les règles de rareté
+   ci-dessus : à spécificité égale (2 classes), l'ordre du fichier tranche — piège déjà rencontré
+   dans ce projet (voir tracker.component.css), évité en gardant "override après la règle qu'il
+   doit emporter". */
+.kpi.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
 /* Tooltip du nom tronqué — positionné en JS (voir `nameTooltip`/
    `hostRelativePos`) : reprend le style visuel du système de tooltip
    générique (styles.css) sans pouvoir en réutiliser le mécanisme CSS pur
