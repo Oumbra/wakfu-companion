@@ -12,8 +12,11 @@ import { IconComponent } from '../icon/icon.component';
  * identiquement sur toutes les pages.
  *
  * Le footer est délibérément placé À L'INTÉRIEUR de `.app-page-body` (après <ng-content>), donc
- * dans le flux scrollable plutôt qu'en bande fixe sous le contenu : il ne doit apparaître que
- * lorsqu'on scrolle jusqu'en bas de la page, jamais rester ancré à l'écran comme le header du site.
+ * dans le flux scrollable plutôt qu'en bande fixe sous le contenu — jamais ancré à l'écran comme le
+ * header du site. Pattern "sticky footer" (voir `.app-page-content { flex: 1 0 auto }` en CSS) :
+ * s'il n'y a pas de scroll (contenu plus court que la page), le footer reste collé au bord bas de
+ * la fenêtre ; s'il y a du scroll (contenu plus long), il ne devient visible qu'une fois scrollé
+ * jusqu'en bas.
  *
  * Ne contient PAS le header du site (logo/titre/fichier/langue, voir AppHeaderComponent) : celui-ci
  * est rendu une seule fois au niveau racine (app.html), en dehors du conteneur qui anime la
