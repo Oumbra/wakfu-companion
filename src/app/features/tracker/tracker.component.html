@@ -13,40 +13,40 @@
       (selected)="add($event)"
     />
     <div class="icon-switch tracker-add-mode-switch">
-      <span class="icon-switch-highlight" [class.is-right]="addMode() === 'down'"></span>
+      <span class="icon-switch-highlight" [class.is-right]="watchlist.addMode() === 'down'"></span>
       <button
         type="button"
         class="icon-switch-option"
-        [class.selected]="addMode() === 'up'"
+        [class.selected]="watchlist.addMode() === 'up'"
         [attr.data-tooltip]="'tracker.countUpMode' | t"
-        (click)="setAddMode('up')"
+        (click)="watchlist.addMode.set('up')"
       >
         ▲
       </button>
       <button
         type="button"
         class="icon-switch-option"
-        [class.selected]="addMode() === 'down'"
+        [class.selected]="watchlist.addMode() === 'down'"
         [attr.data-tooltip]="'tracker.countDownMode' | t"
-        (click)="setAddMode('down')"
+        (click)="watchlist.addMode.set('down')"
       >
         ▼
       </button>
     </div>
-    @if (canBulkDelete()) {
+    @if (watchlist.canBulkDelete()) {
       <div class="kpi-remove-wrap">
         <button
           type="button"
           class="kpi-remove-btn"
-          [class.active]="selectMode()"
-          [attr.data-tooltip]="(selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+          [class.active]="watchlist.selectMode()"
+          [attr.data-tooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
           (click)="toggleSelectMode()"
         >
           −
         </button>
-        @if (selectMode() && selectedNames().size > 0) {
-          <button type="button" class="kpi-bulk-delete-btn" (click)="confirmBulkDelete()">
-            {{ bulkDeleteLabel() }}
+        @if (watchlist.selectMode() && watchlist.selectedNames().size > 0) {
+          <button type="button" class="kpi-bulk-delete-btn" (click)="watchlist.confirmBulkDelete()">
+            {{ watchlist.bulkDeleteLabel() }}
           </button>
         }
       </div>
@@ -61,20 +61,20 @@
         @for (entry of stats.watchlist(); track entry.name) {
           <div
             class="kpi-card"
-            [class]="rarityClass(entry)"
+            [class]="watchlist.rarityClass(entry)"
             [class.is-monster]="entry.kind === 'enemy'"
-            [class.is-selected]="selectMode() && selectedNames().has(entry.name)"
+            [class.is-selected]="watchlist.selectMode() && watchlist.selectedNames().has(entry.name)"
             (click)="onCardClick(entry.name)"
           >
-            @if (selectMode()) {
+            @if (watchlist.selectMode()) {
               <button
                 type="button"
                 class="kpi-card-select-checkbox"
-                [class.checked]="selectedNames().has(entry.name)"
+                [class.checked]="watchlist.selectedNames().has(entry.name)"
                 [attr.data-tooltip]="'tracker.bulkDeleteCheckboxTooltip' | t"
-                (click)="$event.stopPropagation(); toggleSelected(entry.name)"
+                (click)="$event.stopPropagation(); watchlist.toggleSelected(entry.name)"
               >
-                @if (selectedNames().has(entry.name)) {
+                @if (watchlist.selectedNames().has(entry.name)) {
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M4 12l5 5L20 6" />
                   </svg>
@@ -84,7 +84,7 @@
               <button
                 class="kpi-card-del"
                 [attr.data-tooltip]="'tracker.remove' | t"
-                (click)="requestDelete($event, entry.name)"
+                (click)="watchlist.requestDelete($event, entry.name)"
               >
                 ×
               </button>
@@ -97,10 +97,10 @@
             <div class="kpi-card-info">
               <span
                 class="kpi-card-name"
-                [attr.data-tooltip]="truncatedNames().has(entry.name) ? displayName(entry) : null"
+                [attr.data-tooltip]="watchlist.truncatedNames().has(entry.name) ? watchlist.displayName(entry) : null"
               >
-                <span #nameEl (mouseenter)="checkTruncation(nameEl, entry.name)">{{
-                  displayName(entry)
+                <span #nameEl (mouseenter)="watchlist.checkTruncation(nameEl, entry.name)">{{
+                  watchlist.displayName(entry)
                 }}</span>
               </span>
               <div class="kpi-card-count-row">
@@ -113,8 +113,8 @@
                     [value]="entry.count"
                     [attr.data-tooltip]="'tracker.countdownTargetHint' | t"
                     (click)="$event.stopPropagation()"
-                    (keydown)="onCountdownKeydown($event, entry)"
-                    (change)="onCountdownInput($event, entry.name)"
+                    (keydown)="watchlist.onCountdownKeydown($event, entry)"
+                    (change)="watchlist.onCountdownInput($event, entry.name)"
                   />
                 } @else {
                   <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
@@ -126,7 +126,7 @@
                     class="icon-switch-option"
                     [class.selected]="entry.mode === 'up'"
                     [attr.data-tooltip]="'tracker.countUpMode' | t"
-                    (click)="setMode(entry.name, 'up')"
+                    (click)="watchlist.setMode($event, entry.name, 'up')"
                   >
                     ▲
                   </button>
@@ -135,7 +135,7 @@
                     class="icon-switch-option"
                     [class.selected]="entry.mode === 'down'"
                     [attr.data-tooltip]="'tracker.countDownMode' | t"
-                    (click)="setMode(entry.name, 'down')"
+                    (click)="watchlist.setMode($event, entry.name, 'down')"
                   >
                     ▼
                   </button>
@@ -143,7 +143,7 @@
                 <button
                   class="kpi-card-reset"
                   [attr.data-tooltip]="'tracker.reset' | t"
-                  (click)="$event.stopPropagation(); resetCount(entry.name)"
+                  (click)="watchlist.resetCount($event, entry.name)"
                 >
                   <svg
                     viewBox="0 0 24 24"
