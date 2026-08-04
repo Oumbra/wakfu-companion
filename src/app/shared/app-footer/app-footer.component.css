@@ -13,7 +13,6 @@
    copyright), pas en ligne : un seul lien restant, l'agencement horizontal d'origine (pensé pour
    plusieurs liens à droite) n'avait plus de sens. */
 .app-footer {
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
