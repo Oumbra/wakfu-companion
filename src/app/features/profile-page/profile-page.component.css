@@ -528,34 +528,32 @@
   line-height: 1;
 }
 
-/* Couleurs par rareté (échantillonnées sur les bordures officielles cdn.wakfuli.com/rarity). */
+/* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
+   Le pourcentage de mélange varie volontairement par rareté (échantillonné sur les bordures
+   officielles cdn.wakfuli.com/rarity) — seule la couleur de base est donc factorisable ici. */
+.sound-item-tile[class*='rarity-'] {
+  border-color: var(--rarity-color);
+}
 .sound-item-tile.rarity-common {
-  border-color: #c8c8c8;
-  background: color-mix(in srgb, #c8c8c8 12%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 12%, #202020);
 }
 .sound-item-tile.rarity-rare {
-  border-color: #1dd15f;
-  background: color-mix(in srgb, #1dd15f 14%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 14%, #202020);
 }
 .sound-item-tile.rarity-mythical {
-  border-color: #d97a00;
-  background: color-mix(in srgb, #d97a00 18%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 18%, #202020);
 }
 .sound-item-tile.rarity-legendary {
-  border-color: #c7d400;
-  background: color-mix(in srgb, #c7d400 18%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 18%, #202020);
 }
 .sound-item-tile.rarity-memory {
-  border-color: #1f97e0;
-  background: color-mix(in srgb, #1f97e0 16%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 16%, #202020);
 }
 .sound-item-tile.rarity-epic {
-  border-color: #d84fa0;
-  background: color-mix(in srgb, #d84fa0 16%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 16%, #202020);
 }
 .sound-item-tile.rarity-relic {
-  border-color: #9450d9;
-  background: color-mix(in srgb, #9450d9 16%, #202020);
+  background: color-mix(in srgb, var(--rarity-color) 16%, #202020);
 }
 
 /* Section "Personnages déclarés" (voir CharacterRosterService) : un compte
