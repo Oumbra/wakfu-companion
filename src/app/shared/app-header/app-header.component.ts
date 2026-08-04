@@ -3,6 +3,8 @@ import { LogFileAccessService } from '../../core/services/log-file-access.servic
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { SessionRecapService } from '../../core/services/session-recap.service';
+import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { TranslatePipe } from '../translate.pipe';
 import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
@@ -31,6 +33,8 @@ export class AppHeaderComponent {
   protected readonly nav = inject(NavigationService);
   protected readonly sessionRecapService = inject(SessionRecapService);
   private readonly stats = inject(StatsStoreService);
+  private readonly confirmDelete = inject(ConfirmDeleteService);
+  private readonly i18n = inject(I18nService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
   protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
@@ -39,8 +43,14 @@ export class AppHeaderComponent {
     void this.logFileAccess.forgetFile();
   }
 
-  protected onReset(): void {
-    this.stats.resetStats();
+  /** Réinitialise toute la session en cours (kamas, combats, historique, watchlist...) — action
+   * destructive irréversible, confirmée via la même popover partagée que la suppression d'un KPI
+   * suivi (voir ConfirmDeleteService). */
+  protected onReset(event: Event): void {
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('app.confirmReset'), () => {
+      this.stats.resetStats();
+    });
   }
 
   protected toggleMobileMenu(): void {

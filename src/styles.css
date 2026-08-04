@@ -180,6 +180,10 @@ button.icon-btn.plain-icon-btn:hover {
   color: var(--accent);
 }
 
+button.icon-btn .icon-btn-text {
+  height: stretch;
+}
+
 /* Badge rond à cheval sur la bordure d'un conteneur positionné (voir
    `.kpi-del` dans tracker-strip, même principe) — combiner avec `.icon-btn`/
    `.reset-btn` pour la couleur/le survol, cette classe ne pose que la
