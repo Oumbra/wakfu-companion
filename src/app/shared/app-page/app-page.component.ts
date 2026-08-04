@@ -10,6 +10,10 @@ import { TranslatePipe } from '../translate.pipe';
  * via <ng-content>), pied de page (AppFooterComponent). Pour qu'un changement ici se répercute
  * identiquement sur toutes les pages.
  *
+ * Le footer est délibérément placé À L'INTÉRIEUR de `.app-page-body` (après <ng-content>), donc
+ * dans le flux scrollable plutôt qu'en bande fixe sous le contenu : il ne doit apparaître que
+ * lorsqu'on scrolle jusqu'en bas de la page, jamais rester ancré à l'écran comme le header du site.
+ *
  * Ne contient PAS le header du site (logo/titre/fichier/langue, voir AppHeaderComponent) : celui-ci
  * est rendu une seule fois au niveau racine (app.html), en dehors du conteneur qui anime la
  * navigation (`.view-slider`), pour que l'animation de glissement ne s'applique qu'au contenu de
