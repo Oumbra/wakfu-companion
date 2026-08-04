@@ -39,6 +39,7 @@ import {
   NewRosterCharacter,
 } from './character-add-form/character-add-form.component';
 import { AppPageComponent } from '../../shared/app-page/app-page.component';
+import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters';
 
@@ -97,27 +98,17 @@ export class ProfilePageComponent implements OnDestroy {
     ProfilePageComponent.TAB_ORDER.indexOf(this.activeTab()),
   );
 
-  /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en
-   * `auto-fill`, donc variable selon la largeur disponible) — recalculé à
-   * chaque redimensionnement via ResizeObserver, pour savoir combien de
-   * tuiles composent la 1ère ligne (dont le tooltip doit s'afficher en
-   * dessous plutôt qu'au-dessus, sinon rogné par le panneau). Valeurs en dur
-   * = copie de `.sound-item-grid` dans profile-page.component.css
-   * (`gap: 8px`, `minmax(120px, 1fr)`, `padding: 2px`). */
-  private static readonly SOUND_GRID_GAP = 8;
-  private static readonly SOUND_GRID_MIN_COL = 120;
+  /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en `auto-fill`, donc
+   * variable selon la largeur disponible) — voir AutoFillColumnsObserver. Valeurs en dur = copie
+   * de `.sound-item-grid` dans profile-page.component.css (`gap: 8px`, `minmax(120px, 1fr)`,
+   * `padding: 2px`). */
   private readonly soundGrid = viewChild<ElementRef<HTMLDivElement>>('soundGrid');
-  protected readonly soundGridColumns = signal(1);
-  private soundGridResizeObserver?: ResizeObserver;
+  protected readonly soundGridColumns = new AutoFillColumnsObserver(8, 120);
 
-  /** Même principe que `soundGridColumns` ci-dessus, pour la vue grille des
-   * personnages (voir `.roster-character-list.is-grid` en CSS — valeurs à
-   * garder synchronisées avec `CHAR_GRID_GAP`/`CHAR_GRID_MIN_COL`). */
-  private static readonly CHAR_GRID_GAP = 8;
-  private static readonly CHAR_GRID_MIN_COL = 120;
+  /** Même principe que `soundGridColumns` ci-dessus, pour la vue grille des personnages (voir
+   * `.roster-character-list.is-grid` en CSS — valeurs à garder synchronisées). */
   private readonly charGrid = viewChild<ElementRef<HTMLDivElement>>('charGrid');
-  protected readonly charGridColumns = signal(1);
-  private charGridResizeObserver?: ResizeObserver;
+  protected readonly charGridColumns = new AutoFillColumnsObserver(8, 120);
 
   /** Onglet de compte actif (voir `.roster-tab-bar`, même principe que les
    * onglets Combat/Suivi/Chat du dashboard mobile) — signal en mémoire
@@ -152,23 +143,8 @@ export class ProfilePageComponent implements OnDestroy {
       }
     });
 
-    effect(() => {
-      const el = this.soundGrid()?.nativeElement;
-      this.soundGridResizeObserver?.disconnect();
-      if (!el) return;
-      this.soundGridResizeObserver = new ResizeObserver(() => this.updateSoundGridColumns(el));
-      this.soundGridResizeObserver.observe(el);
-      this.updateSoundGridColumns(el);
-    });
-
-    effect(() => {
-      const el = this.charGrid()?.nativeElement;
-      this.charGridResizeObserver?.disconnect();
-      if (!el) return;
-      this.charGridResizeObserver = new ResizeObserver(() => this.updateCharGridColumns(el));
-      this.charGridResizeObserver.observe(el);
-      this.updateCharGridColumns(el);
-    });
+    effect(() => this.soundGridColumns.observe(this.soundGrid()?.nativeElement));
+    effect(() => this.charGridColumns.observe(this.charGrid()?.nativeElement));
 
     // Sélectionne le compte principal (ou le 1er) à l'initialisation, et
     // recorrige si le compte sélectionné a été supprimé entretemps.
@@ -202,8 +178,8 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.soundGridResizeObserver?.disconnect();
-    this.charGridResizeObserver?.disconnect();
+    this.soundGridColumns.disconnect();
+    this.charGridColumns.disconnect();
     this.tabBarResizeObserver?.disconnect();
   }
 
@@ -212,24 +188,6 @@ export class ProfilePageComponent implements OnDestroy {
     const index = accounts.findIndex((a) => a.id === this.selectedAccountId());
     const btn = this.tabButtons()[index]?.nativeElement;
     this.tabSliderRect.set(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 });
-  }
-
-  private updateSoundGridColumns(el: HTMLElement): void {
-    const style = getComputedStyle(el);
-    const contentWidth =
-      el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const { SOUND_GRID_GAP: gap, SOUND_GRID_MIN_COL: minCol } = ProfilePageComponent;
-    const columns = Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
-    this.soundGridColumns.set(columns);
-  }
-
-  private updateCharGridColumns(el: HTMLElement): void {
-    const style = getComputedStyle(el);
-    const contentWidth =
-      el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-    const { CHAR_GRID_GAP: gap, CHAR_GRID_MIN_COL: minCol } = ProfilePageComponent;
-    const columns = Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
-    this.charGridColumns.set(columns);
   }
 
   protected goBack(): void {
