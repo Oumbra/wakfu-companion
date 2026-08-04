@@ -7,6 +7,7 @@ import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 type PurchaseSortOrder = 'desc' | 'asc';
 
@@ -28,7 +29,7 @@ interface PurchaseDateGroup {
  */
 @Component({
   selector: 'app-purchases',
-  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent],
+  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent, IconComponent],
   templateUrl: './purchases.component.html',
   styleUrl: './purchases.component.css',
 })

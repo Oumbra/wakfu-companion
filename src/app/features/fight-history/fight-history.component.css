@@ -79,10 +79,6 @@
   color: #888;
   flex-shrink: 0;
 }
-.fight-clock svg {
-  width: 15px;
-  height: 15px;
-}
 .fight-clock:hover {
   color: var(--accent);
 }

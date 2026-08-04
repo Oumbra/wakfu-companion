@@ -10,6 +10,7 @@ import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
+import { IconComponent } from '../../shared/icon/icon.component';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -42,7 +43,14 @@ const KPI_EXPANDED_WIDTH_PX = 250;
  */
 @Component({
   selector: 'app-tracker-strip',
-  imports: [NumberFrPipe, EntityIconComponent, ItemIconComponent, TranslatePipe, WakfuAutocompleteComponent],
+  imports: [
+    NumberFrPipe,
+    EntityIconComponent,
+    ItemIconComponent,
+    TranslatePipe,
+    WakfuAutocompleteComponent,
+    IconComponent,
+  ],
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
 })

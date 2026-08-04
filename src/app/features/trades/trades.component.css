@@ -73,10 +73,6 @@
   display: flex;
   color: #888;
 }
-.trade-clock svg {
-  width: 15px;
-  height: 15px;
-}
 .trade-character {
   font-weight: 700;
   font-size: 0.85rem;

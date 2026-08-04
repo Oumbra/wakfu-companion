@@ -89,10 +89,6 @@
   display: flex;
   color: #888;
 }
-.purchase-clock svg {
-  width: 15px;
-  height: 15px;
-}
 .purchase-name {
   flex-grow: 1;
   min-width: 0;
