@@ -124,15 +124,15 @@
                     }
                   </div>
                   @if (stats.sessionLoot().length > 1) {
-                    <div class="loot-sort-switch">
+                    <div class="icon-switch icon-switch-3 loot-sort-switch">
                       <span
-                        class="loot-sort-switch-highlight"
-                        [class.is-quantity]="lootSort() === 'quantity'"
-                        [class.is-rarity]="lootSort() === 'rarity'"
+                        class="icon-switch-highlight"
+                        [class.is-right]="lootSort() === 'quantity'"
+                        [class.is-far-right]="lootSort() === 'rarity'"
                       ></span>
                       <button
                         type="button"
-                        class="loot-sort-switch-option"
+                        class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'name'"
                         [attr.data-tooltip]="'damageMeter.sortName' | t"
                         (click)="setLootSort('name')"
@@ -141,7 +141,7 @@
                       </button>
                       <button
                         type="button"
-                        class="loot-sort-switch-option"
+                        class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'quantity'"
                         [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
                         (click)="setLootSort('quantity')"
@@ -150,7 +150,7 @@
                       </button>
                       <button
                         type="button"
-                        class="loot-sort-switch-option"
+                        class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'rarity'"
                         [attr.data-tooltip]="'damageMeter.sortRarity' | t"
                         (click)="setLootSort('rarity')"

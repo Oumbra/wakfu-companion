@@ -20,11 +20,11 @@
       (input)="setSearchQuery($any($event.target).value)"
     />
   </div>
-  <div class="sort-switch">
-    <span class="sort-switch-highlight" [class.is-asc]="sortOrder() === 'asc'"></span>
+  <div class="icon-switch sort-switch">
+    <span class="icon-switch-highlight" [class.is-right]="sortOrder() === 'asc'"></span>
     <button
       type="button"
-      class="sort-switch-option tooltip-below tooltip-align-right"
+      class="icon-switch-option sort-switch-option tooltip-below tooltip-align-right"
       [class.selected]="sortOrder() === 'desc'"
       [attr.data-tooltip]="'purchases.sortNewestFirst' | t"
       (click)="setSortOrder('desc')"
@@ -35,7 +35,7 @@
     </button>
     <button
       type="button"
-      class="sort-switch-option tooltip-below tooltip-align-right"
+      class="icon-switch-option sort-switch-option tooltip-below tooltip-align-right"
       [class.selected]="sortOrder() === 'asc'"
       [attr.data-tooltip]="'purchases.sortOldestFirst' | t"
       (click)="setSortOrder('asc')"

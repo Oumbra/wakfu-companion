@@ -252,6 +252,16 @@ button.badge-close-btn {
   width: 13px;
   height: 13px;
 }
+/* Variante à 3 options (fond glissant sur 1/3 de la largeur au lieu de 1/2) — réutilise la même
+   mécanique de base. `translateX(100%)`/`(200%)` restent relatifs à la largeur du fond glissant
+   lui-même (donc valables quel que soit `.icon-switch-3` ou non) : `.is-right` (2 options)
+   positionne l'option du milieu d'un switch à 3 options, `.is-far-right` la 3ᵉ. */
+.icon-switch-3 .icon-switch-highlight {
+  width: calc(100% / 3);
+}
+.icon-switch-highlight.is-far-right {
+  transform: translateX(200%);
+}
 
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,

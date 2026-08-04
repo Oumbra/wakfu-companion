@@ -11,11 +11,11 @@
 >
   <div class="class-picker-title-row">
     <span class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ position().name }}</span>
-    <div class="gender-switch">
-      <span class="gender-switch-highlight" [class.is-female]="gender() === 'f'"></span>
+    <div class="icon-switch gender-switch">
+      <span class="icon-switch-highlight" [class.is-right]="gender() === 'f'"></span>
       <button
         type="button"
-        class="gender-switch-option"
+        class="icon-switch-option gender-switch-option"
         [class.selected]="gender() === 'm'"
         [attr.data-tooltip]="'classPicker.showMale' | t"
         (click)="setGender('m')"
@@ -24,7 +24,7 @@
       </button>
       <button
         type="button"
-        class="gender-switch-option"
+        class="icon-switch-option gender-switch-option"
         [class.selected]="gender() === 'f'"
         [attr.data-tooltip]="'classPicker.showFemale' | t"
         (click)="setGender('f')"
