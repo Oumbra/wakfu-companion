@@ -14,6 +14,8 @@
   width: 100%;
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Slider deux panneaux (page principale / page profil) : chaque panneau fait
@@ -28,7 +30,8 @@
 .view-slider {
   display: flex;
   width: 200%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   transform: translateX(0%);
 }
