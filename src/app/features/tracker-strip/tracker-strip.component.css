@@ -273,10 +273,6 @@
   padding: 0;
   transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease;
 }
-.kpi-reset svg {
-  width: 15px;
-  height: 15px;
-}
 .kpi-reset:hover {
   color: var(--accent);
 }
@@ -440,10 +436,6 @@
   cursor: pointer;
   z-index: 2;
   padding: 0;
-}
-.kpi-select-checkbox svg {
-  width: 12px;
-  height: 12px;
 }
 .kpi-select-checkbox.checked {
   background: var(--accent);

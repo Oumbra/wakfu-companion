@@ -14,10 +14,7 @@
             [class.tooltip-below]="first"
             [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" stroke-linecap="round" stroke-linejoin="round" />
-            </svg>
+            <app-icon name="clock" [strokeWidth]="2" [size]="15" />
           </span>
           @if (fightImageUrl(record); as imageUrl) {
             <span

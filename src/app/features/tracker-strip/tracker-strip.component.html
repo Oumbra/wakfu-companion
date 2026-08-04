@@ -140,17 +140,7 @@
           [attr.data-tooltip]="'tracker.reset' | t"
           (click)="watchlist.resetCount($event, entry.name)"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <path d="M4 4v5h5M20 20v-5h-5" />
-            <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
-          </svg>
+          <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
         </button>
         <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
         @if (watchlist.selectMode()) {
@@ -162,9 +152,7 @@
             (click)="$event.stopPropagation(); watchlist.toggleSelected(entry.name)"
           >
             @if (watchlist.selectedNames().has(entry.name)) {
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 12l5 5L20 6" />
-              </svg>
+              <app-icon name="check" [strokeWidth]="3" [size]="12" />
             }
           </button>
         } @else {
