@@ -1,0 +1,21 @@
+@if (items().length === 0) {
+  <div class="empty-state small" [class.recap-variant]="emptyVariant() === 'recap'">
+    {{ 'damageMeter.noLoot' | t }}
+  </div>
+} @else {
+  <div class="loot-list" [class.scrollable]="items().length > 5">
+    @for (item of items(); track item.name; let first = $first) {
+      <div
+        class="loot-row"
+        [class]="rarityClass(item.name)"
+        [class.tooltip-below]="first"
+        [attr.data-tooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+        (contextmenu)="onContextMenu($event, item.name)"
+      >
+        <app-item-icon [name]="item.name" />
+        <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
+        <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+      </div>
+    }
+  </div>
+}

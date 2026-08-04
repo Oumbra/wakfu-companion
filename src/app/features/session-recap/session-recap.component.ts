@@ -4,7 +4,7 @@ import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
-import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
+import { LootListComponent } from '../../shared/loot-list/loot-list.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import { SessionRecapService } from '../../core/services/session-recap.service';
@@ -17,7 +17,7 @@ import {
 } from '../../core/data/header-icons.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
-import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -26,7 +26,7 @@ import { lootRarityClass, LootSort, sortLootRows } from '../../core/utils/loot-s
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, ItemIconComponent],
+  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, LootListComponent],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
@@ -108,19 +108,6 @@ export class SessionRecapComponent implements OnDestroy {
 
   protected sortedLoot(): LootRow[] {
     return sortLootRows(this.stats.sessionLoot(), this.lootSort());
-  }
-
-  protected rarityClass(name: string): string {
-    return lootRarityClass(name);
-  }
-
-  protected isWatched(name: string): boolean {
-    return this.stats.isWatched(name);
-  }
-
-  protected onLootContextMenu(event: MouseEvent, name: string): void {
-    event.preventDefault();
-    this.stats.addWatchedItem(name);
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {
