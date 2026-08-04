@@ -13,14 +13,14 @@
           [attr.data-tooltip]="'app.changeFile' | t"
           (click)="onChangeFile()"
         >
-          ⇄
+          <span class="icon-btn-text">⇄</span>
         </button>
         <button
           class="icon-btn reset-btn tooltip-below"
           [attr.data-tooltip]="'app.reset' | t"
           (click)="onReset($event)"
         >
-          ↺
+          <span class="icon-btn-text">↺</span>
         </button>
       </div>
     }
