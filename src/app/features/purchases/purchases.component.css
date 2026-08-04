@@ -84,11 +84,6 @@
   pointer-events: none;
 }
 
-.purchase-clock {
-  flex-shrink: 0;
-  display: flex;
-  color: #888;
-}
 .purchase-name {
   flex-grow: 1;
   min-width: 0;
