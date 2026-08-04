@@ -1,51 +1,10 @@
-<div class="controls-row">
-    <div class="search-wrap">
-      <svg
-        class="search-icon"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="M21 21l-4.3-4.3" />
-      </svg>
-      <input
-        type="text"
-        class="search-input"
-        [placeholder]="'purchases.searchPlaceholder' | t"
-        [value]="searchQuery()"
-        (input)="setSearchQuery($any($event.target).value)"
-      />
-    </div>
-    <div class="icon-switch sort-switch">
-      <span class="icon-switch-highlight" [class.is-right]="sortOrder() === 'asc'"></span>
-      <button
-        type="button"
-        class="icon-switch-option sort-switch-option tooltip-below tooltip-align-right"
-        [class.selected]="sortOrder() === 'desc'"
-        [attr.data-tooltip]="'purchases.sortNewestFirst' | t"
-        (click)="setSortOrder('desc')"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 19V5M5 12l7-7 7 7" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        class="icon-switch-option sort-switch-option tooltip-below tooltip-align-right"
-        [class.selected]="sortOrder() === 'asc'"
-        [attr.data-tooltip]="'purchases.sortOldestFirst' | t"
-        (click)="setSortOrder('asc')"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 5v14M19 12l-7 7-7-7" />
-        </svg>
-      </button>
-    </div>
-  </div>
+<app-history-list-header
+  [searchPlaceholder]="'purchases.searchPlaceholder' | t"
+  [searchQuery]="searchQuery()"
+  [sortOrder]="sortOrder()"
+  (searchQueryChange)="searchQuery.set($event)"
+  (sortOrderChange)="sortOrder.set($event)"
+/>
 
   <div class="panel-body">
     @if (groups().length === 0) {

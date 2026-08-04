@@ -6,6 +6,7 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 
 type TradeSortOrder = 'desc' | 'asc';
 
@@ -26,7 +27,7 @@ interface TradeDateGroup {
  */
 @Component({
   selector: 'app-trades',
-  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent],
+  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent],
   templateUrl: './trades.component.html',
   styleUrl: './trades.component.css',
 })
@@ -87,14 +88,6 @@ export class TradesComponent {
     if (updated.has(dateKey)) updated.delete(dateKey);
     else updated.add(dateKey);
     this.collapsedDates.set(updated);
-  }
-
-  protected setSortOrder(order: TradeSortOrder): void {
-    this.sortOrder.set(order);
-  }
-
-  protected setSearchQuery(value: string): void {
-    this.searchQuery.set(value);
   }
 
   protected rarityClass(name: string): string {

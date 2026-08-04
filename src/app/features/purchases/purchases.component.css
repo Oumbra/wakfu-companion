@@ -7,60 +7,6 @@
   display: contents;
 }
 
-.controls-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: #222;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.search-wrap {
-  position: relative;
-  flex-grow: 1;
-  min-width: 0;
-  display: flex;
-}
-.search-icon {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 14px;
-  height: 14px;
-  color: #777;
-  pointer-events: none;
-}
-.search-input {
-  flex-grow: 1;
-  min-width: 0;
-  background: #151515;
-  border: 1px solid #444;
-  color: var(--text-color);
-  padding: 6px 10px 6px 30px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.82rem;
-}
-.search-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-/* Interrupteur de tri (plus récent / plus ancien en premier) — réutilise la mécanique générique
-   `.icon-switch` (styles.css) ; seules les spécificités de taille restent ici. Sélecteur à deux
-   classes (`.icon-switch.sort-switch`) pour garantir la priorité sur `.icon-switch` (même
-   spécificité sinon, ordre de chargement CSS non garanti entre styles.css et ce composant). */
-.icon-switch.sort-switch {
-  width: 52px;
-  height: 26px;
-}
-.sort-switch-option svg {
-  width: 14px;
-  height: 14px;
-}
-
 .panel-body {
   padding: 0;
 }
