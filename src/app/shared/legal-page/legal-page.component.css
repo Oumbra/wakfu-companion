@@ -4,63 +4,15 @@
   min-height: 0;
 }
 
-.legal-page {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  background: #161616;
-}
-
-.legal-page-header {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  background: #181818;
-  border-bottom: 1px solid var(--border);
-}
-.back-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: none;
-  border: none;
-  color: #ccc;
-  font-weight: 600;
-  padding: 6px 10px 6px 6px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.back-btn:hover {
-  background: #262626;
-  color: #fff;
-}
-.back-btn svg {
-  width: 18px;
-  height: 18px;
-}
-.legal-page-title {
-  flex-grow: 1;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: var(--accent);
-  text-transform: uppercase;
-  font-size: 1.05rem;
-}
-.legal-page-actions {
-  min-width: 78px;
-}
-
-.legal-page-body {
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 24px;
+/* Wrapper interne (pas sur .app-page-body) : c'est lui qui centre/limite la largeur du texte,
+   pendant que la scrollbar réelle reste collée au bord droit de la fenêtre (voir
+   AppPageComponent). */
+.legal-page-content {
   max-width: 760px;
   margin: 0 auto;
+  padding: 24px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .legal-page-heading {
@@ -79,13 +31,11 @@
   color: #ccc;
   font-size: 0.85rem;
   line-height: 1.6;
+  white-space: pre-line;
 }
 
 @media (max-width: 640px) {
-  .legal-page-header {
-    padding: 8px 10px;
-  }
-  .legal-page-body {
+  .legal-page-content {
     padding: 16px;
   }
 }

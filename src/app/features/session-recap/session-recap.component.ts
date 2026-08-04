@@ -1,4 +1,4 @@
-import { Component, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
+import { Component, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
 import { LootRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -7,6 +7,7 @@ import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.compon
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
+import { SessionRecapService } from '../../core/services/session-recap.service';
 import {
   HEADER_ICON_CHALLENGES_DATA_URI,
   HEADER_ICON_COMBAT_DATA_URI,
@@ -41,12 +42,12 @@ export class SessionRecapComponent implements OnDestroy {
 
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  protected readonly recapService = inject(SessionRecapService);
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
-  protected readonly visible = signal(false);
   protected readonly duration = signal('00:00:00');
   protected readonly position = signal<{ left: number; top: number } | null>(null);
   protected readonly kamasExpanded = signal(false);
@@ -59,27 +60,26 @@ export class SessionRecapComponent implements OnDestroy {
   private dragStartPos = { left: 0, top: 0 };
   private dragging = false;
 
-  open(): void {
-    this.visible.set(true);
-    this.updateDuration();
-    this.tickInterval ??= setInterval(() => this.updateDuration(), 1000);
-  }
-
-  close(): void {
-    this.visible.set(false);
-    // Sinon une position glissée en desktop (coordonnées pixel absolues)
-    // reste appliquée telle quelle après un passage en mode mobile — le
-    // panneau peut alors se retrouver hors écran/invisible à la réouverture.
-    this.position.set(null);
-    if (this.tickInterval !== null) {
-      clearInterval(this.tickInterval);
-      this.tickInterval = null;
-    }
-  }
-
-  toggle(): void {
-    if (this.visible()) this.close();
-    else this.open();
+  constructor() {
+    // Réagit à l'état piloté par le service (ouvert depuis plusieurs headers
+    // distincts — header principal et AppHeaderComponent des pages
+    // secondaires — voir SessionRecapService) plutôt qu'un open()/close()
+    // local invoqué via référence de template.
+    effect(() => {
+      if (this.recapService.isOpen()) {
+        this.updateDuration();
+        this.tickInterval ??= setInterval(() => this.updateDuration(), 1000);
+      } else {
+        // Sinon une position glissée en desktop (coordonnées pixel absolues)
+        // reste appliquée telle quelle après un passage en mode mobile — le
+        // panneau peut alors se retrouver hors écran/invisible à la réouverture.
+        this.position.set(null);
+        if (this.tickInterval !== null) {
+          clearInterval(this.tickInterval);
+          this.tickInterval = null;
+        }
+      }
+    });
   }
 
   toggleKamas(): void {
