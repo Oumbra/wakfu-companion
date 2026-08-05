@@ -51,6 +51,7 @@
       [title]="'damageMeter.allies' | t"
       side="ally"
       [rows]="allyRows()"
+      [fightId]="displayedFightId()"
       [interactive]="true"
       [emptyMessage]="'damageMeter.emptyAllies' | t"
     />
@@ -58,6 +59,7 @@
       [title]="'damageMeter.enemies' | t"
       side="enemy"
       [rows]="enemyRows()"
+      [fightId]="displayedFightId()"
       [interactive]="true"
       [emptyMessage]="'damageMeter.emptyEnemies' | t"
     />
