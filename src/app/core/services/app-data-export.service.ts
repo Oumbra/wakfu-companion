@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { PersistenceService } from './persistence.service';
 import { PROFILE_KEY } from './profile.service';
-import { WATCHLIST_KEY } from './stats-store.service';
+import { REASSIGN_HISTORY_KEY, WATCHLIST_KEY } from './stats-store.service';
 import { ROSTER_KEY } from './character-roster.service';
 
 /** Dupliquées depuis chat-panel.component.ts (propriétaire du chat, pas de
@@ -15,6 +15,7 @@ const CHAT_FILTERS_KEY = 'wakfu-chat-filters';
 const EXPORT_KEYS = {
   profile: PROFILE_KEY,
   watchlist: WATCHLIST_KEY,
+  damageReassignments: REASSIGN_HISTORY_KEY,
   roster: ROSTER_KEY,
   chatActiveChannels: CHAT_ACTIVE_CHANNELS_KEY,
   chatFilters: CHAT_FILTERS_KEY,

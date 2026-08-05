@@ -14,8 +14,11 @@ export const WATCHLIST_KEY = 'wakfu-watchlist';
 /** Anciennes clés (listes séparées), lues une seule fois pour migrer vers la liste fusionnée si besoin. */
 const LEGACY_ENEMY_WATCHLIST_KEY = 'wakfu-enemy-watchlist';
 const LEGACY_ITEM_WATCHLIST_KEY = 'wakfu-item-watchlist';
+export const REASSIGN_HISTORY_KEY = 'wakfu-damage-reassignments';
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
+/** Borne haute du journal des réattributions persistées (voir reassignSpell/replayPersistedReassignments) — purement une garde-fou anti-croissance illimitée sur une très longue session, jamais atteinte en usage normal. */
+const MAX_REASSIGNMENT_HISTORY = 500;
 /** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. */
 const PURCHASE_WINDOW_MS = 2000;
 
@@ -98,6 +101,17 @@ export interface TradeRecord {
   given: TradeItemRow[];
   kamasAcquired: number;
   kamasGiven: number;
+}
+
+/** Une correction manuelle de réattribution enregistrée telle quelle (voir reassignSpell), persistée
+ * pour être rejouée après chaque rechargement initial (voir replayPersistedReassignments) — sans
+ * quoi une (re)connexion (F5, "Changer de fichier"...) reconstruit l'historique depuis zéro et perd
+ * toute correction déjà appliquée (voir gating isInitialLoad, CLAUDE.md). */
+interface PersistedReassignment {
+  fightId: number;
+  spellName: string;
+  from: { name: string; instanceIndex: number };
+  to: { name: string; instanceIndex: number };
 }
 
 export interface FightRecord {
@@ -223,6 +237,12 @@ export class StatsStoreService {
   private readonly tradeHistoryList: TradeRecord[] = [];
   /** Combats actuellement en cours, par fightId — voir FightWorking. */
   private readonly activeFights = new Map<number, FightWorking>();
+  /** Journal des réattributions manuelles effectuées par l'utilisateur (voir reassignSpell),
+   * persisté et rejoué après chaque rechargement initial pour ne jamais perdre une correction déjà
+   * faite — voir PersistedReassignment. Volontairement PAS vidé par resetSessionState() (rejoué à
+   * chaque isInitialLoad), seulement par resetStats() (remise à zéro explicite demandée par
+   * l'utilisateur). */
+  private readonly reassignmentHistory: PersistedReassignment[] = [];
   /** Combat affiché par la vue "Combat en cours" : le dernier combat actif touché par un événement. */
   private currentDisplayFightId: number | null = null;
   /** Horodatage de la dernière ligne traitée : sert à calculer la durée écoulée du combat affiché. */
@@ -254,6 +274,9 @@ export class StatsStoreService {
     private readonly roster: CharacterRosterService,
   ) {
     this.watchlist.set(this.loadWatchlist());
+    this.reassignmentHistory.push(
+      ...(this.persistence.getJson<PersistedReassignment[]>(REASSIGN_HISTORY_KEY) ?? []),
+    );
     this.logFileAccess.newLines$.subscribe(({ lines, isInitialLoad }) =>
       this.ingest(lines, isInitialLoad),
     );
@@ -366,6 +389,11 @@ export class StatsStoreService {
     const resetCounts = this.watchlist().map((w) => ({ ...w, count: this.startingCount(w) }));
     this.watchlist.set(resetCounts);
     this.persistence.setJson(WATCHLIST_KEY, resetCounts);
+
+    // Remise à zéro explicite demandée par l'utilisateur : les combats déjà réattribués sont
+    // repartis avec l'historique qu'ils corrigeaient, inutile de les rejouer indéfiniment.
+    this.reassignmentHistory.length = 0;
+    this.persistence.setJson(REASSIGN_HISTORY_KEY, this.reassignmentHistory);
   }
 
   private ingest(lines: string[], isInitialLoad: boolean): void {
@@ -387,6 +415,10 @@ export class StatsStoreService {
     const flushed = this.parser.flush();
     if (flushed) this.apply(flushed);
     this.classifier.commit();
+    // Rejoue les corrections déjà faites par l'utilisateur AVANT une (re)connexion : resetSessionState()
+    // ci-dessus vient de reconstruire l'historique depuis zéro (voir gating isInitialLoad, CLAUDE.md),
+    // sans quoi les combats concernés retrouveraient leur attribution automatique d'origine.
+    if (isInitialLoad) this.replayPersistedReassignments();
     this.publish();
   }
 
@@ -1054,9 +1086,36 @@ export class StatsStoreService {
     from: { name: string; instanceIndex: number },
     to: { name: string; instanceIndex: number },
   ): void {
+    this.applyReassign(fightId, spellName, from, to);
+
+    this.reassignmentHistory.push({ fightId, spellName, from, to });
+    if (this.reassignmentHistory.length > MAX_REASSIGNMENT_HISTORY) {
+      this.reassignmentHistory.splice(0, this.reassignmentHistory.length - MAX_REASSIGNMENT_HISTORY);
+    }
+    this.persistence.setJson(REASSIGN_HISTORY_KEY, this.reassignmentHistory);
+  }
+
+  private applyReassign(
+    fightId: number,
+    spellName: string,
+    from: { name: string; instanceIndex: number },
+    to: { name: string; instanceIndex: number },
+  ): void {
     const working = this.activeFights.get(fightId);
     if (working) this.reassignLiveSpell(working, spellName, from, to);
     else this.reassignHistoricalSpell(fightId, spellName, from, to);
+  }
+
+  /** Rejoue tout le journal des réattributions persistées (voir reassignSpell) — appelé après chaque
+   * lot initial de (re)connexion, une fois l'historique du fichier entièrement reconstruit. Chaque
+   * entrée est rejouée dans son ordre d'origine : une chaîne de corrections successives sur le même
+   * sort (A→B puis B→C) ne fonctionne que rejouée dans cet ordre. applyReassign() est un no-op
+   * silencieux si l'entité/le sort visé n'existe plus (ex. combat absent de ce fichier), donc sans
+   * risque à rejouer sur un historique qui ne correspond plus. */
+  private replayPersistedReassignments(): void {
+    for (const entry of this.reassignmentHistory) {
+      this.applyReassign(entry.fightId, entry.spellName, entry.from, entry.to);
+    }
   }
 
   /** Reconstruit la clé attackerMap ("Nom" ou "Nom#i", voir InitiativeSeat) d'une instance à partir de son nom/index affiché. */
