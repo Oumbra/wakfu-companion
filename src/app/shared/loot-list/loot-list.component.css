@@ -12,6 +12,12 @@
   overflow-y: auto;
   padding-right: 10px;
 }
+/* Modale de fin de session (recap) uniquement : la liste doit rester entièrement visible (la
+   modale elle-même défile si besoin) plutôt que d'ouvrir son propre scroll interne à 130px — voir
+   `emptyVariant` (déjà utilisé pour la même distinction sur l'état vide ci-dessous). */
+.loot-list.scrollable.recap-variant {
+  max-height: unset;
+}
 
 .loot-row {
   position: relative;

@@ -39,8 +39,9 @@ export interface EntityDamageRow {
    * d'instances partageant ce nom (voir Fight.enemies/allies — plusieurs monstres, voire alliés,
    * peuvent porter le même nom). `instanceCount === 1` : une seule ligne pour ce nom, pas de
    * suffixe à afficher. Le log ne référence les dégâts/sorts que par nom (jamais par instance) :
-   * seule la 1ʳᵉ instance porte le détail agrégé, les suivantes existent pour représenter chaque
-   * combattant réellement rejoint (et son propre statut KO) sans dupliquer le total affiché. */
+   * chaque instance récupère ses propres dégâts/sorts via la file d'initiative du combat (voir
+   * InitiativeSeat, resolveNextActor) dès qu'elle a été vue jouer au moins un sort — une instance
+   * jamais vue jouer (morte avant son 1er tour) reste à 0, faute de mieux. */
   instanceIndex: number;
   instanceCount: number;
 }
@@ -126,10 +127,40 @@ interface FightWorking {
   defeatedInstanceCounts: Map<string, number>;
   /** fighterId déjà vus (voir FighterJoinedEntry) : une jointure répétée (doublon multi-compte, resynchronisation) ne doit pas dupliquer l'entrée dans allies/enemies. */
   fighterIdsSeen: Set<number>;
-  /** Acteurs (nom) ayant déjà lancé un sort au cours du tour courant, et dernier acteur ayant joué —
-   * voir le repli round-robin de comptage des tours dans le handler 'spell-cast'. */
-  turnActorsSeen: Set<string>;
+  /** File d'initiative de ce combat (ordre de jeu détecté au fil de l'eau) — voir resolveNextActor(). */
+  initiativeSeats: InitiativeSeat[];
+  /** Index (dans initiativeSeats) du prochain siège attendu à jouer. */
+  initiativeCursor: number;
+  /** Dernier acteur (nom) ayant lancé un sort — permet d'ignorer les sorts consécutifs d'un même
+   * acteur (toujours le même tour en cours, pas un nouveau passage dans la file). */
   lastTurnActor: string | null;
+  /** Dernier siège résolu pour chaque nom (voir resolveNextActor) — sert à attribuer les dégâts
+   * (attaquant identifié par nom seul dans le log) à la bonne instance quand le nom est partagé par
+   * plusieurs combattants (voir case 'damage'). */
+  lastResolvedSeatByName: Map<string, string>;
+  /** Sièges (voir InitiativeSeat, PAS des noms bruts — c'est ce qui distingue correctement deux
+   * combattants homonymes) ayant déjà joué au cours du tour courant — voir registerFightTurn : un
+   * siège qui rejoue alors qu'il a déjà joué ce tour-ci signale que le tour a bouclé. */
+  turnSeatsSeen: Set<string>;
+}
+
+/**
+ * Un siège de la file d'initiative d'un combat : représente un combattant distinct dans l'ordre de
+ * jeu réel (fixe pour toute la durée du combat, propriété du tour par tour Wakfu). `key` est un
+ * identifiant synthétique stable pour toute la durée du combat — PAS le fighterId réel (le log ne
+ * relie jamais une action de dégât/sort à un fighterId, seule la ligne de jointure [_FL_] le porte,
+ * voir FighterJoinedEntry) : "Nom" si ce nom n'est porté que par un seul combattant du combat,
+ * "Nom#i" sinon (i = ordre de découverte parmi les sièges de ce nom, voir resolveNextActor).
+ */
+interface InitiativeSeat {
+  key: string;
+  name: string;
+  /** Nombre de tours consécutifs sautés (ce siège attendu n'a pas joué) sans avoir rejoué depuis —
+   * voir resolveNextActor : à 2, le siège est considéré définitivement hors rotation. */
+  consecutiveSkips: number;
+  /** true dès que ce siège est sorti de la rotation (2 tours sautés d'affilée, très probablement
+   * hors combat) : ignoré lors de la recherche du prochain siège, mais jamais retiré du tableau. */
+  retired: boolean;
 }
 
 /**
@@ -432,7 +463,14 @@ export class StatsStoreService {
         break;
       case 'damage': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) this.addDamage(working.attackerMap, entry.attacker, entry);
+        if (working) {
+          // Le log ne référence l'attaquant que par nom : on l'attribue au dernier siège de la
+          // file d'initiative résolu pour ce nom (voir resolveNextActor), qui distingue plusieurs
+          // combattants homonymes — repli sur le nom brut si ce nom n'a encore jamais joué de sort
+          // (ex. premier événement de dégâts du combat avant toute ligne "lance le sort").
+          const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
+          this.addDamage(working.attackerMap, seatKey, entry);
+        }
         this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
       }
@@ -473,8 +511,11 @@ export class StatsStoreService {
         defeatedNames: new Set(),
         defeatedInstanceCounts: new Map(),
         fighterIdsSeen: new Set(),
-        turnActorsSeen: new Set(),
+        initiativeSeats: [],
+        initiativeCursor: 0,
         lastTurnActor: null,
+        lastResolvedSeatByName: new Map(),
+        turnSeatsSeen: new Set(),
       };
       this.activeFights.set(fightId, working);
     }
@@ -496,34 +537,101 @@ export class StatsStoreService {
       else working.fight.allies.push({ name, breed });
     }
     this.classifier.registerFighterJoin(name, isControlledByAI);
-    this.ensurePresent(working.attackerMap, name);
+    this.ensurePresent(working, name);
   }
 
   /**
    * "N secondes reportées pour le tour suivant" ne se déclenche qu'après un tour JOUEUR (jamais un
    * tour monstre IA) : signal structurellement incomplet pour compter les tours. Seul "X lance le
    * sort Y" est émis pour n'importe quel acteur (allié comme monstre), on s'en sert donc pour
-   * détecter le cycle des tours au fil de l'eau :
-   *  - un même acteur qui recommence à lancer des sorts sans qu'un autre n'ait joué entre-temps
-   *    reste dans son tour en cours (pas de changement de tour) ;
-   *  - un acteur différent qui prend la main est simplement le tour suivant DE CE round (ajouté à
-   *    l'ensemble des acteurs déjà passés ce round) ;
-   *  - un acteur qui reprend la main alors qu'il avait déjà joué ce round signale que le round a
-   *    bouclé : le tour est incrémenté et l'ensemble redémarre avec ce seul acteur. Un acteur
-   *    sorti du combat (mort) n'apparaît simplement plus jamais dans cet ensemble, donc le round
-   *    boucle naturellement sur le suivant sans traitement particulier à prévoir pour ce cas.
+   * construire au fil de l'eau la file d'initiative du combat (voir InitiativeSeat) — l'ordre de
+   * jeu réel est fixe pour toute la durée d'un combat Wakfu (propriété du tour par tour), la
+   * position d'un acteur dans cette file est donc stable d'un tour à l'autre.
+   *
+   * Le tour est compté par SIÈGE (voir turnSeatsSeen), pas par nom brut : un siège qui rejoue alors
+   * qu'il a déjà joué ce tour-ci signale que le tour a bouclé. Compter par nom brut sur-compterait
+   * les tours dès que 2 combattants homonymes jouent chacun une fois dans le même tour (le nom
+   * "réapparaîtrait" avant d'avoir réellement bouclé) — c'est justement ce que résout la file
+   * d'initiative en distinguant leurs sièges.
    */
   private registerFightTurn(fightId: number | null, actor: string): void {
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
     if (!working) return;
+    // Limite résiduelle assumée (irréductible vu le format du log, qui ne référence jamais un nom
+    // par instance en dehors de la ligne de jointure) : si le tour d'une instance nommée X se
+    // termine exactement au moment où le tour suivant démarre par une AUTRE instance de ce même nom
+    // X (aucun autre acteur entre les deux, ex. 2 monstres homonymes placés côte à côte dans l'ordre
+    // de jeu), rien ne permet de distinguer ce cas d'un simple 2ᵉ sort de la même instance dans son
+    // propre tour : les deux sont alors fusionnés sur le même siège.
     if (working.lastTurnActor === actor) return; // même tour en cours (plusieurs sorts d'affilée).
 
-    if (working.turnActorsSeen.has(actor)) {
-      working.fight.turnCount += 1;
-      working.turnActorsSeen.clear();
-    }
-    working.turnActorsSeen.add(actor);
+    const seatKey = this.resolveNextActor(working, actor);
     working.lastTurnActor = actor;
+    working.lastResolvedSeatByName.set(actor, seatKey);
+
+    if (working.turnSeatsSeen.has(seatKey)) {
+      working.fight.turnCount += 1;
+      working.turnSeatsSeen.clear();
+    }
+    working.turnSeatsSeen.add(seatKey);
+  }
+
+  /**
+   * Trouve, à partir du curseur, le plus proche siège actif (non retiré) portant ce nom et avance
+   * la file jusqu'à lui — les sièges actifs sautés au passage (attendus avant lui mais n'ayant pas
+   * joué) voient leur compteur de tours sautés incrémenté, et sont considérés définitivement hors
+   * rotation dès 2 tours sautés d'affilée (très probablement hors combat, cf. énoncé du problème :
+   * un "joker temporaire" qui se confirme se transforme en retrait définitif).
+   *
+   * Tant que ce nom n'a pas encore autant de sièges que d'instances connues ayant rejoint le combat
+   * (voir countNameInstances), la recherche ne boucle PAS par la fin de la file : une occurrence de
+   * ce nom ne peut alors être reconnue comme une instance déjà vue QUE si elle se trouve sans avoir
+   * à franchir la fin de la file actuelle — sinon impossible de savoir s'il s'agit d'une instance
+   * déjà vue qui rejoue ou d'une instance encore jamais vue, on préfère alors créer un nouveau siège
+   * (repli sûr : au pire une instance jamais résolue reste à 0 dégât, voir buildEntityDamageRows).
+   * Une fois toutes les instances connues dotées d'un siège, la recherche redevient circulaire.
+   *
+   * Si aucun siège actif existant ne porte ce nom, il s'agit d'une instance jamais vue jouer
+   * jusqu'ici : un nouveau siège est créé et inséré à la position du curseur (meilleure estimation
+   * disponible de sa place réelle dans l'ordre de jeu). "Nom" si ce nom n'est porté que par un seul
+   * combattant du combat, "Nom#i" sinon (i = ordre de découverte parmi les sièges de ce nom) —
+   * jamais le fighterId réel, que le log ne relie à aucune ligne d'action (voir InitiativeSeat).
+   */
+  private resolveNextActor(working: FightWorking, name: string): string {
+    const seats = working.initiativeSeats;
+    const seatCount = seats.length;
+    const cursor = working.initiativeCursor;
+    const instanceCount = this.countNameInstances(working, name.toLowerCase()) || 1;
+    const existingSeatsForName = seats.reduce((n, s) => n + (s.name === name ? 1 : 0), 0);
+    const allowWrap = existingSeatsForName >= instanceCount;
+    const maxOffset = allowWrap ? seatCount : seatCount - cursor;
+
+    for (let offset = 0; offset < maxOffset; offset++) {
+      const idx = (cursor + offset) % seatCount;
+      const seat = seats[idx];
+      if (seat.retired || seat.name !== name) continue;
+
+      for (let skipOffset = 0; skipOffset < offset; skipOffset++) {
+        const skipped = seats[(cursor + skipOffset) % seatCount];
+        if (skipped.retired) continue;
+        skipped.consecutiveSkips += 1;
+        if (skipped.consecutiveSkips >= 2) skipped.retired = true;
+      }
+
+      seat.consecutiveSkips = 0;
+      working.initiativeCursor = (idx + 1) % seatCount;
+      return seat.key;
+    }
+
+    const key = instanceCount <= 1 ? name : `${name}#${existingSeatsForName + 1}`;
+    seats.splice(cursor, 0, { key, name, consecutiveSkips: 0, retired: false });
+    // Pas de modulo ici (contrairement à la branche "trouvé" ci-dessus) : la file grandit encore
+    // pendant la découverte initiale (1er tour), `cursor` doit alors simplement suivre la queue au
+    // fil des insertions successives (cursor === seats.length tant qu'on ne fait qu'ajouter) —
+    // moduler prématurément par la longueur (souvent 1 juste après la toute 1ʳᵉ insertion) ferait
+    // revenir le curseur à 0 et casserait la position d'insertion des sièges suivants.
+    working.initiativeCursor = cursor + 1;
+    return key;
   }
 
   private registerFightXp(fightId: number | null, character: string, amount: number): void {
@@ -553,7 +661,7 @@ export class StatsStoreService {
     if (!working) return;
     const key = name.toLowerCase();
     working.defeatedNames.add(key);
-    this.ensurePresent(working.attackerMap, name);
+    this.ensurePresent(working, name);
 
     const alreadyCredited = working.defeatedInstanceCounts.get(key) ?? 0;
     const instanceCount = this.countNameInstances(working, key) || 1;
@@ -679,9 +787,18 @@ export class StatsStoreService {
     return ((+h * 60 + +m) * 60 + +s) * 1000 + +ms;
   }
 
-  /** Garantit une ligne à 0 dégât pour un personnage sans y écraser des dégâts déjà enregistrés. */
-  private ensurePresent(map: Map<string, Map<string, SpellAgg>>, name: string): void {
-    if (!map.has(name)) map.set(name, new Map());
+  /**
+   * Garantit une ligne à 0 dégât pour un nom SANS instance ambiguë (voir InitiativeSeat), sans
+   * écraser des dégâts déjà enregistrés. Un nom partagé par plusieurs combattants n'est volontairement
+   * PAS créé ici : ses lignes (une par instance) sont reconstruites par buildEntityDamageRows() à
+   * partir de Fight.enemies/allies, la clé exacte ("Nom#i") n'étant connue qu'une fois l'instance
+   * résolue par la file d'initiative (voir resolveNextActor) — créer ici une entrée "Nom" brute en
+   * plus produirait une ligne fantôme en double des lignes par instance.
+   */
+  private ensurePresent(working: FightWorking, name: string): void {
+    const instanceCount = this.countNameInstances(working, name.toLowerCase()) || 1;
+    if (instanceCount > 1) return;
+    if (!working.attackerMap.has(name)) working.attackerMap.set(name, new Map());
   }
 
   private addDamage(
@@ -842,10 +959,12 @@ export class StatsStoreService {
 
   /**
    * Une ligne par instance réellement rejointe (voir Fight.enemies/allies), pas par nom : plusieurs
-   * monstres (voire alliés) peuvent partager un même nom (voir countNameInstances). Le log ne
-   * référence les dégâts/sorts que par nom, jamais par instance : le détail agrégé est donc porté
-   * par la 1ʳᵉ instance de chaque nom, les suivantes affichées à 0 pour ne pas dupliquer le total
-   * de la section — seul le statut KO (`defeatedInstanceCounts`) est réellement individuel par ligne.
+   * monstres (voire alliés) peuvent partager un même nom (voir countNameInstances). Chaque instance
+   * porte désormais ses propres dégâts/sorts quand la file d'initiative (voir resolveNextActor) a pu
+   * l'identifier au moins une fois (clé "Nom#i" dans attackerMap) — une instance jamais vue jouer de
+   * sort (morte avant son 1er tour, ou dégâts reçus uniquement) reste à 0, faute de mieux. Seul le
+   * statut KO (`defeatedInstanceCounts`) reste indépendant de la file d'initiative (signal explicite
+   * du parser, plus fiable).
    */
   private buildEntityDamageRows(working: FightWorking): EntityDamageRow[] {
     const instanceCountByName = new Map<string, number>();
@@ -855,27 +974,36 @@ export class StatsStoreService {
     for (const a of working.fight.allies) {
       instanceCountByName.set(a.name, (instanceCountByName.get(a.name) ?? 0) + 1);
     }
+    // Noms présents dans attackerMap mais absents de Fight.enemies/allies (ex. invocation d'allié,
+    // jamais rejointe via [_FL_]) : à ajouter aussi, traités comme instance unique (clé = nom brut,
+    // jamais suffixée "#i" — voir resolveNextActor, qui ne suffixe que si countNameInstances > 1).
+    const names = new Set(instanceCountByName.keys());
+    for (const key of working.attackerMap.keys()) names.add(this.seatKeyToName(key));
+
+    const buildSpellRows = (spells: Map<string, SpellAgg> | undefined): SpellBreakdownRow[] =>
+      spells
+        ? [...spells.entries()]
+            .map(([spell, agg]) => ({
+              spell,
+              total: agg.total,
+              byElement: Object.fromEntries(agg.byElement) as Partial<Record<DamageElement, number>>,
+            }))
+            .sort((a, b) => b.total - a.total)
+        : [];
 
     const rows: EntityDamageRow[] = [];
-    for (const [name, spells] of working.attackerMap) {
-      const spellRows: SpellBreakdownRow[] = [...spells.entries()]
-        .map(([spell, agg]) => ({
-          spell,
-          total: agg.total,
-          byElement: Object.fromEntries(agg.byElement) as Partial<Record<DamageElement, number>>,
-        }))
-        .sort((a, b) => b.total - a.total);
-      const total = spellRows.reduce((sum, row) => sum + row.total, 0);
-      const defeatedCount = working.defeatedInstanceCounts.get(name.toLowerCase()) ?? 0;
-      // Absent de Fight.enemies/allies (ex. invocation d'allié) : traité comme une instance unique,
-      // comportement inchangé par rapport à avant cette évolution.
+    for (const name of names) {
       const instanceCount = instanceCountByName.get(name) ?? 1;
+      const defeatedCount = working.defeatedInstanceCounts.get(name.toLowerCase()) ?? 0;
 
       for (let instanceIndex = 1; instanceIndex <= instanceCount; instanceIndex++) {
+        const key = instanceCount <= 1 ? name : `${name}#${instanceIndex}`;
+        const spellRows = buildSpellRows(working.attackerMap.get(key));
+        const total = spellRows.reduce((sum, row) => sum + row.total, 0);
         rows.push({
           name,
-          total: instanceIndex === 1 ? total : 0,
-          spells: instanceIndex === 1 ? spellRows : [],
+          total,
+          spells: spellRows,
           defeated: instanceIndex <= defeatedCount,
           instanceIndex,
           instanceCount,
@@ -883,5 +1011,13 @@ export class StatsStoreService {
       }
     }
     return rows.sort((a, b) => b.total - a.total);
+  }
+
+  /** Retire le suffixe "#i" d'une clé de siège (voir InitiativeSeat) pour retrouver le nom réel —
+   * ce suffixe n'apparaît jamais dans un nom Wakfu, il n'est produit que par resolveNextActor(). */
+  private seatKeyToName(key: string): string {
+    const hashIdx = key.lastIndexOf('#');
+    if (hashIdx === -1) return key;
+    return /^\d+$/.test(key.slice(hashIdx + 1)) ? key.slice(0, hashIdx) : key;
   }
 }
