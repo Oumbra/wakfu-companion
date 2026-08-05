@@ -10,6 +10,8 @@ import { ProfilePageComponent } from './features/profile-page/profile-page.compo
 import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
+import { DamageReassignPickerComponent } from './shared/damage-reassign-picker/damage-reassign-picker.component';
+import { DamageReassignEntity, DamageReassignService } from './core/services/damage-reassign.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';
@@ -29,6 +31,7 @@ import { Gender } from './core/data/class-icons.data';
     ProfilePageComponent,
     LootAlertComponent,
     ClassPickerComponent,
+    DamageReassignPickerComponent,
     ConfirmDeletePopoverComponent,
     CombatEdgeTabComponent,
     HelpModalComponent,
@@ -45,6 +48,7 @@ export class App implements OnInit {
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
+  protected readonly damageReassignService = inject(DamageReassignService);
   protected readonly combatPanel = inject(CombatPanelService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
@@ -56,5 +60,10 @@ export class App implements OnInit {
   protected onClassChosen(event: { className: string; gender: Gender }): void {
     this.classPickerService.request()?.onChosen(event.className, event.gender);
     this.classPickerService.close();
+  }
+
+  protected onDamageReassignChosen(to: DamageReassignEntity): void {
+    this.damageReassignService.request()?.onChosen(to);
+    this.damageReassignService.close();
   }
 }

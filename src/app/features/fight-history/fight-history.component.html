@@ -50,6 +50,7 @@
               [title]="'damageMeter.allies' | t"
               side="ally"
               [rows]="allyRowsFor(record)"
+              [fightId]="record.id"
               [collapsible]="true"
               [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
             />
@@ -57,6 +58,7 @@
               [title]="'damageMeter.enemies' | t"
               side="enemy"
               [rows]="enemyRowsFor(record)"
+              [fightId]="record.id"
               [collapsible]="true"
               [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
             />
