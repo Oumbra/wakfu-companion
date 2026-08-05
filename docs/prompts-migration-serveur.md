@@ -356,52 +356,149 @@ inchangé, fonctionnement hors-ligne après première visite.
 
 ---
 
-# Lot 4 — Serveur de jeu
+# Lot 4 — Monitoring de prix
 
-## Prompt 4.1 — Modèle et sélecteur de serveur
+**Chantier indépendant** des lots 5 à 8 (authentification, comptes) : ne dépend
+que du lot 2 (catalogue serveur) et peut être livré et démontré avant même que
+la page de connexion existe. Voir `docs/plan-migration-serveur.md` §8 — la
+source est un skill de scan vidéo de l'hôtel de ventes, **pas** les achats des
+utilisateurs.
 
-**Objectif** : prérequis bloquant de toute la fonctionnalité prix.
-**Prérequis** : 3.1 (mais totalement indépendant de l'authentification).
+## Prompt 4.1 — Skill de scan vidéo
+
+**Objectif** : extraire d'une vidéo de l'hôtel de ventes une liste
+`{item, prix}` quotidienne, exploitable même sans le reste du lot (sortie
+locale, aucune écriture serveur à ce stade).
+**Prérequis** : 2.2 (recherche catalogue disponible côté serveur).
+**Risque** : moyen — dépend de la fiabilité de l'OCR/vision, à valider avec de
+vraies vidéos avant d'aller plus loin.
 
 ```
-Le log Wakfu ne contient AUCUNE indication du serveur de jeu (vérifié sur
-assets/logs/tests/fr/purchase_2.log). Sans cette dimension, les futures données
-de prix sont inexploitables : il faut la déclarer. Voir
-docs/plan-migration-serveur.md §8, section « Identification du serveur de jeu ».
+Crée un skill (vérifie s'il existe une convention/emplacement dédié hors du
+dépôt public avant de committer quoi que ce soit — ce projet a déjà eu des
+skills de synchronisation de référentiel retirés du dépôt public, voir
+l'historique git ; même précédent probable ici) qui transforme une vidéo de
+l'hôtel de ventes du jeu, déjà enregistrée, en une liste quotidienne
+{item_id, prix}. L'enregistrement de la vidéo elle-même reste manuel et hors
+périmètre de ce prompt.
 
-Conception retenue — le serveur est porté par le COMPTE du roster, pas par
-l'utilisateur : CharacterRosterService gère déjà des comptes (RosterAccount)
-contenant des personnages, et StatsStoreService sait déjà reconnaître un
-personnage du roster (roster.hasCharacter). Le serveur actif se déduit donc
-automatiquement du personnage observé dans le log — factuel, et seule façon de
-gérer un joueur multi-compte réparti sur plusieurs serveurs.
+Pipeline attendu :
+1. Extraction d'images à intervalle régulier depuis la vidéo. Réutilise la
+   technique déjà documentée dans ce projet (imageio + imageio-ffmpeg, voir
+   CLAUDE.md) plutôt que de dépendre d'un ffmpeg système installé.
+2. Lecture du nom d'objet et du prix affiché sur chaque image. Compare une
+   approche OCR classique (Tesseract) et une lecture par un modèle Claude en
+   vision ; choisis en fonction de la fiabilité observée sur un échantillon
+   réel de vidéo, pas en théorie. Documente ton choix et pourquoi.
+3. Nettoyage du prix : même format que les kamas dans wakfu.log (séparateur de
+   milliers en espace insécable) — réutilise la logique déjà présente dans
+   log-parser.ts (regex NUM) plutôt que d'en réécrire une.
+4. Résolution du nom vers un item_id via le catalogue serveur
+   (GET /api/v1/catalog/search, normalizeWakfuName pour la normalisation). Un
+   nom non résolu ne doit JAMAIS être abandonné silencieusement : écris-le
+   dans une sortie séparée « non résolus » pour revue manuelle.
+5. Déduplication : la liste de l'hôtel de ventes est normalement triée par
+   prix croissant, donc la première occurrence d'un objet dans le parcours est
+   déjà son prix le plus bas ce jour-là ; sinon prends le minimum observé.
+6. Sortie : un JSON local {gameServer, capturedOn, items: [{itemId, price}],
+   unresolved: [...]} — PAS encore d'appel réseau vers l'API d'ingestion, ce
+   sera le prompt 4.2.
+
+Teste sur au moins une vraie vidéo de l'hôtel de ventes (fournie par
+l'utilisateur) avant de considérer ce prompt terminé : mesure le taux de noms
+résolus et donne ce chiffre dans ton compte rendu. Si le taux de résolution est
+mauvais, dis-le clairement plutôt que de livrer un pipeline qui produit
+silencieusement des trous.
+```
+
+**Acceptation** : JSON de sortie correct sur une vraie vidéo, taux de
+résolution mesuré et communiqué, aucun nom perdu silencieusement.
+
+---
+
+## Prompt 4.2 — Ingestion et rollups mensuels
+
+**Objectif** : recevoir la sortie du skill (prompt 4.1) et la transformer en
+séries de prix consultables — un objet scanné quotidiennement, un agrégat
+mensuel (min/max/moyenne) qui sert de base aux graphiques et aux classements.
+**Prérequis** : 2.1 (infrastructure serveur). Peut être développé en parallèle
+du 4.1, à condition de s'accorder d'abord sur le format JSON en sortie de
+celui-ci.
+
+```
+Mets en place l'ingestion et l'agrégation des prix
+(docs/plan-migration-serveur.md §8) — une source SANS lien avec les comptes
+utilisateurs ni avec les achats des joueurs.
 
 Tâches :
-1. Ajoute `gameServer` à RosterAccount, avec migration des rosters existants
-   (valeur non renseignée, pas de valeur inventée par défaut).
-2. Page profil : sélecteur de serveur par compte, alimenté par
-   GET /api/v1/game-servers (jamais une liste en dur côté client).
-3. Préférence globale « serveur par défaut », utilisée tant qu'aucun personnage
-   connu n'a été identifié dans la session.
-4. Nouveau core/services/game-server.service.ts exposant un signal
-   `activeServer` : serveur du compte du dernier personnage reconnu, sinon
-   défaut global, sinon null.
-5. Badge « serveur actif » permanent dans le header (avec tooltip indiquant
-   d'où vient la déduction : personnage reconnu ou valeur par défaut). Respecte
-   les conventions de tooltip de CLAUDE.md (.tooltip-below dans un header).
-6. Si aucun serveur n'est renseigné nulle part, une invite discrète et non
-   bloquante invite à le faire — sans interrompre l'usage actuel.
+1. Migrations : item_prices_daily (item_id, game_server, captured_on, price),
+   item_prices_monthly (item_id, game_server, month, price_min, price_max,
+   price_avg, samples_count), price_trends en vue matérialisée, et
+   price_scan_runs pour la traçabilité (schéma exact au §6 du plan).
+2. POST /api/v1/prices/ingest : protégé par un jeton de service STATIQUE
+   (secret Cloudflare), PAS une session utilisateur — vérifie qu'aucune route
+   d'authentification n'est impliquée. Accepte le format JSON produit par le
+   skill du prompt 4.1. Upsert sur (item_id, game_server, captured_on) : une
+   ré-ingestion du même jour écrase plutôt que duplique (pas besoin de la
+   mécanique de clé déterministe du lot 8, ce pipeline n'a pas le problème
+   isInitialLoad).
+3. Cron (Cloudflare Cron Trigger — ces tâches sont légères, essentiellement de
+   l'attente réseau vers la base, donc compatibles avec le budget CPU
+   restreint de Workers) :
+   - rafraîchissement quotidien de price_trends (variation moyenne 30 derniers
+     jours vs 30 jours précédents) ;
+   - consolidation mensuelle item_prices_daily → item_prices_monthly.
+4. GET /api/v1/prices/{itemId}?server=&range= (série bornée) et
+   GET /api/v1/prices/trends?server=&dir= (hausses/baisses, lues dans la vue
+   matérialisée, jamais calculées à la volée).
+5. Un item_id absent du catalogue doit être rejeté à l'ingestion avec un
+   message clair, pas silencieusement ignoré.
 
-Ce lot ne doit RIEN envoyer au serveur : tout tient dans le localStorage
-existant via PersistenceService. Les 4 locales doivent être mises à jour.
-
-Vérifie dans le navigateur : sélection d'un serveur par compte, bascule
-automatique du badge quand un personnage d'un autre compte joue (simule des
-lignes de log), persistance après rechargement.
+Vérifie avec le JSON produit au prompt 4.1 (ou un jeu de données synthétique
+équivalent) : ingestion correcte, upsert idempotent sur ré-ingestion du même
+jour, rollup mensuel correct, endpoints bornés.
 ```
 
-**Acceptation** : serveur actif correct dans tous les cas, badge visible,
-aucune régression du roster existant.
+**Acceptation** : ingestion fonctionnelle, rollups corrects, endpoints publics
+bornés et rapides.
+
+---
+
+## Prompt 4.3 — Interface et graphiques
+
+**Objectif** : la fonctionnalité visible. **Prérequis** : 1.3 (lazy-loading
+disponible) + 4.2.
+
+```
+Ajoute la vue de suivi des prix.
+
+Tâches :
+1. features/prices/ en chargement différé (lazy chunk) : seule cette vue
+   charge la bibliothèque de graphiques.
+2. Bibliothèque : uPlot (~45 Ko, adapté aux séries temporelles) de préférence
+   à Chart.js (~200 Ko). Justifie si tu choisis autrement.
+3. Écrans :
+   - détail d'un objet : courbe du prix quotidien (mois courant) + historique
+     mensuel (min/max/moyenne), sélecteur de plage, sélecteur de serveur ;
+   - tableaux « plus fortes hausses » et « plus fortes baisses », lus depuis
+     /prices/trends ;
+   - accès depuis la watchlist et depuis l'autocomplétion d'objet.
+4. Affiche l'origine de la donnée (« prix affiché le plus bas, scan quotidien
+   de l'hôtel de ventes ») — jamais « prix de vente » ou « cote » : c'est un
+   prix affiché, pas une transaction réalisée.
+5. États vides explicites, à distinguer clairement l'un de l'autre : objet
+   jamais scanné, serveur sans données, mois partiellement couvert
+   (samples_count < jours du mois — à afficher, pas à masquer).
+6. Respecte les conventions UI de CLAUDE.md : .tool-panel, .panel-header,
+   tooltips globaux (jamais de ::after local), .icon-btn. Les 4 locales.
+
+Vérifie dans le navigateur : rendu des courbes, changement de plage et de
+serveur, les trois états vides bien distincts, absence de dépassement
+horizontal sur petite largeur.
+```
+
+**Acceptation** : graphiques fonctionnels, chunk chargé uniquement sur cette
+vue, les trois états vides couverts et visuellement distincts.
 
 ---
 
@@ -532,12 +629,70 @@ invité intact, compteurs de suivi corrects après reconnexion.
 
 ---
 
-# Lot 7 — Historiques serveur
+# Lot 7 — Serveur de jeu (compte roster)
 
-## Prompt 7.1 — Combats, achats, échanges avec idempotence
+**Objectif du lot** : rattacher l'historique personnel (lot 8) à un serveur de
+jeu. **Sans lien avec le monitoring de prix** (lot 4, déjà livré) — le log
+Wakfu ne contient aucune indication du serveur (vérifié sur
+assets/logs/tests/fr/purchase_2.log), il faut donc la déclarer côté client
+pour l'historique personnel uniquement.
+
+## Prompt 7.1 — Modèle et sélecteur de serveur
+
+**Objectif** : permettre de taguer l'historique personnel (combats, achats,
+échanges — lot 8) par serveur de jeu.
+**Prérequis** : 3.1 (aucun lien avec l'authentification, ni avec le lot 4).
+
+```
+Le log Wakfu ne contient AUCUNE indication du serveur de jeu (vérifié sur
+assets/logs/tests/fr/purchase_2.log). Pour permettre de taguer l'historique
+personnel par serveur (lot 8), il faut le déclarer côté client. Voir
+docs/plan-migration-serveur.md §8, section « Identification du serveur de jeu ».
+
+Conception retenue — le serveur est porté par le COMPTE du roster, pas par
+l'utilisateur : CharacterRosterService gère déjà des comptes (RosterAccount)
+contenant des personnages, et StatsStoreService sait déjà reconnaître un
+personnage du roster (roster.hasCharacter). Le serveur actif se déduit donc
+automatiquement du personnage observé dans le log — factuel, et seule façon de
+gérer un joueur multi-compte réparti sur plusieurs serveurs.
+
+Tâches :
+1. Ajoute `gameServer` à RosterAccount, avec migration des rosters existants
+   (valeur non renseignée, pas de valeur inventée par défaut).
+2. Page profil : sélecteur de serveur par compte, alimenté par
+   GET /api/v1/game-servers (jamais une liste en dur côté client).
+3. Préférence globale « serveur par défaut », utilisée tant qu'aucun personnage
+   connu n'a été identifié dans la session.
+4. Nouveau core/services/game-server.service.ts exposant un signal
+   `activeServer` : serveur du compte du dernier personnage reconnu, sinon
+   défaut global, sinon null.
+5. Badge « serveur actif » permanent dans le header (avec tooltip indiquant
+   d'où vient la déduction : personnage reconnu ou valeur par défaut). Respecte
+   les conventions de tooltip de CLAUDE.md (.tooltip-below dans un header).
+6. Si aucun serveur n'est renseigné nulle part, une invite discrète et non
+   bloquante invite à le faire — sans interrompre l'usage actuel.
+
+Ce lot ne doit RIEN envoyer au serveur : tout tient dans le localStorage
+existant via PersistenceService. Les 4 locales doivent être mises à jour.
+
+Vérifie dans le navigateur : sélection d'un serveur par compte, bascule
+automatique du badge quand un personnage d'un autre compte joue (simule des
+lignes de log), persistance après rechargement.
+```
+
+**Acceptation** : serveur actif correct dans tous les cas, badge visible,
+aucune régression du roster existant.
+
+---
+
+# Lot 8 — Historiques serveur
+
+## Prompt 8.1 — Combats, achats, échanges avec idempotence
 
 **Objectif** : historique illimité, sans doublons.
-**Prérequis** : 6.1. **Risque** : ÉLEVÉ — c'est le lot le plus piégeux.
+**Prérequis** : 6.1 (le rattachement au serveur, lot 7, est optionnel : sans
+lui, les achats sont simplement enregistrés sans serveur). **Risque** : ÉLEVÉ
+— c'est le lot le plus piégeux.
 
 ```
 Envoie les historiques au serveur quand l'utilisateur est connecté (combats,
@@ -566,9 +721,11 @@ Tâches :
 2. Endpoints POST par lots + GET paginés pour l'affichage de l'historique.
 3. core/sync/sync-queue.service.ts : file persistante (IndexedDB), envois par
    lots, rejeu après coupure réseau, jamais bloquante pour l'interface.
-4. Purchases : joins le serveur de jeu résolu par GameServerService (lot 4) ;
-   si aucun serveur n'est résolu, envoie quand même l'achat mais SANS serveur —
-   il sera exclu des agrégats de prix, pas de l'historique personnel.
+4. Purchases : joins le serveur de jeu résolu par GameServerService (lot 7, si
+   ce lot a été livré) ; si aucun serveur n'est résolu, envoie quand même
+   l'achat mais SANS serveur — le champ reste vide dans l'historique personnel
+   affiché. Aucun impact sur le monitoring de prix (lot 4) : c'est une source
+   totalement distincte, indépendante des achats des utilisateurs.
 5. Ne transmets JAMAIS le contenu du chat.
 
 Test obligatoire (dans stats-store.service.spec.ts) : rejouer deux fois le même
@@ -582,105 +739,6 @@ retour du réseau.
 
 **Acceptation** : test de double rejeu vert, aucun doublon après reconnexion,
 file d'attente qui survit à une coupure.
-
----
-
-# Lot 8 — Prix
-
-## Prompt 8.1 — Ingestion et agrégation
-
-**Objectif** : transformer les achats individuels déjà collectés (lot 7) en
-séries de prix par objet et par serveur — fiables (résistantes aux valeurs
-aberrantes et aux abus) et bornées en volume (jamais des millions de lignes
-brutes rendues telles quelles). C'est la donnée que consommera l'interface du
-prompt 8.2 ; sans ce prompt, il n'y a rien à afficher.
-**Prérequis** : 7.1, et lot 4 en production depuis assez longtemps pour que les
-achats collectés portent un serveur.
-
-```
-Mets en place la collecte et l'agrégation des prix
-(docs/plan-migration-serveur.md §8).
-
-La collecte est déjà à moitié écrite : registerPurchase produit
-{item, quantity, totalCost, fullTimestampMs}, et le prix unitaire vaut
-totalCost / quantity.
-
-Limites à assumer explicitement dans le produit :
-- Ce sont des prix de TRANSACTION observés côté acheteur, pas des prix
-  affichés en hôtel de ventes. L'interface doit dire « prix d'achat observés ».
-- La détection d'achat est heuristique (perte de kamas suivie d'un ramassage
-  dans les 2 s) : elle produit des faux positifs.
-- wakfu.log est un fichier texte local, donc trivialement falsifiable.
-
-Tâches :
-1. Migrations :
-   - price_observations, PARTITIONNÉE PAR MOIS sur observed_at (la purge se
-     fera par DROP PARTITION, pas par DELETE massif) ;
-   - price_daily (item × serveur × jour : min, max, médiane, p25, p75, volume,
-     observation_count, contributor_count) ;
-   - price_trends en vue matérialisée (variation médiane 7 j vs 30 j).
-2. Ingestion : une observation n'est acceptée QUE si le serveur de jeu est
-   résolu. Sans serveur, rejet — pas de rangement dans un « inconnu ».
-3. Consolidation par cron : observations → price_daily (toutes les heures),
-   rafraîchissement de price_trends, création de la partition du mois suivant,
-   DROP des partitions de plus de 90 jours.
-4. Anti-abus, à intégrer dès maintenant et pas après coup :
-   - agrégats sur la MÉDIANE et les quartiles, jamais la moyenne ;
-   - rejet des valeurs aberrantes (écart interquartile) avant consolidation ;
-   - un point n'est exposé publiquement que s'il repose sur PLUSIEURS
-     contributeurs distincts (contributor_count) ;
-   - plafond de contributions par utilisateur et par jour.
-5. Endpoints : GET /api/v1/prices/{itemId}?server=&range= (série bornée,
-   pré-agrégée, au plus ~90 points) et GET /api/v1/prices/trends?server=&dir=
-   (hausses / baisses, lu dans la vue matérialisée — JAMAIS calculé à la volée).
-
-Rappel de dimensionnement : à 1 000 utilisateurs actifs, la table brute
-atteindrait ~730 Mo/an sans rétention, au-delà de l'offre gratuite. La
-rétention de 90 jours et les rollups ne sont pas une optimisation ultérieure,
-ils font partie du lot.
-
-Vérifie avec un jeu de données synthétique : consolidation correcte, purge de
-partition effective, rejet des valeurs aberrantes, observation sans serveur
-rejetée.
-```
-
-**Acceptation** : rollups corrects, purge fonctionnelle, endpoints bornés.
-
----
-
-## Prompt 8.2 — Interface et graphiques
-
-**Objectif** : la fonctionnalité visible. **Prérequis** : 8.1.
-
-```
-Ajoute la vue de suivi des prix.
-
-Tâches :
-1. features/prices/ en chargement différé (lazy chunk) : seule cette vue charge
-   la bibliothèque de graphiques.
-2. Bibliothèque : uPlot (~45 Ko, adapté aux séries temporelles) de préférence à
-   Chart.js (~200 Ko). Justifie si tu choisis autrement.
-3. Écrans :
-   - détail d'un objet : courbe médiane + bande p25/p75, sélecteur de plage
-     (7 j / 30 j / 90 j / 1 an), sélecteur de serveur ;
-   - tableaux « plus fortes hausses » et « plus fortes baisses », lus depuis
-     /prices/trends ;
-   - accès depuis la watchlist et depuis l'autocomplétion d'objet.
-4. Affiche systématiquement le nombre d'observations et de contributeurs
-   derrière un point : c'est ce qui permet à l'utilisateur de juger de la
-   fiabilité, et ça évite de présenter une donnée faible comme une cote de
-   marché.
-5. États vides explicites : objet jamais observé, serveur sans données,
-   données trop peu nombreuses pour être publiées.
-6. Respecte les conventions UI de CLAUDE.md : .tool-panel, .panel-header,
-   tooltips globaux (jamais de ::after local), .icon-btn. Les 4 locales.
-
-Vérifie dans le navigateur : rendu des courbes, changement de plage et de
-serveur, états vides, absence de dépassement horizontal sur petite largeur.
-```
-
-**Acceptation** : graphiques fonctionnels, chunk chargé uniquement sur cette
-vue, états vides couverts.
 
 ---
 

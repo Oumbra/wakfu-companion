@@ -18,11 +18,14 @@ Six décisions structurantes encadrent ce plan :
 5. **Tous les historiques** (combats, achats, échanges) et **les
    configurations utilisateur** sont stockés côté serveur, rattachés à l'uid,
    *si l'utilisateur est connecté*.
-6. **À terme** : monitoring de l'évolution des prix par objet, avec graphiques
-   et mise en avant des plus fortes hausses/baisses — volumétrie potentiellement
-   importante.
+6. **Monitoring de l'évolution des prix par objet**, avec graphiques et mise en
+   avant des plus fortes hausses/baisses. **Alimenté par un skill de scan vidéo
+   de l'hôtel de ventes** (une capture quotidienne du prix affiché le plus bas
+   par objet) — **indépendant des achats des utilisateurs et de leur compte**,
+   voir §8. Volumétrie modeste et bornée (≈ 30 valeurs/mois/objet).
 7. **Le serveur de jeu est choisi par l'utilisateur** (Pandora / Rubilax /
-   Ogrest), rattaché au compte du roster (voir §8).
+   Ogrest), rattaché au compte du roster — utile pour rattacher l'historique
+   personnel (§11) à un serveur, **sans lien avec le monitoring de prix** (§8).
 8. **Authentification par Discord ou Google** uniquement — pas de mot de passe
    géré en propre. **Optionnelle** : sans connexion, l'application reste
    pleinement fonctionnelle, exactement comme aujourd'hui, avec toutes les
@@ -30,8 +33,11 @@ Six décisions structurantes encadrent ce plan :
 
 Les points 1 et 6 sont les deux plus structurants : le premier lève la
 contrainte d'architecture n°1 du projet, le second dimensionne le choix de base
-de données. Le point 8 débloque la recommandation d'hébergement (§9) ; le point
-7 est le prérequis sans lequel le point 6 est inexploitable (§8).
+de données. Le point 8 débloque la recommandation d'hébergement (§9). **Le
+point 6 ne dépend ni du point 7 ni du point 8** : la source des prix (§8) est
+un scan opéré côté serveur, sans utilisateur ni compte impliqué — ceci corrige
+le phasage (§12) d'une version précédente de ce plan, qui liait à tort le
+monitoring de prix aux achats des utilisateurs.
 
 ---
 
@@ -151,8 +157,9 @@ valent :
 │  /api/v1/fights        historique de combats (uid)                          │
 │  /api/v1/purchases     historique d'achats (uid)                            │
 │  /api/v1/trades        historique d'échanges (uid)                          │
-│  /api/v1/prices/*      séries de prix, tendances (public, agrégé)           │
-│  cron                  gamedata, rollups de prix, purges                    │
+│  /api/v1/prices/*      séries de prix, tendances (public, lecture)          │
+│  /api/v1/prices/ingest écriture — jeton de service, PAS l'auth utilisateur  │
+│  cron                  gamedata ; rollup mensuel et tendances de prix       │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -180,6 +187,14 @@ estimé 200–400 Ko) est chargé une fois au démarrage, mis en cache IndexedDB
 son numéro de version, et interrogé en mémoire. Seuls les détails (recettes,
 traductions, images) sont distants et asynchrones. C'est aussi ce qui garde
 l'autocomplétion instantanée.
+
+**Le monitoring de prix est un pipeline à part, pas une fonctionnalité
+utilisateur.** Contrairement aux historiques (§11) qui viennent du log de
+chaque joueur connecté, les prix viennent d'un unique acteur : un skill qui lit
+une vidéo de l'hôtel de ventes et pousse un lot quotidien via
+`/api/v1/prices/ingest`, protégé par un jeton de service — jamais par une
+session utilisateur (voir §8). Cette route ne dépend donc d'aucun des lots
+d'authentification.
 
 ---
 
@@ -234,27 +249,29 @@ s'ils sont ajoutés hors du pipeline Angular.
 
 ### Relationnel ou document ?
 
-**Relationnel (PostgreSQL).** Le point 6 du cadre tranche la question à lui
-seul :
+**Relationnel (PostgreSQL)**, même si la révision du §8 a rendu la volumétrie
+de prix bien plus modeste qu'envisagé initialement :
 
-- Le modèle est fortement relationnel : utilisateur → personnages → combats →
-  participants ; objet → observations de prix → agrégats.
-- Les requêtes de prix sont **analytiques** : percentiles, fenêtres glissantes,
-  variations sur périodes, classements. C'est exactement ce pour quoi SQL
-  existe, et exactement ce qu'un store document fait mal.
-- L'idempotence des historiques (§8) repose sur des contraintes `UNIQUE`
+- Le modèle reste fortement relationnel : utilisateur → personnages → combats →
+  participants ; objet → prix quotidien → agrégats mensuels.
+- Les requêtes de prix restent **analytiques** : variations d'une période à
+  l'autre, classements des plus fortes hausses/baisses. C'est ce pour quoi SQL
+  existe, et ce qu'un store document fait mal.
+- L'idempotence des historiques (§11) repose sur des contraintes `UNIQUE`
   composites — natif en SQL, à réimplémenter à la main en document.
-- PostgreSQL apporte en plus `PERCENTILE_CONT`, les vues matérialisées (pour
-  les tendances de prix) et le **partitionnement par plage de dates**, qui
-  permet de purger les observations à grain fin par `DROP PARTITION` (instantané)
-  au lieu d'un `DELETE` massif.
+- Les vues matérialisées couvrent les tendances de prix sans recalcul à la
+  volée. Le partitionnement par date, envisagé initialement pour purger un
+  grain fin volumineux, n'est plus nécessaire à l'échelle du §8 — mais reste un
+  outil disponible si les historiques personnels (§11) grossissaient plus que
+  prévu.
 - Les configurations utilisateur, elles, sont hétérogènes et évolutives : elles
   vont dans une colonne `jsonb`. On obtient le meilleur des deux modèles sans
   changer de moteur.
 
-SQLite/D1 conviendrait au reste, mais pas à la volumétrie de prix (§7). Un store
-document conviendrait au profil et aux historiques, mais pas aux séries
-temporelles.
+SQLite/D1 conviendrait probablement à l'essentiel désormais (la volumétrie de
+prix ne l'interdit plus, voir §8) ; PostgreSQL reste préférable pour les vues
+matérialisées et la marge de manœuvre qu'il laisse si les historiques
+personnels grossissent plus que prévu.
 
 ### Schéma
 
@@ -363,35 +380,47 @@ CREATE TABLE trade_items (
   quantity  integer NOT NULL
 );
 
--- ── Prix (voir §7 pour la stratégie de rétention) ───────────────────────
-CREATE TABLE price_observations (
-  item_id     integer NOT NULL,
-  game_server text NOT NULL,
-  unit_price  bigint NOT NULL,
-  quantity    integer NOT NULL,
-  observed_at timestamptz NOT NULL,
-  user_id     uuid REFERENCES users(id) ON DELETE SET NULL
-) PARTITION BY RANGE (observed_at);        -- partitions mensuelles, purge par DROP
+-- ── Prix (voir §8 — indépendant des utilisateurs, alimenté par le skill de
+-- scan vidéo de l'hôtel de ventes, PAS par les achats des joueurs) ─────────
 
-CREATE TABLE price_daily (
-  item_id           integer NOT NULL,
-  game_server       text NOT NULL,
-  day               date NOT NULL,
-  price_min         bigint NOT NULL,
-  price_max         bigint NOT NULL,
-  price_median      bigint NOT NULL,
-  price_p25         bigint NOT NULL,
-  price_p75         bigint NOT NULL,
-  volume            bigint NOT NULL,
-  observation_count integer NOT NULL,
-  contributor_count integer NOT NULL,      -- anti-abus, voir §7
-  PRIMARY KEY (item_id, game_server, day)
+-- Une ligne par objet × serveur × jour scanné : le prix affiché le plus bas
+-- observé ce jour-là. Écrite uniquement par le skill (jeton de service).
+CREATE TABLE item_prices_daily (
+  item_id     integer NOT NULL,
+  game_server text NOT NULL REFERENCES game_servers(code),
+  captured_on date NOT NULL,
+  price       bigint NOT NULL,           -- prix affiché le plus bas ce jour-là
+  PRIMARY KEY (item_id, game_server, captured_on)
 );
 
-CREATE MATERIALIZED VIEW price_trends AS   -- rafraîchie par cron, jamais à la volée
+-- Agrégat mensuel : jusqu'à ~30 lignes de item_prices_daily résumées en une
+-- seule. C'est la table que lisent les graphiques et les classements.
+CREATE TABLE item_prices_monthly (
+  item_id       integer NOT NULL,
+  game_server   text NOT NULL REFERENCES game_servers(code),
+  month         date NOT NULL,           -- 1er jour du mois
+  price_min     bigint NOT NULL,
+  price_max     bigint NOT NULL,
+  price_avg     bigint NOT NULL,
+  samples_count integer NOT NULL,        -- jours réellement scannés ce mois-ci (≤ 31), voir §8
+  PRIMARY KEY (item_id, game_server, month)
+);
+
+CREATE MATERIALIZED VIEW price_trends AS   -- rafraîchie une fois par jour, jamais à la volée
   SELECT item_id, game_server,
-         /* médiane 7 j vs médiane des 30 j précédents → variation en % */
-  FROM price_daily GROUP BY item_id, game_server;
+         /* moyenne des 30 derniers jours vs moyenne des 30 jours précédents → variation en % */
+  FROM item_prices_daily GROUP BY item_id, game_server;
+
+-- Traçabilité des scans (couverture parfois partielle, voir §8) : permet de
+-- diagnostiquer un jour sans données ou incomplet plutôt que de deviner.
+CREATE TABLE price_scan_runs (
+  id               bigserial PRIMARY KEY,
+  game_server      text NOT NULL REFERENCES game_servers(code),
+  captured_on      date NOT NULL,
+  items_captured   integer NOT NULL,
+  items_unresolved integer NOT NULL DEFAULT 0,  -- noms OCR non reconnus, voir §8
+  notes            text
+);
 ```
 
 ---
@@ -455,7 +484,9 @@ Retenir la première, en la documentant.
 - CSRF : `SameSite=Lax` couvre l'essentiel ; ajouter un jeton double-submit sur
   les routes mutatives sensibles.
 - Limitation de débit sur `/auth/*` (par IP et par compte) et sur les endpoints
-  d'ingestion.
+  d'ingestion d'historiques personnels (combats/achats/échanges, §11).
+  L'ingestion des prix (§8) n'utilise pas ce mécanisme : elle passe par un
+  jeton de service dédié, sans rapport avec l'authentification utilisateur.
 
 ### Côté Angular
 
@@ -482,116 +513,120 @@ personnelles :
   compte avec effet réel** (`ON DELETE CASCADE` est déjà posé dans le schéma).
 - **Ne jamais transmettre le contenu du chat.** Il contient les messages
   d'autres joueurs, qui n'ont donné aucun consentement.
-- Les contributions de prix doivent pouvoir être anonymisées : le
-  `ON DELETE SET NULL` sur `price_observations.user_id` permet de supprimer un
-  compte sans détruire l'agrégat communautaire.
+- Le monitoring de prix (§8) est **hors périmètre RGPD** : aucun `user_id`
+  n'y est rattaché, la donnée provient d'un scan opéré côté serveur, pas des
+  utilisateurs de l'application.
 
 ---
 
 ## 8. Le monitoring de prix
 
-C'est la fonctionnalité la plus ambitieuse du lot, et celle qui comporte le plus
-de pièges. Trois d'entre eux sont bloquants s'ils ne sont pas traités en amont.
+Ce point a changé de nature en cours de conception. **Une version précédente de
+ce plan supposait une collecte communautaire à partir des achats des joueurs**
+(`registerPurchase`) — ce n'est pas l'approche retenue. La source réelle est un
+**skill de scan vidéo de l'hôtel de ventes**, exécuté une fois par jour,
+totalement indépendant des comptes utilisateurs et des historiques (§11). Cette
+section documente l'approche retenue.
 
 ### D'où viennent les prix ?
 
-Bonne nouvelle : **la collecte est déjà à moitié écrite.** `registerPurchase`
-détecte un achat quand une perte de kamas est suivie d'un ramassage d'objet dans
-les 2 secondes, et produit déjà `{item, quantity, totalCost, fullTimestampMs}`.
-Le prix unitaire est `totalCost / quantity`.
+Un skill (à l'image des skills de synchronisation du référentiel déjà présents
+dans l'historique de ce dépôt, retirés du dépôt public — voir le commit
+« retirer les skills items/monsters-sync du repo public » — même précédent
+probable ici) traite une vidéo de l'hôtel de ventes du jeu, déjà enregistrée
+(l'enregistrement lui-même — parcourir les pages en jeu — reste manuel et hors
+périmètre de ce plan) :
 
-Trois limites à énoncer clairement, parce qu'elles déterminent ce que la
-fonctionnalité pourra honnêtement afficher :
+1. **Extraction d'images** à intervalle régulier depuis la vidéo. Ce projet a
+   déjà une solution éprouvée pour ça sans dépendre de ffmpeg installé sur la
+   machine (`imageio` + `imageio-ffmpeg`, voir CLAUDE.md, section sur l'analyse
+   de vidéo fournie par l'utilisateur) — directement réutilisable ici.
+2. **Lecture du nom d'objet et du prix affiché** sur chaque image. Deux
+   approches à trancher au moment de l'implémentation : un moteur d'OCR
+   classique (Tesseract — gratuit, rapide, mais sensible à la police et au
+   contraste, demande un prétraitement d'image), ou une lecture par un modèle
+   Claude en vision (plus robuste au bruit visuel, mais un coût et une
+   volumétrie d'appels à surveiller sur potentiellement des centaines
+   d'images/jour). Les prix suivent le même format que dans `wakfu.log`
+   (séparateur de milliers en espace insécable, voir la regex `NUM` dans
+   `log-parser.ts`) — la même logique de nettoyage est réutilisable telle
+   quelle.
+3. **Résolution du nom vers un `item_id`** du catalogue (§3), via
+   `normalizeWakfuName` et une recherche sur l'index déjà exposé par
+   `/api/v1/catalog/search`. Un nom non résolu ne doit **jamais être abandonné
+   silencieusement** : il part dans une file de résolution manuelle
+   (`price_scan_runs.items_unresolved`, voir schéma) plutôt que d'être perdu ou
+   deviné.
+4. **Déduplication** : la liste de l'hôtel de ventes est normalement triée par
+   prix croissant, donc la première occurrence d'un objet dans le parcours est
+   déjà son prix affiché le plus bas ce jour-là ; à défaut, prendre le minimum
+   observé.
+5. **Envoi** du lot du jour à `POST /api/v1/prices/ingest`, protégé par un
+   jeton de service (secret déployé côté serveur) — **pas** une session
+   utilisateur, sans rapport avec l'authentification du §7.
 
-**⚠ Piège n°1 — le serveur de jeu est absent du log.** Vérifié sur les logs
-d'exemple du dépôt : une ligne d'achat ressemble à
-`[Information (jeu)] Vous avez perdu 29 999 kamas.` puis
-`Vous avez ramassé 1x Aura des Bottes Cérémoniales du Seigneur des Rats .` —
-aucune mention du serveur (Pandora, Rubilax, Ogrest…). Or les écarts de prix
-entre serveurs sont considérables : agréger sans cette dimension produirait des
-courbes dénuées de sens. **Le serveur doit donc être déclaré par
-l'utilisateur** — voir la section dédiée ci-dessous, c'est un prérequis
-bloquant de toute la fonctionnalité.
+### Trois limites à énoncer clairement
 
-**⚠ Piège n°2 — ce sont des prix de transaction, pas des prix de marché.** On
-observe ce que l'utilisateur a *payé*, jamais ce qui est *affiché* en hôtel de
-ventes. Pas de prix de vente, pas de profondeur de marché, pas d'objet jamais
-acheté. L'interface doit dire « prix d'achat observés », pas « cote de l'HDV ».
+**⚠ C'est un prix affiché (offre), pas une transaction réalisée.** On observe
+ce qui est *en vente*, jamais ce qui a réellement été *acheté*. Aucune garantie
+que l'objet se vende à ce prix, aucune information de volume. L'interface doit
+dire « prix affiché le plus bas », jamais « prix de vente » ou « cote ». C'est
+l'inverse du compromis qu'aurait eu une collecte par achats (un prix de
+transaction réel, mais rare et peu représentatif) : celle-ci donne une vraie
+photo instantanée du marché, au prix de ne jamais savoir si quelqu'un achète
+réellement à ce niveau.
 
-**⚠ Piège n°3 — la détection d'achat est heuristique.** La fenêtre de 2 s entre
-perte de kamas et ramassage produit des faux positifs. Et `wakfu.log` est un
-fichier texte local, trivialement éditable : la donnée est falsifiable par
-construction.
+**⚠ Couverture potentiellement partielle.** Si le scan d'un jour ne couvre pas
+toutes les catégories de l'hôtel de ventes (vidéo interrompue, catégorie
+oubliée), certains objets n'ont simplement aucune donnée ce jour-là. C'est une
+**absence de donnée**, pas un signal « aucune vente » : ne jamais combler un
+jour manquant par une valeur inventée (zéro, répétition de la veille...).
+`samples_count` dans l'agrégat mensuel expose cette complétude (15/30 jours
+scannés doit s'afficher comme tel, pas comme un mois complet).
 
-Parades, à intégrer dès la conception de l'agrégation :
+**⚠ Fiabilité de l'OCR et objets à caractéristiques variables.** Un texte mal
+reconnu peut mal résoudre un objet, ou le rattacher au mauvais `item_id` parmi
+des homonymes de raretés différentes (voir le référentiel objets, distingués
+uniquement par leur `id`). Par ailleurs — **à valider avec les premières
+données réelles**, je ne l'affirme pas comme un fait établi — si certains
+objets ont des caractéristiques variables/aléatoires en jeu, le moins cher
+affiché un jour donné pourrait refléter un exemplaire aux stats faibles plutôt
+qu'une vraie baisse de marché ; à garder en tête si des sauts de prix
+inexpliqués apparaissent dans les courbes.
 
-- Agréger sur la **médiane** et les quartiles, jamais sur la moyenne.
-- Rejeter les valeurs aberrantes (écart interquartile) avant consolidation.
-- **N'exposer un point que s'il repose sur plusieurs contributeurs distincts**
-  (d'où `contributor_count`) — un utilisateur seul ne peut pas déplacer une
-  courbe.
-- Plafonner les contributions par utilisateur et par jour.
+### Volumétrie — bien plus modeste qu'envisagé dans une version précédente
 
-### Identification du serveur de jeu
+Contrairement à une collecte alimentée par les achats des utilisateurs (dont le
+volume croît avec le nombre d'utilisateurs), **cette source a un volume fixe et
+prévisible dès la conception** : il ne dépend que du nombre d'objets et de
+serveurs scannés, jamais du nombre d'utilisateurs de l'application — un
+avantage structurel que la première version de ce plan n'avait pas.
 
-Le point 7 du cadre retient un sélecteur (Pandora / Rubilax / Ogrest). Le code
-existant permet de faire mieux qu'un simple sélecteur global.
-
-**Rattacher le serveur au compte du roster, pas à l'utilisateur.**
-`CharacterRosterService` gère déjà des *comptes* (`RosterAccount`) contenant des
-*personnages* (`RosterCharacter`), et `StatsStoreService` sait déjà reconnaître
-un personnage du roster (`roster.hasCharacter`, utilisé pour départager les
-échanges). Il suffit d'ajouter `gameServer` à `RosterAccount` pour que **le
-serveur actif se déduise automatiquement du personnage observé dans le log** —
-un signal factuel, sans mécanisme de détection à construire. C'est aussi la
-seule façon de gérer correctement un joueur multi-compte réparti sur plusieurs
-serveurs, cas fréquent qu'un sélecteur global traiterait mal.
-
-Le sélecteur global reste utile comme valeur par défaut, quand aucun personnage
-connu n'a encore été identifié dans la session.
-
-Un badge « serveur actif » permanent dans le header rend l'information visible
-en continu : c'est la meilleure garantie qu'une erreur de sélection ne passe
-pas inaperçue pendant des heures.
-
-### Volumétrie
-
-C'est le point qui justifie PostgreSQL plutôt que SQLite.
-
-Hypothèses : ~20 achats par session, 1 session par jour et par utilisateur ;
-~1 500 à 3 000 objets réellement échangés ; ~6 serveurs de jeu.
-
-| Utilisateurs actifs | Observations/jour | Sur 1 an | Table brute (~100 o/ligne avec index) |
+| Objets scannés/jour (par serveur) | Serveurs scannés | Lignes brutes/an | `item_prices_daily` (~40 o/ligne) |
 | ---: | ---: | ---: | ---: |
-| 100 | 2 000 | 730 k | ~73 Mo |
-| 1 000 | 20 000 | 7,3 M | **~730 Mo** |
-| 5 000 | 100 000 | 36,5 M | ~3,6 Go |
+| 1 000 | 1 | 365 k | ~15 Mo |
+| 3 000 | 1 | 1,1 M | ~44 Mo |
+| 3 000 | 3 | 3,3 M | ~130 Mo |
 
-À 1 000 utilisateurs, la table brute dépasse à elle seule l'offre gratuite de
-Neon (0,5 Go). **Le grain fin ne doit donc jamais être conservé indéfiniment** :
+⚠ Ces volumes d'objets réellement en vente un jour donné sont des hypothèses de
+dimensionnement, **pas des mesures** — à corriger dès le premier scan réel.
 
-| Niveau | Contenu | Rétention | Volume à 1 000 utilisateurs |
-| --- | --- | --- | --- |
-| `price_observations` | chaque observation | **90 jours glissants**, partitions mensuelles purgées par `DROP PARTITION` | ~180 Mo stable |
-| `price_daily` | min/max/médiane/p25/p75/volume par objet × serveur × jour | plusieurs années | ~40 Mo/an |
-| `price_weekly` | idem, hebdomadaire | au-delà de 2 ans | négligeable |
-| `price_trends` | vue matérialisée des variations | rafraîchie toutes les heures | quelques milliers de lignes |
-
-**Les graphiques lisent `price_daily`, jamais le grain fin.** Et « les objets
-les plus en hausse/baisse » se lit dans `price_trends`, calculée par cron — un
-classement sur variation glissante calculé à la volée sur des millions de lignes
-serait le premier endroit où l'application s'effondrerait.
+Conséquence pratique : **le partitionnement et la purge agressive envisagés
+dans une version précédente de ce plan ne sont plus nécessaires.** Le grain
+quotidien (`item_prices_daily`) peut être conservé indéfiniment sans mettre en
+péril l'offre gratuite Neon ; `item_prices_monthly` sert surtout à accélérer les
+lectures (graphiques, classements), pas à limiter le volume.
 
 ### Côté interface
 
-Le retrait du standalone autorise enfin une bibliothèque de graphiques. Pour des
-séries temporelles, **uPlot** (~45 Ko, très rapide) est le meilleur compromis
-poids/capacité ; Chart.js (~200 Ko) si l'ergonomie prime sur le poids. À charger
-en lazy chunk : seule la vue « prix » en a besoin.
-
-Les endpoints renvoient des séries **pré-agrégées et bornées**
-(`/api/v1/prices/{itemId}?server=X&range=90d` → au plus 90 points), jamais des
-points bruts à agréger côté client.
+Le retrait du standalone (§3) autorise une bibliothèque de graphiques légère —
+**uPlot** (~45 Ko, très rapide) de préférence à Chart.js (~200 Ko) — chargée en
+lazy chunk sur la seule vue « prix ». Les courbes lisent `item_prices_daily`
+(le mois courant, vue fine) et `item_prices_monthly` (historique long), jamais
+un calcul d'agrégat à la volée. « Plus fortes hausses/baisses » se lit dans
+`price_trends`, rafraîchie une fois par jour après l'ingestion — un rythme
+largement suffisant puisque la donnée source elle-même n'arrive qu'une fois par
+jour.
 
 ---
 
@@ -642,6 +677,26 @@ La contrainte CPU est neutralisée par le choix OAuth. **Si le mot de passe
 devient une exigence ferme, la recommandation bascule sur Supabase** (auth
 managée) ou **Deno Deploy** — c'est le seul paramètre qui change la
 recommandation, d'où l'importance de trancher tôt.
+
+### Où tourne le skill de scan de prix ?
+
+Nulle part sur Cloudflare Workers : décodage vidéo et OCR/vision dépassent de
+loin son budget CPU (10 ms/requête, voir §7) et la vidéo elle-même n'a aucune
+raison de transiter par l'infrastructure hébergée. Le skill tourne **là où la
+vidéo a été enregistrée** (poste local), et ne pousse au serveur que le
+résultat structuré du jour — une liste `{item, prix}` de quelques dizaines de
+kilo-octets — via `POST /api/v1/prices/ingest`.
+
+Deux façons de déclencher l'exécution quotidienne, aucune ne nécessitant
+Cloudflare :
+- **Une Routine Claude Code** (l'outillage disponible dans cet environnement le
+  permet directement, déclenchement quotidien) qui invoque le skill.
+- Une tâche planifiée locale classique (cron / Planificateur de tâches) si le
+  skill est exécuté hors de Claude Code.
+
+Le seul élément côté serveur est donc l'endpoint `/api/v1/prices/ingest`
+(protégé par un jeton de service statique, secret Cloudflare, sans rapport avec
+les sessions utilisateur) et les tables qu'il alimente.
 
 ### Workflows
 
@@ -724,17 +779,20 @@ dépôt**) :
 | Fréquence | Tâche |
 | --- | --- |
 | `0 4 * * *` | Rafraîchissement du gamedata Ankama (comparer `config.json`, recharger si la version a changé) |
-| `10 * * * *` | Consolidation `price_observations` → `price_daily` |
-| `20 * * * *` | Rafraîchissement de `price_trends` |
-| `0 5 * * 0` | Création de la partition du mois suivant + `DROP` des partitions de plus de 90 jours |
+| `30 4 * * *` | Rafraîchissement de `price_trends` (après la fenêtre habituelle d'ingestion quotidienne du skill) |
+| `0 5 1 * *` | Consolidation mensuelle `item_prices_daily` → `item_prices_monthly` du mois écoulé |
+
+Ces trois tâches interrogent ou rafraîchissent la base via une simple requête
+SQL — un temps de calcul Worker négligeable (l'essentiel du temps est passé à
+attendre la base, ce qui ne compte pas dans le budget CPU) : rien à voir avec
+le budget nécessaire au skill de scan lui-même (§8), qui tourne ailleurs.
 
 ### Coût
 
-**0 €** tant que l'audience reste modérée. Les deux postes capables de faire
-sortir des quotas sont le stockage des prix (maîtrisé par la stratégie de
-rétention du §8) et, s'il est un jour ajouté, un proxy d'images. À 1 000
-utilisateurs actifs, la base tient dans l'offre gratuite Neon **grâce aux
-rollups** ; sans eux, elle la dépasse en moins d'un an.
+**0 €** tant que l'audience reste modérée. Le monitoring de prix (§8) ne pèse
+plus sur ce budget : sa volumétrie est faible et bornée dès la conception. Le
+seul poste réellement capable de faire sortir des quotas gratuits, s'il est un
+jour ajouté, est un proxy d'images.
 
 ---
 
@@ -749,7 +807,8 @@ rollups** ; sans eux, elle la dépasse en moins d'un an.
 | Référentiel rafraîchi sans redéploiement | Supprime le cycle rebuild+déploiement à chaque patch Wakfu |
 | Historiques et configuration rattachés à l'uid | Corrige le risque n°1 actuel : tout perdre en vidant son navigateur ; multi-appareils |
 | Historique illimité | Aujourd'hui plafonné à 30 combats en mémoire, perdu au rechargement |
-| Monitoring de prix | Fonctionnalité impossible sans back — et collecte déjà à moitié écrite |
+| Monitoring de prix | Source indépendante des comptes utilisateurs (skill de scan vidéo) : livrable tôt, sans attendre l'authentification (§8) |
+| Prix hors périmètre RGPD | Aucun utilisateur associé aux données de prix — pas de consentement ni d'anonymisation à gérer pour cette fonctionnalité |
 | Télémétrie de parsing possible | Rend visibles les casses silencieuses après un patch du jeu (angle mort total aujourd'hui) |
 
 ### Négatifs
@@ -758,13 +817,12 @@ rollups** ; sans eux, elle la dépasse en moins d'un an.
 | --- | --- | --- |
 | **L'application ne survit plus à l'arrêt de l'hébergement** (le fichier standalone, si) | Élevée | PWA + Service Worker ; accepter que ce soit un vrai changement de nature |
 | **Nouveau point de panne** : serveur indisponible = application dégradée | Élevée | Cache IndexedDB du catalogue + mode invité toujours fonctionnel |
-| **Serveur de jeu absent du log** → prix inexploitables sans déclaration | **Bloquante** pour §8 | Serveur porté par le compte du roster + déduction depuis le personnage observé ; rejeter toute observation sans serveur résolu |
+| **Serveur de jeu absent du log applicatif** → l'historique personnel d'achats ne peut pas être rattaché à un serveur sans déclaration | Faible (n'affecte que l'affichage personnel, **pas** le monitoring de prix, voir §8) | Serveur porté par le compte du roster + déduction depuis le personnage observé |
 | **`LogParser` est francophone uniquement** : un client en anglais ne produit aucune donnée | Élevée, **déjà vraie aujourd'hui**, indépendante de cette migration | Signaler la limite à l'utilisateur ; l'internationalisation du parseur est un chantier distinct |
 | Dépendance à deux fournisseurs OAuth tiers (panne Discord/Google = connexions impossibles) | Faible | Deux fournisseurs plutôt qu'un ; le mode invité reste pleinement fonctionnel dans tous les cas |
 | Duplication d'historique via `isInitialLoad` | **Critique si ignorée** | Clé déterministe + `UNIQUE(user_id, client_key)` (§11) |
-| Volumétrie des prix | Élevée sans traitement | Rétention 90 j du grain fin + rollups (§8) |
-| Données de prix falsifiables et biaisées | Moyenne | Médiane, rejet des valeurs aberrantes, plusieurs contributeurs requis |
-| RGPD : e-mail + historique de jeu = données personnelles | Moyenne | Politique de confidentialité, export, suppression en cascade, chat jamais transmis |
+| Fiabilité de l'OCR / résolution nom → objet, couverture de scan parfois incomplète | Moyenne | Résolution manuelle des noms non reconnus (`price_scan_runs`), `samples_count` affiché pour signaler un mois incomplet (§8) |
+| RGPD : e-mail + historique de jeu = données personnelles (hors monitoring de prix, voir ligne dédiée en positifs) | Moyenne | Politique de confidentialité, export, suppression en cascade, chat jamais transmis |
 | Deux modes de données utilisateur (invité / connecté) | Moyenne | Interface `UserDataRepository` unique, deux implémentations, aucun `if` dispersé |
 | Charge de maintenance : base, migrations, secrets, sauvegardes, supervision | Moyenne | Tout managé (Neon, Cloudflare) ; migrations en CI |
 | Redistribuer le gamedata depuis son domaine | Faible | JSON publics et documentés sur le forum officiel |
@@ -791,6 +849,8 @@ rollups** ; sans eux, elle la dépasse en moins d'un an.
 | `core/services/app-data-export.service.ts` | Réutilisé tel quel comme format de synchronisation et d'export RGPD |
 | `core/services/stats-store.service.ts` | `findWakfuItemEntry` **reste synchrone** (index en mémoire) ; émettre combats/achats/échanges vers la file d'envoi avec **clé déterministe** |
 | **nouveau** `core/sync/sync-queue.service.ts` | File persistante (IndexedDB), rejeu après coupure réseau, envois par lots |
+| **nouveau** skill de scan de prix (hors dépôt public, même précédent que les skills items/monsters-sync déjà retirés) | Extraction vidéo → images → OCR/vision → résolution catalogue → `POST /api/v1/prices/ingest` |
+| **nouveau** `server/…/routes/prices.ts` | `POST /api/v1/prices/ingest` (jeton de service) + `GET /api/v1/prices/*` (lecture publique) |
 | **nouveau** `features/prices/` | Vue de suivi des prix + graphiques (lazy chunk, uPlot) |
 | `core/services/navigation.service.ts` | Peut céder la place au Router Angular, désormais que le lazy-loading est possible |
 | `core/i18n/translations.ts` | Import dynamique de la seule locale active (−48 Ko) |
@@ -833,24 +893,31 @@ produire exactement le même nombre de lignes côté serveur.*
 | --- | --- | --- | --- |
 | **0** | `package-lock.json` committé, `ci.yml` avec tests, retrait de `pictureUrl`, i18n dynamique | −885 Ko, CI fiabilisée | Nul |
 | **1** | Retrait du standalone, assets → `public/assets/`, sprite SVG, routing + lazy-loading, PWA | −578 Ko, contraintes levées | Faible |
-| **2** | Squelette serveur : même origine, `/api/v1/health`, base Neon, migrations, CI/CD | Invisible | Faible |
-| **3** | Catalogue distant + index chargé et caché | **−4,25 Mo** | Moyen |
-| **4** | **Sélecteur de serveur** (rattaché au compte roster, 100 % client) | Prérequis des prix | Faible |
+| **2** | Squelette serveur : même origine, `/api/v1/health`, base Neon, migrations, CI/CD, import du catalogue | Invisible | Faible |
+| **3** | Catalogue distant côté client + index chargé et caché | **−4,25 Mo** | Moyen |
+| **4** | **Monitoring de prix** : skill de scan vidéo, ingestion, rollups mensuels, interface graphique | Fonctionnalité complète, **indépendante des comptes** | Moyen |
 | **5** | Authentification Discord/Google + page de connexion + migration des données locales | Comptes | Moyen |
 | **6** | Configuration utilisateur serveur (`user_settings`) | Sync multi-appareils | Faible |
-| **7** | Historiques serveur (combats, achats, échanges) | Historique illimité | **Élevé** (idempotence) |
-| **8** | Ingestion des prix + rollups + tâches planifiées | Fondations du point 6 du cadre | Moyen |
-| **9** | Vues de prix, graphiques, tendances | Fonctionnalité complète | Moyen |
+| **7** | Sélecteur de serveur par compte roster (rattachement de l'historique personnel) | Historique tagué par serveur | Faible |
+| **8** | Historiques serveur (combats, achats, échanges) | Historique illimité | **Élevé** (idempotence) |
 
 Le lot 0 a de la valeur même si tout le reste est abandonné. Le lot 1 est
 autonome : il divise le poids par deux et lève les contraintes, sans une seule
 ligne de serveur.
 
-**Le lot 4 est volontairement placé avant l'authentification** : il ne dépend
-d'aucun serveur (le serveur du compte roster tient dans le `localStorage`
-existant), et plus il est livré tôt, plus les données d'achat accumulées d'ici
-au lot 8 seront exploitables. Livrer la collecte de prix avant lui reviendrait à
-jeter les premiers mois d'observations.
+**À partir du lot 3, la migration se scinde en deux chantiers indépendants :**
+
+- **Monitoring de prix (lot 4)** — ne dépend que du catalogue serveur (lot 2)
+  et d'un jeton de service ; aucun utilisateur, aucune authentification. Peut
+  être livré et démontré avant même que la page de connexion existe.
+- **Comptes et données personnelles (lots 5 à 8)** — authentification, puis
+  synchronisation, puis rattachement au serveur, puis historiques.
+
+Ces deux chantiers peuvent être menés dans n'importe quel ordre, y compris en
+parallèle : ils ne partagent que l'infrastructure de base (lot 2) et le
+catalogue (lot 3). Ceci corrige une version précédente de ce plan, qui plaçait
+à tort le monitoring de prix comme dépendant des achats et donc des comptes
+utilisateurs — ce n'est plus le cas.
 
 ---
 
@@ -859,9 +926,10 @@ jeter les premiers mois d'observations.
 1. **OAuth Discord/Google acté** : aucune route de mot de passe à écrire, et la
    recommandation Cloudflare est confirmée (§7). Prévoir la fusion de comptes
    sur e-mail vérifié identique.
-2. **Le serveur de jeu conditionne toute la fonctionnalité prix** — à livrer
-   très tôt (lot 4), bien avant l'ingestion des prix (lot 8), et à rattacher au
-   **compte du roster** plutôt qu'à l'utilisateur.
+2. **Le monitoring de prix ne dépend d'aucun compte utilisateur** : sa source
+   est un scan vidéo opéré côté serveur (lot 4), totalement indépendant de
+   l'authentification (lot 5) et du sélecteur de serveur par compte (lot 7, qui
+   ne sert qu'à taguer l'historique personnel).
 3. **Ne jamais rendre `findWakfuItemEntry` asynchrone** — chemin chaud du parsing.
 4. **Clé d'idempotence déterministe** avant la première écriture d'historique,
    avec le test de double rejeu.
@@ -870,8 +938,8 @@ jeter les premiers mois d'observations.
    bloquante, aucune fonctionnalité de base réservée aux comptes, toutes les
    données restent en `localStorage` — exactement comme aujourd'hui — tant que
    l'utilisateur ne se connecte pas.
-7. **Rétention et rollups des prix dès le premier jour** : rattraper une table
-   d'observations de plusieurs centaines de millions de lignes coûte bien plus
-   cher que de la partitionner d'emblée.
+7. **Résoudre les noms OCR non reconnus dès le premier scan, jamais en
+   silence** : journaliser (`price_scan_runs`) plutôt qu'abandonner, sous peine
+   de trous de données invisibles dans les courbes.
 8. Le principe d'architecture n°2 (persistant vs dérivé du fichier) ne disparaît
    pas avec le serveur — il devient simplement plus coûteux à enfreindre.
