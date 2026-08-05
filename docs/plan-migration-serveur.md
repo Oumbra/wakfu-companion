@@ -22,10 +22,11 @@ Six décisions structurantes encadrent ce plan :
    et mise en avant des plus fortes hausses/baisses — volumétrie potentiellement
    importante.
 7. **Le serveur de jeu est choisi par l'utilisateur** (Pandora / Rubilax /
-   Ogrest), avec détection d'incohérences : en cas de signal contradictoire,
-   l'ingestion est **suspendue** et l'utilisateur doit valider avant reprise.
+   Ogrest), rattaché au compte du roster (voir §8).
 8. **Authentification par Discord ou Google** uniquement — pas de mot de passe
-   géré en propre.
+   géré en propre. **Optionnelle** : sans connexion, l'application reste
+   pleinement fonctionnelle, exactement comme aujourd'hui, avec toutes les
+   données conservées en `localStorage`.
 
 Les points 1 et 6 sont les deux plus structurants : le premier lève la
 contrainte d'architecture n°1 du projet, le second dimensionne le choix de base
@@ -278,13 +279,12 @@ CREATE TABLE user_identities (
   PRIMARY KEY (provider, provider_uid)
 );
 
--- Configuration servie à l'application : liste des serveurs et langues
--- attendues. En base, jamais compilée en dur (§8).
+-- Configuration servie à l'application : liste des serveurs, jamais compilée
+-- en dur côté client (§8) — la liste des serveurs Wakfu évolue (fusions...).
 CREATE TABLE game_servers (
-  code            text PRIMARY KEY,        -- 'pandora' | 'rubilax' | 'ogrest'
-  label           text NOT NULL,
-  expected_locales text[] NOT NULL,
-  is_active       boolean NOT NULL DEFAULT true
+  code      text PRIMARY KEY,              -- 'pandora' | 'rubilax' | 'ogrest'
+  label     text NOT NULL,
+  is_active boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE sessions (
@@ -397,6 +397,16 @@ CREATE MATERIALIZED VIEW price_trends AS   -- rafraîchie par cron, jamais à la
 ---
 
 ## 7. Authentification et sécurité
+
+### Le mode invité reste le mode par défaut
+
+Sans connexion, l'application fonctionne **exactement comme aujourd'hui** :
+aucun compte requis, toutes les données (profil, watchlist, roster,
+historiques...) restent uniquement dans le `localStorage`/IndexedDB du
+navigateur via `PersistenceService`, sans aucune requête vers le serveur
+au-delà du catalogue public (§3). L'authentification est un service
+**optionnel** superposé à ce fonctionnement, jamais un prérequis — voir « Pas
+de garde de route bloquante » plus bas, qui en découle directement.
 
 ### Décision actée : OAuth Discord et Google, aucun mot de passe
 
@@ -522,11 +532,10 @@ Parades, à intégrer dès la conception de l'agrégation :
   courbe.
 - Plafonner les contributions par utilisateur et par jour.
 
-### Identification du serveur de jeu et détection d'incohérences
+### Identification du serveur de jeu
 
-Le point 7 du cadre retient un sélecteur (Pandora / Rubilax / Ogrest) assorti
-d'une détection d'incohérence bloquante. Le mécanisme mérite d'être précisé,
-car le code existant permet **beaucoup mieux qu'un simple sélecteur global**.
+Le point 7 du cadre retient un sélecteur (Pandora / Rubilax / Ogrest). Le code
+existant permet de faire mieux qu'un simple sélecteur global.
 
 **Rattacher le serveur au compte du roster, pas à l'utilisateur.**
 `CharacterRosterService` gère déjà des *comptes* (`RosterAccount`) contenant des
@@ -534,76 +543,16 @@ car le code existant permet **beaucoup mieux qu'un simple sélecteur global**.
 un personnage du roster (`roster.hasCharacter`, utilisé pour départager les
 échanges). Il suffit d'ajouter `gameServer` à `RosterAccount` pour que **le
 serveur actif se déduise automatiquement du personnage observé dans le log** —
-un signal factuel, bien plus fiable que n'importe quelle heuristique. C'est
-aussi la seule façon de gérer correctement un joueur multi-compte réparti sur
-plusieurs serveurs, cas fréquent et que le sélecteur global traiterait mal.
+un signal factuel, sans mécanisme de détection à construire. C'est aussi la
+seule façon de gérer correctement un joueur multi-compte réparti sur plusieurs
+serveurs, cas fréquent qu'un sélecteur global traiterait mal.
 
 Le sélecteur global reste utile comme valeur par défaut, quand aucun personnage
 connu n'a encore été identifié dans la session.
 
-**Trois signaux de détection, de valeurs très inégales :**
-
-| Signal | Fiabilité | Réaction |
-| --- | --- | --- |
-| Personnage observé rattaché à un compte dont le serveur diffère du serveur actif | **Forte** (factuel) | Suspendre, demander confirmation |
-| Personnage inconnu du roster qui joue de façon répétée | Moyenne | Proposer de le rattacher à un compte |
-| Messages **système** dans une langue autre que le français | Faible pour le serveur, **forte pour autre chose** (voir ci-dessous) | Message dédié, voir encadré |
-
-**⚠ La langue ne prouve pas le serveur.** Un joueur peut parfaitement jouer avec
-un client anglais sur un serveur francophone : la langue du client et le serveur
-sont deux choses indépendantes. Utiliser la langue comme preuve d'erreur de
-serveur produirait des faux positifs sur des utilisateurs parfaitement en règle
-— d'où le choix, correct, d'une **demande de confirmation** plutôt que d'une
-correction automatique.
-
-**Mais la détection de langue révèle un problème plus grave.** Vérification
-faite : `LogParser` est **exclusivement francophone** — catégories
-`Information (jeu)` / `Information (combat)` en dur, et l'intégralité des motifs
-(`Vous avez gagné … kamas`, `Vous avez ramassé …`, `… est hors-combat !`) en
-français. Seuls des logs de test `fr/` existent. Autrement dit : **avec un
-client de jeu en anglais, l'application ne détecte strictement rien** — ni
-kamas, ni butin, ni combat. Ce n'est pas une incohérence de serveur, c'est une
-langue non supportée, et cela mérite un message franc (« votre client de jeu
-n'est pas en français, l'application ne peut rien analyser ») plutôt qu'une
-question sur le serveur. C'est accessoirement une limite produit qui n'est
-aujourd'hui documentée nulle part et qu'aucun message n'explique à
-l'utilisateur.
-
-**Ne détecter la langue que sur les messages système.** Le chat contient du
-texte libre : un joueur qui écrit en anglais sur un serveur francophone est
-banal et ne signifie rien. Seules les lignes émises par le client
-(`[Information (jeu)]`, `[Information (combat)]`, marqueurs de combat) portent
-la langue de l'installation. Le score se calcule sur une fenêtre glissante de
-lignes système, avec un seuil (par exemple : au moins 20 lignes système
-observées et moins de 10 % reconnues par les motifs français).
-
-**Comportement de suspension** — c'est la partie qui demande le plus de soin :
-
-1. À la détection, `StatsStoreService` **cesse de consommer** `newLines$`, mais
-   les lots reçus sont **mis en tampon**, jamais jetés — en conservant leur
-   drapeau `isInitialLoad` d'origine, sinon le principe d'architecture n°2 est
-   violé au moment du rejeu.
-2. Une modale bloquante expose le conflit : serveur sélectionné, signal observé,
-   et deux issues — corriger le serveur, ou confirmer que la sélection est
-   correcte.
-3. Tant que l'utilisateur n'a pas tranché : **aucune observation de prix n'est
-   envoyée**. C'est tout l'objet du mécanisme — mieux vaut perdre quelques
-   points que polluer l'agrégat communautaire avec des prix attribués au mauvais
-   serveur.
-4. Après validation, le tampon est rejoué dans l'ordre, et le couple
-   (serveur, signal) validé est mémorisé pour ne plus redemander.
-5. Un garde-fou de taille sur le tampon (par exemple 50 000 lignes) évite qu'une
-   session laissée ouverte n'épuise la mémoire ; au-delà, l'ingestion s'arrête
-   franchement avec un message explicite.
-
-Enfin, un badge « serveur actif » permanent dans le header vaut mieux que
-n'importe quelle détection : rendre l'information visible en continu est le
-moyen le plus simple d'éviter qu'une erreur passe inaperçue pendant des heures.
-
-⚠ La correspondance serveur ↔ langue(s) attendue(s) doit être une **donnée de
-configuration servie par l'API**, jamais une constante compilée : la liste des
-serveurs Wakfu évolue (fusions, ouvertures), et cette correspondance demande à
-être confirmée serveur par serveur avant mise en production.
+Un badge « serveur actif » permanent dans le header rend l'information visible
+en continu : c'est la meilleure garantie qu'une erreur de sélection ne passe
+pas inaperçue pendant des heures.
 
 ### Volumétrie
 
@@ -810,9 +759,8 @@ rollups** ; sans eux, elle la dépasse en moins d'un an.
 | **L'application ne survit plus à l'arrêt de l'hébergement** (le fichier standalone, si) | Élevée | PWA + Service Worker ; accepter que ce soit un vrai changement de nature |
 | **Nouveau point de panne** : serveur indisponible = application dégradée | Élevée | Cache IndexedDB du catalogue + mode invité toujours fonctionnel |
 | **Serveur de jeu absent du log** → prix inexploitables sans déclaration | **Bloquante** pour §8 | Serveur porté par le compte du roster + déduction depuis le personnage observé ; rejeter toute observation sans serveur résolu |
-| **`LogParser` est francophone uniquement** : un client en anglais ne produit aucune donnée | Élevée, **déjà vraie aujourd'hui** | Message explicite au lieu d'un écran vide inexpliqué ; l'internationalisation du parseur est un chantier distinct |
-| Suspension d'ingestion : risque de perdre des lignes ou de rejouer un mauvais `isInitialLoad` | Élevée | Mise en tampon avec conservation du drapeau d'origine, garde-fou de taille (§8) |
-| Dépendance à deux fournisseurs OAuth tiers (panne Discord/Google = connexions impossibles) | Faible | Deux fournisseurs plutôt qu'un ; le mode invité reste fonctionnel |
+| **`LogParser` est francophone uniquement** : un client en anglais ne produit aucune donnée | Élevée, **déjà vraie aujourd'hui**, indépendante de cette migration | Signaler la limite à l'utilisateur ; l'internationalisation du parseur est un chantier distinct |
+| Dépendance à deux fournisseurs OAuth tiers (panne Discord/Google = connexions impossibles) | Faible | Deux fournisseurs plutôt qu'un ; le mode invité reste pleinement fonctionnel dans tous les cas |
 | Duplication d'historique via `isInitialLoad` | **Critique si ignorée** | Clé déterministe + `UNIQUE(user_id, client_key)` (§11) |
 | Volumétrie des prix | Élevée sans traitement | Rétention 90 j du grain fin + rollups (§8) |
 | Données de prix falsifiables et biaisées | Moyenne | Médiane, rejet des valeurs aberrantes, plusieurs contributeurs requis |
@@ -836,9 +784,8 @@ rollups** ; sans eux, elle la dépasse en moins d'un an.
 | **nouveau** `core/api/api-client.service.ts` | `fetch` centralisé : base URL, timeout, retry, `credentials: 'include'`, gestion du 401 |
 | **nouveau** `core/api/catalog.service.ts` | Chargement de l'index au démarrage + cache IndexedDB versionné ; détails à la demande |
 | **nouveau** `core/auth/auth.service.ts` + `features/auth/login-page` | Session, connexion Discord/Google, déconnexion, migration des données locales |
-| **nouveau** `core/services/game-server.service.ts` | Serveur actif (déduit du personnage observé, repli sur le sélecteur), détection d'incohérences, état de suspension |
+| **nouveau** `core/services/game-server.service.ts` | Serveur actif : déduit du personnage observé (compte roster), repli sur le sélecteur global |
 | `core/services/character-roster.service.ts` | Ajouter `gameServer` à `RosterAccount` (+ migration des rosters existants) |
-| `core/services/log-parser.ts` | Exposer un signal « ligne système reconnue / non reconnue » pour le score de langue, sans changer la logique de parsing |
 | **nouveau** `core/data-access/user-data.repository.ts` | Interface + `LocalUserDataRepository` (invité) / `RemoteUserDataRepository` (connecté) |
 | `core/services/persistence.service.ts` | Reste la brique de stockage local, consommée par `LocalUserDataRepository` |
 | `core/services/app-data-export.service.ts` | Réutilisé tel quel comme format de synchronisation et d'export RGPD |
@@ -888,7 +835,7 @@ produire exactement le même nombre de lignes côté serveur.*
 | **1** | Retrait du standalone, assets → `public/assets/`, sprite SVG, routing + lazy-loading, PWA | −578 Ko, contraintes levées | Faible |
 | **2** | Squelette serveur : même origine, `/api/v1/health`, base Neon, migrations, CI/CD | Invisible | Faible |
 | **3** | Catalogue distant + index chargé et caché | **−4,25 Mo** | Moyen |
-| **4** | **Sélecteur de serveur + détection d'incohérences** (100 % client) | Prérequis des prix | Moyen |
+| **4** | **Sélecteur de serveur** (rattaché au compte roster, 100 % client) | Prérequis des prix | Faible |
 | **5** | Authentification Discord/Google + page de connexion + migration des données locales | Comptes | Moyen |
 | **6** | Configuration utilisateur serveur (`user_settings`) | Sync multi-appareils | Faible |
 | **7** | Historiques serveur (combats, achats, échanges) | Historique illimité | **Élevé** (idempotence) |
@@ -920,7 +867,9 @@ jeter les premiers mois d'observations.
    avec le test de double rejeu.
 5. **Ne jamais transmettre le contenu du chat** au serveur.
 6. **Le mode invité doit rester pleinement fonctionnel** : pas de garde de route
-   bloquante, pas de fonctionnalité de base réservée aux comptes.
+   bloquante, aucune fonctionnalité de base réservée aux comptes, toutes les
+   données restent en `localStorage` — exactement comme aujourd'hui — tant que
+   l'utilisateur ne se connecte pas.
 7. **Rétention et rollups des prix dès le premier jour** : rattraper une table
    d'observations de plusieurs centaines de millions de lignes coûte bien plus
    cher que de la partitionner d'emblée.

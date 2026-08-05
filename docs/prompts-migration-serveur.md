@@ -26,6 +26,10 @@ Contexte permanent pour toute cette série de tâches :
   relue.
 - Toute nouvelle chaîne visible passe par I18nService et doit être ajoutée dans
   les 4 locales (fr/en/es/pt) de core/i18n/translations.ts.
+- Le mode invité (sans connexion) doit rester pleinement fonctionnel à tout
+  moment : aucune fonctionnalité de base ne devient réservée aux comptes, et
+  toutes les données restent en localStorage tant que l'utilisateur ne se
+  connecte pas — exactement comme aujourd'hui.
 - Ne touche à aucun fichier sous prompts/.
 - Si tu découvres qu'une hypothèse du plan est fausse, dis-le et propose une
   correction avant d'implémenter — ne contourne pas silencieusement.
@@ -352,7 +356,7 @@ inchangé, fonctionnement hors-ligne après première visite.
 
 ---
 
-# Lot 4 — Serveur de jeu et détection d'incohérences
+# Lot 4 — Serveur de jeu
 
 ## Prompt 4.1 — Modèle et sélecteur de serveur
 
@@ -398,64 +402,6 @@ lignes de log), persistance après rechargement.
 
 **Acceptation** : serveur actif correct dans tous les cas, badge visible,
 aucune régression du roster existant.
-
----
-
-## Prompt 4.2 — Détection d'incohérences et suspension
-
-**Objectif** : empêcher l'attribution de données au mauvais serveur.
-**Prérequis** : 4.1. **Risque** : moyen — touche au flux d'ingestion.
-
-```
-Ajoute la détection d'incohérences avec suspension de l'ingestion
-(docs/plan-migration-serveur.md §8).
-
-Trois signaux, de fiabilités très différentes :
-A. Personnage observé rattaché à un compte dont le serveur diffère du serveur
-   actif → signal FORT → suspendre et demander confirmation.
-B. Personnage inconnu du roster qui joue de façon répétée → signal moyen →
-   proposer de le rattacher à un compte, sans suspendre.
-C. Messages SYSTÈME dans une langue autre que le français → voir ci-dessous.
-
-À propos du signal C, deux points à ne pas confondre :
-- La langue du client ≠ le serveur. On peut jouer en anglais sur un serveur
-  francophone. La langue ne prouve donc JAMAIS une erreur de serveur : au mieux
-  elle motive une question.
-- Surtout : LogParser est exclusivement francophone (catégories
-  « Information (jeu) » / « Information (combat) » et tous les motifs en dur).
-  Avec un client en anglais, l'application ne détecte RIEN — ni kamas, ni
-  butin, ni combat. Le bon message est donc « votre client de jeu n'est pas en
-  français, l'application ne peut rien analyser », pas une question sur le
-  serveur. C'est une limite produit réelle, aujourd'hui expliquée nulle part.
-
-Calcul du signal C : uniquement sur les lignes SYSTÈME (jamais sur le chat, où
-un joueur écrivant en anglais est banal et ne signifie rien). Fenêtre glissante,
-seuil du type « au moins 20 lignes système observées et moins de 10 % reconnues
-par les motifs français ». Expose depuis LogParser un indicateur « ligne système
-reconnue / non reconnue » sans changer sa logique de parsing.
-
-Comportement de suspension (le point le plus délicat) :
-1. StatsStoreService cesse de consommer newLines$, mais les lots reçus sont MIS
-   EN TAMPON, jamais jetés, en CONSERVANT leur drapeau isInitialLoad d'origine
-   (le principe d'architecture n°2 serait violé au rejeu sinon).
-2. Modale bloquante : serveur sélectionné, signal observé, et deux issues —
-   corriger le serveur, ou confirmer la sélection.
-3. Après validation, le tampon est rejoué DANS L'ORDRE, et le couple
-   (serveur, signal) validé est mémorisé pour ne plus redemander.
-4. Garde-fou : au-delà de 50 000 lignes en tampon, arrêt franc avec message
-   explicite plutôt qu'une consommation mémoire illimitée.
-
-Ajoute des tests dans stats-store.service.spec.ts : (a) suspension puis reprise
-ne perd aucune ligne, (b) une ligne mise en tampon pendant un isInitialLoad est
-rejouée AVEC ce drapeau, (c) le chat ne déclenche jamais le signal C.
-
-Vérifie dans le navigateur en simulant des lignes de log (skill
-verify-wakfu-companion) : déclenchement, blocage effectif des compteurs pendant
-la suspension, reprise correcte après validation.
-```
-
-**Acceptation** : les trois tests passent, aucune ligne perdue, compteurs figés
-pendant la suspension.
 
 ---
 
@@ -643,7 +589,11 @@ file d'attente qui survit à une coupure.
 
 ## Prompt 8.1 — Ingestion et agrégation
 
-**Objectif** : fondations du monitoring de prix.
+**Objectif** : transformer les achats individuels déjà collectés (lot 7) en
+séries de prix par objet et par serveur — fiables (résistantes aux valeurs
+aberrantes et aux abus) et bornées en volume (jamais des millions de lignes
+brutes rendues telles quelles). C'est la donnée que consommera l'interface du
+prompt 8.2 ; sans ce prompt, il n'y a rien à afficher.
 **Prérequis** : 7.1, et lot 4 en production depuis assez longtemps pour que les
 achats collectés portent un serveur.
 
