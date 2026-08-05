@@ -1020,4 +1020,114 @@ export class StatsStoreService {
     if (hashIdx === -1) return key;
     return /^\d+$/.test(key.slice(hashIdx + 1)) ? key.slice(0, hashIdx) : key;
   }
+
+  /**
+   * Instances (alliés/ennemis) vers lesquelles une attaque peut être réattribuée (voir
+   * reassignSpell) — combat en cours (recalculé depuis attackerMap) ou déjà terminé (rows déjà
+   * figées dans l'historique). Classées par camp via EntityClassifierService (même heuristique que
+   * l'affichage), pas par la position d'origine de la ligne.
+   */
+  getReassignCandidates(fightId: number): { allies: EntityDamageRow[]; enemies: EntityDamageRow[] } {
+    const working = this.activeFights.get(fightId);
+    const rows = working
+      ? this.buildEntityDamageRows(working)
+      : (this.fightHistoryList.find((f) => f.id === fightId)?.rows ?? []);
+    const allies: EntityDamageRow[] = [];
+    const enemies: EntityDamageRow[] = [];
+    for (const row of rows) {
+      (this.classifier.classify(row.name) === 'ally' ? allies : enemies).push(row);
+    }
+    return { allies, enemies };
+  }
+
+  /**
+   * Réattribue une attaque (un sort et tous ses dégâts déjà enregistrés) d'une instance vers une
+   * autre — correction manuelle d'une attribution automatique erronée (voir resolveNextActor,
+   * ambiguïté inhérente dès que plusieurs combattants partagent un nom, le log ne référençant
+   * jamais une action par instance). Fusionne (incrémente) si la cible a déjà un sort du même nom,
+   * plutôt que d'écraser. Fonctionne aussi bien sur un combat en cours (attackerMap) que déjà
+   * terminé (FightRecord.rows figées dans l'historique).
+   */
+  reassignSpell(
+    fightId: number,
+    spellName: string,
+    from: { name: string; instanceIndex: number },
+    to: { name: string; instanceIndex: number },
+  ): void {
+    const working = this.activeFights.get(fightId);
+    if (working) this.reassignLiveSpell(working, spellName, from, to);
+    else this.reassignHistoricalSpell(fightId, spellName, from, to);
+  }
+
+  /** Reconstruit la clé attackerMap ("Nom" ou "Nom#i", voir InitiativeSeat) d'une instance à partir de son nom/index affiché. */
+  private instanceKey(working: FightWorking, name: string, instanceIndex: number): string {
+    const instanceCount = this.countNameInstances(working, name.toLowerCase()) || 1;
+    return instanceCount <= 1 ? name : `${name}#${instanceIndex}`;
+  }
+
+  private reassignLiveSpell(
+    working: FightWorking,
+    spellName: string,
+    from: { name: string; instanceIndex: number },
+    to: { name: string; instanceIndex: number },
+  ): void {
+    const fromKey = this.instanceKey(working, from.name, from.instanceIndex);
+    const fromSpells = working.attackerMap.get(fromKey);
+    const agg = fromSpells?.get(spellName);
+    if (!fromSpells || !agg) return;
+    fromSpells.delete(spellName);
+
+    const toKey = this.instanceKey(working, to.name, to.instanceIndex);
+    let toSpells = working.attackerMap.get(toKey);
+    if (!toSpells) {
+      toSpells = new Map();
+      working.attackerMap.set(toKey, toSpells);
+    }
+    const existing = toSpells.get(spellName);
+    if (existing) {
+      existing.total += agg.total;
+      for (const [element, amount] of agg.byElement) {
+        existing.byElement.set(element, (existing.byElement.get(element) ?? 0) + amount);
+      }
+    } else {
+      toSpells.set(spellName, agg);
+    }
+    this.publish();
+  }
+
+  private reassignHistoricalSpell(
+    fightId: number,
+    spellName: string,
+    from: { name: string; instanceIndex: number },
+    to: { name: string; instanceIndex: number },
+  ): void {
+    const record = this.fightHistoryList.find((f) => f.id === fightId);
+    if (!record) return;
+
+    const fromRow = record.rows.find(
+      (r) => r.name === from.name && r.instanceIndex === from.instanceIndex,
+    );
+    const spellIdx = fromRow?.spells.findIndex((s) => s.spell === spellName) ?? -1;
+    if (!fromRow || spellIdx === -1) return;
+    const [moved] = fromRow.spells.splice(spellIdx, 1);
+    fromRow.total = fromRow.spells.reduce((sum, s) => sum + s.total, 0);
+
+    const toRow = record.rows.find((r) => r.name === to.name && r.instanceIndex === to.instanceIndex);
+    if (!toRow) return;
+    const existing = toRow.spells.find((s) => s.spell === spellName);
+    if (existing) {
+      existing.total += moved.total;
+      for (const [element, amount] of Object.entries(moved.byElement)) {
+        existing.byElement[element as DamageElement] =
+          (existing.byElement[element as DamageElement] ?? 0) + amount;
+      }
+    } else {
+      toRow.spells.push(moved);
+    }
+    toRow.spells.sort((a, b) => b.total - a.total);
+    toRow.total = toRow.spells.reduce((sum, s) => sum + s.total, 0);
+
+    record.rows.sort((a, b) => b.total - a.total);
+    this.fightHistory.set([...this.fightHistoryList]);
+  }
 }
