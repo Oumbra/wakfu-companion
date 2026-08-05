@@ -71,7 +71,11 @@
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx). */
 .purchase-row[class*='rarity-'] {
   border-left-color: var(--rarity-color);
-  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a), #1a1a1a 70%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 35%, #1a1a1a),
+    #1a1a1a 70%
+  );
 }
 .purchase-row[class*='rarity-']::before {
   content: '';

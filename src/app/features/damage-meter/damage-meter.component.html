@@ -40,9 +40,7 @@
     }
     @if (hasCurrentFight()) {
       <div class="fight-stats-row">
-        <span class="fight-turns"
-          >{{ currentFightTurns() }} {{ 'damageMeter.turns' | t }}</span
-        >
+        <span class="fight-turns">{{ currentFightTurns() }} {{ 'damageMeter.turns' | t }}</span>
         <span class="fight-stats-sep">|</span>
         <span class="fight-duration">{{ formatDuration(currentFightDurationMs()) }}</span>
       </div>

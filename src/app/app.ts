@@ -11,7 +11,10 @@ import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
 import { DamageReassignPickerComponent } from './shared/damage-reassign-picker/damage-reassign-picker.component';
-import { DamageReassignEntity, DamageReassignService } from './core/services/damage-reassign.service';
+import {
+  DamageReassignEntity,
+  DamageReassignService,
+} from './core/services/damage-reassign.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';

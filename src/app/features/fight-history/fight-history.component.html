@@ -40,7 +40,9 @@
             {{ record.result === 'won' ? ('damageMeter.won' | t) : ('damageMeter.lost' | t) }}
           </span>
           <span class="fight-meta">
-            {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{ formatDuration(record.durationMs)}})
+            {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{
+              formatDuration(record.durationMs)
+            }})
           </span>
           <span class="caret" [class.expanded]="isFightExpanded(record.id)">▸</span>
         </div>
@@ -76,7 +78,10 @@
                       }
                     </div>
                     @if (record.loot.length > 1) {
-                      <div class="icon-switch icon-switch-3 loot-sort-switch" (click)="$event.stopPropagation()">
+                      <div
+                        class="icon-switch icon-switch-3 loot-sort-switch"
+                        (click)="$event.stopPropagation()"
+                      >
                         <span
                           class="icon-switch-highlight"
                           [class.is-right]="lootSort() === 'quantity'"

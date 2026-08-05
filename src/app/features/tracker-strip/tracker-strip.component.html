@@ -2,11 +2,14 @@
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
       <div class="kpi-add-wrap">
-        <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="openAdd()">+</button>
-        <button type="button"
-                class="icon-btn help-icon-btn tooltip-below tooltip-align-left"
-                [attr.data-tooltip]="'help.tooltip' | t"
-                (click)="helpModal.open('tracker')"
+        <button class="kpi-add-btn" [attr.data-tooltip]="'tracker.add' | t" (click)="openAdd()">
+          +
+        </button>
+        <button
+          type="button"
+          class="icon-btn help-icon-btn tooltip-below tooltip-align-left"
+          [attr.data-tooltip]="'help.tooltip' | t"
+          (click)="helpModal.open('tracker')"
         >
           ?
         </button>
@@ -17,13 +20,19 @@
             type="button"
             class="kpi-remove-btn"
             [class.active]="watchlist.selectMode()"
-            [attr.data-tooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+            [attr.data-tooltip]="
+              (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
+            "
             (click)="toggleSelectMode()"
           >
             −
           </button>
           @if (watchlist.selectMode() && watchlist.selectedNames().size > 0) {
-            <button type="button" class="kpi-bulk-delete-btn" (click)="watchlist.confirmBulkDelete()">
+            <button
+              type="button"
+              class="kpi-bulk-delete-btn"
+              (click)="watchlist.confirmBulkDelete()"
+            >
               {{ watchlist.bulkDeleteLabel() }}
             </button>
           }
@@ -38,7 +47,10 @@
         (recipeConfirmed)="closeAdd()"
       />
       <div class="icon-switch kpi-add-mode-switch">
-        <span class="icon-switch-highlight" [class.is-right]="watchlist.addMode() === 'down'"></span>
+        <span
+          class="icon-switch-highlight"
+          [class.is-right]="watchlist.addMode() === 'down'"
+        ></span>
         <button
           type="button"
           class="icon-switch-option"
@@ -171,7 +183,6 @@
     }
   </div>
 </div>
-
 
 @if (nameTooltip(); as tip) {
   <div class="kpi-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">

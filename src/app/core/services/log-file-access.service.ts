@@ -3,12 +3,7 @@ import { Subject } from 'rxjs';
 import { PersistenceService } from './persistence.service';
 
 export type LogFileStatus =
-  | 'idle'
-  | 'unsupported'
-  | 'needs-reconnect'
-  | 'connecting'
-  | 'connected'
-  | 'error';
+  'idle' | 'unsupported' | 'needs-reconnect' | 'connecting' | 'connected' | 'error';
 
 const STORAGE_KEY = 'wakfu-log-handle';
 const POLL_INTERVAL_MS = 1000;
@@ -127,7 +122,7 @@ export class LogFileAccessService {
     if (!withHandle?.getAsFileSystemHandle) {
       this.status.set('error');
       this.errorMessage.set(
-        "Ce navigateur ne supporte pas le suivi en direct par glisser-déposer. Utilisez le bouton de sélection de fichier.",
+        'Ce navigateur ne supporte pas le suivi en direct par glisser-déposer. Utilisez le bouton de sélection de fichier.',
       );
       return;
     }

@@ -92,7 +92,11 @@
 }
 .recipe-modal-item-block[class*='rarity-'] {
   border-color: color-mix(in srgb, var(--rarity-color) 45%, transparent);
-  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 45%, #1a1a1a), #1a1a1a 85%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 45%, #1a1a1a),
+    #1a1a1a 85%
+  );
 }
 
 .recipe-modal-item-name {

@@ -269,7 +269,11 @@
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx). */
 .kpi-card[class*='rarity-'] {
   border-color: var(--rarity-color);
-  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 25%, #232323), #232323 85%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 25%, #232323),
+    #232323 85%
+  );
 }
 /* Monstres : bordure grise, fond transparent (pas de dégradé). */
 .kpi-card.is-monster {

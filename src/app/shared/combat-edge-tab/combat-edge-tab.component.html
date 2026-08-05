@@ -1,4 +1,8 @@
-<button class="combat-edge-tab" [attr.data-tooltip]="'damageMeter.expandHint' | t" (click)="expand()">
+<button
+  class="combat-edge-tab"
+  [attr.data-tooltip]="'damageMeter.expandHint' | t"
+  (click)="expand()"
+>
   <img [src]="icon" class="combat-edge-tab-icon" alt="" />
   <span class="notif-dot">{{ combatPanel.activeFightCount() }}</span>
 </button>

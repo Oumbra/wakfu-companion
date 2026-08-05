@@ -9,7 +9,8 @@ export function sortLootRows(loot: readonly LootRow[], sort: LootSort): LootRow[
   if (sort === 'rarity') {
     return [...loot].sort((a, b) => {
       const diff =
-        RARITY_SORT_ORDER[getWakfuItemRarity(b.name)] - RARITY_SORT_ORDER[getWakfuItemRarity(a.name)];
+        RARITY_SORT_ORDER[getWakfuItemRarity(b.name)] -
+        RARITY_SORT_ORDER[getWakfuItemRarity(a.name)];
       return diff !== 0 ? diff : a.name.localeCompare(b.name, 'fr');
     });
   }

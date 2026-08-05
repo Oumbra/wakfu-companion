@@ -38,11 +38,7 @@
     >
       {{ 'history.header' | t }}
     </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'chat'"
-      (click)="activeTab.set('chat')"
-    >
+    <button class="tab-btn" [class.active]="activeTab() === 'chat'" (click)="activeTab.set('chat')">
       {{ 'chat.header' | t }}
       <button
         type="button"
@@ -54,7 +50,10 @@
       </button>
     </button>
   </div>
-  <div class="panels-row" [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()">
+  <div
+    class="panels-row"
+    [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"
+  >
     @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
       <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
     }

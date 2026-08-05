@@ -17,14 +17,7 @@
 import { findWakfuItemEntry } from './wakfu-items.data';
 
 export type WakfuRarity =
-  | 'old'
-  | 'common'
-  | 'rare'
-  | 'mythical'
-  | 'legendary'
-  | 'memory'
-  | 'epic'
-  | 'relic';
+  'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
 export function getWakfuItemRarity(name: string): WakfuRarity {
   return findWakfuItemEntry(name)?.rarity ?? 'common';

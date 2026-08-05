@@ -43,7 +43,7 @@ describe('StatsStoreService', () => {
       expect(purchases.map((p) => p.quantity)).toEqual([100, 16, 4]);
     });
 
-    it('gère les achats d\'objets uniques et de gros montants (purchase_2.log)', () => {
+    it("gère les achats d'objets uniques et de gros montants (purchase_2.log)", () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('purchase_2.log'));
@@ -147,7 +147,7 @@ describe('StatsStoreService', () => {
       expect(names).not.toContain('Oumbra');
     });
 
-    it('ignore un échange entre deux personnages du roster déclaré (et non plus dès qu\'un seul y figure)', () => {
+    it("ignore un échange entre deux personnages du roster déclaré (et non plus dès qu'un seul y figure)", () => {
       const roster = TestBed.inject(CharacterRosterService);
       const accountId = roster.accounts()[0].id;
       roster.addCharacter(accountId, 'Oumbra', 'Sram', 'm');
@@ -180,16 +180,16 @@ describe('StatsStoreService', () => {
       feed(access, [
         ' INFO 13:45:55,483 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
         ' INFO 13:46:13,009 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 20 kamas.',
-        ' INFO 13:46:13,009 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l\'échange',
+        " INFO 13:46:13,009 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange",
         ' INFO 13:46:13,012 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Suuke donne : 20K ; ',
         'le joueur Oumbra donne : 0K ; ',
         ' INFO 13:46:13,012 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 20 kamas.',
-        ' INFO 13:46:13,013 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l\'échange',
-        ' INFO 13:46:13,013 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L\'échange s\'est correctement terminé.',
+        " INFO 13:46:13,013 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange",
+        " INFO 13:46:13,013 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.",
         ' INFO 13:46:13,013 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
         ' INFO 13:46:13,014 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 0K ; ',
         'le joueur Suuke donne : 20K ; ',
-        ' INFO 13:46:13,015 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L\'échange s\'est correctement terminé.',
+        " INFO 13:46:13,015 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.",
         ' INFO 13:46:13,016 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=11039330) and Suuke (id=5749879)',
       ]);
 
@@ -241,7 +241,13 @@ describe('StatsStoreService', () => {
       expect(fight.turns).toBe(1);
       const lootNames = fight.loot.map((l) => l.name).sort();
       expect(lootNames).toEqual(
-        ['Bottes Larvesques Vaseuses', 'Peau de Larve', 'Peau de Nutellarve', 'Perle', 'Plâjeton'].sort(),
+        [
+          'Bottes Larvesques Vaseuses',
+          'Peau de Larve',
+          'Peau de Nutellarve',
+          'Perle',
+          'Plâjeton',
+        ].sort(),
       );
       expect(stats.combatsWon()).toBe(1);
       expect(stats.combatsLost()).toBe(0);
@@ -300,12 +306,22 @@ describe('StatsStoreService', () => {
       expect(stats.activeFightIds()).toEqual([1, 2]);
       // Suivi automatique : le dernier combat touché (2, le plus récent).
       expect(stats.displayedFightId()).toBe(2);
-      expect(stats.damageByAttacker().map((r) => r.name).sort()).toEqual(['Caliburnus', 'Chafer']);
+      expect(
+        stats
+          .damageByAttacker()
+          .map((r) => r.name)
+          .sort(),
+      ).toEqual(['Caliburnus', 'Chafer']);
 
       // L'utilisateur choisit explicitement l'onglet du combat 1.
       stats.selectDisplayedFight(1);
       expect(stats.displayedFightId()).toBe(1);
-      expect(stats.damageByAttacker().map((r) => r.name).sort()).toEqual(['Blop', 'Oumbra']);
+      expect(
+        stats
+          .damageByAttacker()
+          .map((r) => r.name)
+          .sort(),
+      ).toEqual(['Blop', 'Oumbra']);
 
       // De nouvelles lignes touchant le combat 2 ne doivent pas faire perdre le choix explicite.
       feedMore(access, [
@@ -320,7 +336,7 @@ describe('StatsStoreService', () => {
       expect(stats.displayedFightId()).toBe(2);
     });
 
-    it('rejoue le cas réel signalé : le butin de fin de combat n\'est plus perdu quand un combat concurrent vient de se terminer sans ligne à nom résolvable entre les deux (fight_multi-account_loot-after-concurrent-end.log)', () => {
+    it("rejoue le cas réel signalé : le butin de fin de combat n'est plus perdu quand un combat concurrent vient de se terminer sans ligne à nom résolvable entre les deux (fight_multi-account_loot-after-concurrent-end.log)", () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('fight_multi-account_loot-after-concurrent-end.log'));
@@ -347,7 +363,7 @@ describe('StatsStoreService', () => {
       expect(piouLootNames).toContain('Bec de Piou');
     });
 
-    it('combat multi-compte perdu : les dégâts dupliqués par les deux comptes ne sont comptés qu\'une fois (fight_multi-account_lost.log)', () => {
+    it("combat multi-compte perdu : les dégâts dupliqués par les deux comptes ne sont comptés qu'une fois (fight_multi-account_lost.log)", () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('fight_multi-account_lost.log'));
@@ -402,7 +418,9 @@ describe('StatsStoreService', () => {
       feed(access, lines);
 
       const fight = stats.fightHistory().find((f) => f.id === 1)!;
-      expect(fight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell)).toContain('Frappe');
+      expect(fight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell)).toContain(
+        'Frappe',
+      );
 
       stats.reassignSpell(
         1,
@@ -452,9 +470,9 @@ describe('StatsStoreService', () => {
 
       // Sans correction rejouée, l'attribution automatique d'origine (Oumbra) est restaurée.
       const reloadedFight = reloadedStats.fightHistory().find((f) => f.id === 1)!;
-      expect(reloadedFight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell)).toContain(
-        'Frappe',
-      );
+      expect(
+        reloadedFight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell),
+      ).toContain('Frappe');
     });
   });
 
@@ -503,7 +521,7 @@ describe('StatsStoreService', () => {
       // isInitialLoad=false : simule un ramassage après une connexion déjà active (voir
       // gating isInitialLoad, CLAUDE.md) — `feed` (isInitialLoad=true) ne doit rien décrémenter.
       feedMore(access, [
-        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
       ]);
 
       const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
@@ -519,13 +537,13 @@ describe('StatsStoreService', () => {
       stats.setWatchlistMode('Laine de Bouftou', 'down');
 
       feed(access, [
-        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
       ]);
       expect(lootAlert.current()).toBeNull();
 
       feedMore(access, [
-        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
-        "INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.",
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+        'INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
       ]);
 
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(0);
@@ -544,7 +562,7 @@ describe('StatsStoreService', () => {
       stats.setWatchlistCountdownTarget('Laine de Bouftou', 3);
       stats.setWatchlistMode('Laine de Bouftou', 'down');
       feedMore(access, [
-        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
       ]);
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(1);
 
@@ -553,7 +571,7 @@ describe('StatsStoreService', () => {
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(3);
     });
 
-    it("le contenu déjà présent au premier chargement (isInitialLoad) ne décrémente pas le compteur", () => {
+    it('le contenu déjà présent au premier chargement (isInitialLoad) ne décrémente pas le compteur', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       stats.addWatchedItem('Laine de Bouftou');
@@ -561,7 +579,7 @@ describe('StatsStoreService', () => {
       stats.setWatchlistMode('Laine de Bouftou', 'down');
 
       feed(access, [
-        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.",
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
       ]);
 
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(5);

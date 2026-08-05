@@ -91,9 +91,26 @@ describe('LogParser — multi-combat (fightId)', () => {
       ' INFO 11:58:53,629 [AWT-EventQueue-0] (aWF:91) - [FIGHT] End fight with id 111',
     ];
     const entries = parseAll(parser, lines);
-    expect(entries[0]).toMatchObject({ kind: 'fighter-joined', fightId: 111, name: 'Oumbra', breed: 4, fighterId: 999, isControlledByAI: false });
-    expect(entries[1]).toMatchObject({ kind: 'fighter-joined', fightId: 111, name: 'Larve Verte', isControlledByAI: true });
-    expect(entries[2]).toEqual({ kind: 'combat-end', time: '11:58:53,629', fightId: 111, result: 'won' });
+    expect(entries[0]).toMatchObject({
+      kind: 'fighter-joined',
+      fightId: 111,
+      name: 'Oumbra',
+      breed: 4,
+      fighterId: 999,
+      isControlledByAI: false,
+    });
+    expect(entries[1]).toMatchObject({
+      kind: 'fighter-joined',
+      fightId: 111,
+      name: 'Larve Verte',
+      isControlledByAI: true,
+    });
+    expect(entries[2]).toEqual({
+      kind: 'combat-end',
+      time: '11:58:53,629',
+      fightId: 111,
+      result: 'won',
+    });
   });
 
   it('isole deux combats concurrents : la jointure du second ne pollue pas le premier', () => {
@@ -124,7 +141,7 @@ describe('LogParser — multi-combat (fightId)', () => {
       ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Bouftou breed : 1 [3] isControlledByAI=true obstacleId : -1 join the fight at {P}',
       ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Oumbra breed : 4 [4] isControlledByAI=false obstacleId : -1 join the fight at {P}',
       // Un sort/XP ancre currentFightId sur le combat 1 (Piou) juste avant sa fin.
-      ' INFO 10:00:10,000 [T] (a:1) - [Information (combat)] Sagitta : +100 points d\'XP. ',
+      " INFO 10:00:10,000 [T] (a:1) - [Information (combat)] Sagitta : +100 points d'XP. ",
       ' INFO 10:00:11,000 [T] (a:1) - [FIGHT] End fight with id 1',
       // Entre la fin du combat 1 et ce butin, AUCUNE ligne à nom résolvable (seulement des statuts) :
       // avant le fix, currentFightId restait à null et ce butin (du combat 2, encore actif) se perdait.
@@ -133,7 +150,13 @@ describe('LogParser — multi-combat (fightId)', () => {
     ];
     const entries = parseAll(parser, lines);
     const loot = entries.find((e) => e.kind === 'loot');
-    expect(loot).toEqual({ kind: 'loot', time: '10:00:13,000', item: 'Peau de Bouftou', quantity: 1, fightId: 2 });
+    expect(loot).toEqual({
+      kind: 'loot',
+      time: '10:00:13,000',
+      item: 'Peau de Bouftou',
+      quantity: 1,
+      fightId: 2,
+    });
   });
 
   it('déclare une défaite via "Lancement de l\'occupation" même sans marqueur "vaincu(e)"', () => {
@@ -142,7 +165,7 @@ describe('LogParser — multi-combat (fightId)', () => {
       ' INFO 12:05:32,796 [T] (a:1) - [_FL_] fightId=5 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
       ' INFO 12:05:32,797 [T] (a:1) - [_FL_] fightId=5 Sagittarius Caecus breed : 9 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
       ' INFO 12:05:38,613 [T] (a:1) - [Information (combat)] Sagittarius Caecus est KO !',
-      ' INFO 12:05:40,897 [T] (bmX:89) - [DEATH] Lancement de l\'occupation pour le joueur Oumbra Sram',
+      " INFO 12:05:40,897 [T] (bmX:89) - [DEATH] Lancement de l'occupation pour le joueur Oumbra Sram",
       ' INFO 12:05:40,908 [T] (aWF:91) - [FIGHT] End fight with id 5',
     ];
     const entries = parseAll(parser, lines);
@@ -158,12 +181,17 @@ describe('LogParser — multi-combat (fightId)', () => {
     ];
     const entries = parseAll(parser, lines);
     const defeat = entries.find((e) => e.kind === 'enemy-defeated');
-    expect(defeat).toEqual({ kind: 'enemy-defeated', time: '10:00:01,000', name: 'Larve Bleue', fightId: 9 });
+    expect(defeat).toEqual({
+      kind: 'enemy-defeated',
+      time: '10:00:01,000',
+      name: 'Larve Bleue',
+      fightId: 9,
+    });
   });
 });
 
 describe('LogParser — dédoublonnage multi-compte', () => {
-  it('ignore un dégât identique répété moins d\'une seconde plus tard', () => {
+  it("ignore un dégât identique répété moins d'une seconde plus tard", () => {
     const parser = new LogParser();
     const lines = [
       ' INFO 15:16:23,058 [T] (a:1) - [Information (combat)] Sagitta Tenebrarum: -489 PV (Air)',
@@ -173,7 +201,7 @@ describe('LogParser — dédoublonnage multi-compte', () => {
     expect(entries.filter((e) => e.kind === 'damage')).toHaveLength(1);
   });
 
-  it("ne dédoublonne pas le butin (répétition légitime possible en farm)", () => {
+  it('ne dédoublonne pas le butin (répétition légitime possible en farm)', () => {
     const parser = new LogParser();
     const lines = [
       ' INFO 15:01:49,570 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Fausse note .',
@@ -193,16 +221,17 @@ describe('LogParser — dédoublonnage multi-compte', () => {
     expect(entries.filter((e) => e.kind === 'damage')).toHaveLength(2);
   });
 
-  it('dédoublonne un message de chat répété en multi-compte (même auteur, même message, moins d\'1s)', () => {
+  it("dédoublonne un message de chat répété en multi-compte (même auteur, même message, moins d'1s)", () => {
     const parser = new LogParser();
-    const lines = Array.from({ length: 10 }, (_, i) =>
-      ` INFO 15:16:23,0${i}0 [T] (a:1) - [Proximité] Bob : Coucou`,
+    const lines = Array.from(
+      { length: 10 },
+      (_, i) => ` INFO 15:16:23,0${i}0 [T] (a:1) - [Proximité] Bob : Coucou`,
     );
     const entries = parseAll(parser, lines);
     expect(entries.filter((e) => e.kind === 'chat')).toHaveLength(1);
   });
 
-  it('ne dédoublonne pas deux messages de chat différents envoyés à quelques ms d\'écart', () => {
+  it("ne dédoublonne pas deux messages de chat différents envoyés à quelques ms d'écart", () => {
     const parser = new LogParser();
     const lines = [
       ' INFO 15:16:23,000 [T] (a:1) - [Proximité] Bob : Coucou',
@@ -220,14 +249,20 @@ describe('LogParser — échanges multi-lignes', () => {
       ' INFO 11:20:33,092 [T] (Sk:64) - [Trade] Starting an exchange between Suuke (id=1) and Oumbra (id=2)',
       ' INFO 11:21:41,941 [T] (buN:252) - [Trade] le joueur Suuke donne : 0K ; 1xFeuilluchon de Fortune (refId=13360) 1xHavre-Gemme Marchande (refId=4262) ',
       'le joueur Oumbra donne : 0K ; 1xPoudre (refId=27093) ',
-      ' INFO 11:21:41,941 [T] (aPV:174) - [Information (jeu)] L\'échange s\'est correctement terminé.',
+      " INFO 11:21:41,941 [T] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.",
     ];
     const entries = parseAll(parser, lines);
     const trade = entries.find((e) => e.kind === 'trade-completed');
     expect(trade).toMatchObject({
       kind: 'trade-completed',
       sides: [
-        { playerName: 'Suuke', items: [{ name: 'Feuilluchon de Fortune', quantity: 1 }, { name: 'Havre-Gemme Marchande', quantity: 1 }] },
+        {
+          playerName: 'Suuke',
+          items: [
+            { name: 'Feuilluchon de Fortune', quantity: 1 },
+            { name: 'Havre-Gemme Marchande', quantity: 1 },
+          ],
+        },
         { playerName: 'Oumbra', items: [{ name: 'Poudre', quantity: 1 }] },
       ],
     });

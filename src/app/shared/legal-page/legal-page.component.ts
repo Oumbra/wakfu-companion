@@ -33,7 +33,8 @@ export class LegalPageComponent {
 
   protected readonly paragraphs = computed<LegalParagraph[]>(() => {
     this.i18n.locale();
-    const bodyKey = this.legalPage.kind() === 'privacy' ? 'privacy.notice.body' : 'legal.notice.body';
+    const bodyKey =
+      this.legalPage.kind() === 'privacy' ? 'privacy.notice.body' : 'legal.notice.body';
     const body = this.i18n.t(bodyKey);
     return body.split('\n\n').map((paragraph) => {
       const isHeading = paragraph.startsWith('## ');

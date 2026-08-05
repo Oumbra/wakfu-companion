@@ -35,7 +35,11 @@
   </div>
   <div class="class-picker-grid">
     @for (option of classOptions(); track option.key) {
-      <button class="class-picker-item" [attr.data-tooltip]="option.label" (click)="choose(option.key)">
+      <button
+        class="class-picker-item"
+        [attr.data-tooltip]="option.label"
+        (click)="choose(option.key)"
+      >
         <img [src]="option.icon" alt="" />
       </button>
     }

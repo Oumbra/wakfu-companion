@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { LogFileAccessService } from './log-file-access.service';
 
 /** Handle factice dont `getFile()` peut être piloté par le test (succès ou échec simulé). */
-function createFakeHandle(): FileSystemFileHandle & { getFile: (...args: unknown[]) => Promise<File> } {
+function createFakeHandle(): FileSystemFileHandle & {
+  getFile: (...args: unknown[]) => Promise<File>;
+} {
   return {
     kind: 'file',
     name: 'wakfu.log',

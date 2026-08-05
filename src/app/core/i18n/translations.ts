@@ -173,7 +173,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.showMore': 'Afficher plus',
     'sessionRecap.showLess': 'Réduire',
 
-    'help.tooltip': "Comment ça marche ?",
+    'help.tooltip': 'Comment ça marche ?',
     'help.combat.title': 'Combat en cours',
     'help.combat.body':
       "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).",
@@ -328,8 +328,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.secondsUnit': 'sec.',
     'profile.manualCloseLabel': 'Manual',
     'profile.manualCloseTooltip': 'The toast will only close when you press the × button.',
-    'profile.autoCloseTooltipSingular': 'The toast will close automatically after {{seconds}} second.',
-    'profile.autoCloseTooltipPlural': 'The toast will close automatically after {{seconds}} seconds.',
+    'profile.autoCloseTooltipSingular':
+      'The toast will close automatically after {{seconds}} second.',
+    'profile.autoCloseTooltipPlural':
+      'The toast will close automatically after {{seconds}} seconds.',
     'profile.rosterLabel': 'Characters',
     'profile.rosterAddAccount': 'Add an account',
     'profile.rosterEmpty': 'No account declared.',
@@ -378,10 +380,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'How does this work?',
     'help.combat.title': 'Current Fight',
     'help.combat.body':
-      "This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).",
+      'This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).',
     'help.tracker.title': 'Tracker',
     'help.tracker.body':
-      "Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe ▲/▼ switch toggles between count-up mode (starts at 0, goes up) and countdown mode (starts from a target you enter, goes down to 0 then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.",
+      'Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe ▲/▼ switch toggles between count-up mode (starts at 0, goes up) and countdown mode (starts from a target you enter, goes down to 0 then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.',
     'help.fightHistory.title': 'History > Fights',
     'help.fightHistory.body':
       'Keeps the last 30 fights of the session: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.',
@@ -407,7 +409,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Privacy policy',
     'legal.notice.title': 'Legal notice',
     'legal.notice.body':
-      "## 1. Publisher\n\nOumbra, independent developer — personal, non-profit project. Contact: via the GitHub repository issues at github.com/oumbra/wakfu-companion.\n\n## 2. Hosting\n\nWakfu Companion is primarily distributed as a standalone HTML file (wakfu-companion.standalone.html) run locally in your browser, with no hosting provider involved. If you access it via a web address, it is hosted by a standard static hosting platform, with no database or server-side processing.\n\n## 3. Intellectual property\n\n\"Wakfu\" and all game elements (names, images, universe) are the property of Ankama Games. Wakfu Companion is neither published, hosted nor approved by Ankama and has no affiliation with that company. The item and monster icons shown come from third-party community projects (see wakassets) and the game's official servers, used for purely illustrative, non-commercial purposes.\n\n## 4. Source code\n\nThis project is available on GitHub at github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nFor any question about this legal notice, please open an issue on the GitHub repository.",
+      '## 1. Publisher\n\nOumbra, independent developer — personal, non-profit project. Contact: via the GitHub repository issues at github.com/oumbra/wakfu-companion.\n\n## 2. Hosting\n\nWakfu Companion is primarily distributed as a standalone HTML file (wakfu-companion.standalone.html) run locally in your browser, with no hosting provider involved. If you access it via a web address, it is hosted by a standard static hosting platform, with no database or server-side processing.\n\n## 3. Intellectual property\n\n"Wakfu" and all game elements (names, images, universe) are the property of Ankama Games. Wakfu Companion is neither published, hosted nor approved by Ankama and has no affiliation with that company. The item and monster icons shown come from third-party community projects (see wakassets) and the game\'s official servers, used for purely illustrative, non-commercial purposes.\n\n## 4. Source code\n\nThis project is available on GitHub at github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nFor any question about this legal notice, please open an issue on the GitHub repository.',
     'privacy.notice.title': 'Privacy policy',
     'privacy.notice.body':
       "## 1. Data collection\n\nWakfu Companion has no server, no database and no user account. The app runs entirely in your browser (or as a standalone HTML file opened locally): we never receive, store or transmit any of your personal data.\n\n## 2. Data retention\n\nYour settings, declared characters, fight history, watchlist and the reference to the selected wakfu.log file are kept only in your browser's local storage (localStorage / IndexedDB). This data never leaves your device and is never accessible to us.\nThe app reads your wakfu.log file locally, via your browser's File System Access API, to extract kamas, XP, fights and chat. This processing is entirely local: the file's content is never sent anywhere.\n\n## 3. Third-party services\n\nItem and monster icons shown are loaded directly by your browser from third-party servers (static.ankama.com, community projects such as wakassets, cdn.wakfuli.com). These requests are outside our control: your browser communicates directly with these servers, which receive your IP address just like any image loaded on the web, under their own respective privacy policies.\n\n## 4. Hosting\n\nThe online version of the app is hosted by GitHub Pages, which may log standard technical information (IP address, user agent) under its own privacy policy. Wakfu Companion adds no data of its own.\n\n## 5. Your rights\n\nSince no personal data is collected by Oumbra, none can be accessed, corrected or deleted on our side, as we hold none. You remain the sole owner of the data stored locally: it can be erased at any time via the app's \"Reset\" button, or by clearing your browser's storage for this site.\n\n## 6. Questions and complaints\n\nFor any question about this privacy policy, please open an issue on the GitHub repository github.com/oumbra/wakfu-companion.",
@@ -734,8 +736,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.secondsUnit': 'seg.',
     'profile.manualCloseLabel': 'Manual',
     'profile.manualCloseTooltip': 'O aviso só vai fechar ao pressionar o botão ×.',
-    'profile.autoCloseTooltipSingular': 'O aviso vai fechar automaticamente após {{seconds}} segundo.',
-    'profile.autoCloseTooltipPlural': 'O aviso vai fechar automaticamente após {{seconds}} segundos.',
+    'profile.autoCloseTooltipSingular':
+      'O aviso vai fechar automaticamente após {{seconds}} segundo.',
+    'profile.autoCloseTooltipPlural':
+      'O aviso vai fechar automaticamente após {{seconds}} segundos.',
     'profile.rosterLabel': 'Personagens',
     'profile.rosterAddAccount': 'Adicionar uma conta',
     'profile.rosterEmpty': 'Nenhuma conta declarada.',

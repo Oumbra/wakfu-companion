@@ -18,7 +18,13 @@ type HistoryTab = 'combats' | 'purchases' | 'trades';
  */
 @Component({
   selector: 'app-history',
-  imports: [FightHistoryComponent, PurchasesComponent, TradesComponent, TranslatePipe, IconComponent],
+  imports: [
+    FightHistoryComponent,
+    PurchasesComponent,
+    TradesComponent,
+    TranslatePipe,
+    IconComponent,
+  ],
   templateUrl: './history.component.html',
   styleUrl: './history.component.css',
 })

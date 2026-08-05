@@ -57,7 +57,7 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
     NgClass,
     AppPageComponent,
     IconComponent,
-],
+  ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
@@ -158,7 +158,9 @@ export class ProfilePageComponent implements OnDestroy {
       const buttons = this.tabButtons();
       const index = accounts.findIndex((a) => a.id === id);
       const btn = buttons[index]?.nativeElement;
-      this.tabSliderRect.set(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 });
+      this.tabSliderRect.set(
+        btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 },
+      );
     });
 
     effect(() => {
@@ -180,7 +182,9 @@ export class ProfilePageComponent implements OnDestroy {
     const accounts = this.roster.accounts();
     const index = accounts.findIndex((a) => a.id === this.selectedAccountId());
     const btn = this.tabButtons()[index]?.nativeElement;
-    this.tabSliderRect.set(btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 });
+    this.tabSliderRect.set(
+      btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 },
+    );
   }
 
   protected goBack(): void {
@@ -231,7 +235,8 @@ export class ProfilePageComponent implements OnDestroy {
       return this.i18n.t('profile.manualCloseTooltip');
     }
     const seconds = this.profile.alertDurationSeconds();
-    const key = seconds === 1 ? 'profile.autoCloseTooltipSingular' : 'profile.autoCloseTooltipPlural';
+    const key =
+      seconds === 1 ? 'profile.autoCloseTooltipSingular' : 'profile.autoCloseTooltipPlural';
     return this.i18n.t(key, { seconds });
   }
 
@@ -317,12 +322,15 @@ export class ProfilePageComponent implements OnDestroy {
    * qu'il n'a pas encore été renseigné. */
   protected tabLabel(account: RosterAccount, index: number): string {
     if (account.isDefault) return this.i18n.t('profile.rosterDefaultAccountLabel');
-    return account.label.trim() || this.i18n.t('profile.rosterUnnamedAccount', { index: index + 1 });
+    return (
+      account.label.trim() || this.i18n.t('profile.rosterUnnamedAccount', { index: index + 1 })
+    );
   }
 
   /** Pas de pluralisation ICU dans cette app (voir CLAUDE.md) : clé singulier/pluriel distincte selon le nombre de personnages du compte affiché. */
   protected characterCountLabel(count: number): string {
-    const key = count === 1 ? 'profile.rosterCharacterCountOne' : 'profile.rosterCharacterCountMany';
+    const key =
+      count === 1 ? 'profile.rosterCharacterCountOne' : 'profile.rosterCharacterCountMany';
     return this.i18n.t(key, { n: count });
   }
 
@@ -358,7 +366,11 @@ export class ProfilePageComponent implements OnDestroy {
     this.editingCharacter.set(null);
   }
 
-  protected onCharacterRenameKeydown(event: KeyboardEvent, accountId: string, oldName: string): void {
+  protected onCharacterRenameKeydown(
+    event: KeyboardEvent,
+    accountId: string,
+    oldName: string,
+  ): void {
     if (event.key === 'Enter') {
       this.commitCharacterRename(accountId, oldName, (event.target as HTMLInputElement).value);
     } else if (event.key === 'Escape') {
