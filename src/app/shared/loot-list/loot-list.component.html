@@ -3,7 +3,11 @@
     {{ 'damageMeter.noLoot' | t }}
   </div>
 } @else {
-  <div class="loot-list" [class.scrollable]="items().length > 5">
+  <div
+    class="loot-list"
+    [class.scrollable]="items().length > 5"
+    [class.recap-variant]="emptyVariant() === 'recap'"
+  >
     @for (item of items(); track item.name; let first = $first) {
       <div
         class="loot-row"

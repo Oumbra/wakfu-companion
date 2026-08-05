@@ -310,6 +310,11 @@
   width: 18px;
   opacity: 1;
   margin-left: 6px;
+  /* `overflow:hidden` (état replié, ci-dessus) sert à cacher l'icône tant que la largeur anime
+     depuis 0 — mais il clippe aussi la tooltip (`::after`) du bouton lui-même, y compris une fois
+     déplié (bug réel constaté : opacity passe bien à 1 au survol mais rien n'est visible, voir
+     CLAUDE.md pour le même piège sur `.icon-switch`). Repasse en visible une fois déplié. */
+  overflow: visible;
 }
 
 /* Édition directe de la valeur de départ du décompte (mode 'down') : même
@@ -379,6 +384,9 @@
   border-width: 1px;
   opacity: 1;
   margin-left: 6px;
+  /* Même piège que `.kpi-reset` ci-dessus : `overflow:hidden` (état replié) clippe aussi la
+     tooltip des boutons `.icon-switch-option` internes une fois déplié. */
+  overflow: visible;
 }
 .kpi-mode-switch .icon-switch-option {
   font-size: 0.55rem;
