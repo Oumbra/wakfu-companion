@@ -386,6 +386,78 @@ describe('StatsStoreService', () => {
     });
   });
 
+  describe('Réattribution de dégâts : persistance entre (re)connexions (voir CLAUDE.md, gating isInitialLoad)', () => {
+    const lines = [
+      ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+      ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Blop: -100 PV (Terre)',
+      ' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1',
+    ];
+
+    it('une réattribution manuelle reste appliquée après une (re)connexion complète (nouvelle instance du service, relecture localStorage)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, lines);
+
+      const fight = stats.fightHistory().find((f) => f.id === 1)!;
+      expect(fight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell)).toContain('Frappe');
+
+      stats.reassignSpell(
+        1,
+        'Frappe',
+        { name: 'Oumbra', instanceIndex: 1 },
+        { name: 'Caliburnus', instanceIndex: 1 },
+      );
+      const afterReassign = stats.fightHistory().find((f) => f.id === 1)!;
+      expect(afterReassign.rows.find((r) => r.name === 'Oumbra')!.spells).toHaveLength(0);
+      expect(
+        afterReassign.rows.find((r) => r.name === 'Caliburnus')!.spells.map((s) => s.spell),
+      ).toContain('Frappe');
+
+      // Simule un F5/rechargement : nouvelle instance du service (pas seulement un nouveau lot de
+      // lignes sur l'instance existante), qui doit recharger le journal des réattributions depuis
+      // localStorage à la construction et le rejouer après le lot initial.
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const reloadedStats = TestBed.inject(StatsStoreService);
+      const reloadedAccess = TestBed.inject(LogFileAccessService);
+      feed(reloadedAccess, lines);
+
+      const reloadedFight = reloadedStats.fightHistory().find((f) => f.id === 1)!;
+      expect(reloadedFight.rows.find((r) => r.name === 'Oumbra')!.spells).toHaveLength(0);
+      expect(
+        reloadedFight.rows.find((r) => r.name === 'Caliburnus')!.spells.map((s) => s.spell),
+      ).toContain('Frappe');
+    });
+
+    it('resetStats() efface aussi le journal des réattributions persistées', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, lines);
+      stats.reassignSpell(
+        1,
+        'Frappe',
+        { name: 'Oumbra', instanceIndex: 1 },
+        { name: 'Caliburnus', instanceIndex: 1 },
+      );
+      stats.resetStats();
+
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({});
+      const reloadedStats = TestBed.inject(StatsStoreService);
+      const reloadedAccess = TestBed.inject(LogFileAccessService);
+      feed(reloadedAccess, lines);
+
+      // Sans correction rejouée, l'attribution automatique d'origine (Oumbra) est restaurée.
+      const reloadedFight = reloadedStats.fightHistory().find((f) => f.id === 1)!;
+      expect(reloadedFight.rows.find((r) => r.name === 'Oumbra')!.spells.map((s) => s.spell)).toContain(
+        'Frappe',
+      );
+    });
+  });
+
   describe('Robustesse : tous les jeux de test se parsent sans erreur', () => {
     it('ingère chaque fichier fight*.log/trade*.log/purchase*.log sans exception', () => {
       for (const file of readdirSync(FIXTURES_DIR)) {
