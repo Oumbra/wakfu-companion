@@ -239,24 +239,32 @@ visuellement inchangées, application installable.
 
 ```
 Pose l'infrastructure serveur décrite dans docs/plan-migration-serveur.md §4
-et §9 : Cloudflare (front + API sur la MÊME origine, indispensable pour le
-cookie de session) et PostgreSQL Neon.
+et §9 : Cloudflare Pages Functions (front + API dans le MÊME projet Pages,
+donc la MÊME origine sans domaine à acheter, indispensable pour le cookie de
+session) et PostgreSQL Neon.
 
 Tâches :
-1. Crée un dossier server/ : Worker (TypeScript), routage /api/v1/*, et service
-   du front statique buildé sur /.
-2. Base Neon + un outil de migrations versionnées (drizzle-kit ou
+1. Crée un dossier functions/api/ à la racine (convention Pages Functions —
+   PAS un Worker séparé : Pages sert déjà le front statique nativement, seul
+   /api/* a besoin de code). Routage vers /api/v1/*.
+2. Connexion à Neon depuis le runtime Pages Functions (edge, pas de socket TCP
+   classique) : utilise le driver serverless de Neon (@neondatabase/serverless)
+   sur la chaîne de connexion POOLÉE (PgBouncer intégré, pas la connexion
+   directe), OU Cloudflare Hyperdrive si tu préfères garder un driver SQL
+   standard (pg / postgres.js) avec pooling géré par Cloudflare — choisis l'un
+   des deux et documente pourquoi dans server/README.md.
+3. Base Neon + un outil de migrations versionnées (drizzle-kit ou
    node-pg-migrate). Première migration : la table game_servers du §6 du plan,
    remplie avec pandora / rubilax / ogrest.
    ⚠ Les locales attendues par serveur sont à confirmer : mets une valeur par
    défaut prudente et signale-le dans ton compte rendu, ne devine pas.
-3. Endpoints : GET /api/v1/health (état + version) et GET /api/v1/game-servers
+4. Endpoints : GET /api/v1/health (état + version) et GET /api/v1/game-servers
    (liste servie, jamais compilée en dur côté client).
-4. Remplace les deux workflows de déploiement Pages par un workflow unique
+5. Remplace les deux workflows de déploiement Pages par un workflow unique
    deploy.yml : master → environnement production, claude/dev → environnement
    preview, avec migrations jouées avant déploiement et une branche Neon
    DISTINCTE pour la preview (jamais la base de production).
-5. Documente dans server/README.md les secrets nécessaires
+6. Documente dans server/README.md les secrets nécessaires
    (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, DATABASE_URL) et la procédure
    de création de la base.
 
