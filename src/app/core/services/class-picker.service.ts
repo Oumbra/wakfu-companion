@@ -21,7 +21,12 @@ export interface ClassPickerRequest {
 export class ClassPickerService {
   readonly request = signal<ClassPickerRequest | null>(null);
 
-  open(name: string, x: number, y: number, onChosen: (className: string, gender: Gender) => void): void {
+  open(
+    name: string,
+    x: number,
+    y: number,
+    onChosen: (className: string, gender: Gender) => void,
+  ): void {
     this.request.set({ name, x, y, onChosen });
   }
 

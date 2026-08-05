@@ -39,7 +39,9 @@
           type="button"
           class="kpi-remove-btn"
           [class.active]="watchlist.selectMode()"
-          [attr.data-tooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+          [attr.data-tooltip]="
+            (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
+          "
           (click)="toggleSelectMode()"
         >
           −
@@ -63,7 +65,9 @@
             class="kpi-card"
             [class]="watchlist.rarityClass(entry)"
             [class.is-monster]="entry.kind === 'enemy'"
-            [class.is-selected]="watchlist.selectMode() && watchlist.selectedNames().has(entry.name)"
+            [class.is-selected]="
+              watchlist.selectMode() && watchlist.selectedNames().has(entry.name)
+            "
             (click)="onCardClick(entry.name)"
           >
             @if (watchlist.selectMode()) {
@@ -95,7 +99,9 @@
             <div class="kpi-card-info">
               <span
                 class="kpi-card-name"
-                [attr.data-tooltip]="watchlist.truncatedNames().has(entry.name) ? watchlist.displayName(entry) : null"
+                [attr.data-tooltip]="
+                  watchlist.truncatedNames().has(entry.name) ? watchlist.displayName(entry) : null
+                "
               >
                 <span #nameEl (mouseenter)="watchlist.checkTruncation(nameEl, entry.name)">{{
                   watchlist.displayName(entry)
@@ -118,7 +124,10 @@
                   <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
                 }
                 <div class="icon-switch kpi-card-mode-switch" (click)="$event.stopPropagation()">
-                  <span class="icon-switch-highlight" [class.is-right]="entry.mode === 'down'"></span>
+                  <span
+                    class="icon-switch-highlight"
+                    [class.is-right]="entry.mode === 'down'"
+                  ></span>
                   <button
                     type="button"
                     class="icon-switch-option"

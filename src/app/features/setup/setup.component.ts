@@ -1,6 +1,9 @@
 import { Component, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
-import { BrowserIconComponent, BrowserKind } from '../../shared/browser-icon/browser-icon.component';
+import {
+  BrowserIconComponent,
+  BrowserKind,
+} from '../../shared/browser-icon/browser-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 
 interface CompatibleBrowser {

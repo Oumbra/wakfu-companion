@@ -95,7 +95,7 @@
   background: #333333;
 }
 .kpi-add-wrap > .help-icon-btn:hover {
-  color: var(--accent)
+  color: var(--accent);
 }
 
 .kpi-add-btn {
@@ -225,7 +225,8 @@
      classe `.expanded` — la transition CSS n'a donc plus besoin de
      `transition-delay`, ce qui permet en prime de garder largeur et contenu
      parfaitement synchronisés dès le début de l'animation). */
-  transition: width var(--kpi-expand-duration, 320ms) cubic-bezier(0.16, 1, 0.3, 1),
+  transition:
+    width var(--kpi-expand-duration, 320ms) cubic-bezier(0.16, 1, 0.3, 1),
     padding var(--kpi-expand-duration, 320ms) cubic-bezier(0.16, 1, 0.3, 1);
 }
 .kpi:active {
@@ -243,7 +244,9 @@
   white-space: nowrap;
   font-weight: 600;
   font-size: 0.8rem;
-  transition: max-width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease;
+  transition:
+    max-width var(--kpi-expand-duration, 320ms) ease,
+    opacity var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-name > span {
   display: block;
@@ -259,8 +262,11 @@
   font-weight: 700;
   font-size: 0.8rem;
   color: #ccc;
-  transition: max-width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
-    color var(--kpi-expand-duration, 320ms) ease, font-size var(--kpi-expand-duration, 320ms) ease;
+  transition:
+    max-width var(--kpi-expand-duration, 320ms) ease,
+    opacity var(--kpi-expand-duration, 320ms) ease,
+    color var(--kpi-expand-duration, 320ms) ease,
+    font-size var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-reset {
   width: 0;
@@ -271,7 +277,9 @@
   background: transparent;
   border: none;
   padding: 0;
-  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease;
+  transition:
+    width var(--kpi-expand-duration, 320ms) ease,
+    opacity var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi-reset:hover {
   color: var(--accent);
@@ -345,8 +353,11 @@
   overflow: hidden;
   flex-shrink: 0;
   margin-left: 0;
-  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
-    margin-left var(--kpi-expand-duration, 320ms) ease, padding var(--kpi-expand-duration, 320ms) ease,
+  transition:
+    width var(--kpi-expand-duration, 320ms) ease,
+    opacity var(--kpi-expand-duration, 320ms) ease,
+    margin-left var(--kpi-expand-duration, 320ms) ease,
+    padding var(--kpi-expand-duration, 320ms) ease,
     border-width var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi.expanded .kpi-countdown-input {
@@ -376,8 +387,11 @@
   overflow: hidden;
   flex-shrink: 0;
   margin-left: 0;
-  transition: width var(--kpi-expand-duration, 320ms) ease, opacity var(--kpi-expand-duration, 320ms) ease,
-    margin-left var(--kpi-expand-duration, 320ms) ease, border-width var(--kpi-expand-duration, 320ms) ease;
+  transition:
+    width var(--kpi-expand-duration, 320ms) ease,
+    opacity var(--kpi-expand-duration, 320ms) ease,
+    margin-left var(--kpi-expand-duration, 320ms) ease,
+    border-width var(--kpi-expand-duration, 320ms) ease;
 }
 .kpi.expanded .kpi-mode-switch {
   width: 34px;

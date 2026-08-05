@@ -289,13 +289,16 @@ export class StatsStoreService {
     const legacyEnemies = this.persistence.getJson<{ name: string; count: number }[]>(
       LEGACY_ENEMY_WATCHLIST_KEY,
     );
-    const legacyItems = this.persistence.getJson<{ name: string; count: number }[]>(
-      LEGACY_ITEM_WATCHLIST_KEY,
-    );
+    const legacyItems =
+      this.persistence.getJson<{ name: string; count: number }[]>(LEGACY_ITEM_WATCHLIST_KEY);
     if (!legacyEnemies && !legacyItems) return [];
     const migrated: WatchlistEntry[] = [
-      ...(legacyEnemies ?? []).map((w) => this.normalizeWatchlistEntry({ ...w, kind: 'enemy' as const })),
-      ...(legacyItems ?? []).map((w) => this.normalizeWatchlistEntry({ ...w, kind: 'item' as const })),
+      ...(legacyEnemies ?? []).map((w) =>
+        this.normalizeWatchlistEntry({ ...w, kind: 'enemy' as const }),
+      ),
+      ...(legacyItems ?? []).map((w) =>
+        this.normalizeWatchlistEntry({ ...w, kind: 'item' as const }),
+      ),
     ];
     this.persistence.setJson(WATCHLIST_KEY, migrated);
     return migrated;
@@ -524,7 +527,13 @@ export class StatsStoreService {
         this.registerFightTurn(entry.fightId, entry.caster);
         break;
       case 'fighter-joined':
-        this.registerFighterJoin(entry.fightId, entry.name, entry.breed, entry.fighterId, entry.isControlledByAI);
+        this.registerFighterJoin(
+          entry.fightId,
+          entry.name,
+          entry.breed,
+          entry.fighterId,
+          entry.isControlledByAI,
+        );
         break;
       case 'trade-completed':
         this.registerTrade(entry.time, entry.sides);
@@ -739,8 +748,7 @@ export class StatsStoreService {
 
     const allies = working.fight.allies;
     const allAlliesDefeated =
-      allies.length > 0 &&
-      allies.every((a) => working.defeatedNames.has(a.name.toLowerCase()));
+      allies.length > 0 && allies.every((a) => working.defeatedNames.has(a.name.toLowerCase()));
     if (allAlliesDefeated) return 'lost';
 
     return parsedResult;
@@ -801,15 +809,7 @@ export class StatsStoreService {
     const now = new Date();
     if (!match) return now.getTime();
     const [, h, m, s, ms] = match;
-    return new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      +h,
-      +m,
-      +s,
-      +ms,
-    ).getTime();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), +h, +m, +s, +ms).getTime();
   }
 
   private timeToMs(time: string): number {
@@ -966,7 +966,8 @@ export class StatsStoreService {
     const displayFightId = this.resolveDisplayFightId();
     this.displayedFightId.set(displayFightId);
     this.activeFightIds.set([...this.activeFights.keys()]);
-    const displayWorking = displayFightId !== null ? this.activeFights.get(displayFightId) : undefined;
+    const displayWorking =
+      displayFightId !== null ? this.activeFights.get(displayFightId) : undefined;
     this.currentFightTurns.set(displayWorking?.fight.turnCount ?? 1);
     this.currentFightDurationMs.set(
       displayWorking && this.lastLineTime
@@ -1018,7 +1019,9 @@ export class StatsStoreService {
             .map(([spell, agg]) => ({
               spell,
               total: agg.total,
-              byElement: Object.fromEntries(agg.byElement) as Partial<Record<DamageElement, number>>,
+              byElement: Object.fromEntries(agg.byElement) as Partial<
+                Record<DamageElement, number>
+              >,
             }))
             .sort((a, b) => b.total - a.total)
         : [];
@@ -1059,7 +1062,10 @@ export class StatsStoreService {
    * figées dans l'historique). Classées par camp via EntityClassifierService (même heuristique que
    * l'affichage), pas par la position d'origine de la ligne.
    */
-  getReassignCandidates(fightId: number): { allies: EntityDamageRow[]; enemies: EntityDamageRow[] } {
+  getReassignCandidates(fightId: number): {
+    allies: EntityDamageRow[];
+    enemies: EntityDamageRow[];
+  } {
     const working = this.activeFights.get(fightId);
     const rows = working
       ? this.buildEntityDamageRows(working)
@@ -1090,7 +1096,10 @@ export class StatsStoreService {
 
     this.reassignmentHistory.push({ fightId, spellName, from, to });
     if (this.reassignmentHistory.length > MAX_REASSIGNMENT_HISTORY) {
-      this.reassignmentHistory.splice(0, this.reassignmentHistory.length - MAX_REASSIGNMENT_HISTORY);
+      this.reassignmentHistory.splice(
+        0,
+        this.reassignmentHistory.length - MAX_REASSIGNMENT_HISTORY,
+      );
     }
     this.persistence.setJson(REASSIGN_HISTORY_KEY, this.reassignmentHistory);
   }
@@ -1171,7 +1180,9 @@ export class StatsStoreService {
     const [moved] = fromRow.spells.splice(spellIdx, 1);
     fromRow.total = fromRow.spells.reduce((sum, s) => sum + s.total, 0);
 
-    const toRow = record.rows.find((r) => r.name === to.name && r.instanceIndex === to.instanceIndex);
+    const toRow = record.rows.find(
+      (r) => r.name === to.name && r.instanceIndex === to.instanceIndex,
+    );
     if (!toRow) return;
     const existing = toRow.spells.find((s) => s.spell === spellName);
     if (existing) {

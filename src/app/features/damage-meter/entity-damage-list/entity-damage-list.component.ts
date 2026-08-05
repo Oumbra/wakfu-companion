@@ -5,7 +5,10 @@ import {
   SpellBreakdownRow,
   StatsStoreService,
 } from '../../../core/services/stats-store.service';
-import { EntityClassifierService, EntitySide } from '../../../core/services/entity-classifier.service';
+import {
+  EntityClassifierService,
+  EntitySide,
+} from '../../../core/services/entity-classifier.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { NumberFrPipe } from '../../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
@@ -154,7 +157,11 @@ export class EntityDamageListComponent {
    * — correction manuelle d'une attribution automatique erronée (voir resolveNextActor,
    * StatsStoreService, ambiguïté inhérente quand plusieurs combattants partagent un nom).
    */
-  protected onSpellContextMenu(event: MouseEvent, row: EntityDamageRow, spell: SpellBreakdownRow): void {
+  protected onSpellContextMenu(
+    event: MouseEvent,
+    row: EntityDamageRow,
+    spell: SpellBreakdownRow,
+  ): void {
     const fightId = this.fightId();
     if (fightId === null) return;
     event.preventDefault();
@@ -172,7 +179,13 @@ export class EntityDamageListComponent {
       y: event.clientY,
       allies: allies.filter((r) => !isSelf(r)),
       enemies: enemies.filter((r) => !isSelf(r)),
-      onChosen: (to) => this.stats.reassignSpell(fightId, spell.spell, { name: row.name, instanceIndex: row.instanceIndex }, to),
+      onChosen: (to) =>
+        this.stats.reassignSpell(
+          fightId,
+          spell.spell,
+          { name: row.name, instanceIndex: row.instanceIndex },
+          to,
+        ),
     });
   }
 }

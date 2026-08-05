@@ -24,10 +24,7 @@ export interface ChatFilter {
 
 /** Filtres qui s'appliquent au canal d'un message donné : les filtres
  * "global" (tous canaux) et ceux propres à ce canal. */
-function applicableFilters(
-  channel: ChatChannelKey,
-  filters: readonly ChatFilter[],
-): ChatFilter[] {
+function applicableFilters(channel: ChatChannelKey, filters: readonly ChatFilter[]): ChatFilter[] {
   return filters.filter((f) => f.channel === 'global' || f.channel === channel);
 }
 

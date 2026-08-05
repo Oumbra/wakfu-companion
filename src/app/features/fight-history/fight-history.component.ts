@@ -108,8 +108,9 @@ export class FightHistoryComponent {
 
   /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
   protected fightImageTooltip(record: FightRecord): string | null {
-    const source = resolveFightImageInfo(this.enemyRowsFor(record).map((row) => row.name))
-      .tooltipSource;
+    const source = resolveFightImageInfo(
+      this.enemyRowsFor(record).map((row) => row.name),
+    ).tooltipSource;
     return source ? source.names[this.i18n.locale()] : null;
   }
 

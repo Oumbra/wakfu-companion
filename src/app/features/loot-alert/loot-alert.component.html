@@ -23,13 +23,21 @@
           (reason() === 'countdown' ? 'tracker.countdownAlertTitle' : 'profile.lootAlertTitle') | t
         }}</span>
         <span class="loot-alert-name">
-          {{ kind() === 'enemy' ? i18n.translateMonsterName(itemName()) : i18n.translateItemName(itemName()) }}
+          {{
+            kind() === 'enemy'
+              ? i18n.translateMonsterName(itemName())
+              : i18n.translateItemName(itemName())
+          }}
           @if (quantity() > 1) {
             × {{ quantity() }}
           }
         </span>
       </div>
-      <button class="loot-alert-close" [attr.data-tooltip]="'profile.closeToast' | t" (click)="close()">
+      <button
+        class="loot-alert-close"
+        [attr.data-tooltip]="'profile.closeToast' | t"
+        (click)="close()"
+      >
         ×
       </button>
     </div>

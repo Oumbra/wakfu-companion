@@ -11,7 +11,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { EntitySide } from '../../core/services/entity-classifier.service';
-import { DamageReassignEntity, DamageReassignRequest } from '../../core/services/damage-reassign.service';
+import {
+  DamageReassignEntity,
+  DamageReassignRequest,
+} from '../../core/services/damage-reassign.service';
 import { EntityDamageRow } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';

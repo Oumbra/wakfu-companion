@@ -8,8 +8,5 @@
  * toujours l'apostrophe droite.
  */
 export function normalizeWakfuName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[’‘]/g, "'");
+  return name.toLowerCase().trim().replace(/[’‘]/g, "'");
 }

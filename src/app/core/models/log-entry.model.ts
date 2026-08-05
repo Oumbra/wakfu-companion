@@ -1,22 +1,10 @@
 /** Éléments de dégâts reconnus dans les lignes de combat du log Wakfu. */
 export type DamageElement =
-  | 'Neutre'
-  | 'Terre'
-  | 'Feu'
-  | 'Eau'
-  | 'Air'
-  | 'Lumière'
-  | 'Stasis'
-  | 'Inconnu';
+  'Neutre' | 'Terre' | 'Feu' | 'Eau' | 'Air' | 'Lumière' | 'Stasis' | 'Inconnu';
 
 /** Canaux de chat affichés dans le panneau Chat. */
 export type ChatChannelKey =
-  | 'proximite'
-  | 'groupe'
-  | 'guilde'
-  | 'recrutement'
-  | 'commerce'
-  | 'communaute';
+  'proximite' | 'groupe' | 'guilde' | 'recrutement' | 'commerce' | 'communaute';
 
 export interface ChatChannelInfo {
   key: ChatChannelKey;

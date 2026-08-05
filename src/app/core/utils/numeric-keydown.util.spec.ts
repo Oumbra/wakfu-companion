@@ -25,7 +25,16 @@ describe('resolveNumericKeyAction', () => {
   });
 
   it('touches de navigation/édition -> allow', () => {
-    for (const k of ['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'Enter']) {
+    for (const k of [
+      'Backspace',
+      'Delete',
+      'Tab',
+      'ArrowLeft',
+      'ArrowRight',
+      'Home',
+      'End',
+      'Enter',
+    ]) {
       expect(resolveNumericKeyAction(key(k))).toBe('allow');
     }
   });

@@ -84,7 +84,8 @@ const STATUS_REMOVE_RE = /^(.+?): n'est plus sous l'emprise de '(.+?)'\.?$/;
 /** Purement informatif (le coup a été paré) : jamais une source de dégâts. */
 const IGNORED_TAG = 'Parade !';
 /** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
-const TRADE_DONNE_RE = /le joueur (.+?) donne\s*:\s*(\d+)\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
+const TRADE_DONNE_RE =
+  /le joueur (.+?) donne\s*:\s*(\d+)\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
 const TRADE_ITEM_RE = /(\d+)\s*x\s*(.+?)\s*\(refId=-?\d+\)/g;
 
 const DAMAGE_ELEMENTS = new Set<string>([

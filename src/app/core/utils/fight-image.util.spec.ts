@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo, resolveFightImageUrl } from './fight-image.util';
+import {
+  DEFAULT_FIGHT_IMAGE_URL,
+  resolveFightImageInfo,
+  resolveFightImageUrl,
+} from './fight-image.util';
 import { findWakfuMonsterEntry } from '../data/wakfu-monsters.data';
 import { findWakfuDungeonByBossMonsterId } from '../data/wakfu-dungeons.data';
 

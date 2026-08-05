@@ -72,9 +72,11 @@ export class EntityClassifierService {
   constructor(private readonly persistence: PersistenceService) {
     const stored = this.persistence.getJson<Record<string, EntitySide>>(OVERRIDES_KEY) ?? {};
     this.overrides = new Map(Object.entries(stored));
-    const storedClasses = this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
+    const storedClasses =
+      this.persistence.getJson<Record<string, string>>(MANUAL_CLASSES_KEY) ?? {};
     this.manualClasses = new Map(Object.entries(storedClasses));
-    const storedGenders = this.persistence.getJson<Record<string, Gender>>(MANUAL_GENDERS_KEY) ?? {};
+    const storedGenders =
+      this.persistence.getJson<Record<string, Gender>>(MANUAL_GENDERS_KEY) ?? {};
     this.manualGenders = new Map(Object.entries(storedGenders));
     const storedDetected =
       this.persistence.getJson<Record<string, string>>(DETECTED_CLASSES_KEY) ?? {};

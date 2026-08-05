@@ -6,7 +6,8 @@ import { signal } from '@angular/core';
  * en dessous plutôt qu'au-dessus, sinon rogné par le panneau). */
 export function computeAutoFillColumns(el: HTMLElement, gap: number, minCol: number): number {
   const style = getComputedStyle(el);
-  const contentWidth = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+  const contentWidth =
+    el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
   return Math.max(1, Math.floor((contentWidth + gap) / (minCol + gap)));
 }
 

@@ -28,7 +28,13 @@ interface TradeDateGroup {
  */
 @Component({
   selector: 'app-trades',
-  imports: [NumberFrPipe, TranslatePipe, ItemIconComponent, HistoryListHeaderComponent, IconComponent],
+  imports: [
+    NumberFrPipe,
+    TranslatePipe,
+    ItemIconComponent,
+    HistoryListHeaderComponent,
+    IconComponent,
+  ],
   templateUrl: './trades.component.html',
   styleUrl: './trades.component.css',
 })

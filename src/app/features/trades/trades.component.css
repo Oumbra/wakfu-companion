@@ -159,7 +159,11 @@
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx). */
 .trade-item-row[class*='rarity-'] {
   border-left-color: var(--rarity-color);
-  background: linear-gradient(to right, color-mix(in srgb, var(--rarity-color) 30%, #222), #222 75%);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 30%, #222),
+    #222 75%
+  );
 }
 .trade-item-name {
   flex-grow: 1;

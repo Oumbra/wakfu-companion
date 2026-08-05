@@ -62,7 +62,12 @@ export class LootAlertComponent {
     });
   }
 
-  private show(name: string, quantity: number, kind: 'item' | 'enemy', reason: 'loot' | 'countdown'): void {
+  private show(
+    name: string,
+    quantity: number,
+    kind: 'item' | 'enemy',
+    reason: 'loot' | 'countdown',
+  ): void {
     this.itemName.set(name);
     this.quantity.set(quantity);
     this.kind.set(kind);

@@ -33,16 +33,23 @@ export class CharacterAddFormComponent {
     return getClassIconUri(pending?.className, pending?.gender ?? 'm');
   });
 
-  protected readonly canAdd = computed(() => this.pendingClass() !== null && this.name().trim().length > 0);
+  protected readonly canAdd = computed(
+    () => this.pendingClass() !== null && this.name().trim().length > 0,
+  );
 
   protected setName(value: string): void {
     this.name.set(value);
   }
 
   protected openClassPicker(event: MouseEvent): void {
-    this.classPickerService.open(this.name().trim(), event.clientX, event.clientY, (className, gender) => {
-      this.pendingClass.set({ className, gender });
-    });
+    this.classPickerService.open(
+      this.name().trim(),
+      event.clientX,
+      event.clientY,
+      (className, gender) => {
+        this.pendingClass.set({ className, gender });
+      },
+    );
   }
 
   protected commit(): void {

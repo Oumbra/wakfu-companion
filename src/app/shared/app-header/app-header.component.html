@@ -62,7 +62,10 @@
       <div class="mobile-menu-backdrop" (click)="closeMobileMenu()"></div>
       <div class="mobile-menu">
         @if (logFileAccess.status() === 'connected') {
-          <button class="mobile-menu-item" (click)="sessionRecapService.toggle(); closeMobileMenu()">
+          <button
+            class="mobile-menu-item"
+            (click)="sessionRecapService.toggle(); closeMobileMenu()"
+          >
             <img [src]="sessionRecapIcon" class="mobile-menu-icon" alt="" />
             <span>{{ 'app.sessionRecap' | t }}</span>
           </button>

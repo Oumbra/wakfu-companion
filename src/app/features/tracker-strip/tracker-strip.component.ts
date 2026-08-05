@@ -1,5 +1,9 @@
 import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
-import { StatsStoreService, WatchlistCounterMode, WatchlistEntry } from '../../core/services/stats-store.service';
+import {
+  StatsStoreService,
+  WatchlistCounterMode,
+  WatchlistEntry,
+} from '../../core/services/stats-store.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
@@ -61,7 +65,11 @@ export class TrackerStripComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   protected readonly helpModal = inject(HelpModalService);
 
-  protected readonly watchlist = new WatchlistTileController(this.stats, this.i18n, this.confirmDelete);
+  protected readonly watchlist = new WatchlistTileController(
+    this.stats,
+    this.i18n,
+    this.confirmDelete,
+  );
 
   protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
