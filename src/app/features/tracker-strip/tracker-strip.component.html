@@ -134,14 +134,16 @@
             ▼
           </button>
         </div>
-        <button
-          class="kpi-reset"
-          draggable="false"
-          [attr.data-tooltip]="'tracker.reset' | t"
-          (click)="watchlist.resetCount($event, entry.name)"
-        >
-          <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
-        </button>
+        @if (entry.mode === 'up') {
+          <button
+            class="kpi-reset"
+            draggable="false"
+            [attr.data-tooltip]="'tracker.reset' | t"
+            (click)="watchlist.resetCount($event, entry.name)"
+          >
+            <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
+          </button>
+        }
         <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
         @if (watchlist.selectMode()) {
           <button

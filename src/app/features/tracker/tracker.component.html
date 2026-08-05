@@ -138,13 +138,15 @@
                     ▼
                   </button>
                 </div>
-                <button
-                  class="kpi-card-reset"
-                  [attr.data-tooltip]="'tracker.reset' | t"
-                  (click)="watchlist.resetCount($event, entry.name)"
-                >
-                  <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
-                </button>
+                @if (entry.mode === 'up') {
+                  <button
+                    class="kpi-card-reset"
+                    [attr.data-tooltip]="'tracker.reset' | t"
+                    (click)="watchlist.resetCount($event, entry.name)"
+                  >
+                    <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
+                  </button>
+                }
               </div>
             </div>
           </div>
