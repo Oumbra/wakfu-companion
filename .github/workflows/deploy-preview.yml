@@ -24,10 +24,8 @@ jobs:
         with:
           node-version: '22'
 
-      # Pas de package-lock.json committé dans ce dépôt (voir .gitignore) :
-      # `npm ci` échouerait, on utilise donc `npm install`.
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build standalone
         run: npm run build:standalone

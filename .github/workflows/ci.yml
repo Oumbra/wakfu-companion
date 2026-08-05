@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - claude/dev
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Les tables générées (src/app/core/data/wakfu-{items,monsters,dungeons}.data.ts)
+      # sont dans .gitignore : absentes d'un checkout propre. `npm test` et
+      # `npm run build` les régénèrent eux-mêmes via `npm run generate`, mais
+      # prettier tourne avant et doit voir le même périmètre de fichiers qu'en
+      # local, où elles existent (elles sont conformes au format Prettier).
+      - name: Generate data tables
+        run: npm run generate
+
+      - name: Check formatting
+        run: npx prettier --check "src/**/*.{ts,html,css}"
+
+      # `--watch=false` : le builder `@angular/build:unit-test` d'Angular 21
+      # n'accepte pas `--run` (option Vitest). Hors TTY le défaut est déjà
+      # false, on le fixe explicitement pour ne pas dépendre du runner.
+      - name: Run tests
+        run: npm test -- --watch=false
+
+      - name: Build
+        run: npm run build
