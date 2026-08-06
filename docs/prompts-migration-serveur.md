@@ -181,7 +181,9 @@ premier avatar de la liste (index 0) s'affiche, le logo du header est présent.
 Donne la taille du bundle avant/après.
 ```
 
-**Acceptation** : bundle ≈ 850 Ko, tous les sons et images fonctionnels.
+**Acceptation** : bundle ≈ 4,77 Mo (−578 Ko par rapport au lot 1.1 ; le
+référentiel objets/monstres, ~4,25 Mo, n'est retiré qu'au lot 3 — ce lot
+n'agit que sur les assets binaires), tous les sons et images fonctionnels.
 
 ---
 
