@@ -5,7 +5,7 @@
  * Source : https://static.ankama.com/wakfu/ng/modules/mmorpg/encyclopedia/breeds/assets/breeds.jpg
  * Grille reelle : 630x70px, soit 18 colonnes x 2 lignes de cases 35x35px.
  */
-export const BREEDS_SPRITE_DATA_URI = '/assets/avatars/breeds-sprite-73f2ae21.jpg';
+export const BREEDS_SPRITE_DATA_URI = 'assets/avatars/breeds-sprite-73f2ae21.jpg';
 export const BREEDS_SPRITE_COLS = 18;
 export const BREEDS_SPRITE_ROWS = 2;
 export const BREEDS_SPRITE_CELL_SIZE = 35;

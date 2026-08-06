@@ -5,4 +5,4 @@
  * de résultats de l'autocomplétion pour tout objet `hasRecipe` (voir
  * wakfu-autocomplete.component).
  */
-export const RECIPE_ICON_DATA_URI = '/assets/ui/recipe-b912eaf5.png';
+export const RECIPE_ICON_DATA_URI = 'assets/ui/recipe-b912eaf5.png';

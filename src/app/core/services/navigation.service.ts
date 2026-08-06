@@ -38,11 +38,21 @@ export class NavigationService {
   private readonly stack = signal<AppView[]>(['main']);
   private readonly transitionPeer = signal<AppView | null>(null);
   private readonly direction = signal<SlideDirection>('forward');
+  /** Vues jamais retirées une fois ajoutées (contrairement à `stack`, qui ne retient que le
+   * chemin de retour) — pilote le chargement différé de `profile`/`legal` (voir app.html, `@defer
+   * (when nav.hasVisited(...))`) : leur code n'est chargé qu'à la première navigation vers eux,
+   * puis reste monté pour de bon (même règle que "panneau toujours monté" ci-dessus, désormais
+   * vraie seulement après la première visite plutôt que dès le démarrage). */
+  private readonly visited = signal<ReadonlySet<AppView>>(new Set(['main']));
 
   readonly view = computed(() => {
     const s = this.stack();
     return s[s.length - 1];
   });
+
+  hasVisited(view: AppView): boolean {
+    return this.visited().has(view);
+  }
 
   openProfile(): void {
     this.push('profile');
@@ -71,6 +81,9 @@ export class NavigationService {
     this.direction.set('forward');
     this.transitionPeer.set(top);
     this.stack.set([...s, view]);
+    if (!this.visited().has(view)) {
+      this.visited.set(new Set([...this.visited(), view]));
+    }
   }
 
   /** Position (transform CSS) du panneau `view` — voir la doc de classe pour la règle. */
