@@ -14,10 +14,9 @@ const LAST_INDEX = BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS - 1;
  */
 @Component({
   selector: 'app-avatar-icon',
-  // La planche (base64, ~55Ko) est liée dynamiquement plutôt que mise dans
-  // `styles` : le budget Angular "anyComponentStyle" (feuilles de style de
-  // composant) est prévu pour du CSS, pas pour embarquer une image — inlinée
-  // ici, elle ferait échouer le build de production.
+  // La planche est liée dynamiquement (import depuis class-breeds.data.ts,
+  // servie en fichier statique hashé sous public/assets/avatars/) plutôt que
+  // mise en dur dans `styles`.
   template: `
     <div
       class="avatar-cell"

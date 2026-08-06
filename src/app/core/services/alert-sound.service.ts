@@ -22,9 +22,11 @@ export class AlertSoundService {
     this.play(COUNTDOWN_ALERT_SOUND_DATA_URI);
   }
 
-  private play(dataUri: string): void {
+  /** Le fichier n'est réellement téléchargé qu'ici, à la lecture — jamais au démarrage
+   * (voir public/assets/sounds/, servis en fichiers statiques hashés). */
+  private play(url: string): void {
     try {
-      const audio = new Audio(dataUri);
+      const audio = new Audio(url);
       void audio.play();
     } catch {
       // Lecture audio indisponible : l'alerte visuelle reste affichée sans son.
