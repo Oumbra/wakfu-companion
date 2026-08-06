@@ -1,12 +1,18 @@
 import { Component, input } from '@angular/core';
 
 /**
- * SVG utilitaires recopiés à l'identique dans plusieurs composants avant cette factorisation —
- * voir CLAUDE.md. `strokeWidth` reste paramétrable : deux appelants du même pictogramme
- * utilisaient parfois une épaisseur de trait légèrement différente (ex. `chevron-left`, 2 vs 2.2),
- * une vraie petite spécificité à préserver plutôt qu'à écraser.
+ * SVG utilitaires partagés, servis via le sprite public/assets/icons-*.svg (voir
+ * icon.component.html) — nom hashé pour un cache navigateur immuable, à régénérer
+ * si le contenu du sprite change. `strokeWidth` reste paramétrable : deux appelants
+ * du même pictogramme utilisaient parfois une épaisseur de trait légèrement
+ * différente (ex. `chevron-left`, 2 vs 2.2), une vraie petite spécificité à
+ * préserver plutôt qu'à écraser.
  */
-export type AppIconName = 'clock' | 'clock-long' | 'reset' | 'check' | 'chevron-left';
+export type AppIconName =
+  'clock' | 'clock-long' | 'reset' | 'check' | 'chevron-left' | 'edit' | 'volume-on' | 'volume-off';
+
+/** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
+export const ICONS_SPRITE_URL = 'assets/icons-211385e5.svg';
 
 @Component({
   selector: 'app-icon',
@@ -23,4 +29,6 @@ export class IconComponent {
    * la boîte du hôte, pas la portée des sélecteurs). D'où un `@Input` explicite plutôt qu'une
    * classe CSS passée par l'appelant. */
   readonly size = input(20);
+
+  protected readonly spriteUrl = ICONS_SPRITE_URL;
 }

@@ -5,4 +5,4 @@
  * rareté du butin — pas pour représenter une rareté précise, d'où le choix du
  * visuel neutre.
  */
-export const RARITY_ICON_BASE_DATA_URI = '/assets/ui/rarity-base-a39a4be2.png';
+export const RARITY_ICON_BASE_DATA_URI = 'assets/ui/rarity-base-a39a4be2.png';

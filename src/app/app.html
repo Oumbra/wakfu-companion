@@ -15,11 +15,15 @@
     </div>
 
     <div class="view-panel" [style.transform]="nav.panelTransform('profile')">
-      <app-profile-page />
+      @defer (when nav.hasVisited('profile')) {
+        <app-profile-page />
+      }
     </div>
 
     <div class="view-panel" [style.transform]="nav.panelTransform('legal')">
-      <app-legal-page />
+      @defer (when nav.hasVisited('legal')) {
+        <app-legal-page />
+      }
     </div>
   </div>
 

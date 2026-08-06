@@ -113,10 +113,6 @@
   width: 26px;
   height: 26px;
 }
-.pseudo-edit-btn svg {
-  width: 13px;
-  height: 13px;
-}
 .pseudo-edit-input {
   width: 100%;
   background: transparent;
@@ -227,10 +223,6 @@
 }
 .test-sound-btn {
   flex-shrink: 0;
-}
-.test-sound-btn svg {
-  width: 14px;
-  height: 14px;
 }
 .alert-timing-icon {
   display: flex;
@@ -470,10 +462,6 @@
 }
 .sound-toggle-btn {
   left: 2px;
-}
-.sound-toggle-btn svg {
-  width: 13px;
-  height: 13px;
 }
 .sound-toggle-btn:hover,
 .remove-btn:hover {
