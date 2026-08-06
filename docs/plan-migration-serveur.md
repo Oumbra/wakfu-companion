@@ -639,6 +639,17 @@ racine, `claude/dev` → `preview/claude-dev`. Simple et efficace, mais **GitHub
 Pages ne peut plus convenir** : le front et l'API doivent partager la même
 origine pour que le cookie de session soit un cookie *first-party* (§4).
 
+**Mise à jour du 2026-08-06** : `claude/dev` est passée sur Cloudflare Pages
+(`deploy-preview.yml`) en avance sur le phasage ci-dessous — front statique
+uniquement, sans Workers/Neon (ça reste le lot 2). Cause : le workflow système
+GitHub `pages build and deployment` (déclenché automatiquement sur push
+`gh-pages`) est devenu instable dès le passage au build multi-fichiers du lot
+1 (commit `3ab11c78`), restant bloqué en `deployment_queued` jusqu'à son
+timeout de 10 min — y compris en le remplaçant par le pipeline Actions natif
+(`upload-pages-artifact`/`deploy-pages`). `master` (prod) reste sur GitHub
+Pages pendant la migration, comme acté plus haut ; seule la preview est
+avancée sur la cible finale.
+
 Deux manques à corriger au passage, indépendants de la migration :
 
 1. **Aucun workflow ne lance les tests**, alors que Vitest est configuré et que
