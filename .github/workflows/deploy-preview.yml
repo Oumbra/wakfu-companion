@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: pages-deploy
@@ -15,6 +17,9 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,10 +49,32 @@ jobs:
       # (même compromis : nécessaire pour ne pas effacer l'autre déploiement
       # sur cette même branche gh-pages, au prix d'une légère accumulation de
       # fichiers hashés obsolètes, pont temporaire avant Cloudflare Pages).
-      - name: Deploy to GitHub Pages (preview/claude-dev)
+      #
+      # gh-pages sert ici uniquement de zone de fusion entre prod (racine) et
+      # preview (preview/claude-dev/) — voir les étapes suivantes pour la
+      # publication réelle.
+      - name: Merge into gh-pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public_deploy
           destination_dir: preview/claude-dev
           keep_files: true
+
+      # Publication via le pipeline GitHub Actions natif — voir le commentaire
+      # détaillé dans deploy-main.yml (workflow système "pages build and
+      # deployment" instable depuis le lot 1, bloqué en deployment_queued).
+      - name: Checkout gh-pages (fusionné)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-site
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gh-pages-site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
