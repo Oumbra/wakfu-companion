@@ -1,0 +1,3 @@
+Forçage d'un nouveau déploiement GitHub Pages suite à une collision d'ID de déploiement (run #128 bloqué en deployment_queued puis annulé, 2 re-run identiques rejetés avec "Deployment cancelled" car le SHA gh-pages n'avait pas changé). Voir run 31105083614.
+
+2026-08-06T13:50:00Z
