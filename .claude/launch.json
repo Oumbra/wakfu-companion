@@ -6,12 +6,6 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start"],
       "port": 4200
-    },
-    {
-      "name": "wakfu-companion-standalone-preview",
-      "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "4300"],
-      "port": 4300
     }
   ]
 }

@@ -2,7 +2,7 @@
 /**
  * Régénère src/app/core/data/wakfu-items.data.ts à partir de
  * referentiel/items_wakfu.json. Exécuté avant chaque build/serve (voir
- * scripts "start"/"build"/"build:standalone:compile" dans package.json) afin
+ * scripts "start"/"build" dans package.json) afin
  * que la table utilisée par l'UI (icônes objets, autocomplétion, rareté)
  * reste synchronisée avec le référentiel sans étape manuelle.
  *

@@ -2,7 +2,7 @@
 /**
  * Régénère src/app/core/data/wakfu-monsters.data.ts à partir de
  * referentiel/monsters_wakfu.json. Exécuté avant chaque build/serve (voir
- * scripts "start"/"build"/"build:standalone:compile" dans package.json,
+ * scripts "start"/"build" dans package.json,
  * script "generate" combiné) afin que la table utilisée par l'UI (icônes
  * monstre, autocomplétion, classification boss/archimonstre/dominant) reste
  * synchronisée avec le référentiel sans étape manuelle — miroir exact de

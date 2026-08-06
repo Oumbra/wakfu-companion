@@ -15,9 +15,9 @@ npm start          # ng serve sur http://localhost:4200
 ## Build
 
 ```
-npm run build:standalone
+npm run build
 ```
 
-Génère `wakfu-companion.standalone.html` à la racine du dépôt : un fichier
-HTML unique (JS/CSS/favicon inlinés) ouvrable directement en double-clic,
-sans serveur.
+Génère le build de production dans `dist/wakfu-companion/browser` — une
+application web classique, à servir par un serveur HTTP (voir le déploiement
+GitHub Pages dans `.github/workflows/`).

@@ -2,7 +2,7 @@
 /**
  * Régénère src/app/core/data/wakfu-dungeons.data.ts à partir de
  * referentiel/dungeons_wakfu.json. Exécuté avant chaque build/serve (voir
- * scripts "start"/"build"/"build:standalone:compile" dans package.json,
+ * scripts "start"/"build" dans package.json,
  * script "generate" combiné) — miroir de tools/generate-wakfu-monsters-data.mjs
  * pour les donjons. Sert notamment à résoudre l'illustration de donjon d'un
  * boss croisé par `bossMonsterId` (voir core/utils/fight-image.util.ts).

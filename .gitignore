@@ -42,8 +42,7 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Build standalone (régénéré via `npm run build:standalone`)
-/wakfu-companion.standalone.html
+# Tables générées (régénérées via `npm run generate`)
 /src/app/core/data/wakfu-items.data.ts
 /src/app/core/data/wakfu-dungeons.data.ts
 /src/app/core/data/wakfu-monsters.data.ts
