@@ -112,4 +112,4 @@ Puis itérer les frames avec `iio.imiter(path, plugin='FFMPEG')` et sauvegarder 
 
 ## Avant de conclure "corrigé"
 
-Toujours valider les 3 builds (`npm run build` dev, `npm run build`, `npm run build:standalone`) après le test navigateur, et nettoyer tout fichier de test temporaire copié dans `public/` (jamais commité).
+Toujours valider les 2 builds (`npm start`/dev et `npm run build`) après le test navigateur, et nettoyer tout fichier de test temporaire copié dans `public/` (jamais commité).

@@ -27,14 +27,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build standalone
-        run: npm run build:standalone
+      - name: Generate data tables
+        run: npm run generate
+
+      # --base-href explicite : ce dépôt n'est pas un user.github.io, le site
+      # est donc servi sous /wakfu-companion/ (pas à la racine du domaine).
+      # Le build standalone n'avait jamais eu besoin de <base href> (tout
+      # inliné dans un seul fichier, aucune requête d'asset relative) — ce
+      # réglage est nouveau avec un build classique multi-fichiers.
+      - name: Build
+        run: npx ng build --base-href /wakfu-companion/
 
       - name: Prepare deploy directory
         run: |
           mkdir -p public_deploy
-          cp wakfu-companion.standalone.html public_deploy/index.html
+          cp -r dist/wakfu-companion/browser/. public_deploy/
 
+      # keep_files: true est nécessaire car ce dépôt publie deux déploiements
+      # (production ici, preview dans deploy-preview.yml) sur la MÊME branche
+      # gh-pages, à des destination_dir différents — désactiver keep_files
+      # effacerait tout le contenu de la branche, y compris l'autre
+      # déploiement. Contrepartie acceptée : avec outputHashing "all", les
+      # fichiers JS/CSS hashés des anciens déploiements s'accumulent sans
+      # jamais être nettoyés (seul index.html est réellement remplacé à
+      # chaque déploiement). Sans impact fonctionnel, juste un peu de
+      # contenu mort sur gh-pages — pont temporaire avant la migration vers
+      # Cloudflare Pages (voir docs/plan-migration-serveur.md), qui fait des
+      # déploiements atomiques sans ce problème.
       - name: Deploy to GitHub Pages (root)
         uses: peaceiris/actions-gh-pages@v4
         with:

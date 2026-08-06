@@ -3,12 +3,12 @@ import { Component, input } from '@angular/core';
 export type FlagCountry = 'fr' | 'gb' | 'es' | 'pt';
 
 /**
- * Drapeaux dessinés en SVG inline (pas de fichier externe) : nécessaire pour
- * que le build standalone (un seul fichier HTML, voir tools/build-standalone.mjs)
- * fonctionne sans image manquante, et pour éviter la dépendance flag-icons dont
- * les centaines de SVG référencés en CSS provoquaient des collisions de build
- * esbuild sur Windows. Tracés simplifiés (sans blason détaillé) : largement
- * suffisant à la taille d'affichage (~20px).
+ * Drapeaux dessinés en SVG inline (pas de fichier externe) : évite la
+ * dépendance flag-icons, dont les centaines de SVG référencés en CSS
+ * provoquaient des collisions de build esbuild sur Windows — et, tout petits
+ * et peu nombreux (4 pays), ne gagnent rien à être sortis en fichiers séparés.
+ * Tracés simplifiés (sans blason détaillé) : largement suffisant à la taille
+ * d'affichage (~20px).
  */
 @Component({
   selector: 'app-flag-icon',
