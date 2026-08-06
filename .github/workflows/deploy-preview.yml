@@ -58,6 +58,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: wakfu-companion-preview
+          projectName: wakfu-companion
           directory: dist/wakfu-companion/browser
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
