@@ -1,4 +1,4 @@
-name: Deploy preview (GitHub Pages)
+name: Deploy preview (Cloudflare Pages)
 
 on:
   push:
@@ -6,20 +6,16 @@ on:
       - claude/dev
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
+  deployments: write
 
 concurrency:
-  group: pages-deploy
+  group: preview-deploy
   cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,46 +31,28 @@ jobs:
       - name: Generate data tables
         run: npm run generate
 
-      # --base-href explicite : la preview vit sous /wakfu-companion/preview/claude-dev/,
-      # pas à la racine du domaine (voir le commentaire équivalent dans deploy-main.yml).
+      # Pas de --base-href custom : Cloudflare Pages sert ce projet à la
+      # racine de son propre domaine (*.pages.dev), contrairement au hack de
+      # sous-dossier /wakfu-companion/preview/claude-dev/ nécessaire sur
+      # GitHub Pages (voir deploy-main.yml, qui reste sur GitHub Pages).
       - name: Build
-        run: npx ng build --base-href /wakfu-companion/preview/claude-dev/
+        run: npx ng build
 
-      - name: Prepare deploy directory
-        run: |
-          mkdir -p public_deploy
-          cp -r dist/wakfu-companion/browser/. public_deploy/
-
-      # keep_files: true — voir le commentaire détaillé dans deploy-main.yml
-      # (même compromis : nécessaire pour ne pas effacer l'autre déploiement
-      # sur cette même branche gh-pages, au prix d'une légère accumulation de
-      # fichiers hashés obsolètes, pont temporaire avant Cloudflare Pages).
-      #
-      # gh-pages sert ici uniquement de zone de fusion entre prod (racine) et
-      # preview (preview/claude-dev/) — voir les étapes suivantes pour la
-      # publication réelle.
-      - name: Merge into gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      # La preview (claude/dev) est passée sur Cloudflare Pages (déploiement
+      # natif, sans hack de sous-dossier ni dépendance au workflow système
+      # GitHub instable — voir l'historique de deploy-main.yml) : le workflow
+      # système "pages build and deployment" de GitHub restait bloqué en
+      # deployment_queued jusqu'au timeout dès le passage au build
+      # multi-fichiers (lot 1, commit 3ab11c78), y compris via le pipeline
+      # Actions natif (upload-pages-artifact + deploy-pages, cf. tentatives
+      # du 2026-08-06). La prod (master) reste sur GitHub Pages pendant la
+      # migration (voir docs/plan-migration-serveur.md) — seule la preview
+      # est avancée sur la cible finale.
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public_deploy
-          destination_dir: preview/claude-dev
-          keep_files: true
-
-      # Publication via le pipeline GitHub Actions natif — voir le commentaire
-      # détaillé dans deploy-main.yml (workflow système "pages build and
-      # deployment" instable depuis le lot 1, bloqué en deployment_queued).
-      - name: Checkout gh-pages (fusionné)
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: gh-pages-site
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: gh-pages-site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: wakfu-companion-preview
+          directory: dist/wakfu-companion/browser
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
