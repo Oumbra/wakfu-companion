@@ -14,14 +14,20 @@ import type { Env } from '../../_types';
 // ~1,14 Mo bruts / ~348 Ko gzip mesurés sur le référentiel actuel (11 032
 // objets + 851 monstres, 4 langues) — voir server/catalog/compact-index.ts
 // pour le format exact (tuples, PAS d'objets à clés répétées) et
-// server/README.md pour le détail des mesures. Compressé en gzip via
-// CompressionStream (Web Streams, disponible nativement dans le runtime
-// Workers) : le budget "< 400 Ko" du prompt 2.2 s'entend sur ce qui est
-// réellement transféré (Content-Encoding gzip), pas sur le JSON brut — voir
-// server/README.md pour la justification. Chargé UNE FOIS au démarrage puis
-// mis en cache IndexedDB côté client (pas à chaque frappe/chargement) : le
-// poids réel supporté par l'utilisateur est donc bien inférieur à ce que
-// suggère la taille brute de la réponse.
+// server/README.md pour le détail des mesures.
+//
+// PAS de compression manuelle (CompressionStream + content-encoding: gzip
+// posé à la main) : bug réel constaté en prod — un Content-Encoding défini
+// par le script du Worker lui-même n'est PAS décompressé de façon fiable
+// par fetch() côté navigateur (contrairement à une compression négociée
+// "normalement" par un vrai proxy/CDN), le client recevait les octets gzip
+// bruts et `response.json()` échouait avec une SyntaxError. Corrigé en
+// renvoyant le JSON brut et en laissant Cloudflare appliquer sa compression
+// automatique d'edge (gzip/brotli selon l'Accept-Encoding du client) — même
+// mécanisme que pour n'importe quelle réponse JSON servie par ce dépôt,
+// correctement décompressé par le navigateur. Le budget "< 400 Ko" du
+// prompt 2.2 s'entend sur ce qui est réellement transféré une fois cette
+// compression automatique appliquée (voir server/README.md).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const db = createDb(context.env.DATABASE_URL);
 
@@ -56,13 +62,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const compactIndex = buildCompactIndex(itemRows, monsterRows);
   const jsonText = JSON.stringify(compactIndex);
-  const compressedStream = new Blob([jsonText]).stream().pipeThrough(new CompressionStream('gzip'));
 
-  return new Response(compressedStream, {
+  return new Response(jsonText, {
     status: 200,
     headers: {
       'content-type': 'application/json',
-      'content-encoding': 'gzip',
       // Contenu figé pour une version donnée du référentiel (voir
       // GET /api/v1/catalog/version pour détecter un changement) : mise en
       // cache CDN raisonnable, revalidée par le navigateur au besoin.

@@ -180,13 +180,17 @@ compact :
    les URLs d'icônes wakassets/CDN, déjà construites côté client à partir du
    seul `gfxId`.
 
-**Le gzip (`Content-Encoding: gzip`, `CompressionStream` natif au runtime
-Workers) ramène le transfert réel à ~348 Ko** — c'est ce qui est
-effectivement envoyé au client, donc ce qui compte pour l'acceptation
-« index servi < 400 Ko » du prompt 2.2. Chargé UNE FOIS au démarrage puis
-mis en cache IndexedDB côté client (lot 3.1, `core/api/catalog.service.ts`)
-: le poids réel supporté par l'utilisateur au fil de la navigation est donc
-sans rapport avec la taille brute de cette seule réponse.
+**La compression gzip/brotli automatique de l'edge Cloudflare ramène le
+transfert réel à ~348 Ko** — c'est ce qui est effectivement envoyé au
+client, donc ce qui compte pour l'acceptation « index servi < 400 Ko » du
+prompt 2.2. **PAS de compression manuelle côté Worker** (voir gotcha
+ci-dessous) : l'endpoint renvoie le JSON brut, Cloudflare compresse
+automatiquement à l'edge selon l'`Accept-Encoding` du client — seul
+mécanisme dont la décompression côté navigateur est fiable via `fetch()`.
+Chargé UNE FOIS au démarrage puis mis en cache IndexedDB côté client (lot
+3.1, `core/api/catalog.service.ts`) : le poids réel supporté par
+l'utilisateur au fil de la navigation est donc sans rapport avec la taille
+brute de cette seule réponse.
 
 `server/catalog/compact-index.ts` est **partagé** entre le script d'import
 (calcule l'empreinte `indexHash` au moment de l'import) et l'endpoint
@@ -209,6 +213,26 @@ remplie et un `GET /api/v1/catalog/version` fonctionnel). Corrigé en faisant
 appeler au client le chemin réellement servi, `/catalog/` — **ne jamais**
 faire terminer une route Pages Functions par le segment `index`, quel que
 soit le nom du fichier qui la sert.
+
+### ⚠️ Piège : ne jamais poser `Content-Encoding` à la main sur une Response Worker
+
+Deuxième bug réel constaté juste après le précédent (même endpoint,
+redirection corrigée mais toujours aucune donnée exploitable côté client) :
+`functions/api/v1/catalog/index.ts` compressait la réponse à la main
+(`Blob(...).stream().pipeThrough(new CompressionStream('gzip'))`) puis
+posait `content-encoding: gzip` lui-même. Symptôme côté navigateur :
+`fetch('/api/v1/catalog/').then(r => r.json())` échouait avec `SyntaxError:
+Unexpected token '�'... is not valid JSON` — le corps recevait bien les
+octets gzip bruts, mais `fetch()` ne les décompressait PAS automatiquement.
+Contrairement à une compression négociée "normalement" par un vrai
+CDN/proxy (où `Accept-Encoding` du client et `Content-Encoding` de la
+réponse sont mis en correspondance au niveau protocole), un
+`Content-Encoding` défini directement par le script d'un Worker n'est pas
+fiablement décompressé côté navigateur. Corrigé en renvoyant le JSON brut
+et en laissant l'edge Cloudflare appliquer sa propre compression
+automatique (gzip/brotli selon `Accept-Encoding`) — **ne jamais** compresser
+manuellement une `Response` de Pages Function/Worker destinée à un
+navigateur ; laisser Cloudflare le faire.
 
 ### Bilan bundle client (lot 3.1, prompt 3.1 — étape 9/9)
 
