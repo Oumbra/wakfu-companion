@@ -13,10 +13,11 @@
     "watch": "npm run generate && ng build --watch --configuration development",
     "test": "npm run generate && ng test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "install:ci": "npx --yes npm@10.9.8 install"
   },
   "private": true,
-  "packageManager": "npm@11.16.0",
+  "packageManager": "npm@10.9.8",
   "dependencies": {
     "@angular/common": "^21.2.0",
     "@angular/compiler": "^21.2.0",
