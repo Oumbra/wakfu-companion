@@ -1,7 +1,8 @@
 /**
  * Recours manuel (nom FR, minuscule -> URL d'image directe) pour les objets
  * absents des deux catalogues officiels Ankama (jobsItems.json ET
- * items.json) — voir wakfu-items.data.ts. Ce sont typiquement des objets
+ * items.json) — voir core/api/catalog.service.ts (catalogue servi par
+ * l'API distante). Ce sont typiquement des objets
  * spéciaux (trophées de combat, jetons de monstre...) non exposés dans les
  * fichiers JSON publics. URLs trouvées manuellement sur l'encyclopédie
  * officielle (https://www.wakfu.com/fr/mmorpg/encyclopedie/), consultée en

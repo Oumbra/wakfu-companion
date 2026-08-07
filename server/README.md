@@ -102,9 +102,10 @@ externes** (`wakfu-items-sync`, `wakfu-monsters-sync`), publiés dans un
 dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
 exécutés **manuellement** par le mainteneur (le référentiel Ankama change
 très rarement). Réimplémenter cette transformation ici aurait dupliqué une
-logique en partie manuelle (voir le commentaire de
-`tools/generate-wakfu-items-data.mjs` sur l'identification des objets
-"old") — décision actée avec l'utilisateur.
+logique en partie manuelle (voir le commentaire de `normalizeRarity` dans
+`server/import/import-catalog.ts` sur l'identification des objets "old",
+seule implémentation restante depuis la suppression des tables embarquées
+côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
 
 Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
 une version gamedata (il n'y a plus de fetch live à comparer). À la place,

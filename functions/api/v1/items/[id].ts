@@ -7,8 +7,7 @@ import type { Env } from '../../_types';
 // GET /api/v1/items/{id} — détail complet d'un objet (id = ankamaId, PAS
 // items.pk, voir schema.ts). En cas de collision d'id Ankama (2 cas connus
 // sur le référentiel actuel), la première entrée insérée (pk le plus petit)
-// fait foi — même règle "premier gagne" que côté client
-// (WAKFU_ITEMS_BY_ID, voir wakfu-items.data.ts).
+// fait foi.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const id = Number(context.params['id']);
   if (!Number.isInteger(id)) {

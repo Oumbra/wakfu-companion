@@ -31,13 +31,12 @@ export const gameServers = pgTable('game_servers', {
  * skills externes wakfu-items-sync/wakfu-monsters-sync, PAS un fetch direct
  * de wakfu.cdn.ankama.com depuis ce dépôt).
  *
- * Clé primaire synthétique (`pk`, bigserial) plutôt que l'id Ankama : comme
- * côté client (voir wakfu-items.data.ts), ~142 objets historiques du
- * référentiel n'ont pas d'id Ankama et 2 ids sont en collision (2 objets
- * distincts partageant le même id) — l'id Ankama ne peut donc pas être une
- * clé primaire fiable ici. `ankamaId` reste indexé (non unique) pour les
- * lookups par id. Les objets de rareté "old" sont exclus à l'import (jamais
- * stockés), comme côté client.
+ * Clé primaire synthétique (`pk`, bigserial) plutôt que l'id Ankama : ~142
+ * objets historiques du référentiel n'ont pas d'id Ankama et 2 ids sont en
+ * collision (2 objets distincts partageant le même id) — l'id Ankama ne peut
+ * donc pas être une clé primaire fiable ici. `ankamaId` reste indexé (non
+ * unique) pour les lookups par id. Les objets de rareté "old" sont exclus à
+ * l'import (jamais stockés) — voir server/import/import-catalog.ts.
  */
 export const items = pgTable(
   'items',
@@ -81,10 +80,12 @@ export const itemRecipes = pgTable(
  * Monstres — `id` Ankama utilisable comme clé primaire directe ici
  * (contrairement aux objets) : vérifié unique sur les 851 monstres du
  * référentiel actuel. `family` référence un id de
- * referentiel/monster-families_wakfu.json, jamais résolu côté serveur pour
- * l'instant (aucun consommateur ne l'exploite encore, voir
- * wakfu-monsters.data.ts côté client) — pas de table monster_families dans
- * ce lot, à ajouter le jour où un endpoint en a besoin.
+ * referentiel/monster-families_wakfu.json, jamais résolu vers son libellé
+ * côté serveur pour l'instant (exploité côté client uniquement comme clé de
+ * regroupement brute — voir resolveFightImageInfo dans
+ * core/utils/fight-image.util.ts, qui compte les familles distinctes sans
+ * jamais afficher leur nom) — pas de table monster_families dans ce lot, à
+ * ajouter le jour où un endpoint a besoin du libellé.
  */
 export const monsters = pgTable('monsters', {
   id: integer('id').primaryKey(),
@@ -92,7 +93,7 @@ export const monsters = pgTable('monsters', {
   en: text('en').notNull(),
   es: text('es').notNull(),
   pt: text('pt').notNull(),
-  gfxId: text('gfx_id').notNull(), // string côté client (WakfuMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
+  gfxId: text('gfx_id').notNull(), // string côté client (CatalogMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
   family: integer('family'),
   pictureUrl: text('picture_url').notNull(),
   wakassetsAvailable: boolean('wakassets_available').notNull(),

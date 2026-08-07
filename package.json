@@ -3,11 +3,8 @@
   "version": "1.7.0",
   "scripts": {
     "ng": "ng",
-    "generate:items": "node tools/generate-wakfu-items-data.mjs",
-    "generate:monsters": "node tools/generate-wakfu-monsters-data.mjs",
-    "generate:dungeons": "node tools/generate-wakfu-dungeons-data.mjs",
     "generate:build-info": "node tools/generate-build-info.mjs",
-    "generate": "npm run generate:items && npm run generate:monsters && npm run generate:dungeons && npm run generate:build-info",
+    "generate": "npm run generate:build-info",
     "start": "npm run generate && ng serve",
     "build": "npm run generate && ng build",
     "watch": "npm run generate && ng build --watch --configuration development",

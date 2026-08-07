@@ -45,8 +45,7 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 
-# Tables générées (régénérées via `npm run generate`)
-/src/app/core/data/wakfu-items.data.ts
-/src/app/core/data/wakfu-dungeons.data.ts
-/src/app/core/data/wakfu-monsters.data.ts
+# Table générée (régénérée via `npm run generate`) — wakfu-{items,monsters,dungeons}.data.ts
+# ont été supprimés au lot 3.1 étape 8 (catalogue servi par l'API distante, voir
+# core/api/catalog.service.ts) et ne sont plus générés.
 /src/app/core/data/build-info.data.ts

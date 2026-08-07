@@ -91,7 +91,9 @@ interface RawDungeon {
   wakassets_available: boolean;
 }
 
-// Doit rester identique à tools/generate-wakfu-items-data.mjs.
+// Seule implémentation de cette logique depuis le lot 3.1 étape 8 (l'équivalent client,
+// tools/generate-wakfu-items-data.mjs, a été supprimé avec les tables embarquées — le catalogue
+// est désormais entièrement servi par l'API, voir core/api/catalog.service.ts).
 const VALID_RARITIES = new Set<WakfuRarityCode>([
   'old',
   'common',
@@ -177,8 +179,8 @@ async function main(): Promise<void> {
     ),
   ]);
 
-  // Objets : mêmes règles que tools/generate-wakfu-items-data.mjs (exclusion "old", pas de
-  // déduplication par id — voir server/db/schema.ts pour la clé primaire synthétique).
+  // Objets : exclusion "old", pas de déduplication par id (voir server/db/schema.ts pour la clé
+  // primaire synthétique).
   const oldCount = rawItems.filter((item) => normalizeRarity(item) === 'old').length;
   const itemRows: ItemRow[] = rawItems
     .filter((item) => normalizeRarity(item) !== 'old')
