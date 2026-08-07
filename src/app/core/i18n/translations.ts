@@ -204,7 +204,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.notice': 'Mentions légales',
     'footer.privacy': 'Politique de confidentialité',
     'footer.build.prefix': 'Build',
-    'footer.build': '[{{version}}] • {{date}}',
+    'footer.build': '{{version}} • {{date}}',
     'legal.notice.title': 'Mentions légales',
     'legal.notice.body':
       "## 1. Éditeur\n\nOumbra, développeur indépendant — projet personnel à but non lucratif. Contact : via les issues du dépôt GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Hébergement\n\nWakfu Companion est un site web hébergé par une plateforme d'hébergement statique standard, sans base de données ni traitement serveur.\n\n## 3. Propriété intellectuelle\n\n« Wakfu » et l'ensemble des éléments du jeu (noms, images, univers) sont la propriété d'Ankama Games. Wakfu Companion n'est ni édité, ni hébergé, ni approuvé par Ankama et n'entretient aucun lien avec cette société. Les icônes d'objets et de monstres affichées proviennent de projets communautaires tiers (voir wakassets) et des serveurs officiels du jeu, utilisées à titre purement illustratif et non commercial.\n\n## 4. Code source\n\nCe projet est disponible sur GitHub à l'adresse github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nPour toute question relative à ces mentions légales, ouvrez une issue sur le dépôt GitHub.",
@@ -410,7 +410,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.notice': 'Legal notice',
     'footer.privacy': 'Privacy policy',
     'footer.build.prefix': 'Build',
-    'footer.build': '[{{version}}] • {{date}}',
+    'footer.build': '{{version}} • {{date}}',
     'legal.notice.title': 'Legal notice',
     'legal.notice.body':
       '## 1. Publisher\n\nOumbra, independent developer — personal, non-profit project. Contact: via the GitHub repository issues at github.com/oumbra/wakfu-companion.\n\n## 2. Hosting\n\nWakfu Companion is a website hosted by a standard static hosting platform, with no database or server-side processing.\n\n## 3. Intellectual property\n\n"Wakfu" and all game elements (names, images, universe) are the property of Ankama Games. Wakfu Companion is neither published, hosted nor approved by Ankama and has no affiliation with that company. The item and monster icons shown come from third-party community projects (see wakassets) and the game\'s official servers, used for purely illustrative, non-commercial purposes.\n\n## 4. Source code\n\nThis project is available on GitHub at github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nFor any question about this legal notice, please open an issue on the GitHub repository.',
@@ -616,7 +616,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.notice': 'Aviso legal',
     'footer.privacy': 'Política de privacidad',
     'footer.build.prefix': 'Build',
-    'footer.build': '[{{version}}] • {{date}}',
+    'footer.build': '{{version}} • {{date}}',
     'legal.notice.title': 'Aviso legal',
     'legal.notice.body':
       '## 1. Editor\n\nOumbra, desarrollador independiente — proyecto personal sin ánimo de lucro. Contacto: a través de las issues del repositorio de GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Alojamiento\n\nWakfu Companion es un sitio web alojado en una plataforma de alojamiento estático estándar, sin base de datos ni procesamiento en servidor.\n\n## 3. Propiedad intelectual\n\n«Wakfu» y todos los elementos del juego (nombres, imágenes, universo) son propiedad de Ankama Games. Wakfu Companion no está editado, alojado ni aprobado por Ankama y no mantiene ningún vínculo con dicha empresa. Los iconos de objetos y monstruos mostrados proceden de proyectos comunitarios de terceros (ver wakassets) y de los servidores oficiales del juego, utilizados con fines meramente ilustrativos y no comerciales.\n\n## 4. Código fuente\n\nEste proyecto está disponible en GitHub en github.com/oumbra/wakfu-companion.\n\n## 5. Contacto\n\nPara cualquier pregunta relacionada con este aviso legal, abre una issue en el repositorio de GitHub.',
@@ -822,7 +822,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.notice': 'Aviso legal',
     'footer.privacy': 'Política de privacidade',
     'footer.build.prefix': 'Build',
-    'footer.build': '[{{version}}] • {{date}}',
+    'footer.build': '{{version}} • {{date}}',
     'legal.notice.title': 'Aviso legal',
     'legal.notice.body':
       '## 1. Editor\n\nOumbra, programador independente — projeto pessoal sem fins lucrativos. Contacto: através das issues do repositório GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Alojamento\n\nO Wakfu Companion é um site alojado numa plataforma de alojamento estático padrão, sem base de dados nem processamento no servidor.\n\n## 3. Propriedade intelectual\n\n«Wakfu» e todos os elementos do jogo (nomes, imagens, universo) são propriedade da Ankama Games. O Wakfu Companion não é editado, alojado nem aprovado pela Ankama e não mantém qualquer vínculo com essa empresa. Os ícones de objetos e monstros apresentados provêm de projetos comunitários de terceiros (ver wakassets) e dos servidores oficiais do jogo, utilizados para fins meramente ilustrativos e não comerciais.\n\n## 4. Código-fonte\n\nEste projeto está disponível no GitHub em github.com/oumbra/wakfu-companion.\n\n## 5. Contacto\n\nPara qualquer questão relacionada com este aviso legal, abra uma issue no repositório GitHub.',
