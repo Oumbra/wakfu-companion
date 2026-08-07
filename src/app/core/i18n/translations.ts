@@ -24,6 +24,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Changer de fichier',
     'app.menu': 'Menu',
     'app.language': 'Langue',
+    'app.catalogUnavailable':
+      'Catalogue Ankama indisponible : noms et icônes des objets/monstres non reconnus pour le moment.',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Replier',
@@ -230,6 +232,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Change file',
     'app.menu': 'Menu',
     'app.language': 'Language',
+    'app.catalogUnavailable':
+      'Ankama catalog unavailable: item/monster names and icons are not recognized right now.',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Collapse',
@@ -436,6 +440,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Cambiar archivo',
     'app.menu': 'Menú',
     'app.language': 'Idioma',
+    'app.catalogUnavailable':
+      'Catálogo Ankama no disponible: los nombres e iconos de objetos/monstruos no se reconocen por ahora.',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Contraer',
@@ -642,6 +648,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Trocar arquivo',
     'app.menu': 'Menu',
     'app.language': 'Idioma',
+    'app.catalogUnavailable':
+      'Catálogo Ankama indisponível: nomes e ícones de itens/monstros não são reconhecidos no momento.',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Recolher',

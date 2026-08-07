@@ -53,6 +53,21 @@
   gap: 8px;
 }
 
+/* Catalogue Ankama (objets/monstres) injoignable ni en cache ni en réseau (lot 3.1, étape 7) :
+   noms/icônes non reconnus, mais le reste de l'app (parsing, combats, kamas...) continue de
+   fonctionner normalement — simple indicateur discret, pas un blocage. */
+.catalog-unavailable-badge {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #e0a030;
+  cursor: help;
+}
+.catalog-unavailable-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
 .app-header-right {
   display: flex;
   align-items: center;

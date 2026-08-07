@@ -5,6 +5,25 @@
       Wakfu Companion
       <span class="app-title-badge">beta</span>
     </div>
+    @if (catalog.status() === 'unavailable') {
+      <span
+        class="catalog-unavailable-badge tooltip-below"
+        [attr.data-tooltip]="'app.catalogUnavailable' | t"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path
+            d="M12 9v4m0 4h.01M10.29 3.86l-8.18 14.18A2 2 0 0 0 3.82 21h16.36a2 2 0 0 0 1.71-3.02L13.71 3.86a2 2 0 0 0-3.42 0z"
+          />
+        </svg>
+      </span>
+    }
     @if (logFileAccess.status() === 'connected') {
       <div class="app-header-file-group">
         <span class="file-chip">{{ logFileAccess.fileName() }}</span>
