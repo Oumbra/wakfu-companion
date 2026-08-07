@@ -1,0 +1,7 @@
+# Config Cloudflare Pages (front statique + Pages Functions sous functions/api/).
+# pages_build_output_dir doit correspondre au dossier publié par
+# cloudflare/pages-action dans les workflows (dist/wakfu-companion/browser).
+name = "wakfu-companion"
+pages_build_output_dir = "dist/wakfu-companion/browser"
+compatibility_date = "2026-08-07"
+compatibility_flags = ["nodejs_compat"]

@@ -36,12 +36,34 @@ jobs:
       - name: Generate data tables
         run: npm run generate
 
+      # Branche Neon DÉDIÉE à la preview (jamais la production, voir
+      # server/README.md) : DATABASE_URL_PREVIEW, secret distinct de
+      # DATABASE_URL (utilisé par la prod, encore sur GitHub Pages — voir
+      # plus bas). Migrations jouées AVANT le build/déploiement du front.
+      - name: Run DB migrations (preview)
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PREVIEW }}
+
       # Pas de --base-href custom : Cloudflare Pages sert ce projet à la
       # racine de son propre domaine (*.pages.dev), contrairement au hack de
       # sous-dossier /wakfu-companion/preview/claude-dev/ nécessaire sur
       # GitHub Pages (voir deploy-main.yml, qui reste sur GitHub Pages).
       - name: Build
         run: npx ng build
+
+      # Rend DATABASE_URL_PREVIEW disponible à l'exécution dans les Pages
+      # Functions (functions/api/v1/*, context.env.DATABASE_URL) — distinct
+      # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du
+      # build/CI. --env preview cible spécifiquement l'environnement preview
+      # du projet Cloudflare Pages (à vérifier au premier run : si le flag
+      # n'est pas reconnu par cette version de wrangler, adapter ici).
+      - name: Push DB secret to Cloudflare Pages (preview)
+        run: echo "$DATABASE_URL_PREVIEW" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env preview
+        env:
+          DATABASE_URL_PREVIEW: ${{ secrets.DATABASE_URL_PREVIEW }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       # La preview (claude/dev) est passée sur Cloudflare Pages (déploiement
       # natif, sans hack de sous-dossier ni dépendance au workflow système
@@ -52,7 +74,7 @@ jobs:
       # Actions natif (upload-pages-artifact + deploy-pages, cf. tentatives
       # du 2026-08-06). La prod (master) reste sur GitHub Pages pendant la
       # migration (voir docs/plan-migration-serveur.md) — seule la preview
-      # est avancée sur la cible finale.
+      # est avancée sur la cible finale, functions/api/ compris.
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/pages-action@v1
         with:

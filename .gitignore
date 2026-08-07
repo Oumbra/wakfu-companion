@@ -13,6 +13,9 @@
 
 # Environment files
 /.env
+# Secrets locaux Wrangler (wrangler pages dev) — jamais commités
+.dev.vars
+.dev.vars.*
 
 # Angular CLI and build artefacts
 /.angular-cli.json
