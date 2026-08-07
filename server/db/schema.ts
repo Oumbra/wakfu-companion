@@ -1,4 +1,11 @@
-import { boolean, pgTable, text } from 'drizzle-orm/pg-core';
+import { bigserial, boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+
+/** Miroir de WakfuRarity (src/app/core/data/wakfu-item-rarity.data.ts) côté serveur — server/
+ * reste indépendant de src/ (pas d'import cross-cible), voir server/README.md. `rarity` est
+ * stocké en `text` en base (pas d'enum Postgres, pour rester simple à migrer) ; ce type sert
+ * uniquement au typage TypeScript des scripts d'import/des endpoints. */
+export type WakfuRarityCode =
+  'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
 /**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très
@@ -15,4 +22,120 @@ export const gameServers = pgTable('game_servers', {
   code: text('code').primaryKey(), // 'pandora' | 'rubilax' | 'ogrest'
   label: text('label').notNull(),
   isActive: boolean('is_active').notNull().default(true),
+});
+
+/**
+ * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
+ * server/import/import-catalog.ts pour l'import et server/README.md pour
+ * l'origine des données (referentiel/*.json, régénérés à la main via les
+ * skills externes wakfu-items-sync/wakfu-monsters-sync, PAS un fetch direct
+ * de wakfu.cdn.ankama.com depuis ce dépôt).
+ *
+ * Clé primaire synthétique (`pk`, bigserial) plutôt que l'id Ankama : comme
+ * côté client (voir wakfu-items.data.ts), ~142 objets historiques du
+ * référentiel n'ont pas d'id Ankama et 2 ids sont en collision (2 objets
+ * distincts partageant le même id) — l'id Ankama ne peut donc pas être une
+ * clé primaire fiable ici. `ankamaId` reste indexé (non unique) pour les
+ * lookups par id. Les objets de rareté "old" sont exclus à l'import (jamais
+ * stockés), comme côté client.
+ */
+export const items = pgTable(
+  'items',
+  {
+    pk: bigserial('pk', { mode: 'number' }).primaryKey(),
+    ankamaId: integer('ankama_id'),
+    fr: text('fr').notNull(),
+    en: text('en').notNull(),
+    es: text('es').notNull(),
+    pt: text('pt').notNull(),
+    rarity: text('rarity').notNull().$type<WakfuRarityCode>(),
+    gfxId: integer('gfx_id').notNull(),
+    pictureUrl: text('picture_url').notNull(),
+    wakassetsAvailable: boolean('wakassets_available').notNull(),
+    wakfuAvailable: boolean('wakfu_available').notNull(),
+    hasRecipe: boolean('has_recipe').notNull().default(false),
+  },
+  (table) => [index('items_ankama_id_idx').on(table.ankamaId)],
+);
+
+/**
+ * Ingrédients de recette, une ligne par ingrédient (pas de JSON imbriqué,
+ * contrairement à `WakfuItemEntry.recipe` côté client) — voir prompt 2.2.
+ * `itemAnkamaId`/`ingredientAnkamaId` référencent `items.ankamaId`, pas
+ * `items.pk` : un objet sans id Ankama ne peut ni avoir de recette
+ * référencée ni être ingrédient (même limite que côté client, voir
+ * resolveRecipeIngredientNames).
+ */
+export const itemRecipes = pgTable(
+  'item_recipes',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    itemAnkamaId: integer('item_ankama_id').notNull(),
+    ingredientAnkamaId: integer('ingredient_ankama_id').notNull(),
+    quantity: integer('quantity').notNull(),
+  },
+  (table) => [index('item_recipes_item_ankama_id_idx').on(table.itemAnkamaId)],
+);
+
+/**
+ * Monstres — `id` Ankama utilisable comme clé primaire directe ici
+ * (contrairement aux objets) : vérifié unique sur les 851 monstres du
+ * référentiel actuel. `family` référence un id de
+ * referentiel/monster-families_wakfu.json, jamais résolu côté serveur pour
+ * l'instant (aucun consommateur ne l'exploite encore, voir
+ * wakfu-monsters.data.ts côté client) — pas de table monster_families dans
+ * ce lot, à ajouter le jour où un endpoint en a besoin.
+ */
+export const monsters = pgTable('monsters', {
+  id: integer('id').primaryKey(),
+  fr: text('fr').notNull(),
+  en: text('en').notNull(),
+  es: text('es').notNull(),
+  pt: text('pt').notNull(),
+  gfxId: text('gfx_id').notNull(), // string côté client (WakfuMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
+  family: integer('family'),
+  pictureUrl: text('picture_url').notNull(),
+  wakassetsAvailable: boolean('wakassets_available').notNull(),
+  wakfuAvailable: boolean('wakfu_available').notNull(),
+  isBoss: boolean('is_boss').notNull(),
+  isArchi: boolean('is_archi').notNull(),
+  isDominant: boolean('is_dominant').notNull().default(false),
+});
+
+/** Donjons — `id` Ankama en clé primaire (151 donjons, tous uniques). */
+export const dungeons = pgTable(
+  'dungeons',
+  {
+    id: integer('id').primaryKey(),
+    fr: text('fr').notNull(),
+    en: text('en').notNull(),
+    es: text('es').notNull(),
+    pt: text('pt').notNull(),
+    level: integer('level').notNull(),
+    tranche: integer('tranche').notNull(),
+    isBreach: boolean('is_breach').notNull(),
+    isUltimateBreach: boolean('is_ultimate_breach').notNull(),
+    bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
+    pictureUrl: text('picture_url').notNull(),
+    wakassetsAvailable: boolean('wakassets_available').notNull(),
+  },
+  (table) => [index('dungeons_boss_monster_id_idx').on(table.bossMonsterId)],
+);
+
+/**
+ * Une seule ligne (id constant `'catalog'`) : métadonnées du dernier import
+ * réussi — sert de base à GET /api/v1/catalog/version (prompt 2.2). Pas de
+ * vraie "version gamedata" ici (le dépôt n'interroge plus l'API Ankama en
+ * direct, voir server/README.md) : `sourceCommit` est le SHA du commit
+ * ayant déclenché l'import (referentiel/*.json modifié), `indexHash` une
+ * empreinte du contenu de l'index compact servi par /catalog/index.
+ */
+export const catalogMeta = pgTable('catalog_meta', {
+  id: text('id').primaryKey(),
+  importedAt: timestamp('imported_at', { withTimezone: true }).notNull(),
+  sourceCommit: text('source_commit'),
+  itemsCount: integer('items_count').notNull(),
+  monstersCount: integer('monsters_count').notNull(),
+  dungeonsCount: integer('dungeons_count').notNull(),
+  indexHash: text('index_hash').notNull(),
 });

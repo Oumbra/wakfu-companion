@@ -8,6 +8,13 @@
       "when": 1786091210469,
       "tag": "0000_init_game_servers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786106951128,
+      "tag": "0001_catalog_tables",
+      "breakpoints": true
     }
   ]
 }

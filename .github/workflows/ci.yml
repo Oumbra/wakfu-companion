@@ -53,3 +53,8 @@ jobs:
       # type dans les Pages Functions ne serait détectée qu'au déploiement.
       - name: Type-check server
         run: npx tsc -p tsconfig.server.json --noEmit
+
+      # server/import/ cible le runtime Node (via tsx), pas Workers/edge —
+      # tsconfig dédié (voir tsconfig.import.json), donc vérification séparée.
+      - name: Type-check import script
+        run: npx tsc -p tsconfig.import.json --noEmit

@@ -9,7 +9,7 @@ Ce document couvre uniquement la mise en route pratique.
   séparé) : le front statique (`dist/wakfu-companion/browser`) et l'API
   (`functions/api/v1/*`, convention Pages Functions par chemin de fichier)
   sont servis depuis la **même origine** — indispensable pour que le futur
-  cookie de session (lot 5) soit *first-party*.
+  cookie de session (lot 5) soit _first-party_.
 - **Base** : PostgreSQL géré par [Neon](https://neon.tech), gratuit jusqu'à
   0,5 Go. Une **branche Neon par environnement** (production / preview) —
   jamais la même base pour les deux.
@@ -40,18 +40,19 @@ Voir `server/db/client.ts` pour l'implémentation.
 À ajouter comme **secrets GitHub Actions** (`Settings → Secrets and
 variables → Actions`) sur `oumbra/wakfu-companion` :
 
-| Secret | Description |
-| --- | --- |
-| `CLOUDFLARE_API_TOKEN` | Déjà en place (déploiement Pages). Permission *Cloudflare Pages: Edit*. |
-| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place. |
-| `DATABASE_URL` | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**. |
-| `DATABASE_URL_PREVIEW` | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via *Neon → Branches → Create child branch*. |
+| Secret                  | Description                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                            |
+| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place.                                                                                                                                                                     |
+| `DATABASE_URL`          | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                        |
+| `DATABASE_URL_PREVIEW`  | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_. |
 
 `DATABASE_URL`/`DATABASE_URL_PREVIEW` sont aussi transmis comme variable
 d'environnement chiffrée du projet Cloudflare Pages (poussé à chaque déploiement
-via `wrangler pages secret put`, voir `.github/workflows/deploy.yml`) : c'est
-ce qui les rend disponibles dans `context.env.DATABASE_URL` côté Pages
-Functions.
+via `wrangler pages secret put`, voir `.github/workflows/deploy-preview.yml` —
+`deploy-main.yml`, encore sur GitHub Pages, ne les utilise pas pour l'instant)
+: c'est ce qui les rend disponibles dans `context.env.DATABASE_URL` côté
+Pages Functions.
 
 ## Migrations
 
@@ -75,6 +76,90 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`).
 - `GET /api/v1/game-servers` — liste des serveurs de jeu (table
   `game_servers`, jamais compilée en dur côté client).
+- `GET /api/v1/catalog/version` — métadonnées du dernier import catalogue
+  (voir plus bas).
+- `GET /api/v1/catalog/index` — index compact objets+monstres, gzip.
+- `GET /api/v1/catalog/search?q=&locale=fr|en|es|pt&kind=item|monster` —
+  recherche serveur par sous-chaîne (ILIKE), 30 résultats max.
+- `GET /api/v1/items/{id}` / `GET /api/v1/monsters/{id}` — détail complet
+  (`id` = id Ankama).
+
+## Catalogue Ankama (objets/monstres/donjons/recettes)
+
+### D'où viennent les données : `referentiel/*.json`, pas un fetch direct
+
+Contrairement à ce que le prompt 2.2 envisageait initialement, le script
+d'import (`server/import/import-catalog.ts`) **ne lit pas**
+`wakfu.cdn.ankama.com` directement : il lit les fichiers déjà committés dans
+`referentiel/*.json`. Raison : la transformation brut Ankama → JSON curé
+(fusion `items.json`/`jobsItems.json`, résolution des noms, vérification de
+disponibilité d'image sur les CDN tiers, identification de la rareté "old")
+ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
+externes** (`wakfu-items-sync`, `wakfu-monsters-sync`), publiés dans un
+dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
+exécutés **manuellement** par le mainteneur (le référentiel Ankama change
+très rarement). Réimplémenter cette transformation ici aurait dupliqué une
+logique en partie manuelle (voir le commentaire de
+`tools/generate-wakfu-items-data.mjs` sur l'identification des objets
+"old") — décision actée avec l'utilisateur.
+
+Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
+une version gamedata (il n'y a plus de fetch live à comparer). À la place,
+`.github/workflows/import-catalog.yml` se déclenche sur tout push modifiant
+`referentiel/**` (+ `workflow_dispatch` pour un rejeu manuel) — l'import
+suit donc directement les mises à jour du référentiel committé, sans
+polling.
+
+### Script d'import
+
+`npm run catalog:import` (= `tsx server/import/import-catalog.ts`) :
+remplacement complet des tables `items`/`monsters`/`dungeons`/`item_recipes`
+à chaque exécution (DELETE puis INSERT par lots de 1000 lignes), pas de
+diff incrémental. Réutilise scrupuleusement les règles déjà établies côté
+client (exclusion des objets de rareté "old", pas de déduplication par id
+pour les objets — voir le commentaire de `server/db/schema.ts` sur la clé
+primaire synthétique `items.pk`).
+
+Réutilise `server/db/client.ts` (driver `neon-http`, voir plus haut) : pas
+de vraies transactions inter-requêtes ici non plus. Un échec en cours
+d'exécution peut laisser une table partiellement vidée — risque jugé
+acceptable vu la fréquence d'exécution très faible (import déclenché par un
+humain modifiant `referentiel/*.json`, pas par du trafic utilisateur). À
+revoir avec `neon-serverless` si ce script doit un jour tourner sans
+supervision.
+
+### Index compact : la cible de 400 Ko s'entend gzip, pas en JSON brut
+
+Mesures réelles sur le référentiel actuel (11 032 objets hors "old", 851
+monstres) :
+
+|        | Brut    | Gzip    |
+| ------ | ------- | ------- |
+| Taille | ~463 Ko | ~149 Ko |
+
+Le format `{id, nom normalisé, nom affichable, gfxId, rareté, hasRecipe}`
+par objet suggéré par le prompt 2.2 pèserait plus de 1 Mo en JSON brut pour
+~11 700 entrées (mesuré). Deux choix ont été faits pour rester compact :
+
+1. **Tuples plutôt qu'objets** (`[id, nomFr, gfxId, raritySortOrder,
+hasRecipe]`) — évite de répéter les clés `"id":`, `"gfxId":`... ~11 700
+   fois. Voir `server/catalog/compact-index.ts`.
+2. **Un seul nom** (`fr`, pas de version "normalisée" séparée) : le client
+   peut appliquer `normalizeWakfuName()` (déjà disponible,
+   `src/app/core/utils/wakfu-name.util.ts`) à la volée sur ~11 700 chaînes
+   courtes — coût négligeable, inutile de doubler la charge utile pour ça.
+
+Avec ces deux choix, le JSON brut reste à ~463 Ko (encore au-dessus de la
+cible « 400 Ko », mais proche) ; **le gzip (`Content-Encoding: gzip`,
+`CompressionStream` natif au runtime Workers) ramène le transfert réel à
+~149 Ko** — c'est ce qui est effectivement envoyé au client, donc ce qui
+compte pour l'acceptation « index servi < 400 Ko » du prompt 2.2.
+
+`server/catalog/compact-index.ts` est **partagé** entre le script d'import
+(calcule l'empreinte `indexHash` au moment de l'import) et l'endpoint
+`GET /api/v1/catalog/index` (sert le contenu réel) : les deux DOIVENT
+produire des octets strictement identiques pour que `indexHash` reste une
+empreinte fiable.
 
 ## Piège PWA : le service worker interceptait `/api/**`
 

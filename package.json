@@ -14,6 +14,7 @@
     "test": "npm run generate && ng test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "catalog:import": "tsx server/import/import-catalog.ts",
     "install:ci": "npx --yes npm@10.9.8 install"
   },
   "private": true,
@@ -40,6 +41,7 @@
     "drizzle-kit": "^0.31.10",
     "jsdom": "^30.0.1",
     "prettier": "^3.8.1",
+    "tsx": "^4.23.11",
     "typescript": "~5.9.2",
     "vitest": "^4.1.10"
   }
