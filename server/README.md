@@ -97,8 +97,10 @@ ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
 dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
 exécutés **manuellement** par le mainteneur (le référentiel Ankama change
 très rarement). Réimplémenter cette transformation ici aurait dupliqué une
-logique en partie manuelle (voir le commentaire de
-"old") — décision actée avec l'utilisateur.
+logique en partie manuelle (voir le commentaire de `normalizeRarity` dans
+`server/import/import-catalog.ts` sur l'identification des objets "old",
+seule implémentation restante depuis la suppression des tables embarquées
+côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
 
 Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
 `.github/workflows/import-catalog.yml` se déclenche sur tout push modifiant

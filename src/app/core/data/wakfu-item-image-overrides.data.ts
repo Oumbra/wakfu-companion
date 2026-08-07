@@ -1,6 +1,7 @@
 /**
  * Recours manuel (nom FR, minuscule -> URL d'image directe) pour les objets
- * items.json) — voir wakfu-items.data.ts. Ce sont typiquement des objets
+ * items.json) — voir core/api/catalog.service.ts (catalogue servi par
+ * l'API distante). Ce sont typiquement des objets
  * spéciaux (trophées de combat, jetons de monstre...) non exposés dans les
  * particulier sur la fiche du monstre El Pochito.
  *
