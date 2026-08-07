@@ -78,7 +78,8 @@ DATABASE_URL=... npm run db:migrate
   `game_servers`, jamais compilée en dur côté client).
 - `GET /api/v1/catalog/version` — métadonnées du dernier import catalogue
   (voir plus bas).
-- `GET /api/v1/catalog/index` — index compact objets+monstres, gzip.
+- `GET /api/v1/catalog/` — index compact objets+monstres, gzip (surtout
+  **pas** `/catalog/index` — voir gotcha ci-dessous).
 - `GET /api/v1/catalog/search?q=&locale=fr|en|es|pt&kind=item|monster` —
   recherche serveur par sous-chaîne (ILIKE), 30 résultats max.
 - `GET /api/v1/items/{id}` / `GET /api/v1/monsters/{id}` — détail complet
@@ -189,9 +190,25 @@ sans rapport avec la taille brute de cette seule réponse.
 
 `server/catalog/compact-index.ts` est **partagé** entre le script d'import
 (calcule l'empreinte `indexHash` au moment de l'import) et l'endpoint
-`GET /api/v1/catalog/index` (sert le contenu réel) : les deux DOIVENT
+`GET /api/v1/catalog/` (sert le contenu réel) : les deux DOIVENT
 produire des octets strictement identiques pour que `indexHash` reste une
 empreinte fiable.
+
+### ⚠️ Piège : `/api/v1/catalog/index` redirige (308) vers `/api/v1/catalog/`
+
+Bug réel constaté en production (preview) après le premier import réussi du
+catalogue : le fichier `functions/api/v1/catalog/index.ts` sert la racine de
+son dossier (`/api/v1/catalog/`), convention standard de Cloudflare Pages
+Functions — un fichier nommé `index.ts` n'est **jamais** adressable via un
+segment littéral `/index` en fin d'URL, Cloudflare redirige automatiquement
+(308) vers le chemin sans ce segment (même logique qu'un serveur statique
+qui redirige `/foo/index.html` vers `/foo/`). `CatalogService` appelait au
+départ `/catalog/index` : la redirection cassait silencieusement le
+chargement (catalogue jamais peuplé côté client, malgré une base bien
+remplie et un `GET /api/v1/catalog/version` fonctionnel). Corrigé en faisant
+appeler au client le chemin réellement servi, `/catalog/` — **ne jamais**
+faire terminer une route Pages Functions par le segment `index`, quel que
+soit le nom du fichier qui la sert.
 
 ### Bilan bundle client (lot 3.1, prompt 3.1 — étape 9/9)
 

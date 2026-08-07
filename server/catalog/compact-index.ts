@@ -37,7 +37,9 @@ export interface CompactIndexMonsterInput {
 }
 
 /**
- * Construit l'index compact servi par GET /api/v1/catalog/index — tuples
+ * Construit l'index compact servi par GET /api/v1/catalog/ (PAS
+ * /api/v1/catalog/index — segment "index" réservé par Cloudflare Pages
+ * Functions, voir functions/api/v1/catalog/index.ts) — tuples
  * plutôt qu'objets (pas de clés répétées ~11 700 fois) pour rester aussi
  * compact que possible (voir server/README.md pour le détail des mesures
  * réelles ~1,14 Mo bruts / ~348 Ko gzip). Ordre des champs :

@@ -297,8 +297,13 @@ export class CatalogService {
     }
 
     const [indexResult, dungeonsResult] = await Promise.all([
+      // Chemin SANS le segment "index" : Cloudflare Pages Functions traite un fichier nommé
+      // index.ts comme la route racine de son dossier (`/catalog/`), pas comme un segment
+      // littéral `/index` — une requête vers `/catalog/index` se prend une redirection 308 vers
+      // `/catalog/` (bug réel constaté en prod : la redirection cassait silencieusement le
+      // chargement du catalogue côté client). Voir functions/api/v1/catalog/index.ts.
       this.apiClient.getJson<{ items: (number | string)[][]; monsters: (number | string)[][] }>(
-        '/catalog/index',
+        '/catalog/',
       ),
       this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
     ]);
