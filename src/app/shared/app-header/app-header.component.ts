@@ -10,6 +10,7 @@ import { TranslatePipe } from '../translate.pipe';
 import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { ProfileComponent } from '../../features/profile/profile.component';
+import { CatalogService } from '../../core/api/catalog.service';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, langue, recap de
@@ -31,6 +32,7 @@ import { ProfileComponent } from '../../features/profile/profile.component';
 export class AppHeaderComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly nav = inject(NavigationService);
+  protected readonly catalog = inject(CatalogService);
   protected readonly sessionRecapService = inject(SessionRecapService);
   private readonly stats = inject(StatsStoreService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
