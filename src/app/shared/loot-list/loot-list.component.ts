@@ -2,6 +2,7 @@ import { Component, inject, input } from '@angular/core';
 import { LootRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { lootRarityClass } from '../../core/utils/loot-sort.util';
+import { CatalogService } from '../../core/api/catalog.service';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { NumberFrPipe } from '../number-fr.pipe';
 import { TranslatePipe } from '../translate.pipe';
@@ -24,6 +25,7 @@ import { TranslatePipe } from '../translate.pipe';
 export class LootListComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
 
   readonly items = input.required<readonly LootRow[]>();
   /** Style du message "aucun butin" : `default` (historique de combat) ou `recap` (modale de fin
@@ -31,7 +33,7 @@ export class LootListComponent {
   readonly emptyVariant = input<'default' | 'recap'>('default');
 
   protected rarityClass(name: string): string {
-    return lootRarityClass(name);
+    return lootRarityClass(this.catalog, name);
   }
 
   protected isWatched(name: string): boolean {

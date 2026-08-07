@@ -8,6 +8,7 @@ import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { CatalogService } from '../../core/api/catalog.service';
 
 type TradeSortOrder = 'desc' | 'asc';
 
@@ -41,6 +42,7 @@ interface TradeDateGroup {
 export class TradesComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<TradeSortOrder>('desc');
@@ -98,6 +100,6 @@ export class TradesComponent {
   }
 
   protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(name)}`;
+    return `rarity-${getWakfuItemRarity(this.catalog, name)}`;
   }
 }

@@ -32,6 +32,11 @@ export interface CatalogMonsterEntry {
   es: string;
   pt: string;
   gfxId: string;
+  /** `null` si le monstre n'a pas de famille encyclopédie (28 monstres sur 851). */
+  family: number | null;
+  isBoss: boolean;
+  isArchi: boolean;
+  isDominant: boolean;
 }
 
 export interface CatalogDungeonEntry {
@@ -85,7 +90,18 @@ interface CachedIndexPayload {
 }
 
 type ItemTuple = [number, string, string, string, string, number, number, number];
-type MonsterTuple = [number, string, string, string, string, string];
+type MonsterTuple = [
+  number,
+  string,
+  string,
+  string,
+  string,
+  string,
+  number,
+  number,
+  number,
+  number,
+];
 
 /**
  * Catalogue Ankama (objets/monstres/donjons) servi par l'API distante — lot
@@ -277,8 +293,20 @@ export class CatalogService {
     const monstersByFrName = new Map<string, CatalogMonsterEntry>();
     const monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
     for (const tuple of payload.monsters) {
-      const [id, fr, en, es, pt, gfxId] = tuple as MonsterTuple;
-      const entry: CatalogMonsterEntry = { id, fr, en, es, pt, gfxId };
+      const [id, fr, en, es, pt, gfxId, family, isBossFlag, isArchiFlag, isDominantFlag] =
+        tuple as MonsterTuple;
+      const entry: CatalogMonsterEntry = {
+        id,
+        fr,
+        en,
+        es,
+        pt,
+        gfxId,
+        family: family === -1 ? null : family,
+        isBoss: isBossFlag === 1,
+        isArchi: isArchiFlag === 1,
+        isDominant: isDominantFlag === 1,
+      };
       monstersById.set(id, entry);
       const frKey = normalizeWakfuName(fr);
       if (!monstersByFrName.has(frKey)) monstersByFrName.set(frKey, entry);

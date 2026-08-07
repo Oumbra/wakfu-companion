@@ -1,9 +1,20 @@
-import { findWakfuMonsterEntry, WakfuMonsterEntry } from '../data/wakfu-monsters.data';
-import { findWakfuDungeonByBossMonsterId } from '../data/wakfu-dungeons.data';
+import { CatalogMonsterEntry, CatalogService } from '../api/catalog.service';
 
 /** Illustration générique wakassets, utilisée aussi bien en repli erreur réseau qu'en cas de trop grande diversité de monstres (voir resolveFightImageUrl). */
 export const DEFAULT_FIGHT_IMAGE_URL =
   'https://vertylo.github.io/wakassets/bossIllustrations/default.png';
+
+/**
+ * Illustration officielle Ankama d'un monstre (utilisée pour l'illustration de combat, PAS pour
+ * l'icône de dégâts/suivi — voir entity-icon.component.ts qui utilise wakassets). Contrairement à
+ * l'URL équivalente pour un objet (voir item-icon.component.ts), celle-ci EST intégralement
+ * déductible du `gfxId` : vérifié strictement 851/851 sur le référentiel actuel (le segment "42"
+ * est constant pour tous les monstres) — c'est pourquoi elle n'est volontairement PAS incluse dans
+ * l'index compact du catalogue (voir server/catalog/compact-index.ts).
+ */
+function monsterPictureUrl(gfxId: string): string {
+  return `https://static.ankama.com/wakfu/portal/game/monster/42/${gfxId}.png`;
+}
 
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, le combat est considéré comme une horde hétérogène (pas un donjon/archi/dominant précis) — voir resolveFightImageUrl. */
 const DISTINCT_FAMILY_THRESHOLD = 4;
@@ -45,27 +56,37 @@ export interface FightImageInfo {
  *
  * `enemyNames` doit être fourni dans l'ordre de dégâts décroissant (voir
  * FightRecord.rows, déjà trié ainsi) pour que le repli n°5 pointe vers le
- * bon monstre. Les noms sans entrée référentiel connue sont ignorés à
+ * bon monstre. Les noms sans entrée catalogue connue sont ignorés à
  * chaque étape (aucune image disponible pour eux). `tooltipSource` est
  * `null` pour une illustration de donjon-brèche (`isBreach`) ou pour
  * l'illustration générique de repli (horde hétérogène/inconnue) — voir
  * feature "tooltip sur les images d'historique de combat".
+ *
+ * Fonction PARAMÉTRÉE (pas un service) : `catalog` doit être un
+ * `CatalogService` déjà injecté par l'appelant (composant), voir
+ * getWakfuItemRarity (wakfu-item-rarity.data.ts) pour le même principe.
  */
-export function resolveFightImageInfo(enemyNames: readonly string[]): FightImageInfo {
+export function resolveFightImageInfo(
+  catalog: CatalogService,
+  enemyNames: readonly string[],
+): FightImageInfo {
   const entries = enemyNames
-    .map((name) => findWakfuMonsterEntry(name))
-    .filter((entry): entry is WakfuMonsterEntry => entry !== undefined);
+    .map((name) => catalog.findWakfuMonsterEntry(name))
+    .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
 
   const bossEntry = entries.find((entry) => entry.isBoss);
   if (bossEntry) {
-    const dungeon = findWakfuDungeonByBossMonsterId(bossEntry.id);
+    const dungeon = catalog.findWakfuDungeonByBossMonsterId(bossEntry.id);
     if (dungeon) {
       return {
         url: dungeon.pictureUrl,
         tooltipSource: dungeon.isBreach ? null : { kind: 'dungeon', names: dungeon },
       };
     }
-    return { url: bossEntry.pictureUrl, tooltipSource: { kind: 'monster', names: bossEntry } };
+    return {
+      url: monsterPictureUrl(bossEntry.gfxId),
+      tooltipSource: { kind: 'monster', names: bossEntry },
+    };
   }
 
   const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
@@ -75,13 +96,16 @@ export function resolveFightImageInfo(enemyNames: readonly string[]): FightImage
 
   const archiEntry = entries.find((entry) => entry.isArchi);
   if (archiEntry) {
-    return { url: archiEntry.pictureUrl, tooltipSource: { kind: 'monster', names: archiEntry } };
+    return {
+      url: monsterPictureUrl(archiEntry.gfxId),
+      tooltipSource: { kind: 'monster', names: archiEntry },
+    };
   }
 
   const dominantEntry = entries.find((entry) => entry.isDominant);
   if (dominantEntry) {
     return {
-      url: dominantEntry.pictureUrl,
+      url: monsterPictureUrl(dominantEntry.gfxId),
       tooltipSource: { kind: 'monster', names: dominantEntry },
     };
   }
@@ -89,7 +113,7 @@ export function resolveFightImageInfo(enemyNames: readonly string[]): FightImage
   const topDamageEntry = entries[0];
   if (topDamageEntry) {
     return {
-      url: topDamageEntry.pictureUrl,
+      url: monsterPictureUrl(topDamageEntry.gfxId),
       tooltipSource: { kind: 'monster', names: topDamageEntry },
     };
   }
@@ -98,6 +122,9 @@ export function resolveFightImageInfo(enemyNames: readonly string[]): FightImage
 }
 
 /** Repli sans métadonnée de tooltip — voir resolveFightImageInfo. */
-export function resolveFightImageUrl(enemyNames: readonly string[]): string | null {
-  return resolveFightImageInfo(enemyNames).url;
+export function resolveFightImageUrl(
+  catalog: CatalogService,
+  enemyNames: readonly string[],
+): string | null {
+  return resolveFightImageInfo(catalog, enemyNames).url;
 }

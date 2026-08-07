@@ -136,10 +136,10 @@ supervision.
 Mesures réelles sur le référentiel actuel (11 032 objets hors "old", 851
 monstres) :
 
-|      | v1 (lot 2.2, FR seul) | v2 (lot 3.1, 4 langues) |
-| ---- | --------------------- | ----------------------- |
-| Brut | ~463 Ko               | ~1,14 Mo                |
-| Gzip | ~149 Ko               | ~348 Ko                 |
+|      | v1 (lot 2.2, FR seul) | v2 (lot 3.1, 4 langues) | v3 (+ family/isBoss/isArchi/isDominant) |
+| ---- | --------------------- | ----------------------- | --------------------------------------- |
+| Brut | ~463 Ko               | ~1,14 Mo                | ~1,15 Mo (+7,4 Ko)                      |
+| Gzip | ~149 Ko               | ~348 Ko                 | ~349 Ko (+1,3 Ko)                       |
 
 Le format `{id, nom normalisé, nom affichable, gfxId, rareté, hasRecipe}`
 par objet suggéré par le prompt 2.2 pèserait plus de 1 Mo en JSON brut rien
@@ -165,6 +165,18 @@ compact :
    valide — le client (lot 3.1) essaie wakassets puis un CDN de repli
    inconditionnellement plutôt que de dépendre d'un flag, régression
    acceptée et quantifiée sur ces ~10 entrées (icône générique à la place).
+5. **`family`/`isBoss`/`isArchi`/`isDominant` ajoutés côté monstres (v3,
+   lot 3.1 étape 4)**, contrairement au point précédent : nécessaires à
+   `resolveFightImageInfo` (illustration de l'historique de combat, voir
+   `src/app/core/utils/fight-image.util.ts`) pour rester synchrone, et non
+   déductibles du `gfxId` — impact mesuré négligeable (+7,4 Ko brut / +1,3 Ko
+   gzip pour 851 monstres, voir tableau ci-dessus). En revanche PAS de
+   `pictureUrl` monstre dans l'index : contrairement aux objets, cette URL
+   EST intégralement déductible du `gfxId`
+   (`https://static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`,
+   vérifié strictement 851/851 sur le référentiel actuel) — même principe que
+   les URLs d'icônes wakassets/CDN, déjà construites côté client à partir du
+   seul `gfxId`.
 
 **Le gzip (`Content-Encoding: gzip`, `CompressionStream` natif au runtime
 Workers) ramène le transfert réel à ~348 Ko** — c'est ce qui est

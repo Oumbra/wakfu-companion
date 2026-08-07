@@ -21,6 +21,7 @@ import {
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import { CatalogService } from '../../core/api/catalog.service';
 
 /**
  * Historique des combats (liste repliable, butin, XP) — extrait de
@@ -50,6 +51,7 @@ export class FightHistoryComponent {
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
   protected readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
 
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   protected readonly lootSort = signal<LootSort>('name');
@@ -103,12 +105,16 @@ export class FightHistoryComponent {
 
   /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir resolveFightImageInfo. */
   protected fightImageUrl(record: FightRecord): string | null {
-    return resolveFightImageInfo(this.enemyRowsFor(record).map((row) => row.name)).url;
+    return resolveFightImageInfo(
+      this.catalog,
+      this.enemyRowsFor(record).map((row) => row.name),
+    ).url;
   }
 
   /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
   protected fightImageTooltip(record: FightRecord): string | null {
     const source = resolveFightImageInfo(
+      this.catalog,
       this.enemyRowsFor(record).map((row) => row.name),
     ).tooltipSource;
     return source ? source.names[this.i18n.locale()] : null;
@@ -131,7 +137,7 @@ export class FightHistoryComponent {
   }
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
-    return sortLootRows(loot, this.lootSort());
+    return sortLootRows(this.catalog, loot, this.lootSort());
   }
 
   protected onXpContextMenu(event: MouseEvent, name: string): void {

@@ -1,6 +1,6 @@
 {
   "name": "wakfu-companion",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "scripts": {
     "ng": "ng",
     "generate:items": "node tools/generate-wakfu-items-data.mjs",
