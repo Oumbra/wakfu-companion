@@ -193,6 +193,30 @@ sans rapport avec la taille brute de cette seule réponse.
 produire des octets strictement identiques pour que `indexHash` reste une
 empreinte fiable.
 
+### Bilan bundle client (lot 3.1, prompt 3.1 — étape 9/9)
+
+Mesuré via `npm run build` (`ng build` production) :
+
+|                                   | Avant (référentiels embarqués) | Après (catalogue distant) |
+| --------------------------------- | ------------------------------ | ------------------------- |
+| Bundle initial (brut)             | ~4,76 Mo                       | ~472 Ko                   |
+| Bundle initial (transfert estimé) | ~466 Ko                        | ~117 Ko                   |
+
+Réduction ≈ 4,29 Mo brut, cohérente avec l'estimation initiale du prompt
+3.1 (« 4,25 Mo, 79,6 % du bundle »). Le budget `angular.json` (`type:
+initial`) a été resserré en conséquence (4 Mo/8 Mo -> 700 Ko/1,5 Mo) pour
+rester une protection utile contre une régression future, plutôt qu'un
+seuil devenu 10× trop large.
+
+Vérifié en navigateur (Chromium/playwright-core) : autocomplétion objet et
+monstre (latence perçue nulle, recherche dans l'index local), résolution
+de recette (async, cascade sur plusieurs niveaux), icônes d'objets et de
+monstres, comptage de butin sur des lignes de log simulées, et **rechargement
+hors-ligne après une première visite réussie** (catalogue pré-rempli en
+IndexedDB + service worker actif : `CatalogService.status()` passe
+directement à `ready` sans requête réseau, aucun badge « catalogue
+indisponible » affiché).
+
 ## Piège PWA : le service worker interceptait `/api/**`
 
 `navigationUrls` par défaut d'Angular (`/**` sauf les URLs comportant une
