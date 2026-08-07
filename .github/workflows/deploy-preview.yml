@@ -65,6 +65,18 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      # Jeton de service statique protégeant les endpoints prix d'écriture/export (lot 4, prompt
+      # 4.2, voir functions/api/_price-auth.ts) — même mécanisme que le secret DB ci-dessus, sans
+      # rapport avec une session utilisateur. PRICE_SERVICE_TOKEN_PREVIEW distinct de
+      # PRICE_SERVICE_TOKEN (prod, pas encore utilisé — prod reste sur GitHub Pages sans Functions
+      # pour l'instant), même convention que DATABASE_URL/DATABASE_URL_PREVIEW.
+      - name: Push price service token to Cloudflare Pages (preview)
+        run: echo "$PRICE_SERVICE_TOKEN_PREVIEW" | npx wrangler pages secret put PRICE_SERVICE_TOKEN --project-name wakfu-companion --env preview
+        env:
+          PRICE_SERVICE_TOKEN_PREVIEW: ${{ secrets.PRICE_SERVICE_TOKEN_PREVIEW }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       # La preview (claude/dev) est passée sur Cloudflare Pages (déploiement
       # natif, sans hack de sous-dossier ni dépendance au workflow système
       # GitHub instable — voir l'historique de deploy-main.yml) : le workflow
