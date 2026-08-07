@@ -4,18 +4,24 @@ import { items, monsters } from '../../../../server/db/schema';
 import { buildCompactIndex } from '../../../../server/catalog/compact-index';
 import type { Env } from '../../_types';
 
-// GET /api/v1/catalog/index — index compact objets+monstres pour
-// core/api/catalog.service.ts (lot 3.1). ~1,14 Mo bruts / ~348 Ko gzip
-// mesurés sur le référentiel actuel (11 032 objets + 851 monstres, 4
-// langues) — voir server/catalog/compact-index.ts pour le format exact
-// (tuples, PAS d'objets à clés répétées) et server/README.md pour le détail
-// des mesures. Compressé en gzip via CompressionStream (Web Streams,
-// disponible nativement dans le runtime Workers) : le budget "< 400 Ko"
-// du prompt 2.2 s'entend sur ce qui est réellement transféré (Content-Encoding
-// gzip), pas sur le JSON brut — voir server/README.md pour la justification.
-// Chargé UNE FOIS au démarrage puis mis en cache IndexedDB côté client (pas
-// à chaque frappe/chargement) : le poids réel supporté par l'utilisateur
-// est donc bien inférieur à ce que suggère la taille brute de la réponse.
+// GET /api/v1/catalog/ — index compact objets+monstres pour
+// core/api/catalog.service.ts (lot 3.1). Fichier nommé index.ts à dessein :
+// convention Cloudflare Pages Functions, où index.ts sert la racine de son
+// dossier (`/api/v1/catalog/`) — NE PAS appeler ce endpoint `/catalog/index`
+// côté client, ce segment littéral se prend une redirection 308 vers
+// `/catalog/` (bug réel constaté en prod, cassait silencieusement le
+// chargement du catalogue — voir CatalogService.refreshIfNeeded).
+// ~1,14 Mo bruts / ~348 Ko gzip mesurés sur le référentiel actuel (11 032
+// objets + 851 monstres, 4 langues) — voir server/catalog/compact-index.ts
+// pour le format exact (tuples, PAS d'objets à clés répétées) et
+// server/README.md pour le détail des mesures. Compressé en gzip via
+// CompressionStream (Web Streams, disponible nativement dans le runtime
+// Workers) : le budget "< 400 Ko" du prompt 2.2 s'entend sur ce qui est
+// réellement transféré (Content-Encoding gzip), pas sur le JSON brut — voir
+// server/README.md pour la justification. Chargé UNE FOIS au démarrage puis
+// mis en cache IndexedDB côté client (pas à chaque frappe/chargement) : le
+// poids réel supporté par l'utilisateur est donc bien inférieur à ce que
+// suggère la taille brute de la réponse.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const db = createDb(context.env.DATABASE_URL);
 

@@ -62,7 +62,7 @@ function setupCatalog(): CatalogService {
   const setCacheEntry = async () => undefined;
   const getJson = async (path: string) => {
     if (path === '/catalog/version') return ok({ indexHash: 'fixture' });
-    if (path === '/catalog/index') {
+    if (path === '/catalog/') {
       return ok({
         items: [],
         monsters: [

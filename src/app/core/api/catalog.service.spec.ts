@@ -43,7 +43,7 @@ function setup(options: {
   const setCacheEntry = vi.fn(async () => undefined);
   const getJson = vi.fn(async (path: string) => {
     if (path === '/catalog/version') return options.version ?? offline();
-    if (path === '/catalog/index') return options.index ?? offline();
+    if (path === '/catalog/') return options.index ?? offline();
     if (path === '/dungeons') return options.dungeons ?? offline();
     throw new Error(`unexpected path in test: ${path}`);
   });
@@ -82,7 +82,7 @@ describe('CatalogService', () => {
     expect(service.findWakfuItemEntry('Coiffe Test')?.id).toBe(1234);
     // Version vérifiée en arrière-plan, mais index PAS re-téléchargé (hash identique).
     expect(getJson).toHaveBeenCalledWith('/catalog/version');
-    expect(getJson).not.toHaveBeenCalledWith('/catalog/index');
+    expect(getJson).not.toHaveBeenCalledWith('/catalog/');
   });
 
   it('rafraîchit en arrière-plan si le hash serveur diffère du cache', async () => {
