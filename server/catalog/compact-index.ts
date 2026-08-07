@@ -15,6 +15,9 @@ export const RARITY_SORT_ORDER: Record<WakfuRarityCode, number> = {
 export interface CompactIndexItemInput {
   ankamaId: number | null;
   fr: string;
+  en: string;
+  es: string;
+  pt: string;
   gfxId: number;
   rarity: WakfuRarityCode;
   hasRecipe: boolean;
@@ -23,21 +26,36 @@ export interface CompactIndexItemInput {
 export interface CompactIndexMonsterInput {
   id: number;
   fr: string;
+  en: string;
+  es: string;
+  pt: string;
   gfxId: string;
 }
 
 /**
  * Construit l'index compact servi par GET /api/v1/catalog/index — tuples
- * plutôt qu'objets (pas de clés répétées ~11 700 fois) pour rester sous la
- * cible de taille du prompt 2.2 (voir server/README.md pour le détail des
- * mesures réelles ~463 Ko bruts / ~149 Ko gzip). Ordre des champs :
- *   items    : [id, nomFr, gfxId, raritySortOrder, hasRecipe(0|1)]
- *   monsters : [id, nomFr, gfxId]
+ * plutôt qu'objets (pas de clés répétées ~11 700 fois) pour rester aussi
+ * compact que possible (voir server/README.md pour le détail des mesures
+ * réelles ~1,14 Mo bruts / ~348 Ko gzip). Ordre des champs :
+ *   items    : [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipe(0|1)]
+ *   monsters : [id, fr, en, es, pt, gfxId]
  * Triés par id croissant pour un résultat déterministe (empreinte stable
  * tant que le contenu ne change pas — voir catalogMeta.indexHash). Les
  * objets sans id Ankama (~142 entrées historiques, voir schema.ts) sont
  * exclus : ils ne peuvent de toute façon pas être résolus par
  * GET /api/v1/items/{id}, seul débouché prévu de cet index.
+ *
+ * v2 (lot 3.1) — les 4 langues sont nécessaires : findWakfuItemEntry côté
+ * client doit reconnaître un objet quel que soit le nom lu dans wakfu.log
+ * (client Wakfu de l'utilisateur pas forcément en français), contrainte
+ * découverte en démarrant le lot 3.1 (le v1 du lot 2.2, FR seul, ne le
+ * permettait pas). `wakassetsAvailable`/`pictureUrl`/`wakfuAvailable`
+ * (résolution d'icône, voir item-icon/entity-icon) restent volontairement
+ * hors de l'index : `pictureUrl` n'est pas déductible du gfxId et
+ * alourdirait significativement l'index pour un gain marginal (mesuré :
+ * seuls 1 objet sur 10 890 et 9 monstres sur 851 n'ont PAS wakassets comme
+ * source d'image valide — le client essaie wakassets puis un CDN de repli
+ * inconditionnellement, sans avoir besoin du flag).
  *
  * Module PARTAGÉ entre server/import/import-catalog.ts (calcul de
  * l'empreinte au moment de l'import) et functions/api/v1/catalog/index.ts
@@ -56,6 +74,9 @@ export function buildCompactIndex(
     .map((item) => [
       item.ankamaId,
       item.fr,
+      item.en,
+      item.es,
+      item.pt,
       item.gfxId,
       RARITY_SORT_ORDER[item.rarity],
       item.hasRecipe ? 1 : 0,
@@ -63,6 +84,6 @@ export function buildCompactIndex(
   const compactMonsters = monsterRows
     .slice()
     .sort((a, b) => a.id - b.id)
-    .map((monster) => [monster.id, monster.fr, monster.gfxId]);
+    .map((monster) => [monster.id, monster.fr, monster.en, monster.es, monster.pt, monster.gfxId]);
   return { items: compactItems, monsters: compactMonsters };
 }
