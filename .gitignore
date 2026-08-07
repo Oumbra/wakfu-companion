@@ -49,3 +49,4 @@ Thumbs.db
 /src/app/core/data/wakfu-items.data.ts
 /src/app/core/data/wakfu-dungeons.data.ts
 /src/app/core/data/wakfu-monsters.data.ts
+/src/app/core/data/build-info.data.ts
