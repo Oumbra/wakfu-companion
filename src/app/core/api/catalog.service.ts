@@ -61,6 +61,14 @@ export interface CatalogItemDetail extends CatalogItemEntry {
   recipe: { itemId: number; name: string | null; quantity: number }[];
 }
 
+/** Voir CatalogService.resolveRecipeIngredients. */
+export interface CatalogResolvedIngredient {
+  name: string;
+  quantity: number;
+  hasRecipe: boolean;
+  recipeIngredients: readonly CatalogResolvedIngredient[];
+}
+
 export interface CatalogMonsterDetail {
   id: number;
   fr: string;
@@ -215,6 +223,58 @@ export class CatalogService {
   async getItemDetail(id: number): Promise<CatalogItemDetail | undefined> {
     const result = await this.apiClient.getJson<CatalogItemDetail>(`/items/${id}`);
     return result.ok ? result.data : undefined;
+  }
+
+  /** Résout, récursivement (cascade sur tous les niveaux de la recette), les ingrédients d'un
+   * objet vers leur nom FR affichable + quantité requise — voir suivi > "suivre les objets de la
+   * recette". Miroir ASYNCHRONE de resolveRecipeIngredientNames (wakfu-items.data.ts, avant
+   * migration) : chaque niveau nécessite un aller-retour réseau (GET /items/{id}), contrairement à
+   * l'ancienne version qui traversait un index local complet — voir
+   * shared/wakfu-autocomplete/wakfu-autocomplete.component.ts (`openRecipe`, état de chargement).
+   * `hasRecipe` par ingrédient est déterminé SANS réseau via `findWakfuItemEntryById` (déjà dans
+   * l'index compact en mémoire) : seuls les ingrédients ayant réellement une recette déclenchent un
+   * appel réseau supplémentaire (récursion), pas la totalité de l'arbre exploré à l'aveugle.
+   *
+   * `ancestorIds` protège contre une boucle infinie si le référentiel contient un cycle (objet
+   * ingrédient de lui-même, directement ou via une chaîne plus longue — cas réel rencontré, voir
+   * ancien commentaire de resolveRecipeIngredientNames) : un ingrédient dont l'id est déjà un
+   * ancêtre dans la chaîne en cours est résolu avec `hasRecipe: false` (la ligne reste affichée
+   * normalement, seule sa propre recette n'est pas développée davantage). Un ingrédient dont le nom
+   * n'a pas pu être résolu côté serveur (`name: null`, id absent de la table `items`) est
+   * silencieusement omis, comme avant.
+   */
+  async resolveRecipeIngredients(
+    id: number,
+    ancestorIds: ReadonlySet<number> = new Set([id]),
+  ): Promise<CatalogResolvedIngredient[]> {
+    const detail = await this.getItemDetail(id);
+    if (!detail) return [];
+
+    const resolved = await Promise.all(
+      detail.recipe
+        .filter(
+          (ingredient): ingredient is { itemId: number; name: string; quantity: number } =>
+            ingredient.name !== null,
+        )
+        .map(async (ingredient) => {
+          const isCycle = ancestorIds.has(ingredient.itemId);
+          const hasRecipe =
+            (this.findWakfuItemEntryById(ingredient.itemId)?.hasRecipe ?? false) && !isCycle;
+          const recipeIngredients = hasRecipe
+            ? await this.resolveRecipeIngredients(
+                ingredient.itemId,
+                new Set([...ancestorIds, ingredient.itemId]),
+              )
+            : [];
+          return {
+            name: ingredient.name,
+            quantity: ingredient.quantity,
+            hasRecipe,
+            recipeIngredients,
+          };
+        }),
+    );
+    return resolved;
   }
 
   async getMonsterDetail(id: number): Promise<CatalogMonsterDetail | undefined> {

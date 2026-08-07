@@ -1,9 +1,8 @@
 import { inject, Injectable } from '@angular/core';
-import { WAKFU_ITEMS } from '../data/wakfu-items.data';
-import { WAKFU_MONSTERS_FR } from '../data/wakfu-monsters.data';
 import { WakfuRarity } from '../data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { AppLocale, I18nService } from './i18n.service';
+import { CatalogService } from '../api/catalog.service';
 
 export type WakfuSearchKind = 'item' | 'enemy';
 
@@ -87,6 +86,7 @@ function searchEntries(
 @Injectable({ providedIn: 'root' })
 export class WakfuSearchService {
   private readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
 
   searchItems(query: string): WakfuSearchResult[] {
     return this.sortAlphabetically(this.matchedItems(query));
@@ -102,11 +102,11 @@ export class WakfuSearchService {
   }
 
   private matchedItems(query: string): SearchEntry[] {
-    return this.matchedSearch(WAKFU_ITEMS, 'item', query);
+    return this.matchedSearch(this.catalog.itemEntries(), 'item', query);
   }
 
   private matchedEnemies(query: string): SearchEntry[] {
-    return this.matchedSearch(Object.values(WAKFU_MONSTERS_FR), 'enemy', query);
+    return this.matchedSearch(this.catalog.monsterEntries(), 'enemy', query);
   }
 
   private matchedSearch(

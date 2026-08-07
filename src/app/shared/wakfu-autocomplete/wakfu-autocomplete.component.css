@@ -95,6 +95,14 @@
 .wakfu-autocomplete-recipe-btn:hover img {
   opacity: 1;
 }
+/* Le temps de la résolution récursive de la recette (réseau, voir openRecipe/recipeLoading) —
+   évite une double ouverture concurrente. */
+.wakfu-autocomplete-recipe-btn:disabled {
+  cursor: default;
+}
+.wakfu-autocomplete-recipe-btn:disabled img {
+  opacity: 0.35;
+}
 .wakfu-autocomplete-item-icon {
   display: flex;
   align-items: center;
