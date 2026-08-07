@@ -46,10 +46,10 @@ export class I18nService {
   }
 
   /** Formate un horodatage (epoch ms) selon les conventions de la langue courante. */
-  formatDateTime(ms: number): string {
+  formatDateTime(ms: number, showSeconds = true): string {
     return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], {
       dateStyle: 'medium',
-      timeStyle: 'medium',
+      timeStyle: showSeconds ? 'medium' : 'short',
     }).format(new Date(ms));
   }
 
