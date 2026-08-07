@@ -24,6 +24,7 @@ Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagno
 - `npm start` — serveur de dev (port 4200, voir `.claude/launch.json`)
 - `npm run build` — build web de prod (`dist/wakfu-companion/browser`)
 - Toujours valider **les 2 builds** (dev servi + `npm run build`) après un changement non trivial — un changement peut casser silencieusement l'un sans casser l'autre.
+- `npm run install:ci` — régénère `node_modules`/`package-lock.json` avec la **même version npm que la CI** (`packageManager` du `package.json`, actuellement `npm@10.9.8` via `npx`). À utiliser après tout ajout/bump de dépendance touchant une chaîne de sous-dépendances optionnelles/peer imbriquées (esbuild, rolldown, sharp, lightningcss...) : un `npm install` classique avec une version npm locale différente (souvent plus récente/tolérante) peut produire un lockfile qui passe en local mais fait échouer `npm ci` en CI avec `EUSAGE ... Missing: X from lock file` — un vrai cas vécu (2026-08-07, paquets `@emnapi/*` via `rolldown`). `corepack enable` pour pinner npm automatiquement s'est révélé **cassé sur cette machine** (Node installé sous `D:\Program Files\nodejs`, hors de l'emplacement par défaut attendu par les shims générés avec un `--install-directory` personnalisé — chemin relatif codé en dur dans le script généré) ; `npm run install:ci` est le contournement retenu.
 
 ## Vérification systématique des résultats via Playwright (MCP)
 
