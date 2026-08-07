@@ -75,3 +75,20 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`).
 - `GET /api/v1/game-servers` — liste des serveurs de jeu (table
   `game_servers`, jamais compilée en dur côté client).
+
+## Piège PWA : le service worker interceptait `/api/**`
+
+`navigationUrls` par défaut d'Angular (`/**` sauf les URLs comportant une
+extension de fichier dans le dernier segment) traite toute URL de route API
+sans extension — `/api/v1/health`, `/api/v1/game-servers` — comme une route
+SPA : le service worker sert le shell `index.html` en cache au lieu de
+laisser la requête atteindre la Pages Function. Bug réel constaté : une
+navigation directe dans le navigateur vers `/api/v1/health` renvoyait le
+shell app (assets cassés en 404/mauvais MIME) plutôt que la réponse JSON.
+Corrigé en excluant explicitement `/api/**` dans `ngsw-config.json`
+(`navigationUrls`). Un `fetch()` JS classique depuis le code applicatif
+n'est PAS affecté (seule la navigation top-level du navigateur passe par ce
+mécanisme) — le bug ne se voit qu'en testant une route API directement dans
+la barre d'adresse, ce qui explique qu'il ne casse rien côté client une fois
+l'app codée normalement, mais reste un piège pour tout futur endpoint sans
+extension.
