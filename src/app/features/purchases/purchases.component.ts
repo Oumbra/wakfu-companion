@@ -7,6 +7,7 @@ import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
+import { CatalogService } from '../../core/api/catalog.service';
 
 type PurchaseSortOrder = 'desc' | 'asc';
 
@@ -46,6 +47,7 @@ interface PurchaseDateGroup {
 export class PurchasesComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<PurchaseSortOrder>('desc');
@@ -120,6 +122,6 @@ export class PurchasesComponent {
   }
 
   protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(name)}`;
+    return `rarity-${getWakfuItemRarity(this.catalog, name)}`;
   }
 }

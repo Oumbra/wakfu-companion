@@ -6,6 +6,7 @@ import {
 } from '../services/stats-store.service';
 import { I18nService } from '../services/i18n.service';
 import { ConfirmDeleteService } from '../services/confirm-delete.service';
+import { CatalogService } from '../api/catalog.service';
 import { getWakfuItemRarity } from '../data/wakfu-item-rarity.data';
 import { resolveNumericKeyAction } from './numeric-keydown.util';
 
@@ -24,6 +25,7 @@ export class WatchlistTileController {
     private readonly stats: StatsStoreService,
     private readonly i18n: I18nService,
     private readonly confirmDelete: ConfirmDeleteService,
+    private readonly catalog: CatalogService,
   ) {}
 
   /** Noms actuellement tronqués par l'ellipsis CSS (détecté au survol, voir `checkTruncation`) :
@@ -47,7 +49,7 @@ export class WatchlistTileController {
   );
 
   rarityClass(entry: WatchlistEntry): string {
-    return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(entry.name)}` : '';
+    return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(this.catalog, entry.name)}` : '';
   }
 
   displayName(entry: WatchlistEntry): string {

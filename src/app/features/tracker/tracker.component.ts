@@ -10,6 +10,7 @@ import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { CatalogService } from '../../core/api/catalog.service';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -43,6 +44,7 @@ export class TrackerComponent {
     this.stats,
     this.i18n,
     inject(ConfirmDeleteService),
+    inject(CatalogService),
   );
 
   protected readonly existingNames = computed(() =>

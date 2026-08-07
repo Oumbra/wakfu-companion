@@ -1,22 +1,31 @@
 /**
- * Rareté (FR minuscule -> palier) des objets, lue depuis le référentiel
- * Repli sur "common" pour tout objet absent du référentiel (ex. ajouté
- * manuellement au suivi sous un nom introuvable).
+ * Rareté (FR minuscule -> palier) des objets, lue depuis le catalogue distant
+ * (voir core/api/catalog.service.ts, remplace depuis le lot 3.1 étape 4 la
+ * table embarquée wakfu-items.data.ts). Repli sur "common" pour tout objet
+ * absent du catalogue (ex. ajouté manuellement au suivi sous un nom
+ * introuvable, ou catalogue pas encore chargé).
  *
  * Correspondance avec la rareté numérique du jeu : 0 "Qualité commune" ->
  * `old`, 1 "Inhabituel" -> `common`, 2 "Rare" -> `rare`, 3 "Mythique" ->
  * `mythical`, 4 "Légendaire" -> `legendary`, 5 "Relique" -> `relic`,
  * 6 "PVP" -> `memory`, 7 "Epique" -> `epic`. `old` (trad. FR "Ancien") désigne
- * qui les exclut de la table utilisée par l'UI (jamais résolus par
- * findWakfuItemEntry, donc getWakfuItemRarity() ne retourne jamais `old` au
+ * des objets historiques retirés du jeu — voir server/import/import-catalog.ts
+ * qui est exposé côté client (jamais résolus par findWakfuItemEntry, donc
+ * getWakfuItemRarity() ne retourne jamais `old` au runtime ; conservé
+ *
+ * Fonction PARAMÉTRÉE (pas injectable elle-même, c'est une fonction libre,
+ * pas un service) : l'appelant (déjà dans un contexte d'injection — composant
+ * ou classe recevant ses dépendances par constructeur) lui passe son
+ * `CatalogService` déjà injecté, plutôt qu'un import statique du référentiel
+ * embarqué.
  */
-import { findWakfuItemEntry } from './wakfu-items.data';
+import type { CatalogService } from '../api/catalog.service';
 
 export type WakfuRarity =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
-export function getWakfuItemRarity(name: string): WakfuRarity {
-  return findWakfuItemEntry(name)?.rarity ?? 'common';
+export function getWakfuItemRarity(catalog: CatalogService, name: string): WakfuRarity {
+  return catalog.findWakfuItemEntry(name)?.rarity ?? 'common';
 }
 
 /** Ordre de tri croissant des raretés (pas de rapport avec leur valeur en jeu). */

@@ -18,6 +18,7 @@ import {
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import { CatalogService } from '../../core/api/catalog.service';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -41,6 +42,7 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
 
   protected readonly stats = inject(StatsStoreService);
+  private readonly catalog = inject(CatalogService);
   protected readonly i18n = inject(I18nService);
   protected readonly recapService = inject(SessionRecapService);
   private readonly classifier = inject(EntityClassifierService);
@@ -107,7 +109,7 @@ export class SessionRecapComponent implements OnDestroy {
   }
 
   protected sortedLoot(): LootRow[] {
-    return sortLootRows(this.stats.sessionLoot(), this.lootSort());
+    return sortLootRows(this.catalog, this.stats.sessionLoot(), this.lootSort());
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {

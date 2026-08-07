@@ -15,6 +15,7 @@ import { ConfirmDeleteService } from '../../core/services/confirm-delete.service
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { CatalogService } from '../../core/api/catalog.service';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -62,6 +63,7 @@ export class TrackerStripComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
+  private readonly catalog = inject(CatalogService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   protected readonly helpModal = inject(HelpModalService);
 
@@ -69,6 +71,7 @@ export class TrackerStripComponent {
     this.stats,
     this.i18n,
     this.confirmDelete,
+    this.catalog,
   );
 
   protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;

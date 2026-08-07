@@ -26,6 +26,7 @@ import {
   getBreedAvatarIndex,
 } from '../../core/data/class-breeds.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import {
@@ -64,6 +65,7 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
 export class ProfilePageComponent implements OnDestroy {
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
+  private readonly catalog = inject(CatalogService);
   protected readonly roster = inject(CharacterRosterService);
   protected readonly helpModal = inject(HelpModalService);
   private readonly dataExport = inject(AppDataExportService);
@@ -253,7 +255,7 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(name)}`;
+    return `rarity-${getWakfuItemRarity(this.catalog, name)}`;
   }
 
   protected characterIcon(char: RosterCharacter): string {

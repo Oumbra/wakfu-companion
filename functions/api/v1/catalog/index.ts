@@ -40,6 +40,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         es: monsters.es,
         pt: monsters.pt,
         gfxId: monsters.gfxId,
+        family: monsters.family,
+        isBoss: monsters.isBoss,
+        isArchi: monsters.isArchi,
+        isDominant: monsters.isDominant,
       })
       .from(monsters),
   ]);

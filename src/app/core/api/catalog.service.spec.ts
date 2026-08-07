@@ -5,7 +5,7 @@ import { ApiClientService, ApiResult } from './api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 
 const ITEM_TUPLE = [1234, 'Coiffe Test', 'Test Headgear', 'Tocado Test', 'Chapéu Test', 999, 4, 1];
-const MONSTER_TUPLE = [42, 'Bouftou', 'Gobball', 'Jalató', 'Papatudo', '100200001'];
+const MONSTER_TUPLE = [42, 'Bouftou', 'Gobball', 'Jalató', 'Papatudo', '100200001', -1, 0, 0, 0];
 const DUNGEON_ROW = {
   id: 7,
   fr: 'Donjon Test',
