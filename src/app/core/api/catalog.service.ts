@@ -1,0 +1,300 @@
+import { Injectable, inject, signal } from '@angular/core';
+import { ApiClientService } from './api-client.service';
+import { PersistenceService } from '../services/persistence.service';
+import { normalizeWakfuName } from '../utils/wakfu-name.util';
+import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
+
+const INDEX_CACHE_KEY = 'catalog-index';
+const DUNGEONS_CACHE_KEY = 'catalog-dungeons';
+
+/** Doit rester la même table que server/catalog/compact-index.ts (RARITY_SORT_ORDER) — construite
+ * une seule fois par inversion de RARITY_SORT_ORDER (déjà défini côté client) plutôt que dupliquée
+ * à la main. */
+const RARITY_BY_SORT_ORDER: Readonly<Record<number, WakfuRarity>> = Object.fromEntries(
+  Object.entries(RARITY_SORT_ORDER).map(([rarity, order]) => [order, rarity as WakfuRarity]),
+);
+
+export interface CatalogItemEntry {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+  gfxId: number;
+  rarity: WakfuRarity;
+  hasRecipe: boolean;
+}
+
+export interface CatalogMonsterEntry {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+  gfxId: string;
+}
+
+export interface CatalogDungeonEntry {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+  level: number;
+  tranche: number;
+  isBreach: boolean;
+  isUltimateBreach: boolean;
+  bossMonsterId: number | null;
+  pictureUrl: string;
+  wakassetsAvailable: boolean;
+}
+
+export interface CatalogItemDetail extends CatalogItemEntry {
+  pictureUrl: string;
+  wakassetsAvailable: boolean;
+  wakfuAvailable: boolean;
+  recipe: { itemId: number; name: string | null; quantity: number }[];
+}
+
+export interface CatalogMonsterDetail {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+  gfxId: string;
+  family: number | null;
+  pictureUrl: string;
+  wakassetsAvailable: boolean;
+  wakfuAvailable: boolean;
+  isBoss: boolean;
+  isArchi: boolean;
+  isDominant: boolean;
+}
+
+/** `loading` : ni le cache ni le réseau n'ont encore répondu. `ready` : l'index en mémoire est
+ * exploitable (via le cache et/ou un fetch réussi). `unavailable` : ni cache ni réseau — voir
+ * prompt 3.1 point 4 ("affiche un état explicite plutôt qu'une application qui semble fonctionner
+ * mais ne reconnaît plus aucun objet"). */
+export type CatalogStatus = 'loading' | 'ready' | 'unavailable';
+
+interface CachedIndexPayload {
+  indexHash: string;
+  items: (number | string)[][];
+  monsters: (number | string)[][];
+}
+
+type ItemTuple = [number, string, string, string, string, number, number, number];
+type MonsterTuple = [number, string, string, string, string, string];
+
+/**
+ * Catalogue Ankama (objets/monstres/donjons) servi par l'API distante — lot
+ * 3.1, remplace les tables embarquées wakfu-{items,monsters,dungeons}.data.ts
+ * (supprimées à l'étape 8 du même lot).
+ *
+ * SQUELETTE (étape 2/9) : ce service est complet et testé unitairement mais
+ * n'est encore branché à AUCUN consommateur — zéro changement de
+ * comportement pour l'application tant que les étapes suivantes n'ont pas
+ * migré chaque appelant un par un (voir docs/prompts-migration-serveur.md,
+ * prompt 3.1, et la décomposition en étapes actée avec l'utilisateur).
+ *
+ * Contrainte absolue (prompt 3.1) : findWakfuItemEntry/findWakfuMonsterEntry
+ * sont dans le CHEMIN CHAUD du parsing (StatsStoreService, à chaque
+ * ramassage d'objet) — ils DOIVENT rester synchrones, d'où l'architecture
+ * "charge tout en mémoire une fois, cache IndexedDB, lookup en Map" plutôt
+ * qu'un appel réseau par lookup.
+ *
+ * Chargement (méthode `initialize()`, à appeler une fois au démarrage —
+ * pas encore fait, voir étape 7) :
+ * 1. Lit le cache IndexedDB (PersistenceService) — s'il existe, construit
+ *    immédiatement les Map en mémoire et passe `status` à `ready` SANS
+ *    attendre le réseau (l'app doit démarrer vite sur les lancements
+ *    suivants).
+ * 2. Rafraîchissement en arrière-plan (non bloquant si un cache existait) :
+ *    compare `indexHash` (GET /catalog/version) à celui du cache ; si
+ *    différent (ou pas de cache du tout), télécharge /catalog/index +
+ *    /dungeons, reconstruit les Map, met à jour le cache.
+ * 3. Premier lancement (pas de cache) : pas de repli possible, on ATTEND le
+ *    résultat du réseau avant de conclure `ready` ou `unavailable`.
+ */
+@Injectable({ providedIn: 'root' })
+export class CatalogService {
+  private readonly apiClient = inject(ApiClientService);
+  private readonly persistence = inject(PersistenceService);
+
+  readonly status = signal<CatalogStatus>('loading');
+
+  private itemsById = new Map<number, CatalogItemEntry>();
+  private itemsByFrName = new Map<string, CatalogItemEntry>();
+  private itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
+  private monstersById = new Map<number, CatalogMonsterEntry>();
+  private monstersByFrName = new Map<string, CatalogMonsterEntry>();
+  private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
+  private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
+
+  async initialize(): Promise<void> {
+    const [cachedIndex, cachedDungeons] = await Promise.all([
+      this.persistence.getCacheEntry<CachedIndexPayload>(INDEX_CACHE_KEY),
+      this.persistence.getCacheEntry<CatalogDungeonEntry[]>(DUNGEONS_CACHE_KEY),
+    ]);
+
+    if (cachedIndex && cachedDungeons) {
+      this.applyIndex(cachedIndex);
+      this.applyDungeons(cachedDungeons);
+      this.status.set('ready');
+      // Rafraîchissement en arrière-plan : ne bloque pas le démarrage, voir doc de classe.
+      void this.refreshIfNeeded(cachedIndex.indexHash);
+      return;
+    }
+
+    // Premier lancement (ou cache partiel/absent) : aucun repli possible, on doit attendre le réseau.
+    const refreshed = await this.refreshIfNeeded(null);
+    this.status.set(refreshed ? 'ready' : 'unavailable');
+  }
+
+  /** Recherche un objet par nom, quelle que soit sa langue (FR/EN/ES/PT) — miroir de
+   * findWakfuItemEntry (wakfu-items.data.ts, avant migration). SYNCHRONE : lit uniquement l'index
+   * déjà en mémoire (voir contrainte du chemin chaud dans la doc de classe). */
+  findWakfuItemEntry(name: string): CatalogItemEntry | undefined {
+    const key = normalizeWakfuName(name);
+    return this.itemsByFrName.get(key) ?? this.itemsByOtherLocaleName.get(key);
+  }
+
+  findWakfuItemEntryById(id: number): CatalogItemEntry | undefined {
+    return this.itemsById.get(id);
+  }
+
+  /** Miroir de findWakfuMonsterEntry — voir findWakfuItemEntry. */
+  findWakfuMonsterEntry(name: string): CatalogMonsterEntry | undefined {
+    const key = normalizeWakfuName(name);
+    return this.monstersByFrName.get(key) ?? this.monstersByOtherLocaleName.get(key);
+  }
+
+  isKnownWakfuMonsterName(name: string): boolean {
+    return this.findWakfuMonsterEntry(name) !== undefined;
+  }
+
+  findWakfuDungeonByBossMonsterId(bossMonsterId: number): CatalogDungeonEntry | undefined {
+    return this.dungeonsByBossMonsterId.get(bossMonsterId);
+  }
+
+  /** Itère tous les objets connus — sert à l'autocomplétion (WakfuSearchService, étape 5), qui
+   * doit rester instantanée (recherche dans l'index LOCAL, jamais une requête par frappe). */
+  itemEntries(): Iterable<CatalogItemEntry> {
+    return this.itemsById.values();
+  }
+
+  monsterEntries(): Iterable<CatalogMonsterEntry> {
+    return this.monstersById.values();
+  }
+
+  /** Détail complet (recette, traductions, image) — ASYNCHRONE par design (prompt 3.1) : ne fait
+   * pas partie de l'index compact chargé au démarrage. `undefined` si l'objet est introuvable ou
+   * si la requête échoue (hors-ligne...). */
+  async getItemDetail(id: number): Promise<CatalogItemDetail | undefined> {
+    const result = await this.apiClient.getJson<CatalogItemDetail>(`/items/${id}`);
+    return result.ok ? result.data : undefined;
+  }
+
+  async getMonsterDetail(id: number): Promise<CatalogMonsterDetail | undefined> {
+    const result = await this.apiClient.getJson<CatalogMonsterDetail>(`/monsters/${id}`);
+    return result.ok ? result.data : undefined;
+  }
+
+  /** Compare l'empreinte locale (`cachedHash`, `null` si pas de cache) à celle du serveur et
+   * rafraîchit l'index/les donjons si nécessaire. Retourne `true` si l'index en mémoire à l'issue
+   * de l'appel est exploitable (déjà à jour, rafraîchi avec succès, ou repli sur un cache existant
+   * suite à une panne réseau) — `false` uniquement si RIEN n'est exploitable (pas de cache ET
+   * réseau injoignable). */
+  private async refreshIfNeeded(cachedHash: string | null): Promise<boolean> {
+    const versionResult = await this.apiClient.getJson<{ indexHash: string }>('/catalog/version');
+    if (!versionResult.ok) {
+      return cachedHash !== null;
+    }
+    if (versionResult.data.indexHash === cachedHash) {
+      return true;
+    }
+
+    const [indexResult, dungeonsResult] = await Promise.all([
+      this.apiClient.getJson<{ items: (number | string)[][]; monsters: (number | string)[][] }>(
+        '/catalog/index',
+      ),
+      this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
+    ]);
+    if (!indexResult.ok || !dungeonsResult.ok) {
+      return cachedHash !== null;
+    }
+
+    const payload: CachedIndexPayload = {
+      indexHash: versionResult.data.indexHash,
+      items: indexResult.data.items,
+      monsters: indexResult.data.monsters,
+    };
+    this.applyIndex(payload);
+    this.applyDungeons(dungeonsResult.data);
+    this.status.set('ready');
+    await Promise.all([
+      this.persistence.setCacheEntry(INDEX_CACHE_KEY, payload),
+      this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data),
+    ]);
+    return true;
+  }
+
+  private applyIndex(payload: CachedIndexPayload): void {
+    const itemsById = new Map<number, CatalogItemEntry>();
+    const itemsByFrName = new Map<string, CatalogItemEntry>();
+    const itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
+    for (const tuple of payload.items) {
+      const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag] = tuple as ItemTuple;
+      const entry: CatalogItemEntry = {
+        id,
+        fr,
+        en,
+        es,
+        pt,
+        gfxId,
+        rarity: RARITY_BY_SORT_ORDER[raritySortOrder] ?? 'common',
+        hasRecipe: hasRecipeFlag === 1,
+      };
+      itemsById.set(id, entry);
+      const frKey = normalizeWakfuName(fr);
+      if (!itemsByFrName.has(frKey)) itemsByFrName.set(frKey, entry);
+      for (const localized of [en, es, pt]) {
+        const key = normalizeWakfuName(localized);
+        if (!itemsByOtherLocaleName.has(key)) itemsByOtherLocaleName.set(key, entry);
+      }
+    }
+    this.itemsById = itemsById;
+    this.itemsByFrName = itemsByFrName;
+    this.itemsByOtherLocaleName = itemsByOtherLocaleName;
+
+    const monstersById = new Map<number, CatalogMonsterEntry>();
+    const monstersByFrName = new Map<string, CatalogMonsterEntry>();
+    const monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
+    for (const tuple of payload.monsters) {
+      const [id, fr, en, es, pt, gfxId] = tuple as MonsterTuple;
+      const entry: CatalogMonsterEntry = { id, fr, en, es, pt, gfxId };
+      monstersById.set(id, entry);
+      const frKey = normalizeWakfuName(fr);
+      if (!monstersByFrName.has(frKey)) monstersByFrName.set(frKey, entry);
+      for (const localized of [en, es, pt]) {
+        const key = normalizeWakfuName(localized);
+        if (!monstersByOtherLocaleName.has(key)) monstersByOtherLocaleName.set(key, entry);
+      }
+    }
+    this.monstersById = monstersById;
+    this.monstersByFrName = monstersByFrName;
+    this.monstersByOtherLocaleName = monstersByOtherLocaleName;
+  }
+
+  private applyDungeons(dungeons: CatalogDungeonEntry[]): void {
+    const byBossMonsterId = new Map<number, CatalogDungeonEntry>();
+    for (const dungeon of dungeons) {
+      if (dungeon.bossMonsterId === null) continue;
+      if (!byBossMonsterId.has(dungeon.bossMonsterId)) {
+        byBossMonsterId.set(dungeon.bossMonsterId, dungeon);
+      }
+    }
+    this.dungeonsByBossMonsterId = byBossMonsterId;
+  }
+}
