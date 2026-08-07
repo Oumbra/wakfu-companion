@@ -1,6 +1,6 @@
 {
   "name": "wakfu-companion",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scripts": {
     "ng": "ng",
     "generate:items": "node tools/generate-wakfu-items-data.mjs",
@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "catalog:import": "tsx server/import/import-catalog.ts",
-    "install:ci": "npx --yes npm@10.9.8 install"
+    "install:ci": "npx --yes npm@10.9.8 install",
+    "prepare": "husky"
   },
   "private": true,
   "packageManager": "npm@10.9.8",
@@ -39,6 +40,7 @@
     "@types/node": "^26.1.2",
     "@types/wicg-file-system-access": "^2023.10.7",
     "drizzle-kit": "^0.31.10",
+    "husky": "^9.1.7",
     "jsdom": "^30.0.1",
     "prettier": "^3.8.1",
     "tsx": "^4.23.11",

@@ -1,0 +1,1 @@
+node tools/bump-version-from-commit.mjs
