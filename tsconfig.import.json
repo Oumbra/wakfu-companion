@@ -1,0 +1,15 @@
+/* Config TypeScript pour les scripts d'import serveur (server/import/) — cible Node (via tsx),
+   contrairement à tsconfig.server.json (functions/, runtime Workers/edge) : les deux ne peuvent
+   pas partager la même config à cause de globals incompatibles (process/Buffer côté Node vs
+   Response/Headers Workers, voir tsconfig.server.json). server/db/ est importé par les deux
+   sans conflit (aucun global runtime-spécifique utilisé dans ces fichiers). */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/import",
+    "types": ["node"],
+    "module": "ES2022",
+    "moduleResolution": "bundler"
+  },
+  "include": ["server/import/**/*.ts"]
+}

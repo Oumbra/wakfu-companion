@@ -1,0 +1,47 @@
+import type { PagesFunction } from '@cloudflare/workers-types';
+import { createDb } from '../../../../server/db/client';
+import { items, monsters } from '../../../../server/db/schema';
+import { buildCompactIndex } from '../../../../server/catalog/compact-index';
+import type { Env } from '../../_types';
+
+// GET /api/v1/catalog/index — index compact objets+monstres pour
+// l'autocomplétion client (lot 3, pas encore branché). ~463 Ko bruts /
+// ~149 Ko gzip mesurés sur le référentiel actuel (11 032 objets + 851
+// monstres) — voir server/catalog/compact-index.ts pour le format exact
+// (tuples, PAS d'objets à clés répétées) et server/README.md pour le détail
+// des mesures. Compressé en gzip via CompressionStream (Web Streams,
+// disponible nativement dans le runtime Workers) : le budget "< 400 Ko"
+// du prompt 2.2 s'entend sur ce qui est réellement transféré (Content-Encoding
+// gzip), pas sur le JSON brut — voir server/README.md pour la justification.
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  const db = createDb(context.env.DATABASE_URL);
+
+  const [itemRows, monsterRows] = await Promise.all([
+    db
+      .select({
+        ankamaId: items.ankamaId,
+        fr: items.fr,
+        gfxId: items.gfxId,
+        rarity: items.rarity,
+        hasRecipe: items.hasRecipe,
+      })
+      .from(items),
+    db.select({ id: monsters.id, fr: monsters.fr, gfxId: monsters.gfxId }).from(monsters),
+  ]);
+
+  const compactIndex = buildCompactIndex(itemRows, monsterRows);
+  const jsonText = JSON.stringify(compactIndex);
+  const compressedStream = new Blob([jsonText]).stream().pipeThrough(new CompressionStream('gzip'));
+
+  return new Response(compressedStream, {
+    status: 200,
+    headers: {
+      'content-type': 'application/json',
+      'content-encoding': 'gzip',
+      // Contenu figé pour une version donnée du référentiel (voir
+      // GET /api/v1/catalog/version pour détecter un changement) : mise en
+      // cache CDN raisonnable, revalidée par le navigateur au besoin.
+      'cache-control': 'public, max-age=300',
+    },
+  });
+};
