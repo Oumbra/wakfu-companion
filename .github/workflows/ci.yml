@@ -36,7 +36,7 @@ jobs:
         run: npm run generate
 
       - name: Check formatting
-        run: npx prettier --check "src/**/*.{ts,html,css}"
+        run: npx prettier --check "src/**/*.{ts,html,css}" "server/**/*.ts" "functions/**/*.ts"
 
       # `--watch=false` : le builder `@angular/build:unit-test` d'Angular 21
       # n'accepte pas `--run` (option Vitest). Hors TTY le défaut est déjà
@@ -46,3 +46,10 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      # tsconfig.app.json ne couvre que src/ (voir son "include") : le code
+      # serveur (functions/, server/) a son propre tsconfig, jamais compilé
+      # ni vérifié par `ng build`/`ng test` — sans cette étape, une erreur de
+      # type dans les Pages Functions ne serait détectée qu'au déploiement.
+      - name: Type-check server
+        run: npx tsc -p tsconfig.server.json --noEmit

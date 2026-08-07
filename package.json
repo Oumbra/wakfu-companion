@@ -10,7 +10,9 @@
     "start": "npm run generate && ng serve",
     "build": "npm run generate && ng build",
     "watch": "npm run generate && ng build --watch --configuration development",
-    "test": "npm run generate && ng test"
+    "test": "npm run generate && ng test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
   },
   "private": true,
   "packageManager": "npm@11.16.0",
@@ -21,6 +23,8 @@
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
     "@angular/service-worker": "^21.2.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -28,8 +32,10 @@
     "@angular/build": "^21.2.19",
     "@angular/cli": "^21.2.19",
     "@angular/compiler-cli": "^21.2.0",
+    "@cloudflare/workers-types": "^5.20260804.1",
     "@types/node": "^26.1.2",
     "@types/wicg-file-system-access": "^2023.10.7",
+    "drizzle-kit": "^0.31.10",
     "jsdom": "^30.0.1",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",

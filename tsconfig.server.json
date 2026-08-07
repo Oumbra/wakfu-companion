@@ -1,0 +1,16 @@
+/* Config TypeScript pour le code serveur (functions/, server/) — séparée de
+   tsconfig.app.json (qui ne couvre que src/, voir Angular CLI). Sert au
+   typage éditeur et à une vérification manuelle (`npx tsc -p tsconfig.server.json --noEmit`) ;
+   le bundling réel des Pages Functions au déploiement est fait par Wrangler,
+   indépendamment de ce fichier. */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/server",
+    "types": ["@cloudflare/workers-types"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022"]
+  },
+  "include": ["functions/**/*.ts", "server/**/*.ts"]
+}
