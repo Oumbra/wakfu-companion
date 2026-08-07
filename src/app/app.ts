@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { LogFileAccessService } from './core/services/log-file-access.service';
 import { StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
+import { CatalogService } from './core/api/catalog.service';
 import { NavigationService } from './core/services/navigation.service';
 import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
@@ -55,9 +56,18 @@ export class App implements OnInit {
   protected readonly combatPanel = inject(CombatPanelService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
+  private readonly catalog = inject(CatalogService);
 
   ngOnInit(): void {
     void this.logFileAccess.init();
+    // Chargement du catalogue Ankama (objets/monstres/donjons) — voir
+    // core/api/catalog.service.ts. Lot 3.1 étape 3 : appelé dès maintenant
+    // (et pas seulement à l'étape 7/état de démarrage explicite) car les
+    // premiers consommateurs migrés (icônes, i18n, classification) ont
+    // besoin de données réelles pour fonctionner. L'étape 7 ajoutera un état
+    // UI explicite pour le cas `unavailable` ; en attendant, `status()` reste
+    // consultable par tout composant qui en a besoin.
+    void this.catalog.initialize();
   }
 
   protected onClassChosen(event: { className: string; gender: Gender }): void {

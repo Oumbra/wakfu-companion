@@ -1,24 +1,22 @@
-import { Component, computed, input, linkedSignal } from '@angular/core';
-import { findWakfuItemEntry, WakfuItemEntry } from '../../core/data/wakfu-items.data';
+import { Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { CatalogService, CatalogItemEntry } from '../../core/api/catalog.service';
 import { WAKFU_ITEM_IMAGE_OVERRIDES } from '../../core/data/wakfu-item-image-overrides.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 
 /**
- * Construit la liste des URLs candidates pour un objet, dans l'ordre :
- * wakassets (si `wakassetsAvailable`) puis l'image officielle Ankama (si
- * `wakfuAvailable`) puis, en dernier recours systématique (non couvert par
- * ces deux flags), le CDN Wakfuli.
+ * Construit la liste des URLs candidates pour un objet : wakassets puis, en
+ * dernier recours systématique, le CDN Wakfuli. Contrairement à l'ancienne
+ * version (basée sur wakfu-items.data.ts), pas de repli intermédiaire sur
+ * l'image officielle Ankama : `pictureUrl` n'est pas déductible du gfxId et
+ * a été volontairement exclu de l'index compact servi par l'API (voir
+ * server/catalog/compact-index.ts) — impact mesuré négligeable (1 objet sur
+ * 10 890 sans wakassets, couvert par le repli Wakfuli).
  */
-function itemImageCandidates(entry: WakfuItemEntry): string[] {
-  const sources: string[] = [];
-  if (entry.wakassetsAvailable) {
-    sources.push(`https://vertylo.github.io/wakassets/items/${entry.gfxId}.png`);
-  }
-  if (entry.wakfuAvailable) {
-    sources.push(entry.pictureUrl);
-  }
-  sources.push(`https://cdn.wakfuli.com/items/${entry.gfxId}.webp`);
-  return sources;
+function itemImageCandidates(entry: CatalogItemEntry): string[] {
+  return [
+    `https://vertylo.github.io/wakassets/items/${entry.gfxId}.png`,
+    `https://cdn.wakfuli.com/items/${entry.gfxId}.webp`,
+  ];
 }
 
 /**
@@ -82,11 +80,14 @@ export class ItemIconComponent {
   /** Taille en px (carrée). Par défaut 18px, comme dans les listes de suivi/butin. */
   readonly size = input(18);
 
+  private readonly catalog = inject(CatalogService);
+
   private readonly candidates = computed(() => {
+    this.catalog.revision(); // dépendance réactive : recalcule une fois le catalogue chargé
     const key = normalizeWakfuName(this.name());
     const override = WAKFU_ITEM_IMAGE_OVERRIDES[key];
     if (override) return [override];
-    const entry = findWakfuItemEntry(this.name());
+    const entry = this.catalog.findWakfuItemEntry(this.name());
     return entry ? itemImageCandidates(entry) : [];
   });
 

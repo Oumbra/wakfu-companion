@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { isKnownWakfuMonsterName } from '../data/wakfu-monsters.data';
+import { CatalogService } from '../api/catalog.service';
 import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
@@ -39,6 +39,7 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
   private readonly roster = inject(CharacterRosterService);
+  private readonly catalog = inject(CatalogService);
   private readonly allySummonNames = new Set(WAKFU_ALLY_SUMMONS.map(normalizeName));
   private readonly spellToClass = buildSpellToClassMap();
 
@@ -85,7 +86,7 @@ export class EntityClassifierService {
 
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
   registerSpellCast(caster: string, spell: string): void {
-    if (isKnownWakfuMonsterName(caster)) return;
+    if (this.catalog.isKnownWakfuMonsterName(caster)) return;
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
@@ -116,6 +117,7 @@ export class EntityClassifierService {
 
   classify(name: string): EntitySide {
     this.version(); // dépendance réactive pour les computed() appelants
+    this.catalog.revision(); // idem : reclasse une fois le catalogue de monstres chargé
     const override = this.overrides.get(name);
     if (override) return override;
 
@@ -130,7 +132,7 @@ export class EntityClassifierService {
   }
 
   private isConfirmedEnemy(name: string): boolean {
-    return isKnownWakfuMonsterName(name);
+    return this.catalog.isKnownWakfuMonsterName(name);
   }
 
   setOverride(name: string, side: EntitySide): void {
