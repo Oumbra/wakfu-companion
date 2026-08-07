@@ -40,19 +40,21 @@ Voir `server/db/client.ts` pour l'implémentation.
 À ajouter comme **secrets GitHub Actions** (`Settings → Secrets and
 variables → Actions`) sur `oumbra/wakfu-companion` :
 
-| Secret                  | Description                                                                                                                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                            |
-| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place.                                                                                                                                                                     |
-| `DATABASE_URL`          | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                        |
-| `DATABASE_URL_PREVIEW`  | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_. |
+| Secret                        | Description                                                                                                                                                                                                                                                                                                                                                  |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN`        | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                                                                                                                                                                                                      |
+| `CLOUDFLARE_ACCOUNT_ID`       | Déjà en place.                                                                                                                                                                                                                                                                                                                                               |
+| `DATABASE_URL`                | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                                                                                                                                                                                                  |
+| `DATABASE_URL_PREVIEW`        | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_.                                                                                                                                                                           |
+| `PRICE_SERVICE_TOKEN_PREVIEW` | Jeton de service statique (lot 4, prompt 4.2) protégeant `/prices/ingest`, `/prices/export`, `/prices/rollups` sur la preview — n'importe quelle chaîne aléatoire suffisamment longue (ex. `openssl rand -hex 32`), **sans rapport** avec une session utilisateur. Pas d'équivalent prod pour l'instant (prod reste sur GitHub Pages, sans Pages Functions). |
 
-`DATABASE_URL`/`DATABASE_URL_PREVIEW` sont aussi transmis comme variable
-d'environnement chiffrée du projet Cloudflare Pages (poussé à chaque déploiement
-via `wrangler pages secret put`, voir `.github/workflows/deploy-preview.yml` —
-`deploy-main.yml`, encore sur GitHub Pages, ne les utilise pas pour l'instant)
-: c'est ce qui les rend disponibles dans `context.env.DATABASE_URL` côté
-Pages Functions.
+`DATABASE_URL`/`DATABASE_URL_PREVIEW`/`PRICE_SERVICE_TOKEN_PREVIEW` sont
+aussi transmis comme variable d'environnement chiffrée du projet Cloudflare
+Pages (poussé à chaque déploiement via `wrangler pages secret put`, voir
+`.github/workflows/deploy-preview.yml` — `deploy-main.yml`, encore sur
+GitHub Pages, ne les utilise pas pour l'instant) : c'est ce qui les rend
+disponibles dans `context.env.DATABASE_URL`/`context.env.PRICE_SERVICE_TOKEN`
+côté Pages Functions.
 
 ## Migrations
 
@@ -87,6 +89,13 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
   compact — volume négligeable), pour `findWakfuDungeonByBossMonsterId`
   côté client (lot 3.1).
+- `GET /api/v1/prices/{itemId}?server=&range=` — série de prix d'un objet
+  (public), voir plus bas.
+- `GET /api/v1/prices/trends?server=&dir=up|down&limit=` — classement
+  hausses/baisses (public), voir plus bas.
+- `POST /api/v1/prices/ingest`, `GET /api/v1/prices/export`,
+  `POST /api/v1/prices/rollups` — protégés par jeton de service, voir plus
+  bas (lot 4, prompt 4.2).
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
@@ -274,3 +283,72 @@ mécanisme) — le bug ne se voit qu'en testant une route API directement dans
 la barre d'adresse, ce qui explique qu'il ne casse rien côté client une fois
 l'app codée normalement, mais reste un piège pour tout futur endpoint sans
 extension.
+
+## Prix (lot 4, prompt 4.2)
+
+Voir `docs/plan-migration-serveur.md` §8 pour le contexte complet (source,
+limites à énoncer côté UI, volumétrie). Cette section couvre l'architecture
+serveur réellement retenue, qui diffère du plan initial sur un point
+important — voir ci-dessous.
+
+### Architecture : calcul délégué à un skill local, pas au serveur
+
+Le plan initial prévoyait `price_trends` en vue matérialisée SQL et
+`item_prices_monthly` consolidée par un Cloudflare Cron Trigger quotidien.
+**Ni l'un ni l'autre n'a été retenu** : ce projet est déployé en **Cloudflare
+Pages classique** (`cloudflare/pages-action`, voir `deploy-preview.yml`), qui
+**ne supporte pas les Cron Triggers** — fonctionnalité réservée aux Workers
+autonomes, découvert en préparant ce prompt.
+
+Décision actée avec l'utilisateur : au lieu d'un cron serveur, un **second
+skill local dédié** (calcul pur, indépendant du skill de scan vidéo du
+prompt 4.1) lit les prix bruts via `GET /api/v1/prices/export`, calcule
+`item_prices_monthly` (mois courant) et `price_trends` (30j vs 30j
+précédents), puis pousse le résultat via `POST /api/v1/prices/rollups`. Même
+philosophie que le catalogue (lot 2) : le calcul vit dans un skill externe,
+le serveur ne fait qu'ingérer un résultat déjà prêt. Conséquence sur le
+schéma (`server/db/schema.ts`) : `price_trends` est une vraie **table**
+écrite par upsert, pas une vue matérialisée recalculée sur place.
+
+Le prompt destiné à ce skill (à faire jouer dans le dépôt privé
+`wakfu-companion-private-skills`, même précédent que
+`wakfu-items-sync`/`wakfu-monsters-sync`) est fourni séparément par la
+session ayant implémenté ce prompt 4.2 — pas committé ici.
+
+### Jeton de service (`PRICE_SERVICE_TOKEN`)
+
+`POST /prices/ingest`, `GET /prices/export` et `POST /prices/rollups` sont
+protégés par un jeton de service **statique** (en-tête
+`Authorization: Bearer <jeton>`, voir `functions/api/_price-auth.ts`) — PAS
+une session utilisateur, sans rapport avec l'authentification du lot 5 (pas
+encore implémentée). Seuls les deux skills locaux (vidéo, trends) l'utilisent
+; le navigateur d'un joueur ne l'appelle jamais. `GET /prices/{itemId}` et
+`GET /prices/trends` restent **publics**, sans jeton — ce sont les seuls
+endpoints prix consommés par l'application elle-même (prompt 4.3).
+
+### Rejet explicite des `itemId` inconnus du catalogue
+
+`/prices/ingest` et `/prices/rollups` valident chaque `itemId` contre la
+table `items` (`ankamaId`) avant upsert : un id absent du catalogue est
+**exclu** (jamais silencieusement ignoré, voir prompt 4.2 point 5) — listé
+dans la réponse JSON de l'appel ET, pour `/ingest`, dans
+`price_scan_runs.notes` pour une trace persistée. Le reste du lot (les ids
+connus) est tout de même upserté : un id ponctuellement invalide ne doit pas
+faire échouer tout le lot du jour.
+
+### Vérification effectuée / restant à faire
+
+Vérifié dans cette session, sans connexion DB réelle (le sandbox ne peut
+atteindre ni Neon ni `*.pages.dev`, voir gotchas plus haut) : compilation
+`tsconfig.server.json` propre, et un script `tsx` ad hoc validant les
+fonctions pures (`parseIngestBody`/`parseRollupsBody`/validation de forme,
+bornage de dates `currentMonthStart`/`monthsAgo`/`defaultSince`,
+`checkPriceServiceToken`) sur une vingtaine de cas — tous corrects.
+
+**Restant à faire avant de considérer ce prompt pleinement vérifié** (comme
+pour le catalogue, deux bugs réels n'avaient été détectables qu'en testant
+le déploiement preview réel, voir gotchas ci-dessus) : un round-trip complet
+contre la base preview une fois déployé — `POST /ingest` avec un petit lot
+synthétique, vérifier l'upsert idempotent (ré-ingérer le même jour ne
+duplique pas), `GET /export`, `POST /rollups`, puis `GET /prices/{itemId}`
+et `GET /prices/trends`.

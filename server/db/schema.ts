@@ -1,4 +1,16 @@
-import { bigserial, boolean, index, integer, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import {
+  bigint,
+  bigserial,
+  boolean,
+  date,
+  doublePrecision,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from 'drizzle-orm/pg-core';
 
 /** Miroir de WakfuRarity (src/app/core/data/wakfu-item-rarity.data.ts) côté serveur — server/
  * reste indépendant de src/ (pas d'import cross-cible), voir server/README.md. `rarity` est
@@ -139,4 +151,118 @@ export const catalogMeta = pgTable('catalog_meta', {
   monstersCount: integer('monsters_count').notNull(),
   dungeonsCount: integer('dungeons_count').notNull(),
   indexHash: text('index_hash').notNull(),
+});
+
+/**
+ * Prix (lot 4, prompt 4.2) — voir docs/plan-migration-serveur.md §8. Source :
+ * un skill de scan vidéo de l'hôtel de ventes (prompt 4.1), exécuté en
+ * local, totalement indépendant des comptes utilisateurs et des historiques
+ * (fights/purchases/trades, lot 8) — AUCUNE des tables ci-dessous ne
+ * référence `users`.
+ *
+ * Architecture de calcul (décision actée avec l'utilisateur, différente du
+ * plan initial) : `item_prices_monthly` et `price_trends` ne sont PAS
+ * calculées côté serveur (ni par une requête SQL au moment de la lecture, ni
+ * par un Cloudflare Cron Trigger — indisponible sur Cloudflare **Pages**,
+ * seulement sur les Workers autonomes, voir server/README.md). Un second
+ * skill dédié (calcul, pas de vidéo/OCR) lit `GET /api/v1/prices/export`,
+ * calcule les agrégats en local, puis les pousse via
+ * `POST /api/v1/prices/rollups` — même philosophie que le catalogue
+ * (référentiel calculé par un skill externe, le serveur ne fait qu'ingérer).
+ * `price_trends` est donc une vraie TABLE ici (écrite par upsert), pas la
+ * vue matérialisée SQL envisagée initialement.
+ */
+
+/** Une ligne par objet × serveur × jour scanné : le prix affiché le plus bas
+ * observé ce jour-là. Écrite uniquement par POST /api/v1/prices/ingest
+ * (jeton de service). `itemId` référence `items.ankamaId` (pas `items.pk`,
+ * voir plus haut) — pas de FK stricte : un id catalogue peut en théorie
+ * disparaître d'un import à l'autre, on ne veut pas qu'un import catalogue
+ * fasse échouer une écriture de prix historique. */
+export const itemPricesDaily = pgTable(
+  'item_prices_daily',
+  {
+    itemId: integer('item_id').notNull(),
+    gameServer: text('game_server')
+      .notNull()
+      .references(() => gameServers.code),
+    capturedOn: date('captured_on').notNull(),
+    price: bigint('price', { mode: 'number' }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.itemId, table.gameServer, table.capturedOn] }),
+    // Sert à la fois GET /prices/{itemId} (borné par itemId+server) et le skill de trends
+    // (GET /prices/export, borné par server+date — voir index séparé ci-dessous).
+    index('item_prices_daily_item_server_idx').on(table.itemId, table.gameServer),
+    index('item_prices_daily_server_date_idx').on(table.gameServer, table.capturedOn),
+  ],
+);
+
+/** Agrégat mensuel : jusqu'à ~31 lignes de `item_prices_daily` résumées en
+ * une seule. Calculée et poussée par le skill de trends (voir doc de
+ * section) — PAS par une consolidation SQL serveur. `samplesCount` = nombre
+ * de jours réellement scannés ce mois-ci (peut être < jours du mois, voir
+ * §8 du plan — à afficher tel quel côté UI, jamais masqué). */
+export const itemPricesMonthly = pgTable(
+  'item_prices_monthly',
+  {
+    itemId: integer('item_id').notNull(),
+    gameServer: text('game_server')
+      .notNull()
+      .references(() => gameServers.code),
+    month: date('month').notNull(), // 1er jour du mois
+    priceMin: bigint('price_min', { mode: 'number' }).notNull(),
+    priceMax: bigint('price_max', { mode: 'number' }).notNull(),
+    priceAvg: bigint('price_avg', { mode: 'number' }).notNull(),
+    samplesCount: integer('samples_count').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.itemId, table.gameServer, table.month] }),
+    index('item_prices_monthly_item_server_idx').on(table.itemId, table.gameServer),
+  ],
+);
+
+/** Tendance de prix (hausse/baisse) par objet × serveur, sur les 30 derniers
+ * jours vs les 30 jours précédents — alimente GET /api/v1/prices/trends
+ * (classements « plus fortes hausses/baisses », prompt 4.3). Calculée et
+ * poussée par le skill de trends, comme `item_prices_monthly` ci-dessus.
+ * `changePct` stocké directement (pas recalculé à la lecture) : signé,
+ * positif = hausse. */
+export const priceTrends = pgTable(
+  'price_trends',
+  {
+    itemId: integer('item_id').notNull(),
+    gameServer: text('game_server')
+      .notNull()
+      .references(() => gameServers.code),
+    avgLast30d: bigint('avg_last_30d', { mode: 'number' }).notNull(),
+    avgPrev30d: bigint('avg_prev_30d', { mode: 'number' }).notNull(),
+    changePct: doublePrecision('change_pct').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.itemId, table.gameServer] }),
+    // GET /prices/trends trie par changePct (hausses/baisses) filtré par serveur.
+    index('price_trends_server_change_pct_idx').on(table.gameServer, table.changePct),
+  ],
+);
+
+/** Traçabilité de chaque scan quotidien (un run = un appel à
+ * POST /api/v1/prices/ingest) — permet de diagnostiquer un jour sans
+ * données ou incomplet plutôt que de deviner (voir §8 du plan).
+ * `itemsUnresolved` = noms non résolus par le skill vidéo lui-même (OCR
+ * n'ayant matché aucun objet du catalogue, jamais tentés à l'ingestion) ;
+ * les items resolus par le skill mais dont l'`itemId` ne correspond plus à
+ * aucun objet du catalogue AU MOMENT de l'ingestion (cas plus rare) sont
+ * listés dans `notes`, jamais silencieusement ignorés (voir
+ * functions/api/v1/prices/ingest.ts). */
+export const priceScanRuns = pgTable('price_scan_runs', {
+  id: bigserial('id', { mode: 'number' }).primaryKey(),
+  gameServer: text('game_server')
+    .notNull()
+    .references(() => gameServers.code),
+  capturedOn: date('captured_on').notNull(),
+  itemsCaptured: integer('items_captured').notNull(),
+  itemsUnresolved: integer('items_unresolved').notNull().default(0),
+  notes: text('notes'),
 });
