@@ -1,7 +1,7 @@
 import { computed, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
 import { Fight } from '../models/fight.model';
-import { findWakfuItemEntry } from '../data/wakfu-items.data';
+import { CatalogService } from '../api/catalog.service';
 import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { LogFileAccessService } from './log-file-access.service';
@@ -272,6 +272,7 @@ export class StatsStoreService {
     private readonly profile: ProfileService,
     private readonly lootAlert: LootAlertService,
     private readonly roster: CharacterRosterService,
+    private readonly catalog: CatalogService,
   ) {
     this.watchlist.set(this.loadWatchlist());
     this.reassignmentHistory.push(
@@ -873,8 +874,12 @@ export class StatsStoreService {
     else working.fight.loots.push({ name: item, id: this.lookupItemGfxId(item), quantity });
   }
 
+  /** SYNCHRONE (chemin chaud, voir CatalogService) : simple lecture de l'index déjà en mémoire, à
+   * chaque ramassage d'objet. Sans conséquence observable si le catalogue n'est pas encore chargé
+   * au tout premier lancement (repli sur 0) : `FightLoot.id` n'est actuellement lu par aucun
+   * composant d'affichage (voir `loot: LootRow[]`, qui ne conserve que `{name, quantity}`). */
   private lookupItemGfxId(name: string): number {
-    return findWakfuItemEntry(name)?.gfxId ?? 0;
+    return this.catalog.findWakfuItemEntry(name)?.gfxId ?? 0;
   }
 
   /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
