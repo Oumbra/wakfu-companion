@@ -1,25 +1,22 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { EntityClassifierService, EntitySide } from '../../core/services/entity-classifier.service';
 import { getClassIconUri, UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
-import { findWakfuMonsterEntry, WakfuMonsterEntry } from '../../core/data/wakfu-monsters.data';
+import { CatalogService, CatalogMonsterEntry } from '../../core/api/catalog.service';
 
 /**
- * Construit la liste des URLs candidates pour un monstre, dans l'ordre :
- * wakassets/monsters puis wakassets/monsterIllustrations (si
- * `wakassetsAvailable` — quelques boss n'ont qu'une bannière rectangulaire,
- * voir monsterIllustrations/) puis l'image officielle Ankama (si
- * `wakfuAvailable`).
+ * Construit la liste des URLs candidates pour un monstre : wakassets/monsters
+ * puis wakassets/monsterIllustrations (quelques boss n'ont qu'une bannière
+ * rectangulaire, voir monsterIllustrations/). Contrairement à l'ancienne
+ * version (basée sur wakfu-monsters.data.ts), pas de repli sur l'image
+ * officielle Ankama : `pictureUrl` a été volontairement exclu de l'index
+ * compact (voir server/catalog/compact-index.ts) — impact mesuré négligeable
+ * (9 monstres sur 851 sans wakassets, qui retombent sur l'icône générique).
  */
-function monsterImageCandidates(entry: WakfuMonsterEntry): string[] {
-  const sources: string[] = [];
-  if (entry.wakassetsAvailable) {
-    sources.push(`https://vertylo.github.io/wakassets/monsters/${entry.gfxId}.png`);
-    sources.push(`https://vertylo.github.io/wakassets/monsterIllustrations/${entry.gfxId}.png`);
-  }
-  if (entry.wakfuAvailable) {
-    sources.push(entry.pictureUrl);
-  }
-  return sources;
+function monsterImageCandidates(entry: CatalogMonsterEntry): string[] {
+  return [
+    `https://vertylo.github.io/wakassets/monsters/${entry.gfxId}.png`,
+    `https://vertylo.github.io/wakassets/monsterIllustrations/${entry.gfxId}.png`,
+  ];
 }
 
 /**
@@ -59,10 +56,12 @@ export class EntityIconComponent {
   readonly size = input(22);
 
   private readonly classifier = inject(EntityClassifierService);
+  private readonly catalog = inject(CatalogService);
 
   private readonly candidates = computed(() => {
+    this.catalog.revision(); // dépendance réactive : recalcule une fois le catalogue chargé
     if (this.side() === 'ally') return [];
-    const entry = findWakfuMonsterEntry(this.name());
+    const entry = this.catalog.findWakfuMonsterEntry(this.name());
     return entry ? monsterImageCandidates(entry) : [];
   });
 

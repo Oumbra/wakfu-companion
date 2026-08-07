@@ -123,6 +123,11 @@ export class CatalogService {
   private readonly persistence = inject(PersistenceService);
 
   readonly status = signal<CatalogStatus>('loading');
+  /** Incrémenté à chaque (re)construction des Map en mémoire (applyIndex/applyDungeons) — à lire
+   * dans un computed() consommateur pour se rendre dépendant des données du catalogue : `status`
+   * seul ne suffit PAS (un rafraîchissement en arrière-plan qui succède à un état déjà `ready` ne
+   * change pas la valeur du signal, donc ne notifie personne). */
+  readonly revision = signal(0);
 
   private itemsById = new Map<number, CatalogItemEntry>();
   private itemsByFrName = new Map<string, CatalogItemEntry>();
@@ -285,6 +290,7 @@ export class CatalogService {
     this.monstersById = monstersById;
     this.monstersByFrName = monstersByFrName;
     this.monstersByOtherLocaleName = monstersByOtherLocaleName;
+    this.revision.update((v) => v + 1);
   }
 
   private applyDungeons(dungeons: CatalogDungeonEntry[]): void {
@@ -296,5 +302,6 @@ export class CatalogService {
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
+    this.revision.update((v) => v + 1);
   }
 }

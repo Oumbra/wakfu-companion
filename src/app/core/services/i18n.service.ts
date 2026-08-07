@@ -1,8 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { PersistenceService } from './persistence.service';
 import { TRANSLATIONS } from '../i18n/translations';
-import { findWakfuItemEntry } from '../data/wakfu-items.data';
-import { findWakfuMonsterEntry } from '../data/wakfu-monsters.data';
+import { CatalogService } from '../api/catalog.service';
 
 export type AppLocale = 'fr' | 'en' | 'es' | 'pt';
 
@@ -24,6 +23,8 @@ const LOCALE_TAGS: Record<AppLocale, string> = {
  */
 @Injectable({ providedIn: 'root' })
 export class I18nService {
+  private readonly catalog = inject(CatalogService);
+
   readonly locale = signal<AppLocale>('fr');
 
   constructor(private readonly persistence: PersistenceService) {
@@ -68,7 +69,7 @@ export class I18nService {
    * soit sa langue d'origine. Conserve `name` tel quel si l'objet est
    * introuvable dans le référentiel. */
   translateItemName(name: string): string {
-    const entry = findWakfuItemEntry(name);
+    const entry = this.catalog.findWakfuItemEntry(name);
     const translated = entry?.[this.locale()];
     return translated ? translated : name;
   }
@@ -76,7 +77,7 @@ export class I18nService {
   /** Traduit un nom de monstre (dégâts, suivi) via le référentiel officiel
    * Ankama vers la locale courante de l'app — voir `translateItemName`. */
   translateMonsterName(name: string): string {
-    const entry = findWakfuMonsterEntry(name);
+    const entry = this.catalog.findWakfuMonsterEntry(name);
     const translated = entry?.[this.locale()];
     return translated ? translated : name;
   }
