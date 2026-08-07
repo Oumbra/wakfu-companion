@@ -19,10 +19,7 @@ import {
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
-import {
-  findWakfuItemEntryById,
-  resolveRecipeIngredientNames,
-} from '../../core/data/wakfu-items.data';
+import { CatalogService } from '../../core/api/catalog.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
@@ -79,10 +76,15 @@ export class WakfuAutocompleteComponent {
   private readonly search = inject(WakfuSearchService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly recipeTracking = inject(RecipeTrackingService);
+  private readonly catalog = inject(CatalogService);
 
   protected readonly query = signal('');
   protected readonly open = signal(false);
   protected readonly activeIndex = signal(0);
+  /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
+   * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
+   * l'appel pour éviter une double ouverture concurrente. */
+  protected readonly recipeLoading = signal(false);
 
   private readonly itemButtons = viewChildren<ElementRef<HTMLButtonElement>>('itemButton');
   private readonly inputEl = viewChild<ElementRef<HTMLInputElement>>('inputEl');
@@ -182,20 +184,26 @@ export class WakfuAutocompleteComponent {
   }
 
   /** Ouvre la modale "suivre les objets de la recette" (voir RecipeTrackingService) — indépendant
-   * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. */
-  protected openRecipe(event: Event, entry: WakfuAutocompleteOption): void {
+   * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. ASYNCHRONE (lot 3.1, étape 5)
+   * : la résolution récursive de la recette nécessite désormais un aller-retour réseau par niveau
+   * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` pilote l'état de chargement
+   * pendant l'appel (voir template, boutons recette désactivés). */
+  protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
     event.stopPropagation();
-    if (entry.id === null) return;
-    const itemEntry = findWakfuItemEntryById(entry.id);
-    if (!itemEntry) return;
-    const ingredients = resolveRecipeIngredientNames(itemEntry);
-    if (ingredients.length === 0) return;
-    this.awaitingOwnRecipeConfirm = true;
-    this.recipeTracking.open({
-      itemName: entry.name,
-      itemLabel: entry.label,
-      itemRarity: itemEntry.rarity,
-      ingredients,
-    });
+    if (entry.id === null || this.recipeLoading()) return;
+    this.recipeLoading.set(true);
+    try {
+      const ingredients = await this.catalog.resolveRecipeIngredients(entry.id);
+      if (ingredients.length === 0) return;
+      this.awaitingOwnRecipeConfirm = true;
+      this.recipeTracking.open({
+        itemName: entry.name,
+        itemLabel: entry.label,
+        itemRarity: entry.rarity ?? 'common',
+        ingredients,
+      });
+    } finally {
+      this.recipeLoading.set(false);
+    }
   }
 }

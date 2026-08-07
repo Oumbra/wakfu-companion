@@ -49,6 +49,7 @@
               class="wakfu-autocomplete-recipe-btn tooltip-align-right"
               [class.tooltip-below]="i === 0"
               [attr.data-tooltip]="'tracker.recipeTooltip' | t"
+              [disabled]="recipeLoading()"
               (click)="openRecipe($event, r)"
             >
               <img [src]="recipeIcon" alt="" />
