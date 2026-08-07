@@ -83,6 +83,9 @@ DATABASE_URL=... npm run db:migrate
   recherche serveur par sous-chaîne (ILIKE), 30 résultats max.
 - `GET /api/v1/items/{id}` / `GET /api/v1/monsters/{id}` — détail complet
   (`id` = id Ankama).
+- `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
+  compact — volume négligeable), pour `findWakfuDungeonByBossMonsterId`
+  côté client (lot 3.1).
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
@@ -133,27 +136,43 @@ supervision.
 Mesures réelles sur le référentiel actuel (11 032 objets hors "old", 851
 monstres) :
 
-|        | Brut    | Gzip    |
-| ------ | ------- | ------- |
-| Taille | ~463 Ko | ~149 Ko |
+|      | v1 (lot 2.2, FR seul) | v2 (lot 3.1, 4 langues) |
+| ---- | --------------------- | ----------------------- |
+| Brut | ~463 Ko               | ~1,14 Mo                |
+| Gzip | ~149 Ko               | ~348 Ko                 |
 
 Le format `{id, nom normalisé, nom affichable, gfxId, rareté, hasRecipe}`
-par objet suggéré par le prompt 2.2 pèserait plus de 1 Mo en JSON brut pour
-~11 700 entrées (mesuré). Deux choix ont été faits pour rester compact :
+par objet suggéré par le prompt 2.2 pèserait plus de 1 Mo en JSON brut rien
+que pour le nom FR (~11 700 entrées, mesuré). Choix faits pour rester
+compact :
 
-1. **Tuples plutôt qu'objets** (`[id, nomFr, gfxId, raritySortOrder,
-hasRecipe]`) — évite de répéter les clés `"id":`, `"gfxId":`... ~11 700
-   fois. Voir `server/catalog/compact-index.ts`.
-2. **Un seul nom** (`fr`, pas de version "normalisée" séparée) : le client
-   peut appliquer `normalizeWakfuName()` (déjà disponible,
-   `src/app/core/utils/wakfu-name.util.ts`) à la volée sur ~11 700 chaînes
-   courtes — coût négligeable, inutile de doubler la charge utile pour ça.
+1. **Tuples plutôt qu'objets** — évite de répéter les clés `"id":`,
+   `"gfxId":`... ~11 700 fois. Voir `server/catalog/compact-index.ts`.
+2. **Pas de version "normalisée" séparée** : le client applique
+   `normalizeWakfuName()` (déjà disponible,
+   `src/app/core/utils/wakfu-name.util.ts`) à la volée — inutile de doubler
+   la charge utile pour ça.
+3. **4 langues quand même nécessaires** (v2, lot 3.1) : découvert en
+   démarrant ce lot — `findWakfuItemEntry`/`findWakfuMonsterEntry` côté
+   client doivent reconnaître un objet quel que soit son nom dans
+   `wakfu.log`, qui dépend de la langue du client Wakfu de l'utilisateur
+   (pas nécessairement le français). Le v1 (FR seul) du lot 2.2 ne le
+   permettait pas — corrigé ici plutôt que découvert en aval.
+4. **`wakassetsAvailable`/`pictureUrl`/`wakfuAvailable` volontairement
+   absents** de l'index : `pictureUrl` n'est pas déductible du `gfxId` et
+   alourdirait significativement l'index. Mesuré : seuls 1 objet sur
+   10 890 et 9 monstres sur 851 n'ont PAS wakassets comme source d'image
+   valide — le client (lot 3.1) essaie wakassets puis un CDN de repli
+   inconditionnellement plutôt que de dépendre d'un flag, régression
+   acceptée et quantifiée sur ces ~10 entrées (icône générique à la place).
 
-Avec ces deux choix, le JSON brut reste à ~463 Ko (encore au-dessus de la
-cible « 400 Ko », mais proche) ; **le gzip (`Content-Encoding: gzip`,
-`CompressionStream` natif au runtime Workers) ramène le transfert réel à
-~149 Ko** — c'est ce qui est effectivement envoyé au client, donc ce qui
-compte pour l'acceptation « index servi < 400 Ko » du prompt 2.2.
+**Le gzip (`Content-Encoding: gzip`, `CompressionStream` natif au runtime
+Workers) ramène le transfert réel à ~348 Ko** — c'est ce qui est
+effectivement envoyé au client, donc ce qui compte pour l'acceptation
+« index servi < 400 Ko » du prompt 2.2. Chargé UNE FOIS au démarrage puis
+mis en cache IndexedDB côté client (lot 3.1, `core/api/catalog.service.ts`)
+: le poids réel supporté par l'utilisateur au fil de la navigation est donc
+sans rapport avec la taille brute de cette seule réponse.
 
 `server/catalog/compact-index.ts` est **partagé** entre le script d'import
 (calcule l'empreinte `indexHash` au moment de l'import) et l'endpoint
