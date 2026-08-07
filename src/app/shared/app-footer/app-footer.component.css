@@ -68,5 +68,18 @@
 @media (max-width: 640px) {
   .app-footer {
     padding: 8px 10px;
+    flex-direction: column;
+  }
+
+  .app-footer-left {
+    padding-right: unset;
+    border-right: 0;
+  }
+
+  .app-footer-build {
+    border: 0;
+    border-radius: unset;
+    padding: 0;
+    background-color: unset;
   }
 }
