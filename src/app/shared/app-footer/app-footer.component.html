@@ -1,12 +1,16 @@
 <footer class="app-footer">
-  <nav class="app-footer-links">
-    <button type="button" class="app-footer-link" (click)="legalPage.open('notice')">
-      {{ 'footer.notice' | t }}
-    </button>
-    <button type="button" class="app-footer-link" (click)="legalPage.open('privacy')">
-      {{ 'footer.privacy' | t }}
-    </button>
-  </nav>
-  <span class="app-footer-copyright">{{ 'footer.copyright' | t }}</span>
-  <span class="app-footer-build">{{ buildInfo() }}</span>
+  <div class="app-footer-left">
+    <nav class="app-footer-links">
+      <button type="button" class="app-footer-link" (click)="legalPage.open('notice')">
+        {{ 'footer.notice' | t }}
+      </button>
+      <button type="button" class="app-footer-link" (click)="legalPage.open('privacy')">
+        {{ 'footer.privacy' | t }}
+      </button>
+    </nav>
+    <span class="app-footer-copyright">{{ 'footer.copyright' | t }}</span>
+  </div>
+  <span class="app-footer-build">
+    <span class="app-footer-build-prefix">{{ 'footer.build.prefix' | t }}</span> {{ buildInfo() }}
+  </span>
 </footer>

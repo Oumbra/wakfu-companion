@@ -29,7 +29,7 @@ export class AppFooterComponent {
   protected readonly buildInfo = computed(() =>
     this.i18n.t('footer.build', {
       version: BUILD_VERSION,
-      date: this.i18n.formatDateTime(BUILD_TIMESTAMP),
+      date: this.i18n.formatDateTime(BUILD_TIMESTAMP, false),
     }),
   );
 }

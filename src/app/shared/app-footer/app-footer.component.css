@@ -14,12 +14,21 @@
    plusieurs liens à droite) n'avait plus de sens. */
 .app-footer {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
   padding: 10px 20px;
   font-size: 0.68rem;
   color: #666;
+}
+
+.app-footer-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding-right: 15px;
+  border-right: 1px solid #333333;
 }
 
 .app-footer-copyright {
@@ -27,7 +36,15 @@
 }
 
 .app-footer-build {
-  color: #555;
+  padding: 6px 12px;
+  border: 1px solid #555555;
+  border-radius: 16px;
+  background-color: #212121;
+  color: #666;
+}
+
+.app-footer-build-prefix {
+  color: #ccc;
 }
 
 .app-footer-links {
