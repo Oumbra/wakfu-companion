@@ -1,5 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { LegalPageService } from '../../core/services/legal-page.service';
+import { I18nService } from '../../core/services/i18n.service';
+import { BUILD_TIMESTAMP, BUILD_VERSION } from '../../core/data/build-info.data';
 import { TranslatePipe } from '../translate.pipe';
 
 /**
@@ -18,4 +20,16 @@ import { TranslatePipe } from '../translate.pipe';
 })
 export class AppFooterComponent {
   protected readonly legalPage = inject(LegalPageService);
+  private readonly i18n = inject(I18nService);
+
+  // BUILD_VERSION/BUILD_TIMESTAMP : générés par tools/generate-build-info.mjs
+  // à chaque build (voir package.json "generate"), pas des constantes
+  // codées en dur — computed() car formatDateTime() dépend de la locale
+  // courante (doit se réévaluer si l'utilisateur change de langue).
+  protected readonly buildInfo = computed(() =>
+    this.i18n.t('footer.build', {
+      version: BUILD_VERSION,
+      date: this.i18n.formatDateTime(BUILD_TIMESTAMP),
+    }),
+  );
 }
