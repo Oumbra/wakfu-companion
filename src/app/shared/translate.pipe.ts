@@ -10,7 +10,9 @@ import { I18nService } from '../core/services/i18n.service';
 export class TranslatePipe implements PipeTransform {
   private readonly i18n = inject(I18nService);
 
-  transform(key: string): string {
-    return this.i18n.t(key);
+  /** `params` : interpolation `{{placeholder}}` (voir I18nService.t), pour les libellés
+   * paramétrés directement en template plutôt que via une méthode du composant. */
+  transform(key: string, params?: Record<string, string | number>): string {
+    return this.i18n.t(key, params);
   }
 }

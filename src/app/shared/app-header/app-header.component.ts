@@ -11,6 +11,7 @@ import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, langue, recap de
@@ -33,6 +34,7 @@ export class AppHeaderComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly nav = inject(NavigationService);
   protected readonly catalog = inject(CatalogService);
+  protected readonly auth = inject(AuthService);
   protected readonly sessionRecapService = inject(SessionRecapService);
   private readonly stats = inject(StatsStoreService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
@@ -53,6 +55,15 @@ export class AppHeaderComponent {
     this.confirmDelete.open(button, this.i18n.t('app.confirmReset'), () => {
       this.stats.resetStats();
     });
+  }
+
+  /** Bouton compte : page compte si connecté, page de connexion sinon. Toujours visible, y
+   * compris avant qu'un fichier wakfu.log soit connecté (contrairement au bouton profil) — se
+   * connecter ne dépend d'aucun fichier, et l'écran de setup est justement l'endroit où un
+   * utilisateur revenu sur un nouvel appareil voudra retrouver ses données. */
+  protected openAccount(): void {
+    if (this.auth.isAuthenticated()) this.nav.openAccount();
+    else this.nav.openLogin();
   }
 
   protected toggleMobileMenu(): void {

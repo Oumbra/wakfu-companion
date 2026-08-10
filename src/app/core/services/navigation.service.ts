@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 
-export type AppView = 'main' | 'profile' | 'legal';
+export type AppView = 'main' | 'profile' | 'legal' | 'login' | 'account';
 
 type SlideDirection = 'forward' | 'backward';
 
@@ -60,6 +60,33 @@ export class NavigationService {
 
   openLegal(): void {
     this.push('legal');
+  }
+
+  /** Page de connexion (lot 5, prompt 5.2) — une vue comme les autres, jamais une garde
+   * bloquante : on n'y arrive que par une action explicite de l'utilisateur. */
+  openLogin(): void {
+    this.push('login');
+  }
+
+  /** Page compte (identité, sessions, données, suppression). */
+  openAccount(): void {
+    this.push('account');
+  }
+
+  /** Remplace la vue courante par `view` sans empiler (le retour ramène donc là d'où l'on venait
+   * AVANT la vue courante). Utilisé au retour de connexion : passer de « connexion » à « compte »
+   * ne doit pas laisser la page de connexion dans le chemin de retour, elle n'a plus de sens une
+   * fois connecté. */
+  replace(view: AppView): void {
+    const s = this.stack();
+    const top = s[s.length - 1];
+    if (top === view) return;
+    this.direction.set('forward');
+    this.transitionPeer.set(top);
+    this.stack.set([...s.slice(0, -1), view]);
+    if (!this.visited().has(view)) {
+      this.visited.set(new Set([...this.visited(), view]));
+    }
   }
 
   /** Retire le sommet de la pile pour révéler la vue précédente — ne fait rien s'il n'y a nulle

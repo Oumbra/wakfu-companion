@@ -36,6 +36,26 @@ function sleep(ms: number): Promise<void> {
 @Injectable({ providedIn: 'root' })
 export class ApiClientService {
   private readonly baseUrl = '/api/v1';
+  private unauthorizedHandler: (() => void) | null = null;
+
+  /**
+   * Point d'accroche unique pour le `401` (lot 5, prompt 5.2 : « intercepteur
+   * HTTP : sur 401, bascule proprement en mode invité plutôt que de
+   * planter »). Cette application n'utilise pas `HttpClient` — tout passe par
+   * ce service — donc l'équivalent d'un intercepteur est ici, et il couvre
+   * ainsi TOUS les appels API, pas seulement ceux d'`AuthService`.
+   *
+   * Enregistré par `AuthService` ; volontairement pas une injection directe
+   * d'`AuthService` ici, qui créerait une dépendance circulaire (AuthService →
+   * ApiClientService → AuthService).
+   */
+  setUnauthorizedHandler(handler: () => void): void {
+    this.unauthorizedHandler = handler;
+  }
+
+  private notifyIfUnauthorized(status: number): void {
+    if (status === 401) this.unauthorizedHandler?.();
+  }
 
   /**
    * GET JSON avec retry (backoff simple) et timeout. Pas de retry sur une
@@ -67,6 +87,7 @@ export class ApiClientService {
 
         if (!response.ok) {
           lastError = { kind: 'http', status: response.status };
+          this.notifyIfUnauthorized(response.status);
           if (response.status >= 400 && response.status < 500) break;
         } else {
           return { ok: true, data: (await response.json()) as T };
@@ -83,4 +104,68 @@ export class ApiClientService {
 
     return { ok: false, error: lastError };
   }
+
+  /**
+   * Requête JSON quelconque (POST/PUT/DELETE...), sans retry : contrairement
+   * à un GET, rejouer une écriture n'est pas anodin — une requête mutative
+   * dont on ne sait pas si elle a abouti ne doit pas être relancée
+   * automatiquement.
+   *
+   * Ajoute le jeton CSRF double-submit (`X-CSRF-Token`) attendu par les
+   * routes mutatives de l'API d'authentification (voir
+   * functions/api/_auth.ts) : il est lu dans le cookie `wc_csrf`, seul cookie
+   * d'authentification volontairement lisible en JS — le cookie de session,
+   * lui, est `httpOnly` et reste invisible d'ici.
+   */
+  async requestJson<T>(
+    path: string,
+    options: { method: string; body?: unknown; timeoutMs?: number },
+  ): Promise<ApiResult<T>> {
+    if (!navigator.onLine) {
+      return { ok: false, error: { kind: 'offline' } };
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    const headers: Record<string, string> = {};
+    const csrf = readCsrfCookie();
+    if (csrf) headers['X-CSRF-Token'] = csrf;
+    if (options.body !== undefined) headers['content-type'] = 'application/json';
+
+    try {
+      const response = await fetch(`${this.baseUrl}${path}`, {
+        method: options.method,
+        credentials: 'include',
+        signal: controller.signal,
+        headers,
+        body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+      });
+      clearTimeout(timer);
+
+      if (!response.ok) {
+        this.notifyIfUnauthorized(response.status);
+        return { ok: false, error: { kind: 'http', status: response.status } };
+      }
+      // 204 ou corps vide : renvoyer `undefined` plutôt que planter sur un JSON absent.
+      const text = await response.text();
+      return { ok: true, data: (text ? JSON.parse(text) : undefined) as T };
+    } catch {
+      clearTimeout(timer);
+      return {
+        ok: false,
+        error: controller.signal.aborted ? { kind: 'timeout' } : { kind: 'network' },
+      };
+    }
+  }
+}
+
+/** Cookie CSRF posé par l'API (voir server/auth/cookies.ts) — non `httpOnly` par conception. */
+function readCsrfCookie(): string | null {
+  for (const part of document.cookie.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq === -1) continue;
+    if (part.slice(0, eq).trim() === 'wc_csrf')
+      return decodeURIComponent(part.slice(eq + 1).trim());
+  }
+  return null;
 }

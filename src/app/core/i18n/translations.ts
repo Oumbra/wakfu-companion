@@ -207,12 +207,83 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Politique de confidentialité',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'auth.header.login': 'Se connecter',
+    'auth.header.account': 'Mon compte',
+
+    'auth.login.title': 'Connexion',
+    'auth.login.panelTitle': 'Se connecter',
+    'auth.login.intro':
+      'Connectez-vous pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.',
+    'auth.login.discord': 'Discord',
+    'auth.login.google': 'Google',
+    'auth.login.guestNote':
+      "La connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.",
+    'auth.login.privacyNote':
+      "Nous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.",
+
+    'auth.error.cancelled': 'Connexion annulée.',
+    'auth.error.state':
+      'La demande de connexion a expiré ou n’a pas pu être vérifiée. Merci de réessayer.',
+    'auth.error.rateLimited': 'Trop de tentatives de connexion. Réessayez dans quelques minutes.',
+    'auth.error.generic': 'La connexion a échoué. Merci de réessayer.',
+    'auth.error.sync': 'La synchronisation des données a échoué. Réessayez plus tard.',
+
+    'auth.account.title': 'Mon compte',
+    'auth.account.identity': 'Identité',
+    'auth.account.name': 'Nom affiché',
+    'auth.account.noName': 'Non renseigné',
+    'auth.account.email': 'E-mail',
+    'auth.account.noEmail': 'Non communiqué',
+    'auth.account.providers': 'Connexions liées',
+    'auth.account.mergeHint':
+      'Discord et Google menant à la même adresse e-mail vérifiée ouvrent le même compte.',
+    'auth.account.sessions': 'Appareils connectés',
+    'auth.account.refresh': 'Actualiser',
+    'auth.account.sessionsLoading': 'Chargement…',
+    'auth.account.sessionsEmpty': 'Aucune session active.',
+    'auth.account.currentSession': 'cet appareil',
+    'auth.account.lastUsed': 'Dernière activité : {{date}}',
+    'auth.account.revoke': 'Déconnecter cet appareil',
+    'auth.account.revokeAll': 'Déconnecter tous les appareils',
+    'auth.account.unknownDevice': 'Appareil inconnu',
+    'auth.account.data': 'Mes données',
+    'auth.account.dataText':
+      'Vos réglages, personnages, suivi et filtres de chat peuvent être sauvegardés sur votre compte. Le contenu du chat de jeu, lui, ne quitte jamais cet appareil.',
+    'auth.account.export': 'Exporter (fichier)',
+    'auth.account.syncNow': 'Sauvegarder sur le compte',
+    'auth.account.danger': 'Compte',
+    'auth.account.logout': 'Se déconnecter',
+    'auth.account.delete': 'Supprimer mon compte',
+    'auth.account.deleteConfirm': 'Supprimer définitivement le compte ?',
+    'auth.account.deleteHint':
+      'La suppression efface définitivement le compte et toutes les données associées côté serveur. Les données de ce navigateur, elles, sont conservées.',
+    'auth.account.guestTitle': 'Vous n’êtes pas connecté',
+    'auth.account.guestText':
+      "L'application fonctionne parfaitement sans compte : toutes vos données restent dans ce navigateur. Un compte sert uniquement à les retrouver sur un autre appareil.",
+    'auth.account.loginAction': 'Se connecter',
+
+    'auth.migration.title': 'Vos données',
+    'auth.migration.uploadText':
+      'Voulez-vous sauvegarder les données de ce navigateur sur votre compte ?',
+    'auth.migration.uploadAction': 'Sauvegarder sur le compte',
+    'auth.migration.later': 'Plus tard',
+    'auth.migration.downloadText':
+      'Votre compte contient des données enregistrées. Voulez-vous les récupérer sur cet appareil ?',
+    'auth.migration.downloadAction': 'Récupérer sur cet appareil',
+    'auth.migration.conflictText':
+      'Ce navigateur et votre compte contiennent chacun des données. Laquelle des deux souhaitez-vous garder ? L’autre sera remplacée.',
+    'auth.migration.conflictHint':
+      'Aucune fusion automatique n’est faite : exportez d’abord vos données en fichier si vous voulez garder une copie des deux.',
+    'auth.migration.keepLocal': 'Garder celles de ce navigateur',
+    'auth.migration.keepRemote': 'Garder celles du compte',
+    'auth.migration.remoteUpdatedAt': 'Données du compte enregistrées le {{date}}.',
+
     'legal.notice.title': 'Mentions légales',
     'legal.notice.body':
       "## 1. Éditeur\n\nOumbra, développeur indépendant — projet personnel à but non lucratif. Contact : via les issues du dépôt GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Hébergement\n\nWakfu Companion est un site web hébergé par une plateforme d'hébergement statique standard, sans base de données ni traitement serveur.\n\n## 3. Propriété intellectuelle\n\n« Wakfu » et l'ensemble des éléments du jeu (noms, images, univers) sont la propriété d'Ankama Games. Wakfu Companion n'est ni édité, ni hébergé, ni approuvé par Ankama et n'entretient aucun lien avec cette société. Les icônes d'objets et de monstres affichées proviennent de projets communautaires tiers (voir wakassets) et des serveurs officiels du jeu, utilisées à titre purement illustratif et non commercial.\n\n## 4. Code source\n\nCe projet est disponible sur GitHub à l'adresse github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nPour toute question relative à ces mentions légales, ouvrez une issue sur le dépôt GitHub.",
     'privacy.notice.title': 'Politique de confidentialité',
     'privacy.notice.body':
-      "## 1. Collecte de données\n\nWakfu Companion ne dispose d'aucun serveur, d'aucune base de données et d'aucun compte utilisateur. L'application s'exécute entièrement dans votre navigateur (ou comme fichier HTML autonome ouvert en local) : nous ne recevons, ne stockons ni ne transmettons aucune de vos données personnelles.\n\n## 2. Conservation des données\n\nVos réglages, personnages déclarés, historique de combats, liste de suivi et référence au fichier wakfu.log sélectionné sont conservés uniquement dans le stockage local de votre navigateur (localStorage / IndexedDB). Ces données ne quittent jamais votre appareil et ne nous sont jamais accessibles.\nL'application lit votre fichier wakfu.log localement, via l'API File System Access de votre navigateur, pour en extraire kamas, XP, combats et chat. Ce traitement est intégralement local : le contenu du fichier n'est jamais envoyé où que ce soit.\n\n## 3. Services tiers\n\nLes icônes d'objets et de monstres affichées sont chargées directement par votre navigateur depuis des serveurs tiers (static.ankama.com, projets communautaires wakassets, cdn.wakfuli.com). Ces requêtes échappent à notre contrôle : votre navigateur communique alors directement avec ces serveurs, qui reçoivent votre adresse IP comme pour n'importe quelle image chargée sur le web, selon leurs propres règles de confidentialité respectives.\n\n## 4. Hébergement\n\nLa version en ligne de l'application est hébergée par GitHub Pages, qui peut journaliser des informations techniques standard (adresse IP, user-agent) selon sa propre politique de confidentialité. Aucune donnée supplémentaire n'est ajoutée par Wakfu Companion.\n\n## 5. Vos droits\n\nAucune donnée personnelle n'étant collectée par Oumbra, aucune ne peut être consultée, rectifiée ou supprimée de notre côté puisque nous n'en détenons aucune. Vous restez seul maître des données stockées localement : elles peuvent être effacées à tout moment via le bouton « Réinitialiser » de l'application, ou en vidant le stockage de votre navigateur pour ce site.\n\n## 6. Questions et réclamations\n\nPour toute question relative à cette politique de confidentialité, ouvrez une issue sur le dépôt GitHub github.com/oumbra/wakfu-companion.",
+      "## 1. Deux modes d'utilisation\n\nWakfu Companion s'utilise **sans compte** (mode par défaut) ou **avec un compte**, au choix. Sans compte, aucune donnée personnelle n'est collectée : tout reste dans votre navigateur. Avec un compte, seules les données décrites au point 3 sont conservées sur nos serveurs.\n\n## 2. Mode sans compte (par défaut)\n\nVos réglages, personnages déclarés, historique de combats, liste de suivi et référence au fichier wakfu.log sélectionné sont conservés uniquement dans le stockage local de votre navigateur (localStorage / IndexedDB). Ces données ne quittent jamais votre appareil.\nL'application lit votre fichier wakfu.log localement, via l'API File System Access de votre navigateur, pour en extraire kamas, XP, combats et chat. Ce traitement est intégralement local : le contenu du fichier n'est jamais envoyé où que ce soit.\n\n## 3. Compte optionnel (Discord ou Google)\n\nSi vous choisissez de créer un compte, la connexion se fait exclusivement via Discord ou Google : nous ne gérons, ne recevons et ne stockons aucun mot de passe. Sont alors conservés sur nos serveurs : votre adresse e-mail vérifiée et votre nom affiché transmis par le fournisseur, l'identifiant de compte chez ce fournisseur, la date de vos sessions et le navigateur/système utilisé, ainsi que les données de configuration que vous choisissez explicitement de sauvegarder (profil, personnages, liste de suivi, filtres de chat). Un cookie de session strictement nécessaire (technique, non publicitaire, sans traçage) est déposé pour vous maintenir connecté ; il expire au bout de 30 jours et peut être révoqué à tout moment depuis la page « Mon compte ».\n\n## 4. Ce qui n'est jamais transmis\n\nLe contenu du chat de jeu n'est **jamais** envoyé à nos serveurs, connecté ou non : il contient des messages d'autres joueurs qui n'ont donné aucun consentement. De même, le fichier wakfu.log lui-même n'est jamais téléversé.\n\n## 5. Services tiers\n\nLes icônes d'objets et de monstres affichées sont chargées directement par votre navigateur depuis des serveurs tiers (static.ankama.com, projets communautaires wakassets, cdn.wakfuli.com). Ces requêtes échappent à notre contrôle : votre navigateur communique alors directement avec ces serveurs, qui reçoivent votre adresse IP comme pour n'importe quelle image chargée sur le web, selon leurs propres règles de confidentialité. Si vous vous connectez, Discord ou Google traite votre demande selon sa propre politique de confidentialité.\n\n## 6. Hébergement\n\nL'application et son interface de programmation sont hébergées par Cloudflare ; les données de compte sont stockées dans une base PostgreSQL gérée par Neon, au sein de l'Union européenne. Ces prestataires peuvent journaliser des informations techniques standard (adresse IP, user-agent) selon leurs propres politiques.\n\n## 7. Vos droits\n\nSans compte, aucune donnée personnelle n'est détenue par nous : vous restez seul maître des données stockées localement, effaçables à tout moment via le bouton « Réinitialiser » ou en vidant le stockage de votre navigateur. Avec un compte, vous pouvez à tout moment exporter vos données (bouton « Exporter ») et supprimer définitivement votre compte depuis la page « Mon compte » : la suppression efface immédiatement et sans conservation le compte, ses identifiants de connexion, ses sessions et l'ensemble des données associées.\n\n## 8. Questions et réclamations\n\nPour toute question relative à cette politique de confidentialité, ouvrez une issue sur le dépôt GitHub github.com/oumbra/wakfu-companion.",
   },
   en: {
     'setup.dropTitle': 'DRAG « wakfu.log » HERE',
@@ -415,12 +486,81 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Privacy policy',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'auth.header.login': 'Sign in',
+    'auth.header.account': 'My account',
+
+    'auth.login.title': 'Sign in',
+    'auth.login.panelTitle': 'Sign in',
+    'auth.login.intro':
+      'Sign in to find your settings, characters and tracking on all your devices.',
+    'auth.login.discord': 'Discord',
+    'auth.login.google': 'Google',
+    'auth.login.guestNote':
+      'Signing in is optional: without an account the app works exactly the same way and all your data stays in this browser.',
+    'auth.login.privacyNote':
+      'We never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.',
+
+    'auth.error.cancelled': 'Sign-in cancelled.',
+    'auth.error.state': 'The sign-in request expired or could not be verified. Please try again.',
+    'auth.error.rateLimited': 'Too many sign-in attempts. Try again in a few minutes.',
+    'auth.error.generic': 'Sign-in failed. Please try again.',
+    'auth.error.sync': 'Data synchronisation failed. Please try again later.',
+
+    'auth.account.title': 'My account',
+    'auth.account.identity': 'Identity',
+    'auth.account.name': 'Display name',
+    'auth.account.noName': 'Not set',
+    'auth.account.email': 'Email',
+    'auth.account.noEmail': 'Not provided',
+    'auth.account.providers': 'Linked sign-ins',
+    'auth.account.mergeHint':
+      'Discord and Google leading to the same verified email address open the same account.',
+    'auth.account.sessions': 'Signed-in devices',
+    'auth.account.refresh': 'Refresh',
+    'auth.account.sessionsLoading': 'Loading…',
+    'auth.account.sessionsEmpty': 'No active session.',
+    'auth.account.currentSession': 'this device',
+    'auth.account.lastUsed': 'Last activity: {{date}}',
+    'auth.account.revoke': 'Sign out this device',
+    'auth.account.revokeAll': 'Sign out all devices',
+    'auth.account.unknownDevice': 'Unknown device',
+    'auth.account.data': 'My data',
+    'auth.account.dataText':
+      'Your settings, characters, tracking and chat filters can be saved to your account. Game chat content never leaves this device.',
+    'auth.account.export': 'Export (file)',
+    'auth.account.syncNow': 'Save to account',
+    'auth.account.danger': 'Account',
+    'auth.account.logout': 'Sign out',
+    'auth.account.delete': 'Delete my account',
+    'auth.account.deleteConfirm': 'Permanently delete the account?',
+    'auth.account.deleteHint':
+      'Deletion permanently removes the account and all related data on the server. Data in this browser is kept.',
+    'auth.account.guestTitle': 'You are not signed in',
+    'auth.account.guestText':
+      'The app works perfectly without an account: all your data stays in this browser. An account only helps you find it again on another device.',
+    'auth.account.loginAction': 'Sign in',
+
+    'auth.migration.title': 'Your data',
+    'auth.migration.uploadText': 'Do you want to save this browser’s data to your account?',
+    'auth.migration.uploadAction': 'Save to account',
+    'auth.migration.later': 'Later',
+    'auth.migration.downloadText':
+      'Your account holds saved data. Do you want to restore it on this device?',
+    'auth.migration.downloadAction': 'Restore on this device',
+    'auth.migration.conflictText':
+      'This browser and your account both hold data. Which one do you want to keep? The other will be replaced.',
+    'auth.migration.conflictHint':
+      'Nothing is merged automatically: export your data to a file first if you want to keep a copy of both.',
+    'auth.migration.keepLocal': 'Keep this browser’s data',
+    'auth.migration.keepRemote': 'Keep the account’s data',
+    'auth.migration.remoteUpdatedAt': 'Account data saved on {{date}}.',
+
     'legal.notice.title': 'Legal notice',
     'legal.notice.body':
       '## 1. Publisher\n\nOumbra, independent developer — personal, non-profit project. Contact: via the GitHub repository issues at github.com/oumbra/wakfu-companion.\n\n## 2. Hosting\n\nWakfu Companion is a website hosted by a standard static hosting platform, with no database or server-side processing.\n\n## 3. Intellectual property\n\n"Wakfu" and all game elements (names, images, universe) are the property of Ankama Games. Wakfu Companion is neither published, hosted nor approved by Ankama and has no affiliation with that company. The item and monster icons shown come from third-party community projects (see wakassets) and the game\'s official servers, used for purely illustrative, non-commercial purposes.\n\n## 4. Source code\n\nThis project is available on GitHub at github.com/oumbra/wakfu-companion.\n\n## 5. Contact\n\nFor any question about this legal notice, please open an issue on the GitHub repository.',
     'privacy.notice.title': 'Privacy policy',
     'privacy.notice.body':
-      "## 1. Data collection\n\nWakfu Companion has no server, no database and no user account. The app runs entirely in your browser (or as a standalone HTML file opened locally): we never receive, store or transmit any of your personal data.\n\n## 2. Data retention\n\nYour settings, declared characters, fight history, watchlist and the reference to the selected wakfu.log file are kept only in your browser's local storage (localStorage / IndexedDB). This data never leaves your device and is never accessible to us.\nThe app reads your wakfu.log file locally, via your browser's File System Access API, to extract kamas, XP, fights and chat. This processing is entirely local: the file's content is never sent anywhere.\n\n## 3. Third-party services\n\nItem and monster icons shown are loaded directly by your browser from third-party servers (static.ankama.com, community projects such as wakassets, cdn.wakfuli.com). These requests are outside our control: your browser communicates directly with these servers, which receive your IP address just like any image loaded on the web, under their own respective privacy policies.\n\n## 4. Hosting\n\nThe online version of the app is hosted by GitHub Pages, which may log standard technical information (IP address, user agent) under its own privacy policy. Wakfu Companion adds no data of its own.\n\n## 5. Your rights\n\nSince no personal data is collected by Oumbra, none can be accessed, corrected or deleted on our side, as we hold none. You remain the sole owner of the data stored locally: it can be erased at any time via the app's \"Reset\" button, or by clearing your browser's storage for this site.\n\n## 6. Questions and complaints\n\nFor any question about this privacy policy, please open an issue on the GitHub repository github.com/oumbra/wakfu-companion.",
+      "## 1. Two ways to use the app\n\nWakfu Companion can be used **without an account** (the default) or **with an account**, as you prefer. Without an account, no personal data is collected: everything stays in your browser. With an account, only the data described in section 3 is stored on our servers.\n\n## 2. Without an account (default)\n\nYour settings, declared characters, fight history, watchlist and the reference to the selected wakfu.log file are kept only in your browser's local storage (localStorage / IndexedDB). This data never leaves your device.\nThe app reads your wakfu.log file locally, via your browser's File System Access API, to extract kamas, XP, fights and chat. This processing is entirely local: the file's content is never sent anywhere.\n\n## 3. Optional account (Discord or Google)\n\nIf you choose to create an account, sign-in goes exclusively through Discord or Google: we never handle, receive or store any password. The following is then stored on our servers: your verified email address and display name as provided by the provider, your account identifier at that provider, the dates of your sessions and the browser/system used, plus the configuration data you explicitly choose to save (profile, characters, watchlist, chat filters). A strictly necessary session cookie (technical, non-advertising, no tracking) is set to keep you signed in; it expires after 30 days and can be revoked at any time from the “My account” page.\n\n## 4. What is never transmitted\n\nGame chat content is **never** sent to our servers, signed in or not: it contains messages from other players who gave no consent. Likewise, the wakfu.log file itself is never uploaded.\n\n## 5. Third-party services\n\nItem and monster icons shown are loaded directly by your browser from third-party servers (static.ankama.com, community projects such as wakassets, cdn.wakfuli.com). These requests are outside our control: your browser communicates directly with these servers, which receive your IP address just like any image loaded on the web, under their own privacy policies. If you sign in, Discord or Google handles your request under its own privacy policy.\n\n## 6. Hosting\n\nThe app and its programming interface are hosted by Cloudflare; account data is stored in a PostgreSQL database managed by Neon, within the European Union. These providers may log standard technical information (IP address, user agent) under their own policies.\n\n## 7. Your rights\n\nWithout an account, we hold no personal data about you: you remain the sole owner of locally stored data, erasable at any time via the “Reset” button or by clearing your browser's storage. With an account, you can export your data at any time (“Export” button) and permanently delete your account from the “My account” page: deletion immediately and irreversibly removes the account, its sign-in identifiers, its sessions and all related data.\n\n## 8. Questions and complaints\n\nFor any question about this privacy policy, please open an issue on the GitHub repository github.com/oumbra/wakfu-companion.",
   },
   es: {
     'setup.dropTitle': 'ARRASTRA « wakfu.log » AQUÍ',
@@ -623,12 +763,82 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidad',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'auth.header.login': 'Iniciar sesión',
+    'auth.header.account': 'Mi cuenta',
+
+    'auth.login.title': 'Iniciar sesión',
+    'auth.login.panelTitle': 'Iniciar sesión',
+    'auth.login.intro':
+      'Inicia sesión para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.',
+    'auth.login.discord': 'Discord',
+    'auth.login.google': 'Google',
+    'auth.login.guestNote':
+      'Iniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.',
+    'auth.login.privacyNote':
+      'No gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.',
+
+    'auth.error.cancelled': 'Inicio de sesión cancelado.',
+    'auth.error.state':
+      'La solicitud de inicio de sesión ha caducado o no se ha podido verificar. Inténtalo de nuevo.',
+    'auth.error.rateLimited': 'Demasiados intentos. Vuelve a intentarlo en unos minutos.',
+    'auth.error.generic': 'No se ha podido iniciar sesión. Inténtalo de nuevo.',
+    'auth.error.sync': 'La sincronización de datos ha fallado. Inténtalo más tarde.',
+
+    'auth.account.title': 'Mi cuenta',
+    'auth.account.identity': 'Identidad',
+    'auth.account.name': 'Nombre mostrado',
+    'auth.account.noName': 'Sin definir',
+    'auth.account.email': 'Correo electrónico',
+    'auth.account.noEmail': 'No facilitado',
+    'auth.account.providers': 'Accesos vinculados',
+    'auth.account.mergeHint':
+      'Discord y Google que llevan al mismo correo verificado abren la misma cuenta.',
+    'auth.account.sessions': 'Dispositivos conectados',
+    'auth.account.refresh': 'Actualizar',
+    'auth.account.sessionsLoading': 'Cargando…',
+    'auth.account.sessionsEmpty': 'Ninguna sesión activa.',
+    'auth.account.currentSession': 'este dispositivo',
+    'auth.account.lastUsed': 'Última actividad: {{date}}',
+    'auth.account.revoke': 'Cerrar sesión en este dispositivo',
+    'auth.account.revokeAll': 'Cerrar sesión en todos los dispositivos',
+    'auth.account.unknownDevice': 'Dispositivo desconocido',
+    'auth.account.data': 'Mis datos',
+    'auth.account.dataText':
+      'Tus ajustes, personajes, seguimiento y filtros de chat pueden guardarse en tu cuenta. El contenido del chat del juego nunca sale de este dispositivo.',
+    'auth.account.export': 'Exportar (archivo)',
+    'auth.account.syncNow': 'Guardar en la cuenta',
+    'auth.account.danger': 'Cuenta',
+    'auth.account.logout': 'Cerrar sesión',
+    'auth.account.delete': 'Eliminar mi cuenta',
+    'auth.account.deleteConfirm': '¿Eliminar definitivamente la cuenta?',
+    'auth.account.deleteHint':
+      'La eliminación borra definitivamente la cuenta y todos los datos asociados en el servidor. Los datos de este navegador se conservan.',
+    'auth.account.guestTitle': 'No has iniciado sesión',
+    'auth.account.guestText':
+      'La aplicación funciona perfectamente sin cuenta: todos tus datos permanecen en este navegador. Una cuenta solo sirve para recuperarlos en otro dispositivo.',
+    'auth.account.loginAction': 'Iniciar sesión',
+
+    'auth.migration.title': 'Tus datos',
+    'auth.migration.uploadText': '¿Quieres guardar los datos de este navegador en tu cuenta?',
+    'auth.migration.uploadAction': 'Guardar en la cuenta',
+    'auth.migration.later': 'Más tarde',
+    'auth.migration.downloadText':
+      'Tu cuenta contiene datos guardados. ¿Quieres recuperarlos en este dispositivo?',
+    'auth.migration.downloadAction': 'Recuperar en este dispositivo',
+    'auth.migration.conflictText':
+      'Este navegador y tu cuenta contienen datos. ¿Cuáles quieres conservar? Los otros serán reemplazados.',
+    'auth.migration.conflictHint':
+      'No se fusiona nada automáticamente: exporta antes tus datos a un archivo si quieres conservar una copia de ambos.',
+    'auth.migration.keepLocal': 'Conservar los de este navegador',
+    'auth.migration.keepRemote': 'Conservar los de la cuenta',
+    'auth.migration.remoteUpdatedAt': 'Datos de la cuenta guardados el {{date}}.',
+
     'legal.notice.title': 'Aviso legal',
     'legal.notice.body':
       '## 1. Editor\n\nOumbra, desarrollador independiente — proyecto personal sin ánimo de lucro. Contacto: a través de las issues del repositorio de GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Alojamiento\n\nWakfu Companion es un sitio web alojado en una plataforma de alojamiento estático estándar, sin base de datos ni procesamiento en servidor.\n\n## 3. Propiedad intelectual\n\n«Wakfu» y todos los elementos del juego (nombres, imágenes, universo) son propiedad de Ankama Games. Wakfu Companion no está editado, alojado ni aprobado por Ankama y no mantiene ningún vínculo con dicha empresa. Los iconos de objetos y monstruos mostrados proceden de proyectos comunitarios de terceros (ver wakassets) y de los servidores oficiales del juego, utilizados con fines meramente ilustrativos y no comerciales.\n\n## 4. Código fuente\n\nEste proyecto está disponible en GitHub en github.com/oumbra/wakfu-companion.\n\n## 5. Contacto\n\nPara cualquier pregunta relacionada con este aviso legal, abre una issue en el repositorio de GitHub.',
     'privacy.notice.title': 'Política de privacidad',
     'privacy.notice.body':
-      '## 1. Recopilación de datos\n\nWakfu Companion no tiene servidor, ni base de datos, ni cuenta de usuario. La aplicación se ejecuta enteramente en tu navegador (o como archivo HTML autónomo abierto localmente): no recibimos, almacenamos ni transmitimos ninguno de tus datos personales.\n\n## 2. Conservación de datos\n\nTus ajustes, personajes declarados, historial de combates, lista de seguimiento y la referencia al archivo wakfu.log seleccionado se guardan únicamente en el almacenamiento local de tu navegador (localStorage / IndexedDB). Estos datos nunca salen de tu dispositivo ni son accesibles para nosotros.\nLa aplicación lee tu archivo wakfu.log localmente, mediante la API File System Access de tu navegador, para extraer kamas, XP, combates y chat. Este procesamiento es totalmente local: el contenido del archivo nunca se envía a ningún sitio.\n\n## 3. Servicios de terceros\n\nLos iconos de objetos y monstruos mostrados son cargados directamente por tu navegador desde servidores de terceros (static.ankama.com, proyectos comunitarios como wakassets, cdn.wakfuli.com). Estas solicitudes escapan a nuestro control: tu navegador se comunica directamente con esos servidores, que reciben tu dirección IP como con cualquier imagen cargada en la web, según sus propias políticas de privacidad.\n\n## 4. Alojamiento\n\nLa versión en línea de la aplicación está alojada por GitHub Pages, que puede registrar información técnica estándar (dirección IP, user-agent) según su propia política de privacidad. Wakfu Companion no añade ningún dato adicional.\n\n## 5. Tus derechos\n\nComo Oumbra no recopila ningún dato personal, ninguno puede ser consultado, rectificado o eliminado por nuestra parte, ya que no poseemos ninguno. Sigues siendo el único responsable de los datos almacenados localmente: puedes borrarlos en cualquier momento con el botón «Reiniciar» de la aplicación, o vaciando el almacenamiento de tu navegador para este sitio.\n\n## 6. Preguntas y reclamaciones\n\nPara cualquier pregunta relacionada con esta política de privacidad, abre una issue en el repositorio de GitHub github.com/oumbra/wakfu-companion.',
+      '## 1. Dos formas de uso\n\nWakfu Companion se usa **sin cuenta** (modo por defecto) o **con cuenta**, a tu elección. Sin cuenta no se recopila ningún dato personal: todo permanece en tu navegador. Con cuenta, solo se conservan en nuestros servidores los datos descritos en el punto 3.\n\n## 2. Modo sin cuenta (por defecto)\n\nTus ajustes, personajes declarados, historial de combates, lista de seguimiento y la referencia al archivo wakfu.log seleccionado se guardan únicamente en el almacenamiento local de tu navegador (localStorage / IndexedDB). Estos datos nunca salen de tu dispositivo.\nLa aplicación lee tu archivo wakfu.log localmente, mediante la API File System Access de tu navegador, para extraer kamas, XP, combates y chat. Este procesamiento es totalmente local: el contenido del archivo nunca se envía a ningún sitio.\n\n## 3. Cuenta opcional (Discord o Google)\n\nSi decides crear una cuenta, el inicio de sesión se realiza exclusivamente mediante Discord o Google: no gestionamos, recibimos ni almacenamos ninguna contraseña. Se conservan entonces en nuestros servidores: tu correo electrónico verificado y el nombre mostrado facilitados por el proveedor, tu identificador de cuenta en ese proveedor, la fecha de tus sesiones y el navegador/sistema utilizado, así como los datos de configuración que decidas guardar explícitamente (perfil, personajes, lista de seguimiento, filtros de chat). Se instala una cookie de sesión estrictamente necesaria (técnica, no publicitaria, sin rastreo) para mantenerte conectado; caduca a los 30 días y puede revocarse en cualquier momento desde la página «Mi cuenta».\n\n## 4. Lo que nunca se transmite\n\nEl contenido del chat del juego **nunca** se envía a nuestros servidores, con o sin sesión iniciada: contiene mensajes de otros jugadores que no han dado ningún consentimiento. Del mismo modo, el propio archivo wakfu.log nunca se sube.\n\n## 5. Servicios de terceros\n\nLos iconos de objetos y monstruos mostrados son cargados directamente por tu navegador desde servidores de terceros (static.ankama.com, proyectos comunitarios como wakassets, cdn.wakfuli.com). Estas solicitudes escapan a nuestro control: tu navegador se comunica directamente con esos servidores, que reciben tu dirección IP como con cualquier imagen cargada en la web, según sus propias políticas de privacidad. Si inicias sesión, Discord o Google trata tu solicitud según su propia política de privacidad.\n\n## 6. Alojamiento\n\nLa aplicación y su interfaz de programación están alojadas por Cloudflare; los datos de cuenta se almacenan en una base de datos PostgreSQL gestionada por Neon, dentro de la Unión Europea. Estos proveedores pueden registrar información técnica estándar (dirección IP, user-agent) según sus propias políticas.\n\n## 7. Tus derechos\n\nSin cuenta no poseemos ningún dato personal tuyo: sigues siendo el único responsable de los datos almacenados localmente, que puedes borrar en cualquier momento con el botón «Reiniciar» o vaciando el almacenamiento de tu navegador. Con cuenta, puedes exportar tus datos en cualquier momento (botón «Exportar») y eliminar definitivamente tu cuenta desde la página «Mi cuenta»: la eliminación borra de inmediato y sin conservación la cuenta, sus identificadores de conexión, sus sesiones y todos los datos asociados.\n\n## 8. Preguntas y reclamaciones\n\nPara cualquier pregunta relacionada con esta política de privacidad, abre una issue en el repositorio de GitHub github.com/oumbra/wakfu-companion.',
   },
   pt: {
     'setup.dropTitle': 'ARRASTE « wakfu.log » AQUI',
@@ -831,11 +1041,81 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidade',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'auth.header.login': 'Iniciar sessão',
+    'auth.header.account': 'Minha conta',
+
+    'auth.login.title': 'Iniciar sessão',
+    'auth.login.panelTitle': 'Iniciar sessão',
+    'auth.login.intro':
+      'Inicie sessão para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.',
+    'auth.login.discord': 'Discord',
+    'auth.login.google': 'Google',
+    'auth.login.guestNote':
+      'Iniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.',
+    'auth.login.privacyNote':
+      'Não gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.',
+
+    'auth.error.cancelled': 'Início de sessão cancelado.',
+    'auth.error.state':
+      'O pedido de início de sessão expirou ou não pôde ser verificado. Tente novamente.',
+    'auth.error.rateLimited': 'Demasiadas tentativas. Tente novamente dentro de alguns minutos.',
+    'auth.error.generic': 'Não foi possível iniciar sessão. Tente novamente.',
+    'auth.error.sync': 'A sincronização de dados falhou. Tente mais tarde.',
+
+    'auth.account.title': 'Minha conta',
+    'auth.account.identity': 'Identidade',
+    'auth.account.name': 'Nome apresentado',
+    'auth.account.noName': 'Não definido',
+    'auth.account.email': 'E-mail',
+    'auth.account.noEmail': 'Não fornecido',
+    'auth.account.providers': 'Acessos associados',
+    'auth.account.mergeHint':
+      'Discord e Google que levam ao mesmo e-mail verificado abrem a mesma conta.',
+    'auth.account.sessions': 'Dispositivos com sessão iniciada',
+    'auth.account.refresh': 'Atualizar',
+    'auth.account.sessionsLoading': 'A carregar…',
+    'auth.account.sessionsEmpty': 'Nenhuma sessão ativa.',
+    'auth.account.currentSession': 'este dispositivo',
+    'auth.account.lastUsed': 'Última atividade: {{date}}',
+    'auth.account.revoke': 'Terminar sessão neste dispositivo',
+    'auth.account.revokeAll': 'Terminar sessão em todos os dispositivos',
+    'auth.account.unknownDevice': 'Dispositivo desconhecido',
+    'auth.account.data': 'Os meus dados',
+    'auth.account.dataText':
+      'As suas definições, personagens, acompanhamento e filtros de chat podem ser guardados na sua conta. O conteúdo do chat do jogo nunca sai deste dispositivo.',
+    'auth.account.export': 'Exportar (ficheiro)',
+    'auth.account.syncNow': 'Guardar na conta',
+    'auth.account.danger': 'Conta',
+    'auth.account.logout': 'Terminar sessão',
+    'auth.account.delete': 'Eliminar a minha conta',
+    'auth.account.deleteConfirm': 'Eliminar definitivamente a conta?',
+    'auth.account.deleteHint':
+      'A eliminação apaga definitivamente a conta e todos os dados associados no servidor. Os dados deste navegador são mantidos.',
+    'auth.account.guestTitle': 'Não tem sessão iniciada',
+    'auth.account.guestText':
+      'A aplicação funciona perfeitamente sem conta: todos os seus dados ficam neste navegador. Uma conta serve apenas para os recuperar noutro dispositivo.',
+    'auth.account.loginAction': 'Iniciar sessão',
+
+    'auth.migration.title': 'Os seus dados',
+    'auth.migration.uploadText': 'Quer guardar os dados deste navegador na sua conta?',
+    'auth.migration.uploadAction': 'Guardar na conta',
+    'auth.migration.later': 'Mais tarde',
+    'auth.migration.downloadText':
+      'A sua conta contém dados guardados. Quer recuperá-los neste dispositivo?',
+    'auth.migration.downloadAction': 'Recuperar neste dispositivo',
+    'auth.migration.conflictText':
+      'Este navegador e a sua conta contêm dados. Quais quer manter? Os outros serão substituídos.',
+    'auth.migration.conflictHint':
+      'Nada é fundido automaticamente: exporte primeiro os seus dados para um ficheiro se quiser manter uma cópia de ambos.',
+    'auth.migration.keepLocal': 'Manter os deste navegador',
+    'auth.migration.keepRemote': 'Manter os da conta',
+    'auth.migration.remoteUpdatedAt': 'Dados da conta guardados em {{date}}.',
+
     'legal.notice.title': 'Aviso legal',
     'legal.notice.body':
       '## 1. Editor\n\nOumbra, programador independente — projeto pessoal sem fins lucrativos. Contacto: através das issues do repositório GitHub github.com/oumbra/wakfu-companion.\n\n## 2. Alojamento\n\nO Wakfu Companion é um site alojado numa plataforma de alojamento estático padrão, sem base de dados nem processamento no servidor.\n\n## 3. Propriedade intelectual\n\n«Wakfu» e todos os elementos do jogo (nomes, imagens, universo) são propriedade da Ankama Games. O Wakfu Companion não é editado, alojado nem aprovado pela Ankama e não mantém qualquer vínculo com essa empresa. Os ícones de objetos e monstros apresentados provêm de projetos comunitários de terceiros (ver wakassets) e dos servidores oficiais do jogo, utilizados para fins meramente ilustrativos e não comerciais.\n\n## 4. Código-fonte\n\nEste projeto está disponível no GitHub em github.com/oumbra/wakfu-companion.\n\n## 5. Contacto\n\nPara qualquer questão relacionada com este aviso legal, abra uma issue no repositório GitHub.',
     'privacy.notice.title': 'Política de privacidade',
     'privacy.notice.body':
-      '## 1. Recolha de dados\n\nO Wakfu Companion não tem servidor, nem base de dados, nem conta de utilizador. A aplicação é executada inteiramente no seu navegador (ou como ficheiro HTML autónomo aberto localmente): não recebemos, armazenamos nem transmitimos nenhum dos seus dados pessoais.\n\n## 2. Conservação de dados\n\nAs suas definições, personagens declaradas, histórico de combates, lista de seguimento e a referência ao ficheiro wakfu.log selecionado são guardados apenas no armazenamento local do seu navegador (localStorage / IndexedDB). Estes dados nunca saem do seu dispositivo e nunca nos são acessíveis.\nA aplicação lê o seu ficheiro wakfu.log localmente, através da API File System Access do seu navegador, para extrair kamas, XP, combates e chat. Este processamento é totalmente local: o conteúdo do ficheiro nunca é enviado para lado nenhum.\n\n## 3. Serviços de terceiros\n\nOs ícones de objetos e monstros apresentados são carregados diretamente pelo seu navegador a partir de servidores de terceiros (static.ankama.com, projetos comunitários como wakassets, cdn.wakfuli.com). Estes pedidos escapam ao nosso controlo: o seu navegador comunica então diretamente com esses servidores, que recebem o seu endereço IP tal como para qualquer imagem carregada na web, segundo as respetivas políticas de privacidade.\n\n## 4. Alojamento\n\nA versão online da aplicação está alojada no GitHub Pages, que pode registar informações técnicas padrão (endereço IP, user-agent) segundo a sua própria política de privacidade. O Wakfu Companion não acrescenta nenhum dado adicional.\n\n## 5. Os seus direitos\n\nComo nenhum dado pessoal é recolhido pela Oumbra, nenhum pode ser consultado, corrigido ou eliminado do nosso lado, uma vez que não detemos nenhum. Continua a ser o único responsável pelos dados armazenados localmente: podem ser apagados a qualquer momento através do botão «Repor» da aplicação, ou esvaziando o armazenamento do seu navegador para este site.\n\n## 6. Perguntas e reclamações\n\nPara qualquer questão relacionada com esta política de privacidade, abra uma issue no repositório GitHub github.com/oumbra/wakfu-companion.',
+      '## 1. Duas formas de utilização\n\nO Wakfu Companion pode ser utilizado **sem conta** (modo predefinido) ou **com conta**, à sua escolha. Sem conta, não é recolhido qualquer dado pessoal: tudo permanece no seu navegador. Com conta, apenas os dados descritos no ponto 3 são conservados nos nossos servidores.\n\n## 2. Modo sem conta (predefinido)\n\nAs suas definições, personagens declaradas, histórico de combates, lista de seguimento e a referência ao ficheiro wakfu.log selecionado são guardados apenas no armazenamento local do seu navegador (localStorage / IndexedDB). Estes dados nunca saem do seu dispositivo.\nA aplicação lê o seu ficheiro wakfu.log localmente, através da API File System Access do seu navegador, para extrair kamas, XP, combates e chat. Este processamento é totalmente local: o conteúdo do ficheiro nunca é enviado para lado nenhum.\n\n## 3. Conta opcional (Discord ou Google)\n\nSe optar por criar uma conta, o início de sessão é feito exclusivamente através do Discord ou da Google: não gerimos, não recebemos nem armazenamos qualquer palavra-passe. São então conservados nos nossos servidores: o seu e-mail verificado e o nome apresentado fornecidos pelo fornecedor, o seu identificador de conta nesse fornecedor, a data das suas sessões e o navegador/sistema utilizado, bem como os dados de configuração que escolher explicitamente guardar (perfil, personagens, lista de seguimento, filtros de chat). É colocado um cookie de sessão estritamente necessário (técnico, não publicitário, sem rastreio) para o manter com sessão iniciada; expira ao fim de 30 dias e pode ser revogado a qualquer momento na página «Minha conta».\n\n## 4. O que nunca é transmitido\n\nO conteúdo do chat do jogo **nunca** é enviado para os nossos servidores, com ou sem sessão iniciada: contém mensagens de outros jogadores que não deram qualquer consentimento. Da mesma forma, o próprio ficheiro wakfu.log nunca é carregado.\n\n## 5. Serviços de terceiros\n\nOs ícones de objetos e monstros apresentados são carregados diretamente pelo seu navegador a partir de servidores de terceiros (static.ankama.com, projetos comunitários como wakassets, cdn.wakfuli.com). Estes pedidos escapam ao nosso controlo: o seu navegador comunica diretamente com esses servidores, que recebem o seu endereço IP tal como para qualquer imagem carregada na web, segundo as respetivas políticas de privacidade. Se iniciar sessão, o Discord ou a Google trata o seu pedido segundo a sua própria política de privacidade.\n\n## 6. Alojamento\n\nA aplicação e a sua interface de programação estão alojadas na Cloudflare; os dados de conta são armazenados numa base de dados PostgreSQL gerida pela Neon, na União Europeia. Estes fornecedores podem registar informações técnicas padrão (endereço IP, user-agent) segundo as suas próprias políticas.\n\n## 7. Os seus direitos\n\nSem conta, não detemos qualquer dado pessoal seu: continua a ser o único responsável pelos dados armazenados localmente, que pode apagar a qualquer momento através do botão «Repor» ou esvaziando o armazenamento do seu navegador. Com conta, pode exportar os seus dados a qualquer momento (botão «Exportar») e eliminar definitivamente a sua conta na página «Minha conta»: a eliminação apaga de imediato e sem conservação a conta, os seus identificadores de início de sessão, as suas sessões e todos os dados associados.\n\n## 8. Perguntas e reclamações\n\nPara qualquer questão relacionada com esta política de privacidade, abra uma issue no repositório GitHub github.com/oumbra/wakfu-companion.',
   },
 };
