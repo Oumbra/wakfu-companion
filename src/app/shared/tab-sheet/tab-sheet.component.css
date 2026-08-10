@@ -8,7 +8,7 @@
   position: fixed;
   inset: 0;
   z-index: 600;
-  background: transparent;
+  background: #00000080;
 }
 
 /* 3 zones empilées (`overflow: hidden` sur le conteneur, chacune `flex-shrink: 0` sauf la liste) :
@@ -25,9 +25,7 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--panel-bg);
-  border: 1px solid var(--accent);
-  border-bottom: none;
-  border-radius: 16px 16px 0 0;
+  /* border-top: 1px solid var(--accent); */
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
   animation: tabSheetSlideUp 0.2s ease;
 }
@@ -45,7 +43,7 @@
   flex-shrink: 0;
   padding: 20px 16px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 20px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -74,14 +72,15 @@
   height: auto;
   min-height: 30px;
   justify-content: flex-start;
-  padding: 0 26px;
+  padding: 0 20px;
   background: transparent;
   border: none;
   color: var(--text-color);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 200;
   text-align: left;
   cursor: pointer;
+  text-transform: uppercase;
 }
 .tab-sheet-item:hover {
   color: var(--accent);
@@ -105,7 +104,6 @@
   background: #d9d9d9;
   color: #111;
   font-size: 0.95rem;
-  font-weight: 700;
   text-align: center;
   cursor: pointer;
 }
