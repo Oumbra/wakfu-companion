@@ -433,13 +433,15 @@ export const authRateLimits = pgTable(
  * par clé, reprenant exactement `EXPORT_KEYS` d'`AppDataExportService` côté
  * client (`profile`, `watchlist`, `roster`, ...), comme prévu au §6.
  *
- * ⚠ Anticipée ici, au lot 5 : le prompt 5.2 demande de proposer le
- * téléversement des données locales à la première connexion et de trancher le
- * cas « le compte a déjà des données ». Sans endpoint de stockage, ce
- * parcours ne pourrait être qu'une maquette. Ce lot n'implémente donc que le
- * strict nécessaire (lecture/écriture complète du jeu de clés) ; la
- * synchronisation fine, la résolution de conflits par clé et le suivi des
- * horodatages restent au lot 6.
+ * Créée par anticipation au lot 5 (le parcours de migration des données
+ * locales du prompt 5.2 n'aurait été qu'une maquette sans stockage), puis
+ * exploitée pleinement au lot 6 : `updated_at` porte l'arbitrage « dernier
+ * écrivain gagne » **par clé** (voir `server/settings/merge.ts` et
+ * `functions/api/v1/settings.ts`). La table elle-même n'a pas eu à changer —
+ * aucune migration supplémentaire au lot 6.
+ *
+ * Les noms de clés acceptés sont une liste blanche fermée
+ * (`server/settings/keys.ts`), jamais ce que le client envoie.
  *
  * Le contenu du chat n'y figure pas plus que dans `AppDataExportService` :
  * seuls les *filtres* et *canaux actifs* sont des préférences — les messages
