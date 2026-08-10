@@ -1,0 +1,100 @@
+:host {
+  display: contents;
+}
+
+/* Pas de fond assombri (voir maquette de référence) : le clic en dehors de la feuille suffit à la
+   fermer, un simple calque invisible plein écran fait l'affaire. */
+.tab-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: transparent;
+}
+
+/* 3 zones empilées (`overflow: hidden` sur le conteneur, chacune `flex-shrink: 0` sauf la liste) :
+   seule `.tab-sheet-list` défile si elle dépasse la hauteur dispo — l'en-tête et le bouton
+   "Fermer" restent fixes en haut/bas de la feuille, jamais emportés par le scroll. */
+.tab-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 601;
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+  border-bottom: none;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+  animation: tabSheetSlideUp 0.2s ease;
+}
+
+@keyframes tabSheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.tab-sheet-header {
+  flex-shrink: 0;
+  padding: 14px 16px;
+  text-align: center;
+  font-size: 1rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-sheet-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 4px 16px;
+}
+
+.tab-sheet-item {
+  flex-shrink: 0;
+  padding: 13px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-color);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.tab-sheet-item:last-child {
+  border-bottom: none;
+}
+.tab-sheet-item:hover {
+  color: var(--accent);
+}
+.tab-sheet-item.active {
+  color: var(--accent);
+}
+
+.tab-sheet-close {
+  flex-shrink: 0;
+  padding: 15px;
+  padding-bottom: calc(15px + var(--mobile-bottom-safe));
+  border: none;
+  border-top: 1px solid var(--border);
+  background: #d9d9d9;
+  color: #111;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+}
+.tab-sheet-close:hover {
+  background: #c8c8c8;
+}

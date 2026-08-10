@@ -44,8 +44,12 @@ export class AccountPageComponent implements OnInit {
     this.nav.pop();
   }
 
+  /** Renvoie vers la page profil, onglet Connexion (section Discord/Google, voir CLAUDE.md) —
+   * `replace` plutôt que `push` : revenu en arrière depuis là, l'utilisateur ne doit pas retomber
+   * sur cette page compte en mode invité qui n'a plus de sens. */
   protected openLogin(): void {
-    this.nav.replace('login');
+    this.nav.requestProfileConnectionTab();
+    this.nav.replace('profile');
   }
 
   protected async refreshSessions(): Promise<void> {

@@ -1,0 +1,23 @@
+@if (tabSheet.request(); as req) {
+  <div class="tab-sheet-backdrop" (click)="tabSheet.close()"></div>
+  <div class="tab-sheet">
+    @if (req.title) {
+      <div class="tab-sheet-header">{{ req.title | t }}</div>
+    }
+    <div class="tab-sheet-list">
+      @for (item of req.items; track item.id) {
+        <button
+          type="button"
+          class="tab-sheet-item"
+          [class.active]="item.id === req.activeId"
+          (click)="select(item.id)"
+        >
+          {{ item.label | t }}
+        </button>
+      }
+    </div>
+    <button type="button" class="tab-sheet-close" (click)="tabSheet.close()">
+      {{ 'profile.closeToast' | t }}
+    </button>
+  </div>
+}

@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 
-export type AppView = 'main' | 'profile' | 'legal' | 'login' | 'account';
+export type AppView = 'main' | 'profile' | 'legal' | 'account';
 
 type SlideDirection = 'forward' | 'backward';
 
@@ -45,6 +45,12 @@ export class NavigationService {
    * vraie seulement après la première visite plutôt que dès le démarrage). */
   private readonly visited = signal<ReadonlySet<AppView>>(new Set(['main']));
 
+  /** Consommé une seule fois par `ProfilePageComponent` : force l'onglet Connexion (section
+   * Discord/Google, voir CLAUDE.md) à la prochaine ouverture de la page profil. Remplace l'ancienne
+   * vue de connexion dédiée (`AppView` 'login', supprimée) — la page compte (état invité) déclenche
+   * `requestProfileConnectionTab()` avant de naviguer vers `profile`. */
+  readonly profileConnectionTabRequested = signal(false);
+
   readonly view = computed(() => {
     const s = this.stack();
     return s[s.length - 1];
@@ -62,10 +68,8 @@ export class NavigationService {
     this.push('legal');
   }
 
-  /** Page de connexion (lot 5, prompt 5.2) — une vue comme les autres, jamais une garde
-   * bloquante : on n'y arrive que par une action explicite de l'utilisateur. */
-  openLogin(): void {
-    this.push('login');
+  requestProfileConnectionTab(): void {
+    this.profileConnectionTabRequested.set(true);
   }
 
   /** Page compte (identité, sessions, données, suppression). */

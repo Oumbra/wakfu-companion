@@ -184,27 +184,3 @@
     display: flex;
   }
 }
-
-/* Bouton compte (lot 5) — même gabarit que le bouton recap de session juste au-dessus.
-   `.connected` marque visuellement une session ouverte (bordure/teinte accent) : le seul
-   indicateur permanent de l'état connecté dans l'interface, le reste de l'application se
-   comportant strictement à l'identique avec ou sans compte. */
-.account-btn {
-  height: 28px;
-  width: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.account-btn svg {
-  width: 18px;
-  height: 18px;
-}
-.account-btn:hover {
-  background: transparent;
-  border-color: var(--accent);
-}
-.account-btn.connected {
-  border-color: var(--accent);
-  color: var(--accent);
-}

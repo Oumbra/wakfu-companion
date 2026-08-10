@@ -1,55 +1,12 @@
 <div class="dashboard">
   <app-tracker-strip />
 
-  <div class="tab-bar">
-    <div
-      class="tab-slider"
-      [style.--active-tab-index]="activeTabIndex()"
-      [style.--tab-count]="tabCount()"
-    ></div>
-    @if (combatPanel.hasActiveFight()) {
-      <button
-        class="tab-btn"
-        [class.active]="activeTab() === 'damage'"
-        (click)="activeTab.set('damage')"
-      >
-        {{ 'damageMeter.header' | t }}
-      </button>
-    }
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'tracker'"
-      (click)="activeTab.set('tracker')"
-    >
-      {{ 'tracker.header' | t }}
-      <button
-        type="button"
-        class="icon-btn help-icon-btn tooltip-below"
-        [attr.data-tooltip]="'help.tooltip' | t"
-        (click)="helpModal.open('tracker')"
-      >
-        ?
-      </button>
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'history'"
-      (click)="activeTab.set('history')"
-    >
-      {{ 'history.header' | t }}
-    </button>
-    <button class="tab-btn" [class.active]="activeTab() === 'chat'" (click)="activeTab.set('chat')">
-      {{ 'chat.header' | t }}
-      <button
-        type="button"
-        class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
-        [attr.data-tooltip]="'help.tooltip' | t"
-        (click)="helpModal.open('chat')"
-      >
-        ?
-      </button>
-    </button>
-  </div>
+  <app-tab-bar
+    [items]="tabItems()"
+    [activeId]="activeTab()"
+    (activeIdChange)="selectTab($event)"
+    [mobileOnly]="true"
+  />
   <div
     class="panels-row"
     [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"

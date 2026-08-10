@@ -16,12 +16,10 @@
   min-height: 0;
 }
 
-/* Barre d'onglets mobile : fusionnée visuellement avec l'en-tête du panneau actif (voir styles.css
-   pour le masquage du .panel-header propre à chaque panneau et l'alignement du haut de
-   .tool-panel) plutôt que d'être une rangée séparée au-dessus — gagne de la hauteur et lit comme
-   un seul bloc. `.tab-bar`/`.tab-slider`/`.tab-btn` (fond+bordure glissants sur `--tab-count`, 3 ou
-   4 selon qu'un combat est en cours) sont définis globalement dans styles.css — mutualisés avec la
-   page profil. */
+/* Barre d'onglets mobile (voir TabBarComponent, `mobileOnly`) : fusionnée visuellement avec
+   l'en-tête du panneau actif (voir styles.css pour le masquage du .panel-header propre à chaque
+   panneau et l'alignement du haut de .tool-panel) plutôt que d'être une rangée séparée au-dessus —
+   gagne de la hauteur et lit comme un seul bloc. */
 
 .panels-row {
   display: grid;
@@ -61,9 +59,6 @@
 @media (max-width: 800px) {
   .dashboard {
     gap: 0;
-  }
-  .tab-bar {
-    display: flex;
   }
   .panels-row,
   .panels-row.has-combat {
