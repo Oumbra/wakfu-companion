@@ -44,6 +44,12 @@ jobs:
       - name: Run tests
         run: npm test -- --watch=false
 
+      # Tests du code serveur (server/**/*.spec.ts) — pipeline distinct de
+      # `npm test` (builder Angular, src/ uniquement), voir
+      # vitest.server.config.ts.
+      - name: Run server tests
+        run: npm run test:server
+
       - name: Build
         run: npm run build
 
