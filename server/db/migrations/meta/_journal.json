@@ -29,6 +29,13 @@
       "when": 1786190343903,
       "tag": "0003_add_price_max_to_daily",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786357949476,
+      "tag": "0004_auth_tables",
+      "breakpoints": true
     }
   ]
 }

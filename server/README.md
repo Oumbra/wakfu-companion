@@ -48,6 +48,18 @@ variables → Actions`) sur `oumbra/wakfu-companion` :
 | `DATABASE_URL_PREVIEW`        | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_.                                                                                                                                                                           |
 | `PRICE_SERVICE_TOKEN_PREVIEW` | Jeton de service statique (lot 4, prompt 4.2) protégeant `/prices/ingest`, `/prices/export`, `/prices/rollups` sur la preview — n'importe quelle chaîne aléatoire suffisamment longue (ex. `openssl rand -hex 32`), **sans rapport** avec une session utilisateur. Pas d'équivalent prod pour l'instant (prod reste sur GitHub Pages, sans Pages Functions). |
 
+Secrets/variables supplémentaires du **lot 5** (authentification), tous
+**optionnels** : tant qu'ils sont absents, `/api/v1/auth/{provider}/*` répond
+`503 fournisseur non configuré` et l'application reste pleinement utilisable
+en mode invité (§7 du plan). Le workflow de déploiement les pousse seulement
+s'ils sont définis, jamais en échec sinon.
+
+| Secret / variable                                                                                | Description                                                                                                                                                                                                              |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `DISCORD_CLIENT_ID_PREVIEW` / `DISCORD_CLIENT_SECRET_PREVIEW`                                     | Application Discord (_Developer Portal → Applications → OAuth2_). Redirect URI à déclarer : `<PUBLIC_BASE_URL>/api/v1/auth/discord/callback`.                                                                              |
+| `GOOGLE_CLIENT_ID_PREVIEW` / `GOOGLE_CLIENT_SECRET_PREVIEW`                                       | Identifiants OAuth 2.0 Google (_Google Cloud Console → API et services → Identifiants_). Redirect URI : `<PUBLIC_BASE_URL>/api/v1/auth/google/callback`.                                                                   |
+| `PUBLIC_BASE_URL_PREVIEW` (**variable** GitHub, pas un secret)                                     | Origine publique stable de la preview, ex. `https://wakfu-companion.pages.dev`. Indispensable : une preview Cloudflare a aussi une URL **par déploiement** (`<hash>.wakfu-companion.pages.dev`), qui ne peut pas être déclarée chez le fournisseur. |
+
 `DATABASE_URL`/`DATABASE_URL_PREVIEW`/`PRICE_SERVICE_TOKEN_PREVIEW` sont
 aussi transmis comme variable d'environnement chiffrée du projet Cloudflare
 Pages (poussé à chaque déploiement via `wrangler pages secret put`, voir
@@ -96,6 +108,18 @@ DATABASE_URL=... npm run db:migrate
 - `POST /api/v1/prices/ingest`, `GET /api/v1/prices/export`,
   `POST /api/v1/prices/rollups` — protégés par jeton de service, voir plus
   bas (lot 4, prompt 4.2).
+- `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
+  (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
+- `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
+  échange du code côté serveur, pose du cookie de session, redirection vers
+  l'application (`?login=ok` / `?login=error&reason=…`).
+- `GET /api/v1/auth/me` — utilisateur courant, **401 si non connecté (cas
+  normal : mode invité)**.
+- `POST /api/v1/auth/logout` — révoque la session courante.
+- `GET /api/v1/auth/sessions` — sessions actives ;
+  `DELETE /api/v1/auth/sessions[?id=…]` — révoque une session précise, ou
+  toutes.
+- `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
@@ -379,3 +403,98 @@ seul prix par jour.
 Préparé et committé côté `wakfu-companion` uniquement : migration **pas
 encore appliquée** sur la base preview, et le skill mémoire HDV pas encore
 déployé en scan quotidien (voir `wakfu-sync-skills:wakfu-hdv-memory-scan`).
+
+## Authentification (lot 5, prompt 5.1)
+
+Voir `docs/plan-migration-serveur.md` §7 pour le cadre (OAuth uniquement,
+cookie opaque, mode invité intact). Cette section documente ce qui a été
+réellement implémenté et les écarts assumés.
+
+### Ce qui n'existe pas, volontairement
+
+Aucun mot de passe : pas de `password_hash`, pas de réinitialisation, pas de
+vérification d'e-mail à écrire. Motivé §7 par la limite de **10 ms de CPU par
+requête** du plan gratuit Cloudflare, dans laquelle un hachage de mot de passe
+correct ne tient pas — un hachage affaibli pour y tenir serait une sécurité de
+façade.
+
+### Organisation du code
+
+| Fichier                                       | Rôle                                                                                     |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `server/auth/store.ts`                        | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.   |
+| `server/auth/flow.ts`                         | Toute la logique : validation du `state`, usage unique du code, fusion de comptes, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
+| `server/auth/db-store.ts`                     | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                            |
+| `server/auth/memory-store.ts`                 | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                |
+| `server/auth/providers.ts`                    | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                   |
+| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.        |
+| `functions/api/_auth.ts`                      | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.            |
+
+Tests : `npm run test:server` (config `vitest.server.config.ts`, séparée de
+`npm test` qui passe par le builder Angular et ne voit que `src/`). Couvrent
+les quatre exigences du prompt — `state` invalide, code rejoué, session
+révoquée, fusion sur e-mail — plus redirection ouverte, CSRF, rotation,
+expiration glissante et limitation de débit.
+
+### Trois écarts par rapport au schéma du §6 du plan
+
+1. **`sessions.id` n'est pas le jeton, mais son SHA-256.** Le jeton opaque
+   (256 bits) ne vit que dans le cookie `httpOnly`. Une fuite en lecture de la
+   table ne permet donc pas d'usurper une session.
+2. **`users.email` en `text` normalisé en minuscules**, pas en `citext` :
+   évite un `CREATE EXTENSION` pour un gain nul dès lors que la normalisation
+   se fait en un seul endroit (`resolveAccount`, `server/auth/flow.ts`).
+3. **Deux tables non prévues au §6** : `oauth_authorizations` (le
+   `code_verifier` PKCE ne doit jamais atteindre le navigateur, et
+   `consumed_at` rend le `state`/`code` à usage unique) et `auth_rate_limits`
+   (limitation de débit en base, faute de Cron Trigger et pour éviter un
+   binding KV supplémentaire — même contrainte Cloudflare Pages que pour les
+   rollups de prix).
+
+### Fusion de comptes : rattachement automatique sur e-mail vérifié
+
+Décision du §7, appliquée telle quelle : si l'e-mail **vérifié** renvoyé par
+le fournisseur correspond déjà à un compte, la nouvelle identité y est
+rattachée automatiquement (pas d'écran de liaison manuelle). Les deux
+fournisseurs vérifient l'adresse, ce qui rend le rattachement sûr.
+
+Corollaire important : **un profil sans e-mail vérifié ne participe jamais à
+la fusion** (`providers.ts` normalise un e-mail non vérifié en `null`) — sans
+quoi une adresse non validée permettrait de s'approprier le compte d'un tiers.
+Un tel compte reste parfaitement utilisable, il est simplement isolé par
+fournisseur.
+
+### CSRF : jeton double-submit dérivé, non stocké
+
+`SameSite=Lax` est la première barrière. La seconde est un jeton double-submit
+(`X-CSRF-Token` sur les routes mutatives), **dérivé du jeton de session par
+hachage** plutôt que stocké en base : le cookie `wc_csrf` est lisible en JS
+par construction, mais un hachage n'est pas inversible. Aucune colonne, aucune
+expiration séparée à gérer. Le contrôle ne retombe **jamais** sur le cookie en
+l'absence d'en-tête — ce serait exactement ce que la protection empêche (le
+cookie voyage seul, l'en-tête non).
+
+### `PUBLIC_BASE_URL` : pourquoi l'origine de la requête ne suffit pas
+
+L'URL de redirection OAuth doit être déclarée à l'identique chez le
+fournisseur. Or Cloudflare Pages sert chaque déploiement de preview sous une
+URL propre (`<hash>.wakfu-companion.pages.dev`) : déduire l'origine de la
+requête ferait échouer l'échange sur ces URLs. `PUBLIC_BASE_URL` fixe donc
+l'origine publique stable ; l'origine de la requête n'est qu'un repli pour le
+développement local.
+
+### Vérification effectuée / restant à faire
+
+Vérifié dans cette session : `npm run test:server` (tous verts, aucune base ni
+réseau requis) et `npx tsc -p tsconfig.server.json --noEmit`.
+
+**Restant à faire** — comme pour le catalogue et les prix, seuls un
+déploiement et une vraie application OAuth permettent de conclure :
+
+1. appliquer la migration `0004_auth_tables.sql` sur la branche Neon preview ;
+2. créer les applications Discord et Google, poser les secrets, déclarer les
+   deux redirect URIs ;
+3. dérouler un aller-retour réel de connexion sur la preview, vérifier le
+   cookie (`httpOnly`, `Secure`, `SameSite=Lax`), `GET /auth/me`, la
+   révocation d'une session depuis un autre appareil, et la suppression de
+   compte.

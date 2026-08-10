@@ -10,6 +10,8 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
+  uuid,
 } from 'drizzle-orm/pg-core';
 
 /** Miroir de WakfuRarity (src/app/core/data/wakfu-item-rarity.data.ts) côté serveur — server/
@@ -280,3 +282,147 @@ export const priceScanRuns = pgTable('price_scan_runs', {
   itemsUnresolved: integer('items_unresolved').notNull().default(0),
   notes: text('notes'),
 });
+
+/**
+ * Authentification (lot 5, prompt 5.1) — voir docs/plan-migration-serveur.md §7.
+ *
+ * Aucun mot de passe n'est géré en propre (pas de `password_hash`, pas de
+ * réinitialisation, pas de vérification d'e-mail) : l'identité vient
+ * exclusivement d'un fournisseur OAuth (Discord ou Google), qui vérifie
+ * l'adresse à notre place. Décision actée §7 du plan, motivée aussi par la
+ * limite de 10 ms de CPU par requête du plan gratuit Cloudflare — un hachage
+ * de mot de passe correct n'y tient pas.
+ *
+ * Rappel structurant : la connexion est OPTIONNELLE. Aucune des tables
+ * ci-dessus (catalogue, prix) ne référence `users` ; le mode invité continue
+ * de fonctionner sans jamais toucher ces tables.
+ */
+
+/**
+ * Compte utilisateur. `email` est l'e-mail vérifié par le fournisseur OAuth,
+ * normalisé en minuscules à l'écriture (voir server/auth/flow.ts) plutôt que
+ * stocké en `citext` : évite un `CREATE EXTENSION` supplémentaire pour un
+ * gain nul dès lors que la normalisation est faite en un seul endroit.
+ * Nullable : un fournisseur peut théoriquement ne pas renvoyer d'e-mail
+ * vérifié (compte Discord sans e-mail confirmé) — le compte reste utilisable,
+ * il ne participe simplement pas à la fusion sur e-mail (voir flow.ts).
+ *
+ * `defaultGameServer` est le repli du lot 7 (le serveur réel viendra du
+ * compte roster) : colonne posée dès maintenant pour éviter une migration
+ * supplémentaire, jamais lue par ce lot.
+ */
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: text('email'),
+    displayName: text('display_name'),
+    defaultGameServer: text('default_game_server'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+  },
+  (table) => [uniqueIndex('users_email_key').on(table.email)],
+);
+
+/**
+ * Identités OAuth rattachées à un compte. Un même utilisateur peut se
+ * connecter par Discord ET par Google : la fusion se fait automatiquement sur
+ * e-mail vérifié identique (voir server/auth/flow.ts et §7 du plan — les deux
+ * fournisseurs vérifient l'adresse, ce qui rend ce rattachement sûr sans
+ * étape manuelle).
+ */
+export const userIdentities = pgTable(
+  'user_identities',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    provider: text('provider').notNull(), // 'discord' | 'google'
+    providerUid: text('provider_uid').notNull(),
+    email: text('email'),
+    linkedAt: timestamp('linked_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.provider, table.providerUid] }),
+    index('user_identities_user_id_idx').on(table.userId),
+  ],
+);
+
+/**
+ * Sessions serveur (révocation immédiate possible, contrairement à un JWT
+ * autoporteur — §7 du plan).
+ *
+ * ⚠ `id` n'est PAS le jeton envoyé au navigateur : c'est son empreinte
+ * SHA-256 (hex). Le jeton opaque (256 bits d'aléa) ne vit que dans le cookie
+ * `httpOnly` du client ; une fuite en lecture de cette table ne permet donc
+ * pas d'usurper une session. C'est le seul écart avec le schéma du §6 du
+ * plan, qui décrivait `id` comme « identifiant opaque » — même colonne, même
+ * type, une couche de hachage en plus.
+ */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(), // sha256(jeton du cookie), jamais le jeton lui-même
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    issuedAt: timestamp('issued_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }).notNull().defaultNow(),
+    userAgent: text('user_agent'),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [index('sessions_user_id_idx').on(table.userId)],
+);
+
+/**
+ * Autorisations OAuth en cours (entre `/auth/{provider}/start` et
+ * `/auth/{provider}/callback`).
+ *
+ * Deux raisons de passer par la base plutôt que par un cookie signé :
+ * 1. le `code_verifier` PKCE ne doit jamais atteindre le navigateur ;
+ * 2. `consumedAt` rend l'autorisation à usage UNIQUE — c'est ce qui fait
+ *    rejeter un `code` (donc un `state`) rejoué, exigence du prompt 5.1.
+ *
+ * `id` est le `state` lui-même (256 bits d'aléa, opaque, non devinable) : il
+ * transite en clair dans l'URL de redirection du fournisseur, il n'y a donc
+ * rien à protéger d'une fuite en lecture de la table (contrairement au jeton
+ * de session ci-dessus, qui, lui, est haché). Les lignes expirées sont
+ * purgées à la volée à chaque callback (pas de cron : Cloudflare Pages n'en
+ * propose pas, voir server/README.md).
+ */
+export const oauthAuthorizations = pgTable(
+  'oauth_authorizations',
+  {
+    id: text('id').primaryKey(), // `state`
+    provider: text('provider').notNull(),
+    codeVerifier: text('code_verifier').notNull(),
+    redirectTo: text('redirect_to'), // chemin interne de retour, validé (jamais une URL absolue)
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (table) => [index('oauth_authorizations_expires_at_idx').on(table.expiresAt)],
+);
+
+/**
+ * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
+ * compte »). Implémentée en base plutôt qu'en KV/Durable Object : ces routes
+ * sont rares (une poignée d'appels par connexion), le coût d'une écriture
+ * Postgres y est négligeable, et ça évite d'ajouter un binding Cloudflare
+ * supplémentaire au projet Pages.
+ *
+ * `bucket` = `"{portée}:{clé}"` (ex. `start:ip:1.2.3.4`, `callback:user:<uuid>`),
+ * `windowStart` = début de la fenêtre glissante arrondie. Une ligne par
+ * fenêtre : les anciennes sont purgées opportunistement (voir
+ * server/auth/rate-limit.ts).
+ */
+export const authRateLimits = pgTable(
+  'auth_rate_limits',
+  {
+    bucket: text('bucket').notNull(),
+    windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+    count: integer('count').notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.bucket, table.windowStart] })],
+);
