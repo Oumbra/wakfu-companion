@@ -371,6 +371,26 @@
 
               @if (selectedAccount(); as account) {
                 <div class="roster-account-panel">
+                  <!-- Serveur de jeu du compte (lot 7) : le log Wakfu ne l'indique
+                       jamais, il se déclare donc ici, par compte — un joueur
+                       multi-compte peut jouer sur plusieurs serveurs. -->
+                  <div class="roster-account-server">
+                    <label class="roster-server-label" [for]="'account-server-' + account.id">
+                      {{ 'profile.gameServerLabel' | t }}
+                    </label>
+                    <select
+                      class="game-server-select"
+                      [id]="'account-server-' + account.id"
+                      [value]="account.gameServer ?? ''"
+                      (change)="setAccountServer(account.id, $any($event.target).value)"
+                    >
+                      <option value="">{{ 'profile.gameServerNone' | t }}</option>
+                      @for (server of gameServers.selectableServers(); track server.code) {
+                        <option [value]="server.code">{{ server.label }}</option>
+                      }
+                    </select>
+                  </div>
+
                   @if (!account.isDefault) {
                     <div class="roster-account-header">
                       <input
@@ -604,6 +624,28 @@
                 </div>
               }
             </div>
+          </div>
+
+          <!-- Repli tant qu'aucun personnage du roster n'a été reconnu dans le
+               log (lot 7) : ni deviné, ni obligatoire. -->
+          <div class="profile-field profile-field-wide">
+            <div class="profile-label-row">
+              <label class="profile-label" for="default-game-server">
+                {{ 'profile.defaultServerLabel' | t }}
+              </label>
+            </div>
+            <select
+              class="game-server-select"
+              id="default-game-server"
+              [value]="profile.defaultGameServer() ?? ''"
+              (change)="setDefaultServer($any($event.target).value)"
+            >
+              <option value="">{{ 'profile.gameServerNone' | t }}</option>
+              @for (server of gameServers.selectableServers(); track server.code) {
+                <option [value]="server.code">{{ server.label }}</option>
+              }
+            </select>
+            <p class="profile-hint">{{ 'profile.defaultServerHint' | t }}</p>
           </div>
         </div>
       </div>

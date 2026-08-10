@@ -72,6 +72,14 @@ export class NavigationService {
     this.profileConnectionTabRequested.set(true);
   }
 
+  /** Même mécanisme que ci-dessus, pour l'onglet Personnages : c'est là que se déclare le serveur
+   * de jeu (lot 7), et le badge du header y renvoie quand rien n'est renseigné. */
+  readonly profileCharactersTabRequested = signal(false);
+
+  requestProfileCharactersTab(): void {
+    this.profileCharactersTabRequested.set(true);
+  }
+
   /** Page compte (identité, sessions, données, suppression). */
   openAccount(): void {
     this.push('account');

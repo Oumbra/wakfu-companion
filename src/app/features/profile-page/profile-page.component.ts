@@ -44,6 +44,7 @@ import { AppPageComponent } from '../../shared/app-page/app-page.component';
 import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
 import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { GameServerService } from '../../core/services/game-server.service';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
 
@@ -70,6 +71,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
   protected readonly roster = inject(CharacterRosterService);
+  protected readonly gameServers = inject(GameServerService);
   protected readonly helpModal = inject(HelpModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
@@ -161,6 +163,14 @@ export class ProfilePageComponent implements OnDestroy {
       if (!this.nav.profileConnectionTabRequested()) return;
       this.activeTab.set('connection');
       this.nav.profileConnectionTabRequested.set(false);
+    });
+
+    // Même chose depuis le badge « serveur actif » du header (lot 7), qui renvoie ici quand aucun
+    // serveur n'est renseigné nulle part.
+    effect(() => {
+      if (!this.nav.profileCharactersTabRequested()) return;
+      this.activeTab.set('characters');
+      this.nav.profileCharactersTabRequested.set(false);
     });
 
     // Sélectionne le compte principal (ou le 1er) à l'initialisation, et
@@ -316,6 +326,16 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected renameAccount(id: string, value: string): void {
     this.roster.renameAccount(id, value);
+  }
+
+  /** `''` (option « non renseigné ») ne devient jamais une chaîne vide en base : voir
+   * `RosterAccount.gameServer`, absence = non renseigné. */
+  protected setAccountServer(accountId: string, code: string): void {
+    this.roster.setAccountGameServer(accountId, code || null);
+  }
+
+  protected setDefaultServer(code: string): void {
+    this.profile.setDefaultGameServer(code || null);
   }
 
   protected selectAccount(id: string): void {
