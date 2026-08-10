@@ -43,11 +43,12 @@
 
 .tab-sheet-header {
   flex-shrink: 0;
-  padding: 14px 16px;
+  padding: 16px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: bold;
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   color: var(--accent);
   border-bottom: 1px solid var(--border);
 }
@@ -58,23 +59,24 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 4px 16px;
+  padding: 6px 0;
 }
 
+/* `height: auto` + `justify-content: flex-start` : la règle globale `button` (styles.css) impose
+   `height: 28px` et `justify-content: center`, qui écrasaient sinon le padding vertical (lignes
+   tassées) et l'alignement à gauche du libellé (`text-align` est sans effet sur un flex-container). */
 .tab-sheet-item {
   flex-shrink: 0;
-  padding: 13px 4px;
+  height: auto;
+  justify-content: flex-start;
+  padding: 11px 22px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--border);
   color: var(--text-color);
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   text-align: left;
   cursor: pointer;
-}
-.tab-sheet-item:last-child {
-  border-bottom: none;
 }
 .tab-sheet-item:hover {
   color: var(--accent);
@@ -83,14 +85,21 @@
   color: var(--accent);
 }
 
+/* Bouton détaché des bords (marges + coins arrondis), pas une barre pleine largeur collée au bas
+   de l'écran. Marge basse = `env(safe-area-inset-bottom)` (barre gestuelle iOS/Android) plutôt que
+   `--mobile-bottom-safe` : ces 56px sont la réserve des LISTES scrollables face à une barre
+   d'outils navigateur, hors de propos pour une feuille en `position: fixed` (ancrée au viewport
+   visuel) — ils décollaient le bouton du bas de l'écran bien plus que la maquette. */
 .tab-sheet-close {
   flex-shrink: 0;
-  padding: 15px;
-  padding-bottom: calc(15px + var(--mobile-bottom-safe));
+  height: auto;
+  margin: 6px 10px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 14px;
   border: none;
-  border-top: 1px solid var(--border);
+  border-radius: 10px;
   background: #d9d9d9;
   color: #111;
+  font-size: 1rem;
   font-weight: 700;
   text-align: center;
   cursor: pointer;
