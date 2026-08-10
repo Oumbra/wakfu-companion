@@ -352,3 +352,30 @@ contre la base preview une fois déployé — `POST /ingest` avec un petit lot
 synthétique, vérifier l'upsert idempotent (ré-ingérer le même jour ne
 duplique pas), `GET /export`, `POST /rollups`, puis `GET /prices/{itemId}`
 et `GET /prices/trends`.
+
+### `priceMax` sur `item_prices_daily` (scan mémoire HDV)
+
+Ajouté a posteriori du prompt 4.2 : un second skill de scan, **par lecture
+mémoire** du client Java plutôt que par vidéo/OCR
+(`wakfu-hdv-memory-scan`, dépôt privé `wakfu-companion-private-skills`),
+parcourt les pages de l'hôtel des ventes et peut fournir, pour un même
+objet et un même jour, à la fois le prix le plus bas ET le plus haut
+observés — contrairement au skill vidéo (prompt 4.1) qui ne voit qu'un
+seul prix par jour.
+
+- Migration `0003_add_price_max_to_daily.sql`, en 3 temps (colonne
+  nullable → backfill `priceMax = price` sur les lignes existantes →
+  `NOT NULL`) pour rester sûre sur une table déjà peuplée par le skill
+  vidéo en production.
+- `POST /ingest` : `priceMax` optionnel dans `items[]`, retombe sur
+  `price` si absent — le skill vidéo continue de fonctionner sans
+  modification, rétrocompatible.
+- `GET /export` : `priceMax` désormais exposé dans la série brute.
+- `compute-price-trends.mjs` (skill `wakfu-price-trends`, dépôt privé)
+  utilise ce vrai maximum quand disponible au lieu de retomber sur `price`
+  pour calculer `item_prices_monthly.priceMax` — tests du skill toujours au
+  vert.
+
+Préparé et committé côté `wakfu-companion` uniquement : migration **pas
+encore appliquée** sur la base preview, et le skill mémoire HDV pas encore
+déployé en scan quotidien (voir `wakfu-sync-skills:wakfu-hdv-memory-scan`).
