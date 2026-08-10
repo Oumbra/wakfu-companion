@@ -8,7 +8,7 @@ import type { Env } from '../../_types';
 interface IngestBody {
   gameServer: string;
   capturedOn: string;
-  items: { itemId: number; price: number }[];
+  items: { itemId: number; price: number; priceMax?: number }[];
   unresolved: string[];
 }
 
@@ -21,9 +21,11 @@ function jsonError(message: string, status: number): Response {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Valide la forme du corps envoyé par le skill de scan vidéo (prompt 4.1) : {gameServer,
- * capturedOn, items: [{itemId, price}], unresolved: [...]}. Retourne un message d'erreur
- * (400) ou les données typées. */
+/** Valide la forme du corps envoyé par les skills de scan (vidéo, prompt 4.1, ou mémoire HDV) :
+ * {gameServer, capturedOn, items: [{itemId, price, priceMax?}], unresolved: [...]}.
+ * `priceMax` est optionnel en entrée (le skill vidéo ne voit qu'un seul prix par jour et ne
+ * l'envoie pas) — retombe sur `price` à l'insertion, voir plus bas. Retourne un message
+ * d'erreur (400) ou les données typées. */
 export function parseIngestBody(body: unknown): { error: string } | { data: IngestBody } {
   if (typeof body !== 'object' || body === null) return { error: 'corps JSON invalide' };
   const b = body as Record<string, unknown>;
@@ -36,13 +38,15 @@ export function parseIngestBody(body: unknown): { error: string } | { data: Inge
   }
   if (!Array.isArray(b['items'])) return { error: 'items manquant ou invalide' };
   for (const entry of b['items']) {
-    if (
-      typeof entry !== 'object' ||
-      entry === null ||
-      typeof (entry as Record<string, unknown>)['itemId'] !== 'number' ||
-      typeof (entry as Record<string, unknown>)['price'] !== 'number'
-    ) {
+    if (typeof entry !== 'object' || entry === null) {
       return { error: 'items[] doit contenir des entrées {itemId: number, price: number}' };
+    }
+    const e = entry as Record<string, unknown>;
+    if (typeof e['itemId'] !== 'number' || typeof e['price'] !== 'number') {
+      return { error: 'items[] doit contenir des entrées {itemId: number, price: number}' };
+    }
+    if (e['priceMax'] !== undefined && typeof e['priceMax'] !== 'number') {
+      return { error: 'items[].priceMax doit être un nombre si présent' };
     }
   }
   const unresolved = b['unresolved'];
@@ -54,7 +58,7 @@ export function parseIngestBody(body: unknown): { error: string } | { data: Inge
     data: {
       gameServer: b['gameServer'],
       capturedOn: b['capturedOn'],
-      items: b['items'] as { itemId: number; price: number }[],
+      items: b['items'] as { itemId: number; price: number; priceMax?: number }[],
       unresolved: (unresolved as string[] | undefined) ?? [],
     },
   };
@@ -116,13 +120,16 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       gameServer,
       capturedOn,
       price: entry.price,
+      // repli sur price quand la source ne fournit pas de vrai maximum (skill vidéo,
+      // prompt 4.1) — voir commentaire de itemPricesDaily dans schema.ts
+      priceMax: entry.priceMax ?? entry.price,
     }));
     await db
       .insert(itemPricesDaily)
       .values(batch)
       .onConflictDoUpdate({
         target: [itemPricesDaily.itemId, itemPricesDaily.gameServer, itemPricesDaily.capturedOn],
-        set: { price: sql`excluded.price` },
+        set: { price: sql`excluded.price`, priceMax: sql`excluded.price_max` },
       });
   }
 
