@@ -73,7 +73,8 @@ export class TabBarComponent implements OnDestroy {
   private readonly barEl = viewChild<ElementRef<HTMLDivElement>>('barEl');
   private readonly tabBtns = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
   protected readonly sliderRect = signal({ left: 0, width: 0 });
-  private resizeObserver?: ResizeObserver;
+  private containerResizeObserver?: ResizeObserver;
+  private activeBtnResizeObserver?: ResizeObserver;
 
   constructor() {
     // Soulignement de l'onglet actif + défilement automatique pour le garder visible.
@@ -87,9 +88,7 @@ export class TabBarComponent implements OnDestroy {
       const index = items.findIndex((item) => item.id === activeId);
       const btn = this.tabBtns()[index]?.nativeElement;
       const bar = this.barEl()?.nativeElement;
-      this.sliderRect.set(
-        btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 },
-      );
+      this.observeActiveButton(btn);
       if (btn && bar) {
         const target = btn.offsetLeft + btn.offsetWidth / 2 - bar.clientWidth / 2;
         bar.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
@@ -98,15 +97,33 @@ export class TabBarComponent implements OnDestroy {
 
     effect(() => {
       const el = this.barEl()?.nativeElement;
-      this.resizeObserver?.disconnect();
+      this.containerResizeObserver?.disconnect();
       if (!el) return;
-      this.resizeObserver = new ResizeObserver(() => this.updateSliderRect());
-      this.resizeObserver.observe(el);
+      this.containerResizeObserver = new ResizeObserver(() => this.updateSliderRect());
+      this.containerResizeObserver.observe(el);
     });
   }
 
   ngOnDestroy(): void {
-    this.resizeObserver?.disconnect();
+    this.containerResizeObserver?.disconnect();
+    this.activeBtnResizeObserver?.disconnect();
+  }
+
+  /** Observe l'onglet actif pour recalculer le soulignement dès que SA taille change — notamment
+   * quand la croix de suppression apparaît (elle n'est affichée que sur l'onglet actif, ce qui
+   * fait grandir le bouton juste après qu'il le devienne). Lire `btn.offsetWidth` directement dans
+   * l'effect() ci-dessus retombait sur la largeur transitoire d'avant cette croissance (le
+   * soulignement n'englobait alors jamais la croix — bug réel corrigé en session, même piège que
+   * `soundGridColumns`/`AutoFillColumnsObserver`, voir CLAUDE.md) : le `ResizeObserver` se
+   * redéclenche dès que la taille réelle du bouton est atteinte et corrige le soulignement. */
+  private observeActiveButton(btn: HTMLButtonElement | undefined): void {
+    this.activeBtnResizeObserver?.disconnect();
+    if (!btn) {
+      this.sliderRect.set({ left: 0, width: 0 });
+      return;
+    }
+    this.activeBtnResizeObserver = new ResizeObserver(() => this.updateSliderRect());
+    this.activeBtnResizeObserver.observe(btn);
   }
 
   private updateSliderRect(): void {
