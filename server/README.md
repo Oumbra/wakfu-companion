@@ -540,3 +540,144 @@ les deux modes d'utilisation, les données réellement conservées avec un
 compte, le cookie de session, le fait que le chat n'est jamais transmis,
 l'hébergement (Cloudflare + Neon) et les droits RGPD (export, suppression
 réelle). Obligation annoncée au §7 du plan.
+
+## Configuration utilisateur synchronisée (lot 6, prompt 6.1)
+
+Objectif du lot : ne plus perdre ses données en vidant son navigateur, et les
+retrouver d'un appareil à l'autre. Voir `docs/plan-migration-serveur.md` §4
+(« deux modes de données utilisateur ») et §11.
+
+### Aucune migration de base
+
+`user_settings` existait déjà (`0005_user_settings.sql`, créée par
+anticipation au lot 5) et convient telle quelle : `updated_at` par ligne EST
+l'horodatage par clé dont l'arbitrage a besoin. Le lot 6 n'ajoute donc aucun
+fichier de migration.
+
+### Trois verbes, deux usages
+
+| Verbe                    | Usage                                                                                                                                                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /api/v1/settings`   | Valeurs **et** `updatedAtByKey` (nouveau) — c'est lui qui rend l'arbitrage possible côté client.                                                             |
+| `PATCH /api/v1/settings` | Écriture par clé, « dernier écrivain gagne ». Chemin normal de la synchronisation au fil de l'eau.                                                           |
+| `PUT /api/v1/settings`   | Remplacement complet, **sans arbitrage** — le « téléverser mes données locales » de l'écran de migration du lot 5, où l'utilisateur a explicitement tranché. |
+
+**Écart assumé par rapport au prompt** (« endpoints GET et PUT (par clé et en
+lot) ») : pas de route `/settings/{key}`. Un `PATCH` d'une seule entrée EST
+l'écriture par clé, et faire coexister un fichier `settings.ts` et un dossier
+`settings/` dans `functions/` est exactement le genre d'ambiguïté de routage
+Pages Functions qui a déjà coûté un bug en production sur `/catalog/index`
+(voir plus haut). Un verbe distinct est plus sûr qu'un chemin ambigu.
+
+### Arbitrage : où il est décidé, et pourquoi deux fois
+
+`server/settings/merge.ts` (pur, testé sans base — `merge.spec.ts`) tranche à
+partir d'un `SELECT` des horodatages courants. L'`INSERT ... ON CONFLICT` porte
+en plus un `setWhere (updated_at < excluded.updated_at)` : entre le `SELECT` et
+l'écriture, un autre appareil a pu écrire, et sans cette condition SQL une
+écriture plus ancienne pourrait écraser une plus récente — précisément ce que
+l'arbitrage cherche à empêcher.
+
+Les clés refusées repartent au client **avec la valeur conservée**, qui
+s'aligne dessus sans second aller-retour.
+
+### Liste blanche de clés
+
+`server/settings/keys.ts` énumère les six clés acceptées, en miroir exact de
+`src/app/core/data-access/user-data.keys.ts` côté client. Toute autre clé est
+refusée en 400, sur `PATCH` comme sur `PUT` : `user_settings` n'a aucune autre
+borne et son contenu est du `jsonb` opaque.
+
+### Horloges clientes : deux garde-fous
+
+L'horodatage vient du client, donc de son horloge. Deux protections, aux deux
+bouts :
+
+1. **Serveur** — un `updatedAt` à plus de 24 h dans le futur est refusé
+   (`MAX_CLOCK_SKEW_MS`). Sans cette borne, une date lointaine rendrait la clé
+   impossible à écraser depuis n'importe quel autre appareil.
+2. **Client** — une écriture locale est horodatée au plus tard entre
+   « maintenant » et « la version remplacée + 1 ms »
+   (`LocalUserDataRepository.write`). Bug réel constaté en vérification
+   navigateur : après avoir récupéré une valeur d'un appareil dont l'horloge
+   avance, l'appareil local ne pouvait plus rien modifier — ses écritures
+   étaient horodatées _avant_ ce qu'elles remplaçaient, donc rejetées.
+
+### Côté client
+
+| Fichier                                           | Rôle                                                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `core/data-access/user-data.keys.ts`              | Les six clés + la clé de métadonnées locale. N'importe rien (évite les cycles avec les services).    |
+| `core/data-access/user-data.repository.ts`        | L'interface unique du §4 : `read`/`write` **synchrones**, `flush`.                                   |
+| `core/data-access/local-user-data.repository.ts`  | Mode invité : `localStorage`, comportement d'avant le lot 6, + horodatage par clé.                   |
+| `core/data-access/remote-user-data.repository.ts` | Mode connecté : `pull()` au démarrage, écriture décalée (1,5 s) groupée, réapplication des rejets.   |
+| `core/data-access/user-data.service.ts`           | Façade consommée par les services applicatifs + registre d'abonnés aux changements venus d'ailleurs. |
+
+**La lecture reste synchrone, et c'est structurant.** `ProfileService`,
+`CharacterRosterService` et `StatsStoreService` lisent leur état dans leur
+constructeur pour initialiser des signaux, et la watchlist est réécrite en
+plein chemin chaud de parsing. La copie `localStorage` reste donc la source de
+vérité immédiate dans les deux modes ; le compte est une **réplication**, pas
+un chemin de lecture. Même raisonnement que pour `findWakfuItemEntry` (§4,
+point de vigilance n°3 du plan).
+
+**Le seul `if (connecté)` vit dans `AuthService`**, qui déclenche
+`activateRemote()` / `deactivateRemote()`. Aucun composant ne connaît l'état de
+connexion (exigence du §4).
+
+**Changements venus d'un autre appareil** : `UserDataService.onExternalChange`
+laisse `ProfileService`, `CharacterRosterService`, `StatsStoreService`
+(watchlist) et le panneau de chat recharger leurs signaux — pas de
+`location.reload()`. Deux exceptions volontaires :
+
+- `damageReassignments` n'est **pas** rechargé à chaud : le journal des
+  réattributions est rejoué au fil de l'ingestion des combats, le remplacer en
+  pleine session appliquerait des corrections à des combats déjà affichés. La
+  valeur est bien écrite sur le disque, elle prendra effet au prochain
+  démarrage.
+- L'écran de migration du lot 5 (`download`) recharge toujours la page : il
+  remplace tout d'un coup, y compris ce qui n'est pas rechargeable à chaud.
+
+**La synchronisation n'est jamais lancée tant qu'une décision de migration est
+en attente** (`AuthService.handleStartup`) : arbitrer clé par clé pendant qu'on
+demande encore à l'utilisateur quelle source garder reviendrait à fusionner en
+silence, ce que le prompt 5.2 interdit.
+
+### Gating `isInitialLoad` : rien ne change
+
+La watchlist et ses compteurs restent du **suivi persistant** (principe
+d'architecture n°2 de `CLAUDE.md`) : jamais incrémentés pendant
+`isInitialLoad`, jamais réinitialisés. Une version venue d'un autre appareil la
+remplace intégralement, compteurs compris — c'est la sémantique voulue, sans
+rapport avec le gating, qui ne concerne que les incréments issus du fichier de
+log. Vérifié en navigateur (voir ci-dessous).
+
+### Bouton « Synchroniser maintenant » : correction d'un bouton mort
+
+Le bouton de la page compte appelait `chooseMigration('upload')`, or
+`resolveMigration()` sort immédiatement quand aucune décision de migration
+n'est en attente — c'est-à-dire dans la quasi-totalité des cas. Il ne faisait
+donc rien depuis le lot 5. Il appelle désormais `AuthService.syncNow()` (envoi
+de ce qui est en attente, puis réalignement sur le compte), accompagné d'un
+état de synchronisation visible (pastille + libellé + heure de dernière
+synchronisation).
+
+### Vérification effectuée / restant à faire
+
+Vérifié dans cette session : `npm test` (89 tests, dont 15 nouveaux sur
+`UserDataService`), `npm run test:server` (40 tests, dont 15 sur
+`server/settings/merge.ts`), `npm run build`, et **une vérification navigateur
+réelle** (Chromium/playwright-core, `ng serve`) avec un faux backend injecté
+via `fetch` — les Pages Functions n'existent pas sous `ng serve`. 15/15 points
+vérifiés : mode invité sans aucune requête `/settings`, récupération d'une
+valeur de compte plus récente (et rechargement des signaux sans F5),
+téléversement d'une valeur locale plus récente, trois écritures groupées en un
+seul `PATCH` après le délai, compteur de suivi non regonflé par un
+rechargement initial, incrément réel bien répliqué, retour propre au mode
+invité.
+
+**Restant à faire**, comme pour les lots précédents — seul un déploiement réel
+permet de conclure : dérouler la synchronisation entre deux vrais navigateurs
+connectés au même compte sur la preview (le round-trip `PATCH`/arbitrage n'a
+jamais touché Neon depuis ce sandbox, qui ne peut atteindre ni la base ni
+`*.pages.dev`).

@@ -1,7 +1,10 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { PersistenceService } from './persistence.service';
+import { USER_DATA_KEYS } from '../data-access/user-data.keys';
+import { UserDataService } from '../data-access/user-data.service';
 
-export const PROFILE_KEY = 'wakfu-profile';
+/** @deprecated Réexportée pour les consommateurs historiques — la clé fait
+ * désormais autorité dans `core/data-access/user-data.keys.ts`. */
+export const PROFILE_KEY = USER_DATA_KEYS.profile;
 
 export interface SoundItemEntry {
   name: string;
@@ -39,7 +42,7 @@ const DEFAULT_SOUND_ITEM_NAMES: readonly string[] = [
 /** Profil joueur local : pseudo, avatar (planche de classes Ankama) et liste d'objets à alerte sonore au ramassage. */
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
-  private readonly persistence = inject(PersistenceService);
+  private readonly userData = inject(UserDataService);
 
   readonly pseudo = signal('');
   readonly avatarIndex = signal<number | null>(null);
@@ -50,7 +53,15 @@ export class ProfileService {
   readonly characterViewMode = signal<CharacterViewMode>('list');
 
   constructor() {
-    const stored = this.persistence.getJson<StoredProfile>(PROFILE_KEY);
+    this.loadFromStorage();
+    // Le profil a pu être modifié depuis un autre appareil : recharger les
+    // signaux plutôt que de laisser l'écran sur une valeur périmée jusqu'au
+    // prochain rechargement de page (lot 6).
+    this.userData.onExternalChange('profile', () => this.loadFromStorage());
+  }
+
+  private loadFromStorage(): void {
+    const stored = this.userData.read<StoredProfile>('profile');
     this.pseudo.set(stored?.pseudo ?? '');
     this.avatarIndex.set(stored?.avatarIndex ?? null);
     this.soundItems.set(
@@ -130,6 +141,6 @@ export class ProfileService {
       alertManualClose: this.alertManualClose(),
       characterViewMode: this.characterViewMode(),
     };
-    this.persistence.setJson(PROFILE_KEY, value);
+    this.userData.write('profile', value);
   }
 }

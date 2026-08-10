@@ -1,9 +1,12 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { PersistenceService } from './persistence.service';
+import { USER_DATA_KEYS } from '../data-access/user-data.keys';
+import { UserDataService } from '../data-access/user-data.service';
 import { Gender } from '../data/class-icons.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 
-export const ROSTER_KEY = 'wakfu-character-roster';
+/** @deprecated Réexportée pour les consommateurs historiques — la clé fait
+ * désormais autorité dans `core/data-access/user-data.keys.ts`. */
+export const ROSTER_KEY = USER_DATA_KEYS.roster;
 
 export interface RosterCharacter {
   name: string;
@@ -32,16 +35,21 @@ function generateId(): string {
  */
 @Injectable({ providedIn: 'root' })
 export class CharacterRosterService {
-  private readonly persistence = inject(PersistenceService);
+  private readonly userData = inject(UserDataService);
 
   readonly accounts = signal<RosterAccount[]>(this.loadAccounts());
+
+  constructor() {
+    // Le roster a pu être modifié depuis un autre appareil (lot 6).
+    this.userData.onExternalChange('roster', () => this.accounts.set(this.loadAccounts()));
+  }
 
   /** Garantit qu'un compte principal existe toujours et ne peut être
    * supprimé : créé au premier lancement, ou rétabli sur d'anciennes
    * données stockées avant l'introduction de ce champ (le 1er compte
    * devient alors le compte principal). */
   private loadAccounts(): RosterAccount[] {
-    const stored = this.persistence.getJson<RosterAccount[]>(ROSTER_KEY) ?? [];
+    const stored = this.userData.read<RosterAccount[]>('roster') ?? [];
     if (stored.length === 0) {
       return [{ id: generateId(), label: '', characters: [], isDefault: true }];
     }
@@ -150,6 +158,6 @@ export class CharacterRosterService {
   }
 
   private persist(): void {
-    this.persistence.setJson(ROSTER_KEY, this.accounts());
+    this.userData.write('roster', this.accounts());
   }
 }

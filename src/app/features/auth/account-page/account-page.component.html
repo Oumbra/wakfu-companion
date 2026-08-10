@@ -168,16 +168,23 @@
         <div class="panel-header">{{ 'auth.account.data' | t }}</div>
         <div class="account-body">
           <p class="account-text">{{ 'auth.account.dataText' | t }}</p>
+          <!-- État de la synchronisation (lot 6) : la configuration part vers le
+               compte toute seule, encore faut-il pouvoir constater qu'elle est
+               bien passée — et réessayer après une coupure réseau. -->
+          <div class="sync-line">
+            <span class="sync-dot" [attr.data-state]="auth.syncState()"></span>
+            <span class="sync-state">{{ syncStateKey() | t }}</span>
+            @if (auth.lastSyncedAt(); as syncedAt) {
+              <span class="account-hint">
+                {{ 'auth.sync.lastSynced' | t: { date: formatTime(syncedAt) } }}
+              </span>
+            }
+          </div>
           <div class="account-actions">
             <button type="button" class="account-btn" (click)="exportData()">
               {{ 'auth.account.export' | t }}
             </button>
-            <button
-              type="button"
-              class="account-btn"
-              [disabled]="auth.busy()"
-              (click)="chooseMigration('upload')"
-            >
+            <button type="button" class="account-btn" [disabled]="auth.busy()" (click)="syncNow()">
               {{ 'auth.account.syncNow' | t }}
             </button>
           </div>

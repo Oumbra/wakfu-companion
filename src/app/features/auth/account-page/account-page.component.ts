@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService, AuthSessionInfo } from '../../../core/auth/auth.service';
 import { AppDataExportService } from '../../../core/services/app-data-export.service';
 import { ConfirmDeleteService } from '../../../core/services/confirm-delete.service';
@@ -31,7 +31,7 @@ export class AccountPageComponent implements OnInit {
   private readonly nav = inject(NavigationService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
-  private readonly i18n = inject(I18nService);
+  protected readonly i18n = inject(I18nService);
 
   protected readonly sessions = signal<readonly AuthSessionInfo[]>([]);
   protected readonly sessionsLoading = signal(false);
@@ -100,6 +100,19 @@ export class AccountPageComponent implements OnInit {
 
   protected async chooseMigration(choice: 'upload' | 'download'): Promise<void> {
     await this.auth.resolveMigration(choice);
+  }
+
+  /** Clé i18n décrivant l'état courant de la synchronisation (lot 6). */
+  protected readonly syncStateKey = computed(() => `auth.sync.${this.auth.syncState()}`);
+
+  /** Relance la synchronisation à la demande — voir `AuthService.syncNow`. */
+  protected async syncNow(): Promise<void> {
+    this.auth.clearError();
+    await this.auth.syncNow();
+  }
+
+  protected formatTime(date: Date): string {
+    return date.toLocaleTimeString(this.i18n.locale());
   }
 
   protected formatDate(iso: string): string {

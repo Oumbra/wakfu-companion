@@ -412,11 +412,13 @@ export class ProfilePageComponent implements OnDestroy {
     input.click();
   }
 
-  /** Un import réécrit directement le `localStorage` (voir
+  /** Un import réécrit l'ensemble des données utilisateur (voir
    * AppDataExportService) : recharger la page est le moyen le plus sûr de
    * refléter le résultat partout (chaque service/composant se réinitialise
    * proprement depuis les nouvelles valeurs, sans risquer d'oublier de
-   * resynchroniser un signal en mémoire quelque part). */
+   * resynchroniser un signal en mémoire quelque part). L'`await` n'est pas
+   * décoratif : en mode connecté, il laisse l'import partir vers le compte
+   * avant que le rechargement n'interrompe l'écriture décalée. */
   protected async onImportFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -424,7 +426,7 @@ export class ProfilePageComponent implements OnDestroy {
     if (!file) return;
     try {
       const raw = JSON.parse(await file.text());
-      this.dataExport.applyImport(raw);
+      await this.dataExport.applyImport(raw);
       window.location.reload();
     } catch {
       window.alert(this.i18n.t('profile.importError'));

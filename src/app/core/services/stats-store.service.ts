@@ -2,6 +2,8 @@ import { computed, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
 import { Fight } from '../models/fight.model';
 import { CatalogService } from '../api/catalog.service';
+import { USER_DATA_KEYS } from '../data-access/user-data.keys';
+import { UserDataService } from '../data-access/user-data.service';
 import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { LogFileAccessService } from './log-file-access.service';
@@ -10,11 +12,13 @@ import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
 
-export const WATCHLIST_KEY = 'wakfu-watchlist';
+/** @deprecated Réexportée pour les consommateurs historiques — les clés font
+ * désormais autorité dans `core/data-access/user-data.keys.ts`. */
+export const WATCHLIST_KEY = USER_DATA_KEYS.watchlist;
 /** Anciennes clés (listes séparées), lues une seule fois pour migrer vers la liste fusionnée si besoin. */
 const LEGACY_ENEMY_WATCHLIST_KEY = 'wakfu-enemy-watchlist';
 const LEGACY_ITEM_WATCHLIST_KEY = 'wakfu-item-watchlist';
-export const REASSIGN_HISTORY_KEY = 'wakfu-damage-reassignments';
+export const REASSIGN_HISTORY_KEY = USER_DATA_KEYS.damageReassignments;
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
 /** Borne haute du journal des réattributions persistées (voir reassignSpell/replayPersistedReassignments) — purement une garde-fou anti-croissance illimitée sur une très longue session, jamais atteinte en usage normal. */
@@ -267,24 +271,40 @@ export class StatsStoreService {
 
   constructor(
     private readonly logFileAccess: LogFileAccessService,
+    /** Uniquement pour les deux anciennes clés de watchlist (migration
+     * ponctuelle, voir `loadWatchlist`) : tout le reste passe par
+     * `UserDataService`. */
     private readonly persistence: PersistenceService,
     private readonly classifier: EntityClassifierService,
     private readonly profile: ProfileService,
     private readonly lootAlert: LootAlertService,
     private readonly roster: CharacterRosterService,
     private readonly catalog: CatalogService,
+    private readonly userData: UserDataService,
   ) {
     this.watchlist.set(this.loadWatchlist());
     this.reassignmentHistory.push(
-      ...(this.persistence.getJson<PersistedReassignment[]>(REASSIGN_HISTORY_KEY) ?? []),
+      ...(this.userData.read<PersistedReassignment[]>('damageReassignments') ?? []),
     );
+    // La watchlist est du SUIVI PERSISTANT (principe d'architecture n°2) : une
+    // version venue d'un autre appareil la remplace intégralement, compteurs
+    // compris — c'est exactement la sémantique voulue, et ça n'a rien à voir
+    // avec le gating `isInitialLoad`, qui ne concerne que les incréments issus
+    // du fichier de log.
+    //
+    // Pas d'équivalent pour `damageReassignments` : le journal des
+    // réattributions est rejoué au fil de l'ingestion des combats, le
+    // remplacer en pleine session appliquerait des corrections à des combats
+    // déjà affichés. La nouvelle valeur est bien écrite sur le disque par le
+    // dépôt, elle prendra effet au prochain démarrage.
+    this.userData.onExternalChange('watchlist', () => this.watchlist.set(this.loadWatchlist()));
     this.logFileAccess.newLines$.subscribe(({ lines, isInitialLoad }) =>
       this.ingest(lines, isInitialLoad),
     );
   }
 
   private loadWatchlist(): WatchlistEntry[] {
-    const stored = this.persistence.getJson<WatchlistEntry[]>(WATCHLIST_KEY);
+    const stored = this.userData.read<WatchlistEntry[]>('watchlist');
     if (stored) return stored.map((w) => this.normalizeWatchlistEntry(w));
     // Migration ponctuelle depuis les deux anciennes listes séparées.
     const legacyEnemies = this.persistence.getJson<{ name: string; count: number }[]>(
@@ -301,7 +321,7 @@ export class StatsStoreService {
         this.normalizeWatchlistEntry({ ...w, kind: 'item' as const }),
       ),
     ];
-    this.persistence.setJson(WATCHLIST_KEY, migrated);
+    this.userData.write('watchlist', migrated);
     return migrated;
   }
 
@@ -336,7 +356,7 @@ export class StatsStoreService {
   removeWatched(name: string): void {
     const updated = this.watchlist().filter((w) => w.name !== name);
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /** Remet le compteur d'une seule entrée suivie à sa valeur de départ (0 en mode 'up',
@@ -346,7 +366,7 @@ export class StatsStoreService {
       w.name === name ? { ...w, count: this.startingCount(w) } : w,
     );
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /** Bascule le mode de comptage d'une entrée suivie ('up' <-> 'down') et réinitialise son
@@ -358,7 +378,7 @@ export class StatsStoreService {
       return { ...next, count: this.startingCount(next) };
     });
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /** Change la valeur de départ du décompte d'une entrée suivie (mode 'down') et réinitialise
@@ -369,7 +389,7 @@ export class StatsStoreService {
       w.name === name ? { ...w, countdownTarget: clamped, count: clamped } : w,
     );
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   private startingCount(entry: WatchlistEntry): number {
@@ -382,7 +402,7 @@ export class StatsStoreService {
     if (!moved) return;
     updated.splice(toIndex, 0, moved);
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /** Remet à zéro les compteurs de la session (conserve les noms suivis). */
@@ -392,12 +412,12 @@ export class StatsStoreService {
 
     const resetCounts = this.watchlist().map((w) => ({ ...w, count: this.startingCount(w) }));
     this.watchlist.set(resetCounts);
-    this.persistence.setJson(WATCHLIST_KEY, resetCounts);
+    this.userData.write('watchlist', resetCounts);
 
     // Remise à zéro explicite demandée par l'utilisateur : les combats déjà réattribués sont
     // repartis avec l'historique qu'ils corrigeaient, inutile de les rejouer indéfiniment.
     this.reassignmentHistory.length = 0;
-    this.persistence.setJson(REASSIGN_HISTORY_KEY, this.reassignmentHistory);
+    this.userData.write('damageReassignments', this.reassignmentHistory);
   }
 
   private ingest(lines: string[], isInitialLoad: boolean): void {
@@ -930,7 +950,7 @@ export class StatsStoreService {
     if (current.some((w) => w.name.toLowerCase() === name.toLowerCase())) return;
     const updated = [...current, { name, count: 0, kind, mode: 'up' as const, countdownTarget: 0 }];
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /**
@@ -957,7 +977,7 @@ export class StatsStoreService {
       updated[idx] = { ...entry, count: entry.count + by };
     }
     this.watchlist.set(updated);
-    this.persistence.setJson(WATCHLIST_KEY, updated);
+    this.userData.write('watchlist', updated);
   }
 
   /** Combat à afficher : le choix explicite de l'utilisateur (onglets) tant qu'il reste actif, sinon le suivi automatique (dernier combat touché). */
@@ -1106,7 +1126,7 @@ export class StatsStoreService {
         this.reassignmentHistory.length - MAX_REASSIGNMENT_HISTORY,
       );
     }
-    this.persistence.setJson(REASSIGN_HISTORY_KEY, this.reassignmentHistory);
+    this.userData.write('damageReassignments', this.reassignmentHistory);
   }
 
   private applyReassign(
