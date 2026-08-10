@@ -1,0 +1,115 @@
+:host {
+  display: contents;
+}
+
+.tab-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  padding: 6px 6px 0;
+}
+/* Barre "mobile only" (page profil, dashboard) : cachée par défaut — l'agencement desktop empile
+   les sections sans onglets — visible seulement sous le seuil mobile (800px, seuil déjà utilisé
+   partout ailleurs dans l'app pour ce même besoin). Sans cette classe (défaut), la barre reste
+   toujours affichée (sous-onglets de compte de Profil > Personnages, par exemple). */
+.tab-bar-row.mobile-only {
+  display: none;
+}
+@media (max-width: 800px) {
+  .tab-bar-row.mobile-only {
+    display: flex;
+  }
+}
+
+.tab-bar-list-btn {
+  flex-shrink: 0;
+  align-self: center;
+  margin-bottom: 6px;
+}
+
+.tab-bar-scroll {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.tab-bar-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-bar-underline {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  transition:
+    left 0.25s ease,
+    width 0.25s ease;
+  pointer-events: none;
+}
+
+.tab-bar-btn {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 6px 6px 0 0;
+  color: #999;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+  cursor: pointer;
+}
+.tab-bar-btn.active {
+  color: var(--accent);
+}
+.tab-bar-btn > .help-icon-btn {
+  width: 12px;
+  height: 12px;
+  font-size: 9px !important;
+}
+/* Croix affichée dans l'onglet actif uniquement (voir `item.removable`) — un `<span>` avec
+   `stopPropagation()` côté TS plutôt qu'un `<button>` imbriqué (invalide dans un `<button>`
+   englobant), même principe que l'ancien `.roster-tab-remove`. */
+.tab-bar-remove {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  line-height: 14px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #999;
+}
+.tab-bar-remove:hover {
+  background: #b33939;
+  color: #fff;
+}
+.tab-bar-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

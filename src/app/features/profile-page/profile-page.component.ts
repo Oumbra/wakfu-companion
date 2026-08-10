@@ -7,16 +7,17 @@ import {
   OnDestroy,
   signal,
   viewChild,
-  viewChildren,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ProfileService } from '../../core/services/profile.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService } from '../../core/services/navigation.service';
+import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -44,9 +45,10 @@ import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns
 import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
 
-type ProfileTab = 'avatar' | 'alerts' | 'characters';
+type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
 
-/** Page dédiée au profil (pseudo, avatar, alertes sonores de butin) — voir NavigationService pour le slide d'entrée/sortie. */
+/** Page dédiée au profil (pseudo, avatar, alertes sonores de butin, connexion Discord/Google) —
+ * voir NavigationService pour le slide d'entrée/sortie. */
 @Component({
   selector: 'app-profile-page',
   imports: [
@@ -58,6 +60,7 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters';
     NgClass,
     AppPageComponent,
     IconComponent,
+    TabBarComponent,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -68,6 +71,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly catalog = inject(CatalogService);
   protected readonly roster = inject(CharacterRosterService);
   protected readonly helpModal = inject(HelpModalService);
+  protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
@@ -92,16 +96,19 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly charEditInput = viewChild<ElementRef<HTMLInputElement>>('charEditInput');
   private charDragIndex: number | null = null;
 
-  /** Onglets de la page profil (Avatar/Alertes/Personnages), même principe
-   * que la barre d'onglets mobile du dashboard : 3 largeurs égales, fond +
-   * bordure glissants en CSS pur via `--active-tab-index` (voir
-   * dashboard.component.css `.tab-slider`). Chaque section reste montée en
-   * permanence (juste masquée via `.tab-hidden`) pour conserver son état. */
+  /** Onglets de la page profil (Avatar/Connexion/Alertes/Personnages) — voir TabBarComponent.
+   * Chaque section reste montée en permanence (juste masquée via `.tab-hidden`) pour conserver son
+   * état, à l'ordre `TAB_DEFS` près (source unique de vérité pour la barre d'onglets ET l'ordre
+   * d'empilement desktop, voir le template). */
+  private static readonly TAB_DEFS: readonly TabBarItem[] = [
+    { id: 'avatar', label: 'profile.tabAvatar' },
+    { id: 'connection', label: 'profile.tabConnection', helpSection: 'profileConnection' },
+    { id: 'alerts', label: 'profile.tabAlerts', helpSection: 'profileAlerts' },
+    { id: 'characters', label: 'profile.tabCharacters', helpSection: 'profileCharacters' },
+  ];
+  protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
+
   protected readonly activeTab = signal<ProfileTab>('avatar');
-  private static readonly TAB_ORDER: readonly ProfileTab[] = ['avatar', 'alerts', 'characters'];
-  protected readonly activeTabIndex = computed(() =>
-    ProfilePageComponent.TAB_ORDER.indexOf(this.activeTab()),
-  );
 
   /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en `auto-fill`, donc
    * variable selon la largeur disponible) — voir AutoFillColumnsObserver. Valeurs en dur = copie
@@ -115,21 +122,28 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly charGrid = viewChild<ElementRef<HTMLDivElement>>('charGrid');
   protected readonly charGridColumns = new AutoFillColumnsObserver(8, 120);
 
-  /** Onglet de compte actif (voir `.roster-tab-bar`, même principe que les
-   * onglets Combat/Suivi/Chat du dashboard mobile) — signal en mémoire
+  /** Onglet de compte actif (voir `rosterTabItems`/TabBarComponent) — signal en mémoire
    * seulement, pas persisté, comme `DashboardComponent.activeTab`. */
   protected readonly selectedAccountId = signal<string | null>(null);
   protected readonly selectedAccount = computed<RosterAccount | null>(
     () => this.roster.accounts().find((a) => a.id === this.selectedAccountId()) ?? null,
   );
 
-  private readonly tabBar = viewChild<ElementRef<HTMLDivElement>>('tabBar');
-  private readonly tabButtons = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
-  /** Position/largeur (px) du fond+bordure glissants de l'onglet actif — measurée
-   * sur le DOM plutôt que calculée en CSS pur, car les onglets ont une largeur
-   * variable (nom du compte, jusqu'à `.roster-tab-btn`'s max-width). */
-  protected readonly tabSliderRect = signal({ left: 0, width: 0 });
-  private tabBarResizeObserver?: ResizeObserver;
+  /** Items de la barre d'onglets de comptes (voir TabBarComponent) — un compte retirable (croix)
+   * dès qu'il n'est pas le compte par défaut, tooltip = libellé complet (toujours affiché, pas
+   * seulement en cas de troncature, comme avant). */
+  protected readonly rosterTabItems = computed<TabBarItem[]>(() =>
+    this.roster.accounts().map((account, i) => {
+      const label = this.tabLabel(account, i);
+      return {
+        id: account.id,
+        label,
+        tooltip: label,
+        removable: !account.isDefault,
+        removeTooltip: 'profile.rosterRemoveAccount',
+      };
+    }),
+  );
 
   constructor() {
     focusInlineEditInput(this.editingPseudo, this.pseudoEditInput);
@@ -141,6 +155,14 @@ export class ProfilePageComponent implements OnDestroy {
     effect(() => this.soundGridColumns.observe(this.soundGrid()?.nativeElement));
     effect(() => this.charGridColumns.observe(this.charGrid()?.nativeElement));
 
+    // Consomme le flag posé par la page compte (voir NavigationService) : forcer l'onglet
+    // Connexion quand on arrive ici depuis son CTA "Se connecter" (état invité).
+    effect(() => {
+      if (!this.nav.profileConnectionTabRequested()) return;
+      this.activeTab.set('connection');
+      this.nav.profileConnectionTabRequested.set(false);
+    });
+
     // Sélectionne le compte principal (ou le 1er) à l'initialisation, et
     // recorrige si le compte sélectionné a été supprimé entretemps.
     effect(() => {
@@ -150,47 +172,29 @@ export class ProfilePageComponent implements OnDestroy {
       const fallback = accounts.find((a) => a.isDefault) ?? accounts[0];
       this.selectedAccountId.set(fallback?.id ?? null);
     });
-
-    // Repositionne le slider à chaque changement d'onglet actif, de liste de
-    // comptes (largeur du bouton peut changer avec le libellé) ou de taille
-    // de la barre (redimensionnement fenêtre) — voir ResizeObserver plus bas.
-    effect(() => {
-      const id = this.selectedAccountId();
-      const accounts = this.roster.accounts();
-      const buttons = this.tabButtons();
-      const index = accounts.findIndex((a) => a.id === id);
-      const btn = buttons[index]?.nativeElement;
-      this.tabSliderRect.set(
-        btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 },
-      );
-    });
-
-    effect(() => {
-      const el = this.tabBar()?.nativeElement;
-      this.tabBarResizeObserver?.disconnect();
-      if (!el) return;
-      this.tabBarResizeObserver = new ResizeObserver(() => this.updateTabSliderRect());
-      this.tabBarResizeObserver.observe(el);
-    });
   }
 
   ngOnDestroy(): void {
     this.soundGridColumns.disconnect();
     this.charGridColumns.disconnect();
-    this.tabBarResizeObserver?.disconnect();
-  }
-
-  private updateTabSliderRect(): void {
-    const accounts = this.roster.accounts();
-    const index = accounts.findIndex((a) => a.id === this.selectedAccountId());
-    const btn = this.tabButtons()[index]?.nativeElement;
-    this.tabSliderRect.set(
-      btn ? { left: btn.offsetLeft, width: btn.offsetWidth } : { left: 0, width: 0 },
-    );
   }
 
   protected goBack(): void {
     this.nav.pop();
+  }
+
+  /** Onglet principal sélectionné depuis la barre — `id` est bien un `ProfileTab` (voir `tabDefs`,
+   * seule source des items passés à `<app-tab-bar>`), l'assertion est sûre. */
+  protected selectTab(id: string): void {
+    this.activeTab.set(id as ProfileTab);
+  }
+
+  /** Bouton "Gérer mon compte" de l'onglet Connexion (état authentifié uniquement) — seul point
+   * d'entrée restant vers la page compte depuis que le bouton du header a été retiré (voir
+   * CLAUDE.md) : sans lui, un utilisateur déjà connecté n'aurait plus aucun moyen de consulter ses
+   * sessions, exporter ses données ou supprimer son compte après la redirection post-connexion. */
+  protected openAccount(): void {
+    this.nav.openAccount();
   }
 
   protected startEditPseudo(): void {
@@ -217,6 +221,13 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected chooseAvatar(index: number): void {
     this.profile.setAvatar(index);
+  }
+
+  /** Repris de l'ancienne page de connexion dédiée (voir CLAUDE.md) : nettoie une éventuelle
+   * erreur d'une tentative précédente avant de relancer le flux OAuth. */
+  protected login(provider: AuthProvider): void {
+    this.auth.clearError();
+    this.auth.login(provider);
   }
 
   protected onDurationInput(value: string): void {
@@ -300,14 +311,6 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected removeAccount(id: string): void {
-    this.roster.removeAccount(id);
-  }
-
-  /** Suppression via la croix affichée dans l'onglet actif (voir
-   * `.roster-tab-remove`) — stoppe la propagation pour ne pas déclencher
-   * `selectAccount` porté par le bouton `.roster-tab-btn` englobant. */
-  protected removeAccountFromTab(event: MouseEvent, id: string): void {
-    event.stopPropagation();
     this.roster.removeAccount(id);
   }
 

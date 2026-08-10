@@ -10,7 +10,8 @@ export type HelpSection =
   | 'trades'
   | 'chat'
   | 'profileAlerts'
-  | 'profileCharacters';
+  | 'profileCharacters'
+  | 'profileConnection';
 
 /**
  * Pilote la modale d'aide générique (HelpModalComponent, rendue une seule fois au niveau racine —

@@ -5,8 +5,8 @@ import { TrackerComponent } from '../tracker/tracker.component';
 import { TrackerStripComponent } from '../tracker-strip/tracker-strip.component';
 import { HistoryComponent } from '../history/history.component';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
-import { TranslatePipe } from '../../shared/translate.pipe';
-import { HelpModalService } from '../../core/services/help-modal.service';
+import { HelpSection } from '../../core/services/help-modal.service';
+import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 
 type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
 
@@ -24,16 +24,28 @@ type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
     TrackerStripComponent,
     HistoryComponent,
     ChatPanelComponent,
-    TranslatePipe,
+    TabBarComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent {
   protected readonly combatPanel = inject(CombatPanelService);
-  protected readonly helpModal = inject(HelpModalService);
 
   protected readonly activeTab = signal<DashboardTab>('tracker');
+
+  private static readonly TAB_LABELS: Record<DashboardTab, string> = {
+    damage: 'damageMeter.header',
+    tracker: 'tracker.header',
+    history: 'history.header',
+    chat: 'chat.header',
+  };
+  /** Seuls Suivi et Chat portent une icône d'aide sur l'onglet : Combat et Historique ont déjà la
+   * leur dans l'en-tête de leur propre panneau (voir damage-meter/history component). */
+  private static readonly TAB_HELP: Partial<Record<DashboardTab, HelpSection>> = {
+    tracker: 'tracker',
+    chat: 'chat',
+  };
 
   /** Ordre des onglets réellement affichés (mobile) : Combat n'y figure que
    * pendant un combat en cours (voir CombatPanelService.hasActiveFight). */
@@ -42,12 +54,15 @@ export class DashboardComponent {
       ? ['damage', 'tracker', 'history', 'chat']
       : ['tracker', 'history', 'chat'],
   );
-  protected readonly tabCount = computed(() => this.visibleTabOrder().length);
-  /** Index de l'onglet actif parmi ceux réellement visibles (voir `.tab-slider` en CSS, qui glisse selon cet index). */
-  protected readonly activeTabIndex = computed(() => {
-    const index = this.visibleTabOrder().indexOf(this.activeTab());
-    return index === -1 ? 0 : index;
-  });
+  /** Items passés à `<app-tab-bar>` (voir TabBarComponent) — labels en clés i18n, résolues par le
+   * composant lui-même. */
+  protected readonly tabItems = computed<TabBarItem[]>(() =>
+    this.visibleTabOrder().map((id) => ({
+      id,
+      label: DashboardComponent.TAB_LABELS[id],
+      helpSection: DashboardComponent.TAB_HELP[id],
+    })),
+  );
 
   constructor() {
     // Le combat vient de se terminer pendant que l'onglet Combat (mobile)
@@ -58,5 +73,9 @@ export class DashboardComponent {
         this.activeTab.set('tracker');
       }
     });
+  }
+
+  protected selectTab(id: string): void {
+    this.activeTab.set(id as DashboardTab);
   }
 }

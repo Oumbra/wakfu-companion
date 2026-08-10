@@ -46,46 +46,13 @@
   </ng-container>
 
   <div class="profile-page-content">
-    <div class="tab-bar" [style.--tab-count]="3">
-      <span class="tab-slider" [style.--active-tab-index]="activeTabIndex()"></span>
-      <button
-        class="tab-btn"
-        [class.active]="activeTab() === 'avatar'"
-        (click)="activeTab.set('avatar')"
-      >
-        {{ 'profile.tabAvatar' | t }}
-      </button>
-      <button
-        class="tab-btn"
-        [class.active]="activeTab() === 'alerts'"
-        (click)="activeTab.set('alerts')"
-      >
-        {{ 'profile.tabAlerts' | t }}
-        <button
-          type="button"
-          class="icon-btn help-icon-btn"
-          [attr.data-tooltip]="'help.tooltip' | t"
-          (click)="helpModal.open('profileAlerts')"
-        >
-          ?
-        </button>
-      </button>
-      <button
-        class="tab-btn"
-        [class.active]="activeTab() === 'characters'"
-        (click)="activeTab.set('characters')"
-      >
-        {{ 'profile.tabCharacters' | t }}
-        <button
-          type="button"
-          class="icon-btn help-icon-btn"
-          [attr.data-tooltip]="'help.tooltip' | t"
-          (click)="helpModal.open('profileCharacters')"
-        >
-          ?
-        </button>
-      </button>
-    </div>
+    <app-tab-bar
+      [items]="tabDefs"
+      [activeId]="activeTab()"
+      (activeIdChange)="selectTab($event)"
+      sheetTitle="profile.title"
+      [mobileOnly]="true"
+    />
 
     <div class="panels-row">
       <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
@@ -140,6 +107,93 @@
                 }
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'connection'">
+        <div class="panel-body">
+          <div class="profile-field profile-field-wide">
+            <div class="profile-label-row">
+              <label class="profile-label">
+                {{ 'auth.login.panelTitle' | t }}
+                <button
+                  type="button"
+                  class="icon-btn help-icon-btn"
+                  [attr.data-tooltip]="'help.tooltip' | t"
+                  (click)="helpModal.open('profileConnection')"
+                >
+                  ?
+                </button>
+              </label>
+            </div>
+
+            @if (auth.isAuthenticated()) {
+              <button type="button" class="manage-account-btn" (click)="openAccount()">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+                <span>{{ 'auth.account.title' | t }}</span>
+              </button>
+            }
+
+            @if (auth.error(); as errorKey) {
+              <p class="login-error" role="alert">{{ errorKey | t }}</p>
+            }
+
+            <div class="provider-buttons">
+              <button
+                type="button"
+                class="provider-btn discord"
+                [disabled]="auth.busy()"
+                (click)="login('discord')"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path
+                    d="M20.32 4.94A19.8 19.8 0 0 0 15.43 3.4a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.26a18.3 18.3 0 0 0-5.48 0c-.16-.4-.4-.88-.62-1.26a.08.08 0 0 0-.08-.04c-1.71.3-3.35.81-4.89 1.54a.07.07 0 0 0-.03.03C.53 9.6-.32 14.13.1 18.6a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .09-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.05-.11c-.65-.25-1.27-.55-1.87-.89a.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08 0 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08 0l.37.3a.08.08 0 0 1-.01.12c-.6.35-1.22.64-1.87.89a.08.08 0 0 0-.04.11c.36.7.77 1.36 1.22 1.99a.08.08 0 0 0 .09.03 19.9 19.9 0 0 0 6.02-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.63a.06.06 0 0 0-.03-.03ZM8.02 15.88c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.95-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42Z"
+                  />
+                </svg>
+                <span>{{ 'auth.login.discord' | t }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="provider-btn google"
+                [disabled]="auth.busy()"
+                (click)="login('google')"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="#4285F4"
+                    d="M21.6 12.23c0-.68-.06-1.36-.18-2.02H12v3.82h5.4a4.62 4.62 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.33Z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.6 0-4.8-1.76-5.59-4.12H3.08v2.59A10 10 0 0 0 12 22Z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M6.41 13.89a5.99 5.99 0 0 1 0-3.78V7.52H3.08a10 10 0 0 0 0 8.96l3.33-2.59Z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 5.99c1.47 0 2.79.51 3.83 1.5l2.86-2.86C16.95 2.98 14.7 2 12 2a10 10 0 0 0-8.92 5.52l3.33 2.59C7.2 7.75 9.4 5.99 12 5.99Z"
+                  />
+                </svg>
+                <span>{{ 'auth.login.google' | t }}</span>
+              </button>
+            </div>
+
+            <p class="login-intro login-mobile-only">{{ 'auth.login.intro' | t }}</p>
+            <p class="login-guest-note login-mobile-only">{{ 'auth.login.guestNote' | t }}</p>
           </div>
         </div>
       </div>
@@ -288,32 +342,13 @@
             </div>
 
             <div class="roster-tabs-wrapper">
-              <div class="roster-tab-bar" #tabBar>
-                <span
-                  class="roster-tab-slider"
-                  [style.left.px]="tabSliderRect().left"
-                  [style.width.px]="tabSliderRect().width"
-                ></span>
-                @for (account of roster.accounts(); track account.id; let i = $index) {
-                  <button
-                    #tabBtn
-                    class="roster-tab-btn"
-                    [class.active]="account.id === selectedAccountId()"
-                    [attr.data-tooltip]="tabLabel(account, i)"
-                    (click)="selectAccount(account.id)"
-                  >
-                    <span class="roster-tab-label">{{ tabLabel(account, i) }}</span>
-                    @if (!account.isDefault && account.id === selectedAccountId()) {
-                      <span
-                        class="roster-tab-remove"
-                        [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
-                        (click)="removeAccountFromTab($event, account.id)"
-                      >
-                        ×
-                      </span>
-                    }
-                  </button>
-                }
+              <app-tab-bar
+                [items]="rosterTabItems()"
+                [activeId]="selectedAccountId() ?? ''"
+                (activeIdChange)="selectAccount($event)"
+                (remove)="removeAccount($event)"
+                sheetTitle="profile.rosterLabel"
+              >
                 <button
                   class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
                   type="button"
@@ -332,7 +367,7 @@
                     <line x1="5" y1="12" x2="19" y2="12" />
                   </svg>
                 </button>
-              </div>
+              </app-tab-bar>
 
               @if (selectedAccount(); as account) {
                 <div class="roster-account-panel">

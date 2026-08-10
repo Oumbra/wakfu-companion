@@ -115,6 +115,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertes',
     'profile.tabCharacters': 'Personnages',
+    'profile.tabConnection': 'Connexion',
+    'profile.tabListTooltip': 'Tous les onglets',
     'profile.soundItemsLabel': 'Alerte',
     'profile.testSound': "Tester le son de l'alerte",
     'profile.soundItemPlaceholder': "Nom de l'objet...",
@@ -200,6 +202,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileCharacters.title': 'Profil > Personnages',
     'help.profileCharacters.body':
       "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte) ; glisser-déposer permet de réordonner les personnages d'un compte.",
+    'help.profileConnection.title': 'Profil > Connexion',
+    'help.profileConnection.body':
+      "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.",
 
     'footer.copyright':
       "WAKFU MMORPG : © 2012-2025 Ankama Studio. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays.\nLe site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama.",
@@ -207,19 +212,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Politique de confidentialité',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
-    'auth.header.login': 'Se connecter',
-    'auth.header.account': 'Mon compte',
-
-    'auth.login.title': 'Connexion',
-    'auth.login.panelTitle': 'Se connecter',
+    'auth.login.panelTitle': 'Connectez-vous',
     'auth.login.intro':
-      'Connectez-vous pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.',
+      'Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
     'auth.login.guestNote':
       "La connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.",
-    'auth.login.privacyNote':
-      "Nous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.",
 
     'auth.error.cancelled': 'Connexion annulée.',
     'auth.error.state':
@@ -394,6 +393,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alerts',
     'profile.tabCharacters': 'Characters',
+    'profile.tabConnection': 'Sign in',
+    'profile.tabListTooltip': 'All tabs',
     'profile.soundItemsLabel': 'Alert',
     'profile.testSound': 'Test the alert sound',
     'profile.soundItemPlaceholder': 'Item name...',
@@ -476,6 +477,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
       "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
+    'help.profileConnection.title': 'Profile > Sign in',
+    'help.profileConnection.body':
+      "Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.",
     'help.profileCharacters.title': 'Profile > Characters',
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account); drag and drop reorders a account's characters.",
@@ -486,19 +490,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Privacy policy',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
-    'auth.header.login': 'Sign in',
-    'auth.header.account': 'My account',
-
-    'auth.login.title': 'Sign in',
     'auth.login.panelTitle': 'Sign in',
     'auth.login.intro':
-      'Sign in to find your settings, characters and tracking on all your devices.',
+      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
     'auth.login.guestNote':
       'Signing in is optional: without an account the app works exactly the same way and all your data stays in this browser.',
-    'auth.login.privacyNote':
-      'We never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.',
 
     'auth.error.cancelled': 'Sign-in cancelled.',
     'auth.error.state': 'The sign-in request expired or could not be verified. Please try again.',
@@ -671,6 +669,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personajes',
+    'profile.tabConnection': 'Inicio de sesión',
+    'profile.tabListTooltip': 'Todas las pestañas',
     'profile.soundItemsLabel': 'Alerta',
     'profile.testSound': 'Probar el sonido de la alerta',
     'profile.soundItemPlaceholder': 'Nombre del objeto...',
@@ -756,6 +756,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileCharacters.title': 'Perfil > Personajes',
     'help.profileCharacters.body':
       'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta); arrastra y suelta para reordenar los personajes de una cuenta.',
+    'help.profileConnection.title': 'Perfil > Inicio de sesión',
+    'help.profileConnection.body':
+      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. Todos los derechos reservados. WAKFU y ANKAMA son marcas o marcas registradas de Ankama en Francia y/o en otros países.\nEl sitio WAKFU-COMPANION es un sitio no oficial sin ningún vínculo con Ankama.',
@@ -763,19 +766,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidad',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
-    'auth.header.login': 'Iniciar sesión',
-    'auth.header.account': 'Mi cuenta',
-
-    'auth.login.title': 'Iniciar sesión',
     'auth.login.panelTitle': 'Iniciar sesión',
     'auth.login.intro':
-      'Inicia sesión para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.',
+      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
     'auth.login.guestNote':
       'Iniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.',
-    'auth.login.privacyNote':
-      'No gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.',
 
     'auth.error.cancelled': 'Inicio de sesión cancelado.',
     'auth.error.state':
@@ -949,6 +946,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personagens',
+    'profile.tabConnection': 'Iniciar sessão',
+    'profile.tabListTooltip': 'Todos os separadores',
     'profile.soundItemsLabel': 'Alerta',
     'profile.testSound': 'Testar o som do alerta',
     'profile.soundItemPlaceholder': 'Nome do item...',
@@ -1034,6 +1033,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileCharacters.title': 'Perfil > Personagens',
     'help.profileCharacters.body':
       'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta); arraste e solte para reordenar os personagens de uma conta.',
+    'help.profileConnection.title': 'Perfil > Iniciar sessão',
+    'help.profileConnection.body':
+      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. Todos os direitos reservados. WAKFU e ANKAMA são marcas ou marcas registradas da Ankama na França e/ou em outros países.\nO site WAKFU-COMPANION é um site não oficial sem qualquer vínculo com a Ankama.',
@@ -1041,19 +1043,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidade',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
-    'auth.header.login': 'Iniciar sessão',
-    'auth.header.account': 'Minha conta',
-
-    'auth.login.title': 'Iniciar sessão',
     'auth.login.panelTitle': 'Iniciar sessão',
     'auth.login.intro':
-      'Inicie sessão para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.',
+      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
     'auth.login.guestNote':
       'Iniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.',
-    'auth.login.privacyNote':
-      'Não gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.',
 
     'auth.error.cancelled': 'Início de sessão cancelado.',
     'auth.error.state':

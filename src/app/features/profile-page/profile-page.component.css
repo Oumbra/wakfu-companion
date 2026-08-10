@@ -5,14 +5,13 @@
   min-height: 0;
 }
 
-/* Onglets Avatar/Alertes/Personnages : `.tab-bar`/`.tab-slider`/`.tab-btn` (fond+bordure glissants)
-   sont définis globalement dans styles.css — mutualisés avec la barre d'onglets mobile du
-   dashboard (voir styles.css) — mobile only comme sur le dashboard : cachée par défaut, affichée
-   dans la media query en fin de fichier. `.panels-row`/`.tool-panel`/`.panel-body` reprennent le
-   même principe : `.tool-panel`/`.panel-body` sont globaux (styles.css, boîte + header + body),
-   neutralisés ici en desktop (voir plus bas) pour ne pas changer la mise en page empilée
-   d'origine, et ne prennent leur habillage "carte" qu'en mobile, connectée sans vide sous
-   `.tab-bar` (comme `.panels-row .tool-panel` sur le dashboard). */
+/* Onglets Avatar/Connexion/Alertes/Personnages : voir TabBarComponent (défilement horizontal,
+   soulignement mesuré sur le DOM, feuille de repli) — `mobileOnly` le cache par défaut en desktop
+   (sections empilées sans onglets), visible seulement en mobile. `.panels-row`/`.tool-panel`/
+   `.panel-body` reprennent un principe similaire : `.tool-panel`/`.panel-body` sont globaux
+   (styles.css, boîte + header + body), neutralisés ici en desktop (voir plus bas) pour ne pas
+   changer la mise en page empilée d'origine, et ne prennent leur habillage "carte" qu'en mobile,
+   connectée sans vide sous la barre d'onglets (comme `.panels-row .tool-panel` sur le dashboard). */
 
 /* Le scroll (desktop) appartient à .app-page-body, l'ancêtre générique (voir AppPageComponent) :
    ce wrapper ne fait que porter le padding/la mise en page en flux normal, sans overflow propre —
@@ -33,7 +32,7 @@
 }
 /* Neutralisé en desktop (boîte/ombre/padding globaux de styles.css retirés)
    pour garder la pile de sections d'origine — voir media query mobile plus
-   bas pour l'habillage carte réel, connecté à .tab-bar. */
+   bas pour l'habillage carte réel, connecté à la barre d'onglets (TabBarComponent). */
 .tool-panel {
   width: 100%;
   background: none;
@@ -128,6 +127,123 @@
 .pseudo-edit-input:focus {
   outline: none;
   background: #151515;
+}
+
+/* Section connexion Discord/Google (voir CLAUDE.md), onglet dédié au même titre qu'Avatar/Alertes/
+   Personnages : mêmes classes `.profile-field-wide`/`.profile-label-row`/`.profile-label` que les
+   autres onglets (voir plus bas). La description détaillée (portée facultative de la connexion,
+   confidentialité, choix de migration des données...) vit dans la modale d'aide
+   (help.profileConnection) ; les 2 premières phrases restent en plus affichées en clair sous les
+   boutons en mobile (`.login-mobile-only`), à l'identique de l'ancienne page de connexion dédiée —
+   masquées en desktop où la modale suffit et où la section reste compacte comme Alertes/
+   Personnages. */
+.manage-account-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.manage-account-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.manage-account-btn svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.login-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid var(--btn-active-red);
+  color: #ffb4ab;
+  line-height: 1.4;
+}
+.provider-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.provider-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    transform 0.05s ease,
+    box-shadow 0.15s ease;
+}
+.provider-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.provider-btn:not(:disabled):hover {
+  filter: brightness(1.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.provider-btn:not(:disabled):active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+.provider-btn svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.provider-btn.discord {
+  background: #5865f2;
+  border-color: #5865f2;
+  color: #fff;
+}
+.provider-btn.google {
+  background: #fff;
+  border-color: #dadce0;
+  color: #3c4043;
+}
+.login-intro {
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+.login-guest-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+/* Desktop (> seuil des onglets mobiles de cette page, voir @media (max-width: 800px) plus bas) :
+   boutons Discord/Google côte à côte, même largeur — plus de place qu'en mobile pour un rendu plus
+   soigné qu'un simple empilement plein-largeur. La description détaillée n'y est plus répétée
+   (disponible via la modale d'aide, bouton "?" du libellé de section). */
+@media (min-width: 801px) {
+  .provider-buttons {
+    flex-direction: row;
+  }
+  .provider-btn {
+    flex: 1;
+  }
+  .login-mobile-only {
+    display: none;
+  }
 }
 
 .profile-field {
@@ -502,59 +618,9 @@
   background: color-mix(in srgb, var(--rarity-color) 16%, #202020);
 }
 
-/* Section "Personnages déclarés" (voir CharacterRosterService) : un compte
-   = un onglet, même principe visuel que la barre d'onglets mobile du
-   dashboard (dashboard.component.css .tab-bar/.tab-slider) — fond +
-   bordure inférieure glissants, mesurés sur le DOM (largeur d'onglet
-   variable ici, contrairement aux 3 onglets à largeur égale du dashboard). */
-.roster-tab-bar {
-  position: relative;
-  display: flex;
-  gap: 2px;
-  overflow-x: auto;
-  background: var(--panel-header-bg);
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  padding: 6px 6px 0;
-  overflow-y: hidden;
-}
-.roster-tab-slider {
-  position: absolute;
-  top: 6px;
-  height: 30px;
-  background: var(--panel-bg);
-  border-bottom: 2px solid var(--accent);
-  border-radius: 6px 6px 0 0;
-  transition:
-    left 0.25s ease,
-    width 0.25s ease;
-  pointer-events: none;
-}
-.roster-tab-btn {
-  flex-shrink: 0;
-  align-items: center;
-  gap: 4px;
-  max-width: 140px;
-  min-width: 0;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 6px 6px 0 0;
-  font-size: 0.75rem;
-}
-.roster-tab-btn {
-  position: relative;
-  display: flex;
-  background: transparent;
-  border: none;
-  color: #999;
-  font-weight: 700;
-  transition: color 0.25s ease;
-}
-.roster-tab-btn.active {
-  color: var(--accent);
-}
-.roster-tab-label,
+/* Section "Personnages déclarés" (voir CharacterRosterService) : un compte = un onglet — voir
+   TabBarComponent pour la barre elle-même (défilement horizontal, soulignement mesuré sur le
+   DOM, feuille de repli). */
 .roster-character-name {
   min-width: 0;
   overflow: hidden;
@@ -632,21 +698,6 @@
   width: 12px;
   height: 12px;
 }
-/* Croix affichée dans l'onglet actif (voir [class.active] côté template) —
-   pas un <button> imbriqué (invalide dans un <button> englobant), un <span>
-   avec stopPropagation() côté TS pour ne pas sélectionner l'onglet. */
-.roster-tab-remove {
-  width: 14px;
-  height: 14px;
-  border-radius: 4px;
-  line-height: 14px;
-  text-align: center;
-  color: #999;
-}
-.roster-tab-remove:hover {
-  background: #b33939;
-  color: #fff;
-}
 .roster-character-icon {
   width: 22px;
   height: 22px;
@@ -667,9 +718,6 @@
     padding: 15px;
     overflow: hidden;
   }
-  .tab-bar {
-    display: flex;
-  }
   .panels-row {
     flex-grow: 1;
     min-height: 0;
@@ -679,7 +727,7 @@
   .panels-row .tab-hidden {
     display: none;
   }
-  /* Se connecte sans vide sous .tab-bar (même principe que
+  /* Se connecte sans vide sous la barre d'onglets (même principe que
      .panels-row .tool-panel sur le dashboard) : pas de bordure/radius haut. */
   .tool-panel {
     background: var(--panel-bg);

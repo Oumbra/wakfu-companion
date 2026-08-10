@@ -24,8 +24,8 @@ import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/rec
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
 import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppPageComponent } from './shared/app-page/app-page.component';
-import { LoginPageComponent } from './features/auth/login-page/login-page.component';
 import { AccountPageComponent } from './features/auth/account-page/account-page.component';
+import { TabSheetComponent } from './shared/tab-sheet/tab-sheet.component';
 import { AuthService } from './core/auth/auth.service';
 import { Gender } from './core/data/class-icons.data';
 
@@ -46,8 +46,8 @@ import { Gender } from './core/data/class-icons.data';
     LegalPageComponent,
     AppHeaderComponent,
     AppPageComponent,
-    LoginPageComponent,
     AccountPageComponent,
+    TabSheetComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

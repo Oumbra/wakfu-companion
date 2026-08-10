@@ -54,29 +54,6 @@
         <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
       </button>
     }
-    @if (nav.view() !== 'account' && nav.view() !== 'login') {
-      <button
-        class="icon-btn account-btn tooltip-below tooltip-align-right"
-        type="button"
-        [class.connected]="auth.isAuthenticated()"
-        [attr.data-tooltip]="
-          (auth.isAuthenticated() ? 'auth.header.account' : 'auth.header.login') | t
-        "
-        (click)="openAccount()"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        >
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-          <circle cx="12" cy="7" r="4" />
-        </svg>
-      </button>
-    }
     <app-language-switcher />
     @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
       <app-profile />
@@ -110,25 +87,6 @@
           >
             <img [src]="sessionRecapIcon" class="mobile-menu-icon" alt="" />
             <span>{{ 'app.sessionRecap' | t }}</span>
-          </button>
-        }
-        @if (nav.view() !== 'account' && nav.view() !== 'login') {
-          <button class="mobile-menu-item" (click)="openAccount(); closeMobileMenu()">
-            <svg
-              class="mobile-menu-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-            <span>{{
-              (auth.isAuthenticated() ? 'auth.header.account' : 'auth.header.login') | t
-            }}</span>
           </button>
         }
         <app-language-switcher variant="row" />

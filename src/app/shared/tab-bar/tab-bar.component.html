@@ -1,0 +1,58 @@
+<div class="tab-bar-row" [class.mobile-only]="mobileOnly()">
+  <button
+    type="button"
+    class="icon-btn tab-bar-list-btn tooltip-below tooltip-align-left"
+    [attr.data-tooltip]="listTooltip() | t"
+    (click)="openSheet()"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  </button>
+  <div class="tab-bar-scroll" #barEl>
+    <span
+      class="tab-bar-underline"
+      [style.left.px]="sliderRect().left"
+      [style.width.px]="sliderRect().width"
+    ></span>
+    @for (item of items(); track item.id) {
+      <button
+        #tabBtn
+        type="button"
+        class="tab-bar-btn"
+        [class.active]="item.id === activeId()"
+        [attr.data-tooltip]="item.tooltip ? (item.tooltip | t) : null"
+        (click)="select(item.id)"
+      >
+        <span class="tab-bar-label">{{ item.label | t }}</span>
+        @if (item.helpSection; as section) {
+          <button
+            type="button"
+            class="icon-btn help-icon-btn"
+            [attr.data-tooltip]="'help.tooltip' | t"
+            (click)="helpModal.open(section)"
+          >
+            ?
+          </button>
+        }
+        @if (item.removable && item.id === activeId()) {
+          <span
+            class="tab-bar-remove"
+            [attr.data-tooltip]="item.removeTooltip ? (item.removeTooltip | t) : null"
+            (click)="onRemove($event, item.id)"
+          >
+            ×
+          </span>
+        }
+      </button>
+    }
+    <ng-content></ng-content>
+  </div>
+</div>
