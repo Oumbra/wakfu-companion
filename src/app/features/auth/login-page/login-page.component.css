@@ -1,0 +1,99 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.login-content {
+  padding: 16px 20px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+/* `.tool-panel` global impose height: 100% (voir styles.css) : neutralisé ici, la page de
+   connexion est un bloc court centré, pas un panneau à hauteur de colonne. */
+.login-panel {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+}
+
+.login-body {
+  padding: 18px 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-intro {
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.login-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid var(--btn-active-red);
+  color: #ffb4ab;
+  line-height: 1.4;
+}
+
+.provider-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.provider-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    transform 0.05s ease;
+}
+.provider-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.provider-btn:not(:disabled):hover {
+  filter: brightness(1.12);
+}
+.provider-btn:not(:disabled):active {
+  transform: translateY(1px);
+}
+.provider-btn svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.provider-btn.discord {
+  background: #5865f2;
+  border-color: #5865f2;
+  color: #fff;
+}
+.provider-btn.google {
+  background: #fff;
+  border-color: #dadce0;
+  color: #3c4043;
+}
+
+.login-guest-note,
+.login-privacy-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}

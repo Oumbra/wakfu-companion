@@ -6,6 +6,7 @@ import {
   doublePrecision,
   index,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
   text,
@@ -425,4 +426,35 @@ export const authRateLimits = pgTable(
     count: integer('count').notNull().default(0),
   },
   (table) => [primaryKey({ columns: [table.bucket, table.windowStart] })],
+);
+
+/**
+ * Configuration utilisateur (lot 6 dans le phasage du plan §12) — une ligne
+ * par clé, reprenant exactement `EXPORT_KEYS` d'`AppDataExportService` côté
+ * client (`profile`, `watchlist`, `roster`, ...), comme prévu au §6.
+ *
+ * ⚠ Anticipée ici, au lot 5 : le prompt 5.2 demande de proposer le
+ * téléversement des données locales à la première connexion et de trancher le
+ * cas « le compte a déjà des données ». Sans endpoint de stockage, ce
+ * parcours ne pourrait être qu'une maquette. Ce lot n'implémente donc que le
+ * strict nécessaire (lecture/écriture complète du jeu de clés) ; la
+ * synchronisation fine, la résolution de conflits par clé et le suivi des
+ * horodatages restent au lot 6.
+ *
+ * Le contenu du chat n'y figure pas plus que dans `AppDataExportService` :
+ * seuls les *filtres* et *canaux actifs* sont des préférences — les messages
+ * eux-mêmes ne quittent jamais la machine du joueur (§7, RGPD : ils
+ * appartiennent à des tiers qui n'ont rien demandé).
+ */
+export const userSettings = pgTable(
+  'user_settings',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    key: text('key').notNull(),
+    value: jsonb('value').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.key] })],
 );

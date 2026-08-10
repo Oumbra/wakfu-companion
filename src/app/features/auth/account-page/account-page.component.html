@@ -1,0 +1,224 @@
+<app-page [title]="'auth.account.title' | t" (back)="goBack()">
+  <div class="account-content">
+    @if (auth.isAuthenticated()) {
+      <!-- Décision de migration des données locales — jamais de fusion silencieuse
+           (prompt 5.2 point 5) : tant qu'elle est en attente, elle passe avant tout le reste. -->
+      @if (auth.migrationPrompt(); as migration) {
+        <section class="tool-panel account-panel migration-panel">
+          <div class="panel-header">{{ 'auth.migration.title' | t }}</div>
+          <div class="account-body">
+            @switch (migration.kind) {
+              @case ('upload') {
+                <p class="account-text">{{ 'auth.migration.uploadText' | t }}</p>
+                <div class="account-actions">
+                  <button
+                    type="button"
+                    class="account-btn primary"
+                    [disabled]="auth.busy()"
+                    (click)="chooseMigration('upload')"
+                  >
+                    {{ 'auth.migration.uploadAction' | t }}
+                  </button>
+                  <button type="button" class="account-btn" (click)="auth.dismissMigration()">
+                    {{ 'auth.migration.later' | t }}
+                  </button>
+                </div>
+              }
+              @case ('download') {
+                <p class="account-text">{{ 'auth.migration.downloadText' | t }}</p>
+                <div class="account-actions">
+                  <button
+                    type="button"
+                    class="account-btn primary"
+                    [disabled]="auth.busy()"
+                    (click)="chooseMigration('download')"
+                  >
+                    {{ 'auth.migration.downloadAction' | t }}
+                  </button>
+                  <button type="button" class="account-btn" (click)="auth.dismissMigration()">
+                    {{ 'auth.migration.later' | t }}
+                  </button>
+                </div>
+              }
+              @case ('conflict') {
+                <p class="account-text">{{ 'auth.migration.conflictText' | t }}</p>
+                @if (migration.remote.updatedAt; as updatedAt) {
+                  <p class="account-hint">
+                    {{ 'auth.migration.remoteUpdatedAt' | t: { date: formatDate(updatedAt) } }}
+                  </p>
+                }
+                <div class="account-actions">
+                  <button
+                    type="button"
+                    class="account-btn primary"
+                    [disabled]="auth.busy()"
+                    (click)="chooseMigration('upload')"
+                  >
+                    {{ 'auth.migration.keepLocal' | t }}
+                  </button>
+                  <button
+                    type="button"
+                    class="account-btn"
+                    [disabled]="auth.busy()"
+                    (click)="chooseMigration('download')"
+                  >
+                    {{ 'auth.migration.keepRemote' | t }}
+                  </button>
+                </div>
+                <p class="account-hint">{{ 'auth.migration.conflictHint' | t }}</p>
+              }
+            }
+          </div>
+        </section>
+      }
+
+      <section class="tool-panel account-panel">
+        <div class="panel-header">{{ 'auth.account.identity' | t }}</div>
+        <div class="account-body">
+          <div class="identity-line">
+            <span class="identity-label">{{ 'auth.account.name' | t }}</span>
+            <span class="identity-value">{{
+              auth.user()?.displayName ?? ('auth.account.noName' | t)
+            }}</span>
+          </div>
+          <div class="identity-line">
+            <span class="identity-label">{{ 'auth.account.email' | t }}</span>
+            <span class="identity-value">{{
+              auth.user()?.email ?? ('auth.account.noEmail' | t)
+            }}</span>
+          </div>
+          <div class="identity-line">
+            <span class="identity-label">{{ 'auth.account.providers' | t }}</span>
+            <span class="provider-badges">
+              @for (identity of auth.identities(); track identity.provider) {
+                <span class="provider-badge" [class.google]="identity.provider === 'google'">
+                  {{
+                    identity.provider === 'discord'
+                      ? ('auth.login.discord' | t)
+                      : ('auth.login.google' | t)
+                  }}
+                </span>
+              }
+            </span>
+          </div>
+          <p class="account-hint">{{ 'auth.account.mergeHint' | t }}</p>
+        </div>
+      </section>
+
+      <section class="tool-panel account-panel">
+        <div class="panel-header">
+          {{ 'auth.account.sessions' | t }}
+          <button
+            class="icon-btn tooltip-align-right"
+            type="button"
+            [attr.data-tooltip]="'auth.account.refresh' | t"
+            (click)="refreshSessions()"
+          >
+            <span class="icon-btn-text">↻</span>
+          </button>
+        </div>
+        <div class="account-body">
+          @if (sessionsLoading()) {
+            <p class="account-hint">{{ 'auth.account.sessionsLoading' | t }}</p>
+          } @else if (sessions().length === 0) {
+            <p class="account-hint">{{ 'auth.account.sessionsEmpty' | t }}</p>
+          } @else {
+            <ul class="session-list">
+              @for (session of sessions(); track session.id; let i = $index) {
+                <li class="session-row">
+                  <div class="session-info">
+                    <span class="session-device">
+                      {{ describeSession(session) }}
+                      @if (session.current) {
+                        <span class="session-current">{{ 'auth.account.currentSession' | t }}</span>
+                      }
+                    </span>
+                    <span class="session-dates">
+                      {{ 'auth.account.lastUsed' | t: { date: formatDate(session.lastUsedAt) } }}
+                    </span>
+                  </div>
+                  <button
+                    class="icon-btn reset-btn"
+                    [class.tooltip-below]="i === 0"
+                    type="button"
+                    [attr.data-tooltip]="'auth.account.revoke' | t"
+                    [disabled]="auth.busy()"
+                    (click)="revokeSession(session)"
+                  >
+                    <span class="icon-btn-text">×</span>
+                  </button>
+                </li>
+              }
+            </ul>
+            <div class="account-actions">
+              <button
+                type="button"
+                class="account-btn"
+                [disabled]="auth.busy()"
+                (click)="revokeAll()"
+              >
+                {{ 'auth.account.revokeAll' | t }}
+              </button>
+            </div>
+          }
+        </div>
+      </section>
+
+      <section class="tool-panel account-panel">
+        <div class="panel-header">{{ 'auth.account.data' | t }}</div>
+        <div class="account-body">
+          <p class="account-text">{{ 'auth.account.dataText' | t }}</p>
+          <div class="account-actions">
+            <button type="button" class="account-btn" (click)="exportData()">
+              {{ 'auth.account.export' | t }}
+            </button>
+            <button
+              type="button"
+              class="account-btn"
+              [disabled]="auth.busy()"
+              (click)="chooseMigration('upload')"
+            >
+              {{ 'auth.account.syncNow' | t }}
+            </button>
+          </div>
+          @if (auth.error(); as errorKey) {
+            <p class="account-error" role="alert">{{ errorKey | t }}</p>
+          }
+        </div>
+      </section>
+
+      <section class="tool-panel account-panel">
+        <div class="panel-header">{{ 'auth.account.danger' | t }}</div>
+        <div class="account-body">
+          <div class="account-actions">
+            <button type="button" class="account-btn" [disabled]="auth.busy()" (click)="logout()">
+              {{ 'auth.account.logout' | t }}
+            </button>
+            <button
+              type="button"
+              class="account-btn danger"
+              [disabled]="auth.busy()"
+              (click)="confirmDeleteAccount($event)"
+            >
+              {{ 'auth.account.delete' | t }}
+            </button>
+          </div>
+          <p class="account-hint">{{ 'auth.account.deleteHint' | t }}</p>
+        </div>
+      </section>
+    } @else {
+      <!-- Mode invité : la page reste accessible et explique simplement l'intérêt d'un compte. -->
+      <section class="tool-panel account-panel">
+        <div class="panel-header">{{ 'auth.account.guestTitle' | t }}</div>
+        <div class="account-body">
+          <p class="account-text">{{ 'auth.account.guestText' | t }}</p>
+          <div class="account-actions">
+            <button type="button" class="account-btn primary" (click)="openLogin()">
+              {{ 'auth.account.loginAction' | t }}
+            </button>
+          </div>
+        </div>
+      </section>
+    }
+  </div>
+</app-page>

@@ -25,6 +25,18 @@
         <app-legal-page />
       }
     </div>
+
+    <div class="view-panel" [style.transform]="nav.panelTransform('login')">
+      @defer (when nav.hasVisited('login')) {
+        <app-login-page />
+      }
+    </div>
+
+    <div class="view-panel" [style.transform]="nav.panelTransform('account')">
+      @defer (when nav.hasVisited('account')) {
+        <app-account-page />
+      }
+    </div>
   </div>
 
   <app-session-recap />

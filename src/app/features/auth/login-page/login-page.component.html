@@ -1,0 +1,60 @@
+<app-page [title]="'auth.login.title' | t" (back)="goBack()">
+  <div class="login-content">
+    <section class="tool-panel login-panel">
+      <div class="panel-header">{{ 'auth.login.panelTitle' | t }}</div>
+      <div class="login-body">
+        <p class="login-intro">{{ 'auth.login.intro' | t }}</p>
+
+        @if (auth.error(); as errorKey) {
+          <p class="login-error" role="alert">{{ errorKey | t }}</p>
+        }
+
+        <div class="provider-buttons">
+          <button
+            type="button"
+            class="provider-btn discord"
+            [disabled]="auth.busy()"
+            (click)="login('discord')"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path
+                d="M20.32 4.94A19.8 19.8 0 0 0 15.43 3.4a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.26a18.3 18.3 0 0 0-5.48 0c-.16-.4-.4-.88-.62-1.26a.08.08 0 0 0-.08-.04c-1.71.3-3.35.81-4.89 1.54a.07.07 0 0 0-.03.03C.53 9.6-.32 14.13.1 18.6a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .09-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.05-.11c-.65-.25-1.27-.55-1.87-.89a.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08 0 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08 0l.37.3a.08.08 0 0 1-.01.12c-.6.35-1.22.64-1.87.89a.08.08 0 0 0-.04.11c.36.7.77 1.36 1.22 1.99a.08.08 0 0 0 .09.03 19.9 19.9 0 0 0 6.02-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.63a.06.06 0 0 0-.03-.03ZM8.02 15.88c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.95-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42Z"
+              />
+            </svg>
+            <span>{{ 'auth.login.discord' | t }}</span>
+          </button>
+
+          <button
+            type="button"
+            class="provider-btn google"
+            [disabled]="auth.busy()"
+            (click)="login('google')"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                fill="#4285F4"
+                d="M21.6 12.23c0-.68-.06-1.36-.18-2.02H12v3.82h5.4a4.62 4.62 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.33Z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.6 0-4.8-1.76-5.59-4.12H3.08v2.59A10 10 0 0 0 12 22Z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M6.41 13.89a5.99 5.99 0 0 1 0-3.78V7.52H3.08a10 10 0 0 0 0 8.96l3.33-2.59Z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.99c1.47 0 2.79.51 3.83 1.5l2.86-2.86C16.95 2.98 14.7 2 12 2a10 10 0 0 0-8.92 5.52l3.33 2.59C7.2 7.75 9.4 5.99 12 5.99Z"
+              />
+            </svg>
+            <span>{{ 'auth.login.google' | t }}</span>
+          </button>
+        </div>
+
+        <p class="login-guest-note">{{ 'auth.login.guestNote' | t }}</p>
+        <p class="login-privacy-note">{{ 'auth.login.privacyNote' | t }}</p>
+      </div>
+    </section>
+  </div>
+</app-page>

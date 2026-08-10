@@ -54,11 +54,11 @@ Secrets/variables supplémentaires du **lot 5** (authentification), tous
 en mode invité (§7 du plan). Le workflow de déploiement les pousse seulement
 s'ils sont définis, jamais en échec sinon.
 
-| Secret / variable                                                                                | Description                                                                                                                                                                                                              |
-| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `DISCORD_CLIENT_ID_PREVIEW` / `DISCORD_CLIENT_SECRET_PREVIEW`                                     | Application Discord (_Developer Portal → Applications → OAuth2_). Redirect URI à déclarer : `<PUBLIC_BASE_URL>/api/v1/auth/discord/callback`.                                                                              |
-| `GOOGLE_CLIENT_ID_PREVIEW` / `GOOGLE_CLIENT_SECRET_PREVIEW`                                       | Identifiants OAuth 2.0 Google (_Google Cloud Console → API et services → Identifiants_). Redirect URI : `<PUBLIC_BASE_URL>/api/v1/auth/google/callback`.                                                                   |
-| `PUBLIC_BASE_URL_PREVIEW` (**variable** GitHub, pas un secret)                                     | Origine publique stable de la preview, ex. `https://wakfu-companion.pages.dev`. Indispensable : une preview Cloudflare a aussi une URL **par déploiement** (`<hash>.wakfu-companion.pages.dev`), qui ne peut pas être déclarée chez le fournisseur. |
+| Secret / variable                                              | Description                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_CLIENT_ID_PREVIEW` / `DISCORD_CLIENT_SECRET_PREVIEW`  | Application Discord (_Developer Portal → Applications → OAuth2_). Redirect URI à déclarer : `<PUBLIC_BASE_URL>/api/v1/auth/discord/callback`.                                                                                                       |
+| `GOOGLE_CLIENT_ID_PREVIEW` / `GOOGLE_CLIENT_SECRET_PREVIEW`    | Identifiants OAuth 2.0 Google (_Google Cloud Console → API et services → Identifiants_). Redirect URI : `<PUBLIC_BASE_URL>/api/v1/auth/google/callback`.                                                                                            |
+| `PUBLIC_BASE_URL_PREVIEW` (**variable** GitHub, pas un secret) | Origine publique stable de la preview, ex. `https://wakfu-companion.pages.dev`. Indispensable : une preview Cloudflare a aussi une URL **par déploiement** (`<hash>.wakfu-companion.pages.dev`), qui ne peut pas être déclarée chez le fournisseur. |
 
 `DATABASE_URL`/`DATABASE_URL_PREVIEW`/`PRICE_SERVICE_TOKEN_PREVIEW` sont
 aussi transmis comme variable d'environnement chiffrée du projet Cloudflare
@@ -420,15 +420,15 @@ façade.
 
 ### Organisation du code
 
-| Fichier                                       | Rôle                                                                                     |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `server/auth/store.ts`                        | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.   |
-| `server/auth/flow.ts`                         | Toute la logique : validation du `state`, usage unique du code, fusion de comptes, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
-| `server/auth/db-store.ts`                     | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                            |
-| `server/auth/memory-store.ts`                 | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                |
-| `server/auth/providers.ts`                    | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                   |
-| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.        |
-| `functions/api/_auth.ts`                      | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.            |
+| Fichier                                                | Rôle                                                                                                                                     |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `server/auth/store.ts`                                 | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.                                                   |
+| `server/auth/flow.ts`                                  | Toute la logique : validation du `state`, usage unique du code, fusion de comptes, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
+| `server/auth/db-store.ts`                              | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                                                                           |
+| `server/auth/memory-store.ts`                          | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                                                              |
+| `server/auth/providers.ts`                             | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                                                                 |
+| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.                                                                 |
+| `functions/api/_auth.ts`                               | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.                                                          |
 
 Tests : `npm run test:server` (config `vitest.server.config.ts`, séparée de
 `npm test` qui passe par le builder Angular et ne voit que `src/`). Couvrent
@@ -498,3 +498,45 @@ déploiement et une vraie application OAuth permettent de conclure :
    cookie (`httpOnly`, `Secure`, `SameSite=Lax`), `GET /auth/me`, la
    révocation d'une session depuis un autre appareil, et la suppression de
    compte.
+
+## Parcours client (lot 5, prompt 5.2)
+
+| Fichier                                  | Rôle                                                                                                       |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `src/app/core/auth/auth.service.ts`      | État de session en signaux, connexion/déconnexion, sessions, suppression de compte, décision de migration. |
+| `src/app/features/auth/login-page/`      | Deux boutons (Discord, Google) + erreur explicite au retour d'un échec.                                    |
+| `src/app/features/auth/account-page/`    | Identité, fournisseurs liés, appareils connectés (révocation), export, suppression, écran de migration.    |
+| `src/app/core/api/api-client.service.ts` | `requestJson` (écritures + en-tête CSRF) et le point d'accroche global du `401`.                           |
+
+Trois points valent d'être retenus :
+
+**Le « 401 → mode invité » n'est pas un intercepteur Angular.** L'application
+n'utilise pas `HttpClient` : tout passe par `ApiClientService`, où un seul
+point d'accroche (`setUnauthorizedHandler`, enregistré par `AuthService`)
+couvre donc l'intégralité des appels API. Un 401 est un cas normal, pas une
+panne : la session a expiré ou a été révoquée depuis un autre appareil, et
+l'application continue sans compte.
+
+**Aucune garde de route.** `login` et `account` sont deux vues de plus dans
+`NavigationService` (chargées en `@defer`, donc en lazy chunk), atteintes
+uniquement par un clic sur le bouton compte de l'en-tête. Ce bouton est
+volontairement visible **même avant qu'un fichier `wakfu.log` soit connecté**
+(contrairement au bouton profil) : se connecter ne dépend d'aucun fichier, et
+l'écran de configuration est justement là où un joueur arrivant sur un nouvel
+appareil voudra récupérer ses données.
+
+**La migration des données ne fusionne jamais.** Après une connexion réussie,
+le client compare les données locales et celles du compte, puis pose une
+question explicite selon les quatre cas possibles (rien / téléverser /
+récupérer / conflit à trancher). Le remplacement est complet dans les deux
+sens, et l'écran de conflit rappelle qu'un export fichier reste possible avant
+de choisir.
+
+### Politique de confidentialité mise à jour
+
+`privacy.notice.body` (4 locales) affirmait « aucun serveur, aucune base de
+données, aucun compte utilisateur » — faux dès ce lot. Réécrite pour couvrir
+les deux modes d'utilisation, les données réellement conservées avec un
+compte, le cookie de session, le fait que le chat n'est jamais transmis,
+l'hébergement (Cloudflare + Neon) et les droits RGPD (export, suppression
+réelle). Obligation annoncée au §7 du plan.

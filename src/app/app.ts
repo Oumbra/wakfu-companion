@@ -24,6 +24,9 @@ import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/rec
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
 import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppPageComponent } from './shared/app-page/app-page.component';
+import { LoginPageComponent } from './features/auth/login-page/login-page.component';
+import { AccountPageComponent } from './features/auth/account-page/account-page.component';
+import { AuthService } from './core/auth/auth.service';
 import { Gender } from './core/data/class-icons.data';
 
 @Component({
@@ -43,6 +46,8 @@ import { Gender } from './core/data/class-icons.data';
     LegalPageComponent,
     AppHeaderComponent,
     AppPageComponent,
+    LoginPageComponent,
+    AccountPageComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -57,6 +62,7 @@ export class App implements OnInit {
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
   private readonly catalog = inject(CatalogService);
+  private readonly auth = inject(AuthService);
 
   ngOnInit(): void {
     void this.logFileAccess.init();
@@ -68,6 +74,16 @@ export class App implements OnInit {
     // UI explicite pour le cas `unavailable` ; en attendant, `status()` reste
     // consultable par tout composant qui en a besoin.
     void this.catalog.initialize();
+
+    // Authentification (lot 5) : lit le retour OAuth éventuel puis interroge
+    // /auth/me. Volontairement non bloquant — un invité (cas courant) ne subit
+    // qu'un 401, et l'application s'affiche normalement pendant ce temps.
+    void this.auth.handleStartup().then((outcome) => {
+      // Au retour d'une connexion réussie, on atterrit sur la page compte :
+      // c'est là que se prend, le cas échéant, la décision sur les données
+      // locales (voir AuthService.evaluateDataMigration).
+      if (outcome?.status === 'ok') this.nav.openAccount();
+    });
   }
 
   protected onClassChosen(event: { className: string; gender: Gender }): void {

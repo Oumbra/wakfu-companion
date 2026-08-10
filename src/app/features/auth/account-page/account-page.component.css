@@ -1,0 +1,170 @@
+:host {
+  display: block;
+  height: 100%;
+  min-height: 0;
+}
+
+.account-content {
+  padding: 16px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+/* `.tool-panel` global impose height: 100% (voir styles.css) : neutralisé, ces sections
+   s'empilent en flux normal et grandissent avec leur contenu. */
+.account-panel {
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+}
+
+.migration-panel {
+  border-color: var(--accent);
+}
+
+.account-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.account-text {
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+.account-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+.account-error {
+  margin: 0;
+  color: #ffb4ab;
+  font-size: 0.9rem;
+}
+
+.identity-line {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+.identity-label {
+  color: var(--text-muted);
+  min-width: 130px;
+}
+.identity-value {
+  color: var(--text-color);
+  word-break: break-word;
+}
+
+.provider-badges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.provider-badge {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  background: #5865f2;
+  color: #fff;
+}
+.provider-badge.google {
+  background: #fff;
+  color: #3c4043;
+}
+
+.session-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-header-bg);
+}
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.session-device {
+  color: var(--text-color);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.session-current {
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  background: var(--highlight-green);
+  border: 1px solid var(--highlight-green-border);
+  color: var(--btn-active-green);
+}
+.session-dates {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.account-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.account-btn {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-header-bg);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.account-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.account-btn:not(:disabled):hover {
+  border-color: var(--accent);
+}
+.account-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06232b;
+  font-weight: 600;
+}
+.account-btn.danger:not(:disabled):hover {
+  border-color: var(--btn-active-red);
+  color: var(--btn-active-red);
+}
+
+@media (max-width: 640px) {
+  .account-content {
+    padding: 12px 12px 20px;
+  }
+  .identity-label {
+    min-width: 0;
+    width: 100%;
+  }
+}
