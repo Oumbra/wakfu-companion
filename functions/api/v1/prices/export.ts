@@ -49,6 +49,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       itemId: itemPricesDaily.itemId,
       capturedOn: itemPricesDaily.capturedOn,
       price: itemPricesDaily.price,
+      priceMax: itemPricesDaily.priceMax,
     })
     .from(itemPricesDaily)
     .where(and(eq(itemPricesDaily.gameServer, server), gte(itemPricesDaily.capturedOn, since)));

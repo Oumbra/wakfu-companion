@@ -174,11 +174,24 @@ export const catalogMeta = pgTable('catalog_meta', {
  */
 
 /** Une ligne par objet × serveur × jour scanné : le prix affiché le plus bas
- * observé ce jour-là. Écrite uniquement par POST /api/v1/prices/ingest
- * (jeton de service). `itemId` référence `items.ankamaId` (pas `items.pk`,
- * voir plus haut) — pas de FK stricte : un id catalogue peut en théorie
- * disparaître d'un import à l'autre, on ne veut pas qu'un import catalogue
- * fasse échouer une écriture de prix historique. */
+ * observé ce jour-là (`price`) et, si connu, le plus haut (`priceMax`).
+ * Écrite uniquement par POST /api/v1/prices/ingest (jeton de service).
+ * `itemId` référence `items.ankamaId` (pas `items.pk`, voir plus haut) —
+ * pas de FK stricte : un id catalogue peut en théorie disparaître d'un
+ * import à l'autre, on ne veut pas qu'un import catalogue fasse échouer une
+ * écriture de prix historique.
+ *
+ * `priceMax` est NOT NULL mais **pas garanti fiable pour toute source** :
+ * le skill de scan vidéo (prompt 4.1) ne voit qu'un seul prix par jour (le
+ * moins cher affiché) et ne peut pas fournir de vrai maximum — l'API
+ * (`ingest.ts`) retombe alors sur `priceMax = price` pour ces lignes-là
+ * (on ne veut pas de colonne nullable ni de logique conditionnelle dans les
+ * consommateurs en aval). Seul un scan capable d'énumérer plusieurs offres
+ * du même jour (scan mémoire HDV plutôt que vidéo) peut fournir un
+ * `priceMax` réellement différent de `price` — jusqu'à preuve du contraire,
+ * une ligne où `priceMax == price` peut donc signifier soit "un seul prix vu
+ * ce jour-là", soit "le max n'a jamais été distinct du min ce jour-là", pas
+ * moyen de distinguer les deux sans regarder la source du scan. */
 export const itemPricesDaily = pgTable(
   'item_prices_daily',
   {
@@ -188,6 +201,7 @@ export const itemPricesDaily = pgTable(
       .references(() => gameServers.code),
     capturedOn: date('captured_on').notNull(),
     price: bigint('price', { mode: 'number' }).notNull(),
+    priceMax: bigint('price_max', { mode: 'number' }).notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.itemId, table.gameServer, table.capturedOn] }),
