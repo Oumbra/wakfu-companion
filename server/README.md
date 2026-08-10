@@ -681,3 +681,86 @@ permet de conclure : dérouler la synchronisation entre deux vrais navigateurs
 connectés au même compte sur la preview (le round-trip `PATCH`/arbitrage n'a
 jamais touché Neon depuis ce sandbox, qui ne peut atteindre ni la base ni
 `*.pages.dev`).
+
+## Serveur de jeu (lot 7, prompt 7.1)
+
+Objectif : pouvoir taguer l'historique personnel du lot 8 (combats, achats,
+échanges) par serveur de jeu. **Sans aucun lien avec le monitoring de prix**
+(lot 4), dont la source est un scan opéré côté serveur.
+
+### Rien de nouveau côté serveur
+
+Ce lot n'ajoute ni endpoint, ni table, ni migration. `GET /api/v1/game-servers`
+(lot 2) fournit déjà la liste, et c'est le seul appel réseau du lot — la liste
+n'est **jamais** compilée en dur côté client (les serveurs Wakfu fusionnent et
+changent de nom).
+
+### Le log ne dit jamais sur quel serveur on joue
+
+Vérifié sur `assets/logs/tests/fr/purchase_2.log` : aucune trace du serveur. Il
+doit donc être **déclaré**. La conception le rattache au **compte du roster**
+(`RosterAccount.gameServer`) et non à l'utilisateur : un joueur multi-compte
+peut être réparti sur plusieurs serveurs, et c'est la seule façon de le gérer
+sans lui demander de basculer un sélecteur à la main.
+
+`GameServerService.activeServer` (`core/services/game-server.service.ts`)
+applique trois priorités :
+
+1. serveur du compte auquel appartient le **dernier personnage du roster
+   reconnu dans le log** (`noticeCharacter`, alimenté par `StatsStoreService`
+   sur `fighter-joined` non-IA et sur les échanges) ;
+2. sinon le **serveur par défaut** du profil ;
+3. sinon `null` → le badge du header devient une invite cliquable vers l'onglet
+   Personnages. Non bloquante : tout le reste de l'application fonctionne.
+
+Deux règles pour ne jamais afficher une donnée fausse :
+
+- **Aucune valeur inventée.** Un compte sans serveur reste « non renseigné » ;
+  deviner « Pandora » parce que c'est le plus peuplé taguerait l'historique du
+  lot 8 avec une donnée fabriquée.
+- **Un personnage reconnu dont le compte n'a pas de serveur ne prend pas celui
+  d'un autre compte** : on retombe sur le défaut global, explicitement signalé
+  comme tel dans le tooltip.
+
+### Le serveur par défaut vit dans le profil (écart assumé)
+
+Le prompt disait « tout tient dans le localStorage existant via
+`PersistenceService` ». Le défaut global est rangé dans `StoredProfile`
+(`defaultGameServer`), donc **synchronisé avec le compte** via le lot 6 — écrit
+après ce prompt. C'est une préférence utilisateur qui a vocation à suivre le
+joueur d'un appareil à l'autre, le §6 du plan la prévoit d'ailleurs sous
+`users.default_game_server`, et ça n'ajoute aucun appel serveur : elle voyage
+dans la charge utile `profile` déjà synchronisée. Même logique pour
+`RosterAccount.gameServer`, qui part avec la clé `roster`.
+
+La liste des serveurs, elle, est mise en cache dans une clé locale **hors**
+`USER_DATA_KEYS` : ce n'est pas une donnée utilisateur mais une copie d'une
+table serveur, elle n'a rien à faire dans le compte ni dans l'export RGPD.
+
+### Hors ligne
+
+Si la liste ne peut être chargée (ni réseau ni cache), un serveur déjà choisi
+reste affiché à partir de son seul code (`resolveServer`) : afficher « non
+renseigné » alors que l'utilisateur l'a renseigné serait un mensonge. Ce repli
+ne sert jamais à _proposer_ un choix — les sélecteurs ne lisent que la liste
+réelle.
+
+### État dérivé du fichier, pas du suivi persistant
+
+Le dernier personnage reconnu n'est pas persisté : il se reconstruit à chaque
+lecture du log. Le mettre à jour pendant `isInitialLoad` est donc ici le
+comportement **correct** (une reconnexion relit tout le fichier et retrouve
+naturellement le dernier personnage vu), contrairement aux compteurs de suivi —
+principe d'architecture n°2 de `CLAUDE.md`, appliqué dans l'autre sens.
+
+### Vérification effectuée
+
+`npm test` (97 tests, dont 8 nouveaux sur `GameServerService`),
+`npm run build`, et une vérification navigateur réelle
+(Chromium/playwright-core, `ng serve`, `/game-servers` simulé — les Pages
+Functions n'existent pas en local) : 14/14 points, dont l'invite cliquable
+menant au bon onglet, le sélecteur alimenté par l'API (serveur inactif exclu),
+la bascule du badge sur des lignes `[_FL_]` réelles entre deux comptes, un
+joueur hors roster sans effet, et la persistance après rechargement. Rendu
+vérifié en desktop (1280px) et mobile (390px) : le badge tient dans le header
+sans débordement horizontal.

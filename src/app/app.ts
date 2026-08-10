@@ -27,6 +27,7 @@ import { AppPageComponent } from './shared/app-page/app-page.component';
 import { AccountPageComponent } from './features/auth/account-page/account-page.component';
 import { TabSheetComponent } from './shared/tab-sheet/tab-sheet.component';
 import { AuthService } from './core/auth/auth.service';
+import { GameServerService } from './core/services/game-server.service';
 import { Gender } from './core/data/class-icons.data';
 
 @Component({
@@ -63,6 +64,7 @@ export class App implements OnInit {
   private readonly stats = inject(StatsStoreService);
   private readonly catalog = inject(CatalogService);
   private readonly auth = inject(AuthService);
+  private readonly gameServers = inject(GameServerService);
 
   ngOnInit(): void {
     void this.logFileAccess.init();
@@ -74,6 +76,11 @@ export class App implements OnInit {
     // UI explicite pour le cas `unavailable` ; en attendant, `status()` reste
     // consultable par tout composant qui en a besoin.
     void this.catalog.initialize();
+
+    // Liste des serveurs de jeu (lot 7) — jamais compilée en dur côté client.
+    // Non bloquant : sans elle, seul le sélecteur se retrouve sans options,
+    // un serveur déjà choisi reste affiché (voir GameServerService).
+    void this.gameServers.initialize();
 
     // Authentification (lot 5) : lit le retour OAuth éventuel puis interroge
     // /auth/me. Volontairement non bloquant — un invité (cas courant) ne subit

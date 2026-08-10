@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -11,6 +11,7 @@ import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { GameServerService } from '../../core/services/game-server.service';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, langue, recap de
@@ -33,6 +34,7 @@ export class AppHeaderComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly nav = inject(NavigationService);
   protected readonly catalog = inject(CatalogService);
+  protected readonly gameServers = inject(GameServerService);
   protected readonly sessionRecapService = inject(SessionRecapService);
   private readonly stats = inject(StatsStoreService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
@@ -53,6 +55,24 @@ export class AppHeaderComponent {
     this.confirmDelete.open(button, this.i18n.t('app.confirmReset'), () => {
       this.stats.resetStats();
     });
+  }
+
+  /** Explique d'où vient le serveur affiché : un personnage reconnu dans le log, ou le repli
+   * global du profil (lot 7). Un badge qui ne dirait que « Pandora » laisserait croire à une
+   * donnée lue dans le log, alors qu'elle est toujours déclarée par l'utilisateur. */
+  protected readonly serverTooltip = computed(() => {
+    const active = this.gameServers.activeServer();
+    if (!active) return this.i18n.t('app.gameServerUnsetTooltip');
+    return active.source === 'character'
+      ? this.i18n.t('app.gameServerFromCharacter', { name: active.characterName ?? '' })
+      : this.i18n.t('app.gameServerFromDefault');
+  });
+
+  /** Renvoie vers l'onglet Personnages de la page profil, où le serveur se déclare. */
+  protected openServerSetup(): void {
+    this.nav.requestProfileCharactersTab();
+    this.nav.openProfile();
+    this.closeMobileMenu();
   }
 
   protected toggleMobileMenu(): void {

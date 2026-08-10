@@ -20,6 +20,18 @@ export interface RosterAccount {
   characters: RosterCharacter[];
   /** Compte principal créé automatiquement : toujours présent, pas de bouton de suppression (voir removeAccount). */
   isDefault?: boolean;
+  /**
+   * Code du serveur de jeu de ce compte (`game_servers.code`, servi par
+   * `/api/v1/game-servers` — jamais une liste en dur, lot 7).
+   *
+   * **Absent = non renseigné**, jamais une valeur inventée : le log Wakfu ne
+   * contient aucune indication de serveur (vérifié sur
+   * `assets/logs/tests/fr/purchase_2.log`), et les rosters créés avant ce lot
+   * n'en portent donc aucune. Deviner « Pandora » parce que c'est le plus
+   * peuplé taguerait l'historique du lot 8 avec une donnée fausse — pire que
+   * pas de donnée du tout.
+   */
+  gameServer?: string | null;
 }
 
 function generateId(): string {
@@ -71,6 +83,20 @@ export class CharacterRosterService {
 
   hasCharacter(name: string): boolean {
     return this.findCharacter(name) !== undefined;
+  }
+
+  /** Compte auquel appartient ce personnage — base de la déduction du serveur actif (lot 7). */
+  findAccountByCharacter(name: string): RosterAccount | undefined {
+    const key = normalizeWakfuName(name);
+    return this.accounts().find((a) =>
+      a.characters.some((c) => normalizeWakfuName(c.name) === key),
+    );
+  }
+
+  /** `null` remet le compte à « non renseigné » — voir `RosterAccount.gameServer`. */
+  setAccountGameServer(id: string, gameServer: string | null): void {
+    this.accounts.update((list) => list.map((a) => (a.id === id ? { ...a, gameServer } : a)));
+    this.persist();
   }
 
   /** Retourne l'id du compte créé, pour que l'appelant puisse le sélectionner immédiatement (voir onglets, profile-page.component.ts). */

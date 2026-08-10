@@ -68,6 +68,45 @@
   height: 18px;
 }
 
+/* Serveur de jeu actif (lot 7) — jamais lu dans le log, toujours déclaré :
+   le tooltip dit d'où vient la déduction. `.tooltip-below` obligatoire dans un
+   header (voir CLAUDE.md, conventions de tooltip). */
+.game-server-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #1c1c1c;
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  cursor: help;
+}
+.game-server-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--btn-active-green);
+  flex: none;
+}
+/* Aucun serveur déductible : invite cliquable, volontairement discrète (pas
+   d'accent criard, pas de modale) — l'application fonctionne très bien sans. */
+.game-server-badge-empty {
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.game-server-badge-empty:hover {
+  border-color: var(--accent);
+  color: var(--text-color);
+}
+.game-server-badge-empty .game-server-dot {
+  background: var(--text-muted);
+}
+
 .app-header-right {
   display: flex;
   align-items: center;

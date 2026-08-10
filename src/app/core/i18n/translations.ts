@@ -24,6 +24,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Changer de fichier',
     'app.menu': 'Menu',
     'app.language': 'Langue',
+    'app.gameServerUnset': 'Serveur ?',
+    'app.gameServerUnsetTooltip':
+      'Serveur de jeu non renseigné — cliquer pour le déclarer (le journal Wakfu ne l’indique jamais).',
+    'app.gameServerFromCharacter': 'Serveur déduit du personnage {{name}}',
+    'app.gameServerFromDefault':
+      'Serveur par défaut (aucun personnage déclaré reconnu pour l’instant)',
     'app.catalogUnavailable':
       'Catalogue Ankama indisponible : noms et icônes des objets/monstres non reconnus pour le moment.',
 
@@ -133,6 +139,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'Le toast se fermera automatiquement au bout de {{seconds}} secondes.',
     'profile.rosterLabel': 'Personnages',
+    'profile.gameServerLabel': 'Serveur de jeu',
+    'profile.gameServerNone': 'Non renseigné',
+    'profile.defaultServerLabel': 'Serveur par défaut',
+    'profile.defaultServerHint':
+      'Utilisé tant qu’aucun personnage déclaré ci-dessus n’a été reconnu dans le journal. Le journal Wakfu n’indique jamais le serveur : il ne peut être que déclaré ici.',
     'profile.rosterAddAccount': 'Ajouter un compte',
     'profile.rosterEmpty': 'Aucun compte déclaré.',
     'profile.rosterAccountPlaceholder': 'Nom du compte...',
@@ -308,6 +319,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Change file',
     'app.menu': 'Menu',
     'app.language': 'Language',
+    'app.gameServerUnset': 'Server?',
+    'app.gameServerUnsetTooltip':
+      'Game server not set — click to declare it (the Wakfu log never states it).',
+    'app.gameServerFromCharacter': 'Server inferred from character {{name}}',
+    'app.gameServerFromDefault': 'Default server (no declared character recognised yet)',
     'app.catalogUnavailable':
       'Ankama catalog unavailable: item/monster names and icons are not recognized right now.',
 
@@ -417,6 +433,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'The toast will close automatically after {{seconds}} seconds.',
     'profile.rosterLabel': 'Characters',
+    'profile.gameServerLabel': 'Game server',
+    'profile.gameServerNone': 'Not set',
+    'profile.defaultServerLabel': 'Default server',
+    'profile.defaultServerHint':
+      'Used until one of the characters declared above is recognised in the log. The Wakfu log never states the server: it can only be declared here.',
     'profile.rosterAddAccount': 'Add an account',
     'profile.rosterEmpty': 'No account declared.',
     'profile.rosterAccountPlaceholder': 'Account name...',
@@ -589,6 +610,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Cambiar archivo',
     'app.menu': 'Menú',
     'app.language': 'Idioma',
+    'app.gameServerUnset': '¿Servidor?',
+    'app.gameServerUnsetTooltip':
+      'Servidor de juego sin definir — haz clic para declararlo (el registro de Wakfu nunca lo indica).',
+    'app.gameServerFromCharacter': 'Servidor deducido del personaje {{name}}',
+    'app.gameServerFromDefault':
+      'Servidor por defecto (aún no se ha reconocido ningún personaje declarado)',
     'app.catalogUnavailable':
       'Catálogo Ankama no disponible: los nombres e iconos de objetos/monstruos no se reconocen por ahora.',
 
@@ -698,6 +725,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'El aviso se cerrará automáticamente después de {{seconds}} segundos.',
     'profile.rosterLabel': 'Personajes',
+    'profile.gameServerLabel': 'Servidor de juego',
+    'profile.gameServerNone': 'Sin definir',
+    'profile.defaultServerLabel': 'Servidor por defecto',
+    'profile.defaultServerHint':
+      'Se usa mientras no se reconozca en el registro ninguno de los personajes declarados arriba. El registro de Wakfu nunca indica el servidor: solo puede declararse aquí.',
     'profile.rosterAddAccount': 'Añadir una cuenta',
     'profile.rosterEmpty': 'Ninguna cuenta declarada.',
     'profile.rosterAccountPlaceholder': 'Nombre de la cuenta...',
@@ -872,6 +904,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.changeFile': 'Trocar arquivo',
     'app.menu': 'Menu',
     'app.language': 'Idioma',
+    'app.gameServerUnset': 'Servidor?',
+    'app.gameServerUnsetTooltip':
+      'Servidor de jogo não definido — clique para o declarar (o registo do Wakfu nunca o indica).',
+    'app.gameServerFromCharacter': 'Servidor deduzido da personagem {{name}}',
+    'app.gameServerFromDefault':
+      'Servidor predefinido (ainda não foi reconhecida nenhuma personagem declarada)',
     'app.catalogUnavailable':
       'Catálogo Ankama indisponível: nomes e ícones de itens/monstros não são reconhecidos no momento.',
 
@@ -981,6 +1019,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'O aviso vai fechar automaticamente após {{seconds}} segundos.',
     'profile.rosterLabel': 'Personagens',
+    'profile.gameServerLabel': 'Servidor de jogo',
+    'profile.gameServerNone': 'Não definido',
+    'profile.defaultServerLabel': 'Servidor predefinido',
+    'profile.defaultServerHint':
+      'Usado enquanto nenhuma das personagens declaradas acima for reconhecida no registo. O registo do Wakfu nunca indica o servidor: só pode ser declarado aqui.',
     'profile.rosterAddAccount': 'Adicionar uma conta',
     'profile.rosterEmpty': 'Nenhuma conta declarada.',
     'profile.rosterAccountPlaceholder': 'Nome da conta...',

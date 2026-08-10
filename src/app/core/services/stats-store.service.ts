@@ -6,6 +6,7 @@ import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
 import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
+import { GameServerService } from './game-server.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { LogParser } from './log-parser';
 import { LootAlertService } from './loot-alert.service';
@@ -281,6 +282,7 @@ export class StatsStoreService {
     private readonly roster: CharacterRosterService,
     private readonly catalog: CatalogService,
     private readonly userData: UserDataService,
+    private readonly gameServer: GameServerService,
   ) {
     this.watchlist.set(this.loadWatchlist());
     this.reassignmentHistory.push(
@@ -599,6 +601,10 @@ export class StatsStoreService {
       else working.fight.allies.push({ name, breed });
     }
     this.classifier.registerFighterJoin(name, isControlledByAI);
+    // Un combattant non-IA qui appartient au roster déclaré identifie le compte
+    // joué, donc le serveur (lot 7) — les autres joueurs présents dans le
+    // combat sont ignorés par `noticeCharacter`.
+    if (!isControlledByAI) this.gameServer.noticeCharacter(name);
     this.ensurePresent(working, name);
   }
 
@@ -923,6 +929,9 @@ export class StatsStoreService {
     const [a, b] = sides;
     const aIsSelf = this.roster.hasCharacter(a.playerName);
     const bIsSelf = this.roster.hasCharacter(b.playerName);
+    // Un échange suffit à identifier le compte joué : une session purement
+    // marchande (aucun combat) renseigne ainsi le serveur actif elle aussi.
+    this.gameServer.noticeCharacter(aIsSelf ? a.playerName : b.playerName);
     // Un échange entre deux personnages du roster déclaré (deux de ses
     // propres comptes) n'est pas un vrai échange avec un autre joueur : on
     // l'ignore plutôt que de l'enregistrer avec un "characterName" arbitraire.

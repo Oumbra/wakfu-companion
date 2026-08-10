@@ -25,6 +25,19 @@ interface StoredProfile {
   alertManualClose: boolean;
   /** Affichage de la liste des personnages (page profil, onglet Personnages). */
   characterViewMode: CharacterViewMode;
+  /**
+   * Serveur de jeu par défaut (lot 7) : repli tant qu'aucun personnage connu
+   * du roster n'a été identifié dans le log. `null` = non renseigné, jamais
+   * une valeur inventée (voir `RosterAccount.gameServer`).
+   *
+   * Rangé dans le profil — donc **synchronisé avec le compte** (lot 6) —
+   * plutôt que dans une clé locale à part : c'est une préférence utilisateur,
+   * elle a vocation à suivre le joueur d'un appareil à l'autre, et le §6 du
+   * plan la prévoit d'ailleurs sous `users.default_game_server`. Ça n'ajoute
+   * aucun appel serveur : elle voyage dans la charge utile `profile` déjà
+   * synchronisée.
+   */
+  defaultGameServer: string | null;
 }
 
 const DEFAULT_ALERT_DURATION_SECONDS = 3.5;
@@ -51,6 +64,8 @@ export class ProfileService {
   readonly alertManualClose = signal(false);
   /** Tout interrupteur/switch de l'application doit être persisté ici plutôt que gardé en mémoire (voir setCharacterViewMode). */
   readonly characterViewMode = signal<CharacterViewMode>('list');
+  /** Voir `StoredProfile.defaultGameServer` — `null` = non renseigné. */
+  readonly defaultGameServer = signal<string | null>(null);
 
   constructor() {
     this.loadFromStorage();
@@ -77,6 +92,7 @@ export class ProfileService {
       this.alertManualClose.set(stored?.alertManualClose ?? false);
     }
     this.characterViewMode.set(stored?.characterViewMode ?? 'list');
+    this.defaultGameServer.set(stored?.defaultGameServer ?? null);
   }
 
   setPseudo(value: string): void {
@@ -101,6 +117,11 @@ export class ProfileService {
 
   setCharacterViewMode(value: CharacterViewMode): void {
     this.characterViewMode.set(value);
+    this.persist();
+  }
+
+  setDefaultGameServer(code: string | null): void {
+    this.defaultGameServer.set(code);
     this.persist();
   }
 
@@ -140,6 +161,7 @@ export class ProfileService {
       alertDurationSeconds: this.alertDurationSeconds(),
       alertManualClose: this.alertManualClose(),
       characterViewMode: this.characterViewMode(),
+      defaultGameServer: this.defaultGameServer(),
     };
     this.userData.write('profile', value);
   }

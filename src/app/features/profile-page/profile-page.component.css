@@ -246,6 +246,41 @@
   }
 }
 
+/* Serveur de jeu (lot 7) : sélecteur par compte du roster, et repli global
+   plus bas dans le même onglet. Même habillage que les autres champs de la
+   page — c'est une préférence, pas un réglage à part. */
+.roster-account-server {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.roster-server-label {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.game-server-select {
+  /* Dans un `.profile-field` (flex colonne), un select s'étirerait sur toute la
+     largeur du champ — inutile pour trois options. */
+  align-self: flex-start;
+  max-width: 260px;
+  background: #1c1c1c;
+  border: 1px solid var(--border);
+  color: var(--text-color);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  min-width: 160px;
+}
+.profile-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .profile-field {
   width: 100%;
   max-width: 480px;
