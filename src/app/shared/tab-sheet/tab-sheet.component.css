@@ -43,10 +43,10 @@
 
 .tab-sheet-header {
   flex-shrink: 0;
-  padding: 16px;
+  padding: 20px 16px;
   text-align: center;
-  font-size: 1.05rem;
-  font-weight: bold;
+  font-size: 1rem;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--accent);
@@ -59,21 +59,26 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  padding: 6px 0;
+  padding: 10px 0;
 }
 
-/* `height: auto` + `justify-content: flex-start` : la règle globale `button` (styles.css) impose
-   `height: 28px` et `justify-content: center`, qui écrasaient sinon le padding vertical (lignes
-   tassées) et l'alignement à gauche du libellé (`text-align` est sans effet sur un flex-container). */
+/* `justify-content: flex-start` : la règle globale `button` (styles.css) impose
+   `justify-content: center`, qui écrasait sinon l'alignement à gauche du libellé (`text-align` est
+   sans effet sur un flex-container).
+   `height: auto` + `min-height` plutôt que la hauteur fixe de cette même règle globale : 30px est
+   la hauteur de ligne de la maquette, mais un libellé long (nom de compte saisi par l'utilisateur,
+   voir `rosterTabItems`) revient à la ligne et doit pouvoir pousser la ligne — sinon il déborde par
+   dessus l'entrée suivante. */
 .tab-sheet-item {
   flex-shrink: 0;
   height: auto;
+  min-height: 30px;
   justify-content: flex-start;
-  padding: 11px 22px;
+  padding: 0 26px;
   background: transparent;
   border: none;
   color: var(--text-color);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -92,14 +97,14 @@
    visuel) — ils décollaient le bouton du bas de l'écran bien plus que la maquette. */
 .tab-sheet-close {
   flex-shrink: 0;
-  height: auto;
-  margin: 6px 10px calc(10px + env(safe-area-inset-bottom, 0px));
-  padding: 14px;
+  height: 30px;
+  margin: 6px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 0 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #d9d9d9;
   color: #111;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   text-align: center;
   cursor: pointer;
