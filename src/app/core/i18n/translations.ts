@@ -249,7 +249,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.dataText':
       'Vos réglages, personnages, suivi et filtres de chat peuvent être sauvegardés sur votre compte. Le contenu du chat de jeu, lui, ne quitte jamais cet appareil.',
     'auth.account.export': 'Exporter (fichier)',
-    'auth.account.syncNow': 'Sauvegarder sur le compte',
+    'auth.account.syncNow': 'Synchroniser maintenant',
+    'auth.sync.idle': 'Configuration à jour sur le compte',
+    'auth.sync.pending': 'Modifications en attente d’envoi',
+    'auth.sync.syncing': 'Synchronisation en cours…',
+    'auth.sync.error':
+      'Synchronisation impossible pour l’instant — vos données restent enregistrées sur cet appareil',
+    'auth.sync.lastSynced': 'dernière synchronisation à {{date}}',
     'auth.account.danger': 'Compte',
     'auth.account.logout': 'Se déconnecter',
     'auth.account.delete': 'Supprimer mon compte',
@@ -479,7 +485,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
     'help.profileConnection.title': 'Profile > Sign in',
     'help.profileConnection.body':
-      "Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.",
+      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.',
     'help.profileCharacters.title': 'Profile > Characters',
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account); drag and drop reorders a account's characters.",
@@ -526,7 +532,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.dataText':
       'Your settings, characters, tracking and chat filters can be saved to your account. Game chat content never leaves this device.',
     'auth.account.export': 'Export (file)',
-    'auth.account.syncNow': 'Save to account',
+    'auth.account.syncNow': 'Sync now',
+    'auth.sync.idle': 'Settings up to date on your account',
+    'auth.sync.pending': 'Changes waiting to be sent',
+    'auth.sync.syncing': 'Syncing…',
+    'auth.sync.error': 'Sync unavailable right now — your data stays saved on this device',
+    'auth.sync.lastSynced': 'last synced at {{date}}',
     'auth.account.danger': 'Account',
     'auth.account.logout': 'Sign out',
     'auth.account.delete': 'Delete my account',
@@ -803,7 +814,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.dataText':
       'Tus ajustes, personajes, seguimiento y filtros de chat pueden guardarse en tu cuenta. El contenido del chat del juego nunca sale de este dispositivo.',
     'auth.account.export': 'Exportar (archivo)',
-    'auth.account.syncNow': 'Guardar en la cuenta',
+    'auth.account.syncNow': 'Sincronizar ahora',
+    'auth.sync.idle': 'Configuración actualizada en tu cuenta',
+    'auth.sync.pending': 'Cambios pendientes de envío',
+    'auth.sync.syncing': 'Sincronizando…',
+    'auth.sync.error':
+      'Sincronización no disponible ahora mismo — tus datos siguen guardados en este dispositivo',
+    'auth.sync.lastSynced': 'última sincronización a las {{date}}',
     'auth.account.danger': 'Cuenta',
     'auth.account.logout': 'Cerrar sesión',
     'auth.account.delete': 'Eliminar mi cuenta',
@@ -1080,7 +1097,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.dataText':
       'As suas definições, personagens, acompanhamento e filtros de chat podem ser guardados na sua conta. O conteúdo do chat do jogo nunca sai deste dispositivo.',
     'auth.account.export': 'Exportar (ficheiro)',
-    'auth.account.syncNow': 'Guardar na conta',
+    'auth.account.syncNow': 'Sincronizar agora',
+    'auth.sync.idle': 'Configuração atualizada na sua conta',
+    'auth.sync.pending': 'Alterações a aguardar envio',
+    'auth.sync.syncing': 'A sincronizar…',
+    'auth.sync.error':
+      'Sincronização indisponível de momento — os seus dados continuam guardados neste dispositivo',
+    'auth.sync.lastSynced': 'última sincronização às {{date}}',
     'auth.account.danger': 'Conta',
     'auth.account.logout': 'Terminar sessão',
     'auth.account.delete': 'Eliminar a minha conta',

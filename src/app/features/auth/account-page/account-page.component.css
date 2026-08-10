@@ -159,6 +159,34 @@
   color: var(--btn-active-red);
 }
 
+/* État de synchronisation (lot 6) — pastille de couleur + libellé. */
+.sync-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sync-state {
+  font-size: 0.9rem;
+}
+.sync-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--text-muted);
+}
+.sync-dot[data-state='idle'] {
+  background: var(--btn-active-green);
+}
+.sync-dot[data-state='pending'],
+.sync-dot[data-state='syncing'] {
+  background: var(--accent);
+}
+.sync-dot[data-state='error'] {
+  background: var(--btn-active-red);
+}
+
 @media (max-width: 640px) {
   .account-content {
     padding: 12px 12px 20px;

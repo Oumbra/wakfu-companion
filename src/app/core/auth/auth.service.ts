@@ -1,6 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
-import { AppDataExport, AppDataExportService } from '../services/app-data-export.service';
+import { UserDataService } from '../data-access/user-data.service';
+import type { UserDataKey } from '../data-access/user-data.keys';
+import { AppDataExportService } from '../services/app-data-export.service';
 
 /**
  * État de session côté client (lot 5, prompt 5.2) — voir
@@ -60,6 +62,8 @@ export interface RemoteSettings {
   keys: string[];
   data: Record<string, unknown>;
   updatedAt: string | null;
+  /** Horodatage par clé (lot 6) — indispensable à l'arbitrage « dernier écrivain gagne ». */
+  updatedAtByKey?: Partial<Record<UserDataKey, string>>;
 }
 
 /** Décision de migration en attente — voir `AuthService.evaluateDataMigration`. */
@@ -87,6 +91,7 @@ function loginErrorKey(reason: string | null): string {
 export class AuthService {
   private readonly api = inject(ApiClientService);
   private readonly dataExport = inject(AppDataExportService);
+  private readonly userData = inject(UserDataService);
 
   private readonly _status = signal<AuthStatus>('unknown');
   private readonly _user = signal<AuthUser | null>(null);
@@ -106,6 +111,11 @@ export class AuthService {
   readonly loginOutcome = this._loginOutcome.asReadonly();
   readonly migrationPrompt = this._migrationPrompt.asReadonly();
   readonly isAuthenticated = computed(() => this._status() === 'authenticated');
+
+  /** État de la synchronisation de configuration (lot 6) — `'idle'` en mode invité. */
+  readonly syncState = this.userData.syncState;
+  readonly syncPendingKeys = this.userData.pendingKeys;
+  readonly lastSyncedAt = this.userData.lastSyncedAt;
 
   constructor() {
     // Équivalent de l'intercepteur HTTP demandé par le prompt 5.2 : tout 401
@@ -206,6 +216,13 @@ export class AuthService {
     if (outcome?.status === 'ok' && this.isAuthenticated()) {
       await this.evaluateDataMigration();
     }
+    // Synchronisation de la configuration (lot 6) — jamais tant qu'une
+    // décision de migration est en attente : arbitrer clé par clé pendant
+    // qu'on demande encore à l'utilisateur quelle source garder reviendrait à
+    // fusionner en silence, ce que le prompt 5.2 interdit.
+    if (this.isAuthenticated() && !this._migrationPrompt()) {
+      await this.userData.activateRemote();
+    }
     this._loginOutcome.set(outcome);
     return outcome;
   }
@@ -244,8 +261,10 @@ export class AuthService {
 
     if (choice === 'upload') {
       const ok = await this.uploadLocalData();
-      if (ok) this._migrationPrompt.set(null);
-      return ok;
+      if (!ok) return false;
+      this._migrationPrompt.set(null);
+      await this.userData.activateRemote();
+      return true;
     }
 
     this.applyRemoteData(prompt.remote);
@@ -256,6 +275,26 @@ export class AuthService {
 
   dismissMigration(): void {
     this._migrationPrompt.set(null);
+  }
+
+  /**
+   * Synchronisation manuelle (bouton de la page compte) : envoie ce qui est en
+   * attente, puis se réaligne sur le compte. Utile quand une synchronisation
+   * automatique a échoué (hors-ligne) et que l'utilisateur veut réessayer sans
+   * attendre la prochaine modification.
+   *
+   * Sans effet en mode invité — c'est la définition même de ce mode : aucune
+   * donnée ne part du navigateur.
+   */
+  async syncNow(): Promise<boolean> {
+    if (!this.isAuthenticated()) return false;
+    this._busy.set(true);
+    await this.userData.flush();
+    await this.userData.activateRemote();
+    this._busy.set(false);
+    const ok = this.userData.syncState() !== 'error';
+    if (!ok) this._error.set('auth.error.sync');
+    return ok;
   }
 
   // ── Données du compte (base de la migration du prompt 5.2 point 5) ──────
@@ -269,7 +308,7 @@ export class AuthService {
   async uploadLocalData(): Promise<boolean> {
     this._busy.set(true);
     const payload = this.dataExport.buildExport();
-    const result = await this.api.requestJson<{ saved: number }>('/settings', {
+    const result = await this.api.requestJson<{ saved: number; updatedAt: string }>('/settings', {
       method: 'PUT',
       body: { data: payload.data },
     });
@@ -278,23 +317,25 @@ export class AuthService {
       this._error.set('auth.error.sync');
       return false;
     }
+    // Aligner les horodatages locaux sur celui du serveur : sans ça, la copie
+    // locale paraîtrait plus récente que ce qu'elle vient d'envoyer et
+    // repartirait inutilement à la synchronisation suivante (lot 6).
+    const uploadedAt = new Date(result.data?.updatedAt ?? Date.now());
+    this.userData.markUploaded(Number.isNaN(uploadedAt.getTime()) ? new Date() : uploadedAt);
     return true;
   }
 
   /**
-   * Écrase les données locales par celles du compte. Réutilise
-   * `AppDataExportService.applyImport` : même format, même chemin de code que
-   * l'import de fichier existant — donc aucun risque de divergence de
-   * traitement entre les deux.
+   * Écrase les données locales par celles du compte, **en conservant les
+   * horodatages du serveur** (lot 6) : une valeur récupérée du compte ne doit
+   * pas ressortir comme une modification locale toute fraîche à la
+   * synchronisation suivante.
    */
   applyRemoteData(remote: RemoteSettings): void {
-    const asExport: AppDataExport = {
-      app: 'wakfu-companion',
-      version: 1,
-      exportedAt: remote.updatedAt ?? new Date().toISOString(),
-      data: remote.data as AppDataExport['data'],
-    };
-    this.dataExport.applyImport(asExport);
+    this.userData.applyAccountSnapshot(
+      remote.data as Partial<Record<UserDataKey, unknown>>,
+      remote.updatedAtByKey,
+    );
   }
 
   /** Vrai s'il existe des données locales qui vaudraient la peine d'être téléversées. */
@@ -347,5 +388,8 @@ export class AuthService {
     this._user.set(null);
     this._identities.set([]);
     this._status.set('guest');
+    // Retour au stockage purement local — les données déjà présentes sur cet
+    // appareil restent intactes et utilisables (mode invité, §7 du plan).
+    this.userData.deactivateRemote();
   }
 }

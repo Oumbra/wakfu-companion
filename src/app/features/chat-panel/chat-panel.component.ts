@@ -1,6 +1,15 @@
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { StatsStoreService } from '../../core/services/stats-store.service';
-import { PersistenceService } from '../../core/services/persistence.service';
+import { UserDataService } from '../../core/data-access/user-data.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { CHAT_CHANNELS } from '../../core/services/log-parser';
 import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.model';
@@ -8,8 +17,6 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
 
-const ACTIVE_CHANNELS_KEY = 'wakfu-active-chat-channels';
-const CHAT_FILTERS_KEY = 'wakfu-chat-filters';
 /** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
 const BOTTOM_THRESHOLD_PX = 24;
 
@@ -61,7 +68,7 @@ export class ChatPanelComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   protected readonly helpModal = inject(HelpModalService);
-  private readonly persistence = inject(PersistenceService);
+  private readonly userData = inject(UserDataService);
   private readonly alertSound = inject(AlertSoundService);
   protected readonly channels = CHAT_CHANNELS;
 
@@ -73,14 +80,14 @@ export class ChatPanelComponent {
   protected readonly newFilterChannel = signal<ChatFilterChannel>('global');
 
   private loadActiveChannels(): ReadonlySet<ChatChannelKey> {
-    const stored = this.persistence.getJson<ChatChannelKey[]>(ACTIVE_CHANNELS_KEY);
+    const stored = this.userData.read<ChatChannelKey[]>('chatActiveChannels');
     return new Set(stored ?? CHAT_CHANNELS.map((c) => c.key));
   }
 
   /** Migration douce : les filtres étaient stockés en simples chaînes avant
    * l'ajout du choix de canal — reprises telles quelles en filtres "global". */
   private loadFilters(): ChatFilter[] {
-    const stored = this.persistence.getJson<Array<string | ChatFilter>>(CHAT_FILTERS_KEY) ?? [];
+    const stored = this.userData.read<Array<string | ChatFilter>>('chatFilters') ?? [];
     return stored.map((f) => (typeof f === 'string' ? { text: f, channel: 'global' } : f));
   }
 
@@ -100,6 +107,21 @@ export class ChatPanelComponent {
   private lastAlertedMessageCount = 0;
 
   constructor() {
+    // Canaux et filtres ont pu changer depuis un autre appareil (lot 6). Ce
+    // composant est monté/démonté avec sa vue, contrairement aux services
+    // `providedIn: 'root'` : le désabonnement n'est pas optionnel ici.
+    const destroyRef = inject(DestroyRef);
+    const unsubscribeChannels = this.userData.onExternalChange('chatActiveChannels', () =>
+      this.activeChannels.set(this.loadActiveChannels()),
+    );
+    const unsubscribeFilters = this.userData.onExternalChange('chatFilters', () =>
+      this.filters.set(this.loadFilters()),
+    );
+    destroyRef.onDestroy(() => {
+      unsubscribeChannels();
+      unsubscribeFilters();
+    });
+
     effect(() => {
       const count = this.filteredMessages().length;
       const shouldStickToBottom = count > this.lastMessageCount && this.isAtBottom();
@@ -144,7 +166,7 @@ export class ChatPanelComponent {
     if (next.has(key)) next.delete(key);
     else next.add(key);
     this.activeChannels.set(next);
-    this.persistence.setJson(ACTIVE_CHANNELS_KEY, [...next]);
+    this.userData.write('chatActiveChannels', [...next]);
   }
 
   protected isActive(key: ChatChannelKey): boolean {
@@ -167,7 +189,7 @@ export class ChatPanelComponent {
     if (!current.some((f) => f.text === text && f.channel === channel)) {
       const updated = [...current, { text, channel }];
       this.filters.set(updated);
-      this.persistence.setJson(CHAT_FILTERS_KEY, updated);
+      this.userData.write('chatFilters', updated);
     }
     this.newFilterText.set('');
   }
@@ -175,7 +197,7 @@ export class ChatPanelComponent {
   protected removeFilter(filter: ChatFilter): void {
     const updated = this.filters().filter((f) => f !== filter);
     this.filters.set(updated);
-    this.persistence.setJson(CHAT_FILTERS_KEY, updated);
+    this.userData.write('chatFilters', updated);
   }
 
   protected filterChannelLabelKey(channel: ChatFilterChannel): string {
