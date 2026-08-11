@@ -111,6 +111,28 @@ export class NavigationService {
     this.stack.set(s.slice(0, -1));
   }
 
+  /** Rejoint `view` par le chemin le plus court dans la pile plutôt que d'empiler aveuglément —
+   * utilisé par `RouteSyncService` (URL dédiée par page, voir app.routes.ts) pour réconcilier une
+   * navigation venue de l'URL (lien direct, F5, précédent/suivant du navigateur) avec cette pile :
+   *  - déjà au sommet : ne fait rien ;
+   *  - `view` est plus bas dans la pile (ex. légal → profil alors que profil précède déjà légal) :
+   *    dépile jusqu'à `view`, comme un retour classique (anime en arrière) ;
+   *  - sinon (vue jamais visitée sur ce chemin, ex. lien direct `/profil` au tout premier chargement) :
+   *    empile normalement (anime en avant), même comportement que `openProfile()` etc. */
+  goTo(view: AppView): void {
+    const s = this.stack();
+    const top = s[s.length - 1];
+    if (top === view) return;
+    const idx = s.lastIndexOf(view);
+    if (idx !== -1) {
+      this.direction.set('backward');
+      this.transitionPeer.set(top);
+      this.stack.set(s.slice(0, idx + 1));
+      return;
+    }
+    this.push(view);
+  }
+
   /** Empile `view` — ignore silencieusement si on y est déjà (ex. changer de contenu légal alors
    * qu'on est déjà sur la page légale ne doit pas ré-empiler ni ré-animer). */
   private push(view: AppView): void {

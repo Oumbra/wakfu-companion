@@ -1,4 +1,8 @@
 <div class="app-shell">
+  <!-- Aucun rendu propre (voir RouteBridgeComponent) : Angular Router a seulement besoin d'un
+       point d'ancrage pour instancier le composant de la route active, le contenu réel reste porté
+       par les panneaux ci-dessous (voir CLAUDE.md, principe "URL dédiée en façade"). -->
+  <router-outlet />
   <app-header />
 
   <div class="view-slider">
