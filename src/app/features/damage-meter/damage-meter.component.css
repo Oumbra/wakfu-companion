@@ -49,6 +49,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 0;
 }
 
 /* Plusieurs combats concurrents (multi-compte) : un onglet par combat,

@@ -54,13 +54,6 @@
   --channel-recrutement: #2ecc71;
   --channel-commerce: #ffd700;
   --channel-communaute: #5dade2;
-
-  /* Marge de secours en bas des listes scrollables sur mobile (voir
-     app.css `.app-shell` pour le contexte : `100dvh` corrige la cause
-     racine, ce padding protège en plus les navigateurs sans support de
-     `dvh` en garantissant que la dernière ligne reste scrollable au-dessus
-     d'une barre d'outils navigateur fixe). */
-  --mobile-bottom-safe: 56px;
 }
 
 /* Thème clair (ThemeService, `data-theme` posé sur <html>) : inversion littérale de la palette
@@ -460,13 +453,7 @@ button.reset-btn:hover {
   }
   .panels-row .roster-character-scroll {
     max-height: none !important;
-    padding: 10px 10px 0 0 !important;
-  }
-  .panels-row .roster-character-scroll.roster-account-default {
-    height: calc(100vh - 458px);
-  }
-  .panels-row .roster-character-scroll:not(.roster-account-default) {
-    height: calc(100vh - 491px);
+    padding: 0 !important;
   }
   .panels-row .roster-character-row .pseudo-edit-input {
     width: calc(100% - 62px) !important;
@@ -483,12 +470,9 @@ button.reset-btn:hover {
 .tool-panel {
   position: relative;
   background: var(--panel-bg);
-  border-radius: 8px;
-  border: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
   height: 100%;
   min-height: 0;
 }
@@ -533,9 +517,11 @@ button.reset-btn:hover {
    toujours centré indépendamment de la taille de police du texte parent. */
 button.icon-btn.help-icon-btn {
   border-radius: 50%;
-  font-size: 0.75rem;
+  font-size: 10px;
   font-weight: 700;
   flex-shrink: 0;
+  height: 16px;
+  width: 16px;
 }
 
 /* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
@@ -554,9 +540,6 @@ button.icon-btn.help-icon-btn {
     border-top: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
-  }
-  .panel-body {
-    padding-bottom: var(--mobile-bottom-safe);
   }
 }
 

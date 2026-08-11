@@ -7,7 +7,9 @@
   [attr.data-tooltip]="variant() === 'header' ? ('profile.button' | t) : null"
 >
   @if (profile.avatarIndex() !== null) {
-    <app-avatar-icon class="profile-avatar" [index]="profile.avatarIndex()!" />
+    <div class="profile-avatar-wrapper">
+      <app-avatar-icon class="profile-avatar" [index]="profile.avatarIndex()!" />
+    </div>
   } @else {
     <span class="profile-question">?</span>
   }

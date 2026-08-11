@@ -437,6 +437,7 @@
                       </button>
                     </div>
                   }
+                  <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
 
                   @if (account.characters.length > 0) {
                     <div class="roster-view-row">
@@ -450,7 +451,7 @@
                           characterCountLabel(account.characters.length)
                         }}</span>
                       </div>
-                      <div class="icon-switch" style="width: 52px">
+                      <div class="icon-switch">
                         <span
                           class="icon-switch-highlight"
                           [class.is-right]="profile.characterViewMode() === 'grid'"
@@ -653,8 +654,6 @@
                       </div>
                     </div>
                   }
-
-                  <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
                 </div>
               }
             </div>

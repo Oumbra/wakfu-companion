@@ -112,6 +112,8 @@
              comme telle (pas de fond d'item) — sauf quand rien n'est encore
              déductible, où elle devient l'invite cliquable. Même condition que
              dans l'en-tête : rien tant qu'aucun wakfu.log n'est connecté. -->
+        <app-theme-switch variant="row" />
+        <app-language-switcher variant="row" />
         @if (logFileAccess.status() === 'connected') {
           @if (gameServers.activeServer(); as active) {
             <div class="mobile-menu-server">
@@ -134,8 +136,6 @@
             <span>{{ 'app.sessionRecap' | t }}</span>
           </button>
         }
-        <app-theme-switch variant="row" />
-        <app-language-switcher variant="row" />
         @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
           <div (click)="closeMobileMenu()">
             <app-profile variant="row" />

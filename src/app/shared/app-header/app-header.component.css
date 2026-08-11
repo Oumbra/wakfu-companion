@@ -147,7 +147,7 @@
   gap: 10px;
   height: 36px;
   padding: 0 10px;
-  background: var(--surface-raised);
+  background: var(--surface-well);
   border: none;
   border-radius: 6px;
   color: var(--text-color);
@@ -168,7 +168,7 @@
   gap: 10px;
   height: 32px;
   padding: 0 10px;
-  background: transparent;
+  background: var(--surface-well);
   border: none;
   color: var(--text-color);
   font-family: inherit;
@@ -184,7 +184,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 22px;
+  width: 46px;
 }
 
 /* Rien de déductible : pastille éteinte, et la ligne devient cliquable. */
@@ -200,7 +200,7 @@ button.mobile-menu-server:hover {
 
 .mobile-menu-icon {
   flex-shrink: 0;
-  width: 22px;
+  width: 46px;
   height: 22px;
   object-fit: contain;
 }

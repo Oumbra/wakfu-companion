@@ -10,6 +10,7 @@
 
 .theme-switch {
   width: 46px;
+  height: 28px;
 }
 
 .theme-switch-option {
@@ -46,8 +47,9 @@
   width: 100%;
   height: 36px;
   padding: 0 10px;
-  justify-content: space-between;
   gap: 10px;
+  border-radius: 6px;
+  background: var(--surface-well);
 }
 .theme-switch-row-label {
   font-weight: 600;

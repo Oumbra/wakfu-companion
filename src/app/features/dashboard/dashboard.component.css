@@ -59,6 +59,7 @@
 @media (max-width: 800px) {
   .dashboard {
     gap: 0;
+    padding: 0;
   }
   .panels-row,
   .panels-row.has-combat {

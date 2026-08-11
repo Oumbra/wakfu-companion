@@ -12,3 +12,11 @@
   flex-grow: 1;
   min-width: 0;
 }
+.roster-class-pick-btn {
+  width: 32px;
+  height: 32px;
+}
+.roster-character-add-btn {
+  width: 32px;
+  height: 32px;
+}
