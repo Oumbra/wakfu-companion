@@ -16,6 +16,7 @@
 # Secrets locaux Wrangler (wrangler pages dev) — jamais commités
 .dev.vars
 .dev.vars.*
+/.wrangler/
 
 # Angular CLI and build artefacts
 /.angular-cli.json
