@@ -1,5 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { LogFileAccessService } from './core/services/log-file-access.service';
+import { RouteSyncService } from './core/services/route-sync.service';
 import { StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
 import { CatalogService } from './core/api/catalog.service';
@@ -33,6 +35,7 @@ import { Gender } from './core/data/class-icons.data';
 @Component({
   selector: 'app-root',
   imports: [
+    RouterOutlet,
     SetupComponent,
     DashboardComponent,
     SessionRecapComponent,
@@ -62,6 +65,9 @@ export class App implements OnInit {
   protected readonly combatPanel = inject(CombatPanelService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
+  // Idem : démarre la synchronisation état de navigation → URL dès le premier changement de vue
+  // (voir RouteSyncService).
+  private readonly routeSync = inject(RouteSyncService);
   private readonly catalog = inject(CatalogService);
   private readonly auth = inject(AuthService);
   private readonly gameServers = inject(GameServerService);

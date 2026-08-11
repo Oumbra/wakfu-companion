@@ -1,0 +1,5 @@
+# Cloudflare Pages : renvoie toute URL de page (lien direct, F5) vers index.html pour laisser
+# Angular Router prendre le relais côté client (voir src/app/app.routes.ts, lot "URL dédiée par
+# page"). Les fichiers statiques réels (assets/, favicon.ico...) et les Pages Functions (functions/
+# api/) sont résolus par Cloudflare AVANT ce catch-all, donc ils ne sont pas concernés.
+/*  /index.html  200
