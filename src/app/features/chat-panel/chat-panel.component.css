@@ -115,13 +115,20 @@
   animation: fadeIn 0.2s;
 }
 /* Message correspondant à un filtre de texte configuré (voir `isHighlighted`) : les filtres ne
-   masquent plus les autres messages, ils mettent seulement celui-ci en évidence — dégradé doré qui
-   s'estompe vers la droite, bordure gauche pleine de la même couleur que le départ du dégradé
-   (remplace ponctuellement la couleur de canal habituelle, --ch, pour rester repérable au premier
-   coup d'œil quel que soit le canal). */
+   masquent plus les autres messages, ils mettent seulement celui-ci en évidence — dégradé qui
+   s'estompe vers la droite, bordure gauche pleine de la même couleur que le départ du dégradé.
+   Couleur accordée à celle du CANAL du message (--ch, déjà posée sur `.chat-msg` pour la bordure
+   habituelle) plutôt qu'une couleur fixe : la mise en évidence reste cohérente avec le code couleur
+   déjà utilisé partout ailleurs dans le chat (pastille de canal, chips de filtre...), et distingue
+   d'un coup d'œil un hit "Commerce" d'un hit "Guilde". Repli sur l'ancien doré si `--ch` est absent
+   (ne devrait pas arriver, tous les canaux connus en posent un). */
 .chat-msg.filter-hit {
-  background: linear-gradient(90deg, rgba(255, 199, 0, 0.32), rgba(255, 199, 0, 0) 75%);
-  border-left-color: #ffc700;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ch, #ffc700) 35%, transparent),
+    transparent 75%
+  );
+  border-left-color: var(--ch, #ffc700);
 }
 .chat-meta {
   display: flex;

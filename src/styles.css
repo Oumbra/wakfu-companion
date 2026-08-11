@@ -616,6 +616,23 @@ button.icon-btn.help-icon-btn {
   /* Dégâts Terre : vert rapproché du rouge/orange (Feu) sur cet axe — décalé vers un bleu-sarcelle
      nettement séparé de --dmg-fire. */
   --dmg-earth: #0f6b8c;
+  /* Canal Recrutement : même vert que l'ancienne couleur de victoire (#2ecc71) — décalé vers le
+     même bleu de remplacement pour rester cohérent avec la correction victoire/défaite ci-dessus. */
+  --channel-recrutement: #3391ff;
+}
+/* Rareté d'objet (voir .rarity-xxx, styles.css plus haut) : sélecteur combiné (ancêtre [data-
+   colorblind] + classe de rareté sur l'élément visé) plutôt qu'un jeton :root, ces couleurs sont
+   posées directement sur l'élément concerné (loot, tuile de suivi...), pas sur --rarity-color au
+   niveau racine. Seules "rare" (vert) et "légendaire" (jaune-vert) sont concernées : trop proches
+   l'une de l'autre ET de "mythique" (orange) sur l'axe rouge-vert — les autres raretés restent déjà
+   suffisamment distinctes (bleu, violet, rose, gris). */
+:root[data-colorblind='protanopia'] .rarity-rare,
+:root[data-colorblind='deuteranopia'] .rarity-rare {
+  --rarity-color: #17b8a0;
+}
+:root[data-colorblind='protanopia'] .rarity-legendary,
+:root[data-colorblind='deuteranopia'] .rarity-legendary {
+  --rarity-color: #e0c200;
 }
 :root[data-colorblind='tritanopia'] {
   /* Dégâts Eau : cyan décalé vers un bleu plus franc, moins susceptible d'être lu comme un vert

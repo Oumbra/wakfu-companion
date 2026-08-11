@@ -62,6 +62,21 @@ export class I18nService {
     );
   }
 
+  /** Même usage que `formatDate` (en-tête de regroupement par jour — combats/achats/échanges),
+   * mais avec des termes relatifs pour les 3 derniers jours ("Aujourd'hui"/"Hier"/"Avant-hier"),
+   * bien plus parlants qu'une date complète pour ce cas précis. Repli sur `formatDate` au-delà.
+   * Comparaison sur le jour calendaire LOCAL (minuit à minuit), pas sur un delta de 24h glissant —
+   * un événement à 23h59 hier et un autre à 00h01 aujourd'hui sont bien deux jours différents,
+   * quel que soit l'écart réel en millisecondes entre les deux. */
+  formatRelativeDay(ms: number): string {
+    const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const diffDays = Math.round((startOfDay(new Date()) - startOfDay(new Date(ms))) / 86_400_000);
+    if (diffDays === 0) return this.t('date.today');
+    if (diffDays === 1) return this.t('date.yesterday');
+    if (diffDays === 2) return this.t('date.dayBeforeYesterday');
+    return this.formatDate(ms);
+  }
+
   /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama
    * vers la locale courante de l'app. `name` peut être dans n'importe
    * laquelle des 4 langues (le client Wakfu de l'utilisateur n'est pas

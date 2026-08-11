@@ -70,7 +70,7 @@ export class TradesComponent {
 
     const byDate = new Map<string, TradeRecord[]>();
     for (const record of filtered) {
-      const key = this.i18n.formatDate(record.fullTimestampMs);
+      const key = this.i18n.formatRelativeDay(record.fullTimestampMs);
       const list = byDate.get(key);
       if (list) list.push(record);
       else byDate.set(key, [record]);
