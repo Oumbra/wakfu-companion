@@ -1,4 +1,4 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
 import { Fight } from '../models/fight.model';
 import { CatalogService } from '../api/catalog.service';
@@ -12,6 +12,7 @@ import { LogParser } from './log-parser';
 import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
+import { HistorySyncService } from '../sync/history-sync.service';
 
 /** @deprecated Réexportée pour les consommateurs historiques — les clés font
  * désormais autorité dans `core/data-access/user-data.keys.ts`. */
@@ -88,6 +89,11 @@ export interface PurchaseRecord {
   item: string;
   quantity: number;
   totalCost: number;
+  /** Heure brute du log (`HH:MM:SS,mmm`) — seule partie réellement écrite par Wakfu, donc la
+   * seule stable d'une relecture à l'autre : c'est elle qui entre dans la clé déterministe
+   * d'envoi au compte (voir core/sync/history-event.model.ts), jamais `fullTimestampMs`, dont
+   * la date vient de l'horloge système du jour de lecture. */
+  time: string;
   fullTimestampMs: number;
 }
 
@@ -101,6 +107,8 @@ export interface TradeRecord {
   id: number;
   characterName: string;
   selfName: string;
+  /** Heure brute du log — voir `PurchaseRecord.time`. */
+  time: string;
   fullTimestampMs: number;
   acquired: TradeItemRow[];
   given: TradeItemRow[];
@@ -197,6 +205,8 @@ interface InitiativeSeat {
 @Injectable({ providedIn: 'root' })
 export class StatsStoreService {
   private readonly parser = new LogParser();
+  /** Envoi de l'historique au compte (lot 8) — no-op complet en mode invité, voir HistorySyncService. */
+  private readonly historySync = inject(HistorySyncService);
 
   readonly sessionStartedAt = signal<number | null>(null);
 
@@ -284,6 +294,11 @@ export class StatsStoreService {
     private readonly userData: UserDataService,
     private readonly gameServer: GameServerService,
   ) {
+    // Une connexion survenue EN COURS de session ne doit pas laisser derrière
+    // elle l'historique déjà reconstruit : au moment où la file s'active, elle
+    // rappelle ceci pour récupérer tout ce qui est en mémoire. Sans risque de
+    // doublon — c'est exactement ce que garantit la clé déterministe (lot 8).
+    this.historySync.setReplaySource(() => this.replayHistoryToSync());
     this.watchlist.set(this.loadWatchlist());
     this.reassignmentHistory.push(
       ...(this.userData.read<PersistedReassignment[]>('damageReassignments') ?? []),
@@ -821,6 +836,10 @@ export class StatsStoreService {
         .sort((a, b) => b.amount - a.amount),
     };
     this.fightHistoryList.unshift(record);
+    // Envoi au compte AVANT le plafonnement en mémoire : `MAX_FIGHT_HISTORY`
+    // borne ce que l'appareil garde affiché, pas ce que le compte archive —
+    // c'est tout l'objet de ce lot (« historique illimité »).
+    this.historySync.recordFight(record);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
 
     this.activeFights.delete(fightId);
@@ -910,13 +929,16 @@ export class StatsStoreService {
 
   /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
   private registerPurchase(amount: number, item: string, quantity: number, time: string): void {
-    this.purchaseHistoryList.unshift({
+    const record: PurchaseRecord = {
       id: this.nextPurchaseId++,
       item,
       quantity,
       totalCost: amount,
+      time,
       fullTimestampMs: this.buildFullTimestampMs(time),
-    });
+    };
+    this.purchaseHistoryList.unshift(record);
+    this.historySync.recordPurchase(record);
   }
 
   private registerTrade(
@@ -940,16 +962,19 @@ export class StatsStoreService {
     // (roster déclaré en page profil) ; si aucun des deux n'est reconnu, on
     // garde un choix stable plutôt que de ne rien enregistrer.
     const [self, other] = bIsSelf ? [b, a] : [a, b];
-    this.tradeHistoryList.unshift({
+    const record: TradeRecord = {
       id: this.nextTradeId++,
       characterName: other.playerName,
       selfName: self.playerName,
+      time,
       fullTimestampMs: this.buildFullTimestampMs(time),
       acquired: other.items,
       given: self.items,
       kamasAcquired: other.kamas,
       kamasGiven: self.kamas,
-    });
+    };
+    this.tradeHistoryList.unshift(record);
+    this.historySync.recordTrade(record);
   }
 
   private addWatched(rawName: string, kind: WatchlistKind): void {
@@ -987,6 +1012,18 @@ export class StatsStoreService {
     }
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
+  }
+
+  /**
+   * Repasse à la file de synchronisation tout l'historique déjà reconstruit
+   * (lot 8) — appelé quand la connexion aboutit alors que le fichier de log est
+   * déjà lu. La file dédoublonne par clé de contenu, un événement déjà envoyé
+   * n'est donc pas renvoyé.
+   */
+  private replayHistoryToSync(): void {
+    for (const record of this.fightHistoryList) this.historySync.recordFight(record);
+    for (const record of this.purchaseHistoryList) this.historySync.recordPurchase(record);
+    for (const record of this.tradeHistoryList) this.historySync.recordTrade(record);
   }
 
   /** Combat à afficher : le choix explicite de l'utilisateur (onglets) tant qu'il reste actif, sinon le suivi automatique (dernier combat touché). */

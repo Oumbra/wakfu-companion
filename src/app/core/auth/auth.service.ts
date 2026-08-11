@@ -3,6 +3,7 @@ import { ApiClientService } from '../api/api-client.service';
 import { UserDataService } from '../data-access/user-data.service';
 import type { UserDataKey } from '../data-access/user-data.keys';
 import { AppDataExportService } from '../services/app-data-export.service';
+import { HistorySyncService } from '../sync/history-sync.service';
 
 /**
  * État de session côté client (lot 5, prompt 5.2) — voir
@@ -92,6 +93,7 @@ export class AuthService {
   private readonly api = inject(ApiClientService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly userData = inject(UserDataService);
+  private readonly historySync = inject(HistorySyncService);
 
   private readonly _status = signal<AuthStatus>('unknown');
   private readonly _user = signal<AuthUser | null>(null);
@@ -222,6 +224,7 @@ export class AuthService {
     // fusionner en silence, ce que le prompt 5.2 interdit.
     if (this.isAuthenticated() && !this._migrationPrompt()) {
       await this.userData.activateRemote();
+      await this.activateHistorySync();
     }
     this._loginOutcome.set(outcome);
     return outcome;
@@ -264,6 +267,7 @@ export class AuthService {
       if (!ok) return false;
       this._migrationPrompt.set(null);
       await this.userData.activateRemote();
+      await this.activateHistorySync();
       return true;
     }
 
@@ -291,6 +295,9 @@ export class AuthService {
     this._busy.set(true);
     await this.userData.flush();
     await this.userData.activateRemote();
+    // L'historique (lot 8) suit le même bouton : c'est la même promesse faite à
+    // l'utilisateur — « envoie ce qui n'est pas encore parti ».
+    await this.historySync.flush();
     this._busy.set(false);
     const ok = this.userData.syncState() !== 'error';
     if (!ok) this._error.set('auth.error.sync');
@@ -384,10 +391,24 @@ export class AuthService {
    * pleinement fonctionnelle dans cet état — c'est le mode par défaut, pas une
    * dégradation.
    */
+  /**
+   * Active la file d'envoi des historiques (lot 8). L'identifiant du compte
+   * entre dans la clé déterministe de chaque événement, d'où l'attente que la
+   * session soit résolue avant de démarrer la file.
+   */
+  private async activateHistorySync(): Promise<void> {
+    const user = this._user();
+    if (!user) return;
+    await this.historySync.enable(user.id);
+  }
+
   private becomeGuest(): void {
     this._user.set(null);
     this._identities.set([]);
     this._status.set('guest');
+    // La file d'historique cesse d'être alimentée et vidée ; son contenu reste
+    // sur le disque, prêt à repartir à la prochaine connexion au même compte.
+    this.historySync.disable();
     // Retour au stockage purement local — les données déjà présentes sur cet
     // appareil restent intactes et utilisables (mode invité, §7 du plan).
     this.userData.deactivateRemote();
