@@ -308,9 +308,12 @@ export const priceScanRuns = pgTable('price_scan_runs', {
  * vérifié (compte Discord sans e-mail confirmé) — le compte reste utilisable,
  * il ne participe simplement pas à la fusion sur e-mail (voir flow.ts).
  *
- * `defaultGameServer` est le repli du lot 7 (le serveur réel viendra du
- * compte roster) : colonne posée dès maintenant pour éviter une migration
- * supplémentaire, jamais lue par ce lot.
+ * `defaultGameServer` était prévue comme repli du lot 7, posée dès le lot 5
+ * pour éviter une migration supplémentaire. Le lot 7 a finalement abandonné
+ * tout repli global (le serveur vient uniquement du compte roster, voir
+ * server/README.md) : **cette colonne n'est lue ni écrite par personne**.
+ * Nullable, elle ne coûte rien ; à supprimer si le lot 8 confirme qu'elle ne
+ * sert à rien.
  */
 export const users = pgTable(
   'users',

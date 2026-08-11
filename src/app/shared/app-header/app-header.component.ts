@@ -14,11 +14,12 @@ import { CatalogService } from '../../core/api/catalog.service';
 import { GameServerService } from '../../core/services/game-server.service';
 
 /**
- * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, langue, recap de
- * session, accès profil) — rendu une seule fois au niveau racine (voir app.html), commun à toutes
- * les pages. En dessous de 640px, recap/langue/profil se regroupent dans un menu burger (même
- * principe que `.mobile-menu` ailleurs dans l'app) car ils ne tiennent plus sur une seule ligne à
- * côté du logo/titre/fichier.
+ * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
+ * langue, recap de session, accès profil) — rendu une seule fois au niveau racine (voir app.html),
+ * commun à toutes les pages. En dessous de 640px, serveur/recap/langue/profil se regroupent dans un
+ * menu burger (même principe que `.mobile-menu` ailleurs dans l'app) car ils ne tiennent plus sur
+ * une seule ligne à côté du logo/titre/fichier — le serveur y passe en tête, c'est une information
+ * d'état, pas une action.
  *
  * Recap et profil ne s'affichent que si un fichier wakfu.log valide est connecté ; le bouton
  * profil s'efface en plus sur la page profil elle-même (pas de bouton pour aller vers la page où
@@ -62,10 +63,9 @@ export class AppHeaderComponent {
    * donnée lue dans le log, alors qu'elle est toujours déclarée par l'utilisateur. */
   protected readonly serverTooltip = computed(() => {
     const active = this.gameServers.activeServer();
-    if (!active) return this.i18n.t('app.gameServerUnsetTooltip');
-    return active.source === 'character'
-      ? this.i18n.t('app.gameServerFromCharacter', { name: active.characterName ?? '' })
-      : this.i18n.t('app.gameServerFromDefault');
+    return active
+      ? this.i18n.t('app.gameServerFromCharacter', { name: active.characterName })
+      : this.i18n.t('app.gameServerUnsetTooltip');
   });
 
   /** Renvoie vers l'onglet Personnages de la page profil, où le serveur se déclare. */

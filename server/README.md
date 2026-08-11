@@ -703,35 +703,38 @@ doit donc être **déclaré**. La conception le rattache au **compte du roster**
 peut être réparti sur plusieurs serveurs, et c'est la seule façon de le gérer
 sans lui demander de basculer un sélecteur à la main.
 
-`GameServerService.activeServer` (`core/services/game-server.service.ts`)
-applique trois priorités :
+`GameServerService.activeServer` (`core/services/game-server.service.ts`) tient
+en une seule règle, sans repli : le serveur est celui du compte auquel
+appartient le **dernier personnage du roster reconnu dans le log**
+(`noticeCharacter`, alimenté par `StatsStoreService` sur `fighter-joined`
+non-IA et sur les échanges). Tant qu'aucun ne l'a été, `activeServer` vaut
+`null` et le badge devient une invite cliquable vers l'onglet Personnages —
+non bloquante, tout le reste de l'application fonctionne.
 
-1. serveur du compte auquel appartient le **dernier personnage du roster
-   reconnu dans le log** (`noticeCharacter`, alimenté par `StatsStoreService`
-   sur `fighter-joined` non-IA et sur les échanges) ;
-2. sinon le **serveur par défaut** du profil ;
-3. sinon `null` → le badge du header devient une invite cliquable vers l'onglet
-   Personnages. Non bloquante : tout le reste de l'application fonctionne.
-
-Deux règles pour ne jamais afficher une donnée fausse :
+**Pas de « serveur par défaut » global.** Le prompt 7.1 en prévoyait un ; il a
+été implémenté puis retiré à la demande de l'utilisateur. Un repli global
+n'aurait affiché qu'une valeur plausible mais non vérifiée, alors que tout
+l'intérêt de cette déduction est d'être factuelle — et il aurait fini par
+taguer l'historique du lot 8 avec une donnée que personne n'a confirmée. Même
+raison pour les deux règles suivantes :
 
 - **Aucune valeur inventée.** Un compte sans serveur reste « non renseigné » ;
-  deviner « Pandora » parce que c'est le plus peuplé taguerait l'historique du
-  lot 8 avec une donnée fabriquée.
+  deviner « Pandora » parce que c'est le plus peuplé serait une donnée
+  fabriquée.
 - **Un personnage reconnu dont le compte n'a pas de serveur ne prend pas celui
-  d'un autre compte** : on retombe sur le défaut global, explicitement signalé
-  comme tel dans le tooltip.
+  d'un autre compte** : rien n'est affiché.
 
-### Le serveur par défaut vit dans le profil (écart assumé)
+Conséquence côté schéma : `users.default_game_server` (posée au lot 5 « pour
+éviter une migration supplémentaire ») **reste inutilisée**. Colonne nullable
+sans lecteur, elle ne coûte rien ; à supprimer si le lot 8 confirme qu'elle ne
+sert à rien.
 
-Le prompt disait « tout tient dans le localStorage existant via
-`PersistenceService` ». Le défaut global est rangé dans `StoredProfile`
-(`defaultGameServer`), donc **synchronisé avec le compte** via le lot 6 — écrit
-après ce prompt. C'est une préférence utilisateur qui a vocation à suivre le
-joueur d'un appareil à l'autre, le §6 du plan la prévoit d'ailleurs sous
-`users.default_game_server`, et ça n'ajoute aucun appel serveur : elle voyage
-dans la charge utile `profile` déjà synchronisée. Même logique pour
-`RosterAccount.gameServer`, qui part avec la clé `roster`.
+### Où vit la donnée
+
+`RosterAccount.gameServer` part avec la clé `roster`, donc **synchronisé avec
+le compte** via le lot 6 (écrit après ce prompt, qui disait « tout tient dans
+le localStorage via `PersistenceService` ») : ça n'ajoute aucun appel serveur,
+la valeur voyage dans une charge utile déjà synchronisée.
 
 La liste des serveurs, elle, est mise en cache dans une clé locale **hors**
 `USER_DATA_KEYS` : ce n'est pas une donnée utilisateur mais une copie d'une
@@ -753,14 +756,23 @@ comportement **correct** (une reconnexion relit tout le fichier et retrouve
 naturellement le dernier personnage vu), contrairement aux compteurs de suivi —
 principe d'architecture n°2 de `CLAUDE.md`, appliqué dans l'autre sens.
 
+### Où s'affiche le badge
+
+- **Desktop** : dans l'en-tête, à droite du titre (`.game-server-badge-desktop`).
+- **Mobile (≤ 640 px)** : masqué de l'en-tête — il n'y a plus la place à côté du
+  logo, du titre et du fichier connecté — et affiché **en tête du menu burger**,
+  au-dessus de Session recap / Langue / Profil. Présenté comme une ligne
+  d'information (pas le fond des `.mobile-menu-item`, réservés aux actions),
+  sauf quand rien n'est déductible : la ligne devient alors l'invite cliquable.
+
 ### Vérification effectuée
 
-`npm test` (97 tests, dont 8 nouveaux sur `GameServerService`),
-`npm run build`, et une vérification navigateur réelle
-(Chromium/playwright-core, `ng serve`, `/game-servers` simulé — les Pages
-Functions n'existent pas en local) : 14/14 points, dont l'invite cliquable
-menant au bon onglet, le sélecteur alimenté par l'API (serveur inactif exclu),
-la bascule du badge sur des lignes `[_FL_]` réelles entre deux comptes, un
-joueur hors roster sans effet, et la persistance après rechargement. Rendu
-vérifié en desktop (1280px) et mobile (390px) : le badge tient dans le header
+`npm test` (97 tests, dont 8 sur `GameServerService`), `npm run build`, et une
+vérification navigateur réelle (Chromium/playwright-core, `ng serve`,
+`/game-servers` simulé — les Pages Functions n'existent pas en local) :
+l'invite cliquable menant au bon onglet, le sélecteur alimenté par l'API
+(serveur inactif exclu), la bascule du badge sur des lignes `[_FL_]` réelles
+entre deux comptes, un joueur hors roster sans effet, et la persistance après
+rechargement. Rendu vérifié en desktop (1280 px) et mobile (390 px) : badge dans
+l'en-tête d'un côté, en tête du burger de l'autre, jamais les deux à la fois,
 sans débordement horizontal.

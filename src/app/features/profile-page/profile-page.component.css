@@ -247,8 +247,7 @@
 }
 
 .game-server-select {
-  /* Dans un `.profile-field` (flex colonne), un select s'étirerait sur toute la
-     largeur du champ — inutile pour trois options. */
+  /* Ne s'étire pas à la largeur de son conteneur — inutile pour trois options. */
   align-self: flex-start;
   max-width: 160px;
   background: #1c1c1c;
@@ -259,13 +258,6 @@
   font-family: inherit;
   font-size: 0.8125rem;
 }
-.profile-hint {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
 .profile-field {
   width: 100%;
   max-width: 480px;

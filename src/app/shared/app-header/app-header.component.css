@@ -158,6 +158,46 @@
   background: #2f2f2f;
   color: #fff;
 }
+/* Serveur de jeu en tête du menu burger (mobile) : même pastille que le badge
+   desktop, mais présenté en ligne d'information — d'où l'absence du fond des
+   `.mobile-menu-item`, réservés aux actions. */
+.mobile-menu-server {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: left;
+}
+/* La pastille occupe la même largeur qu'une icône d'item (voir
+   .mobile-menu-icon) : sans ça, le libellé du serveur ne s'alignerait pas sur
+   ceux des entrées du menu. */
+.mobile-menu-dot-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 22px;
+}
+
+/* Rien de déductible : pastille éteinte, et la ligne devient cliquable. */
+button.mobile-menu-server {
+  cursor: pointer;
+}
+button.mobile-menu-server .game-server-dot {
+  background: var(--text-muted);
+}
+button.mobile-menu-server:hover {
+  color: #fff;
+}
+
 .mobile-menu-icon {
   flex-shrink: 0;
   width: 22px;
@@ -217,6 +257,11 @@
     max-width: 90px;
   }
   .app-header-right-desktop {
+    display: none;
+  }
+  /* Le serveur passe en tête du menu burger (voir .mobile-menu-server) : le
+     garder aussi dans l'en-tête le ferait apparaître deux fois. */
+  .game-server-badge-desktop {
     display: none;
   }
   .app-header-burger {

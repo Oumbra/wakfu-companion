@@ -335,10 +335,6 @@ export class ProfilePageComponent implements OnDestroy {
     this.roster.setAccountGameServer(accountId, code || null);
   }
 
-  protected setDefaultServer(code: string): void {
-    this.profile.setDefaultGameServer(code || null);
-  }
-
   protected selectAccount(id: string): void {
     this.selectedAccountId.set(id);
   }
