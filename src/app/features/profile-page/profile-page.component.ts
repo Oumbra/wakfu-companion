@@ -8,7 +8,7 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { NgClass } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ProfileService } from '../../core/services/profile.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService } from '../../core/services/navigation.service';
@@ -62,7 +62,8 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
     AppPageComponent,
     IconComponent,
     TabBarComponent,
-  ],
+    NgTemplateOutlet
+],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })

@@ -396,10 +396,10 @@ button.reset-btn:hover {
     padding: 10px 10px 0 0 !important;
   }
   .panels-row .roster-character-scroll.roster-account-default {
-    height: calc(100vh - 250px);
+    height: calc(100vh - 458px);
   }
   .panels-row .roster-character-scroll:not(.roster-account-default) {
-    height: calc(100vh - 290px);
+    height: calc(100vh - 491px);
   }
   .panels-row .roster-character-row .pseudo-edit-input {
     width: calc(100% - 62px) !important;

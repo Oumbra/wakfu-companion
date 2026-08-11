@@ -246,33 +246,18 @@
   }
 }
 
-/* Serveur de jeu (lot 7) : sélecteur par compte du roster, et repli global
-   plus bas dans le même onglet. Même habillage que les autres champs de la
-   page — c'est une préférence, pas un réglage à part. */
-.roster-account-server {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 12px;
-}
-.roster-server-label {
-  color: var(--text-muted);
-  font-size: 0.85rem;
-}
 .game-server-select {
   /* Dans un `.profile-field` (flex colonne), un select s'étirerait sur toute la
      largeur du champ — inutile pour trois options. */
   align-self: flex-start;
-  max-width: 260px;
+  max-width: 160px;
   background: #1c1c1c;
   border: 1px solid var(--border);
   color: var(--text-color);
   border-radius: 4px;
-  padding: 5px 8px;
+  padding: 4px;
   font-family: inherit;
-  font-size: 0.85rem;
-  min-width: 160px;
+  font-size: 0.8125rem;
 }
 .profile-hint {
   margin: 0;
@@ -662,11 +647,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/* Nombre de personnages du compte affiché, sur la même ligne que le switch liste/grille. */
+/* Selecteur de server et nombre de personnages du compte affiché, sur la même ligne que le switch liste/grille. */
 .roster-view-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
+}
+.roster-view-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 .roster-character-count {
   display: flex;

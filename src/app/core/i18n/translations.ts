@@ -25,8 +25,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.menu': 'Menu',
     'app.language': 'Langue',
     'app.gameServerUnset': 'Serveur ?',
-    'app.gameServerUnsetTooltip':
-      'Serveur de jeu non renseigné — cliquer pour le déclarer (le journal Wakfu ne l’indique jamais).',
+    'app.gameServerUnsetTooltip': 'Serveur de jeu non renseigné',
     'app.gameServerFromCharacter': 'Serveur déduit du personnage {{name}}',
     'app.gameServerFromDefault':
       'Serveur par défaut (aucun personnage déclaré reconnu pour l’instant)',
@@ -139,8 +138,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'Le toast se fermera automatiquement au bout de {{seconds}} secondes.',
     'profile.rosterLabel': 'Personnages',
-    'profile.gameServerLabel': 'Serveur de jeu',
-    'profile.gameServerNone': 'Non renseigné',
+    'profile.gameServerNone': 'Serveur ?',
     'profile.defaultServerLabel': 'Serveur par défaut',
     'profile.defaultServerHint':
       'Utilisé tant qu’aucun personnage déclaré ci-dessus n’a été reconnu dans le journal. Le journal Wakfu n’indique jamais le serveur : il ne peut être que déclaré ici.',
@@ -320,8 +318,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.menu': 'Menu',
     'app.language': 'Language',
     'app.gameServerUnset': 'Server?',
-    'app.gameServerUnsetTooltip':
-      'Game server not set — click to declare it (the Wakfu log never states it).',
+    'app.gameServerUnsetTooltip': 'Game server not set',
     'app.gameServerFromCharacter': 'Server inferred from character {{name}}',
     'app.gameServerFromDefault': 'Default server (no declared character recognised yet)',
     'app.catalogUnavailable':
@@ -433,8 +430,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'The toast will close automatically after {{seconds}} seconds.',
     'profile.rosterLabel': 'Characters',
-    'profile.gameServerLabel': 'Game server',
-    'profile.gameServerNone': 'Not set',
+    'profile.gameServerNone': 'Server ?',
     'profile.defaultServerLabel': 'Default server',
     'profile.defaultServerHint':
       'Used until one of the characters declared above is recognised in the log. The Wakfu log never states the server: it can only be declared here.',
@@ -611,8 +607,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.menu': 'Menú',
     'app.language': 'Idioma',
     'app.gameServerUnset': '¿Servidor?',
-    'app.gameServerUnsetTooltip':
-      'Servidor de juego sin definir — haz clic para declararlo (el registro de Wakfu nunca lo indica).',
+    'app.gameServerUnsetTooltip': 'Servidor de juego sin definir',
     'app.gameServerFromCharacter': 'Servidor deducido del personaje {{name}}',
     'app.gameServerFromDefault':
       'Servidor por defecto (aún no se ha reconocido ningún personaje declarado)',
@@ -725,8 +720,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'El aviso se cerrará automáticamente después de {{seconds}} segundos.',
     'profile.rosterLabel': 'Personajes',
-    'profile.gameServerLabel': 'Servidor de juego',
-    'profile.gameServerNone': 'Sin definir',
+    'profile.gameServerNone': '¿Servidor?',
     'profile.defaultServerLabel': 'Servidor por defecto',
     'profile.defaultServerHint':
       'Se usa mientras no se reconozca en el registro ninguno de los personajes declarados arriba. El registro de Wakfu nunca indica el servidor: solo puede declararse aquí.',
@@ -905,8 +899,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.menu': 'Menu',
     'app.language': 'Idioma',
     'app.gameServerUnset': 'Servidor?',
-    'app.gameServerUnsetTooltip':
-      'Servidor de jogo não definido — clique para o declarar (o registo do Wakfu nunca o indica).',
+    'app.gameServerUnsetTooltip': 'Servidor de jogo não definido',
     'app.gameServerFromCharacter': 'Servidor deduzido da personagem {{name}}',
     'app.gameServerFromDefault':
       'Servidor predefinido (ainda não foi reconhecida nenhuma personagem declarada)',
@@ -1019,8 +1012,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'O aviso vai fechar automaticamente após {{seconds}} segundos.',
     'profile.rosterLabel': 'Personagens',
-    'profile.gameServerLabel': 'Servidor de jogo',
-    'profile.gameServerNone': 'Não definido',
+    'profile.gameServerNone': 'Servidor ?',
     'profile.defaultServerLabel': 'Servidor predefinido',
     'profile.defaultServerHint':
       'Usado enquanto nenhuma das personagens declaradas acima for reconhecida no registo. O registo do Wakfu nunca indica o servidor: só pode ser declarado aqui.',
