@@ -9,12 +9,12 @@
   border-radius: 50%;
   padding: 0;
   border: 1px solid var(--accent);
-  background: linear-gradient(145deg, #262626, #161616);
+  background: linear-gradient(145deg, var(--surface-raised), var(--surface-well));
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 0 0 1px var(--tint-weak),
     0 2px 6px rgba(0, 0, 0, 0.5);
   transition:
     transform 0.15s ease,
@@ -24,7 +24,7 @@
 .profile-btn:hover {
   transform: scale(1.07);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    inset 0 0 0 1px var(--tint-weak),
     0 0 10px var(--accent);
 }
 .profile-question {
@@ -47,7 +47,7 @@
   height: 36px;
   border-radius: 6px;
   border: none;
-  background: #262626;
+  background: var(--surface-raised);
   padding: 0 10px;
   justify-content: flex-start;
   gap: 10px;
@@ -55,7 +55,7 @@
 }
 .profile-btn-row:hover {
   transform: none;
-  background: #2f2f2f;
+  background: var(--surface-active);
   box-shadow: none;
 }
 .profile-btn-row .profile-avatar,
@@ -75,8 +75,8 @@
   text-align: left;
   font-weight: 600;
   font-size: 0.85rem;
-  color: #ccc;
+  color: var(--text-color);
 }
 .profile-btn-row:hover .profile-btn-label {
-  color: #fff;
+  color: var(--text-bright);
 }

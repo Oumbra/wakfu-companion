@@ -18,7 +18,7 @@
   letter-spacing: 1px;
   color: var(--accent);
   text-transform: uppercase;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--surface-active);
   flex-shrink: 0;
   transition: background 0.15s;
 }
@@ -70,7 +70,7 @@
 }
 
 .entity-block {
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
 }
 .entity-row {
   position: relative;
@@ -87,7 +87,7 @@
   cursor: grabbing;
 }
 .entity-row:not(.no-toggle):hover {
-  background: #242424;
+  background: var(--surface-raised);
 }
 .entity-row.no-toggle {
   cursor: default;
@@ -96,7 +96,7 @@
   cursor: grab;
 }
 .entity-row.ko-zero {
-  background-color: #363636a6;
+  background-color: var(--ko-overlay);
 }
 .ko-icon {
   position: relative;
@@ -135,7 +135,7 @@
 }
 .caret {
   font-size: 0.65em;
-  color: #666;
+  color: var(--text-muted);
   transition: transform 0.2s;
   display: inline-block;
 }
@@ -153,8 +153,8 @@
 }
 
 .spell-list {
-  background: #161616;
-  border-top: 1px solid #2a2a2a;
+  background: var(--surface-well);
+  border-top: 1px solid var(--border);
 }
 .spell-row {
   display: flex;
@@ -162,8 +162,8 @@
   align-items: center;
   padding: 6px 15px 6px 32px;
   font-size: 0.78rem;
-  color: #ccc;
-  border-bottom: 1px solid #222;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--surface-well);
   gap: 10px;
 }
 .spell-name {
@@ -180,7 +180,7 @@
 }
 .spell-total {
   font-family: monospace;
-  color: #888;
+  color: var(--text-muted);
   min-width: 70px;
   text-align: right;
 }

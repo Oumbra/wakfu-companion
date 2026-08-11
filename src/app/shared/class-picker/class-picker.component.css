@@ -10,7 +10,7 @@
 .class-picker {
   position: fixed;
   z-index: 601;
-  background: #1c1c1c;
+  background: var(--surface-raised);
   border: 1px solid var(--accent);
   border-radius: 8px;
   padding: 10px;
@@ -41,7 +41,7 @@
 }
 .icon-switch-option.gender-switch-option {
   line-height: 1;
-  color: #fff;
+  color: var(--text-bright);
   font-size: 0.85rem;
   cursor: pointer;
   transition: color 0.25s ease;
@@ -58,12 +58,12 @@
   width: 34px;
   height: 34px;
   padding: 4px;
-  background: #262626;
-  border: 1px solid #3a3a3a;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
 }
 .class-picker-item:hover {
   border-color: var(--accent);
-  background: #2f2f2f;
+  background: var(--surface-active);
 }
 .class-picker-item img {
   width: 100%;

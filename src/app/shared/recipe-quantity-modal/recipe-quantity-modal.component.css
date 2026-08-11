@@ -94,15 +94,15 @@
   border-color: color-mix(in srgb, var(--rarity-color) 45%, transparent);
   background: linear-gradient(
     to right,
-    color-mix(in srgb, var(--rarity-color) 45%, #1a1a1a),
-    #1a1a1a 85%
+    color-mix(in srgb, var(--rarity-color) 45%, var(--surface-well)),
+    var(--surface-well) 85%
   );
 }
 
 .recipe-modal-item-name {
   font-size: 0.9rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--text-bright);
 }
 
 .recipe-modal-qty-row {
@@ -114,15 +114,15 @@
 
 .recipe-modal-qty-label {
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--text-muted);
 }
 
 .recipe-modal-qty-input {
   width: 64px;
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--tint-strong);
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--tint-weak);
   color: var(--accent);
   font-family: monospace;
   font-weight: 700;
@@ -154,9 +154,9 @@
   align-items: center;
   gap: 8px;
   font-size: 0.8rem;
-  color: #ccc;
+  color: var(--text-color);
   padding: 3px 6px;
-  background: #1a1a1a;
+  background: var(--surface-well);
   border-radius: 4px;
 }
 
@@ -186,7 +186,7 @@
   padding: 0;
   background: transparent;
   border: none;
-  color: #777;
+  color: var(--text-muted);
   cursor: pointer;
 }
 .recipe-modal-nest-btn svg {

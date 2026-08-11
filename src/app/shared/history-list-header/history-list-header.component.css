@@ -10,7 +10,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
-  background: #222;
+  background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -27,14 +27,14 @@
   transform: translateY(-50%);
   width: 14px;
   height: 14px;
-  color: #777;
+  color: var(--text-muted);
   pointer-events: none;
 }
 .search-input {
   flex-grow: 1;
   min-width: 0;
-  background: #151515;
-  border: 1px solid #444;
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
   color: var(--text-color);
   padding: 6px 10px 6px 30px;
   border-radius: 4px;

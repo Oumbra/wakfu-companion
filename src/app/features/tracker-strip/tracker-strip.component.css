@@ -92,7 +92,7 @@
   position: absolute;
   top: -13px;
   right: -13px;
-  background: #333333;
+  background: var(--surface-active);
 }
 .kpi-add-wrap > .help-icon-btn:hover {
   color: var(--accent);
@@ -103,8 +103,8 @@
   height: 58px;
   border-radius: 10px;
   background: var(--panel-header-bg);
-  border: 2px dashed #555;
-  color: #999;
+  border: 2px dashed var(--border-strong);
+  color: var(--text-muted);
   font-size: 1.4rem;
   display: flex;
   align-items: center;
@@ -128,8 +128,8 @@
   height: 58px;
   border-radius: 10px;
   background: var(--panel-header-bg);
-  border: 2px dashed #555;
-  color: #999;
+  border: 2px dashed var(--border-strong);
+  color: var(--text-muted);
   font-size: 1.4rem;
   display: flex;
   align-items: center;
@@ -147,7 +147,7 @@
   left: 50%;
   transform: translateX(-50%);
   background: #b33939;
-  color: #fff;
+  color: var(--text-bright);
   border: none;
   border-radius: 6px;
   padding: 6px 12px;
@@ -261,7 +261,7 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 0.8rem;
-  color: #ccc;
+  color: var(--text-color);
   transition:
     max-width var(--kpi-expand-duration, 320ms) ease,
     opacity var(--kpi-expand-duration, 320ms) ease,
@@ -273,7 +273,7 @@
   opacity: 0;
   overflow: hidden;
   flex-shrink: 0;
-  color: #999;
+  color: var(--text-muted);
   background: transparent;
   border: none;
   padding: 0;
@@ -341,9 +341,9 @@
      décompte — bug réel observé (icône visiblement pas centrée à 58x58). */
   border-width: 0;
   border-style: solid;
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--tint-strong);
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--tint-weak);
   font-family: monospace;
   font-weight: 700;
   font-size: 0.8rem;
@@ -410,8 +410,8 @@
   position: absolute;
   bottom: -7px;
   right: -7px;
-  background: #111;
-  border: 1px solid #444;
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   padding: 2px 6px;
   font-family: monospace;
@@ -427,9 +427,9 @@
   width: 19px;
   height: 19px;
   border-radius: 50%;
-  background: #333;
-  border: 1px solid #555;
-  color: #ccc;
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -449,9 +449,9 @@
   width: 19px;
   height: 19px;
   border-radius: 50%;
-  background: #222;
-  border: 1px solid #666;
-  color: #fff;
+  background: var(--surface-well);
+  border: 1px solid var(--text-muted);
+  color: var(--text-bright);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -474,7 +474,7 @@
 .kpi-del:hover {
   background: #b33939;
   border-color: #b33939;
-  color: #fff;
+  color: var(--text-bright);
 }
 
 /* Bordure/dégradé par rareté (objets suivis) — mêmes couleurs que
@@ -503,7 +503,7 @@
 }
 /* Monstres : bordure grise, fond toujours transparent (pas de dégradé, même déployé). */
 .kpi.is-monster {
-  border-color: #888;
+  border-color: var(--text-muted);
   background: transparent;
 }
 .kpi.expanded.is-monster {
@@ -526,6 +526,9 @@
    (`[title]::after`), rogné ici par `.kpi-strip`. La popover de suppression
    elle-même n'est plus locale : voir ConfirmDeleteService/
    ConfirmDeletePopoverComponent (mutualisée avec le profil). */
+/* Toujours sombre, dans les deux thèmes (comme .confirm-delete-popover et
+   .floating-name-tooltip/styles.css) — convention "tooltip toujours foncé"
+   du système de tooltip générique, gardée volontairement hors palette. */
 .kpi-name-tooltip {
   position: absolute;
   background: #000;

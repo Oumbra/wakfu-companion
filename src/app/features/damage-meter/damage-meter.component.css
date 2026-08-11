@@ -26,9 +26,9 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  color: #ccc;
+  background: var(--tint-medium);
+  border: 1px solid var(--tint-strong);
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,8 +36,8 @@
   padding: 0;
 }
 .collapse-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  background: var(--tint-strong);
+  color: var(--text-bright);
 }
 @media (max-width: 800px) {
   .collapse-btn {
@@ -58,24 +58,24 @@
   flex-wrap: wrap;
   gap: 4px;
   padding: 6px 10px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .fight-tab {
   padding: 3px 9px;
   font-size: 0.7rem;
   font-weight: 700;
-  color: #999;
-  background: #222;
-  border: 1px solid #3a3a3a;
+  color: var(--text-muted);
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
 }
 .fight-tab:hover {
-  background: #2c2c2c;
-  color: #fff;
+  background: var(--surface-active);
+  color: var(--text-bright);
 }
 .fight-tab.selected {
-  background: color-mix(in srgb, var(--accent) 20%, #222);
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-well));
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -86,19 +86,19 @@
   justify-content: center;
   gap: 12px;
   padding: 8px 15px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
 }
 .fight-turns {
-  color: #ccc;
+  color: var(--text-color);
   font-family: monospace;
   font-size: 0.85rem;
   font-weight: 700;
 }
 .fight-duration {
-  color: #888;
+  color: var(--text-muted);
   font-family: monospace;
   font-size: 0.72rem;
 }
 .fight-stats-sep {
-  color: #555;
+  color: var(--border-strong);
 }

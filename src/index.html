@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <title>Wakfu Companion</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#00d2ff" />
     <!-- Contrairement à main-*.js/styles-*.css (hashés via outputHashing,
        voir angular.json), ce fichier index.html garde toujours le même nom :
@@ -17,6 +17,25 @@
     <meta http-equiv="Expires" content="0" />
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="manifest" href="manifest.webmanifest" />
+    <!-- Pose data-theme AVANT le premier rendu (voir ThemeService, même clé/logique de détection) :
+         sans ça, un visiteur en thème système clair verrait un flash du thème sombre par défaut le
+         temps qu'Angular démarre et instancie le service. -->
+    <script>
+      (function () {
+        try {
+          var stored = JSON.parse(localStorage.getItem('wakfu-theme') || 'null');
+          var theme =
+            stored === 'dark' || stored === 'light'
+              ? stored
+              : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark';
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          /* localStorage indisponible (mode privé strict...) : reste sur le thème sombre par défaut. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <app-root></app-root>

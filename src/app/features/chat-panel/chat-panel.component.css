@@ -24,7 +24,7 @@
   flex-wrap: wrap;
   gap: 6px;
   padding: 8px 10px;
-  background: #191919;
+  background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -48,7 +48,7 @@
 
 .search-bar {
   padding: 8px 10px;
-  background: #151515;
+  background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -63,7 +63,7 @@
 .filter-channel-select {
   flex-shrink: 0;
   max-width: 110px;
-  background: #1c1c1c;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   color: var(--text-color);
   border-radius: 4px;
@@ -103,7 +103,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background-color: #1a1a1a;
+  background-color: var(--surface-well);
 }
 
 .chat-msg {
@@ -111,7 +111,7 @@
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 0.85rem;
-  border-left: 3px solid var(--ch, #444);
+  border-left: 3px solid var(--ch, var(--border-strong));
   animation: fadeIn 0.2s;
 }
 .chat-meta {
@@ -123,7 +123,7 @@
   flex-wrap: wrap;
 }
 .chat-time {
-  color: #666;
+  color: var(--text-muted);
 }
 .chat-channel {
   font-weight: bold;
@@ -131,10 +131,10 @@
 }
 .chat-author {
   font-weight: bold;
-  color: #eee;
+  color: var(--text-bright);
 }
 .chat-content {
-  color: #ddd;
+  color: var(--text-color);
   line-height: 1.4;
   word-wrap: break-word;
 }

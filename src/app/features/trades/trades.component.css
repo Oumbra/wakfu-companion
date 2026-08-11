@@ -11,7 +11,7 @@
 }
 
 .date-group {
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
 }
 .date-group-header {
   display: flex;
@@ -22,7 +22,7 @@
   cursor: pointer;
 }
 .date-group-header:hover {
-  background: #232323;
+  background: var(--surface-raised);
 }
 .date-group-right {
   display: flex;
@@ -33,7 +33,7 @@
   font-family: monospace;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #ccc;
+  color: var(--text-color);
 }
 .date-group-count {
   font-family: monospace;
@@ -43,7 +43,7 @@
 }
 .date-group-caret {
   font-size: 0.7em;
-  color: #666;
+  color: var(--text-muted);
   transition: transform 0.2s;
 }
 .date-group-caret.expanded {
@@ -52,14 +52,14 @@
 }
 
 .trade-entry {
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   padding: 10px 15px;
 }
 .trade-entry:nth-child(odd) {
-  background-color: #1a1a1a;
+  background-color: var(--surface-well);
 }
 .trade-entry:nth-child(even) {
-  background-color: #30303080;
+  background-color: var(--row-stripe);
 }
 
 .trade-header {
@@ -71,12 +71,12 @@
 .trade-clock {
   flex-shrink: 0;
   display: flex;
-  color: #888;
+  color: var(--text-muted);
 }
 .trade-character {
   font-weight: 700;
   font-size: 0.85rem;
-  color: #ccc;
+  color: var(--text-color);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -89,14 +89,14 @@
   gap: 8px;
   padding: 5px 8px;
   margin-bottom: 8px;
-  background: #161616;
+  background: var(--surface-well);
   border-radius: 6px;
   font-family: monospace;
   font-size: 0.78rem;
   font-weight: 700;
 }
 .trade-kamas-label {
-  color: #888;
+  color: var(--text-muted);
   font-family: inherit;
   font-size: 0.66rem;
   font-weight: 700;
@@ -121,7 +121,7 @@
 }
 .trade-section {
   min-width: 0;
-  background: #161616;
+  background: var(--surface-well);
   border-radius: 6px;
   padding: 8px;
 }
@@ -148,7 +148,7 @@
   align-items: center;
   gap: 6px;
   font-size: 0.78rem;
-  color: #ccc;
+  color: var(--text-color);
   padding: 3px 6px;
   border-left: 2px solid transparent;
   border-radius: 0;
@@ -161,8 +161,8 @@
   border-left-color: var(--rarity-color);
   background: linear-gradient(
     to right,
-    color-mix(in srgb, var(--rarity-color) 30%, #222),
-    #222 75%
+    color-mix(in srgb, var(--rarity-color) 30%, var(--surface-well)),
+    var(--surface-well) 75%
   );
 }
 .trade-item-name {
@@ -176,7 +176,7 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 0.72rem;
-  color: #ccc;
+  color: var(--text-color);
   flex-shrink: 0;
 }
 
