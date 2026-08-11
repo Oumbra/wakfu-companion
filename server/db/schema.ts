@@ -463,3 +463,159 @@ export const userSettings = pgTable(
   },
   (table) => [primaryKey({ columns: [table.userId, table.key] })],
 );
+
+/**
+ * Historiques personnels (lot 8, prompt 8.1) — combats, achats, échanges.
+ *
+ * ## `clientKey` : le cœur du lot
+ *
+ * Le principe d'architecture n°2 (CLAUDE.md) veut que toute (re)connexion au
+ * fichier de log le relise **depuis le début** et reconstruise l'intégralité de
+ * l'historique. Sans précaution, chaque reconnexion réenverrait tout et
+ * créerait des doublons **persistés** — qu'un simple F5 ne réparerait pas.
+ *
+ * Les identifiants côté client (`nextPurchaseId`, `nextTradeId`, `Fight.id`)
+ * sont des compteurs de session, remis à zéro à chaque reconstruction : ils
+ * sont inutilisables comme clés. `clientKey` est donc dérivée du **contenu** de
+ * l'événement (voir `src/app/core/sync/history-signature.util.ts` et
+ * `client-key.util.ts` : `sha256(uid|type|horodatage ms|signature du
+ * contenu)`), et `UNIQUE (user_id, client_key)` + `ON CONFLICT DO NOTHING`
+ * rendent l'ingestion idempotente : rejouer dix fois le même log n'écrit
+ * qu'une ligne.
+ *
+ * ## Écarts assumés par rapport au §6 du plan
+ *
+ * 1. **`gameServer` sur les trois tables**, pas seulement `purchases` : le lot
+ *    7 a été fait pour « taguer l'historique personnel (combats, achats,
+ *    échanges) par serveur de jeu », le §6 ne le portait que sur les achats.
+ *    Toujours nullable — aucun serveur résolu n'empêche jamais l'envoi (prompt
+ *    8.1 point 4), la colonne reste simplement vide.
+ * 2. **`fight_participants` porte un `instanceIndex`** dans sa clé primaire :
+ *    la PK `(fight_id, name, side)` du plan entre en collision dès que deux
+ *    combattants du même camp partagent un nom, ce qui est courant (voir
+ *    `countNameInstances`/`InitiativeSeat` côté client, tout un mécanisme y est
+ *    consacré). Sans lui, un combat contre 3 Bouftous perdrait 2 lignes sur 3.
+ * 3. **`trade_items` porte un `lineIndex`** et une vraie clé primaire, là où le
+ *    §6 laissait la table sans contrainte : c'est ce qui permet de réinsérer
+ *    les lignes filles en `ON CONFLICT DO NOTHING` sans jamais les dupliquer
+ *    (voir functions/api/v1/history/trades.ts — le driver `neon-http` n'offre
+ *    pas de transaction, les filles sont donc écrites en une requête séparée
+ *    de leur parent et doivent être idempotentes elles aussi).
+ *
+ * ## Ce qui n'est jamais envoyé
+ *
+ * Le contenu du chat (prompt 8.1 point 5) : aucune table ci-dessous ne le
+ * référence, et `SYNCED_HISTORY_KINDS` côté client ne l'inclut pas. Les
+ * messages appartiennent à des tiers qui n'ont rien demandé (§7 du plan).
+ */
+export const fights = pgTable(
+  'fights',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    clientKey: text('client_key').notNull(),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull(),
+    durationMs: integer('duration_ms'),
+    won: boolean('won'),
+    turns: integer('turns'),
+    totalDamage: bigint('total_damage', { mode: 'number' }),
+    xpGained: bigint('xp_gained', { mode: 'number' }),
+    kamasGained: bigint('kamas_gained', { mode: 'number' }),
+    gameServer: text('game_server').references(() => gameServers.code),
+  },
+  (table) => [
+    uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
+    // Pagination : « les N combats de cet utilisateur les plus récents ».
+    index('fights_user_started_at_idx').on(table.userId, table.startedAt),
+  ],
+);
+
+/** Une ligne par **instance** de combattant (voir `instanceIndex` ci-dessus), pas par nom. */
+export const fightParticipants = pgTable(
+  'fight_participants',
+  {
+    fightId: bigint('fight_id', { mode: 'number' })
+      .notNull()
+      .references(() => fights.id, { onDelete: 'cascade' }),
+    side: text('side').notNull(), // 'ally' | 'enemy'
+    name: text('name').notNull(),
+    instanceIndex: integer('instance_index').notNull().default(1),
+    className: text('class_name'),
+    damage: bigint('damage', { mode: 'number' }).notNull().default(0),
+    defeated: boolean('defeated').notNull().default(false),
+  },
+  (table) => [
+    primaryKey({ columns: [table.fightId, table.side, table.name, table.instanceIndex] }),
+  ],
+);
+
+/**
+ * Achats détectés dans le log (perte de kamas suivie d'un ramassage immédiat,
+ * voir `registerPurchase` côté client). `itemId` référence `items.ankamaId`
+ * quand l'objet a pu être résolu dans le catalogue, `NULL` sinon — sans FK
+ * stricte, pour la même raison que les prix : un import de catalogue ne doit
+ * jamais faire échouer l'écriture d'un historique.
+ *
+ * **Aucun rapport avec le monitoring de prix (lot 4)** : celui-ci vient d'un
+ * scan de l'hôtel des ventes, jamais des achats des joueurs (§8 du plan).
+ */
+export const purchases = pgTable(
+  'purchases',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    clientKey: text('client_key').notNull(),
+    itemId: integer('item_id'),
+    itemName: text('item_name').notNull(),
+    quantity: integer('quantity').notNull(),
+    totalCost: bigint('total_cost', { mode: 'number' }).notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    gameServer: text('game_server').references(() => gameServers.code),
+  },
+  (table) => [
+    uniqueIndex('purchases_user_client_key_uq').on(table.userId, table.clientKey),
+    index('purchases_user_occurred_at_idx').on(table.userId, table.occurredAt),
+  ],
+);
+
+/** Échange avec un autre joueur. `peerName` est le personnage EN FACE, `selfName` celui du roster déclaré (voir `registerTrade` côté client). */
+export const trades = pgTable(
+  'trades',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    clientKey: text('client_key').notNull(),
+    peerName: text('peer_name').notNull(),
+    selfName: text('self_name').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    kamasAcquired: bigint('kamas_acquired', { mode: 'number' }).notNull().default(0),
+    kamasGiven: bigint('kamas_given', { mode: 'number' }).notNull().default(0),
+    gameServer: text('game_server').references(() => gameServers.code),
+  },
+  (table) => [
+    uniqueIndex('trades_user_client_key_uq').on(table.userId, table.clientKey),
+    index('trades_user_occurred_at_idx').on(table.userId, table.occurredAt),
+  ],
+);
+
+/** Objets échangés, une ligne par entrée de chaque côté — `lineIndex` = position dans son côté (voir doc de section). */
+export const tradeItems = pgTable(
+  'trade_items',
+  {
+    tradeId: bigint('trade_id', { mode: 'number' })
+      .notNull()
+      .references(() => trades.id, { onDelete: 'cascade' }),
+    direction: text('direction').notNull(), // 'acquired' | 'given'
+    lineIndex: integer('line_index').notNull(),
+    itemId: integer('item_id'),
+    itemName: text('item_name').notNull(),
+    quantity: integer('quantity').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],
+);

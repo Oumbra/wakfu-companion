@@ -1,11 +1,13 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { StatsStoreService } from './stats-store.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { CharacterRosterService } from './character-roster.service';
 import { LootAlertService } from './loot-alert.service';
+import { ApiClientService, type ApiResult } from '../api/api-client.service';
+import { HistorySyncService } from '../sync/history-sync.service';
 
 const FIXTURES_DIR = join(process.cwd(), 'assets/logs/tests/fr');
 
@@ -583,6 +585,191 @@ describe('StatsStoreService', () => {
       ]);
 
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(5);
+    });
+  });
+
+  /**
+   * Test exigé sans ambiguïté par le prompt 8.1 : « rejouer deux fois le même
+   * lot de lignes de log produit exactement le même nombre d'enregistrements
+   * côté serveur. Un test qui ne couvre pas ce cas ne vaut rien ici. »
+   *
+   * Le faux serveur ci-dessous reproduit la seule chose qui compte du vrai :
+   * `UNIQUE (user_id, client_key)` + `INSERT ... ON CONFLICT DO NOTHING`. Si la
+   * clé déterministe (core/sync/) cesse d'être déterministe, le compte de
+   * lignes double et le test tombe.
+   */
+  describe("Envoi de l'historique au compte : idempotence (lot 8)", () => {
+    /** Reproduit `INSERT ... ON CONFLICT DO NOTHING` sur `UNIQUE (user_id, client_key)`. */
+    class FakeHistoryServer {
+      private readonly tables = new Map<string, Set<string>>();
+      /** Nombre de lignes réellement insérées, par requête reçue — 0 signifie « tout était déjà là ». */
+      readonly insertedPerRequest: number[] = [];
+
+      ingest(path: string, entries: { clientKey: string }[]): number {
+        const table = this.tables.get(path) ?? new Set<string>();
+        this.tables.set(path, table);
+        let inserted = 0;
+        for (const entry of entries) {
+          if (table.has(entry.clientKey)) continue;
+          table.add(entry.clientKey);
+          inserted += 1;
+        }
+        this.insertedPerRequest.push(inserted);
+        return inserted;
+      }
+
+      rowCount(path: string): number {
+        return this.tables.get(path)?.size ?? 0;
+      }
+
+      totals(): { fights: number; purchases: number; trades: number } {
+        return {
+          fights: this.rowCount('/history/fights'),
+          purchases: this.rowCount('/history/purchases'),
+          trades: this.rowCount('/history/trades'),
+        };
+      }
+    }
+
+    function configureWithServer(server: FakeHistoryServer): void {
+      const api: Partial<ApiClientService> = {
+        setUnauthorizedHandler: () => undefined,
+        // Aucun GET n'a de sens ici (catalogue, serveurs de jeu) : le mode
+        // hors-ligne est la réponse la plus neutre possible.
+        getJson: async () => ({ ok: false, error: { kind: 'offline' } }) as ApiResult<never>,
+        requestJson: async <T>(
+          path: string,
+          options: { method: string; body?: unknown },
+        ): Promise<ApiResult<T>> => {
+          const entries = (options.body as { entries?: { clientKey: string }[] })?.entries ?? [];
+          const inserted = server.ingest(path, entries);
+          return {
+            ok: true,
+            data: { accepted: entries.map((e) => e.clientKey), inserted } as T,
+          };
+        },
+      };
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    }
+
+    /** Un jeu de lignes couvrant les trois types d'historique d'un coup. */
+    const lines = [
+      ...readFixture('fight_single-account_end_after-all-monsters-play.log'),
+      ...readFixture('purchase.log'),
+      ...readFixture('trade.log'),
+    ];
+
+    function declareRoster(): void {
+      const roster = TestBed.inject(CharacterRosterService);
+      roster.addCharacter(roster.accounts()[0].id, 'Oumbra', 'Sram', 'm');
+    }
+
+    async function replayOnce(server: FakeHistoryServer): Promise<void> {
+      const stats = TestBed.inject(StatsStoreService);
+      const sync = TestBed.inject(HistorySyncService);
+      await sync.enable('utilisateur-de-test');
+      feed(TestBed.inject(LogFileAccessService), lines);
+      await sync.flush();
+      void stats;
+    }
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('rejouer deux fois le même lot de lignes produit exactement le même nombre d\'enregistrements côté serveur', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+
+      await replayOnce(server);
+      const afterFirst = server.totals();
+      expect(afterFirst.fights).toBeGreaterThan(0);
+      expect(afterFirst.purchases).toBeGreaterThan(0);
+      expect(afterFirst.trades).toBeGreaterThan(0);
+
+      // Une (re)connexion relit tout le fichier depuis le début et reconstruit
+      // l'historique complet (principe d'architecture n°2, CLAUDE.md) : tout
+      // repart au serveur, qui ne doit pourtant rien insérer de plus.
+      const sync = TestBed.inject(HistorySyncService);
+      feed(TestBed.inject(LogFileAccessService), lines);
+      await sync.flush();
+
+      expect(server.totals()).toEqual(afterFirst);
+      // Et la preuve que c'est bien l'idempotence qui joue, pas un envoi
+      // silencieusement sauté : le second envoi a bien eu lieu, sans rien insérer.
+      expect(server.insertedPerRequest.at(-1)).toBe(0);
+    });
+
+    it("un rechargement complet de l'application (nouvelle instance des services) ne recrée aucun doublon", async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+      await replayOnce(server);
+      const afterFirst = server.totals();
+
+      // F5 : tous les services repartent de zéro, seul le stockage local persiste.
+      configureWithServer(server);
+      await replayOnce(server);
+
+      expect(server.totals()).toEqual(afterFirst);
+    });
+
+    it("relire le même fichier un autre jour ne recrée aucun doublon (la clé ignore la date système)", async () => {
+      // Le log Wakfu n'écrit que l'heure : StatsStoreService lui recolle la date
+      // du jour de LECTURE. Si cette date entrait dans la clé déterministe, un
+      // fichier encore ouvert le lendemain réenverrait tout en double — d'où une
+      // signature bâtie sur la seule heure du log (voir history-event.model.ts).
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date('2026-08-11T22:00:00Z'));
+
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+      await replayOnce(server);
+      const afterFirst = server.totals();
+
+      vi.setSystemTime(new Date('2026-08-12T09:00:00Z'));
+      configureWithServer(server);
+      await replayOnce(server);
+
+      expect(server.totals()).toEqual(afterFirst);
+    });
+
+    it('en mode invité, aucun historique ne part vers le serveur', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+
+      // Pas d'appel à `enable()` : c'est exactement la définition du mode
+      // invité — aucune donnée ne quitte l'appareil.
+      TestBed.inject(StatsStoreService);
+      feed(TestBed.inject(LogFileAccessService), lines);
+      await TestBed.inject(HistorySyncService).flush();
+
+      expect(server.totals()).toEqual({ fights: 0, purchases: 0, trades: 0 });
+      expect(server.insertedPerRequest).toEqual([]);
+    });
+
+    it("une connexion survenue en cours de session envoie l'historique déjà reconstruit", async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+
+      // Le fichier est lu AVANT toute connexion.
+      TestBed.inject(StatsStoreService);
+      feed(TestBed.inject(LogFileAccessService), lines);
+      expect(server.totals()).toEqual({ fights: 0, purchases: 0, trades: 0 });
+
+      const sync = TestBed.inject(HistorySyncService);
+      await sync.enable('utilisateur-de-test');
+      await sync.flush();
+
+      const totals = server.totals();
+      expect(totals.fights).toBeGreaterThan(0);
+      expect(totals.purchases).toBeGreaterThan(0);
+      expect(totals.trades).toBeGreaterThan(0);
     });
   });
 });
