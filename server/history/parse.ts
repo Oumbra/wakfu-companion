@@ -29,8 +29,18 @@ export const MAX_HISTORY_BATCH = 100;
 const MAX_NAME_LENGTH = 200;
 const MAX_PARTICIPANTS_PER_FIGHT = 64;
 const MAX_ITEMS_PER_TRADE = 128;
+/** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
+const MAX_SPELLS_PER_PARTICIPANT = 64;
+const MAX_LOOT_PER_FIGHT = 128;
 /** `clientKey` est un SHA-256 en hexadécimal minuscule (voir core/sync/client-key.util.ts). */
 const CLIENT_KEY_PATTERN = /^[0-9a-f]{64}$/;
+
+/** Ventilation des dégâts d'un sort, par élément — miroir de `SpellBreakdownRow` côté client. */
+export interface FightSpellInput {
+  spell: string;
+  total: number;
+  byElement: Record<string, number>;
+}
 
 export interface FightParticipantInput {
   side: 'ally' | 'enemy';
@@ -39,6 +49,13 @@ export interface FightParticipantInput {
   className: string | null;
   damage: number;
   defeated: boolean;
+  spells: FightSpellInput[];
+}
+
+export interface FightLootInput {
+  itemId: number | null;
+  itemName: string;
+  quantity: number;
 }
 
 export interface FightInput {
@@ -52,6 +69,7 @@ export interface FightInput {
   kamasGained: number | null;
   gameServer: string | null;
   participants: FightParticipantInput[];
+  loot: FightLootInput[];
 }
 
 export interface PurchaseInput {
@@ -175,6 +193,58 @@ function parseBatch<T>(
   return { ok: true, value: values };
 }
 
+/**
+ * Ventilation d'un sort. `byElement` est stocké en `jsonb` : ses clés sont les
+ * éléments Wakfu (`Feu`, `Eau`, `Terre`...) définis côté client
+ * (`DamageElement`), volontairement pas ré-énumérés ici — un élément ajouté par
+ * une future extension du jeu ne doit pas faire rejeter tout un historique. Les
+ * valeurs, elles, sont bornées comme partout ailleurs.
+ */
+function parseSpell(raw: unknown): ParseResult<FightSpellInput> {
+  const record = asRecord(raw, 'sort');
+  if (!record.ok) return record;
+  const entry = record.value;
+
+  const spell = parseText(entry['spell'], 'spells.spell');
+  if (!spell.ok) return spell;
+  const total = parseCount(entry['total'] ?? 0, 'spells.total');
+  if (!total.ok) return total;
+
+  const rawByElement = entry['byElement'] ?? {};
+  if (typeof rawByElement !== 'object' || rawByElement === null || Array.isArray(rawByElement)) {
+    return { ok: false, error: 'spells.byElement invalide' };
+  }
+  const byElement: Record<string, number> = {};
+  for (const [element, amount] of Object.entries(rawByElement as Record<string, unknown>)) {
+    if (element.length === 0 || element.length > MAX_NAME_LENGTH) {
+      return { ok: false, error: 'spells.byElement : élément invalide' };
+    }
+    const parsed = parseCount(amount, `spells.byElement.${element}`);
+    if (!parsed.ok) return parsed;
+    byElement[element] = parsed.value ?? 0;
+  }
+
+  return { ok: true, value: { spell: spell.value, total: total.value ?? 0, byElement } };
+}
+
+function parseLootRow(raw: unknown): ParseResult<FightLootInput> {
+  const record = asRecord(raw, 'butin');
+  if (!record.ok) return record;
+  const entry = record.value;
+
+  const itemName = parseText(entry['itemName'], 'loot.itemName');
+  if (!itemName.ok) return itemName;
+  const quantity = parseCount(entry['quantity'], 'loot.quantity');
+  if (!quantity.ok) return quantity;
+  const itemId = parseCount(entry['itemId'], 'loot.itemId', true);
+  if (!itemId.ok) return itemId;
+
+  return {
+    ok: true,
+    value: { itemId: itemId.value, itemName: itemName.value, quantity: quantity.value ?? 0 },
+  };
+}
+
 function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   const record = asRecord(raw, 'participant');
   if (!record.ok) return record;
@@ -194,6 +264,25 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
     return { ok: false, error: 'participant.className invalide' };
   }
 
+  const rawSpells = entry['spells'] ?? [];
+  if (!Array.isArray(rawSpells)) return { ok: false, error: 'participant.spells invalide' };
+  if (rawSpells.length > MAX_SPELLS_PER_PARTICIPANT) {
+    return { ok: false, error: `trop de sorts (max ${MAX_SPELLS_PER_PARTICIPANT})` };
+  }
+  const spells: FightSpellInput[] = [];
+  const seenSpells = new Set<string>();
+  for (const rawSpell of rawSpells) {
+    const parsed = parseSpell(rawSpell);
+    if (!parsed.ok) return parsed;
+    // Le client agrège déjà les dégâts par sort : deux entrées du même nom
+    // signaleraient une ventilation incohérente, pas deux lancers distincts.
+    if (seenSpells.has(parsed.value.spell)) {
+      return { ok: false, error: `sort en double : ${parsed.value.spell}` };
+    }
+    seenSpells.add(parsed.value.spell);
+    spells.push(parsed.value);
+  }
+
   return {
     ok: true,
     value: {
@@ -203,6 +292,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
       className: typeof className === 'string' ? className.slice(0, MAX_NAME_LENGTH) : null,
       damage: damage.value ?? 0,
       defeated: entry['defeated'] === true,
+      spells,
     },
   };
 }
@@ -249,6 +339,26 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
         participants.push(parsed.value);
       }
 
+      const rawLoot = entry['loot'] ?? [];
+      if (!Array.isArray(rawLoot)) return { ok: false, error: 'loot invalide' };
+      if (rawLoot.length > MAX_LOOT_PER_FIGHT) {
+        return { ok: false, error: `trop d'objets ramassés (max ${MAX_LOOT_PER_FIGHT})` };
+      }
+      const loot: FightLootInput[] = [];
+      // Clé primaire `(fight_id, item_name)` : deux lignes du même objet feraient
+      // échouer l'insertion entière. Le client les agrège déjà (`registerLoot`),
+      // on refuse donc franchement plutôt que de fusionner en silence.
+      const seenLoot = new Set<string>();
+      for (const rawRow of rawLoot) {
+        const parsed = parseLootRow(rawRow);
+        if (!parsed.ok) return parsed;
+        if (seenLoot.has(parsed.value.itemName)) {
+          return { ok: false, error: `butin en double : ${parsed.value.itemName}` };
+        }
+        seenLoot.add(parsed.value.itemName);
+        loot.push(parsed.value);
+      }
+
       return {
         ok: true,
         value: {
@@ -262,6 +372,7 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
           kamasGained: kamasGained.value,
           gameServer: gameServer.value,
           participants,
+          loot,
         },
       };
     },

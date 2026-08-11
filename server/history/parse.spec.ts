@@ -70,6 +70,7 @@ describe('parseFightsBody', () => {
       className: null,
       damage: 1234,
       defeated: false,
+      spells: [],
     });
   });
 
@@ -147,6 +148,125 @@ describe('parseFightsBody', () => {
 
   it('refuse une charge utile sans champ entries', () => {
     expect(parseFightsBody({})).toEqual({ ok: false, error: expect.stringContaining('entries') });
+  });
+
+  describe('ventilation par sort et butin', () => {
+    it('accepte la ventilation par sort et par élément', () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            participants: [
+              {
+                side: 'ally',
+                name: 'Oumbra',
+                instanceIndex: 1,
+                damage: 1234,
+                spells: [
+                  { spell: 'Frappe', total: 1000, byElement: { Terre: 800, Feu: 200 } },
+                  { spell: 'Piqûre', total: 234, byElement: { Air: 234 } },
+                ],
+              },
+            ],
+          }),
+        ],
+      });
+      expect(parsed.ok).toBe(true);
+      if (!parsed.ok) return;
+      expect(parsed.value[0].participants[0].spells).toEqual([
+        { spell: 'Frappe', total: 1000, byElement: { Terre: 800, Feu: 200 } },
+        { spell: 'Piqûre', total: 234, byElement: { Air: 234 } },
+      ]);
+    });
+
+    it("n'impose aucune liste fermée d'éléments (une extension du jeu ne doit rien casser)", () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            participants: [
+              {
+                side: 'ally',
+                name: 'Oumbra',
+                instanceIndex: 1,
+                spells: [{ spell: 'X', total: 10, byElement: { ÉlémentInédit: 10 } }],
+              },
+            ],
+          }),
+        ],
+      });
+      expect(parsed.ok && parsed.value[0].participants[0].spells[0].byElement).toEqual({
+        ÉlémentInédit: 10,
+      });
+    });
+
+    it('accepte un participant sans aucun sort (jamais vu jouer)', () => {
+      const parsed = parseFightsBody({
+        entries: [fightEntry({ participants: [{ side: 'enemy', name: 'Bouftou' }] })],
+      });
+      expect(parsed.ok && parsed.value[0].participants[0].spells).toEqual([]);
+    });
+
+    it('refuse deux ventilations du même sort pour une même instance', () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            participants: [
+              {
+                side: 'ally',
+                name: 'Oumbra',
+                instanceIndex: 1,
+                spells: [
+                  { spell: 'Frappe', total: 10 },
+                  { spell: 'Frappe', total: 20 },
+                ],
+              },
+            ],
+          }),
+        ],
+      });
+      expect(parsed).toEqual({ ok: false, error: expect.stringContaining('sort en double') });
+    });
+
+    it('accepte le butin du combat', () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            loot: [
+              { itemId: 1234, itemName: 'Laine de Bouftou', quantity: 3 },
+              { itemId: null, itemName: 'Objet inconnu du catalogue', quantity: 1 },
+            ],
+          }),
+        ],
+      });
+      expect(parsed.ok && parsed.value[0].loot).toEqual([
+        { itemId: 1234, itemName: 'Laine de Bouftou', quantity: 3 },
+        { itemId: null, itemName: 'Objet inconnu du catalogue', quantity: 1 },
+      ]);
+    });
+
+    it('accepte un combat sans butin', () => {
+      expect(parseFightsBody({ entries: [fightEntry()] })).toMatchObject({ ok: true });
+    });
+
+    it('refuse deux lignes de butin du même objet (collision de clé primaire)', () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            loot: [
+              { itemName: 'Poudre', quantity: 1 },
+              { itemName: 'Poudre', quantity: 2 },
+            ],
+          }),
+        ],
+      });
+      expect(parsed).toEqual({ ok: false, error: expect.stringContaining('butin en double') });
+    });
+
+    it('refuse une quantité de butin négative', () => {
+      const parsed = parseFightsBody({
+        entries: [fightEntry({ loot: [{ itemName: 'Poudre', quantity: -1 }] })],
+      });
+      expect(parsed).toEqual({ ok: false, error: expect.stringContaining('loot.quantity') });
+    });
   });
 });
 

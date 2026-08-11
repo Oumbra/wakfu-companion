@@ -815,11 +815,11 @@ dans `src/app/core/sync/history-event.model.ts`) :
    risque inverse, lui, serait quotidien.
 2. **Aucune valeur révisable dans la signature.** Les dégâts n'entrent pas dans
    celle d'un combat : une réattribution manuelle (`reassignSpell`) les modifie
-   après coup, ce qui changerait la clé et créerait une seconde ligne.
-   Corollaire assumé : l'historique du compte est un **journal immuable**, une
-   réattribution postérieure à l'envoi reste locale.
+   après coup, ce qui changerait la clé et créerait une seconde ligne. Ce n'est
+   pas pour autant un journal figé : la clé identifie le **combat**, son détail
+   se rafraîchit (voir « Ce qui est immuable, ce qui se rafraîchit » plus bas).
 
-### Trois écarts par rapport au schéma du §6 du plan
+### Cinq écarts par rapport au schéma du §6 du plan
 
 1. **`game_server` sur les trois tables**, pas seulement `purchases` : c'est ce
    pour quoi le lot 7 existe (« taguer l'historique personnel — combats, achats,
@@ -833,6 +833,48 @@ dans `src/app/core/sync/history-event.model.ts`) :
 3. **`trade_items` porte un `line_index`** et une vraie clé primaire : c'est ce
    qui permet de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans
    les dupliquer (voir ci-dessous).
+4. **`fight_participants.spells` (jsonb)** — ventilation des dégâts par sort et
+   par élément, absente du §6. Sans elle, un combat archivé se réduisait à des
+   totaux : l'essentiel de ce que l'application sait d'un combat était perdu dès
+   qu'on quittait la session.
+5. **`fight_loot` (table)** — butin du combat, absent du §6, pour la même
+   raison.
+
+### Sorts en `jsonb`, butin en table : pourquoi pas la même forme
+
+Ce n'est pas une inconséquence, les deux données n'ont pas le même cycle de vie.
+
+Les **sorts** sont la seule partie de l'historique que l'utilisateur peut
+**réviser après l'envoi** : une réattribution déplace une attaque d'une instance
+vers une autre. Dans une table `fight_spells`, le sort déplacé s'ajouterait chez
+sa nouvelle instance **sans disparaître de l'ancienne** — il faudrait un `DELETE`
+préalable, donc une requête de plus et une fenêtre sans détail (pas de
+transaction, voir ci-dessous). Un tableau `jsonb` remplacé en bloc à chaque
+upsert n'a pas ce problème, et ne coûte aucune requête supplémentaire.
+
+Le **butin**, lui, ne bouge jamais une fois le combat terminé, et c'est
+typiquement ce qu'on voudra agréger en SQL plus tard (« combien de Laine de
+Bouftou ce mois-ci », « quels combats font tomber tel ingrédient »). Une table
+indexée par `item_id` est exactement le bon outil ; un tableau `jsonb` rendrait
+ces requêtes pénibles pour rien.
+
+### Ce qui est immuable, ce qui se rafraîchit
+
+`fight_participants` est la **seule** table écrite en `ON CONFLICT DO UPDATE`
+(dégâts, classe, statut KO, ventilation par sort). Tout le reste — combats,
+achats, échanges, butin — est en `DO NOTHING`.
+
+Concrètement : après une réattribution manuelle, `StatsStoreService` remet le
+combat concerné en file (`applyReassign`). Même clé déterministe, donc pas de
+seconde ligne ; seul le détail des participants est réécrit, et la correction
+remonte au compte. Si l'entrée est encore dans la file d'envoi au moment de la
+correction, c'est la version corrigée qui part (`SyncQueueService.enqueue`
+remplace la charge utile d'un identifiant déjà présent au lieu de l'ignorer).
+
+Risque résiduel accepté : une reconstruction partielle du même combat écraserait
+un détail complet par un détail incomplet. En pratique un combat n'est envoyé
+qu'à sa clôture (ligne de fin présente dans le log), donc avec tout ce que le
+fichier contient à son sujet.
 
 ### Pourquoi trois requêtes SQL et non deux
 
@@ -906,20 +948,22 @@ d'un calcul asynchrone par ligne affichée et par rendu. La bascule est plus
 honnête (on sait d'où viennent les lignes) et l'archive étant un sur-ensemble,
 l'utilisateur n'a rien à recouper.
 
-Ce que l'archive ne contient pas, faute de tables au §6 : le **butin par
-combat** et le **détail des dégâts par sort**. Un combat archivé montre ses
-participants et leurs totaux ; ces deux informations restent disponibles dans la
-vue de session tant que le fichier de log les porte.
+Un combat archivé porte tout ce que la vue de session en montre : participants,
+dégâts, ventilation par sort et par élément, et butin. Deux différences
+subsistent, faute de données correspondantes en base : l'XP est un total de
+combat et non une ventilation par personnage, et les kamas ne sont pas rattachés
+au combat — le log ne les y relie jamais (voir `KamaGainEntry`, sans `fightId`).
 
 ### Vérification effectuée / restant à faire
 
 Vérifié dans cette session :
 
-- `npm test` (102 tests, dont 5 nouveaux sur l'idempotence — le test de double
-  rejeu exigé par le prompt, un rechargement complet de l'application, une
-  relecture **un autre jour** (horloge système avancée), le mode invité muet, et
-  la connexion en cours de session) ;
-- `npm run test:server` (64 tests, dont 24 sur `server/history/parse.ts`) ;
+- `npm test` (104 tests, dont 7 nouveaux : le test de double rejeu exigé par le
+  prompt, un rechargement complet de l'application, une relecture **un autre
+  jour** (horloge système avancée), le mode invité muet, la connexion en cours
+  de session, l'envoi effectif de la ventilation par sort et du butin, et une
+  réattribution qui corrige le combat archivé sans le dupliquer) ;
+- `npm run test:server` (72 tests, dont 32 sur `server/history/parse.ts`) ;
 - `npm run build` ;
 - une **vérification navigateur réelle** (Chromium/playwright-core, `ng serve`,
   backend simulé par interception de `fetch` — les Pages Functions n'existent
@@ -927,11 +971,16 @@ Vérifié dans cette session :
   complète du fichier de log (envoi bien effectué, `inserted: 0`, aucun
   doublon), coupure réseau (3 entrées en attente **et** écrites en IndexedDB),
   retour du réseau (file vidée, entrées manquantes arrivées), puis la bascule
-  Session/Compte alimentée par les `GET` paginés.
+  Session/Compte alimentée par les `GET` paginés. Second passage après l'ajout
+  du détail : ventilation par sort et par élément (`Frappe=250 {Terre}`,
+  `Brûlure=80 {Feu}`) et butin (`Laine de Bouftou ×3`) bien transmis puis relus
+  depuis l'archive, et une réattribution manuelle après envoi déplaçant le sort
+  d'une instance à l'autre — toujours un seul combat archivé.
 
 **Restant à faire**, comme pour tous les lots précédents — seul un déploiement
-réel permet de conclure : appliquer `0006_history_tables.sql` sur la branche Neon
-preview (automatique via `deploy-preview.yml`), puis dérouler un aller-retour
+réel permet de conclure : appliquer `0006_history_tables.sql` et
+`0007_fight_loot_and_spells.sql` sur la branche Neon preview (automatique via
+`deploy-preview.yml`), puis dérouler un aller-retour
 complet contre la vraie base — ingestion, rejeu du même log (vérifier que
 `inserted` retombe à 0), pagination sur plus d'une page, et suppression de compte
 (cascade sur les cinq tables).

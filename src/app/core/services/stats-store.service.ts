@@ -1182,8 +1182,19 @@ export class StatsStoreService {
     to: { name: string; instanceIndex: number },
   ): void {
     const working = this.activeFights.get(fightId);
-    if (working) this.reassignLiveSpell(working, spellName, from, to);
-    else this.reassignHistoricalSpell(fightId, spellName, from, to);
+    if (working) {
+      // Combat encore en cours : rien à renvoyer, il ne partira au compte qu'à
+      // sa clôture (finalizeFight), donc déjà corrigé.
+      this.reassignLiveSpell(working, spellName, from, to);
+      return;
+    }
+    this.reassignHistoricalSpell(fightId, spellName, from, to);
+    // Combat déjà clôturé, donc déjà envoyé (ou en file) : le remettre en file
+    // avec sa ventilation corrigée. Même clé déterministe, donc aucun doublon —
+    // seul le détail du combat est rafraîchi côté compte (voir
+    // `fight_participants`, écrit en ON CONFLICT DO UPDATE).
+    const corrected = this.fightHistoryList.find((record) => record.id === fightId);
+    if (corrected) this.historySync.recordFight(corrected);
   }
 
   /** Rejoue tout le journal des réattributions persistées (voir reassignSpell) — appelé après chaque

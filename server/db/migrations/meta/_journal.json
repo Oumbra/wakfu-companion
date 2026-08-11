@@ -50,6 +50,13 @@
       "when": 1786440913153,
       "tag": "0006_history_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786442977556,
+      "tag": "0007_fight_loot_and_spells",
+      "breakpoints": true
     }
   ]
 }

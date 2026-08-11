@@ -36,13 +36,25 @@
  *    signature (le plan disait déjà `fightId|participants triés`) : une
  *    réattribution manuelle (`reassignSpell`) les modifie après coup, ce qui
  *    changerait la clé et créerait une seconde ligne pour le même combat.
- *    Corollaire : l'historique du compte est un journal d'événements
- *    **immuable** — une réattribution faite après l'envoi reste locale.
+ *
+ *    Ce n'est pas pour autant un journal figé : la clé identifie le combat, et
+ *    son **détail** (dégâts et ventilation par sort de chaque instance) est
+ *    rafraîchi à chaque envoi côté serveur (`ON CONFLICT DO UPDATE` sur
+ *    `fight_participants`). `StatsStoreService` remet donc le combat en file
+ *    après chaque réattribution, et la correction remonte au compte sans jamais
+ *    créer de doublon.
  */
 
 export type HistoryEventKind = 'fight' | 'purchase' | 'trade';
 
 /** Charges utiles, en miroir exact de ce qu'attendent les endpoints `/api/v1/history/*`. */
+
+/** Ventilation des dégâts d'un sort — miroir de `SpellBreakdownRow` (stats-store). */
+export interface FightSpellPayload {
+  spell: string;
+  total: number;
+  byElement: Record<string, number>;
+}
 
 export interface FightParticipantPayload {
   side: 'ally' | 'enemy';
@@ -51,6 +63,13 @@ export interface FightParticipantPayload {
   className: string | null;
   damage: number;
   defeated: boolean;
+  spells: FightSpellPayload[];
+}
+
+export interface FightLootPayload {
+  itemId: number | null;
+  itemName: string;
+  quantity: number;
 }
 
 export interface FightPayload {
@@ -63,6 +82,7 @@ export interface FightPayload {
   kamasGained: number | null;
   gameServer: string | null;
   participants: FightParticipantPayload[];
+  loot: FightLootPayload[];
 }
 
 export interface PurchasePayload {

@@ -1,7 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
-import { fightParticipants, fights } from '../../../../server/db/schema';
+import { fightLoot, fightParticipants, fights } from '../../../../server/db/schema';
 import {
   MAX_HISTORY_BATCH,
   parseFightsBody,
@@ -103,11 +103,49 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       className: participant.className,
       damage: participant.damage,
       defeated: participant.defeated,
+      spells: participant.spells,
     }));
   });
 
   if (participantRows.length > 0) {
-    await db.insert(fightParticipants).values(participantRows).onConflictDoNothing();
+    await db
+      .insert(fightParticipants)
+      .values(participantRows)
+      // Seule table de l'historique écrite en `DO UPDATE` : une réattribution
+      // manuelle de dégâts (`reassignSpell` côté client) renvoie le combat avec
+      // sa ventilation corrigée, et c'est cette correction-là qui doit prendre.
+      // Le combat parent, lui, reste immuable (`DO NOTHING` plus haut).
+      .onConflictDoUpdate({
+        target: [
+          fightParticipants.fightId,
+          fightParticipants.side,
+          fightParticipants.name,
+          fightParticipants.instanceIndex,
+        ],
+        set: {
+          className: sql`excluded.class_name`,
+          damage: sql`excluded.damage`,
+          defeated: sql`excluded.defeated`,
+          spells: sql`excluded.spells`,
+        },
+      });
+  }
+
+  const lootRows = parsed.value.flatMap((fight) => {
+    const fightId = idByKey.get(fight.clientKey);
+    if (fightId === undefined) return [];
+    return fight.loot.map((row) => ({
+      fightId,
+      itemId: row.itemId,
+      itemName: row.itemName,
+      quantity: row.quantity,
+    }));
+  });
+
+  if (lootRows.length > 0) {
+    // Le butin d'un combat terminé ne bouge plus : `DO NOTHING` suffit, et une
+    // relecture du même log réécrirait de toute façon les mêmes valeurs.
+    await db.insert(fightLoot).values(lootRows).onConflictDoNothing();
   }
 
   return json({
@@ -151,11 +189,31 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           )
       : [];
 
+  const loot =
+    rows.length > 0
+      ? await db
+          .select()
+          .from(fightLoot)
+          .where(
+            inArray(
+              fightLoot.fightId,
+              rows.map((row) => row.id),
+            ),
+          )
+      : [];
+
   const participantsByFight = new Map<number, typeof participants>();
   for (const participant of participants) {
     const list = participantsByFight.get(participant.fightId) ?? [];
     list.push(participant);
     participantsByFight.set(participant.fightId, list);
+  }
+
+  const lootByFight = new Map<number, typeof loot>();
+  for (const row of loot) {
+    const list = lootByFight.get(row.fightId) ?? [];
+    list.push(row);
+    lootByFight.set(row.fightId, list);
   }
 
   return json({
@@ -176,6 +234,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         className: participant.className,
         damage: participant.damage,
         defeated: participant.defeated,
+        spells: participant.spells,
+      })),
+      loot: (lootByFight.get(row.id) ?? []).map((line) => ({
+        itemId: line.itemId,
+        itemName: line.itemName,
+        quantity: line.quantity,
       })),
     })),
     // Curseur de la page suivante : `null` quand la page n'est pas pleine, donc

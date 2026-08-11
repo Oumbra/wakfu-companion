@@ -4,6 +4,7 @@ import type {
   EntityDamageRow,
   FightRecord,
   PurchaseRecord,
+  SpellBreakdownRow,
   TradeRecord,
 } from '../services/stats-store.service';
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
@@ -28,7 +29,9 @@ interface FightPage {
       className: string | null;
       damage: number;
       defeated: boolean;
+      spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
     }[];
+    loot: { itemId: number | null; itemName: string; quantity: number }[];
   }[];
   nextBefore: string | null;
 }
@@ -82,13 +85,18 @@ export type HistorySource = 'session' | 'account';
  * sur-ensemble de la session une fois la synchronisation faite, l'utilisateur
  * n'a rien à recouper lui-même.
  *
- * ## Ce que l'archive ne contient pas
+ * ## Ce que l'archive contient
  *
- * Le schéma du §6 du plan ne prévoit ni le butin par combat ni le détail des
- * dégâts par sort : un combat archivé affiche donc ses participants et leurs
- * totaux, pas son butin ni sa ventilation par sort. Ces deux informations
- * restent disponibles dans la vue de session tant que le fichier de log les
- * porte.
+ * Tout ce que la vue de session affiche d'un combat terminé : participants,
+ * dégâts, **ventilation par sort et par élément** (`fight_participants.spells`)
+ * et **butin** (`fight_loot`). Ces deux dernières informations ne figuraient pas
+ * au schéma du §6 du plan ; elles y ont été ajoutées parce que sans elles un
+ * combat archivé perdait l'essentiel de son intérêt.
+ *
+ * Deux différences subsistent avec la vue de session, faute de données
+ * archivées correspondantes : l'XP est un total de combat et non une
+ * ventilation par personnage, et les kamas ne sont pas rattachés au combat (le
+ * log ne les y relie jamais, voir `KamaGainEntry`).
  */
 @Injectable({ providedIn: 'root' })
 export class HistoryArchiveService {
@@ -229,9 +237,11 @@ function toFightRecord(entry: FightPage['entries'][number], index: number): Figh
   const rows: EntityDamageRow[] = entry.participants.map((participant) => ({
     name: participant.name,
     total: participant.damage,
-    // Le détail par sort n'est pas archivé (voir doc de classe) : une ligne
-    // sans ventilation plutôt qu'une ventilation inventée.
-    spells: [],
+    spells: (participant.spells ?? []).map((spell) => ({
+      spell: spell.spell,
+      total: spell.total,
+      byElement: spell.byElement as SpellBreakdownRow['byElement'],
+    })),
     defeated: participant.defeated,
     instanceIndex: participant.instanceIndex,
     instanceCount: instanceCounts.get(participant.name) ?? 1,
@@ -243,7 +253,7 @@ function toFightRecord(entry: FightPage['entries'][number], index: number): Figh
     fullTimestampMs: new Date(entry.startedAt).getTime(),
     result: entry.won === false ? 'lost' : 'won',
     rows: rows.sort((a, b) => b.total - a.total),
-    loot: [],
+    loot: (entry.loot ?? []).map((row) => ({ name: row.itemName, quantity: row.quantity })),
     turns: entry.turns ?? 0,
     durationMs: entry.durationMs ?? 0,
     // Seul le total d'XP du combat est archivé, pas sa ventilation par

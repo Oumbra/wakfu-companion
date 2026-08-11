@@ -532,7 +532,25 @@ export const fights = pgTable(
   ],
 );
 
-/** Une ligne par **instance** de combattant (voir `instanceIndex` ci-dessus), pas par nom. */
+/**
+ * Une ligne par **instance** de combattant (voir `instanceIndex` ci-dessus), pas
+ * par nom.
+ *
+ * `spells` porte la ventilation des dégâts par sort — `[{ spell, total,
+ * byElement: { Feu: 1200, ... } }]`, miroir exact de `SpellBreakdownRow` côté
+ * client. En `jsonb` plutôt qu'en table `fight_spells` dédiée, pour une raison
+ * qui n'est pas la commodité : c'est la **seule donnée de l'historique que
+ * l'utilisateur peut réviser après l'envoi** (réattribution manuelle d'une
+ * attaque, voir `reassignSpell`). Un tableau remplacé en bloc à chaque upsert ne
+ * peut pas laisser de ligne périmée derrière lui, alors qu'une table de sorts en
+ * produirait dès la première réattribution : le sort déplacé s'ajouterait chez
+ * sa nouvelle instance sans disparaître de l'ancienne, et le total serait faux.
+ * Bonus : aucune requête supplémentaire par lot ingéré.
+ *
+ * Corollaire, contrairement au reste de l'historique : cette table est écrite en
+ * `ON CONFLICT DO UPDATE`, pas `DO NOTHING`. Le combat parent, lui, reste
+ * immuable — seul son détail se rafraîchit.
+ */
 export const fightParticipants = pgTable(
   'fight_participants',
   {
@@ -545,9 +563,41 @@ export const fightParticipants = pgTable(
     className: text('class_name'),
     damage: bigint('damage', { mode: 'number' }).notNull().default(0),
     defeated: boolean('defeated').notNull().default(false),
+    spells: jsonb('spells').notNull().default([]),
   },
   (table) => [
     primaryKey({ columns: [table.fightId, table.side, table.name, table.instanceIndex] }),
+  ],
+);
+
+/**
+ * Butin d'un combat, une ligne par objet — déjà agrégé par nom côté client
+ * (`registerLoot` fusionne les ramassages successifs d'un même objet), d'où la
+ * clé primaire `(fight_id, item_name)`.
+ *
+ * En table relationnelle et non en `jsonb` sur `fights`, à l'inverse des sorts
+ * ci-dessus : c'est précisément la donnée qu'on voudra agréger en SQL (« combien
+ * de Laine de Bouftou ce mois-ci », « quels donjons rapportent tel ingrédient »),
+ * et elle n'est jamais révisée après coup — le butin d'un combat terminé ne
+ * bouge plus.
+ *
+ * `itemId` référence `items.ankamaId` quand le catalogue a pu résoudre le nom,
+ * `NULL` sinon ; pas de FK stricte, même raison que pour les prix et les achats.
+ */
+export const fightLoot = pgTable(
+  'fight_loot',
+  {
+    fightId: bigint('fight_id', { mode: 'number' })
+      .notNull()
+      .references(() => fights.id, { onDelete: 'cascade' }),
+    itemId: integer('item_id'),
+    itemName: text('item_name').notNull(),
+    quantity: integer('quantity').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.fightId, table.itemName] }),
+    // « Tous les combats où cet objet est tombé » — l'agrégation visée ci-dessus.
+    index('fight_loot_item_id_idx').on(table.itemId),
   ],
 );
 

@@ -599,19 +599,31 @@ describe('StatsStoreService', () => {
    * lignes double et le test tombe.
    */
   describe("Envoi de l'historique au compte : idempotence (lot 8)", () => {
-    /** Reproduit `INSERT ... ON CONFLICT DO NOTHING` sur `UNIQUE (user_id, client_key)`. */
+    /**
+     * Reproduit le comportement du vrai serveur : `UNIQUE (user_id,
+     * client_key)` + `ON CONFLICT DO NOTHING` sur la ligne d'événement, mais
+     * `ON CONFLICT DO UPDATE` sur le détail d'un combat (`fight_participants`)
+     * — c'est ce qui permet à une réattribution manuelle de remonter au compte
+     * sans créer de seconde ligne.
+     */
     class FakeHistoryServer {
-      private readonly tables = new Map<string, Set<string>>();
+      private readonly tables = new Map<string, Map<string, Record<string, unknown>>>();
       /** Nombre de lignes réellement insérées, par requête reçue — 0 signifie « tout était déjà là ». */
       readonly insertedPerRequest: number[] = [];
 
       ingest(path: string, entries: { clientKey: string }[]): number {
-        const table = this.tables.get(path) ?? new Set<string>();
+        const table = this.tables.get(path) ?? new Map<string, Record<string, unknown>>();
         this.tables.set(path, table);
         let inserted = 0;
         for (const entry of entries) {
-          if (table.has(entry.clientKey)) continue;
-          table.add(entry.clientKey);
+          const existing = table.get(entry.clientKey);
+          if (existing) {
+            // Seul le détail se rafraîchit ; l'événement lui-même est immuable.
+            const refreshed = entry as unknown as Record<string, unknown>;
+            existing['participants'] = refreshed['participants'];
+            continue;
+          }
+          table.set(entry.clientKey, entry as unknown as Record<string, unknown>);
           inserted += 1;
         }
         this.insertedPerRequest.push(inserted);
@@ -620,6 +632,10 @@ describe('StatsStoreService', () => {
 
       rowCount(path: string): number {
         return this.tables.get(path)?.size ?? 0;
+      }
+
+      row(path: string, index = 0): Record<string, unknown> | undefined {
+        return [...(this.tables.get(path)?.values() ?? [])][index];
       }
 
       totals(): { fights: number; purchases: number; trades: number } {
@@ -750,6 +766,78 @@ describe('StatsStoreService', () => {
 
       expect(server.totals()).toEqual({ fights: 0, purchases: 0, trades: 0 });
       expect(server.insertedPerRequest).toEqual([]);
+    });
+
+    it('envoie la ventilation par sort (et par élément) ainsi que le butin du combat', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+      await replayOnce(server);
+
+      const fight = server.row('/history/fights') as {
+        participants: {
+          name: string;
+          damage: number;
+          spells: { spell: string; total: number; byElement: Record<string, number> }[];
+        }[];
+        loot: { itemName: string; quantity: number }[];
+      };
+
+      const attaquant = fight.participants.find((p) => p.spells.length > 0);
+      expect(attaquant, 'au moins un participant doit porter sa ventilation').toBeDefined();
+      expect(attaquant!.spells[0].spell).toBeTruthy();
+      // La ventilation par sort doit rendre compte du total de la ligne.
+      expect(attaquant!.spells.reduce((sum, s) => sum + s.total, 0)).toBe(attaquant!.damage);
+      // Et chaque sort porte sa répartition par élément (Terre, Feu, ...).
+      expect(Object.keys(attaquant!.spells[0].byElement).length).toBeGreaterThan(0);
+      // Le butin du combat part avec lui (fixture : combat gagné avec ramassage).
+      expect(fight.loot.length).toBeGreaterThan(0);
+      expect(fight.loot[0].quantity).toBeGreaterThan(0);
+    });
+
+    it('une réattribution de dégâts renvoie le combat corrigé, sans créer de doublon', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+
+      const stats = TestBed.inject(StatsStoreService);
+      const sync = TestBed.inject(HistorySyncService);
+      await sync.enable('utilisateur-de-test');
+      feed(TestBed.inject(LogFileAccessService), [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Blop: -100 PV (Terre)',
+        ' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      ]);
+      await sync.flush();
+
+      const avant = server.row('/history/fights') as {
+        participants: { name: string; damage: number; spells: { spell: string }[] }[];
+      };
+      expect(
+        avant.participants.find((p) => p.name === 'Oumbra')!.spells.map((s) => s.spell),
+      ).toEqual(['Frappe']);
+
+      stats.reassignSpell(
+        1,
+        'Frappe',
+        { name: 'Oumbra', instanceIndex: 1 },
+        { name: 'Caliburnus', instanceIndex: 1 },
+      );
+      await sync.flush();
+
+      // Toujours un seul combat archivé…
+      expect(server.rowCount('/history/fights')).toBe(1);
+      // …mais la correction a bien remonté.
+      const apres = server.row('/history/fights') as {
+        participants: { name: string; damage: number; spells: { spell: string }[] }[];
+      };
+      expect(apres.participants.find((p) => p.name === 'Oumbra')!.spells).toEqual([]);
+      expect(
+        apres.participants.find((p) => p.name === 'Caliburnus')!.spells.map((s) => s.spell),
+      ).toEqual(['Frappe']);
     });
 
     it("une connexion survenue en cours de session envoie l'historique déjà reconstruit", async () => {
