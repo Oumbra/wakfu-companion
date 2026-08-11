@@ -1,0 +1,56 @@
+:host {
+  display: flex;
+  align-items: center;
+}
+
+.theme-switch-wrap {
+  display: flex;
+  align-items: center;
+}
+
+.theme-switch {
+  width: 46px;
+}
+
+.theme-switch-option {
+  padding: 0;
+}
+.theme-switch-option img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  transition:
+    opacity 0.2s ease,
+    filter 0.2s ease;
+}
+/* Icône du thème INACTIF : grisée/estompée, reste cliquable pour basculer. */
+.theme-switch-option:not(.selected) img {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+/* Icône du thème ACTIF : bouton désactivé (voir template, [disabled]) — la règle globale
+   `button:disabled { opacity: 0.5 }` (styles.css) est écrasée ici pour garder l'icône du thème
+   actif pleinement visible (2 classes > élément+pseudo-classe, pas besoin de !important). */
+.theme-switch-option.selected {
+  opacity: 1;
+  cursor: default;
+}
+.theme-switch-option.selected img {
+  opacity: 1;
+  filter: none;
+}
+
+/* Variante "row" : ligne pleine largeur du menu burger (libellé + switch), même principe que
+   `.lang-switcher-row`/`app-language-switcher`. */
+.theme-switch-wrap-row {
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  justify-content: space-between;
+  gap: 10px;
+}
+.theme-switch-row-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-color);
+}

@@ -49,7 +49,7 @@
 .help-modal-body {
   padding: 16px;
   overflow-y: auto;
-  color: #ccc;
+  color: var(--text-color);
   font-size: 0.88rem;
   line-height: 1.5;
   white-space: pre-line;

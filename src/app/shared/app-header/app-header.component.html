@@ -81,6 +81,7 @@
         <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
       </button>
     }
+    <app-theme-switch />
     <app-language-switcher />
     @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
       <app-profile />
@@ -133,6 +134,7 @@
             <span>{{ 'app.sessionRecap' | t }}</span>
           </button>
         }
+        <app-theme-switch variant="row" />
         <app-language-switcher variant="row" />
         @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
           <div (click)="closeMobileMenu()">

@@ -49,7 +49,7 @@
   align-items: center;
   gap: 10px;
   padding: 10px 30px 10px 18px;
-  background: linear-gradient(135deg, #1c1c1c, #262626);
+  background: linear-gradient(135deg, var(--surface-raised), var(--surface-raised));
   border: 1px solid var(--accent);
   border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -83,7 +83,7 @@
 }
 .loot-alert-name {
   font-weight: 700;
-  color: #fff;
+  color: var(--text-bright);
 }
 
 .loot-alert-close {
@@ -95,12 +95,12 @@
   padding: 0;
   border: none;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #aaa;
+  background: var(--tint-medium);
+  color: var(--text-muted);
   font-size: 0.85rem;
   line-height: 1;
 }
 .loot-alert-close:hover {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
+  background: var(--tint-strong);
+  color: var(--text-bright);
 }

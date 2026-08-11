@@ -1,5 +1,6 @@
 /* Charte graphique reprise de https://wakfu-companion.nexuswow.workers.dev/ */
 :root {
+  color-scheme: dark;
   --bg-color: #121212;
   --panel-bg: #1e1e1e;
   --panel-header-bg: #2a2a2a;
@@ -7,6 +8,25 @@
   --text-muted: #888;
   --accent: #00d2ff;
   --border: #333;
+
+  /* Palier(s) de surface additionnels, en plus de bg-color/panel-bg/panel-header-bg ci-dessus —
+     introduits pour le thème clair (voir [data-theme='light'] plus bas) : la majorité des ~250
+     couleurs grises codées en dur à travers les composants (recensées via `grep -roh '#[0-9a-f]
+     {3,6}'`) ne sont pas de vraies teintes distinctes mais des variations organiques d'un même
+     petit nombre de rôles (fond en creux, fond surélevé, état survolé/actif, bordure appuyée,
+     texte à forte emphase) — consolidées ici en tokens uniques pour que l'inversion du thème
+     reste cohérente partout plutôt que composant par composant. */
+  --surface-well: #181818; /* fonds en creux : champs de recherche, listes défilantes, barres de contrôle */
+  --surface-raised: #262626; /* fonds surélevés : menus, popovers, tuiles, lignes survolées */
+  --surface-active: #333333; /* état actif/sélectionné/appuyé au-dessus de surface-raised */
+  --border-strong: #4d4d4d; /* bordure plus marquée que --border (champs, boutons pointillés) */
+  --text-bright: #f2f2f2; /* texte à emphase forte (au-dessus de --text-color) */
+  --toggle-thumb: #cccccc; /* curseur des interrupteurs on/off */
+  --tint-weak: rgba(255, 255, 255, 0.06); /* survol/focus discret sur une surface sombre */
+  --tint-medium: rgba(255, 255, 255, 0.12);
+  --tint-strong: rgba(255, 255, 255, 0.18);
+  --row-stripe: #30303080; /* bande alternée une ligne sur deux (listes) */
+  --ko-overlay: #363636a6; /* assombrissement d'une ligne "à zéro" (KO...) */
 
   --btn-active-green: #2ecc71;
   --btn-active-red: #e74c3c;
@@ -41,6 +61,47 @@
      `dvh` en garantissant que la dernière ligne reste scrollable au-dessus
      d'une barre d'outils navigateur fixe). */
   --mobile-bottom-safe: 56px;
+}
+
+/* Thème clair (ThemeService, `data-theme` posé sur <html>) : inversion littérale de la palette
+   sombre ci-dessus, palier par palier — fond quasi-blanc, cartes blanches, gris clairs pour les
+   bordures/en-têtes/surfaces, encre proche du noir pour le texte. L'accent cyan et TOUTES les
+   couleurs sémantiques (victoire/défaite, dégâts par élément, rareté d'objet, canaux de chat,
+   marques Discord/Google...) restent volontairement identiques aux deux thèmes : elles ne sont
+   pas déclarées ici, seuls les jetons neutres/structurels le sont. Pas de media query
+   `prefers-color-scheme` correspondante : la détection du thème système n'a lieu qu'une fois, au
+   tout premier lancement (voir ThemeService), et se fige ensuite en `data-theme` explicite — ce
+   n'est pas un mode "suit le système" qui resterait vivant en continu. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-color: #f7f7f8;
+  --panel-bg: #ffffff;
+  --panel-header-bg: #eceef0;
+  --text-color: #1a1a1a;
+  --text-muted: #767676;
+  --border: #e1e3e6;
+
+  --surface-well: #eef0f2;
+  --surface-raised: #e9ebee;
+  --surface-active: #dde1e6;
+  --border-strong: #c7cbd1;
+  --text-bright: #0d0d0d;
+  --toggle-thumb: #ffffff;
+  --tint-weak: rgba(0, 0, 0, 0.05);
+  --tint-medium: rgba(0, 0, 0, 0.08);
+  --tint-strong: rgba(0, 0, 0, 0.12);
+  --row-stripe: rgba(0, 0, 0, 0.04);
+  --ko-overlay: rgba(0, 0, 0, 0.08);
+
+  --chat-msg-bg: #f2f3f5;
+  --scrollbar-track: #eceef0;
+  --scrollbar-thumb: #c6c9cd;
+
+  /* Seule couleur de canal de chat à redéfinir ici : "Proximité" (#d8d8d8, quasi blanc) est
+     conçue pour trancher sur un fond sombre — sur fond clair elle devient quasi invisible.
+     Les autres canaux (cyan/violet/vert/or/bleu) restent assez saturés pour rester lisibles
+     sur les deux fonds, donc inchangés (voir "couleurs sémantiques" en tête de bloc). */
+  --channel-proximite: #5a5f66;
 }
 
 /* Couleurs de rareté d'objet Wakfu — palette partagée par toute UI qui affiche un objet
@@ -104,7 +165,7 @@ button {
   gap: 6px;
   transition: all 0.2s ease;
   color: var(--text-color);
-  background: #333;
+  background: var(--surface-active);
 }
 
 button:disabled {
@@ -113,8 +174,8 @@ button:disabled {
 }
 
 input[type='text'] {
-  background: #151515;
-  border: 1px solid #444;
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
   color: var(--text-color);
   padding: 6px 10px;
   border-radius: 4px;
@@ -128,15 +189,15 @@ input[type='text']:focus {
 }
 
 button.toggle-btn {
-  background-color: #333;
-  color: #aaa;
-  border: 1px solid #444;
+  background-color: var(--surface-active);
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
   white-space: nowrap;
 }
 button.toggle-btn:hover {
-  background-color: #3a3a3a;
-  color: #ddd;
-  border-color: #666;
+  background-color: var(--border-strong);
+  color: var(--text-bright);
+  border-color: var(--border-strong);
 }
 button.toggle-btn.active {
   background-color: rgba(0, 210, 255, 0.15);
@@ -155,9 +216,9 @@ button.primary-btn:hover {
 }
 
 button.icon-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ccc;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--tint-medium);
+  color: var(--text-color);
+  border: 1px solid var(--tint-strong);
   width: 26px;
   height: 26px;
   flex-shrink: 0;
@@ -220,8 +281,8 @@ button.badge-close-btn {
   flex-shrink: 0;
   height: 22px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--tint-strong);
+  background: var(--tint-medium);
 }
 .icon-switch-highlight {
   position: absolute;
@@ -247,7 +308,7 @@ button.badge-close-btn {
   background: transparent;
   border: none;
   padding: 0;
-  color: #999;
+  color: var(--text-muted);
 }
 .icon-switch-option.selected {
   color: #04222a;
@@ -370,7 +431,7 @@ button.reset-btn:hover {
   height: 64px;
   border-radius: 6px;
   overflow: hidden;
-  background: #111;
+  background: var(--surface-well);
 }
 @media (max-width: 800px) {
   /* Vue grille mobile : portrait sans carte/fond autour (taille inchangée, 64x64). */
@@ -430,7 +491,7 @@ button.reset-btn:hover {
   background: var(--panel-header-bg);
   padding: 10px 15px;
   font-weight: bold;
-  color: #fff;
+  color: var(--text-bright);
   border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
@@ -506,7 +567,7 @@ button.icon-btn.help-icon-btn {
   align-items: center;
   height: 100%;
   width: 100%;
-  color: #555;
+  color: var(--text-muted);
   font-style: italic;
   font-size: 0.95rem;
   padding: 20px;

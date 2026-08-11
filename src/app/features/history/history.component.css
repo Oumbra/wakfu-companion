@@ -19,7 +19,7 @@
   align-items: center;
   gap: 0;
   flex-shrink: 0;
-  background: #222;
+  background: var(--surface-well);
 }
 /* `.meter-tab` est un conteneur flex (pas un `<button>`, voir CLAUDE.md — un
    bouton ne peut pas imbriquer un autre bouton) : le libellé cliquable
@@ -36,17 +36,17 @@
   padding: 6px 8px 6px 14px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: #888;
-  background: #222;
+  color: var(--text-muted);
+  background: var(--surface-well);
   border-bottom: 3px solid transparent;
   border-radius: 0;
 }
 .meter-tab:hover {
-  background: #2c2c2c;
-  color: #fff;
+  background: var(--surface-active);
+  color: var(--text-bright);
 }
 .meter-tab.active {
-  background: #333;
+  background: var(--surface-active);
   color: var(--accent);
   border-bottom-color: var(--accent);
 }
@@ -72,30 +72,30 @@
   gap: 6px;
   flex-shrink: 0;
   padding: 6px 10px;
-  background: #262626;
-  border-bottom: 1px solid #333;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--surface-active);
 }
 .history-source-btn {
   padding: 3px 10px;
   font-size: 0.72rem;
   font-weight: 700;
-  color: #999;
-  background: #2f2f2f;
-  border: 1px solid #3a3a3a;
+  color: var(--text-muted);
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   cursor: pointer;
 }
 .history-source-btn:hover {
-  color: #fff;
+  color: var(--text-bright);
 }
 .history-source-btn.active {
-  color: #111;
+  color: var(--surface-well);
   background: var(--accent);
   border-color: var(--accent);
 }
 .history-source-status {
   font-size: 0.7rem;
-  color: #888;
+  color: var(--text-muted);
 }
 .history-source-status.error {
   color: #e06c6c;
@@ -106,20 +106,20 @@
   justify-content: center;
   flex-shrink: 0;
   padding: 8px;
-  border-top: 1px solid #333;
+  border-top: 1px solid var(--surface-active);
 }
 .history-load-more button {
   padding: 4px 14px;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #ccc;
-  background: #2f2f2f;
-  border: 1px solid #3a3a3a;
+  color: var(--text-color);
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   cursor: pointer;
 }
 .history-load-more button:hover:not(:disabled) {
-  color: #fff;
+  color: var(--text-bright);
   border-color: var(--accent);
 }
 .history-load-more button:disabled {

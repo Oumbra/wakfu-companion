@@ -13,7 +13,7 @@
 }
 
 .fight-entry {
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .fight-summary {
@@ -24,7 +24,7 @@
   cursor: pointer;
 }
 .fight-summary:hover {
-  background: #242424;
+  background: var(--surface-raised);
 }
 /* Une fois l'entrée dépliée, le header (horloge/monstre/tours/durée) reste
    collé en haut du panneau pendant le scroll du détail — permet de refermer
@@ -37,7 +37,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
 }
 .fight-summary.sticky:hover {
-  background: #242424;
+  background: var(--surface-raised);
 }
 .fight-badge {
   font-size: 0.7rem;
@@ -76,7 +76,7 @@
 .fight-clock {
   display: flex;
   align-items: center;
-  color: #888;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 .fight-clock:hover {
@@ -84,7 +84,7 @@
 }
 
 .fight-meta {
-  color: #888;
+  color: var(--text-muted);
   font-family: monospace;
   font-size: 0.85rem;
   flex-grow: 1;
@@ -92,7 +92,7 @@
 
 .caret {
   font-size: 0.7em;
-  color: #666;
+  color: var(--text-muted);
   transition: transform 0.2s;
   display: inline-block;
   margin-left: auto;
@@ -105,12 +105,12 @@
 .fight-details {
   display: flex;
   flex-direction: column;
-  background: #161616;
-  border-top: 1px solid #2a2a2a;
+  background: var(--surface-well);
+  border-top: 1px solid var(--border);
 }
 
 .collapsible-section {
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 .collapsible-header {
@@ -128,7 +128,7 @@
   cursor: pointer;
 }
 .collapsible-header:hover {
-  background: #1c1c1c;
+  background: var(--surface-raised);
 }
 /* Switch à 3 positions (nom/quantité/rareté) — réutilise la mécanique générique `.icon-switch`/
    `.icon-switch-3` (styles.css) ; seules les spécificités de taille/texte restent ici.
@@ -157,7 +157,7 @@
 }
 
 .loot-section {
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 .loot-header-row {
@@ -201,7 +201,7 @@
 .loot-count {
   font-family: monospace;
   font-size: 0.68rem;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .fight-xp-row {
@@ -209,7 +209,7 @@
   align-items: center;
   gap: 8px;
   font-size: 0.82rem;
-  color: #ccc;
+  color: var(--text-color);
   padding: 3px 0;
 }
 .fight-xp-name {

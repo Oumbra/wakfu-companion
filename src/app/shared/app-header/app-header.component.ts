@@ -6,6 +6,7 @@ import { SessionRecapService } from '../../core/services/session-recap.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
+import { ThemeSwitchComponent } from '../theme-switch/theme-switch.component';
 import { TranslatePipe } from '../translate.pipe';
 import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
@@ -28,7 +29,7 @@ import { GameServerService } from '../../core/services/game-server.service';
  */
 @Component({
   selector: 'app-header',
-  imports: [LanguageSwitcherComponent, TranslatePipe, ProfileComponent],
+  imports: [LanguageSwitcherComponent, ThemeSwitchComponent, TranslatePipe, ProfileComponent],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',
 })

@@ -98,7 +98,7 @@
   border: none;
   border-bottom: 2px solid transparent;
   border-radius: 6px 6px 0 0;
-  color: #999;
+  color: var(--text-muted);
   font-weight: 700;
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -126,11 +126,11 @@
   line-height: 14px;
   text-align: center;
   font-size: 0.9rem;
-  color: #999;
+  color: var(--text-muted);
 }
 .tab-bar-remove:hover {
   background: #b33939;
-  color: #fff;
+  color: var(--text-bright);
 }
 .tab-bar-label {
   overflow: hidden;

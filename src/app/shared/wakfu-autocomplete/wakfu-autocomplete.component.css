@@ -17,7 +17,7 @@
   left: 0;
   right: 0;
   margin-top: 4px;
-  background: #1c1c1c;
+  background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
@@ -41,16 +41,16 @@
      ne respecte pas la hauteur voulue ici. */
   height: 35px;
   flex-shrink: 0;
-  color: #ddd;
+  color: var(--text-bright);
 }
 .wakfu-autocomplete-item.active,
 .wakfu-autocomplete-item:hover:not(.disabled) {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: #fff;
+  color: var(--text-bright);
 }
 .wakfu-autocomplete-item.disabled {
-  background: #2a2a2a;
-  color: #777;
+  background: var(--border);
+  color: var(--text-muted);
 }
 .wakfu-autocomplete-item-main {
   display: flex;

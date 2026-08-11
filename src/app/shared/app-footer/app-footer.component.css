@@ -1,7 +1,7 @@
 :host {
   display: flex;
   justify-content: center;
-  background: #181818;
+  background: var(--surface-well);
   border-top: 1px solid var(--border);
 }
 
@@ -19,7 +19,7 @@
   gap: 15px;
   padding: 10px 20px;
   font-size: 0.68rem;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .app-footer-left {
@@ -28,7 +28,7 @@
   align-items: flex-start;
   gap: 8px;
   padding-right: 15px;
-  border-right: 1px solid #333333;
+  border-right: 1px solid var(--surface-active);
 }
 
 .app-footer-copyright {
@@ -37,14 +37,14 @@
 
 .app-footer-build {
   padding: 6px 12px;
-  border: 1px solid #555555;
+  border: 1px solid var(--text-muted);
   border-radius: 16px;
-  background-color: #212121;
-  color: #666;
+  background-color: var(--surface-raised);
+  color: var(--text-muted);
 }
 
 .app-footer-build-prefix {
-  color: #ccc;
+  color: var(--text-color);
 }
 
 .app-footer-links {
@@ -56,7 +56,7 @@
   background: none;
   border: none;
   padding: 0;
-  color: #ccc;
+  color: var(--text-color);
   font-weight: 600;
   font-size: 0.7rem;
   cursor: pointer;

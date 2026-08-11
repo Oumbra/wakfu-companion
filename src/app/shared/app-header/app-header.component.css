@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  background: #181818;
+  background: var(--surface-well);
   border-bottom: 1px solid var(--border);
 }
 
@@ -28,7 +28,7 @@
   top: -10px;
   right: 0;
   background: transparent;
-  color: #fff;
+  color: var(--text-bright);
   text-transform: lowercase;
   font-size: 10px;
   font-style: italic;
@@ -79,7 +79,7 @@
   padding: 3px 9px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: #1c1c1c;
+  background: var(--surface-raised);
   color: var(--text-color);
   font-family: inherit;
   font-size: 0.78rem;
@@ -130,7 +130,7 @@
   top: calc(100% + 8px);
   right: 0;
   min-width: 200px;
-  background: #1c1c1c;
+  background: var(--surface-raised);
   border: 1px solid var(--accent);
   border-radius: 8px;
   padding: 8px;
@@ -147,16 +147,16 @@
   gap: 10px;
   height: 36px;
   padding: 0 10px;
-  background: #262626;
+  background: var(--surface-raised);
   border: none;
   border-radius: 6px;
-  color: #ccc;
+  color: var(--text-color);
   font-weight: 600;
   font-size: 0.85rem;
 }
 .mobile-menu-item:hover {
-  background: #2f2f2f;
-  color: #fff;
+  background: var(--surface-active);
+  color: var(--text-bright);
 }
 /* Serveur de jeu en tête du menu burger (mobile) : même pastille que le badge
    desktop, mais présenté en ligne d'information — d'où l'absence du fond des
@@ -170,7 +170,7 @@
   padding: 0 10px;
   background: transparent;
   border: none;
-  color: #ccc;
+  color: var(--text-color);
   font-family: inherit;
   font-weight: 600;
   font-size: 0.85rem;
@@ -195,7 +195,7 @@ button.mobile-menu-server .game-server-dot {
   background: var(--text-muted);
 }
 button.mobile-menu-server:hover {
-  color: #fff;
+  color: var(--text-bright);
 }
 
 .mobile-menu-icon {
@@ -224,12 +224,12 @@ button.mobile-menu-server:hover {
 
 .file-chip {
   font-family: monospace;
-  color: #aaa;
+  color: var(--text-muted);
   font-size: 0.8rem;
-  background: #000;
+  background: var(--surface-well);
   padding: 4px 8px;
   border-radius: 4px;
-  border: 1px solid #333;
+  border: 1px solid var(--border);
   max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;

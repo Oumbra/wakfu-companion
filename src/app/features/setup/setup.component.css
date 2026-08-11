@@ -22,12 +22,12 @@
 }
 
 .drop-zone {
-  border: 2px dashed #555;
+  border: 2px dashed var(--border-strong);
   border-radius: 10px;
-  background-color: rgba(34, 34, 34, 0.95);
+  background-color: var(--surface-well);
   padding: 50px 30px;
   text-align: center;
-  color: #888;
+  color: var(--text-muted);
   transition: all 0.2s ease;
   cursor: pointer;
   box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
@@ -35,7 +35,7 @@
 .drop-zone:hover,
 .drop-zone.drag-over {
   border-color: var(--accent);
-  background-color: #2a2a2a;
+  background-color: var(--border);
   color: var(--accent);
   box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
 }
@@ -58,11 +58,11 @@
   justify-content: center;
   gap: 8px;
   background: rgba(0, 0, 0, 0.3);
-  border: 1px solid #444;
+  border: 1px solid var(--border-strong);
   padding: 8px 14px;
   border-radius: 6px;
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--text-muted);
   flex-wrap: wrap;
 }
 .path-hint code {
@@ -72,7 +72,7 @@
 }
 
 .reconnect-box {
-  background: #141414;
+  background: var(--surface-well);
   padding: 36px;
   border: 2px solid var(--accent);
   border-radius: 10px;
@@ -81,7 +81,7 @@
 }
 .prev-file-label {
   font-size: 1rem;
-  color: #eee;
+  color: var(--text-bright);
   margin: 0 0 8px;
 }
 .prev-filename {
@@ -98,13 +98,13 @@
 }
 .browser-warning {
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--text-muted);
   margin: 0 0 18px;
 }
 .link-btn {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-muted);
   text-decoration: underline;
   cursor: pointer;
   font-size: 0.85rem;
@@ -112,7 +112,7 @@
   padding: 0;
 }
 .link-btn:hover {
-  color: #fff;
+  color: var(--text-bright);
 }
 
 .setup-message {
@@ -124,7 +124,7 @@
 }
 
 .unsupported-box {
-  background: #141414;
+  background: var(--surface-well);
   padding: 36px;
   border: 2px solid var(--border);
   border-radius: 10px;
@@ -133,7 +133,7 @@
 }
 .unsupported-message {
   font-size: 0.95rem;
-  color: #eee;
+  color: var(--text-bright);
   margin: 0 0 22px;
   line-height: 1.5;
 }
@@ -155,5 +155,5 @@
 }
 .browser-item-name {
   font-size: 0.8rem;
-  color: #aaa;
+  color: var(--text-muted);
 }
