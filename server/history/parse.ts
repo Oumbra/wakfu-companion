@@ -50,6 +50,8 @@ export interface FightParticipantInput {
   damage: number;
   defeated: boolean;
   spells: FightSpellInput[];
+  /** XP gagnée par ce combattant sur ce combat (voir `fight_participants.xpGained`). */
+  xpGained: number;
 }
 
 export interface FightLootInput {
@@ -259,6 +261,8 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   if (!instanceIndex.ok) return instanceIndex;
   const damage = parseCount(entry['damage'] ?? 0, 'participant.damage');
   if (!damage.ok) return damage;
+  const xpGained = parseCount(entry['xpGained'] ?? 0, 'participant.xpGained');
+  if (!xpGained.ok) return xpGained;
   const className = entry['className'];
   if (className !== null && className !== undefined && typeof className !== 'string') {
     return { ok: false, error: 'participant.className invalide' };
@@ -293,6 +297,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
       damage: damage.value ?? 0,
       defeated: entry['defeated'] === true,
       spells,
+      xpGained: xpGained.value ?? 0,
     },
   };
 }

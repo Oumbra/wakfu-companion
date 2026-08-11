@@ -64,6 +64,8 @@ export interface FightParticipantPayload {
   damage: number;
   defeated: boolean;
   spells: FightSpellPayload[];
+  /** XP gagnée par ce combattant sur ce combat (0 pour les ennemis). */
+  xpGained: number;
 }
 
 export interface FightLootPayload {

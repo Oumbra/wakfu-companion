@@ -104,6 +104,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       damage: participant.damage,
       defeated: participant.defeated,
       spells: participant.spells,
+      xpGained: participant.xpGained,
     }));
   });
 
@@ -127,6 +128,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           damage: sql`excluded.damage`,
           defeated: sql`excluded.defeated`,
           spells: sql`excluded.spells`,
+          xpGained: sql`excluded.xp_gained`,
         },
       });
   }
@@ -235,6 +237,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         damage: participant.damage,
         defeated: participant.defeated,
         spells: participant.spells,
+        xpGained: participant.xpGained,
       })),
       loot: (lootByFight.get(row.id) ?? []).map((line) => ({
         itemId: line.itemId,
