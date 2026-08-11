@@ -89,11 +89,6 @@
   color: var(--accent);
 }
 
-/* Bouton détaché des bords (marges + coins arrondis), pas une barre pleine largeur collée au bas
-   de l'écran. Marge basse = `env(safe-area-inset-bottom)` (barre gestuelle iOS/Android) plutôt que
-   `--mobile-bottom-safe` : ces 56px sont la réserve des LISTES scrollables face à une barre
-   d'outils navigateur, hors de propos pour une feuille en `position: fixed` (ancrée au viewport
-   visuel) — ils décollaient le bouton du bas de l'écran bien plus que la maquette. */
 .tab-sheet-close {
   flex-shrink: 0;
   height: 30px;

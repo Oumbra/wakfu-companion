@@ -62,7 +62,6 @@
   overflow-y: auto;
   flex-grow: 1;
   min-height: 0;
-  padding-right: 10px;
   transition: background-color 0.15s;
 }
 .half-list.drag-over {

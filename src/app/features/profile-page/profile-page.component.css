@@ -254,7 +254,7 @@
   border: 1px solid var(--border);
   color: var(--text-color);
   border-radius: 4px;
-  padding: 4px;
+  padding: 5.5px;
   font-family: inherit;
   font-size: 0.8125rem;
 }
@@ -613,7 +613,6 @@
   gap: 8px;
 }
 .sound-item-grid {
-  max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
   padding: 2px;
@@ -715,6 +714,10 @@
   justify-content: space-between;
   align-items: center;
 }
+.roster-view-row .icon-switch {
+  width: 64px;
+  height: 32px;
+}
 .roster-view-header {
   display: flex;
   align-items: center;
@@ -748,6 +751,10 @@
   align-items: center;
   gap: 8px;
   position: relative;
+}
+.roster-account-header .reset-btn {
+  height: 32px;
+  width: 32px;
 }
 .roster-character-row {
   padding: 3px 0;
@@ -802,7 +809,7 @@
 @media (max-width: 800px) {
   .profile-page-content {
     height: 100%;
-    padding: 15px;
+    padding: unset;
     overflow: hidden;
   }
   .panels-row {
@@ -818,10 +825,6 @@
      .panels-row .tool-panel sur le dashboard) : pas de bordure/radius haut. */
   .tool-panel {
     background: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-top: none;
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     align-items: stretch;
     flex-grow: 1;
@@ -829,7 +832,7 @@
   }
   .panel-body {
     align-items: stretch;
-    padding: 12px 15px var(--mobile-bottom-safe);
+    padding: 12px 15px;
     overflow-y: auto;
     flex-grow: 1;
     min-height: 0;

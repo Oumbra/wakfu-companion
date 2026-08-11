@@ -291,12 +291,3 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
-
-/* Voir --mobile-bottom-safe (styles.css) : marge de secours pour que la
-   dernière ligne reste scrollable au-dessus d'une barre d'outils navigateur
-   mobile fixe. */
-@media (max-width: 800px) {
-  .panel-body {
-    padding-bottom: var(--mobile-bottom-safe);
-  }
-}

@@ -1,7 +1,4 @@
 <div class="theme-switch-wrap" [class.theme-switch-wrap-row]="variant() === 'row'">
-  @if (variant() === 'row') {
-    <span class="theme-switch-row-label">{{ 'app.theme' | t }}</span>
-  }
   <div class="icon-switch theme-switch">
     <span class="icon-switch-highlight" [class.is-right]="theme.theme() === 'light'"></span>
     <button
@@ -27,4 +24,7 @@
       <img [src]="lightIcon" alt="" referrerpolicy="no-referrer" draggable="false" />
     </button>
   </div>
+  @if (variant() === 'row') {
+    <span class="theme-switch-row-label">{{ 'app.theme' | t }}</span>
+  }
 </div>

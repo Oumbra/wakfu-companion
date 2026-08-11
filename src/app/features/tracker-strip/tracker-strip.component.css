@@ -90,8 +90,8 @@
 }
 .kpi-add-wrap > .help-icon-btn {
   position: absolute;
-  top: -13px;
-  right: -13px;
+  top: -8px;
+  right: -8px;
   background: var(--surface-active);
 }
 .kpi-add-wrap > .help-icon-btn:hover {

@@ -19,6 +19,9 @@ const LIGHT_ICON_URL = 'https://vertylo.github.io/wakassets/monsters/117601209.p
   imports: [TranslatePipe],
   templateUrl: './theme-switch.component.html',
   styleUrl: './theme-switch.component.css',
+  host: {
+    '(click)': 'toggleTheme()',
+  },
 })
 export class ThemeSwitchComponent {
   protected readonly theme = inject(ThemeService);
@@ -28,4 +31,12 @@ export class ThemeSwitchComponent {
   /** 'header' : pilule compacte de l'en-tête desktop (défaut) ; 'row' : ligne pleine largeur du
    * menu burger, même principe que `app-language-switcher`. */
   readonly variant = input<'header' | 'row'>('header');
+
+  toggleTheme() {
+    if (this.variant() !== 'row') return;
+
+    const currentTheme = this.theme.theme();
+    const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    this.theme.setTheme(nextTheme);
+  }
 }
