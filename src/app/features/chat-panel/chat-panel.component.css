@@ -114,6 +114,15 @@
   border-left: 3px solid var(--ch, var(--border-strong));
   animation: fadeIn 0.2s;
 }
+/* Message correspondant à un filtre de texte configuré (voir `isHighlighted`) : les filtres ne
+   masquent plus les autres messages, ils mettent seulement celui-ci en évidence — dégradé doré qui
+   s'estompe vers la droite, bordure gauche pleine de la même couleur que le départ du dégradé
+   (remplace ponctuellement la couleur de canal habituelle, --ch, pour rester repérable au premier
+   coup d'œil quel que soit le canal). */
+.chat-msg.filter-hit {
+  background: linear-gradient(90deg, rgba(255, 199, 0, 0.32), rgba(255, 199, 0, 0) 75%);
+  border-left-color: #ffc700;
+}
 .chat-meta {
   display: flex;
   gap: 6px;

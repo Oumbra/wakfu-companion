@@ -41,19 +41,10 @@ function matchesFilterText(msg: ChatMessageEntry, filter: ChatFilter): boolean {
   return message.includes(filter.text) || author.includes(filter.text);
 }
 
-/** Un canal sans filtre qui le cible (ni filtre "global", ni filtre propre)
- * affiche tous ses messages sans restriction — un filtre "Commerce" ne doit
- * pas masquer les messages des autres canaux. */
-function messageVisible(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
-  const applicable = applicableFilters(msg.channel, filters);
-  if (applicable.length === 0) return true;
-  return applicable.some((f) => matchesFilterText(msg, f));
-}
-
-/** Pour l'alerte sonore : contrairement à `messageVisible`, pas de défaut
- * permissif — un message ne doit déclencher l'alerte que s'il correspond
- * réellement à un filtre configuré, sinon tout message sur un canal sans
- * filtre déclencherait une alerte. */
+/** Un message "correspond" à un filtre s'il en existe au moins un, parmi ceux qui le ciblent
+ * (global ou propre à son canal), dont le texte matche — utilisé à la fois pour la mise en
+ * évidence visuelle (voir `isHighlighted`) et pour l'alerte sonore : les filtres ne masquent plus
+ * aucun message (voir `filteredMessages`), ils ne font plus que signaler une correspondance. */
 function messageMatchesAnyFilter(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
   return applicableFilters(msg.channel, filters).some((f) => matchesFilterText(msg, f));
 }
@@ -91,14 +82,19 @@ export class ChatPanelComponent {
     return stored.map((f) => (typeof f === 'string' ? { text: f, channel: 'global' } : f));
   }
 
+  /** Le nom garde "filtered" (canaux actifs, voir `toggleChannel`) même si les filtres de texte,
+   * eux, ne masquent plus rien — ils ne font que mettre en évidence (voir `isHighlighted`). */
   protected readonly filteredMessages = computed(() => {
     const active = this.activeChannels();
-    const filters = this.filters();
-    return this.stats
-      .chatMessages()
-      .filter((m) => active.has(m.channel))
-      .filter((m) => messageVisible(m, filters));
+    return this.stats.chatMessages().filter((m) => active.has(m.channel));
   });
+
+  /** Un message est mis en évidence (dégradé + bordure, voir template/CSS) s'il correspond à l'un
+   * des filtres de texte configurés — l'alerte sonore utilise le même critère (voir `effect` ci-
+   * dessous), les deux doivent toujours s'accorder. */
+  protected isHighlighted(msg: ChatMessageEntry): boolean {
+    return messageMatchesAnyFilter(msg, this.filters());
+  }
 
   private readonly chatList = viewChild<ElementRef<HTMLDivElement>>('chatList');
   /** Faux tant qu'on n'a pas encore mesuré le scroll une première fois : évite d'afficher le bouton avant le premier rendu. */
