@@ -21,9 +21,10 @@ import { GameServerService } from '../../core/services/game-server.service';
  * une seule ligne à côté du logo/titre/fichier — le serveur y passe en tête, c'est une information
  * d'état, pas une action.
  *
- * Recap et profil ne s'affichent que si un fichier wakfu.log valide est connecté ; le bouton
- * profil s'efface en plus sur la page profil elle-même (pas de bouton pour aller vers la page où
- * l'on se trouve déjà).
+ * Recap, profil et serveur de jeu ne s'affichent que si un fichier wakfu.log valide est connecté —
+ * pour le serveur, parce qu'il se déduit du log lui-même (personnage du roster reconnu, voir
+ * GameServerService) : l'afficher avant n'aurait rien à dire. Le bouton profil s'efface en plus sur
+ * la page profil elle-même (pas de bouton pour aller vers la page où l'on se trouve déjà).
  */
 @Component({
   selector: 'app-header',

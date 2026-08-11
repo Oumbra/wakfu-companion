@@ -2,13 +2,23 @@
   display: contents;
 }
 
+/* `--tab-bar-tooltip-room` : hauteur réservée au-dessus des onglets pour que
+   leurs tooltips ne soient pas rognés par le conteneur défilant — voir
+   `.tab-bar-scroll`. Un tooltip fait ~22px de haut + 6px de marge ; 40px laisse
+   de la marge sans effet de bord. */
 .tab-bar-row {
+  --tab-bar-tooltip-room: 40px;
   display: flex;
   align-items: center;
   gap: 4px;
   width: 100%;
   min-width: 0;
-  overflow: hidden;
+  /* PAS d'`overflow: hidden` ici : il rognait tous les tooltips de la barre
+     (bouton « tous les onglets », onglets, « ? », croix de suppression) — bug
+     réel signalé. Le défilement horizontal est porté par `.tab-bar-scroll`, et
+     rien d'autre ne déborde de cette rangée : le clipping n'y servait à rien
+     d'autre qu'à masquer ces tooltips. Même correction que pour
+     `.icon-switch` (voir styles.css). */
   background: var(--panel-header-bg);
   border: 1px solid var(--border);
   border-bottom: none;
@@ -45,6 +55,19 @@
   overflow-x: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Un conteneur défilant horizontalement rogne AUSSI verticalement : dès que
+     `overflow-x` vaut `auto`, `overflow-y` ne peut plus valoir `visible` (CSS
+     Overflow §3), et le tooltip d'un onglet — qui se place au-dessus de lui —
+     disparaissait donc entièrement.
+     Le clipping s'arrête à la boîte de *padding*, pas à celle de contenu :
+     réserver de la hauteur en padding puis l'annuler par une marge négative
+     de même valeur laisse la place au tooltip SANS changer ni la position des
+     onglets, ni la hauteur de la barre, ni le défilement horizontal.
+     Uniquement vers le haut : les tooltips de cette barre s'affichent
+     au-dessus (défaut du système), et un padding en bas décalerait
+     `.tab-bar-underline`, ancrée à `bottom: 0`. */
+  padding-top: var(--tab-bar-tooltip-room);
+  margin-top: calc(-1 * var(--tab-bar-tooltip-room));
 }
 .tab-bar-scroll::-webkit-scrollbar {
   display: none;
