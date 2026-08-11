@@ -285,6 +285,27 @@
   margin-bottom: 4px;
 }
 
+/* Switch daltonien (4 positions, voir `.icon-switch-4` générique dans styles.css) — largeur fixe
+   raisonnable plutôt que pleine largeur, les libellés étant courts. */
+.colorblind-switch {
+  width: 220px;
+}
+.colorblind-switch-option {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+.colorblind-hint {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+@media (max-width: 480px) {
+  .colorblind-switch {
+    width: 100%;
+  }
+}
+
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(9, 1fr);

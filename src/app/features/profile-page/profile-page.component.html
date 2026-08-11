@@ -108,6 +108,30 @@
               </div>
             </div>
           </div>
+
+          <div class="profile-field profile-field-wide">
+            <div class="profile-label-row">
+              <label class="profile-label">{{ 'profile.colorblindLabel' | t }}</label>
+            </div>
+            <div class="icon-switch icon-switch-4 colorblind-switch">
+              <span
+                class="icon-switch-highlight"
+                [style.transform]="colorblindHighlightTransform()"
+              ></span>
+              @for (opt of colorblindOptions; track opt.value) {
+                <button
+                  type="button"
+                  class="icon-switch-option colorblind-switch-option"
+                  [class.selected]="colorblind.profile() === opt.value"
+                  [attr.data-tooltip]="opt.tooltipKey | t"
+                  (click)="colorblind.setProfile(opt.value)"
+                >
+                  {{ opt.labelKey | t }}
+                </button>
+              }
+            </div>
+            <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
+          </div>
         </div>
       </div>
 

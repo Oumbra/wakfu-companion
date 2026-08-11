@@ -327,6 +327,12 @@ button.badge-close-btn {
 .icon-switch-highlight.is-far-right {
   transform: translateX(200%);
 }
+/* Variante à 4 options (voir `.colorblind-switch`, profile-page) : la position du fond glissant
+   est calculée en JS ([style.transform], pas de 3e/4e classe modificatrice à ajouter ici — les
+   noms `.is-right`/`.is-far-right` n'ont de sens que jusqu'à 3 positions). */
+.icon-switch-4 .icon-switch-highlight {
+  width: 25%;
+}
 
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,
@@ -593,6 +599,32 @@ button.icon-btn.help-icon-btn {
   to {
     opacity: 1;
   }
+}
+
+/* Mode daltonien (ColorblindService, `data-colorblind` posé sur <html>) : ne touche QUE les
+   paires de couleurs qui posent réellement problème pour le profil concerné — pas de palette
+   "universelle" plaquée sur les 3 profils, la confusion rouge/vert (protanopie/deutéranopie)
+   n'est pas celle du bleu/jaune (tritanopie). */
+:root[data-colorblind='protanopia'],
+:root[data-colorblind='deuteranopia'] {
+  /* Victoire/défaite : vert/rouge remplacés par bleu/orange, la paire la plus sûre pour l'axe
+     rouge-vert (les deux profils partagent cette même confusion). */
+  --btn-active-green: #3391ff;
+  --btn-active-red: #e6863c;
+  --highlight-green: rgba(51, 145, 255, 0.2);
+  --highlight-green-border: #3391ff;
+  /* Dégâts Terre : vert rapproché du rouge/orange (Feu) sur cet axe — décalé vers un bleu-sarcelle
+     nettement séparé de --dmg-fire. */
+  --dmg-earth: #0f6b8c;
+}
+:root[data-colorblind='tritanopia'] {
+  /* Dégâts Eau : cyan décalé vers un bleu plus franc, moins susceptible d'être lu comme un vert
+     sur l'axe bleu-jaune propre à la tritanopie. */
+  --dmg-water: #1f9fd9;
+  /* Dégâts Lumière + canal Commerce (même or) : décalés vers l'ambre, à l'écart du jaune pur
+     (risque de confusion avec le violet/rose sur cet axe). */
+  --dmg-light: #ffb703;
+  --channel-commerce: #ffb703;
 }
 
 /* --- Couleurs des éléments de dégâts --- */
