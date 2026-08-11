@@ -678,7 +678,7 @@ describe('StatsStoreService', () => {
       vi.useRealTimers();
     });
 
-    it('rejouer deux fois le même lot de lignes produit exactement le même nombre d\'enregistrements côté serveur', async () => {
+    it("rejouer deux fois le même lot de lignes produit exactement le même nombre d'enregistrements côté serveur", async () => {
       const server = new FakeHistoryServer();
       configureWithServer(server);
       declareRoster();
@@ -716,7 +716,7 @@ describe('StatsStoreService', () => {
       expect(server.totals()).toEqual(afterFirst);
     });
 
-    it("relire le même fichier un autre jour ne recrée aucun doublon (la clé ignore la date système)", async () => {
+    it('relire le même fichier un autre jour ne recrée aucun doublon (la clé ignore la date système)', async () => {
       // Le log Wakfu n'écrit que l'heure : StatsStoreService lui recolle la date
       // du jour de LECTURE. Si cette date entrait dans la clé déterministe, un
       // fichier encore ouvert le lendemain réenverrait tout en double — d'où une

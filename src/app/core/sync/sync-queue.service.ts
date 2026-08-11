@@ -2,11 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 import { computeClientKey } from './client-key.util';
-import {
-  HISTORY_ENDPOINTS,
-  type HistoryEvent,
-  type HistoryEventKind,
-} from './history-event.model';
+import { HISTORY_ENDPOINTS, type HistoryEvent, type HistoryEventKind } from './history-event.model';
 
 /** Taille d'un envoi, à garder ≤ `MAX_HISTORY_BATCH` côté serveur (`server/history/parse.ts`). */
 const SYNC_BATCH_SIZE = 50;
@@ -98,7 +94,8 @@ export class SyncQueueService {
 
     try {
       const stored = await this.persistence.getSyncQueue<HistoryEvent>();
-      for (const entry of stored) if (!this.entries.has(entry.id)) this.entries.set(entry.id, entry);
+      for (const entry of stored)
+        if (!this.entries.has(entry.id)) this.entries.set(entry.id, entry);
     } catch {
       // Une file illisible (IndexedDB indisponible, navigation privée) ne doit
       // jamais empêcher l'application de fonctionner : on repart d'une file

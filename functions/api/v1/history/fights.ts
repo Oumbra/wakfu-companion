@@ -2,7 +2,11 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { fightParticipants, fights } from '../../../../server/db/schema';
-import { MAX_HISTORY_BATCH, parseFightsBody, parsePageQuery } from '../../../../server/history/parse';
+import {
+  MAX_HISTORY_BATCH,
+  parseFightsBody,
+  parsePageQuery,
+} from '../../../../server/history/parse';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 

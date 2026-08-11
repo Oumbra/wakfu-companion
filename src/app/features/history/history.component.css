@@ -64,6 +64,69 @@
   flex-shrink: 0;
 }
 
+/* Bascule Session / Compte (lot 8) : visible seulement quand un compte est
+   connecté — en mode invité, rien n'est archivé, la question ne se pose pas. */
+.history-source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  background: #262626;
+  border-bottom: 1px solid #333;
+}
+.history-source-btn {
+  padding: 3px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #999;
+  background: #2f2f2f;
+  border: 1px solid #3a3a3a;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.history-source-btn:hover {
+  color: #fff;
+}
+.history-source-btn.active {
+  color: #111;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.history-source-status {
+  font-size: 0.7rem;
+  color: #888;
+}
+.history-source-status.error {
+  color: #e06c6c;
+}
+
+.history-load-more {
+  display: flex;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 8px;
+  border-top: 1px solid #333;
+}
+.history-load-more button {
+  padding: 4px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #ccc;
+  background: #2f2f2f;
+  border: 1px solid #3a3a3a;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.history-load-more button:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--accent);
+}
+.history-load-more button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 @media (max-width: 800px) {
   .meter-tab > .help-icon-btn {
     width: 12px;

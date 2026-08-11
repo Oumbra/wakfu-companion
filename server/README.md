@@ -776,3 +776,162 @@ entre deux comptes, un joueur hors roster sans effet, et la persistance après
 rechargement. Rendu vérifié en desktop (1280 px) et mobile (390 px) : badge dans
 l'en-tête d'un côté, en tête du burger de l'autre, jamais les deux à la fois,
 sans débordement horizontal.
+
+## Historiques serveur (lot 8, prompt 8.1)
+
+Objectif : un historique **illimité** de combats, achats et échanges, rattaché
+au compte, **sans doublons**. Aujourd'hui tout vivait en mémoire, plafonné à 30
+combats (`MAX_FIGHT_HISTORY`) et perdu au rechargement.
+
+### Le piège central : la clé déterministe
+
+Le principe d'architecture n°2 de `CLAUDE.md` veut que toute (re)connexion au
+fichier de log le relise **depuis le début** et reconstruise l'historique
+complet. Sans précaution, chaque reconnexion réenverrait tout et créerait des
+doublons **persistés** — qu'un simple F5 ne réparerait pas, contrairement au bug
+déjà corrigé en local.
+
+Les identifiants côté client (`nextPurchaseId`, `nextTradeId`) sont des
+compteurs de session, remis à zéro à chaque reconstruction : inutilisables comme
+clés. D'où :
+
+```
+client_key = sha256(uid | type | signature de contenu)
+```
+
+couplée à `UNIQUE (user_id, client_key)` et à `INSERT ... ON CONFLICT DO
+NOTHING`. Rejouer dix fois le même log n'écrit qu'une ligne.
+
+Deux décisions de composition de la signature méritent d'être retenues (détail
+dans `src/app/core/sync/history-event.model.ts`) :
+
+1. **L'heure du log, jamais la date système.** Wakfu n'écrit que
+   `HH:MM:SS,mmm` ; `StatsStoreService` y recolle la date du jour de **lecture**.
+   Inclure cette date rendrait la clé différente pour le même événement relu le
+   lendemain — donc un doublon par jour et par événement, exactement le
+   problème que ce lot combat. Limite assumée en contrepartie : deux événements
+   réellement distincts, à la même milliseconde de la journée et au contenu
+   strictement identique, seraient fusionnés. Invraisemblable en pratique ; le
+   risque inverse, lui, serait quotidien.
+2. **Aucune valeur révisable dans la signature.** Les dégâts n'entrent pas dans
+   celle d'un combat : une réattribution manuelle (`reassignSpell`) les modifie
+   après coup, ce qui changerait la clé et créerait une seconde ligne.
+   Corollaire assumé : l'historique du compte est un **journal immuable**, une
+   réattribution postérieure à l'envoi reste locale.
+
+### Trois écarts par rapport au schéma du §6 du plan
+
+1. **`game_server` sur les trois tables**, pas seulement `purchases` : c'est ce
+   pour quoi le lot 7 existe (« taguer l'historique personnel — combats, achats,
+   échanges — par serveur »). Toujours nullable : un événement sans serveur
+   résolu part quand même, le champ reste vide (prompt 8.1 point 4).
+2. **`fight_participants` porte un `instance_index`** dans sa clé primaire. La
+   PK `(fight_id, name, side)` du plan entre en collision dès que deux
+   combattants du même camp partagent un nom — courant, et tout un mécanisme
+   client y est consacré (`InitiativeSeat`, `countNameInstances`). Sans lui, un
+   combat contre trois Bouftous perdrait deux lignes sur trois.
+3. **`trade_items` porte un `line_index`** et une vraie clé primaire : c'est ce
+   qui permet de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans
+   les dupliquer (voir ci-dessous).
+
+### Pourquoi trois requêtes SQL et non deux
+
+Le driver `neon-http` n'offre pas de transaction interactive : un combat et ses
+participants ne peuvent pas être écrits « tout ou rien ». La séquence naïve
+(insérer les parents en récupérant les `id` des seules lignes nouvelles via
+`RETURNING`, puis insérer les filles) laisse, si la seconde requête échoue, un
+combat **sans** participants — et un rejeu ne le réparerait jamais, son
+`clientKey` étant désormais en conflit.
+
+D'où la séquence retenue (`functions/api/v1/history/fights.ts`, idem pour les
+échanges) : `INSERT ... ON CONFLICT DO NOTHING` → `SELECT id, client_key` sur
+**tout** le lot → `INSERT ... ON CONFLICT DO NOTHING` sur les filles. Une
+requête de plus, mais un rejeu répare alors n'importe quel état intermédiaire —
+ce qui est précisément la propriété recherchée. C'est aussi ce qui évite d'avoir
+à passer à `neon-serverless` (WebSocket), envisagé plus haut dans ce document
+pour ce lot.
+
+### Endpoints
+
+- `POST /api/v1/history/{fights,purchases,trades}` — ingestion par lots
+  (`{ entries: [...] }`, 100 max), session + CSRF requis. Réponse :
+  `{ accepted, inserted }` — `inserted: 0` signifie « tout était déjà là »,
+  c'est le cas normal d'un rejeu.
+- `GET /api/v1/history/{fights,purchases,trades}?limit=&before=` — lecture
+  paginée par **curseur de date** (pas `OFFSET` : un historique s'écrit pendant
+  qu'on le feuillette). `nextBefore: null` = fin de l'historique.
+
+Validation dans `server/history/parse.ts` (pure, testée sans base —
+`parse.spec.ts`). Un lot contenant une entrée invalide est refusé **en entier**,
+contrairement à `/prices/ingest` : ces charges utiles viennent d'un seul
+émetteur (la file cliente), une entrée mal formée y signale un bug, pas une
+saisie à rattraper.
+
+### Côté client
+
+| Fichier                                | Rôle                                                                                                    |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `core/sync/history-event.model.ts`     | Types des charges utiles et **signatures de contenu** (synchrones, sans hachage).                       |
+| `core/sync/client-key.util.ts`         | `sha256(uid\|type\|signature)` — asynchrone, calculé à l'envoi, jamais dans le chemin chaud de parsing. |
+| `core/sync/sync-queue.service.ts`      | File persistante (IndexedDB), envois par lots, rejeu au retour du réseau, jamais bloquante.             |
+| `core/sync/history-sync.service.ts`    | Traduit les enregistrements du store en événements ; no-op complet en mode invité.                      |
+| `core/sync/history-archive.service.ts` | Lecture paginée de l'archive du compte pour l'affichage.                                                |
+
+Points structurants :
+
+- **`StatsStoreService` appelle la synchronisation inconditionnellement**, y
+  compris pendant `isInitialLoad` — et c'est voulu : le gating protège les
+  compteurs persistants d'un regonflage, alors qu'ici c'est justement
+  l'historique reconstruit qu'il faut pouvoir envoyer (sinon un historique
+  retrouvé après un F5 ne partirait jamais). L'idempotence est ce qui rend cet
+  envoi systématique sans danger. Aucun `if (connecté)` ne remonte jusqu'au
+  store : `SyncQueueService.isActive()` décide, et `AuthService` seul l'active.
+- **Le combat est envoyé avant le plafonnement** à `MAX_FIGHT_HISTORY` : cette
+  borne limite ce que l'appareil garde affiché, pas ce que le compte archive.
+- **Une connexion en cours de session rejoue l'historique déjà en mémoire**
+  (`setReplaySource`, appelé par `enable()`) — un rappel explicite plutôt qu'un
+  `effect()` sur un signal, pour que le rejeu parte immédiatement et non au
+  prochain cycle de détection de changement.
+- **Le chat n'est jamais transmis** (prompt 8.1 point 5) : aucune table ne le
+  référence, aucun type d'événement ne le couvre.
+
+### Affichage : une bascule, pas une fusion
+
+La section Historique propose « Session / Compte » (visible seulement une fois
+connecté). La liste de session vient du fichier de log courant et est plafonnée ;
+l'archive du compte contient tout, y compris ce que la session vient d'envoyer.
+Fusionner les deux demanderait de reconnaître localement qu'un événement de
+session est déjà archivé — ce que seule la clé SHA-256 permet vraiment, au prix
+d'un calcul asynchrone par ligne affichée et par rendu. La bascule est plus
+honnête (on sait d'où viennent les lignes) et l'archive étant un sur-ensemble,
+l'utilisateur n'a rien à recouper.
+
+Ce que l'archive ne contient pas, faute de tables au §6 : le **butin par
+combat** et le **détail des dégâts par sort**. Un combat archivé montre ses
+participants et leurs totaux ; ces deux informations restent disponibles dans la
+vue de session tant que le fichier de log les porte.
+
+### Vérification effectuée / restant à faire
+
+Vérifié dans cette session :
+
+- `npm test` (102 tests, dont 5 nouveaux sur l'idempotence — le test de double
+  rejeu exigé par le prompt, un rechargement complet de l'application, une
+  relecture **un autre jour** (horloge système avancée), le mode invité muet, et
+  la connexion en cours de session) ;
+- `npm run test:server` (64 tests, dont 24 sur `server/history/parse.ts`) ;
+- `npm run build` ;
+- une **vérification navigateur réelle** (Chromium/playwright-core, `ng serve`,
+  backend simulé par interception de `fetch` — les Pages Functions n'existent
+  pas sous `ng serve`) : premier envoi (1 combat + 1 achat insérés), reconnexion
+  complète du fichier de log (envoi bien effectué, `inserted: 0`, aucun
+  doublon), coupure réseau (3 entrées en attente **et** écrites en IndexedDB),
+  retour du réseau (file vidée, entrées manquantes arrivées), puis la bascule
+  Session/Compte alimentée par les `GET` paginés.
+
+**Restant à faire**, comme pour tous les lots précédents — seul un déploiement
+réel permet de conclure : appliquer `0006_history_tables.sql` sur la branche Neon
+preview (automatique via `deploy-preview.yml`), puis dérouler un aller-retour
+complet contre la vraie base — ingestion, rejeu du même log (vérifier que
+`inserted` retombe à 0), pagination sur plus d'une page, et suppression de compte
+(cascade sur les cinq tables).

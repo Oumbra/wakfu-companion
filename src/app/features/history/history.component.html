@@ -48,11 +48,47 @@
     </div>
   </div>
 
+  @if (canShowAccount()) {
+    <div class="history-source">
+      <button
+        type="button"
+        class="history-source-btn"
+        [class.active]="!archive.showsAccount()"
+        [title]="'history.source.sessionTooltip' | t"
+        (click)="showSource('session')"
+      >
+        {{ 'history.source.session' | t }}
+      </button>
+      <button
+        type="button"
+        class="history-source-btn"
+        [class.active]="archive.showsAccount()"
+        [title]="'history.source.accountTooltip' | t"
+        (click)="showSource('account')"
+      >
+        {{ 'history.source.account' | t }}
+      </button>
+      @if (archive.loading()) {
+        <span class="history-source-status">{{ 'history.source.loading' | t }}</span>
+      } @else if (archive.failed()) {
+        <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
+      }
+    </div>
+  }
+
   @if (activeTab() === 'combats') {
     <app-fight-history />
   } @else if (activeTab() === 'purchases') {
     <app-purchases />
   } @else {
     <app-trades />
+  }
+
+  @if (hasMore()) {
+    <div class="history-load-more">
+      <button type="button" (click)="loadMore()" [disabled]="archive.loading()">
+        {{ 'history.source.loadMore' | t }}
+      </button>
+    </div>
   }
 </div>
