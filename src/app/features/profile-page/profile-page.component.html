@@ -371,28 +371,9 @@
 
               @if (selectedAccount(); as account) {
                 <div class="roster-account-panel">
-                  <!-- Serveur de jeu du compte (lot 7) : le log Wakfu ne l'indique
-                       jamais, il se déclare donc ici, par compte — un joueur
-                       multi-compte peut jouer sur plusieurs serveurs. -->
-                  <div class="roster-account-server">
-                    <label class="roster-server-label" [for]="'account-server-' + account.id">
-                      {{ 'profile.gameServerLabel' | t }}
-                    </label>
-                    <select
-                      class="game-server-select"
-                      [id]="'account-server-' + account.id"
-                      [value]="account.gameServer ?? ''"
-                      (change)="setAccountServer(account.id, $any($event.target).value)"
-                    >
-                      <option value="">{{ 'profile.gameServerNone' | t }}</option>
-                      @for (server of gameServers.selectableServers(); track server.code) {
-                        <option [value]="server.code">{{ server.label }}</option>
-                      }
-                    </select>
-                  </div>
-
                   @if (!account.isDefault) {
                     <div class="roster-account-header">
+                      <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
                       <input
                         type="text"
                         class="roster-account-label-input"
@@ -413,9 +394,12 @@
 
                   @if (account.characters.length > 0) {
                     <div class="roster-view-row">
-                      <span class="roster-character-count">{{
-                        characterCountLabel(account.characters.length)
-                      }}</span>
+                      <div class="roster-view-header">
+                        @if (account.isDefault) {
+                          <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
+                        }
+                        <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                      </div>
                       <div class="icon-switch" style="width: 52px">
                         <span
                           class="icon-switch-highlight"
@@ -658,3 +642,18 @@
     {{ tip.text }}
   </div>
 }
+
+<ng-template #gameServerSelect let-account>
+  <select
+    class="game-server-select"
+    [id]="'account-server-' + account.id"
+    [value]="account.gameServer ?? ''"
+    (change)="setAccountServer(account.id, $any($event.target).value)"
+    placeholder="Serveur"
+  >
+    <option value="">{{ 'profile.gameServerNone' | t }}</option>
+    @for (server of gameServers.selectableServers(); track server.code) {
+      <option [value]="server.code">{{ server.label }}</option>
+    }
+  </select>
+</ng-template>
