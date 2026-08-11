@@ -627,17 +627,27 @@
   </div>
 }
 
+<!-- Serveur de jeu du compte (lot 7). ⚠ La sélection courante se pose sur les
+     `<option>` (`[selected]`), JAMAIS via `[value]` sur le `<select>` : Angular
+     applique les propriétés de l'élément hôte AVANT de rendre son contenu
+     embarqué, donc `select.value = 'pandora'` s'exécute alors qu'aucune
+     `<option>` n'existe encore — le navigateur ignore l'affectation et le
+     select retombe sur la première option. Bug réel : le serveur était bien
+     enregistré (localStorage/compte) mais s'affichait « Serveur ? » au
+     changement d'onglet de compte comme au rechargement. -->
 <ng-template #gameServerSelect let-account>
   <select
     class="game-server-select"
     [id]="'account-server-' + account.id"
-    [value]="account.gameServer ?? ''"
     (change)="setAccountServer(account.id, $any($event.target).value)"
-    placeholder="Serveur"
   >
-    <option value="">{{ 'profile.gameServerNone' | t }}</option>
+    <option value="" [selected]="!account.gameServer">
+      {{ 'profile.gameServerNone' | t }}
+    </option>
     @for (server of gameServers.selectableServers(); track server.code) {
-      <option [value]="server.code">{{ server.label }}</option>
+      <option [value]="server.code" [selected]="server.code === account.gameServer">
+        {{ server.label }}
+      </option>
     }
   </select>
 </ng-template>
