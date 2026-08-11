@@ -129,9 +129,21 @@ export class SyncQueueService {
    */
   enqueue(event: Omit<HistoryEvent, 'queuedAt' | 'attempts'>): void {
     if (this.uid === null) return;
-    // Déjà en file (rejeu du même fichier de log) : rien à faire, surtout pas
-    // remettre `attempts` à zéro ni réécrire IndexedDB pour rien.
-    if (this.entries.has(event.id)) return;
+
+    const existing = this.entries.get(event.id);
+    if (existing) {
+      // Même événement déjà en file. Le cas courant est un simple rejeu du même
+      // fichier de log : la charge utile est identique, rien à faire — surtout
+      // pas remettre `attempts` à zéro ni réécrire IndexedDB pour rien. Mais un
+      // combat peut aussi revenir AVEC UN DÉTAIL CORRIGÉ (réattribution
+      // manuelle) avant d'être parti : c'est alors la version corrigée qui doit
+      // partir, pas celle qui attendait.
+      if (JSON.stringify(existing.payload) === JSON.stringify(event.payload)) return;
+      existing.payload = event.payload;
+      this.unpersisted.set(existing.id, existing);
+      this.scheduleFlush();
+      return;
+    }
 
     const entry: HistoryEvent = { ...event, queuedAt: Date.now(), attempts: 0 };
     this.entries.set(entry.id, entry);

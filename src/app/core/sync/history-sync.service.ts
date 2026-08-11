@@ -110,6 +110,19 @@ export class HistorySyncService {
         className: side === 'ally' ? (this.classifier.getDetectedClass(row.name) ?? null) : null,
         damage: Math.max(0, Math.round(row.total)),
         defeated: row.defeated,
+        // Ventilation par sort et par élément : c'est l'essentiel de la valeur
+        // d'un historique de combat, et c'est aussi ce qu'une réattribution
+        // manuelle peut corriger après coup (d'où l'upsert côté serveur).
+        spells: row.spells.map((spell) => ({
+          spell: spell.spell,
+          total: Math.max(0, Math.round(spell.total)),
+          byElement: Object.fromEntries(
+            Object.entries(spell.byElement).map(([element, amount]) => [
+              element,
+              Math.max(0, Math.round(amount ?? 0)),
+            ]),
+          ),
+        })),
       };
     });
 
@@ -142,6 +155,11 @@ export class HistorySyncService {
         kamasGained: null,
         gameServer: this.currentServer(),
         participants,
+        loot: record.loot.map((row) => ({
+          itemId: this.itemId(row.name),
+          itemName: row.name,
+          quantity: row.quantity,
+        })),
       },
     });
   }
