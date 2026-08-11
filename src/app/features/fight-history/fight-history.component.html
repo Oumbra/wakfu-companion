@@ -1,150 +1,199 @@
+<div class="fight-group-controls">
+  <div class="icon-switch icon-switch-3 fight-group-switch">
+    <span
+      class="icon-switch-highlight"
+      [class.is-right]="groupMode() === 'location'"
+      [class.is-far-right]="groupMode() === 'type'"
+    ></span>
+    <button
+      type="button"
+      class="icon-switch-option fight-group-switch-option"
+      [class.selected]="groupMode() === 'day'"
+      [attr.data-tooltip]="'history.group.day' | t"
+      (click)="setGroupMode('day')"
+    >
+      <app-icon name="calendar" [size]="13" [strokeWidth]="2" />
+      <span class="fight-group-switch-label">{{ 'history.group.day' | t }}</span>
+    </button>
+    <button
+      type="button"
+      class="icon-switch-option fight-group-switch-option"
+      [class.selected]="groupMode() === 'location'"
+      [attr.data-tooltip]="'history.group.location' | t"
+      (click)="setGroupMode('location')"
+    >
+      <app-icon name="map-pin" [size]="13" [strokeWidth]="2" />
+      <span class="fight-group-switch-label">{{ 'history.group.location' | t }}</span>
+    </button>
+    <button
+      type="button"
+      class="icon-switch-option fight-group-switch-option"
+      [class.selected]="groupMode() === 'type'"
+      [attr.data-tooltip]="'history.group.type' | t"
+      (click)="setGroupMode('type')"
+    >
+      <app-icon name="swords" [size]="13" [strokeWidth]="2" />
+      <span class="fight-group-switch-label">{{ 'history.group.type' | t }}</span>
+    </button>
+  </div>
+</div>
+
 <div class="panel-body meter-body">
   @if (fightHistory().length === 0) {
     <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
   } @else {
-    @for (record of fightHistory(); track record.id; let first = $first) {
-      <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
-        <div
-          class="fight-summary"
-          [class.sticky]="isFightExpanded(record.id)"
-          (click)="toggleFight(record.id)"
-        >
-          <span
-            class="fight-clock tooltip-align-left"
-            [class.tooltip-below]="first"
-            [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
-          >
-            <app-icon name="clock" [strokeWidth]="2" [size]="15" />
-          </span>
-          @if (fightImageUrl(record); as imageUrl) {
-            <span
-              class="fight-image-wrap"
-              [class.tooltip-below]="first"
-              [attr.data-tooltip]="fightImageTooltip(record)"
+    @for (group of fightGroups(); track groupMode() + ':' + group.key; let firstGroup = $first) {
+      <div class="fight-group-row" [class.tooltip-below]="firstGroup" (click)="toggleGroupCollapsed(group.key)">
+        <span class="caret" [class.expanded]="!isGroupCollapsed(group.key)">▸</span>
+        <span class="fight-group-label">{{ group.label }}</span>
+        <span class="fight-group-count">{{ fightCountLabel(group.records.length) }}</span>
+      </div>
+      @if (!isGroupCollapsed(group.key)) {
+        @for (record of group.records; track record.id; let first = $first) {
+          <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
+            <div
+              class="fight-summary"
+              [class.sticky]="isFightExpanded(record.id)"
+              (click)="toggleFight(record.id)"
             >
-              <img
-                class="fight-image"
-                [src]="imageUrl"
-                referrerpolicy="no-referrer"
-                draggable="false"
-                (error)="onFightImageError($event)"
-                alt=""
-              />
-            </span>
-          }
-          <span
-            class="fight-badge"
-            [class.won]="record.result === 'won'"
-            [class.lost]="record.result === 'lost'"
-          >
-            {{ record.result === 'won' ? ('damageMeter.won' | t) : ('damageMeter.lost' | t) }}
-          </span>
-          <span class="fight-meta">
-            {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{
-              formatDuration(record.durationMs)
-            }})
-          </span>
-          <span class="caret" [class.expanded]="isFightExpanded(record.id)">▸</span>
-        </div>
-        @if (isFightExpanded(record.id)) {
-          <div class="fight-details">
-            <app-entity-damage-list
-              [title]="'damageMeter.allies' | t"
-              side="ally"
-              [rows]="allyRowsFor(record)"
-              [fightId]="record.id"
-              [collapsible]="true"
-              [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
-            />
-            <app-entity-damage-list
-              [title]="'damageMeter.enemies' | t"
-              side="enemy"
-              [rows]="enemyRowsFor(record)"
-              [fightId]="record.id"
-              [collapsible]="true"
-              [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
-            />
-            @if (record.result === 'won') {
-              <div class="loot-section">
-                <div class="loot-header-row" (click)="toggleFightLoot(record.id)">
-                  <div class="loot-header-main">
-                    <div class="loot-header-left">
-                      <img [src]="lootIcon" class="collapsible-icon" alt="" />
-                      <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
-                      @if (record.loot.length > 0) {
-                        <span class="loot-count"
-                          >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
-                        >
-                      }
+              <span
+                class="fight-clock tooltip-align-left"
+                [class.tooltip-below]="first"
+                [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+              >
+                <app-icon name="clock" [strokeWidth]="2" [size]="15" />
+              </span>
+              @if (fightImageUrl(record); as imageUrl) {
+                <span
+                  class="fight-image-wrap"
+                  [class.tooltip-below]="first"
+                  [attr.data-tooltip]="fightImageTooltip(record)"
+                >
+                  <img
+                    class="fight-image"
+                    [src]="imageUrl"
+                    referrerpolicy="no-referrer"
+                    draggable="false"
+                    (error)="onFightImageError($event)"
+                    alt=""
+                  />
+                </span>
+              }
+              <span
+                class="fight-badge"
+                [class.won]="record.result === 'won'"
+                [class.lost]="record.result === 'lost'"
+              >
+                {{ record.result === 'won' ? ('damageMeter.won' | t) : ('damageMeter.lost' | t) }}
+              </span>
+              <span class="fight-meta">
+                {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{
+                  formatDuration(record.durationMs)
+                }})
+              </span>
+              <span class="caret" [class.expanded]="isFightExpanded(record.id)">▸</span>
+            </div>
+            @if (isFightExpanded(record.id)) {
+              <div class="fight-details">
+                <app-entity-damage-list
+                  [title]="'damageMeter.allies' | t"
+                  side="ally"
+                  [rows]="allyRowsFor(record)"
+                  [fightId]="record.id"
+                  [collapsible]="true"
+                  [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
+                />
+                <app-entity-damage-list
+                  [title]="'damageMeter.enemies' | t"
+                  side="enemy"
+                  [rows]="enemyRowsFor(record)"
+                  [fightId]="record.id"
+                  [collapsible]="true"
+                  [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
+                />
+                @if (record.result === 'won') {
+                  <div class="loot-section">
+                    <div class="loot-header-row" (click)="toggleFightLoot(record.id)">
+                      <div class="loot-header-main">
+                        <div class="loot-header-left">
+                          <img [src]="lootIcon" class="collapsible-icon" alt="" />
+                          <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
+                          @if (record.loot.length > 0) {
+                            <span class="loot-count"
+                              >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
+                            >
+                          }
+                        </div>
+                        @if (record.loot.length > 1) {
+                          <div
+                            class="icon-switch icon-switch-3 loot-sort-switch"
+                            (click)="$event.stopPropagation()"
+                          >
+                            <span
+                              class="icon-switch-highlight"
+                              [class.is-right]="lootSort() === 'quantity'"
+                              [class.is-far-right]="lootSort() === 'rarity'"
+                            ></span>
+                            <button
+                              type="button"
+                              class="icon-switch-option loot-sort-switch-option"
+                              [class.selected]="lootSort() === 'name'"
+                              [attr.data-tooltip]="'damageMeter.sortName' | t"
+                              (click)="setLootSort('name')"
+                            >
+                              Az
+                            </button>
+                            <button
+                              type="button"
+                              class="icon-switch-option loot-sort-switch-option"
+                              [class.selected]="lootSort() === 'quantity'"
+                              [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
+                              (click)="setLootSort('quantity')"
+                            >
+                              Nb
+                            </button>
+                            <button
+                              type="button"
+                              class="icon-switch-option loot-sort-switch-option"
+                              [class.selected]="lootSort() === 'rarity'"
+                              [attr.data-tooltip]="'damageMeter.sortRarity' | t"
+                              (click)="setLootSort('rarity')"
+                            >
+                              <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                            </button>
+                          </div>
+                        }
+                      </div>
+                      <span class="caret" [class.expanded]="isFightLootExpanded(record.id)">▸</span>
                     </div>
-                    @if (record.loot.length > 1) {
-                      <div
-                        class="icon-switch icon-switch-3 loot-sort-switch"
-                        (click)="$event.stopPropagation()"
-                      >
-                        <span
-                          class="icon-switch-highlight"
-                          [class.is-right]="lootSort() === 'quantity'"
-                          [class.is-far-right]="lootSort() === 'rarity'"
-                        ></span>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'name'"
-                          [attr.data-tooltip]="'damageMeter.sortName' | t"
-                          (click)="setLootSort('name')"
-                        >
-                          Az
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'quantity'"
-                          [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
-                          (click)="setLootSort('quantity')"
-                        >
-                          Nb
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'rarity'"
-                          [attr.data-tooltip]="'damageMeter.sortRarity' | t"
-                          (click)="setLootSort('rarity')"
-                        >
-                          <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
-                        </button>
+                    @if (isFightLootExpanded(record.id)) {
+                      <div class="loot-body">
+                        <app-loot-list [items]="sortedLoot(record.loot)" />
                       </div>
                     }
                   </div>
-                  <span class="caret" [class.expanded]="isFightLootExpanded(record.id)">▸</span>
-                </div>
-                @if (isFightLootExpanded(record.id)) {
-                  <div class="loot-body">
-                    <app-loot-list [items]="sortedLoot(record.loot)" />
-                  </div>
                 }
-              </div>
-            }
-            @if (record.xp.length > 0) {
-              <div class="collapsible-section">
-                <div class="collapsible-header" (click)="toggleFightXp(record.id)">
-                  <img [src]="xpIcon" class="collapsible-icon" alt="" />
-                  <span>{{ 'damageMeter.experience' | t }}</span>
-                  <span class="caret" [class.expanded]="isFightXpExpanded(record.id)">▸</span>
-                </div>
-                @if (isFightXpExpanded(record.id)) {
-                  <div class="collapsible-body">
-                    @for (row of record.xp; track row.name; let first = $first) {
-                      <div
-                        class="fight-xp-row"
-                        [class.tooltip-below]="first"
-                        [attr.data-tooltip]="'damageMeter.classHint' | t"
-                        (contextmenu)="onXpContextMenu($event, row.name)"
-                      >
-                        <app-entity-icon [name]="row.name" side="ally" />
-                        <span class="fight-xp-name">{{ row.name }}</span>
-                        <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
+                @if (record.xp.length > 0) {
+                  <div class="collapsible-section">
+                    <div class="collapsible-header" (click)="toggleFightXp(record.id)">
+                      <img [src]="xpIcon" class="collapsible-icon" alt="" />
+                      <span>{{ 'damageMeter.experience' | t }}</span>
+                      <span class="caret" [class.expanded]="isFightXpExpanded(record.id)">▸</span>
+                    </div>
+                    @if (isFightXpExpanded(record.id)) {
+                      <div class="collapsible-body">
+                        @for (row of record.xp; track row.name; let first = $first) {
+                          <div
+                            class="fight-xp-row"
+                            [class.tooltip-below]="first"
+                            [attr.data-tooltip]="'damageMeter.classHint' | t"
+                            (contextmenu)="onXpContextMenu($event, row.name)"
+                          >
+                            <app-entity-icon [name]="row.name" side="ally" />
+                            <span class="fight-xp-name">{{ row.name }}</span>
+                            <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
+                          </div>
+                        }
                       </div>
                     }
                   </div>
@@ -153,7 +202,7 @@
             }
           </div>
         }
-      </div>
+      }
     }
   }
 </div>

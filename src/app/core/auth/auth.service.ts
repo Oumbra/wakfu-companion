@@ -143,6 +143,10 @@ export class AuthService {
       this._user.set(result.data.user);
       this._identities.set(result.data.identities);
       this._status.set('authenticated');
+      // Historique fusionné (voir HistoryArchiveService) : charge l'archive dès qu'on sait la
+      // session déjà active au démarrage (pas seulement après un login fraîchement effectué,
+      // voir les 2 autres appels sur ce même service plus bas).
+      void this.historyArchive.loadAll();
       return;
     }
     this.becomeGuest();

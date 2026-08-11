@@ -41,22 +41,15 @@ const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
 export class HistoryComponent {
   protected readonly helpModal = inject(HelpModalService);
   protected readonly archive = inject(HistoryArchiveService);
-  private readonly auth = inject(AuthService);
+  protected readonly auth = inject(AuthService);
 
   protected readonly activeTab = signal<HistoryTab>('combats');
 
-  /** La bascule Session/Compte n'a de sens qu'avec un compte : en mode invité,
-   * rien n'a jamais été archivé (§7 du plan, aucune donnée ne quitte l'appareil). */
-  protected readonly canShowAccount = this.auth.isAuthenticated;
-
-  /** Vrai s'il reste des pages à charger pour le sous-onglet affiché. */
+  /** Vrai s'il reste des pages d'archive à charger pour le sous-onglet affiché — en mode invité,
+   * rien n'a jamais été archivé (§7 du plan, aucune donnée ne quitte l'appareil), donc toujours faux. */
   protected readonly hasMore = computed(
-    () => this.archive.showsAccount() && this.archive.hasMore(TAB_EVENT_KIND[this.activeTab()]),
+    () => this.auth.isAuthenticated() && this.archive.hasMore(TAB_EVENT_KIND[this.activeTab()]),
   );
-
-  protected async showSource(source: 'session' | 'account'): Promise<void> {
-    await this.archive.setSource(source);
-  }
 
   protected loadMore(): void {
     void this.archive.loadMore(TAB_EVENT_KIND[this.activeTab()]);
