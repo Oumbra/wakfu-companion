@@ -120,7 +120,7 @@ export class FightHistoryComponent {
         : this.i18n.t('history.group.otherType');
       return { key: label, label };
     }
-    const label = this.i18n.formatDate(record.fullTimestampMs);
+    const label = this.i18n.formatRelativeDay(record.fullTimestampMs);
     return { key: label, label };
   }
 

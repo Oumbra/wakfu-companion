@@ -49,6 +49,41 @@ import { ColorblindProfile, ColorblindService } from '../../core/services/colorb
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
 
+interface ColorblindSwatch {
+  labelKey: string;
+  before: string;
+  after: string;
+}
+
+/** Une entrée par couleur RÉELLEMENT redéfinie pour ce profil (voir les blocs
+ * `[data-colorblind='...']` de styles.css, à garder synchronisé avec cette liste) — ce qui permet
+ * à l'utilisateur de voir en un coup d'œil, avant/après, tout ce que le profil choisi va changer
+ * dans l'app, sans avoir à chercher ces éléments un par un dans l'interface. */
+const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindSwatch[]> = {
+  protanopia: [
+    { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
+    { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
+    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
+    { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
+    { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
+    { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
+  ],
+  // Corrections identiques à protanopia : même axe de confusion rouge-vert pour les deux profils.
+  deuteranopia: [
+    { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
+    { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
+    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
+    { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
+    { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
+    { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
+  ],
+  tritanopia: [
+    { labelKey: 'profile.colorblindSwatchWater', before: '#00e1ff', after: '#1f9fd9' },
+    { labelKey: 'profile.colorblindSwatchLight', before: '#ffd700', after: '#ffb703' },
+    { labelKey: 'chat.channel.commerce', before: '#ffd700', after: '#ffb703' },
+  ],
+};
+
 /** Page dédiée au profil (pseudo, avatar, alertes sonores de butin, connexion Discord/Google) —
  * voir NavigationService pour le slide d'entrée/sortie. */
 @Component({
@@ -119,6 +154,13 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly colorblindHighlightTransform = computed(() => {
     const index = this.colorblindOptions.findIndex((o) => o.value === this.colorblind.profile());
     return `translateX(${Math.max(index, 0) * 100}%)`;
+  });
+
+  /** Aperçu avant/après des couleurs réellement affectées par le profil actuellement sélectionné —
+   * vide pour 'off' (rien n'est masqué, `[class.hidden]`/`@if` côté template). */
+  protected readonly colorblindSwatches = computed<ColorblindSwatch[]>(() => {
+    const profile = this.colorblind.profile();
+    return profile === 'off' ? [] : COLORBLIND_SWATCHES[profile];
   });
 
   protected readonly existingSoundItemNames = computed(() =>

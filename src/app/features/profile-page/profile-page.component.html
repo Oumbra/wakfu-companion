@@ -131,6 +131,26 @@
               }
             </div>
             <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
+            @if (colorblindSwatches().length > 0) {
+              <div class="colorblind-swatches">
+                @for (swatch of colorblindSwatches(); track swatch.labelKey) {
+                  <div class="colorblind-swatch-row">
+                    <span class="colorblind-swatch-label">{{ swatch.labelKey | t }}</span>
+                    <span class="colorblind-swatch-pair">
+                      <span
+                        class="colorblind-swatch-dot"
+                        [style.background]="swatch.before"
+                      ></span>
+                      <span class="colorblind-swatch-arrow">→</span>
+                      <span
+                        class="colorblind-swatch-dot"
+                        [style.background]="swatch.after"
+                      ></span>
+                    </span>
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>

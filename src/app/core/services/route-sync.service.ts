@@ -38,11 +38,11 @@ export class RouteSyncService {
   private pathFor(view: AppView, legalKind: 'notice' | 'privacy' | null): string {
     switch (view) {
       case 'profile':
-        return '/profil';
+        return '/profile';
       case 'account':
-        return '/compte';
+        return '/account';
       case 'legal':
-        return legalKind === 'privacy' ? '/politique-confidentialite' : '/mentions-legales';
+        return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
       case 'main':
       default:
         return '/';

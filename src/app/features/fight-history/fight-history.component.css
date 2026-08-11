@@ -84,6 +84,13 @@
   padding: 1px 8px;
 }
 .fight-group-row .caret {
+  /* Le sélecteur `.caret` générique (plus haut dans ce fichier, pour la ligne de résumé d'un
+     combat) pose `margin-left: auto` pour se plaquer à droite de sa propre ligne — ce n'est PAS le
+     rôle voulu ici (le caret est le PREMIER enfant, le vrai "flush right" est porté par
+     `.fight-group-count`) : sans cette remise à zéro explicite, la règle générique s'appliquait
+     quand même (elle ne définit pas `margin-left`, donc rien ne l'écrase par défaut) et poussait
+     tout le groupe caret+libellé vers la droite au lieu de le laisser à gauche. */
+  margin-left: 0;
   font-size: 0.7em;
   color: var(--text-muted);
   transition: transform 0.2s;

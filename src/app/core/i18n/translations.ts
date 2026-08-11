@@ -7,6 +7,9 @@ import { AppLocale } from '../services/i18n.service';
  */
 export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
   fr: {
+    'date.today': "Aujourd'hui",
+    'date.yesterday': 'Hier',
+    'date.dayBeforeYesterday': 'Avant-hier',
     'setup.dropTitle': 'GLISSEZ « wakfu.log » ICI',
     'setup.dropSub': 'ou cliquez pour parcourir vos fichiers',
     'setup.pathLabel': 'Chemin par défaut :',
@@ -139,6 +142,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
       'Corrige les couleurs sensibles (victoire/défaite, dégâts élémentaires) selon le type de daltonisme choisi.',
+    'profile.colorblindSwatchEarth': 'Terre',
+    'profile.colorblindSwatchWater': 'Eau',
+    'profile.colorblindSwatchLight': 'Lumière',
+    'profile.colorblindSwatchRare': 'Rareté rare',
+    'profile.colorblindSwatchLegendary': 'Rareté légendaire',
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertes',
     'profile.tabCharacters': 'Personnages',
@@ -319,6 +327,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "## 1. Deux modes d'utilisation\n\nWakfu Companion s'utilise **sans compte** (mode par défaut) ou **avec un compte**, au choix. Sans compte, aucune donnée personnelle n'est collectée : tout reste dans votre navigateur. Avec un compte, seules les données décrites au point 3 sont conservées sur nos serveurs.\n\n## 2. Mode sans compte (par défaut)\n\nVos réglages, personnages déclarés, historique de combats, liste de suivi et référence au fichier wakfu.log sélectionné sont conservés uniquement dans le stockage local de votre navigateur (localStorage / IndexedDB). Ces données ne quittent jamais votre appareil.\nL'application lit votre fichier wakfu.log localement, via l'API File System Access de votre navigateur, pour en extraire kamas, XP, combats et chat. Ce traitement est intégralement local : le contenu du fichier n'est jamais envoyé où que ce soit.\n\n## 3. Compte optionnel (Discord ou Google)\n\nSi vous choisissez de créer un compte, la connexion se fait exclusivement via Discord ou Google : nous ne gérons, ne recevons et ne stockons aucun mot de passe. Sont alors conservés sur nos serveurs : votre adresse e-mail vérifiée et votre nom affiché transmis par le fournisseur, l'identifiant de compte chez ce fournisseur, la date de vos sessions et le navigateur/système utilisé, ainsi que les données de configuration que vous choisissez explicitement de sauvegarder (profil, personnages, liste de suivi, filtres de chat). Un cookie de session strictement nécessaire (technique, non publicitaire, sans traçage) est déposé pour vous maintenir connecté ; il expire au bout de 30 jours et peut être révoqué à tout moment depuis la page « Mon compte ».\n\n## 4. Ce qui n'est jamais transmis\n\nLe contenu du chat de jeu n'est **jamais** envoyé à nos serveurs, connecté ou non : il contient des messages d'autres joueurs qui n'ont donné aucun consentement. De même, le fichier wakfu.log lui-même n'est jamais téléversé.\n\n## 5. Services tiers\n\nLes icônes d'objets et de monstres affichées sont chargées directement par votre navigateur depuis des serveurs tiers (static.ankama.com, projets communautaires wakassets, cdn.wakfuli.com). Ces requêtes échappent à notre contrôle : votre navigateur communique alors directement avec ces serveurs, qui reçoivent votre adresse IP comme pour n'importe quelle image chargée sur le web, selon leurs propres règles de confidentialité. Si vous vous connectez, Discord ou Google traite votre demande selon sa propre politique de confidentialité.\n\n## 6. Hébergement\n\nL'application et son interface de programmation sont hébergées par Cloudflare ; les données de compte sont stockées dans une base PostgreSQL gérée par Neon, au sein de l'Union européenne. Ces prestataires peuvent journaliser des informations techniques standard (adresse IP, user-agent) selon leurs propres politiques.\n\n## 7. Vos droits\n\nSans compte, aucune donnée personnelle n'est détenue par nous : vous restez seul maître des données stockées localement, effaçables à tout moment via le bouton « Réinitialiser » ou en vidant le stockage de votre navigateur. Avec un compte, vous pouvez à tout moment exporter vos données (bouton « Exporter ») et supprimer définitivement votre compte depuis la page « Mon compte » : la suppression efface immédiatement et sans conservation le compte, ses identifiants de connexion, ses sessions et l'ensemble des données associées.\n\n## 8. Questions et réclamations\n\nPour toute question relative à cette politique de confidentialité, ouvrez une issue sur le dépôt GitHub github.com/oumbra/wakfu-companion.",
   },
   en: {
+    'date.today': 'Today',
+    'date.yesterday': 'Yesterday',
+    'date.dayBeforeYesterday': 'The day before yesterday',
     'setup.dropTitle': 'DRAG « wakfu.log » HERE',
     'setup.dropSub': 'or click to browse your files',
     'setup.pathLabel': 'Default path:',
@@ -451,6 +462,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
       'Corrects sensitive colors (win/loss, elemental damage) based on the colorblindness type chosen.',
+    'profile.colorblindSwatchEarth': 'Earth',
+    'profile.colorblindSwatchWater': 'Water',
+    'profile.colorblindSwatchLight': 'Light',
+    'profile.colorblindSwatchRare': 'Rare rarity',
+    'profile.colorblindSwatchLegendary': 'Legendary rarity',
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alerts',
     'profile.tabCharacters': 'Characters',
@@ -628,6 +644,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "## 1. Two ways to use the app\n\nWakfu Companion can be used **without an account** (the default) or **with an account**, as you prefer. Without an account, no personal data is collected: everything stays in your browser. With an account, only the data described in section 3 is stored on our servers.\n\n## 2. Without an account (default)\n\nYour settings, declared characters, fight history, watchlist and the reference to the selected wakfu.log file are kept only in your browser's local storage (localStorage / IndexedDB). This data never leaves your device.\nThe app reads your wakfu.log file locally, via your browser's File System Access API, to extract kamas, XP, fights and chat. This processing is entirely local: the file's content is never sent anywhere.\n\n## 3. Optional account (Discord or Google)\n\nIf you choose to create an account, sign-in goes exclusively through Discord or Google: we never handle, receive or store any password. The following is then stored on our servers: your verified email address and display name as provided by the provider, your account identifier at that provider, the dates of your sessions and the browser/system used, plus the configuration data you explicitly choose to save (profile, characters, watchlist, chat filters). A strictly necessary session cookie (technical, non-advertising, no tracking) is set to keep you signed in; it expires after 30 days and can be revoked at any time from the “My account” page.\n\n## 4. What is never transmitted\n\nGame chat content is **never** sent to our servers, signed in or not: it contains messages from other players who gave no consent. Likewise, the wakfu.log file itself is never uploaded.\n\n## 5. Third-party services\n\nItem and monster icons shown are loaded directly by your browser from third-party servers (static.ankama.com, community projects such as wakassets, cdn.wakfuli.com). These requests are outside our control: your browser communicates directly with these servers, which receive your IP address just like any image loaded on the web, under their own privacy policies. If you sign in, Discord or Google handles your request under its own privacy policy.\n\n## 6. Hosting\n\nThe app and its programming interface are hosted by Cloudflare; account data is stored in a PostgreSQL database managed by Neon, within the European Union. These providers may log standard technical information (IP address, user agent) under their own policies.\n\n## 7. Your rights\n\nWithout an account, we hold no personal data about you: you remain the sole owner of locally stored data, erasable at any time via the “Reset” button or by clearing your browser's storage. With an account, you can export your data at any time (“Export” button) and permanently delete your account from the “My account” page: deletion immediately and irreversibly removes the account, its sign-in identifiers, its sessions and all related data.\n\n## 8. Questions and complaints\n\nFor any question about this privacy policy, please open an issue on the GitHub repository github.com/oumbra/wakfu-companion.",
   },
   es: {
+    'date.today': 'Hoy',
+    'date.yesterday': 'Ayer',
+    'date.dayBeforeYesterday': 'Anteayer',
     'setup.dropTitle': 'ARRASTRA « wakfu.log » AQUÍ',
     'setup.dropSub': 'o haz clic para explorar tus archivos',
     'setup.pathLabel': 'Ruta por defecto:',
@@ -760,6 +779,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
       'Corrige los colores sensibles (victoria/derrota, daño elemental) según el tipo de daltonismo elegido.',
+    'profile.colorblindSwatchEarth': 'Tierra',
+    'profile.colorblindSwatchWater': 'Agua',
+    'profile.colorblindSwatchLight': 'Luz',
+    'profile.colorblindSwatchRare': 'Rareza rara',
+    'profile.colorblindSwatchLegendary': 'Rareza legendaria',
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personajes',
@@ -939,6 +963,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       '## 1. Dos formas de uso\n\nWakfu Companion se usa **sin cuenta** (modo por defecto) o **con cuenta**, a tu elección. Sin cuenta no se recopila ningún dato personal: todo permanece en tu navegador. Con cuenta, solo se conservan en nuestros servidores los datos descritos en el punto 3.\n\n## 2. Modo sin cuenta (por defecto)\n\nTus ajustes, personajes declarados, historial de combates, lista de seguimiento y la referencia al archivo wakfu.log seleccionado se guardan únicamente en el almacenamiento local de tu navegador (localStorage / IndexedDB). Estos datos nunca salen de tu dispositivo.\nLa aplicación lee tu archivo wakfu.log localmente, mediante la API File System Access de tu navegador, para extraer kamas, XP, combates y chat. Este procesamiento es totalmente local: el contenido del archivo nunca se envía a ningún sitio.\n\n## 3. Cuenta opcional (Discord o Google)\n\nSi decides crear una cuenta, el inicio de sesión se realiza exclusivamente mediante Discord o Google: no gestionamos, recibimos ni almacenamos ninguna contraseña. Se conservan entonces en nuestros servidores: tu correo electrónico verificado y el nombre mostrado facilitados por el proveedor, tu identificador de cuenta en ese proveedor, la fecha de tus sesiones y el navegador/sistema utilizado, así como los datos de configuración que decidas guardar explícitamente (perfil, personajes, lista de seguimiento, filtros de chat). Se instala una cookie de sesión estrictamente necesaria (técnica, no publicitaria, sin rastreo) para mantenerte conectado; caduca a los 30 días y puede revocarse en cualquier momento desde la página «Mi cuenta».\n\n## 4. Lo que nunca se transmite\n\nEl contenido del chat del juego **nunca** se envía a nuestros servidores, con o sin sesión iniciada: contiene mensajes de otros jugadores que no han dado ningún consentimiento. Del mismo modo, el propio archivo wakfu.log nunca se sube.\n\n## 5. Servicios de terceros\n\nLos iconos de objetos y monstruos mostrados son cargados directamente por tu navegador desde servidores de terceros (static.ankama.com, proyectos comunitarios como wakassets, cdn.wakfuli.com). Estas solicitudes escapan a nuestro control: tu navegador se comunica directamente con esos servidores, que reciben tu dirección IP como con cualquier imagen cargada en la web, según sus propias políticas de privacidad. Si inicias sesión, Discord o Google trata tu solicitud según su propia política de privacidad.\n\n## 6. Alojamiento\n\nLa aplicación y su interfaz de programación están alojadas por Cloudflare; los datos de cuenta se almacenan en una base de datos PostgreSQL gestionada por Neon, dentro de la Unión Europea. Estos proveedores pueden registrar información técnica estándar (dirección IP, user-agent) según sus propias políticas.\n\n## 7. Tus derechos\n\nSin cuenta no poseemos ningún dato personal tuyo: sigues siendo el único responsable de los datos almacenados localmente, que puedes borrar en cualquier momento con el botón «Reiniciar» o vaciando el almacenamiento de tu navegador. Con cuenta, puedes exportar tus datos en cualquier momento (botón «Exportar») y eliminar definitivamente tu cuenta desde la página «Mi cuenta»: la eliminación borra de inmediato y sin conservación la cuenta, sus identificadores de conexión, sus sesiones y todos los datos asociados.\n\n## 8. Preguntas y reclamaciones\n\nPara cualquier pregunta relacionada con esta política de privacidad, abre una issue en el repositorio de GitHub github.com/oumbra/wakfu-companion.',
   },
   pt: {
+    'date.today': 'Hoje',
+    'date.yesterday': 'Ontem',
+    'date.dayBeforeYesterday': 'Anteontem',
     'setup.dropTitle': 'ARRASTE « wakfu.log » AQUI',
     'setup.dropSub': 'ou clique para procurar seus arquivos',
     'setup.pathLabel': 'Caminho padrão:',
@@ -1071,6 +1098,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
       'Corrige as cores sensíveis (vitória/derrota, dano elemental) conforme o tipo de daltonismo escolhido.',
+    'profile.colorblindSwatchEarth': 'Terra',
+    'profile.colorblindSwatchWater': 'Água',
+    'profile.colorblindSwatchLight': 'Luz',
+    'profile.colorblindSwatchRare': 'Raridade rara',
+    'profile.colorblindSwatchLegendary': 'Raridade lendária',
     'profile.tabAvatar': 'Avatar',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personagens',
