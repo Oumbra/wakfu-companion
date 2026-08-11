@@ -1,0 +1,50 @@
+# Wakfu Companion
+
+> Wakfu Companion (alias : Wakfu Tracker, Wakfu Combat Tracker, Wakfu Damage Meter) est un
+> compagnon de jeu gratuit pour le MMORPG Wakfu (Ankama Games). Il lit en temps réel le fichier de
+> log `wakfu.log` généré par le client du jeu, directement dans le navigateur (aucun envoi du
+> fichier à un serveur), pour afficher : un tracker/damage meter de combat en temps réel, un
+> historique de combats, le suivi des kamas et de l'XP gagnés, le butin ramassé et le chat par
+> canal. Disponible sans compte (toutes les données restent dans le navigateur) ou avec un compte
+> optionnel (connexion Discord ou Google) pour synchroniser les réglages entre appareils.
+> Interface disponible en français (langue par défaut), anglais, espagnol et portugais.
+
+Wakfu Companion n'est ni édité, ni hébergé, ni approuvé par Ankama Games et n'entretient aucun lien
+avec cette société. « Wakfu » et les éléments du jeu (noms, images, univers) sont la propriété
+d'Ankama Games.
+
+## Fonctionnalités
+
+- Tracker de combat en temps réel (damage meter) : répartition des dégâts infligés par allié et
+  par ennemi, durée du combat, victoire/défaite.
+- Historique des combats reconstruit automatiquement depuis wakfu.log.
+- Suivi des kamas et de l'XP gagnés au fil de la session.
+- Suivi du butin (objets ramassés) avec liste de suivi (watchlist) configurable et alertes sonores.
+- Chat en jeu regroupé par canal, avec surbrillance de mots-clés.
+- Profil joueur : roster de personnages, préférences d'affichage, mode daltonien.
+- Compte optionnel (Discord ou Google) pour synchroniser les réglages entre appareils, export et
+  suppression des données à tout moment.
+
+## Pages
+
+- [Application](https://oumbra.github.io/wakfu-companion/) : page unique (SPA) donnant accès à
+  l'ensemble des fonctionnalités ci-dessus.
+- [Mentions légales](https://oumbra.github.io/wakfu-companion/legal-notice)
+- [Politique de confidentialité](https://oumbra.github.io/wakfu-companion/privacy-policy)
+- [Dépôt de code source (GitHub)](https://github.com/oumbra/wakfu-companion)
+
+## Questions fréquentes
+
+Qu'est-ce que Wakfu Companion ? Un compagnon de jeu gratuit pour Wakfu qui lit wakfu.log en temps
+réel pour afficher tracker de combat, historique, kamas/XP, butin et chat.
+
+Existe-t-il un tracker de dégâts (damage meter) pour Wakfu ? Oui, intégré et calculé en temps réel
+depuis wakfu.log.
+
+Comment consulter l'historique de ses combats sur Wakfu ? Automatiquement reconstruit et affiché
+par Wakfu Companion depuis wakfu.log, sans configuration.
+
+Wakfu Companion est-il gratuit et nécessite-t-il un compte ? Oui, gratuit et utilisable sans
+compte ; un compte Discord/Google optionnel permet de synchroniser les réglages entre appareils.
+
+Dans quelles langues est disponible Wakfu Companion ? Français, anglais, espagnol et portugais.

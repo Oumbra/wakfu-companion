@@ -2,10 +2,159 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
-    <title>Wakfu Companion</title>
+    <title>Wakfu Companion — Tracker de combat, historique et suivi en temps réel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#00d2ff" />
+
+    <!-- ═══════════════════════ SEO / référencement (moteurs classiques + IA) ═══════════════════════
+         Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
+         docs/plan-migration-serveur.md) : À METTRE À JOUR PARTOUT (ce fichier, public/robots.txt,
+         public/sitemap.xml, public/llms.txt) le jour où la prod bascule sur Cloudflare/domaine
+         personnalisé. Volontairement en dur (canonical/og:url identiques sur TOUTES les URLs de
+         déploiement, y compris les previews *.pages.dev) : ça dit explicitement aux moteurs
+         "n'indexe pas cette URL séparément, c'est un doublon de la prod" — technique standard pour
+         un environnement de preview/staging, sans avoir besoin de config par environnement.
+         Le titre/la description ci-dessous sont repris (mêmes clés `seo.*`) et mis à jour
+         dynamiquement par page/langue une fois l'app démarrée (voir core/services/seo.service.ts) ;
+         ce contenu STATIQUE reste ce que voient les crawlers qui n'exécutent PAS de JavaScript
+         (GPTBot, ClaudeBot, PerplexityBot, CCBot...), d'où l'importance qu'il soit correct et
+         suffisant à lui seul. Pas de balises hreflang par langue : l'app ne propose qu'une seule URL
+         pour les 4 langues (changement de langue côté client, pas de sous-chemin /en//es//pt/), et
+         hreflang n'a de sens documenté par Google que pour des URLs DISTINCTES par langue — en mettre
+         sur une URL unique serait incorrect plutôt qu'utile. La couverture multilingue passe donc par
+         le JSON-LD (`inLanguage`) et le bloc <noscript> ci-dessous plutôt que par hreflang. -->
+    <meta
+      name="description"
+      content="Wakfu Companion est le compagnon de jeu gratuit pour Wakfu : tracker de combat (damage meter) en temps réel, historique de combats, suivi des kamas, de l'XP, du butin et du chat, à partir de votre wakfu.log. Disponible en français, anglais, espagnol et portugais."
+    />
+    <meta
+      name="keywords"
+      content="wakfu tracker, wakfu companion, wakfu historique de combats, wakfu damage meter, wakfu combat tracker, suivi de combat wakfu, wakfu log parser, wakfu fight history, wakfu combat history, rastreador de combate wakfu, wakfu historial de combates, wakfu tracker de daño, rastreador de dano wakfu, wakfu histórico de combates"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Oumbra" />
+    <meta http-equiv="content-language" content="fr, en, es, pt" />
+    <link rel="canonical" href="https://oumbra.github.io/wakfu-companion/" />
+
+    <!-- Open Graph (partage Discord/Facebook/LinkedIn...) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Wakfu Companion" />
+    <meta property="og:url" content="https://oumbra.github.io/wakfu-companion/" />
+    <meta
+      property="og:title"
+      content="Wakfu Companion — Tracker de combat, historique et suivi en temps réel"
+    />
+    <meta
+      property="og:description"
+      content="Compagnon de jeu gratuit pour Wakfu : tracker de combat en temps réel, historique de combats, kamas, XP, butin et chat. Français, anglais, espagnol, portugais."
+    />
+    <meta property="og:image" content="https://oumbra.github.io/wakfu-companion/logo-purple.png" />
+    <meta property="og:image:alt" content="Logo Wakfu Companion" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="en_GB" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:locale:alternate" content="pt_PT" />
+
+    <!-- Twitter/X Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Wakfu Companion — Tracker de combat, historique et suivi en temps réel"
+    />
+    <meta
+      name="twitter:description"
+      content="Compagnon de jeu gratuit pour Wakfu : tracker de combat en temps réel, historique de combats, kamas, XP, butin et chat."
+    />
+    <meta name="twitter:image" content="https://oumbra.github.io/wakfu-companion/logo-purple.png" />
+
+    <!-- JSON-LD : décrit l'application aux moteurs de recherche ET aux agents/assistants IA
+         (ChatGPT, Perplexity, Claude...) qui privilégient les données structurées pour répondre
+         directement à une requête plutôt que de résumer une page. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Wakfu Companion",
+        "alternateName": [
+          "Wakfu Tracker",
+          "Wakfu Combat Tracker",
+          "Wakfu Damage Meter",
+          "Wakfu Historique de combats",
+          "Wakfu Fight History",
+          "Wakfu Historial de combates",
+          "Wakfu Histórico de combates"
+        ],
+        "url": "https://oumbra.github.io/wakfu-companion/",
+        "description": "Compagnon de jeu gratuit pour Wakfu : tracker de combat (damage meter) en temps réel, historique de combats, suivi des kamas, de l'XP, du butin et du chat, à partir du fichier wakfu.log lu localement dans le navigateur.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Web (Chrome, Edge)",
+        "browserRequirements": "Nécessite JavaScript. Chrome ou Edge recommandés pour la lecture continue du fichier de log (File System Access API).",
+        "inLanguage": ["fr", "en", "es", "pt"],
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        },
+        "image": "https://oumbra.github.io/wakfu-companion/logo-purple.png",
+        "author": {
+          "@type": "Person",
+          "name": "Oumbra"
+        },
+        "sameAs": ["https://github.com/oumbra/wakfu-companion"]
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Qu'est-ce que Wakfu Companion ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Wakfu Companion est un compagnon de jeu gratuit pour le MMORPG Wakfu qui lit le fichier wakfu.log en temps réel pour afficher un tracker de combat (dégâts alliés/ennemis), un historique de combats, les kamas et l'XP gagnés, le butin ramassé et le chat par canal."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Existe-t-il un tracker de dégâts (damage meter) pour Wakfu ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, Wakfu Companion inclut un damage meter en temps réel qui répartit les dégâts infligés par chaque allié et ennemi durant un combat, calculé directement depuis le fichier wakfu.log du joueur."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Comment consulter l'historique de ses combats sur Wakfu ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Wakfu Companion conserve un historique des combats (durée, victoire ou défaite, dégâts, participants) reconstruit automatiquement à partir du fichier wakfu.log, sans configuration."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Wakfu Companion est-il disponible en plusieurs langues ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, l'interface de Wakfu Companion est disponible en français, anglais, espagnol et portugais."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Wakfu Companion est-il gratuit et nécessite-t-il un compte ?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Oui, Wakfu Companion est entièrement gratuit et utilisable sans compte : toutes les données restent alors dans le navigateur du joueur. Un compte optionnel (connexion Discord ou Google) permet de synchroniser les réglages entre appareils."
+            }
+          }
+        ]
+      }
+    </script>
+    <!-- ═══════════════════════════════════════════════════════════════════════════════════════ -->
+
     <!-- Contrairement à main-*.js/styles-*.css (hashés via outputHashing,
        voir angular.json), ce fichier index.html garde toujours le même nom :
        sans ces en-têtes, le navigateur peut continuer à servir une version
@@ -39,6 +188,40 @@
   </head>
   <body>
     <app-root></app-root>
-    <noscript>Please enable JavaScript to continue using this application.</noscript>
+    <!-- Contenu visible uniquement par les agents/navigateurs qui n'exécutent PAS de JavaScript
+         (crawlers IA compris — voir le commentaire SEO du <head>) : les utilisateurs réels ne le
+         voient jamais, `<app-root>` prend leur place dès qu'Angular démarre. Une phrase par langue
+         plutôt qu'une traduction unique, pour rester lisible par un crawler qui ne détecte pas de
+         langue de requête particulière. -->
+    <noscript>
+      <main lang="fr">
+        <h1>Wakfu Companion — Tracker de combat, historique et suivi en temps réel</h1>
+        <p>
+          Wakfu Companion est un compagnon de jeu gratuit pour le MMORPG Wakfu : il lit votre
+          fichier wakfu.log en temps réel pour afficher un tracker de combat (dégâts alliés et
+          ennemis), un historique de combats, vos kamas et XP gagnés, votre butin et votre chat par
+          canal. Aucune installation, aucun compte requis — toutes les données restent dans votre
+          navigateur.
+        </p>
+        <p lang="en">
+          Wakfu Companion is a free companion app for the Wakfu MMORPG: it reads your wakfu.log file
+          live to display a real-time combat/damage tracker, a fight history, your kamas and XP
+          gained, your loot and your chat by channel. No install, no account required.
+        </p>
+        <p lang="es">
+          Wakfu Companion es una app compañera gratuita para el MMORPG Wakfu: lee tu archivo
+          wakfu.log en tiempo real para mostrar un tracker de combate (daño), un historial de
+          combates, tus kamas y XP ganados, tu botín y tu chat por canal. Sin instalación, sin
+          cuenta necesaria.
+        </p>
+        <p lang="pt">
+          O Wakfu Companion é uma aplicação companheira gratuita para o MMORPG Wakfu: lê o seu
+          ficheiro wakfu.log em tempo real para mostrar um tracker de combate (dano), um histórico
+          de combates, os seus kamas e XP ganhos, o seu loot e o seu chat por canal. Sem instalação,
+          sem conta necessária.
+        </p>
+        <p>Cette page nécessite JavaScript pour être utilisée pleinement.</p>
+      </main>
+    </noscript>
   </body>
 </html>
