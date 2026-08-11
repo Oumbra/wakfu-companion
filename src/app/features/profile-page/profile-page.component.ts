@@ -45,6 +45,7 @@ import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns
 import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
+import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
 
 type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
 
@@ -73,6 +74,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly catalog = inject(CatalogService);
   protected readonly roster = inject(CharacterRosterService);
   protected readonly gameServers = inject(GameServerService);
+  protected readonly colorblind = inject(ColorblindService);
   protected readonly helpModal = inject(HelpModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
@@ -85,6 +87,39 @@ export class ProfilePageComponent implements OnDestroy {
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
     (_, i) => i,
   );
+
+  /** 4 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché,
+   * libellé complet en tooltip. Ordre = ordre visuel du switch. */
+  protected readonly colorblindOptions: readonly {
+    value: ColorblindProfile;
+    labelKey: string;
+    tooltipKey: string;
+  }[] = [
+    { value: 'off', labelKey: 'profile.colorblindOff', tooltipKey: 'profile.colorblindOff' },
+    {
+      value: 'protanopia',
+      labelKey: 'profile.colorblindProtanopiaShort',
+      tooltipKey: 'profile.colorblindProtanopia',
+    },
+    {
+      value: 'deuteranopia',
+      labelKey: 'profile.colorblindDeuteranopiaShort',
+      tooltipKey: 'profile.colorblindDeuteranopia',
+    },
+    {
+      value: 'tritanopia',
+      labelKey: 'profile.colorblindTritanopiaShort',
+      tooltipKey: 'profile.colorblindTritanopia',
+    },
+  ];
+
+  /** Position du fond glissant du switch daltonien (4 positions, `.icon-switch-4` pose déjà la
+   * largeur à 25% — voir styles.css) : calculée ici plutôt que via les classes `.is-right`/
+   * `.is-far-right` génériques (pensées pour 2/3 positions, pas 4). */
+  protected readonly colorblindHighlightTransform = computed(() => {
+    const index = this.colorblindOptions.findIndex((o) => o.value === this.colorblind.profile());
+    return `translateX(${Math.max(index, 0) * 100}%)`;
+  });
 
   protected readonly existingSoundItemNames = computed(() =>
     this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
