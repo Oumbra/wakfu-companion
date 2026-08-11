@@ -37,6 +37,10 @@ const DEFAULT_SOUND_ITEM_NAMES: readonly string[] = [
   'Pierre de vitesse',
   'Pierre ultime',
   'Influence III',
+  'Plan « Epée de Bonta »', 
+  'Plan « Epée de Brâkmar »',
+  'Plan « Epée de Sufokia »',
+  "Plan « Epée d'Amakna »"
 ];
 
 /** Profil joueur local : pseudo, avatar (planche de classes Ankama) et liste d'objets à alerte sonore au ramassage. */
