@@ -1,0 +1,1 @@
+ALTER TABLE "fight_participants" ADD COLUMN "xp_gained" bigint DEFAULT 0 NOT NULL;

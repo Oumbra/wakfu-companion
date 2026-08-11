@@ -819,7 +819,7 @@ dans `src/app/core/sync/history-event.model.ts`) :
    pas pour autant un journal figé : la clé identifie le **combat**, son détail
    se rafraîchit (voir « Ce qui est immuable, ce qui se rafraîchit » plus bas).
 
-### Cinq écarts par rapport au schéma du §6 du plan
+### Six écarts par rapport au schéma du §6 du plan
 
 1. **`game_server` sur les trois tables**, pas seulement `purchases` : c'est ce
    pour quoi le lot 7 existe (« taguer l'historique personnel — combats, achats,
@@ -839,6 +839,15 @@ dans `src/app/core/sync/history-event.model.ts`) :
    qu'on quittait la session.
 5. **`fight_loot` (table)** — butin du combat, absent du §6, pour la même
    raison.
+6. **`fight_participants.xp_gained`** — XP **par personnage**, là où le §6 n'en
+   gardait que le total au niveau du combat. Rattachée au participant plutôt
+   qu'à une table `fight_xp` : le log nomme le bénéficiaire exactement comme le
+   combattant qui a rejoint le combat (`Caliburnus : +7 374 187 points d'XP.`),
+   c'est donc un attribut du participant — zéro table et zéro requête de plus,
+   et `SUM(xp_gained) GROUP BY name` reste immédiat. Un test parcourt tous les
+   jeux de test de combat pour vérifier que cette correspondance de noms tient
+   (`stats-store.service.spec.ts`) ; `fights.xp_gained` conserve de toute façon
+   le total, qui reste exact même si un bénéficiaire n'était pas rattachable.
 
 ### Sorts en `jsonb`, butin en table : pourquoi pas la même forme
 
@@ -949,21 +958,23 @@ honnête (on sait d'où viennent les lignes) et l'archive étant un sur-ensemble
 l'utilisateur n'a rien à recouper.
 
 Un combat archivé porte tout ce que la vue de session en montre : participants,
-dégâts, ventilation par sort et par élément, et butin. Deux différences
-subsistent, faute de données correspondantes en base : l'XP est un total de
-combat et non une ventilation par personnage, et les kamas ne sont pas rattachés
-au combat — le log ne les y relie jamais (voir `KamaGainEntry`, sans `fightId`).
+dégâts, ventilation par sort et par élément, butin, et XP par personnage. Une
+seule différence subsiste, et elle ne vient pas du schéma : les kamas ne sont pas
+rattachés au combat, parce que le log ne les y relie jamais (voir
+`KamaGainEntry`, sans `fightId`).
 
 ### Vérification effectuée / restant à faire
 
 Vérifié dans cette session :
 
-- `npm test` (104 tests, dont 7 nouveaux : le test de double rejeu exigé par le
+- `npm test` (106 tests, dont 9 nouveaux : le test de double rejeu exigé par le
   prompt, un rechargement complet de l'application, une relecture **un autre
   jour** (horloge système avancée), le mode invité muet, la connexion en cours
-  de session, l'envoi effectif de la ventilation par sort et du butin, et une
+  de session, l'envoi effectif de la ventilation par sort et du butin, l'XP
+  nominative dont la somme redonne le total du combat, la correspondance
+  bénéficiaire d'XP / participant sur tous les jeux de test, et une
   réattribution qui corrige le combat archivé sans le dupliquer) ;
-- `npm run test:server` (72 tests, dont 32 sur `server/history/parse.ts`) ;
+- `npm run test:server` (74 tests, dont 34 sur `server/history/parse.ts`) ;
 - `npm run build` ;
 - une **vérification navigateur réelle** (Chromium/playwright-core, `ng serve`,
   backend simulé par interception de `fetch` — les Pages Functions n'existent
@@ -975,12 +986,16 @@ Vérifié dans cette session :
   du détail : ventilation par sort et par élément (`Frappe=250 {Terre}`,
   `Brûlure=80 {Feu}`) et butin (`Laine de Bouftou ×3`) bien transmis puis relus
   depuis l'archive, et une réattribution manuelle après envoi déplaçant le sort
-  d'une instance à l'autre — toujours un seul combat archivé.
+  d'une instance à l'autre — toujours un seul combat archivé. Troisième passage
+  après l'ajout de l'XP nominative : les 4 bénéficiaires d'un combat
+  multi-compte réel partent nommés (somme ventilée = total du combat, aucun
+  ennemi crédité) et reviennent de l'archive ligne pour ligne identiques à la
+  vue de session.
 
 **Restant à faire**, comme pour tous les lots précédents — seul un déploiement
 réel permet de conclure : appliquer `0006_history_tables.sql` et
-`0007_fight_loot_and_spells.sql` sur la branche Neon preview (automatique via
-`deploy-preview.yml`), puis dérouler un aller-retour
+`0007_fight_loot_and_spells.sql`/`0008_participant_xp.sql` sur la branche Neon
+preview (automatique via `deploy-preview.yml`), puis dérouler un aller-retour
 complet contre la vraie base — ingestion, rejeu du même log (vérifier que
 `inserted` retombe à 0), pagination sur plus d'une page, et suppression de compte
 (cascade sur les cinq tables).

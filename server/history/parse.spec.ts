@@ -71,6 +71,7 @@ describe('parseFightsBody', () => {
       damage: 1234,
       defeated: false,
       spells: [],
+      xpGained: 0,
     });
   });
 
@@ -259,6 +260,36 @@ describe('parseFightsBody', () => {
         ],
       });
       expect(parsed).toEqual({ ok: false, error: expect.stringContaining('butin en double') });
+    });
+
+    it("accepte l'XP par participant", () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            participants: [
+              { side: 'ally', name: 'Caliburnus', instanceIndex: 1, xpGained: 7374187 },
+              { side: 'enemy', name: 'Bouftou', instanceIndex: 1 },
+            ],
+          }),
+        ],
+      });
+      expect(parsed.ok && parsed.value[0].participants.map((p) => p.xpGained)).toEqual([
+        7374187, 0,
+      ]);
+    });
+
+    it('refuse une XP de participant négative', () => {
+      const parsed = parseFightsBody({
+        entries: [
+          fightEntry({
+            participants: [{ side: 'ally', name: 'Oumbra', instanceIndex: 1, xpGained: -5 }],
+          }),
+        ],
+      });
+      expect(parsed).toEqual({
+        ok: false,
+        error: expect.stringContaining('participant.xpGained'),
+      });
     });
 
     it('refuse une quantité de butin négative', () => {

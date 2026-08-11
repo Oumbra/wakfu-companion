@@ -795,6 +795,54 @@ describe('StatsStoreService', () => {
       expect(fight.loot[0].quantity).toBeGreaterThan(0);
     });
 
+    it("envoie l'XP rattachée à chaque personnage, et non un simple total", async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+      declareRoster();
+
+      const sync = TestBed.inject(HistorySyncService);
+      TestBed.inject(StatsStoreService);
+      await sync.enable('utilisateur-de-test');
+      feed(
+        TestBed.inject(LogFileAccessService),
+        readFixture('fight_multi-account_end_after-all-monsters-play.log'),
+      );
+      await sync.flush();
+
+      const fight = server.row('/history/fights') as {
+        xpGained: number;
+        participants: { name: string; side: string; xpGained: number }[];
+      };
+      const beneficiaires = fight.participants.filter((p) => p.xpGained > 0);
+      expect(beneficiaires.length).toBeGreaterThan(1);
+      // Chaque bénéficiaire est nommé…
+      expect(beneficiaires.every((p) => p.name.length > 0)).toBe(true);
+      // …aucun ennemi n'en reçoit…
+      expect(beneficiaires.every((p) => p.side === 'ally')).toBe(true);
+      // …et la ventilation redonne exactement le total du combat.
+      expect(beneficiaires.reduce((sum, p) => sum + p.xpGained, 0)).toBe(fight.xpGained);
+    });
+
+    it("tout bénéficiaire d'XP correspond à un participant du combat (tous les jeux de test)", () => {
+      // C'est l'hypothèse qui autorise à rattacher l'XP au participant plutôt
+      // qu'à une table dédiée : le log nomme le bénéficiaire exactement comme le
+      // combattant. Si un jeu de test la prend en défaut un jour, la ventilation
+      // perdrait cette ligne (le total du combat, lui, resterait juste).
+      for (const file of readdirSync(FIXTURES_DIR).filter((name) => name.startsWith('fight'))) {
+        TestBed.resetTestingModule();
+        TestBed.configureTestingModule({});
+        const stats = TestBed.inject(StatsStoreService);
+        feed(TestBed.inject(LogFileAccessService), readFixture(file));
+
+        for (const record of stats.fightHistory()) {
+          const noms = new Set(record.rows.map((row) => row.name));
+          for (const xp of record.xp) {
+            expect(noms.has(xp.name), `${file} : ${xp.name} absent des participants`).toBe(true);
+          }
+        }
+      }
+    });
+
     it('une réattribution de dégâts renvoie le combat corrigé, sans créer de doublon', async () => {
       const server = new FakeHistoryServer();
       configureWithServer(server);

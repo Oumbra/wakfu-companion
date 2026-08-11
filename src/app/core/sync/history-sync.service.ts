@@ -99,6 +99,12 @@ export class HistorySyncService {
   recordFight(record: FightRecord): void {
     if (!this.queue.isActive()) return;
 
+    // L'XP est nommée dans le log exactement comme le combattant qui l'a
+    // gagnée (`Caliburnus : +7 374 187 points d'XP.`) : elle se rattache donc
+    // au participant. Un même nom ne peut pas recevoir deux gains distincts
+    // dans un même combat (registerFightXp les cumule déjà).
+    const xpByName = new Map(record.xp.map((row) => [row.name, row.amount]));
+
     const participants: FightParticipantPayload[] = record.rows.map((row) => {
       const side = this.classifier.classify(row.name);
       return {
@@ -113,6 +119,11 @@ export class HistorySyncService {
         // Ventilation par sort et par élément : c'est l'essentiel de la valeur
         // d'un historique de combat, et c'est aussi ce qu'une réattribution
         // manuelle peut corriger après coup (d'où l'upsert côté serveur).
+        // Plusieurs instances homonymes (`Nom#1`, `Nom#2`) : seule la première
+        // porte l'XP, sans quoi le total du combat serait multiplié par le
+        // nombre d'instances. Le cas ne concerne en pratique que des monstres,
+        // qui n'en gagnent jamais.
+        xpGained: row.instanceIndex === 1 ? (xpByName.get(row.name) ?? 0) : 0,
         spells: row.spells.map((spell) => ({
           spell: spell.spell,
           total: Math.max(0, Math.round(spell.total)),

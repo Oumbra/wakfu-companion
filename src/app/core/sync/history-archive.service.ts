@@ -30,6 +30,7 @@ interface FightPage {
       damage: number;
       defeated: boolean;
       spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
+      xpGained: number | null;
     }[];
     loot: { itemId: number | null; itemName: string; quantity: number }[];
   }[];
@@ -256,10 +257,24 @@ function toFightRecord(entry: FightPage['entries'][number], index: number): Figh
     loot: (entry.loot ?? []).map((row) => ({ name: row.itemName, quantity: row.quantity })),
     turns: entry.turns ?? 0,
     durationMs: entry.durationMs ?? 0,
-    // Seul le total d'XP du combat est archivé, pas sa ventilation par
-    // personnage : on l'expose comme une ligne unique quand il est non nul.
-    xp: entry.xpGained ? [{ name: '', amount: entry.xpGained }] : [],
+    xp: buildXpRows(entry),
   };
+}
+
+/**
+ * XP par personnage, reconstruite depuis les participants. Repli sur une ligne
+ * anonyme portant le total du combat quand aucun participant n'a d'XP alors que
+ * le combat en a rapporté : le cas ne devrait pas se produire (le log nomme le
+ * bénéficiaire comme le combattant), mais mieux vaut afficher un total juste
+ * sans nom que rien du tout.
+ */
+function buildXpRows(entry: FightPage['entries'][number]): FightRecord['xp'] {
+  const rows = entry.participants
+    .filter((participant) => (participant.xpGained ?? 0) > 0)
+    .map((participant) => ({ name: participant.name, amount: participant.xpGained ?? 0 }))
+    .sort((a, b) => b.amount - a.amount);
+  if (rows.length > 0) return rows;
+  return entry.xpGained ? [{ name: '', amount: entry.xpGained }] : [];
 }
 
 function toPurchaseRecord(entry: PurchasePage['entries'][number], index: number): PurchaseRecord {

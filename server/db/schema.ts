@@ -564,6 +564,20 @@ export const fightParticipants = pgTable(
     damage: bigint('damage', { mode: 'number' }).notNull().default(0),
     defeated: boolean('defeated').notNull().default(false),
     spells: jsonb('spells').notNull().default([]),
+    /**
+     * XP gagnée par ce combattant sur ce combat. Rattachée au participant plutôt
+     * qu'à une table `fight_xp` dédiée : le log nomme le bénéficiaire d'un gain
+     * d'XP exactement comme le combattant qui a rejoint le combat (vérifié sur
+     * les jeux de test — `Caliburnus`, `Sagitta Lucis`...), c'est donc bien un
+     * attribut du participant. Zéro table, zéro requête de plus, et
+     * `SUM(xp_gained) GROUP BY name` reste immédiat.
+     *
+     * `0` par défaut, y compris pour les ennemis (à qui la notion ne s'applique
+     * pas) : `fights.xp_gained` porte de toute façon le total du combat, qui
+     * reste exact même si un bénéficiaire n'a pu être rattaché à aucun
+     * participant.
+     */
+    xpGained: bigint('xp_gained', { mode: 'number' }).notNull().default(0),
   },
   (table) => [
     primaryKey({ columns: [table.fightId, table.side, table.name, table.instanceIndex] }),
