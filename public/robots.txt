@@ -1,0 +1,65 @@
+# Wakfu Companion — robots.txt
+#
+# Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
+# docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, sitemap.xml, llms.txt) le
+# jour où la prod bascule sur Cloudflare/domaine personnalisé.
+#
+# Politique volontairement permissive : cette application est un outil communautaire gratuit sans
+# contenu utilisateur sensible indexable (le tracker/l'historique ne sont jamais servis en HTML côté
+# serveur, voir CLAUDE.md — architecture n°2, tout est reconstruit client-side depuis wakfu.log local).
+# Seule /api/ est exclue (endpoints de données, jamais des pages ; n'existe de toute façon que sur le
+# déploiement Cloudflare, pas sur GH Pages — inoffensif de le lister ici dans tous les cas).
+
+User-agent: *
+Disallow: /api/
+
+# ── Crawlers d'IA / moteurs de réponse — autorisés explicitement ─────────────────────────────────
+# Objectif explicite du projet : être trouvé aussi bien par les moteurs de recherche classiques que
+# par les assistants/agents IA (ChatGPT, Claude, Perplexity...) et leurs index de type "search".
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+Sitemap: https://oumbra.github.io/wakfu-companion/sitemap.xml

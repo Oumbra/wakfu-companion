@@ -81,6 +81,53 @@ Rencontré plusieurs fois cette session — avant de conclure à un bug produit 
 - Un vrai `FileSystemFileHandle`/`File` lié au disque ne peut pas être reproduit par un objet créé en mémoire (impossible à automatiser via CDP) : pour tester un comportement de péremption/permission FSA, s'appuyer sur la doc/le comportement documenté du navigateur plutôt que sur un test automatisé.
 - Pas de `ffmpeg` sur la machine : pour analyser une vidéo fournie par l'utilisateur (ex. `.mp4` d'un bug), installer `imageio` + `imageio-ffmpeg` via pip (`/c/Python312/python.exe -m pip install imageio imageio-ffmpeg`) puis extraire des frames à intervalles réguliers avec `imageio.v3.imiter(path, plugin='FFMPEG')` — fonctionne bien, pas besoin d'installer ffmpeg séparément. Attention aux chemins Windows passés à Python depuis Git Bash : utiliser des slashes avant, jamais de backslash suivi de lettre (`\b` devient un caractère backspace).
 
+## Référencement (SEO / recherche IA)
+
+Objectif explicite : être trouvé aussi bien par les moteurs de recherche classiques (Google, Bing)
+que par les assistants/agents IA (ChatGPT, Claude, Perplexity...), sur des requêtes type « wakfu
+tracker », « wakfu companion », « wakfu historique » et toute variante plausible dans les 4 langues
+de l'app (fr/en/es/pt).
+
+- **Domaine canonique en dur, à plusieurs endroits.** L'app n'a pas de rendu serveur (SPA pure, voir
+  plus haut) : `src/index.html`, `public/robots.txt`, `public/sitemap.xml` et `public/llms.txt`
+  contiennent chacun l'URL canonique de prod (`https://oumbra.github.io/wakfu-companion/`, GitHub
+  Pages — hébergement de prod actuel) codée en dur, faute de templating au build sur `public/`. **Le
+  jour où la prod bascule sur Cloudflare/un domaine personnalisé (voir `docs/plan-migration-serveur.md`),
+  mettre à jour les 4 fichiers ensemble** — un grep sur `oumbra.github.io/wakfu-companion` les
+  retrouve tous. Ce même domaine figure aussi en canonical/`og:url` sur les déploiements de preview
+  (`*.pages.dev`) : volontaire, ça dit aux moteurs de ne pas indexer la preview séparément (doublon
+  de la prod) sans avoir besoin de config par environnement.
+  - **Piège correctif inverse** : à la bascule finale sur Cloudflare, `public/sitemap.xml` ne liste
+    QUE `/` — voir le commentaire dans le fichier : GitHub Pages n'a pas de fallback SPA côté serveur
+    (contrairement à Cloudflare Pages + `public/_redirects`), donc un accès direct à `/profile`,
+    `/account`, `/legal-notice`, `/privacy-policy` y répond 404 aujourd'hui. Une fois sur Cloudflare
+    (où ces URLs répondent bien 200), réévaluer s'il faut les ajouter au sitemap — ceci dit leur
+    valeur de référencement reste faible (aucune ne cible les requêtes visées, toutes convergent vers
+    la page d'accueil).
+- **Deux couches de meta/title distinctes, à ne pas confondre.** (1) Le `<head>` statique de
+  `src/index.html` (meta description, Open Graph, Twitter Card, JSON-LD `WebApplication` +
+  `FAQPage`, bloc `<noscript>` multilingue) est ce que voient les crawlers qui **n'exécutent pas de
+  JavaScript** (GPTBot, ClaudeBot, PerplexityBot, CCBot...) — la seule chose qu'ils indexent. (2)
+  `SeoService` (`core/services/seo.service.ts`, injecté une fois dans `app.ts` comme
+  `RouteSyncService`) met à jour `<title>`/meta description/`<html lang>` **dynamiquement** une fois
+  l'app démarrée, par page (`NavigationService.view()`) et par langue (`I18nService.locale()`), via
+  les clés `seo.title.*`/`seo.description.*` de `translations.ts` (4 locales, à mettre à jour
+  ensemble comme toute clé i18n — voir plus bas). Ne sert qu'aux utilisateurs réels, à Google/Bing
+  (qui rendent le JS) et aux aperçus de partage générés après exécution — **jamais** vu par un
+  crawler non-JS, d'où l'importance que (1) reste correct et suffisant à lui seul.
+- **Pas de balises `hreflang`.** L'app propose une seule URL pour les 4 langues (changement de
+  langue côté client, pas de sous-chemin `/en/`, `/es/`, `/pt/`) — `hreflang` n'a de sens documenté
+  par Google que pour des URLs **distinctes** par langue ; en poser sur une URL unique serait
+  incorrect plutôt qu'utile. La couverture multilingue passe par `inLanguage` (JSON-LD) et le bloc
+  `<noscript>` (une traduction par langue) à la place. Une vraie amélioration future serait des URLs
+  préfixées par langue, mais c'est un changement d'architecture de routing, pas fait ici.
+- **`public/llms.txt`** : convention émergente (pas encore un standard formel) pour donner aux
+  agents/LLM un résumé structuré du site en Markdown, séparé du HTML. Même règle de mise à jour que
+  le reste (contenu/fonctionnalités à synchroniser si l'app évolue significativement).
+- Si une nouvelle page/route est ajoutée à `app.routes.ts`, se demander explicitement si elle a une
+  valeur de référencement propre (sinon, ne pas l'ajouter au sitemap) et lui donner des clés
+  `seo.title.*`/`seo.description.*` dans les 4 locales pour que `SeoService` la couvre.
+
 ## Liens de référence
 
 - [wakfu-companion.nexuswow.workers.dev](https://wakfu-companion.nexuswow.workers.dev/) — site de référence Nexus-Hub (même nom de projet, sans lien de code avec cette app) : point de comparaison fonctionnel utile.

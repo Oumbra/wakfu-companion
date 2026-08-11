@@ -1,7 +1,10 @@
 {
   "name": "Wakfu Companion",
   "short_name": "Wakfu Companion",
-  "description": "Compagnon de jeu en temps réel pour Wakfu : suivi de dégâts, historique de combats, butin, chat et alertes sonores.",
+  "description": "Compagnon de jeu en temps réel pour Wakfu : tracker de combat (damage meter), historique de combats, kamas, XP, butin, chat et alertes sonores.",
+  "lang": "fr",
+  "dir": "ltr",
+  "categories": ["games", "utilities"],
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#00d2ff",

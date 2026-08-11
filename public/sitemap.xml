@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Wakfu Companion — sitemap.xml
+
+  Domaine canonique en dur (GH Pages, hébergement de prod actuel — voir
+  docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, robots.txt, llms.txt) le
+  jour où la prod bascule sur Cloudflare/domaine personnalisé.
+
+  Une seule URL volontairement : c'est une application (SPA) à page unique, pas un site de contenu
+  — /profile, /account, /legal-notice, /privacy-policy existent comme routes Angular (voir
+  app.routes.ts) mais (1) n'ont aucune valeur de recherche propre pour les requêtes ciblées
+  (wakfu tracker/companion/historique pointent toutes vers la page d'accueil), et (2) un accès direct
+  à ces URLs sur l'hébergement de prod actuel (GitHub Pages, pas de fallback SPA côté serveur —
+  contrairement à Cloudflare Pages qui a public/_redirects) répond 404 : les y référencer inviterait
+  un crawler à indexer des liens cassés. À revoir une fois la prod migrée sur Cloudflare.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://oumbra.github.io/wakfu-companion/</loc>
+    <lastmod>2026-08-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
