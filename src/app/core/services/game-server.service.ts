@@ -2,7 +2,6 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
 import { CharacterRosterService } from './character-roster.service';
 import { PersistenceService } from './persistence.service';
-import { ProfileService } from './profile.service';
 
 /** Serveur de jeu tel que servi par `GET /api/v1/game-servers` (table `game_servers`). */
 export interface GameServer {
@@ -18,14 +17,10 @@ export interface GameServer {
  */
 const SERVERS_CACHE_KEY = 'wakfu-game-servers';
 
-/** D'où vient le serveur actif — sert à expliquer la déduction dans le tooltip du badge. */
-export type ActiveServerSource = 'character' | 'default';
-
 export interface ActiveServer {
   server: GameServer;
-  source: ActiveServerSource;
-  /** Personnage à l'origine de la déduction (`source === 'character'` uniquement). */
-  characterName?: string;
+  /** Personnage à l'origine de la déduction — affiché dans le tooltip du badge. */
+  characterName: string;
 }
 
 /**
@@ -38,13 +33,13 @@ export interface ActiveServer {
  * seule façon de le gérer sans lui demander de basculer un sélecteur à la main
  * à chaque changement de personnage.
  *
- * La déduction, par ordre de priorité :
- *
- * 1. le serveur du compte auquel appartient le **dernier personnage du roster
- *    reconnu dans le log** (factuel, aucune saisie) ;
- * 2. à défaut, le **serveur par défaut** du profil ;
- * 3. à défaut, `null` — et l'interface invite discrètement à le renseigner,
- *    sans jamais bloquer quoi que ce soit.
+ * La déduction tient en une règle, sans repli : le serveur est celui du compte
+ * auquel appartient le **dernier personnage du roster reconnu dans le log**.
+ * Tant qu'aucun ne l'a été (ou que son compte n'a pas de serveur déclaré),
+ * `activeServer` vaut `null` et l'interface invite discrètement à le
+ * renseigner, sans jamais bloquer quoi que ce soit. Pas de « serveur par
+ * défaut » global : il n'aurait fait qu'afficher une valeur plausible mais non
+ * vérifiée, alors que tout l'intérêt de cette déduction est d'être factuelle.
  *
  * Le personnage reconnu n'est **pas persisté** : il est de l'état dérivé du
  * fichier (principe d'architecture n°2 de CLAUDE.md), reconstruit à chaque
@@ -57,7 +52,6 @@ export class GameServerService {
   private readonly api = inject(ApiClientService);
   private readonly persistence = inject(PersistenceService);
   private readonly roster = inject(CharacterRosterService);
-  private readonly profile = inject(ProfileService);
 
   /** Liste servie par l'API (jamais une liste en dur côté client, voir prompt 2.1). */
   readonly servers = signal<readonly GameServer[]>(
@@ -72,17 +66,12 @@ export class GameServerService {
 
   readonly activeServer = computed<ActiveServer | null>(() => {
     const character = this.lastKnownCharacter();
-    if (character) {
-      const account = this.roster.findAccountByCharacter(character);
-      const server = account?.gameServer ? this.resolveServer(account.gameServer) : undefined;
-      // Un personnage reconnu dont le compte n'a pas de serveur renseigné ne
-      // doit PAS faire croire au serveur par défaut d'un autre compte : mieux
-      // vaut retomber sur le défaut global, explicitement signalé comme tel.
-      if (server) return { server, source: 'character', characterName: character };
-    }
-    const fallback = this.profile.defaultGameServer();
-    const server = fallback ? this.resolveServer(fallback) : undefined;
-    return server ? { server, source: 'default' } : null;
+    if (!character) return null;
+    const account = this.roster.findAccountByCharacter(character);
+    // Un personnage reconnu dont le compte n'a pas de serveur renseigné ne doit
+    // surtout pas hériter de celui d'un autre compte : on n'affiche rien.
+    if (!account?.gameServer) return null;
+    return { server: this.resolveServer(account.gameServer), characterName: character };
   });
 
   /**
@@ -109,9 +98,6 @@ export class GameServerService {
     if (this.lastKnownCharacter() === name) return;
     this.lastKnownCharacter.set(name);
   }
-
-  /** Le serveur actif ne peut être déduit de rien : l'interface le signale discrètement. */
-  readonly needsSetup = computed(() => this.activeServer() === null);
 
   /**
    * Serveur correspondant à un code déjà choisi par l'utilisateur. Si la liste

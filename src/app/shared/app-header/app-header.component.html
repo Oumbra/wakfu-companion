@@ -27,16 +27,20 @@
     <!-- Serveur de jeu actif (lot 7) : permanent, y compris avant qu'un fichier
          soit connecté — c'est justement là qu'on peut vouloir le renseigner.
          Sans serveur déductible, le badge devient une invite discrète et
-         cliquable, jamais un blocage. -->
+         cliquable, jamais un blocage. En mobile il quitte l'en-tête (plus de
+         place) pour la tête du menu burger, voir plus bas. -->
     @if (gameServers.activeServer(); as active) {
-      <span class="game-server-badge tooltip-below" [attr.data-tooltip]="serverTooltip()">
+      <span
+        class="game-server-badge game-server-badge-desktop tooltip-below"
+        [attr.data-tooltip]="serverTooltip()"
+      >
         <span class="game-server-dot"></span>
         {{ active.server.label }}
       </span>
     } @else {
       <button
         type="button"
-        class="game-server-badge game-server-badge-empty tooltip-below"
+        class="game-server-badge game-server-badge-desktop game-server-badge-empty tooltip-below"
         [attr.data-tooltip]="'app.gameServerUnsetTooltip' | t"
         (click)="openServerSetup()"
       >
@@ -100,6 +104,20 @@
     @if (mobileMenuOpen()) {
       <div class="mobile-menu-backdrop" (click)="closeMobileMenu()"></div>
       <div class="mobile-menu">
+        <!-- Serveur de jeu en tête du menu : information d'état, présentée
+             comme telle (pas de fond d'item) — sauf quand rien n'est encore
+             déductible, où elle devient l'invite cliquable. -->
+        @if (gameServers.activeServer(); as active) {
+          <div class="mobile-menu-server">
+            <span class="mobile-menu-dot-slot"><span class="game-server-dot"></span></span>
+            <span>{{ active.server.label }}</span>
+          </div>
+        } @else {
+          <button type="button" class="mobile-menu-server" (click)="openServerSetup()">
+            <span class="mobile-menu-dot-slot"><span class="game-server-dot"></span></span>
+            <span>{{ 'app.gameServerUnset' | t }}</span>
+          </button>
+        }
         @if (logFileAccess.status() === 'connected') {
           <button
             class="mobile-menu-item"

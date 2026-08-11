@@ -609,28 +609,6 @@
               }
             </div>
           </div>
-
-          <!-- Repli tant qu'aucun personnage du roster n'a été reconnu dans le
-               log (lot 7) : ni deviné, ni obligatoire. -->
-          <div class="profile-field profile-field-wide">
-            <div class="profile-label-row">
-              <label class="profile-label" for="default-game-server">
-                {{ 'profile.defaultServerLabel' | t }}
-              </label>
-            </div>
-            <select
-              class="game-server-select"
-              id="default-game-server"
-              [value]="profile.defaultGameServer() ?? ''"
-              (change)="setDefaultServer($any($event.target).value)"
-            >
-              <option value="">{{ 'profile.gameServerNone' | t }}</option>
-              @for (server of gameServers.selectableServers(); track server.code) {
-                <option [value]="server.code">{{ server.label }}</option>
-              }
-            </select>
-            <p class="profile-hint">{{ 'profile.defaultServerHint' | t }}</p>
-          </div>
         </div>
       </div>
     </div>
