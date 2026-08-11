@@ -9,10 +9,20 @@ import { Component, input } from '@angular/core';
  * préserver plutôt qu'à écraser.
  */
 export type AppIconName =
-  'clock' | 'clock-long' | 'reset' | 'check' | 'chevron-left' | 'edit' | 'volume-on' | 'volume-off';
+  | 'clock'
+  | 'clock-long'
+  | 'reset'
+  | 'check'
+  | 'chevron-left'
+  | 'edit'
+  | 'volume-on'
+  | 'volume-off'
+  | 'calendar'
+  | 'map-pin'
+  | 'swords';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-211385e5.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-920e64e8.svg';
 
 @Component({
   selector: 'app-icon',

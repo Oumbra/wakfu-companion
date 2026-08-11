@@ -1,10 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import {
-  EntityDamageRow,
-  FightRecord,
-  LootRow,
-  StatsStoreService,
-} from '../../core/services/stats-store.service';
+import { EntityDamageRow, FightRecord, LootRow } from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
@@ -22,7 +17,17 @@ import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
-import { HistoryArchiveService } from '../../core/sync/history-archive.service';
+import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
+
+export type FightGroupMode = 'day' | 'location' | 'type';
+
+interface FightGroup {
+  /** Identifiant stable non traduit (date ISO courte / 'session' / 'account' / nom de type) —
+   * sert de clé de tracking et de clé de repli, jamais affiché tel quel. */
+  key: string;
+  label: string;
+  records: (FightRecord & { origin: HistoryOrigin })[];
+}
 
 /**
  * Historique des combats (liste repliable, butin, XP) — extrait de
@@ -48,7 +53,6 @@ export class FightHistoryComponent {
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
 
-  private readonly stats = inject(StatsStoreService);
   private readonly archive = inject(HistoryArchiveService);
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
@@ -62,11 +66,85 @@ export class FightHistoryComponent {
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
 
-  /** Combats affichés : session en cours (fichier de log) ou archive du compte
-   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
-  protected readonly fightHistory = computed<readonly FightRecord[]>(() =>
-    this.archive.showsAccount() ? this.archive.fights() : this.stats.fightHistory(),
-  );
+  /** Combats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
+   * HistoryArchiveService.mergedFights). */
+  protected readonly fightHistory = this.archive.mergedFights;
+
+  /** Regroupement (voir `FightGroupMode`) — Jour par défaut, comme toute liste de l'historique. */
+  protected readonly groupMode = signal<FightGroupMode>('day');
+  /** Clés de groupe actuellement repliées (vide par défaut, tout déplié — même convention que
+   * `PurchasesComponent`/`TradesComponent`). Un `Set` de clés composites (`mode:key`) plutôt qu'un
+   * `Set` de simples clés : changer de mode ne doit pas hériter du repli d'un autre regroupement. */
+  private readonly collapsedGroupKeys = signal<ReadonlySet<string>>(new Set());
+
+  private static readonly LOCATION_ORDER: readonly HistoryOrigin[] = ['session', 'account'];
+
+  protected readonly fightGroups = computed<FightGroup[]>(() => {
+    const mode = this.groupMode();
+    const records = this.fightHistory();
+    const groups = new Map<string, FightGroup>();
+    for (const record of records) {
+      const { key, label } = this.groupKeyFor(record, mode);
+      const existing = groups.get(key);
+      if (existing) existing.records.push(record);
+      else groups.set(key, { key, label, records: [record] });
+    }
+    const list = [...groups.values()];
+    if (mode === 'location') {
+      list.sort(
+        (a, b) =>
+          FightHistoryComponent.LOCATION_ORDER.indexOf(a.key as HistoryOrigin) -
+          FightHistoryComponent.LOCATION_ORDER.indexOf(b.key as HistoryOrigin),
+      );
+    }
+    return list;
+  });
+
+  private groupKeyFor(
+    record: FightRecord & { origin: HistoryOrigin },
+    mode: FightGroupMode,
+  ): { key: string; label: string } {
+    if (mode === 'location') {
+      const label = this.i18n.t(
+        record.origin === 'session' ? 'history.group.session' : 'history.group.account',
+      );
+      return { key: record.origin, label };
+    }
+    if (mode === 'type') {
+      const info = resolveFightImageInfo(
+        this.catalog,
+        this.enemyRowsFor(record).map((row) => row.name),
+      );
+      const label = info.tooltipSource
+        ? info.tooltipSource.names[this.i18n.locale()]
+        : this.i18n.t('history.group.otherType');
+      return { key: label, label };
+    }
+    const label = this.i18n.formatDate(record.fullTimestampMs);
+    return { key: label, label };
+  }
+
+  protected setGroupMode(mode: FightGroupMode): void {
+    this.groupMode.set(mode);
+  }
+
+  protected isGroupCollapsed(groupKey: string): boolean {
+    return this.collapsedGroupKeys().has(`${this.groupMode()}:${groupKey}`);
+  }
+
+  protected toggleGroupCollapsed(groupKey: string): void {
+    const compositeKey = `${this.groupMode()}:${groupKey}`;
+    const next = new Set(this.collapsedGroupKeys());
+    if (next.has(compositeKey)) next.delete(compositeKey);
+    else next.add(compositeKey);
+    this.collapsedGroupKeys.set(next);
+  }
+
+  protected fightCountLabel(count: number): string {
+    return this.i18n.t(count === 1 ? 'history.group.fightCount' : 'history.group.fightCountPlural', {
+      count,
+    });
+  }
 
   protected toggleFight(id: number): void {
     const next = new Set(this.expandedFightIds());

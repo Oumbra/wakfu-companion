@@ -48,26 +48,8 @@
     </div>
   </div>
 
-  @if (canShowAccount()) {
+  @if (auth.isAuthenticated() && (archive.loading() || archive.failed())) {
     <div class="history-source">
-      <button
-        type="button"
-        class="history-source-btn"
-        [class.active]="!archive.showsAccount()"
-        [title]="'history.source.sessionTooltip' | t"
-        (click)="showSource('session')"
-      >
-        {{ 'history.source.session' | t }}
-      </button>
-      <button
-        type="button"
-        class="history-source-btn"
-        [class.active]="archive.showsAccount()"
-        [title]="'history.source.accountTooltip' | t"
-        (click)="showSource('account')"
-      >
-        {{ 'history.source.account' | t }}
-      </button>
       @if (archive.loading()) {
         <span class="history-source-status">{{ 'history.source.loading' | t }}</span>
       } @else if (archive.failed()) {

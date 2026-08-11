@@ -64,8 +64,9 @@
   flex-shrink: 0;
 }
 
-/* Bascule Session / Compte (lot 8) : visible seulement quand un compte est
-   connecté — en mode invité, rien n'est archivé, la question ne se pose pas. */
+/* État de chargement/erreur de l'archive du compte (fusionnée en continu avec la session, voir
+   HistoryArchiveService) — visible seulement pendant un chargement ou après un échec, plus de
+   bascule Session/Compte à afficher au repos. */
 .history-source {
   display: flex;
   align-items: center;
@@ -74,24 +75,6 @@
   padding: 6px 10px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--surface-active);
-}
-.history-source-btn {
-  padding: 3px 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: var(--surface-active);
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
-  cursor: pointer;
-}
-.history-source-btn:hover {
-  color: var(--text-bright);
-}
-.history-source-btn.active {
-  color: var(--surface-well);
-  background: var(--accent);
-  border-color: var(--accent);
 }
 .history-source-status {
   font-size: 0.7rem;

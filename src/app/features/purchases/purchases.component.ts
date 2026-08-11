@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { PurchaseRecord, StatsStoreService } from '../../core/services/stats-store.service';
+import { PurchaseRecord } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -46,16 +46,13 @@ interface PurchaseDateGroup {
   styleUrl: './purchases.component.css',
 })
 export class PurchasesComponent {
-  protected readonly stats = inject(StatsStoreService);
   private readonly archive = inject(HistoryArchiveService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
 
-  /** Achats affichés : session en cours (fichier de log) ou archive du compte
-   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
-  private readonly records = computed<readonly PurchaseRecord[]>(() =>
-    this.archive.showsAccount() ? this.archive.purchases() : this.stats.purchaseHistory(),
-  );
+  /** Achats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
+   * HistoryArchiveService.mergedPurchases). */
+  private readonly records = computed<readonly PurchaseRecord[]>(() => this.archive.mergedPurchases());
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<PurchaseSortOrder>('desc');

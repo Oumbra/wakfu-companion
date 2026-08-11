@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TradeRecord, StatsStoreService } from '../../core/services/stats-store.service';
+import { TradeRecord } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -41,16 +41,13 @@ interface TradeDateGroup {
   styleUrl: './trades.component.css',
 })
 export class TradesComponent {
-  protected readonly stats = inject(StatsStoreService);
   private readonly archive = inject(HistoryArchiveService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
 
-  /** Échanges affichés : session en cours (fichier de log) ou archive du compte
-   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
-  private readonly records = computed<readonly TradeRecord[]>(() =>
-    this.archive.showsAccount() ? this.archive.trades() : this.stats.tradeHistory(),
-  );
+  /** Échanges affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
+   * HistoryArchiveService.mergedTrades). */
+  private readonly records = computed<readonly TradeRecord[]>(() => this.archive.mergedTrades());
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<TradeSortOrder>('desc');

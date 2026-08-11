@@ -1,13 +1,22 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
-import type {
-  EntityDamageRow,
-  FightRecord,
-  PurchaseRecord,
-  SpellBreakdownRow,
-  TradeRecord,
+import {
+  StatsStoreService,
+  type EntityDamageRow,
+  type FightRecord,
+  type PurchaseRecord,
+  type SpellBreakdownRow,
+  type TradeRecord,
 } from '../services/stats-store.service';
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
+import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
+
+/** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
+ * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
+ * archivée (préférée en cas de doublon, voir `merge`) : c'est ce que l'utilisateur attend du
+ * regroupement "par localisation" (l'appartenance à la session prime sur l'origine de la copie
+ * gardée). `'account'` seulement pour ce qui n'existe QUE dans l'archive du compte. */
+export type HistoryOrigin = 'session' | 'account';
 
 /** Taille d'une page de lecture (`GET /api/v1/history/*?limit=`). */
 const PAGE_SIZE = 50;
@@ -65,26 +74,27 @@ interface TradePage {
   nextBefore: string | null;
 }
 
-/** Source affichée par la section Historique. */
-export type HistorySource = 'session' | 'account';
-
 /**
  * Lecture de l'historique archivé sur le compte (lot 8, prompt 8.1 — « GET
  * paginés pour l'affichage de l'historique »).
  *
- * ## Pourquoi une bascule, et non une fusion
+ * ## Fusion session/compte, et pourquoi elle reste approximative par construction
  *
- * La liste de session (`StatsStoreService`) est reconstruite depuis le fichier
- * de log courant et plafonnée à 30 combats ; l'archive du compte, elle, contient
- * **tout**, y compris ce que la session vient d'envoyer. Fusionner les deux
- * demanderait de reconnaître localement qu'un événement de session est déjà
- * archivé — ce que seule la clé SHA-256 permet vraiment, au prix d'un calcul
- * asynchrone pour chaque ligne affichée, à chaque rendu.
+ * La liste de session (`StatsStoreService`) est reconstruite depuis le fichier de log courant et
+ * plafonnée à 30 combats ; l'archive du compte, elle, contient tout, y compris ce que la session
+ * vient d'envoyer. Les deux sont maintenant fusionnées en continu (`mergedFights`/`mergedPurchases`/
+ * `mergedTrades`, chargées dès la connexion — voir `loadAll`) plutôt que basculées manuellement.
  *
- * L'interface propose donc une bascule explicite « Session / Compte ». Elle est
- * plus honnête (on sait d'où viennent les lignes), et l'archive étant un
- * sur-ensemble de la session une fois la synchronisation faite, l'utilisateur
- * n'a rien à recouper lui-même.
+ * Le rapprochement d'un doublon (même événement présent des deux côtés) se fait par une clé de
+ * CONTENU (`history-dedup.util.ts` : heure de log + résultat/quantité/coût + participants ou
+ * objets), pas par la clé SHA-256 d'envoi (`client-key.util.ts`) — celle-ci dépend du `fightId` du
+ * log, jamais renvoyé par l'archive (absent de `FightPayload`), et son calcul est de toute façon
+ * asynchrone (`crypto.subtle.digest`), inadapté à un `computed()` synchrone recalculé à chaque
+ * rendu. La clé de contenu, elle, est pure et bon marché : calculable des deux côtés, à la volée.
+ *
+ * Limite assumée, identique à celle documentée pour `fightSignature` : deux événements réellement
+ * distincts, à la même seconde du log et strictement identiques par ailleurs, seraient vus comme un
+ * seul. Invraisemblable en pratique — c'était déjà l'arbitrage retenu pour la déduplication d'envoi.
  *
  * ## Ce que l'archive contient
  *
@@ -102,8 +112,8 @@ export type HistorySource = 'session' | 'account';
 @Injectable({ providedIn: 'root' })
 export class HistoryArchiveService {
   private readonly api = inject(ApiClientService);
+  private readonly stats = inject(StatsStoreService);
 
-  private readonly _source = signal<HistorySource>('session');
   private readonly _fights = signal<readonly FightRecord[]>([]);
   private readonly _purchases = signal<readonly PurchaseRecord[]>([]);
   private readonly _trades = signal<readonly TradeRecord[]>([]);
@@ -114,27 +124,61 @@ export class HistoryArchiveService {
   private readonly loaded = new Set<HistoryEventKind>();
   private readonly _exhausted = signal<readonly HistoryEventKind[]>([]);
 
-  readonly source = this._source.asReadonly();
+  /** Archive brute du compte (sans la session) — encore utile pour `mergedXxx` ci-dessous, plus
+   * consommée ailleurs directement (voir `fight-history`/`purchases`/`trades.component.ts`). */
   readonly fights = this._fights.asReadonly();
   readonly purchases = this._purchases.asReadonly();
   readonly trades = this._trades.asReadonly();
   readonly loading = this._loading.asReadonly();
   /** Vrai quand la dernière lecture a échoué (hors ligne, serveur indisponible). */
   readonly failed = this._failed.asReadonly();
-  readonly showsAccount = computed(() => this._source() === 'account');
+
+  /** Combats de la session en cours + archive du compte, dédoublonnés (voir doc de classe) et triés
+   * du plus récent au plus ancien. `origin` reflète l'appartenance à la session (pas la provenance
+   * de la copie effectivement affichée) — voir `HistoryOrigin`. */
+  readonly mergedFights = computed<readonly (FightRecord & { origin: HistoryOrigin })[]>(() => {
+    const sessionRecords = this.stats.fightHistory();
+    const sessionKeys = new Set(sessionRecords.map(fightDedupKey));
+    const account = this._fights();
+    const accountKeys = new Set(account.map(fightDedupKey));
+    const sessionOnly = sessionRecords
+      .filter((record) => !accountKeys.has(fightDedupKey(record)))
+      .map((record) => ({ ...record, origin: 'session' as const }));
+    const accountTagged = account.map((record) => ({
+      ...record,
+      origin: (sessionKeys.has(fightDedupKey(record)) ? 'session' : 'account') as HistoryOrigin,
+    }));
+    return [...sessionOnly, ...accountTagged].sort(
+      (a, b) => b.fullTimestampMs - a.fullTimestampMs,
+    );
+  });
+
+  readonly mergedPurchases = computed<readonly PurchaseRecord[]>(() => {
+    const account = this._purchases();
+    const accountKeys = new Set(account.map(purchaseDedupKey));
+    const sessionOnly = this.stats
+      .purchaseHistory()
+      .filter((record) => !accountKeys.has(purchaseDedupKey(record)));
+    return [...sessionOnly, ...account].sort((a, b) => b.fullTimestampMs - a.fullTimestampMs);
+  });
+
+  readonly mergedTrades = computed<readonly TradeRecord[]>(() => {
+    const account = this._trades();
+    const accountKeys = new Set(account.map(tradeDedupKey));
+    const sessionOnly = this.stats
+      .tradeHistory()
+      .filter((record) => !accountKeys.has(tradeDedupKey(record)));
+    return [...sessionOnly, ...account].sort((a, b) => b.fullTimestampMs - a.fullTimestampMs);
+  });
 
   hasMore(kind: HistoryEventKind): boolean {
     return !this._exhausted().includes(kind);
   }
 
-  /**
-   * Bascule la source affichée. Le premier passage sur « Compte » déclenche le
-   * chargement de la première page de chaque type — l'utilisateur a cliqué, il
-   * attend des données, pas un second clic par sous-onglet.
-   */
-  async setSource(source: HistorySource): Promise<void> {
-    this._source.set(source);
-    if (source !== 'account') return;
+  /** Charge la première page de chaque type si ce n'est pas déjà fait — appelé dès qu'on sait
+   * l'utilisateur connecté (voir `AuthService`), plus au clic sur un bouton (la bascule Session/
+   * Compte a disparu, voir doc de classe). Sans effet en mode invité (l'appelant ne l'invoque pas). */
+  async loadAll(): Promise<void> {
     await Promise.all(
       (Object.keys(HISTORY_ENDPOINTS) as HistoryEventKind[])
         .filter((kind) => !this.loaded.has(kind))
@@ -198,7 +242,6 @@ export class HistoryArchiveService {
 
   /** Repart de zéro (déconnexion, ou synchronisation manuelle qui vient de pousser du contenu). */
   reset(): void {
-    this._source.set('session');
     this._fights.set([]);
     this._purchases.set([]);
     this._trades.set([]);

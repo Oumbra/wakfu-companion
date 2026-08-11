@@ -1,7 +1,7 @@
 /* Rendu directement à l'intérieur du `.tool-panel` de HistoryComponent
    (voir history.component.html) : ce composant ne porte pas son propre
-   `.tool-panel`/`.panel-header`, `display:contents` laisse son unique enfant
-   racine (`.panel-body.meter-body`) participer au flex-column du parent. */
+   `.tool-panel`/`.panel-header`, `display:contents` laisse ses enfants racine
+   (`.fight-group-controls`, `.panel-body.meter-body`) participer au flex-column du parent. */
 :host {
   display: contents;
 }
@@ -10,6 +10,88 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Switch de regroupement (jour/lieu/type, voir FightGroupMode) — même emplacement/gabarit que
+   `.history-source`/`.controls-row` ailleurs dans l'historique (barre juste sous les onglets). */
+.fight-group-controls {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 10px;
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--surface-active);
+  flex-shrink: 0;
+}
+.fight-group-switch {
+  width: auto;
+}
+.fight-group-switch-option {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+@media (max-width: 800px) {
+  /* Icônes seules en mobile : pas assez de place pour les 3 libellés dans un panneau qui peut se
+     retrouver aussi étroit qu'un téléphone en portrait (onglet mobile du dashboard). */
+  .fight-group-switch-label {
+    display: none;
+  }
+  .fight-group-switch-option {
+    padding: 0 9px;
+  }
+}
+
+/* En-tête de groupe repliable — même rôle que `.date-group-header` (purchases/trades) mais avec un
+   caret + compteur explicites plutôt qu'un simple total, voir CLAUDE.md ("switch icône... les
+   groupements doivent pouvoir être collapse, la ligne de regroupement doit indiquer le nombre de
+   combats qu'elle contient"). */
+.fight-group-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  background: var(--surface-well);
+  border-bottom: 1px solid var(--border);
+}
+.fight-group-row:hover {
+  background: var(--surface-raised);
+}
+.fight-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fight-group-count {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.fight-group-row .caret {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.fight-group-row .caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
 }
 
 .fight-entry {
