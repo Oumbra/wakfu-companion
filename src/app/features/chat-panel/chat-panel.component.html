@@ -73,7 +73,11 @@
       <div class="empty-state">{{ 'chat.empty' | t }}</div>
     } @else {
       @for (msg of filteredMessages(); track $index) {
-        <div class="chat-msg" [style.--ch]="channelColorVar(msg.channel)">
+        <div
+          class="chat-msg"
+          [class.filter-hit]="isHighlighted(msg)"
+          [style.--ch]="channelColorVar(msg.channel)"
+        >
           <div class="chat-meta">
             <span class="chat-time">{{ msg.time.slice(0, 8) }}</span>
             <span class="chat-channel">[{{ channelLabelKey(msg.channel) | t }}]</span>
