@@ -373,7 +373,9 @@
                 <div class="roster-account-panel">
                   @if (!account.isDefault) {
                     <div class="roster-account-header">
-                      <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
+                      <ng-container
+                        *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                      ></ng-container>
                       <input
                         type="text"
                         class="roster-account-label-input"
@@ -396,9 +398,13 @@
                     <div class="roster-view-row">
                       <div class="roster-view-header">
                         @if (account.isDefault) {
-                          <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
+                          <ng-container
+                            *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                          ></ng-container>
                         }
-                        <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                        <span class="roster-character-count">{{
+                          characterCountLabel(account.characters.length)
+                        }}</span>
                       </div>
                       <div class="icon-switch" style="width: 52px">
                         <span

@@ -62,8 +62,8 @@ type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
     AppPageComponent,
     IconComponent,
     TabBarComponent,
-    NgTemplateOutlet
-],
+    NgTemplateOutlet,
+  ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
 })
