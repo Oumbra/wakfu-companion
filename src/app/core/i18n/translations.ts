@@ -91,6 +91,15 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
+    'history.source.session': 'Session',
+    'history.source.account': 'Compte',
+    'history.source.sessionTooltip':
+      'Historique reconstruit depuis le fichier wakfu.log en cours de lecture',
+    'history.source.accountTooltip':
+      'Historique complet archivé sur votre compte, au-delà de la session en cours',
+    'history.source.loading': 'Chargement…',
+    'history.source.error': 'Historique du compte indisponible',
+    'history.source.loadMore': 'Charger plus',
 
     'purchases.header': 'Achats',
     'purchases.searchPlaceholder': 'Rechercher un objet ou une date...',
@@ -379,6 +388,14 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
+    'history.source.session': 'Session',
+    'history.source.account': 'Account',
+    'history.source.sessionTooltip': 'History rebuilt from the wakfu.log file currently being read',
+    'history.source.accountTooltip':
+      'Full history archived on your account, beyond the current session',
+    'history.source.loading': 'Loading…',
+    'history.source.error': 'Account history unavailable',
+    'history.source.loadMore': 'Load more',
 
     'purchases.header': 'Purchases',
     'purchases.searchPlaceholder': 'Search an item or a date...',
@@ -664,6 +681,15 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
+    'history.source.session': 'Sesión',
+    'history.source.account': 'Cuenta',
+    'history.source.sessionTooltip':
+      'Historial reconstruido a partir del archivo wakfu.log en lectura',
+    'history.source.accountTooltip':
+      'Historial completo archivado en tu cuenta, más allá de la sesión actual',
+    'history.source.loading': 'Cargando…',
+    'history.source.error': 'Historial de la cuenta no disponible',
+    'history.source.loadMore': 'Cargar más',
 
     'purchases.header': 'Compras',
     'purchases.searchPlaceholder': 'Buscar un objeto o una fecha...',
@@ -951,6 +977,15 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
+    'history.source.session': 'Sessão',
+    'history.source.account': 'Conta',
+    'history.source.sessionTooltip':
+      'Histórico reconstruído a partir do ficheiro wakfu.log em leitura',
+    'history.source.accountTooltip':
+      'Histórico completo arquivado na sua conta, para além da sessão atual',
+    'history.source.loading': 'A carregar…',
+    'history.source.error': 'Histórico da conta indisponível',
+    'history.source.loadMore': 'Carregar mais',
 
     'purchases.header': 'Compras',
     'purchases.searchPlaceholder': 'Pesquisar um item ou uma data...',

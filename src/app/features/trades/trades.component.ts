@@ -9,6 +9,7 @@ import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 
 type TradeSortOrder = 'desc' | 'asc';
 
@@ -41,8 +42,15 @@ interface TradeDateGroup {
 })
 export class TradesComponent {
   protected readonly stats = inject(StatsStoreService);
+  private readonly archive = inject(HistoryArchiveService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
+
+  /** Échanges affichés : session en cours (fichier de log) ou archive du compte
+   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
+  private readonly records = computed<readonly TradeRecord[]>(() =>
+    this.archive.showsAccount() ? this.archive.trades() : this.stats.tradeHistory(),
+  );
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<TradeSortOrder>('desc');
@@ -53,7 +61,7 @@ export class TradesComponent {
     const query = normalizeWakfuName(this.searchQuery().trim());
     const order = this.sortOrder();
 
-    const filtered = this.stats.tradeHistory().filter((record) => {
+    const filtered = this.records().filter((record) => {
       if (!query) return true;
       const character = normalizeWakfuName(record.characterName);
       const dateLabel = normalizeWakfuName(this.i18n.formatDate(record.fullTimestampMs));

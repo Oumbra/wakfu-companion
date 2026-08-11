@@ -2,7 +2,11 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { tradeItems, trades } from '../../../../server/db/schema';
-import { MAX_HISTORY_BATCH, parsePageQuery, parseTradesBody } from '../../../../server/history/parse';
+import {
+  MAX_HISTORY_BATCH,
+  parsePageQuery,
+  parseTradesBody,
+} from '../../../../server/history/parse';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -141,10 +145,18 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         gameServer: row.gameServer,
         acquired: lines
           .filter((line) => line.direction === 'acquired')
-          .map((line) => ({ itemId: line.itemId, itemName: line.itemName, quantity: line.quantity })),
+          .map((line) => ({
+            itemId: line.itemId,
+            itemName: line.itemName,
+            quantity: line.quantity,
+          })),
         given: lines
           .filter((line) => line.direction === 'given')
-          .map((line) => ({ itemId: line.itemId, itemName: line.itemName, quantity: line.quantity })),
+          .map((line) => ({
+            itemId: line.itemId,
+            itemName: line.itemName,
+            quantity: line.quantity,
+          })),
       };
     }),
     nextBefore:

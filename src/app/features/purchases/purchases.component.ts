@@ -8,6 +8,7 @@ import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 
 type PurchaseSortOrder = 'desc' | 'asc';
 
@@ -46,8 +47,15 @@ interface PurchaseDateGroup {
 })
 export class PurchasesComponent {
   protected readonly stats = inject(StatsStoreService);
+  private readonly archive = inject(HistoryArchiveService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
+
+  /** Achats affichés : session en cours (fichier de log) ou archive du compte
+   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
+  private readonly records = computed<readonly PurchaseRecord[]>(() =>
+    this.archive.showsAccount() ? this.archive.purchases() : this.stats.purchaseHistory(),
+  );
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<PurchaseSortOrder>('desc');
@@ -58,7 +66,7 @@ export class PurchasesComponent {
     const query = normalizeWakfuName(this.searchQuery().trim());
     const order = this.sortOrder();
 
-    const filtered = this.stats.purchaseHistory().filter((record) => {
+    const filtered = this.records().filter((record) => {
       if (!query) return true;
       const name = normalizeWakfuName(this.i18n.translateItemName(record.item));
       const dateLabel = normalizeWakfuName(this.i18n.formatDate(record.fullTimestampMs));

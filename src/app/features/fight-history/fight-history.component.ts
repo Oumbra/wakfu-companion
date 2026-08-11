@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import {
   EntityDamageRow,
   FightRecord,
@@ -22,6 +22,7 @@ import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
+import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 
 /**
  * Historique des combats (liste repliable, butin, XP) — extrait de
@@ -48,6 +49,7 @@ export class FightHistoryComponent {
   protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
 
   private readonly stats = inject(StatsStoreService);
+  private readonly archive = inject(HistoryArchiveService);
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
   protected readonly i18n = inject(I18nService);
@@ -60,7 +62,11 @@ export class FightHistoryComponent {
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
 
-  protected readonly fightHistory = this.stats.fightHistory;
+  /** Combats affichés : session en cours (fichier de log) ou archive du compte
+   * (lot 8) selon la source choisie dans l'en-tête de la section Historique. */
+  protected readonly fightHistory = computed<readonly FightRecord[]>(() =>
+    this.archive.showsAccount() ? this.archive.fights() : this.stats.fightHistory(),
+  );
 
   protected toggleFight(id: number): void {
     const next = new Set(this.expandedFightIds());

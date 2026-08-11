@@ -2,11 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { CatalogService } from '../api/catalog.service';
 import { EntityClassifierService } from '../services/entity-classifier.service';
 import { GameServerService } from '../services/game-server.service';
-import type {
-  FightRecord,
-  PurchaseRecord,
-  TradeRecord,
-} from '../services/stats-store.service';
+import type { FightRecord, PurchaseRecord, TradeRecord } from '../services/stats-store.service';
 import {
   fightSignature,
   purchaseSignature,

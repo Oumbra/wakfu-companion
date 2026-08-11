@@ -83,7 +83,7 @@ describe('parseFightsBody', () => {
     expect(parsed.ok && parsed.value[0].gameServer).toBe(null);
   });
 
-  it('refuse un clientKey qui n\'est pas un sha256 hexadécimal', () => {
+  it("refuse un clientKey qui n'est pas un sha256 hexadécimal", () => {
     expect(parseFightsBody({ entries: [fightEntry({ clientKey: 'fight-1' })] })).toEqual({
       ok: false,
       error: expect.stringContaining('clientKey'),
@@ -162,7 +162,7 @@ describe('parsePurchasesBody', () => {
     });
   });
 
-  it("accepte un objet inconnu du catalogue (itemId absent)", () => {
+  it('accepte un objet inconnu du catalogue (itemId absent)', () => {
     const parsed = parsePurchasesBody({ entries: [purchaseEntry({ itemId: null })] });
     expect(parsed.ok && parsed.value[0].itemId).toBe(null);
   });
