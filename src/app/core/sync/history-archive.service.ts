@@ -21,6 +21,18 @@ export type HistoryOrigin = 'session' | 'account';
 /** Taille d'une page de lecture (`GET /api/v1/history/*?limit=`). */
 const PAGE_SIZE = 50;
 
+/** Nombre maximal de pages enchaînées par `loadMorePurchasesUntilDayComplete` — garde-fou pur
+ * (jamais censé être atteint en pratique, voir sa doc) plutôt qu'une vraie limite métier. */
+const MAX_DAY_COMPLETION_PAGES = 40;
+
+/** Début du jour calendaire LOCAL (minuit) contenant `timestampMs` — même découpage que
+ * `I18nService.formatRelativeDay` (celui qui pilote le regroupement par jour affiché), reproduit
+ * ici en pur pour ne pas faire dépendre ce service d'`I18nService`. */
+function localDayStart(timestampMs: number): number {
+  const d = new Date(timestampMs);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
 interface FightPage {
   entries: {
     clientKey: string;
@@ -182,7 +194,7 @@ export class HistoryArchiveService {
     await Promise.all(
       (Object.keys(HISTORY_ENDPOINTS) as HistoryEventKind[])
         .filter((kind) => !this.loaded.has(kind))
-        .map((kind) => this.loadMore(kind)),
+        .map((kind) => (kind === 'purchase' ? this.loadMorePurchasesUntilDayComplete() : this.loadMore(kind))),
     );
   }
 
@@ -237,6 +249,40 @@ export class HistoryArchiveService {
           ),
         ]);
         break;
+    }
+  }
+
+  /**
+   * Comme `loadMore('purchase')`, mais enchaîne autant de pages supplémentaires que nécessaire
+   * pour garantir que le jour calendaire le plus ancien parmi les achats déjà chargés est
+   * COMPLET — voir CLAUDE.md ("les données d'historique d'achat doivent toujours être chargées
+   * par jour complet"). Sans ce garde-fou, un jour affiché par `PurchasesComponent` (regroupement
+   * par jour) pouvait n'être que partiellement chargé (une seule page de `PAGE_SIZE` achats, quel
+   * que soit le nombre réel d'achats de ce jour), affichant un total très inférieur à la réalité
+   * tant que l'utilisateur ne cliquait pas "Charger plus" assez de fois — bug réel signalé.
+   *
+   * Un jour n'est prouvé complet qu'en ayant chargé un achat plus ANCIEN que lui : l'API renvoie
+   * les pages triées du plus récent au plus ancien sans jamais réordonner, donc dépasser un jour
+   * prouve qu'il n'en reste plus rien à charger — ou par épuisement de l'archive
+   * (`!hasMore('purchase')`). Bornée par construction : cette méthode ne poursuit que jusqu'à ce
+   * premier jour complet, jamais au-delà (pas de préchargement en cascade de tout l'historique du
+   * compte à chaque connexion) — `MAX_DAY_COMPLETION_PAGES` est un garde-fou pur en plus (jamais
+   * censé être atteint), pas une troncature métier voulue.
+   */
+  async loadMorePurchasesUntilDayComplete(): Promise<void> {
+    const before = this._purchases().length;
+    await this.loadMore('purchase');
+    let loaded = this._purchases();
+    if (loaded.length === before) return; // rien chargé (échec réseau, ou déjà tout chargé)
+
+    const boundaryDay = localDayStart(loaded[loaded.length - 1].fullTimestampMs);
+    for (let page = 0; page < MAX_DAY_COMPLETION_PAGES && this.hasMore('purchase'); page++) {
+      const previousLength = loaded.length;
+      await this.loadMore('purchase');
+      loaded = this._purchases();
+      const oldest = loaded[loaded.length - 1];
+      if (!oldest || loaded.length === previousLength) break;
+      if (localDayStart(oldest.fullTimestampMs) !== boundaryDay) break; // jour limite dépassé : il est désormais complet
     }
   }
 
