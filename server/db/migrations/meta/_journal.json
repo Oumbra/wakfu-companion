@@ -64,6 +64,13 @@
       "when": 1786444021629,
       "tag": "0008_participant_xp",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786564800000,
+      "tag": "0009_rename_dungeons_bracket",
+      "breakpoints": true
     }
   ]
 }

@@ -42,7 +42,7 @@ const DUNGEON_FOR_BOSS = {
   es: 'Mazmorra Boss',
   pt: 'Masmorra Chefe',
   level: 1,
-  tranche: 1,
+  bracket: 1,
   isBreach: false,
   isUltimateBreach: false,
   bossMonsterId: 101,

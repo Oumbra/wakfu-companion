@@ -45,7 +45,7 @@ export interface CatalogDungeonEntry {
   es: string;
   pt: string;
   level: number;
-  tranche: number;
+  bracket: number;
   isBreach: boolean;
   isUltimateBreach: boolean;
   bossMonsterId: number | null;

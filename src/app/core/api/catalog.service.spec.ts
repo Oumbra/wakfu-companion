@@ -13,7 +13,7 @@ const DUNGEON_ROW = {
   es: 'Mazmorra Test',
   pt: 'Masmorra Teste',
   level: 20,
-  tranche: 1,
+  bracket: 1,
   isBreach: false,
   isUltimateBreach: false,
   bossMonsterId: 42,
