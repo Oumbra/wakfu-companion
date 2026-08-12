@@ -19,19 +19,75 @@
   object-fit: contain;
 }
 
+/* Une seule ligne, défilement horizontal uniquement (voir CLAUDE.md) : `flex-wrap: nowrap` +
+   `overflow-x: auto` plutôt que le retour à la ligne d'origine — sur un panneau chat étroit
+   (mobile, ou desktop avec beaucoup de canaux), les boutons débordaient sur 2-3 lignes et
+   mangeaient la hauteur disponible pour les messages. `overflow-y: hidden` (même paire que
+   `.kpi-strip`/tracker-strip.component.css) : les boutons de canal ne portent aucun tooltip, donc
+   aucun risque de clipping vertical à compenser ici. */
 .channel-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
   gap: 6px;
   padding: 8px 10px;
   background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
+.channel-filters .toggle-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .channel-filters .toggle-btn.active {
   color: var(--ch);
   border-color: var(--ch);
   background: color-mix(in srgb, var(--ch) 18%, transparent);
+}
+
+/* Bandeau fin, toujours visible, qui replie/déplie la zone de filtres (entrée texte + sélecteur de
+   canal + bouton + chips) — remplace l'affichage permanent d'origine pour gagner de la hauteur au
+   profit du fil de messages, surtout en mobile (voir CLAUDE.md). Même gabarit que
+   `.collapsible-header` (fight-history.component.css) : icône/label + caret, hauteur fixe réduite. */
+.filters-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 10px;
+  background: var(--surface-well);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.filters-toggle:hover {
+  background: var(--surface-raised);
+}
+.filters-toggle-count {
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.filters-toggle .caret {
+  margin-left: auto;
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+.filters-toggle .caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
 }
 
 /* Masqué par défaut (l'icône "?" du .panel-header suffit en desktop) — voir le commentaire dans

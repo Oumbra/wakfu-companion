@@ -185,6 +185,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personnages',
 
     'chat.header': 'Chat',
+    'chat.filtersToggle': 'Filtres',
     'chat.filterPlaceholder': 'Filtrer les messages...',
     'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Aucun message pour le moment.',
@@ -526,6 +527,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Characters',
 
     'chat.header': 'Chat',
+    'chat.filtersToggle': 'Filters',
     'chat.filterPlaceholder': 'Filter messages...',
     'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'No messages yet.',
@@ -861,6 +863,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personajes',
 
     'chat.header': 'Chat',
+    'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
     'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Aún no hay mensajes.',
@@ -1199,6 +1202,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personagens',
 
     'chat.header': 'Chat',
+    'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensagens...',
     'chat.filterChannelGlobal': 'Global',
     'chat.empty': 'Ainda sem mensagens.',
