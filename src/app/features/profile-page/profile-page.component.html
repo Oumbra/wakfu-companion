@@ -360,7 +360,13 @@
                     </button>
                   }
                   <app-item-icon [name]="entry.name" [size]="32" />
-                  <span class="sound-item-name">{{ i18n.translateItemName(entry.name) }}</span>
+                  <span
+                    #nameEl
+                    class="sound-item-name"
+                    (mouseenter)="onNameHover(nameEl, i18n.translateItemName(entry.name))"
+                    (mouseleave)="onNameLeave()"
+                    >{{ i18n.translateItemName(entry.name) }}</span
+                  >
                 </div>
               }
             </div>
