@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { EntityDamageRow, FightRecord, LootRow } from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
@@ -24,6 +24,7 @@ import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
+import { AuthService } from '../../core/auth/auth.service';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -67,6 +68,7 @@ export class FightHistoryComponent {
   private readonly classPickerService = inject(ClassPickerService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
+  protected readonly auth = inject(AuthService);
 
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   protected readonly lootSort = signal<LootSort>('name');
@@ -104,6 +106,18 @@ export class FightHistoryComponent {
   private readonly collapsedGroupKeys = signal<ReadonlySet<string>>(new Set());
 
   private static readonly LOCATION_ORDER: readonly HistoryOrigin[] = ['session', 'account'];
+
+  constructor() {
+    // Le regroupement "Origine" (session/compte) n'a d'intérêt qu'en mode connecté — en invité, il
+    // n'existe qu'une seule origine possible (la session en cours), voir `auth.isAuthenticated()`
+    // dans le template. Repli sur "Jour" si l'utilisateur se déconnecte alors que ce mode était
+    // actif : le bouton disparaît du switch, un mode sélectionné mais introuvable serait confus.
+    effect(() => {
+      if (this.groupMode() === 'location' && !this.auth.isAuthenticated()) {
+        this.groupMode.set('day');
+      }
+    });
+  }
 
   protected readonly fightGroups = computed<FightGroup[]>(() => {
     const mode = this.groupMode();
