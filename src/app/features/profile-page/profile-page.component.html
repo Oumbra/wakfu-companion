@@ -6,17 +6,7 @@
       [attr.data-tooltip]="'profile.exportData' | t"
       (click)="exportData()"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M12 3v12M7 10l5 5 5-5" />
-        <path d="M4 19h16" />
-      </svg>
+      ↓
     </button>
     <button
       class="icon-btn tooltip-below tooltip-align-right"
@@ -24,17 +14,7 @@
       [attr.data-tooltip]="'profile.importData' | t"
       (click)="triggerImport(importFileInput)"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path d="M12 15V3M7 8l5-5 5 5" />
-        <path d="M4 19h16" />
-      </svg>
+      ↑
     </button>
     <input
       #importFileInput
@@ -70,71 +50,19 @@
             <span class="profile-rail-icon">
               @switch (tab.id) {
                 @case ('avatar') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="7" r="4" />
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  </svg>
+                  ◐
                 }
                 @case ('colorblind') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+                  ◎
                 }
                 @case ('connection') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
+                  ⇄
                 }
                 @case ('alerts') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                  </svg>
+                  ♪
                 }
                 @case ('characters') {
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
+                  ☰
                 }
               }
             </span>
@@ -145,58 +73,60 @@
 
       <div class="panels-row">
         <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
-          <div class="panel-body">
-            <div class="profile-label-row">
-              <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
-            </div>
-            <div class="identity-row">
-              <div class="identity-left">
-                <div class="avatar-preview">
-                  @if (profile.avatarIndex() !== null) {
-                    <app-avatar-icon [index]="profile.avatarIndex()!" />
+          <div class="profile-field profile-field-wide">
+            <div class="panel-body">
+              <div class="profile-label-row">
+                <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
+              </div>
+              <div class="identity-row">
+                <div class="identity-left">
+                  <div class="avatar-preview">
+                    @if (profile.avatarIndex() !== null) {
+                      <app-avatar-icon [index]="profile.avatarIndex()!" />
+                    } @else {
+                      <span class="avatar-preview-question">?</span>
+                    }
+                  </div>
+                  @if (editingPseudo()) {
+                    <input
+                      #pseudoEditInput
+                      type="text"
+                      class="pseudo-edit-input"
+                      [placeholder]="'profile.pseudoPlaceholder' | t"
+                      [value]="profile.pseudo()"
+                      (blur)="commitPseudo($any($event.target).value)"
+                      (keydown)="onPseudoKeydown($event)"
+                    />
                   } @else {
-                    <span class="avatar-preview-question">?</span>
+                    <div class="profile-preview-name-row">
+                      <span class="profile-preview-name">{{
+                        profile.pseudo() || ('profile.noPseudo' | t)
+                      }}</span>
+                      <button
+                        class="icon-btn pseudo-edit-btn"
+                        type="button"
+                        [attr.data-tooltip]="'profile.editPseudo' | t"
+                        (click)="startEditPseudo()"
+                      >
+                        <app-icon name="edit" [size]="13" />
+                      </button>
+                    </div>
                   }
                 </div>
-                @if (editingPseudo()) {
-                  <input
-                    #pseudoEditInput
-                    type="text"
-                    class="pseudo-edit-input"
-                    [placeholder]="'profile.pseudoPlaceholder' | t"
-                    [value]="profile.pseudo()"
-                    (blur)="commitPseudo($any($event.target).value)"
-                    (keydown)="onPseudoKeydown($event)"
-                  />
-                } @else {
-                  <div class="profile-preview-name-row">
-                    <span class="profile-preview-name">{{
-                      profile.pseudo() || ('profile.noPseudo' | t)
-                    }}</span>
-                    <button
-                      class="icon-btn pseudo-edit-btn"
-                      type="button"
-                      [attr.data-tooltip]="'profile.editPseudo' | t"
-                      (click)="startEditPseudo()"
-                    >
-                      <app-icon name="edit" [size]="13" />
-                    </button>
-                  </div>
-                }
-              </div>
 
-              <div class="profile-field identity-right">
-                <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
-                <div class="avatar-grid">
-                  @for (i of avatarIndexes; track i) {
-                    <button
-                      class="avatar-cell-btn"
-                      [class.selected]="profile.avatarIndex() === i"
-                      (click)="chooseAvatar(i)"
-                    >
-                      <app-avatar-icon [index]="i" />
-                    </button>
-                  }
+                <div class="profile-field identity-right">
+                  <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+                  <div class="avatar-grid">
+                    @for (i of avatarIndexes; track i) {
+                      <button
+                        class="avatar-cell-btn"
+                        [class.selected]="profile.avatarIndex() === i"
+                        (click)="chooseAvatar(i)"
+                      >
+                        <app-avatar-icon [index]="i" />
+                      </button>
+                    }
+                  </div>
                 </div>
               </div>
             </div>
@@ -219,6 +149,7 @@
                   </button>
                 </label>
               </div>
+              <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
               <div class="icon-switch icon-switch-3 colorblind-switch">
                 <span
                   class="icon-switch-highlight"
@@ -237,7 +168,6 @@
                   </button>
                 }
               </div>
-              <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
               @if (colorblindSwatches().length > 0) {
                 <div class="colorblind-swatches">
                   @for (swatch of colorblindSwatches(); track swatch.labelKey) {
