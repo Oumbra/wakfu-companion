@@ -318,6 +318,15 @@ export class CatalogService {
       return cachedHash !== null;
     }
     if (versionResult.data.indexHash === cachedHash) {
+      // `indexHash` ne couvre QUE l'index compact (objets/monstres, voir buildCompactIndex côté
+      // serveur) — les donjons n'y participent pas (payload séparé, /dungeons). Un changement
+      // portant uniquement sur `referentiel/dungeons_wakfu.json` (ex. type de donjon corrigé) ne
+      // fait donc jamais bouger ce hash : sans ce rafraîchissement dédié, un navigateur ayant déjà
+      // un catalogue en cache ne réapprendrait JAMAIS une correction de donjon, potentiellement
+      // indéfiniment (bug réel constaté : "Repaire des Super-Vilains" resté mal typé côté client
+      // alors que la base était déjà correcte). Fire-and-forget : ne bloque pas `initialize()`,
+      // les donjons sont un petit payload (quelques dizaines de Ko).
+      void this.refreshDungeonsOnly();
       return true;
     }
 
@@ -349,6 +358,17 @@ export class CatalogService {
       this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data),
     ]);
     return true;
+  }
+
+  /** Rafraîchit UNIQUEMENT `/dungeons`, indépendamment de `indexHash` (voir le commentaire dans
+   * `refreshIfNeeded`) — seul moyen pour un navigateur avec un catalogue déjà en cache d'apprendre
+   * une correction de donjon qui ne s'accompagne d'aucun changement d'objet/monstre. Silencieux en
+   * cas d'échec réseau (le cache existant reste utilisable tel quel, comme le reste du service). */
+  private async refreshDungeonsOnly(): Promise<void> {
+    const dungeonsResult = await this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons');
+    if (!dungeonsResult.ok) return;
+    this.applyDungeons(dungeonsResult.data);
+    await this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data);
   }
 
   private applyIndex(payload: CachedIndexPayload): void {

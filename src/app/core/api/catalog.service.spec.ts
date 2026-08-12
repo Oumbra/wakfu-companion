@@ -85,6 +85,34 @@ describe('CatalogService', () => {
     expect(getJson).not.toHaveBeenCalledWith('/catalog/');
   });
 
+  it('rafraîchit quand même les donjons en arrière-plan si le hash (objets/monstres) n’a pas changé', async () => {
+    // Bug réel corrigé : `indexHash` ne couvre pas les donjons (payload séparé). Une correction
+    // portant UNIQUEMENT sur dungeons_wakfu.json (ex. type de donjon) ne doit pas rester invisible
+    // indéfiniment pour un navigateur qui a déjà un catalogue en cache.
+    const cachedIndex = { indexHash: 'abc', items: [ITEM_TUPLE], monsters: [MONSTER_TUPLE] };
+    const staleDungeon = { ...DUNGEON_ROW, type: 'TWO_ROOMS' as const };
+    const freshDungeon = { ...DUNGEON_ROW, type: 'ULTIMATE_BOSS' as const };
+    const { service, getJson, setCacheEntry } = setup({
+      cachedIndex,
+      cachedDungeons: [staleDungeon],
+      version: ok({ indexHash: 'abc' }),
+      dungeons: ok([freshDungeon]),
+    });
+
+    await service.initialize();
+    expect(service.findWakfuDungeonByBossMonsterId(42)?.type).toBe('TWO_ROOMS'); // état du cache, avant le rafraîchissement fire-and-forget
+
+    // refreshDungeonsOnly est lancé en fire-and-forget (void) : laisser les microtasks se dérouler.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(getJson).toHaveBeenCalledWith('/dungeons');
+    expect(getJson).not.toHaveBeenCalledWith('/catalog/'); // toujours pas de re-téléchargement de l'index objets/monstres
+    expect(service.findWakfuDungeonByBossMonsterId(42)?.type).toBe('ULTIMATE_BOSS');
+    expect(setCacheEntry).toHaveBeenCalledWith('catalog-dungeons', [freshDungeon]);
+  });
+
   it('rafraîchit en arrière-plan si le hash serveur diffère du cache', async () => {
     const cachedIndex = { indexHash: 'old-hash', items: [], monsters: [] };
     const freshItemTuple = [5678, 'Objet Neuf', 'New Item', 'Objeto Nuevo', 'Item Novo', 111, 1, 0];
