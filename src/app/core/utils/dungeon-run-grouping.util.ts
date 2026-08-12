@@ -1,4 +1,23 @@
-import { CatalogDungeonEntry } from '../api/catalog.service';
+import { CatalogDungeonEntry, WakfuDungeonType } from '../api/catalog.service';
+
+/** Nombre de salles précédant le boss (boss compris) pour un clear "propre" d'un donjon, déduit de
+ * son `type` (voir CatalogDungeonEntry) — remplace l'ancien `roomCount` curé séparément. Seuls
+ * `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` ont plusieurs salles ; tous les autres types (donjon 3
+ * joueurs, boss ultime, brèche, arcade...) désignent un donjon à un seul combat. */
+const ROOM_COUNT_BY_TYPE: Readonly<Record<WakfuDungeonType, number>> = {
+  TWO_ROOMS: 2,
+  THREE_ROOMS: 3,
+  FOUR_ROOMS: 4,
+  THREE_PLAYERS: 1,
+  ULTIMATE_BOSS: 1,
+  BREACH: 1,
+  ULTIMATE_BREACH: 1,
+  ARCADE: 1,
+};
+
+export function dungeonRoomCount(dungeon: CatalogDungeonEntry): number {
+  return ROOM_COUNT_BY_TYPE[dungeon.type];
+}
 
 /** Combat minimal requis pour le regroupement — `FightRecord` (stats-store.service.ts) satisfait
  * largement cette contrainte, une contrainte structurelle plutôt qu'un import direct évite une
@@ -41,13 +60,14 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
  *    distinct, jamais à celui-ci) contre ce même boss le rejoignent tant qu'ils sont consécutifs —
  *    couvre le cas de plusieurs défaites suivies d'une victoire, comme un abandon pur (aucune
  *    victoire, le cluster ne contient alors que des défaites).
- * 2. Salles précédentes : jusqu'à `roomCount - 1` combats consécutifs supplémentaires (plus
- *    anciens encore), qu'ils soient gagnés ou perdus (garde-fou explicite : une salle perdue puis
- *    retentée reste correctement rattachée au groupe) — `+ 1` combat de plus si `hasPreBossArchi`
- *    (archimonstre optionnel avant le boss, ex. Kokokolantha). `roomCount` inconnu (`null`, donjon
- *    pas encore catégorisé) équivaut à 1 : pas de salle à rattacher, seul le cluster de tentatives
- *    contre le boss s'applique. Un combat qui inclut n'importe quel boss de donjon interrompt
- *    aussitôt ce ramassage (garde-fou : n'avale jamais la fin d'un run antérieur distinct).
+ * 2. Salles précédentes : jusqu'à `dungeonRoomCount(dungeon) - 1` combats consécutifs
+ *    supplémentaires (plus anciens encore), qu'ils soient gagnés ou perdus (garde-fou explicite :
+ *    une salle perdue puis retentée reste correctement rattachée au groupe) — `+ 1` combat de plus
+ *    si `hasPreBossArchi` (archimonstre optionnel avant le boss, ex. Kokokolantha). Les types à un
+ *    seul combat (donjon 3 joueurs, boss ultime, brèche, arcade...) valent 1 : pas de salle à
+ *    rattacher, seul le cluster de tentatives contre le boss s'applique. Un combat qui inclut
+ *    n'importe quel boss de donjon interrompt aussitôt ce ramassage (garde-fou : n'avale jamais la
+ *    fin d'un run antérieur distinct).
  *
  * Un groupe d'un seul combat (donjon 3 joueurs/boss ultime gagné du premier coup, sans salle)
  * redevient une entrée `single` classique plutôt qu'un collapse à un seul élément.
@@ -82,7 +102,7 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
       j++;
     }
 
-    const extraSlots = (dungeon.roomCount ?? 1) - 1 + (dungeon.hasPreBossArchi ? 1 : 0);
+    const extraSlots = dungeonRoomCount(dungeon) - 1 + (dungeon.hasPreBossArchi ? 1 : 0);
     let roomsFound = 0;
     while (roomsFound < extraSlots && j < records.length && !findDungeon(records[j])) {
       j++;

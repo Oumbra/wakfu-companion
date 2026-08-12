@@ -21,7 +21,7 @@ import {
   resolveFightImageInfo,
 } from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
-import { CatalogService } from '../../core/api/catalog.service';
+import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
 
@@ -268,7 +268,7 @@ export class FightHistoryComponent {
    * règle que `fightImageTooltip`/resolveFightImageInfo, aucun donjon multi-salles n'est en
    * pratique une brèche mais autant rester cohérent). */
   protected dungeonRunTooltip(entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>): string | null {
-    return entry.dungeon.isBreach ? null : entry.dungeon[this.i18n.locale()];
+    return isDungeonBreach(entry.dungeon) ? null : entry.dungeon[this.i18n.locale()];
   }
 
   /** Durée totale d'un run de donjon (somme des combats qui le composent, victoires et défaites

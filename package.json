@@ -15,6 +15,9 @@
     "db:migrate": "drizzle-kit migrate",
     "db:verify-migrations": "tsx server/import/verify-migrations.ts",
     "catalog:import": "tsx server/import/import-catalog.ts",
+    "local:db:generate": "node tools/with-dev-vars.mjs npm run db:generate",
+    "local:db:migrate": "node tools/with-dev-vars.mjs npm run db:migrate",
+    "local:catalog:import": "node tools/with-dev-vars.mjs npm run catalog:import",
     "install:ci": "npx --yes npm@10.9.8 install",
     "prepare": "husky"
   },

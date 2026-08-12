@@ -19,19 +19,17 @@ function makeDungeon(overrides: Partial<CatalogDungeonEntry> & { id: number }): 
     pt: `Masmorra ${overrides.id}`,
     level: 1,
     bracket: 1,
-    isBreach: false,
-    isUltimateBreach: false,
+    type: 'ULTIMATE_BOSS', // type "1 seul combat" par défaut (équivalent de l'ancien roomCount=null)
     bossMonsterId: 900 + overrides.id,
     pictureUrl: `https://example.test/dungeon-${overrides.id}.png`,
     wakassetsAvailable: true,
-    roomCount: null,
     hasPreBossArchi: false,
     ...overrides,
   };
 }
 
-const DUNGEON_A = makeDungeon({ id: 1, roomCount: 3 });
-const DUNGEON_B = makeDungeon({ id: 2, roomCount: 2 });
+const DUNGEON_A = makeDungeon({ id: 1, type: 'THREE_ROOMS' });
+const DUNGEON_B = makeDungeon({ id: 2, type: 'TWO_ROOMS' });
 const DUNGEON_ARCHI = makeDungeon({ id: 3, hasPreBossArchi: true });
 
 function findDungeon(record: TestFight): CatalogDungeonEntry | null {
@@ -47,10 +45,10 @@ describe('groupDungeonRuns', () => {
     expect(groupDungeonRuns(records, findDungeon)).toEqual([{ kind: 'single', record: records[0] }]);
   });
 
-  it("laisse un boss gagné du premier coup sans salle rattachable en entrée single (roomCount=1)", () => {
+  it("laisse un boss gagné du premier coup sans salle rattachable en entrée single (type à 1 combat)", () => {
     const records = [fight(1, 'Boss ultime', 'won', DUNGEON_ARCHI.id)];
-    // DUNGEON_ARCHI a roomCount=null (=1) mais hasPreBossArchi=true -> 1 salle attendue ; ici
-    // aucun combat précédent n'existe (début du tableau), donc rien à rattacher.
+    // DUNGEON_ARCHI a type ULTIMATE_BOSS (1 combat) mais hasPreBossArchi=true -> 1 salle attendue ;
+    // ici aucun combat précédent n'existe (début du tableau), donc rien à rattacher.
     expect(groupDungeonRuns(records, findDungeon)).toEqual([{ kind: 'single', record: records[0] }]);
   });
 
@@ -93,7 +91,7 @@ describe('groupDungeonRuns', () => {
   });
 
   it("garde-fou : n'avale pas le combat de boss d'un run antérieur distinct comme si c'était une salle", () => {
-    // Un 2e donjon (B, roomCount=2) juste après la fin du run du donjon A ne doit jamais être
+    // Un 2e donjon (B, type TWO_ROOMS) juste après la fin du run du donjon A ne doit jamais être
     // considéré comme une "salle" du donjon A, même par pure adjacence.
     const bossA = fight(3, 'Boss A', 'won', DUNGEON_A.id);
     const bossB = fight(2, 'Boss B (run antérieur distinct)', 'won', DUNGEON_B.id);
@@ -103,7 +101,7 @@ describe('groupDungeonRuns', () => {
     const result = groupDungeonRuns(records, findDungeon);
 
     // bossA reste seul (aucune salle rattachée, bossB appartient à un autre donjon) ; bossB+roomB
-    // forment leur propre groupe (donjon B, roomCount=2 = 1 salle + boss).
+    // forment leur propre groupe (donjon B, TWO_ROOMS = 1 salle + boss).
     expect(result).toEqual([
       { kind: 'single', record: bossA },
       {
@@ -133,7 +131,7 @@ describe('groupDungeonRuns', () => {
   });
 
   it("s'arrête sans erreur si moins de salles que prévu sont disponibles (début de l'historique)", () => {
-    // Donjon 3 salles (roomCount=3, 2 salles attendues) mais une seule salle disponible avant le
+    // Donjon 3 salles (type THREE_ROOMS, 2 salles attendues) mais une seule salle disponible avant le
     // boss dans l'historique fourni (garde-fou : ne doit pas planter, ni sortir du tableau).
     const boss = fight(2, 'Boss A', 'won', DUNGEON_A.id);
     const room1 = fight(1, 'Seule salle disponible', 'won', null);

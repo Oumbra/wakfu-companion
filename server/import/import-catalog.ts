@@ -29,6 +29,7 @@ import {
   itemRecipes,
   items,
   monsters,
+  type WakfuDungeonType,
   type WakfuRarityCode,
 } from '../db/schema';
 import { buildCompactIndex } from '../catalog/compact-index';
@@ -79,12 +80,10 @@ interface RawDungeon {
   pt: string;
   level: number;
   bracket: number;
-  isBreach: boolean;
-  isUltimateBreach: boolean;
+  type: WakfuDungeonType;
   bossMonsterId?: number | null;
   picture_url: string;
   wakassets_available: boolean;
-  room_count?: number | null;
   has_pre_boss_archi?: boolean;
 }
 
@@ -227,12 +226,10 @@ async function main(): Promise<void> {
     pt: dungeon.pt,
     level: dungeon.level,
     bracket: dungeon.bracket,
-    isBreach: dungeon.isBreach,
-    isUltimateBreach: dungeon.isUltimateBreach,
+    type: dungeon.type,
     bossMonsterId: dungeon.bossMonsterId ?? null,
     pictureUrl: dungeon.picture_url,
     wakassetsAvailable: dungeon.wakassets_available,
-    roomCount: dungeon.room_count ?? null,
     hasPreBossArchi: dungeon.has_pre_boss_archi ?? false,
   }));
 
