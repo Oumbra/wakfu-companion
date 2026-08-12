@@ -67,7 +67,7 @@
                 <span
                   class="fight-clock tooltip-align-left"
                   [class.tooltip-below]="first"
-                  [attr.data-tooltip]="i18n.formatDateTime(entry.fights[0].fullTimestampMs)"
+                  [attr.data-tooltip]="i18n.formatDateTime(entry.representative.fullTimestampMs)"
                 >
                   <app-icon name="clock" [strokeWidth]="2" [size]="15" />
                 </span>
@@ -85,6 +85,7 @@
                     alt=""
                   />
                 </span>
+                <span class="dungeon-run-name">{{ entry.dungeon[i18n.locale()] }}</span>
                 <span
                   class="fight-badge"
                   [class.won]="entry.representative.result === 'won'"
@@ -96,10 +97,10 @@
                       : ('damageMeter.lost' | t)
                   }}
                 </span>
-                <span class="fight-meta">
-                  {{ fightCountLabel(entry.fights.length) }} ({{
+                <span class="dungeon-run-meta">
+                  {{ fightCountLabel(entry.fights.length) }} - {{
                     formatDuration(dungeonRunDurationMs(entry))
-                  }})
+                  }}
                 </span>
                 <span class="caret" [class.expanded]="!isDungeonRunCollapsed(entry.representative.id)"
                   >▸</span
@@ -109,7 +110,14 @@
                 <div class="dungeon-run-fights">
                   @for (record of entry.fights; track record.id) {
                     <ng-container
-                      *ngTemplateOutlet="fightEntryTpl; context: { record: record, first: false }"
+                      *ngTemplateOutlet="
+                        fightEntryTpl;
+                        context: {
+                          record: record,
+                          first: false,
+                          isBossRow: record.id === entry.representative.id,
+                        }
+                      "
                     />
                   }
                 </div>
@@ -122,7 +130,7 @@
   }
 </div>
 
-<ng-template #fightEntryTpl let-record="record" let-first="first">
+<ng-template #fightEntryTpl let-record="record" let-first="first" let-isBossRow="isBossRow">
   <div class="fight-entry" [class.expanded]="isFightExpanded(record.id)">
     <div
       class="fight-summary"
@@ -136,11 +144,11 @@
       >
         <app-icon name="clock" [strokeWidth]="2" [size]="15" />
       </span>
-      @if (fightImageUrl(record); as imageUrl) {
+      @if (fightImageUrl(record, isBossRow); as imageUrl) {
         <span
           class="fight-image-wrap"
           [class.tooltip-below]="first"
-          [attr.data-tooltip]="fightImageTooltip(record)"
+          [attr.data-tooltip]="fightImageTooltip(record, isBossRow)"
         >
           <img
             class="fight-image"

@@ -32,11 +32,12 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
   | {
       kind: 'dungeonRun';
       dungeon: CatalogDungeonEntry;
-      /** Combats du run, du plus ANCIEN au plus RÉCENT (salle 1 -> salle 2 -> ... -> boss) —
-       * lecture naturelle d'un déroulé de donjon, à l'inverse de l'ordre "plus récent d'abord"
-       * utilisé par `records` en entrée (voir `HistoryArchiveService.mergedFights`). */
+      /** Combats du run, du plus RÉCENT au plus ANCIEN (boss -> ... -> salle 2 -> salle 1) — même
+       * ordre que `records` en entrée (voir `HistoryArchiveService.mergedFights`), demandé
+       * explicitement pour la lecture d'un run déplié (le dernier combat d'abord, puis
+       * l'avant-dernier, etc.) plutôt qu'un déroulé chronologique salle par salle. */
       fights: T[];
-      /** Combat le plus récent du run (dernier de `fights`) — sert de repère pour le
+      /** Combat le plus récent du run (premier de `fights`) — sert de repère pour le
        * regroupement jour/lieu/type existant (date, image de l'entrée...). */
       representative: T;
     };
@@ -49,32 +50,42 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
  * `HistoryArchiveService.mergedFights`, déjà utilisée par tout l'historique) : ce tri est ce qui
  * permet de scanner vers l'arrière dans le temps sans avoir à re-trier quoi que ce soit.
  * `findDungeon` identifie le donjon dont un combat contient le boss (voir
- * `findDungeonForEnemies`, fight-image.util.ts), injecté plutôt qu'importé en dur pour rester une
- * fonction pure ne dépendant d'aucun service Angular (même principe que `resolveFightImageInfo`).
+ * `findDungeonForEnemies`, fight-image.util.ts) ; `hasArchiEnemy` détecte si un combat (non-boss)
+ * contient un archimonstre (voir `CatalogMonsterEntry.isArchi`) — les deux sont injectés plutôt
+ * qu'importés en dur pour rester une fonction pure ne dépendant d'aucun service Angular (même
+ * principe que `resolveFightImageInfo`).
  *
  * Algorithme, pour chaque combat de boss encore non consommé (parcouru du plus récent au plus
  * ancien) :
+ * 0. Donjons à un seul combat (`dungeonRoomCount(dungeon) === 1` — donjon 3 joueurs, boss ultime,
+ *    brèche, arcade...) : JAMAIS regroupés, quel que soit le résultat — même des défaites répétées
+ *    contre le même boss restent des entrées `single` distinctes. Seuls les types à plusieurs
+ *    salles (`TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`) passent aux étapes suivantes.
  * 1. Cluster de tentatives contre CE boss précis : le combat de départ (le plus récent contre ce
  *    boss) en fait toujours partie, quel que soit son résultat. Les combats plus anciens
  *    (défaites uniquement — une VICTOIRE plus ancienne appartient déjà à un run précédent
  *    distinct, jamais à celui-ci) contre ce même boss le rejoignent tant qu'ils sont consécutifs —
  *    couvre le cas de plusieurs défaites suivies d'une victoire, comme un abandon pur (aucune
  *    victoire, le cluster ne contient alors que des défaites).
- * 2. Salles précédentes : jusqu'à `dungeonRoomCount(dungeon) - 1` combats consécutifs
+ * 2. Archimonstre pré-boss optionnel (`hasPreBossArchi`, ex. Kokokolantha) : le combat qui suit
+ *    IMMÉDIATEMENT le cluster de boss (donc le dernier avant le boss chronologiquement) ne
+ *    rejoint le run à ce titre QUE s'il contient effectivement un archimonstre
+ *    (`hasArchiEnemy`) — `hasPreBossArchi` indique seulement qu'un tel combat PEUT exister pour ce
+ *    donjon, pas qu'il a eu lieu cette fois-ci (bug corrigé : l'ancienne version rattachait un
+ *    5e combat même sans archimonstre dedans, dès que `hasPreBossArchi` était vrai).
+ * 3. Salles précédentes : jusqu'à `dungeonRoomCount(dungeon) - 1` combats consécutifs
  *    supplémentaires (plus anciens encore), qu'ils soient gagnés ou perdus (garde-fou explicite :
- *    une salle perdue puis retentée reste correctement rattachée au groupe) — `+ 1` combat de plus
- *    si `hasPreBossArchi` (archimonstre optionnel avant le boss, ex. Kokokolantha). Les types à un
- *    seul combat (donjon 3 joueurs, boss ultime, brèche, arcade...) valent 1 : pas de salle à
- *    rattacher, seul le cluster de tentatives contre le boss s'applique. Un combat qui inclut
+ *    une salle perdue puis retentée reste correctement rattachée au groupe). Un combat qui inclut
  *    n'importe quel boss de donjon interrompt aussitôt ce ramassage (garde-fou : n'avale jamais la
  *    fin d'un run antérieur distinct).
  *
- * Un groupe d'un seul combat (donjon 3 joueurs/boss ultime gagné du premier coup, sans salle)
- * redevient une entrée `single` classique plutôt qu'un collapse à un seul élément.
+ * Un groupe d'un seul combat (salle manquante en tout début d'historique) redevient une entrée
+ * `single` classique plutôt qu'un collapse à un seul élément.
  */
 export function groupDungeonRuns<T extends DungeonGroupableFight>(
   records: readonly T[],
   findDungeon: (record: T) => CatalogDungeonEntry | null,
+  hasArchiEnemy: (record: T) => boolean,
 ): DungeonHistoryEntry<T>[] {
   const entries: DungeonHistoryEntry<T>[] = [];
   const consumed = new Array<boolean>(records.length).fill(false);
@@ -84,6 +95,14 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
 
     const dungeon = findDungeon(records[i]);
     if (!dungeon) {
+      entries.push({ kind: 'single', record: records[i] });
+      consumed[i] = true;
+      continue;
+    }
+
+    // Donjon à un seul combat : jamais regroupé (voir étape 0 de la doc ci-dessus), même en cas de
+    // tentatives répétées contre le même boss.
+    if (dungeonRoomCount(dungeon) === 1) {
       entries.push({ kind: 'single', record: records[i] });
       consumed[i] = true;
       continue;
@@ -102,9 +121,15 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
       j++;
     }
 
-    const extraSlots = dungeonRoomCount(dungeon) - 1 + (dungeon.hasPreBossArchi ? 1 : 0);
+    // Créneau archimonstre optionnel (voir étape 2) : consommé seulement s'il est réellement
+    // présent dans ce combat précis, jamais sur la seule foi de `hasPreBossArchi`.
+    if (dungeon.hasPreBossArchi && j < records.length && !findDungeon(records[j]) && hasArchiEnemy(records[j])) {
+      j++;
+    }
+
+    const roomSlots = dungeonRoomCount(dungeon) - 1;
     let roomsFound = 0;
-    while (roomsFound < extraSlots && j < records.length && !findDungeon(records[j])) {
+    while (roomsFound < roomSlots && j < records.length && !findDungeon(records[j])) {
       j++;
       roomsFound++;
     }
@@ -120,7 +145,7 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
     entries.push({
       kind: 'dungeonRun',
       dungeon,
-      fights: [...span].reverse(),
+      fights: span,
       representative: records[i],
     });
   }

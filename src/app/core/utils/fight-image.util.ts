@@ -88,10 +88,19 @@ export function findDungeonForEnemies(
  * Fonction PARAMÉTRÉE (pas un service) : `catalog` doit être un
  * `CatalogService` déjà injecté par l'appelant (composant), voir
  * getWakfuItemRarity (wakfu-item-rarity.data.ts) pour le même principe.
+ *
+ * `forceBossOwnImage` (faux par défaut) court-circuite le repli "donjon" de la priorité 1 : utilisé
+ * par fight-history.component.ts pour la ligne du combat de boss À L'INTÉRIEUR d'un regroupement de
+ * donjon déjà déplié (voir dungeon-run-grouping.util.ts) — l'image du donjon y est déjà portée par
+ * l'en-tête du regroupement (`entry.dungeon.pictureUrl`), la ligne du boss doit donc afficher SA
+ * propre illustration pour rester distinguable des salles au coup d'œil. Sans effet ailleurs
+ * (combat isolé hors regroupement, mode de tri "Type"...) : le comportement par défaut reste
+ * inchangé.
  */
 export function resolveFightImageInfo(
   catalog: CatalogService,
   enemyNames: readonly string[],
+  forceBossOwnImage = false,
 ): FightImageInfo {
   const entries = enemyNames
     .map((name) => catalog.findWakfuMonsterEntry(name))
@@ -99,7 +108,7 @@ export function resolveFightImageInfo(
 
   const bossEntry = entries.find((entry) => entry.isBoss);
   if (bossEntry) {
-    const dungeon = findDungeonForEnemies(catalog, enemyNames);
+    const dungeon = forceBossOwnImage ? null : findDungeonForEnemies(catalog, enemyNames);
     if (dungeon) {
       return {
         url: dungeon.pictureUrl,
