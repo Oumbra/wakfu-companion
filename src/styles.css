@@ -342,6 +342,9 @@ button.reset-btn:hover {
      header applicatif/de page, sans place au-dessus — voir CLAUDE.md)
    - .tooltip-align-left / .tooltip-align-right : ancré à gauche/droite au
      lieu de centré (éviter le débordement d'écran pour les éléments en bord)
+   - .tooltip-side-right : sur le côté droit au lieu d'au-dessus (élément collé
+     au bord GAUCHE de l'écran, ex. onglet replié — au-dessus serait tronqué
+     par le bord de la fenêtre, voir .combat-edge-tab)
    - .tooltip-multiline : largeur max + retour à la ligne (libellés longs/dynamiques) */
 [title],
 [data-tooltip] {
@@ -389,6 +392,14 @@ button.reset-btn:hover {
   top: 100%;
   margin-bottom: 0;
   margin-top: 6px;
+}
+.tooltip-side-right::after {
+  bottom: auto;
+  top: 50%;
+  left: 100%;
+  margin-bottom: 0;
+  margin-left: 6px;
+  transform: translateY(-50%);
 }
 .tooltip-multiline::after {
   white-space: normal;
