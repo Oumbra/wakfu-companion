@@ -69,6 +69,12 @@ export class ChatPanelComponent {
   protected readonly filters = signal<ChatFilter[]>(this.loadFilters());
   protected readonly newFilterText = signal('');
   protected readonly newFilterChannel = signal<ChatFilterChannel>('global');
+  /** Replié par défaut : l'entrée de filtre + le sélecteur de canal + les chips ne sont pas
+   * essentiels à la lecture du chat au quotidien — les masquer par défaut sous un collapse fin
+   * rend de la hauteur au fil de messages, surtout en mobile où chaque ligne compte (voir
+   * CLAUDE.md). Purement local à la session (pas de persistance) : rouvrir le panneau chat doit
+   * toujours repartir de cet état compact. */
+  protected readonly filtersExpanded = signal(false);
 
   private loadActiveChannels(): ReadonlySet<ChatChannelKey> {
     const stored = this.userData.read<ChatChannelKey[]>('chatActiveChannels');
@@ -167,6 +173,10 @@ export class ChatPanelComponent {
 
   protected isActive(key: ChatChannelKey): boolean {
     return this.activeChannels().has(key);
+  }
+
+  protected toggleFiltersExpanded(): void {
+    this.filtersExpanded.update((expanded) => !expanded);
   }
 
   protected setNewFilterText(value: string): void {

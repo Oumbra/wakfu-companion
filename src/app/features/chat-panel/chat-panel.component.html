@@ -25,48 +25,58 @@
     }
   </div>
 
-  <div class="search-bar">
-    <div class="filter-input-row">
-      <input
-        type="text"
-        [placeholder]="'chat.filterPlaceholder' | t"
-        [value]="newFilterText()"
-        (input)="setNewFilterText($any($event.target).value)"
-        (keydown.enter)="addFilter()"
-      />
-      <select
-        class="filter-channel-select"
-        [value]="newFilterChannel()"
-        (change)="setNewFilterChannel($any($event.target).value)"
-      >
-        <option value="global">{{ 'chat.filterChannelGlobal' | t }}</option>
-        @for (channel of channels; track channel.key) {
-          <option [value]="channel.key">{{ channelLabelKey(channel.key) | t }}</option>
-        }
-      </select>
-      <button class="primary-btn" (click)="addFilter()">{{ 'tracker.add' | t }}</button>
-    </div>
+  <div class="filters-toggle" (click)="toggleFiltersExpanded()">
+    <span class="filters-toggle-label">{{ 'chat.filtersToggle' | t }}</span>
     @if (filters().length > 0) {
-      <div class="filter-chips">
-        @for (filter of filters(); track filter.text + '|' + filter.channel) {
-          <span
-            class="filter-chip"
-            [style.--ch]="filterChannelColorVar(filter.channel)"
-            [attr.data-tooltip]="filterChannelLabelKey(filter.channel) | t"
-          >
-            {{ filter.text }}
-            <button
-              class="icon-btn reset-btn chip-remove-btn"
-              [attr.data-tooltip]="'tracker.remove' | t"
-              (click)="removeFilter(filter)"
-            >
-              ×
-            </button>
-          </span>
-        }
-      </div>
+      <span class="filters-toggle-count">{{ filters().length }}</span>
     }
+    <span class="caret" [class.expanded]="filtersExpanded()">▸</span>
   </div>
+
+  @if (filtersExpanded()) {
+    <div class="search-bar">
+      <div class="filter-input-row">
+        <input
+          type="text"
+          [placeholder]="'chat.filterPlaceholder' | t"
+          [value]="newFilterText()"
+          (input)="setNewFilterText($any($event.target).value)"
+          (keydown.enter)="addFilter()"
+        />
+        <select
+          class="filter-channel-select"
+          [value]="newFilterChannel()"
+          (change)="setNewFilterChannel($any($event.target).value)"
+        >
+          <option value="global">{{ 'chat.filterChannelGlobal' | t }}</option>
+          @for (channel of channels; track channel.key) {
+            <option [value]="channel.key">{{ channelLabelKey(channel.key) | t }}</option>
+          }
+        </select>
+        <button class="primary-btn" (click)="addFilter()">{{ 'tracker.add' | t }}</button>
+      </div>
+      @if (filters().length > 0) {
+        <div class="filter-chips">
+          @for (filter of filters(); track filter.text + '|' + filter.channel) {
+            <span
+              class="filter-chip"
+              [style.--ch]="filterChannelColorVar(filter.channel)"
+              [attr.data-tooltip]="filterChannelLabelKey(filter.channel) | t"
+            >
+              {{ filter.text }}
+              <button
+                class="icon-btn reset-btn chip-remove-btn"
+                [attr.data-tooltip]="'tracker.remove' | t"
+                (click)="removeFilter(filter)"
+              >
+                ×
+              </button>
+            </span>
+          }
+        </div>
+      }
+    </div>
+  }
 
   <div class="panel-body chat-list" #chatList (scroll)="onScroll()">
     @if (filteredMessages().length === 0) {
