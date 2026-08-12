@@ -108,15 +108,30 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
 
+      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'colorblind'">
+        <div class="panel-body">
           <div class="profile-field profile-field-wide">
             <div class="profile-label-row">
-              <label class="profile-label">{{ 'profile.colorblindLabel' | t }}</label>
+              <label class="profile-label">
+                {{ 'profile.colorblindLabel' | t }}
+                <button
+                  type="button"
+                  class="icon-btn help-icon-btn"
+                  [attr.data-tooltip]="'help.tooltip' | t"
+                  (click)="helpModal.open('profileColorblind')"
+                >
+                  ?
+                </button>
+              </label>
             </div>
-            <div class="icon-switch icon-switch-4 colorblind-switch">
+            <div class="icon-switch icon-switch-3 colorblind-switch">
               <span
                 class="icon-switch-highlight"
-                [style.transform]="colorblindHighlightTransform()"
+                [class.is-right]="colorblind.profile() === 'redGreen'"
+                [class.is-far-right]="colorblind.profile() === 'tritanopia'"
               ></span>
               @for (opt of colorblindOptions; track opt.value) {
                 <button

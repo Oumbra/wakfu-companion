@@ -320,12 +320,6 @@ button.badge-close-btn {
 .icon-switch-highlight.is-far-right {
   transform: translateX(200%);
 }
-/* Variante à 4 options (voir `.colorblind-switch`, profile-page) : la position du fond glissant
-   est calculée en JS ([style.transform], pas de 3e/4e classe modificatrice à ajouter ici — les
-   noms `.is-right`/`.is-far-right` n'ont de sens que jusqu'à 3 positions). */
-.icon-switch-4 .icon-switch-highlight {
-  width: 25%;
-}
 
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,
@@ -586,10 +580,10 @@ button.icon-btn.help-icon-btn {
 
 /* Mode daltonien (ColorblindService, `data-colorblind` posé sur <html>) : ne touche QUE les
    paires de couleurs qui posent réellement problème pour le profil concerné — pas de palette
-   "universelle" plaquée sur les 3 profils, la confusion rouge/vert (protanopie/deutéranopie)
-   n'est pas celle du bleu/jaune (tritanopie). */
-:root[data-colorblind='protanopia'],
-:root[data-colorblind='deuteranopia'] {
+   "universelle" plaquée sur les 2 profils, la confusion rouge/vert (protanopie/deutéranopie,
+   fusionnées en une seule option 'redGreen' — même correction pour les deux, voir
+   ColorblindService) n'est pas celle du bleu/jaune (tritanopie). */
+:root[data-colorblind='redGreen'] {
   /* Victoire/défaite : vert/rouge remplacés par bleu/orange, la paire la plus sûre pour l'axe
      rouge-vert (les deux profils partagent cette même confusion). */
   --btn-active-green: #3391ff;
@@ -609,12 +603,10 @@ button.icon-btn.help-icon-btn {
    niveau racine. Seules "rare" (vert) et "légendaire" (jaune-vert) sont concernées : trop proches
    l'une de l'autre ET de "mythique" (orange) sur l'axe rouge-vert — les autres raretés restent déjà
    suffisamment distinctes (bleu, violet, rose, gris). */
-:root[data-colorblind='protanopia'] .rarity-rare,
-:root[data-colorblind='deuteranopia'] .rarity-rare {
+:root[data-colorblind='redGreen'] .rarity-rare {
   --rarity-color: #17b8a0;
 }
-:root[data-colorblind='protanopia'] .rarity-legendary,
-:root[data-colorblind='deuteranopia'] .rarity-legendary {
+:root[data-colorblind='redGreen'] .rarity-legendary {
   --rarity-color: #e0c200;
 }
 :root[data-colorblind='tritanopia'] {
