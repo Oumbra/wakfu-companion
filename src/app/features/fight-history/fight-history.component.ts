@@ -74,10 +74,11 @@ export class FightHistoryComponent {
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
-  /** Combats de donjon actuellement repliés (vide par défaut, tout déplié — même convention que
-   * `collapsedGroupKeys` ci-dessous), clé = `id` du combat représentatif (le plus récent du run,
-   * voir `DungeonHistoryEntry.representative`), stable et unique. */
-  private readonly collapsedDungeonRunIds = signal<ReadonlySet<number>>(new Set());
+  /** Combats de donjon actuellement DÉPLIÉS (vide par défaut, tout REPLIÉ — à l'inverse de la
+   * convention "vide = tout déplié" utilisée par `collapsedGroupKeys` ci-dessous : un regroupement
+   * de donjon doit toujours démarrer fermé, voir CLAUDE.md), clé = `id` du combat représentatif (le
+   * plus récent du run, voir `DungeonHistoryEntry.representative`), stable et unique. */
+  private readonly expandedDungeonRunIds = signal<ReadonlySet<number>>(new Set());
 
   /** Combats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedFights). */
@@ -88,11 +89,10 @@ export class FightHistoryComponent {
    * `groupDungeonRuns` préserve cet ordre global (une entrée de donjon prend la position de son
    * combat le plus récent). */
   protected readonly historyEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() =>
-    groupDungeonRuns(this.fightHistory(), (record) =>
-      findDungeonForEnemies(
-        this.catalog,
-        this.enemyRowsFor(record).map((row) => row.name),
-      ),
+    groupDungeonRuns(
+      this.fightHistory(),
+      (record) => findDungeonForEnemies(this.catalog, this.enemyRowsFor(record).map((row) => row.name)),
+      (record) => this.hasArchiEnemy(record),
     ),
   );
 
@@ -174,16 +174,17 @@ export class FightHistoryComponent {
   }
 
   /** État de repli d'un collapse de donjon, indexé par `id` du combat représentatif (le plus
-   * récent du run) — même convention "vide = tout déplié" que `collapsedGroupKeys` ci-dessus. */
+   * récent du run) — toujours replié tant qu'il n'a pas été explicitement déplié une fois (voir
+   * `expandedDungeonRunIds` ci-dessus, convention inversée par rapport à `collapsedGroupKeys`). */
   protected isDungeonRunCollapsed(representativeId: number): boolean {
-    return this.collapsedDungeonRunIds().has(representativeId);
+    return !this.expandedDungeonRunIds().has(representativeId);
   }
 
   protected toggleDungeonRunCollapsed(representativeId: number): void {
-    const next = new Set(this.collapsedDungeonRunIds());
+    const next = new Set(this.expandedDungeonRunIds());
     if (next.has(representativeId)) next.delete(representativeId);
     else next.add(representativeId);
-    this.collapsedDungeonRunIds.set(next);
+    this.expandedDungeonRunIds.set(next);
   }
 
   /** Nombre total de combats individuels d'un groupe jour/lieu/type — un run de donjon replié
@@ -242,19 +243,33 @@ export class FightHistoryComponent {
     return record.rows.filter((r) => this.classifier.classify(r.name) === 'enemy');
   }
 
-  /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir resolveFightImageInfo. */
-  protected fightImageUrl(record: FightRecord): string | null {
+  /** Vrai si un archimonstre (`CatalogMonsterEntry.isArchi`) figure parmi les ennemis du combat —
+   * utilisé par `groupDungeonRuns` pour n'ajouter le créneau "archimonstre pré-boss" que lorsqu'il
+   * est réellement présent (voir dungeon-run-grouping.util.ts, `hasPreBossArchi`). */
+  private hasArchiEnemy(record: HistoryFight): boolean {
+    return this.enemyRowsFor(record).some(
+      (row) => this.catalog.findWakfuMonsterEntry(row.name)?.isArchi === true,
+    );
+  }
+
+  /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir
+   * resolveFightImageInfo. `isDungeonBossRow` (voir template) force l'illustration propre du boss
+   * plutôt que celle du donjon pour la ligne de boss À L'INTÉRIEUR d'un regroupement déjà déplié
+   * (l'image du donjon est déjà portée par l'en-tête du regroupement, voir template). */
+  protected fightImageUrl(record: FightRecord, isDungeonBossRow = false): string | null {
     return resolveFightImageInfo(
       this.catalog,
       this.enemyRowsFor(record).map((row) => row.name),
+      isDungeonBossRow,
     ).url;
   }
 
   /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
-  protected fightImageTooltip(record: FightRecord): string | null {
+  protected fightImageTooltip(record: FightRecord, isDungeonBossRow = false): string | null {
     const source = resolveFightImageInfo(
       this.catalog,
       this.enemyRowsFor(record).map((row) => row.name),
+      isDungeonBossRow,
     ).tooltipSource;
     return source ? source.names[this.i18n.locale()] : null;
   }

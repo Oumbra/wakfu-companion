@@ -202,6 +202,34 @@
 .dungeon-run-summary {
   border-left: 3px solid var(--accent);
 }
+/* Nom du donjon, entre son image et le badge victoire/défaite (voir CLAUDE.md — le label d'un
+   regroupement doit afficher l'image ET le nom du donjon, pas seulement l'image). `min-width: 0` +
+   ellipsis : peut être compressé par `.dungeon-run-meta` (flush right) sur un panneau étroit
+   (mobile) sans jamais pousser celui-ci hors de vue. */
+.dungeon-run-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--text-bright);
+}
+/* Nombre de combats - durée totale du run, plaqué à droite — même design que `.fight-group-count`
+   (badge/pill du bandeau de regroupement jour/lieu/type) plutôt que le texte brut de `.fight-meta`
+   utilisé par un combat isolé, pour rester visuellement distinct d'un simple `.fight-meta`. */
+.dungeon-run-meta {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
 /* Combats du run une fois déplié : fond légèrement distinct + léger retrait, pour rester lisible
    comme "contenu d'un groupe" plutôt que de se confondre avec les combats isolés du reste de la
    liste. `.fight-entry`/`.fight-summary` internes gardent leur apparence habituelle (aucun style
