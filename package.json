@@ -13,6 +13,7 @@
     "test:server": "vitest run --config vitest.server.config.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:verify-migrations": "tsx server/import/verify-migrations.ts",
     "catalog:import": "tsx server/import/import-catalog.ts",
     "install:ci": "npx --yes npm@10.9.8 install",
     "prepare": "husky"
