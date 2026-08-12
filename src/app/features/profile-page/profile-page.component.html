@@ -6,7 +6,17 @@
       [attr.data-tooltip]="'profile.exportData' | t"
       (click)="exportData()"
     >
-      ↓
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 3v12M7 10l5 5 5-5" />
+        <path d="M4 19h16" />
+      </svg>
     </button>
     <button
       class="icon-btn tooltip-below tooltip-align-right"
@@ -14,7 +24,17 @@
       [attr.data-tooltip]="'profile.importData' | t"
       (click)="triggerImport(importFileInput)"
     >
-      ↑
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M12 15V3M7 8l5-5 5 5" />
+        <path d="M4 19h16" />
+      </svg>
     </button>
     <input
       #importFileInput
@@ -50,83 +70,154 @@
             <span class="profile-rail-icon">
               @switch (tab.id) {
                 @case ('avatar') {
-                  ◐
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="7" r="4" />
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  </svg>
                 }
                 @case ('colorblind') {
-                  ◎
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
                 }
                 @case ('connection') {
-                  ⇄
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                  </svg>
                 }
                 @case ('alerts') {
-                  ♪
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
                 }
                 @case ('characters') {
-                  ☰
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                  </svg>
                 }
               }
             </span>
-            <span class="profile-rail-label">{{ tab.label | t }}</span>
+            <span class="profile-rail-label">
+              <!-- Libellés rail plus explicites que les onglets mobile (voir CLAUDE.md) : rail
+                   seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
+              @switch (tab.id) {
+                @case ('avatar') {
+                  {{ 'profile.railIdentity' | t }}
+                }
+                @case ('colorblind') {
+                  {{ 'profile.railAccessibility' | t }}
+                }
+                @case ('alerts') {
+                  {{ 'profile.railSoundAlerts' | t }}
+                }
+                @default {
+                  {{ tab.label | t }}
+                }
+              }
+            </span>
+            @if (tab.id === 'characters') {
+              <span class="profile-rail-count">{{ totalCharacterCount() }}</span>
+            }
           </button>
         }
       </nav>
 
       <div class="panels-row">
         <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
-          <div class="profile-field profile-field-wide">
-            <div class="panel-body">
-              <div class="profile-label-row">
-                <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
-              </div>
-              <div class="identity-row">
-                <div class="identity-left">
-                  <div class="avatar-preview">
-                    @if (profile.avatarIndex() !== null) {
-                      <app-avatar-icon [index]="profile.avatarIndex()!" />
-                    } @else {
-                      <span class="avatar-preview-question">?</span>
-                    }
-                  </div>
-                  @if (editingPseudo()) {
-                    <input
-                      #pseudoEditInput
-                      type="text"
-                      class="pseudo-edit-input"
-                      [placeholder]="'profile.pseudoPlaceholder' | t"
-                      [value]="profile.pseudo()"
-                      (blur)="commitPseudo($any($event.target).value)"
-                      (keydown)="onPseudoKeydown($event)"
-                    />
+          <div class="panel-body">
+            <div class="profile-label-row">
+              <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
+            </div>
+            <p class="profile-section-desc">{{ 'profile.avatarDesc' | t }}</p>
+            <div class="identity-row">
+              <div class="identity-left">
+                <div class="avatar-preview">
+                  @if (profile.avatarIndex() !== null) {
+                    <app-avatar-icon [index]="profile.avatarIndex()!" />
                   } @else {
-                    <div class="profile-preview-name-row">
-                      <span class="profile-preview-name">{{
-                        profile.pseudo() || ('profile.noPseudo' | t)
-                      }}</span>
-                      <button
-                        class="icon-btn pseudo-edit-btn"
-                        type="button"
-                        [attr.data-tooltip]="'profile.editPseudo' | t"
-                        (click)="startEditPseudo()"
-                      >
-                        <app-icon name="edit" [size]="13" />
-                      </button>
-                    </div>
+                    <span class="avatar-preview-question">?</span>
                   }
                 </div>
-
-                <div class="profile-field identity-right">
-                  <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
-                  <div class="avatar-grid">
-                    @for (i of avatarIndexes; track i) {
-                      <button
-                        class="avatar-cell-btn"
-                        [class.selected]="profile.avatarIndex() === i"
-                        (click)="chooseAvatar(i)"
-                      >
-                        <app-avatar-icon [index]="i" />
-                      </button>
-                    }
+                @if (editingPseudo()) {
+                  <input
+                    #pseudoEditInput
+                    type="text"
+                    class="pseudo-edit-input"
+                    [placeholder]="'profile.pseudoPlaceholder' | t"
+                    [value]="profile.pseudo()"
+                    (blur)="commitPseudo($any($event.target).value)"
+                    (keydown)="onPseudoKeydown($event)"
+                  />
+                } @else {
+                  <div class="profile-preview-name-row">
+                    <span class="profile-preview-name">{{
+                      profile.pseudo() || ('profile.noPseudo' | t)
+                    }}</span>
+                    <button
+                      class="icon-btn pseudo-edit-btn"
+                      type="button"
+                      [attr.data-tooltip]="'profile.editPseudo' | t"
+                      (click)="startEditPseudo()"
+                    >
+                      <app-icon name="edit" [size]="13" />
+                    </button>
                   </div>
+                }
+              </div>
+
+              <div class="profile-field identity-right">
+                <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+                <div class="avatar-grid">
+                  @for (i of avatarIndexes; track i) {
+                    <button
+                      class="avatar-cell-btn"
+                      [class.selected]="profile.avatarIndex() === i"
+                      (click)="chooseAvatar(i)"
+                    >
+                      <app-avatar-icon [index]="i" />
+                    </button>
+                  }
                 </div>
               </div>
             </div>
@@ -149,7 +240,7 @@
                   </button>
                 </label>
               </div>
-              <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
+              <p class="profile-section-desc">{{ 'profile.colorblindHint' | t }}</p>
               <div class="icon-switch icon-switch-3 colorblind-switch">
                 <span
                   class="icon-switch-highlight"
@@ -208,6 +299,7 @@
                   </button>
                 </label>
               </div>
+              <p class="profile-section-desc">{{ 'auth.login.intro' | t }}</p>
 
               @if (auth.isAuthenticated()) {
                 <button type="button" class="manage-account-btn" (click)="openAccount()">
@@ -273,7 +365,6 @@
                 </button>
               </div>
 
-              <p class="login-intro login-mobile-only">{{ 'auth.login.intro' | t }}</p>
               <p class="login-guest-note login-mobile-only">{{ 'auth.login.guestNote' | t }}</p>
             </div>
           </div>
@@ -295,6 +386,7 @@
                   </button>
                 </label>
               </div>
+              <p class="profile-section-desc">{{ 'profile.alertsDesc' | t }}</p>
 
               <div class="alert-timing-test">
                 <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
@@ -309,58 +401,42 @@
               </div>
 
               <div class="alert-timing-control">
-                <div class="alert-timing-label">
-                  <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
-                    <app-icon name="clock-long" [strokeWidth]="1.8" [size]="17" />
-                  </div>
-                  <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
-                </div>
-                <div class="alert-timing-actions">
-                  <div
-                    class="alert-timing-duration"
-                    [class.is-disabled]="profile.alertManualClose()"
+                <span class="alert-timing-text">
+                  {{ 'profile.alertTimingLabel' | t }} :
+                  <input
+                    type="number"
+                    class="alert-duration-input"
+                    min="0.5"
+                    step="0.5"
+                    [disabled]="profile.alertManualClose()"
+                    [value]="profile.alertDurationSeconds()"
+                    (input)="onDurationInput($any($event.target).value)"
+                  />
+                  <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
+                </span>
+                <div class="icon-switch alert-mode-switch">
+                  <span
+                    class="icon-switch-highlight"
+                    [class.is-right]="profile.alertManualClose()"
+                  ></span>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="!profile.alertManualClose()"
+                    [attr.data-tooltip]="autoCloseTooltip()"
+                    (click)="setManualClose(false)"
                   >
-                    <input
-                      type="number"
-                      class="alert-duration-input"
-                      min="0.5"
-                      step="0.5"
-                      [disabled]="profile.alertManualClose()"
-                      [value]="profile.alertDurationSeconds()"
-                      (input)="onDurationInput($any($event.target).value)"
-                    />
-                    <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
-                  </div>
-
-                  <label
-                    class="manual-close-switch tooltip-align-right tooltip-multiline"
-                    [attr.data-tooltip]="manualCloseTooltip()"
+                    {{ 'profile.autoCloseLabel' | t }}
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-switch-option"
+                    [class.selected]="profile.alertManualClose()"
+                    [attr.data-tooltip]="'profile.manualCloseTooltip' | t"
+                    (click)="setManualClose(true)"
                   >
-                    <input
-                      type="checkbox"
-                      class="switch-input"
-                      [checked]="profile.alertManualClose()"
-                      (change)="setManualClose($any($event.target).checked)"
-                    />
-                    <span class="switch-track"><span class="switch-thumb"></span></span>
-                    <span class="switch-label" [class.is-disabled]="!profile.alertManualClose()">{{
-                      'profile.manualCloseLabel' | t
-                    }}</span>
-                    <svg
-                      class="switch-hand-icon"
-                      [class.is-disabled]="!profile.alertManualClose()"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path
-                        d="M9 11.5V5a1.5 1.5 0 0 1 3 0v5.5M12 10.5V4a1.5 1.5 0 0 1 3 0v6.5M15 10.5V6a1.5 1.5 0 0 1 3 0v8c0 3.5-2 6.5-6 6.5s-6-1.8-7-4l-1.6-3.4a1.4 1.4 0 0 1 2.5-1.3L7 14"
-                      />
-                    </svg>
-                  </label>
+                    {{ 'profile.manualCloseLabel' | t }}
+                  </button>
                 </div>
               </div>
 
@@ -430,6 +506,40 @@
                   </button>
                 </label>
               </div>
+              <p class="profile-section-desc">{{ 'profile.rosterDesc' | t }}</p>
+            </div>
+
+            <div class="roster-layout">
+              <!-- Liste verticale des comptes, desktop uniquement (voir CLAUDE.md, proposition A) —
+                   remplace la barre d'onglets horizontale ci-dessous, devenue mobileOnly. Mêmes
+                   `selectedAccountId()`/`selectAccount()`/`tabLabel()` que la barre : seul
+                   l'habillage change. -->
+              <nav class="roster-account-rail">
+                @for (account of roster.accounts(); track account.id; let i = $index) {
+                  <button
+                    type="button"
+                    class="profile-rail-btn roster-account-rail-btn"
+                    [class.active]="selectedAccountId() === account.id"
+                    (click)="selectAccount(account.id)"
+                  >
+                    {{ tabLabel(account, i) }}
+                  </button>
+                }
+                <button type="button" class="roster-account-rail-add" (click)="addAccount()">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>{{ 'profile.rosterAddAccount' | t }}</span>
+                </button>
+              </nav>
 
               <div class="roster-tabs-wrapper">
                 <app-tab-bar
@@ -438,6 +548,7 @@
                   (activeIdChange)="selectAccount($event)"
                   (remove)="removeAccount($event)"
                   sheetTitle="profile.rosterLabel"
+                  [mobileOnly]="true"
                 >
                   <button
                     class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"

@@ -132,6 +132,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.editPseudo': 'Modifier le pseudo',
     'profile.pseudoPlaceholder': 'Votre pseudo...',
     'profile.avatarLabel': 'Avatar',
+    'profile.avatarDesc': "Personnalisez votre pseudo et l'avatar affiché dans l'application.",
     'profile.colorblindLabel': 'Mode daltonien',
     'profile.colorblindOff': 'Désact.',
     'profile.colorblindRedGreen': 'Protanopie & Deutéranopie',
@@ -151,7 +152,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabCharacters': 'Personnages',
     'profile.tabConnection': 'Connexion',
     'profile.tabListTooltip': 'Tous les onglets',
+    'profile.railIdentity': 'Identité',
+    'profile.railAccessibility': 'Accessibilité',
+    'profile.railSoundAlerts': 'Alertes sonores',
     'profile.soundItemsLabel': 'Alerte',
+    'profile.alertsDesc':
+      "Objets qui déclenchent une alerte sonore et un message à l'écran lorsqu'ils sont ramassés.",
     'profile.testSound': "Tester le son de l'alerte",
     'profile.soundItemPlaceholder': "Nom de l'objet...",
     'profile.soundOn': 'Son activé',
@@ -160,6 +166,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.closeToast': 'Fermer',
     'profile.alertTimingLabel': "Fermeture de l'alerte",
     'profile.secondsUnit': 'sec.',
+    'profile.autoCloseLabel': 'Auto',
     'profile.manualCloseLabel': 'Manuelle',
     'profile.manualCloseTooltip': "Le toast se fermera à l'appui du bouton ×.",
     'profile.autoCloseTooltipSingular':
@@ -167,6 +174,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'Le toast se fermera automatiquement au bout de {{seconds}} secondes.',
     'profile.rosterLabel': 'Personnages',
+    'profile.rosterDesc':
+      'Déclarez vos personnages pour les distinguer des ennemis dans le suivi et calculer vos gains par compte.',
     'profile.gameServerNone': 'Serveur ?',
     'profile.rosterAddAccount': 'Ajouter un compte',
     'profile.rosterEmpty': 'Aucun compte déclaré.',
@@ -474,6 +483,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.editPseudo': 'Edit nickname',
     'profile.pseudoPlaceholder': 'Your nickname...',
     'profile.avatarLabel': 'Avatar',
+    'profile.avatarDesc': 'Customize your nickname and the avatar shown in the app.',
     'profile.colorblindLabel': 'Colorblind mode',
     'profile.colorblindOff': 'Off',
     'profile.colorblindRedGreen': 'Protanopia & Deuteranopia',
@@ -493,7 +503,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabCharacters': 'Characters',
     'profile.tabConnection': 'Sign in',
     'profile.tabListTooltip': 'All tabs',
+    'profile.railIdentity': 'Identity',
+    'profile.railAccessibility': 'Accessibility',
+    'profile.railSoundAlerts': 'Sound alerts',
     'profile.soundItemsLabel': 'Alert',
+    'profile.alertsDesc': 'Items that trigger a sound alert and an on-screen toast when picked up.',
     'profile.testSound': 'Test the alert sound',
     'profile.soundItemPlaceholder': 'Item name...',
     'profile.soundOn': 'Sound on',
@@ -502,6 +516,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.closeToast': 'Close',
     'profile.alertTimingLabel': 'Alert close timing',
     'profile.secondsUnit': 'sec.',
+    'profile.autoCloseLabel': 'Auto',
     'profile.manualCloseLabel': 'Manual',
     'profile.manualCloseTooltip': 'The toast will only close when you press the × button.',
     'profile.autoCloseTooltipSingular':
@@ -509,6 +524,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'The toast will close automatically after {{seconds}} seconds.',
     'profile.rosterLabel': 'Characters',
+    'profile.rosterDesc':
+      'Declare your characters to tell them apart from enemies in the tracker and compute your earnings per account.',
     'profile.gameServerNone': 'Server ?',
     'profile.rosterAddAccount': 'Add an account',
     'profile.rosterEmpty': 'No account declared.',
@@ -810,6 +827,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.editPseudo': 'Editar apodo',
     'profile.pseudoPlaceholder': 'Tu apodo...',
     'profile.avatarLabel': 'Avatar',
+    'profile.avatarDesc': 'Personaliza tu apodo y el avatar mostrado en la aplicación.',
     'profile.colorblindLabel': 'Modo daltónico',
     'profile.colorblindOff': 'Desact.',
     'profile.colorblindRedGreen': 'Protanopia y Deuteranopia',
@@ -829,7 +847,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabCharacters': 'Personajes',
     'profile.tabConnection': 'Inicio de sesión',
     'profile.tabListTooltip': 'Todas las pestañas',
+    'profile.railIdentity': 'Identidad',
+    'profile.railAccessibility': 'Accesibilidad',
+    'profile.railSoundAlerts': 'Alertas sonoras',
     'profile.soundItemsLabel': 'Alerta',
+    'profile.alertsDesc':
+      'Objetos que activan una alerta sonora y un aviso en pantalla al recogerlos.',
     'profile.testSound': 'Probar el sonido de la alerta',
     'profile.soundItemPlaceholder': 'Nombre del objeto...',
     'profile.soundOn': 'Sonido activado',
@@ -838,6 +861,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.closeToast': 'Cerrar',
     'profile.alertTimingLabel': 'Cierre de la alerta',
     'profile.secondsUnit': 'seg.',
+    'profile.autoCloseLabel': 'Auto',
     'profile.manualCloseLabel': 'Manual',
     'profile.manualCloseTooltip': 'El aviso solo se cerrará al pulsar el botón ×.',
     'profile.autoCloseTooltipSingular':
@@ -845,6 +869,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'El aviso se cerrará automáticamente después de {{seconds}} segundos.',
     'profile.rosterLabel': 'Personajes',
+    'profile.rosterDesc':
+      'Declara tus personajes para distinguirlos de los enemigos en el seguimiento y calcular tus ganancias por cuenta.',
     'profile.gameServerNone': '¿Servidor?',
     'profile.rosterAddAccount': 'Añadir una cuenta',
     'profile.rosterEmpty': 'Ninguna cuenta declarada.',
@@ -1090,7 +1116,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.searchPlaceholder': 'Nome do inimigo ou do recurso a rastrear...',
     'tracker.add': 'Adicionar',
     'tracker.empty': 'Adicione um inimigo ou um recurso a rastrear.',
-    'tracker.remove': 'Remover',  
+    'tracker.remove': 'Remover',
     'tracker.reset': 'Reiniciar para zero',
     'tracker.bulkDeleteStart': 'Excluir vários',
     'tracker.bulkDeleteExit': 'Sair da seleção',
@@ -1149,6 +1175,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.editPseudo': 'Editar apelido',
     'profile.pseudoPlaceholder': 'Seu apelido...',
     'profile.avatarLabel': 'Avatar',
+    'profile.avatarDesc': 'Personalize seu apelido e o avatar exibido no aplicativo.',
     'profile.colorblindLabel': 'Modo daltônico',
     'profile.colorblindOff': 'Desat.',
     'profile.colorblindRedGreen': 'Protanopia e Deuteranopia',
@@ -1168,7 +1195,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.tabCharacters': 'Personagens',
     'profile.tabConnection': 'Iniciar sessão',
     'profile.tabListTooltip': 'Todos os separadores',
+    'profile.railIdentity': 'Identidade',
+    'profile.railAccessibility': 'Acessibilidade',
+    'profile.railSoundAlerts': 'Alertas sonoros',
     'profile.soundItemsLabel': 'Alerta',
+    'profile.alertsDesc':
+      'Itens que disparam um alerta sonoro e um aviso na tela ao serem coletados.',
     'profile.testSound': 'Testar o som do alerta',
     'profile.soundItemPlaceholder': 'Nome do item...',
     'profile.soundOn': 'Som ativado',
@@ -1177,6 +1209,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.closeToast': 'Fechar',
     'profile.alertTimingLabel': 'Fechamento do aviso',
     'profile.secondsUnit': 'seg.',
+    'profile.autoCloseLabel': 'Auto',
     'profile.manualCloseLabel': 'Manual',
     'profile.manualCloseTooltip': 'O aviso só vai fechar ao pressionar o botão ×.',
     'profile.autoCloseTooltipSingular':
@@ -1184,6 +1217,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.autoCloseTooltipPlural':
       'O aviso vai fechar automaticamente após {{seconds}} segundos.',
     'profile.rosterLabel': 'Personagens',
+    'profile.rosterDesc':
+      'Declare seus personagens para distingui-los dos inimigos no acompanhamento e calcular seus ganhos por conta.',
     'profile.gameServerNone': 'Servidor ?',
     'profile.rosterAddAccount': 'Adicionar uma conta',
     'profile.rosterEmpty': 'Nenhuma conta declarada.',
