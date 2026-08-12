@@ -17,7 +17,12 @@ export const routes: Routes = [
     data: { view: 'profile' },
     canActivate: [fileConnectedGuard],
   },
-  { path: 'account', component: RouteBridgeComponent, data: { view: 'account' } },
+  { 
+    path: 'account', 
+    component: RouteBridgeComponent, 
+    data: { view: 'account' },
+    canActivate: [fileConnectedGuard],
+  },
   {
     path: 'legal-notice',
     component: RouteBridgeComponent,

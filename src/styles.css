@@ -480,6 +480,8 @@ button.reset-btn:hover {
   overflow: hidden;
   height: 100%;
   min-height: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
 }
 
 .panel-header {
@@ -542,9 +544,8 @@ button.icon-btn.help-icon-btn {
     display: none;
   }
   .panels-row .tool-panel {
-    border-top: none;
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
+    border: none;
+    border-radius: 0;
   }
 }
 
