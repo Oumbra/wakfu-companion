@@ -37,10 +37,10 @@ const DEFAULT_SOUND_ITEM_NAMES: readonly string[] = [
   'Pierre de vitesse',
   'Pierre ultime',
   'Influence III',
-  'Plan « Epée de Bonta »', 
-  'Plan « Epée de Brâkmar »',
-  'Plan « Epée de Sufokia »',
-  "Plan « Epée d'Amakna »"
+  'Plan "Epée de Bonta"', 
+  'Plan "Epée de Brâkmar"',
+  'Plan "Epée de Sufokia"',
+  'Plan "Epée d\'Amakna"'
 ];
 
 /** Profil joueur local : pseudo, avatar (planche de classes Ankama) et liste d'objets à alerte sonore au ramassage. */
@@ -68,10 +68,8 @@ export class ProfileService {
     const stored = this.userData.read<StoredProfile>('profile');
     this.pseudo.set(stored?.pseudo ?? '');
     this.avatarIndex.set(stored?.avatarIndex ?? null);
-    this.soundItems.set(
-      stored?.soundItems ??
-        DEFAULT_SOUND_ITEM_NAMES.map((name) => ({ name, enabled: true, isDefault: true })),
-    );
+    const mergedSoundItems = this.mergeWithDefaultSoundItems(stored?.soundItems);
+    this.soundItems.set(mergedSoundItems);
     // Migration : une ancienne version stockait 0 = "fermeture manuelle" dans alertDurationSeconds.
     if (stored?.alertDurationSeconds === 0) {
       this.alertDurationSeconds.set(DEFAULT_ALERT_DURATION_SECONDS);
@@ -81,6 +79,27 @@ export class ProfileService {
       this.alertManualClose.set(stored?.alertManualClose ?? false);
     }
     this.characterViewMode.set(stored?.characterViewMode ?? 'list');
+    // Un profil existant dont la fusion a ajouté de nouveaux objets par défaut doit être
+    // re-sauvegardé, sinon la fusion (mémoire uniquement) est perdue au prochain rechargement
+    // tant que l'utilisateur ne déclenche pas lui-même une autre écriture (persist()).
+    if (stored?.soundItems && mergedSoundItems !== stored.soundItems) {
+      this.persist();
+    }
+  }
+
+  /**
+   * Fusionne les objets par défaut avec ceux déjà stockés : un profil existant garde son
+   * ordre/état `enabled` d'origine, mais tout nouvel objet ajouté à `DEFAULT_SOUND_ITEM_NAMES`
+   * depuis la dernière sauvegarde du profil est ajouté à la suite (sinon un profil déjà
+   * initialisé ne verrait jamais les nouveaux défauts — `stored.soundItems` prime toujours
+   * sur la constante une fois qu'il existe).
+   */
+  private mergeWithDefaultSoundItems(stored: SoundItemEntry[] | undefined): SoundItemEntry[] {
+    const defaults = DEFAULT_SOUND_ITEM_NAMES.map((name) => ({ name, enabled: true, isDefault: true }));
+    if (!stored) return defaults;
+    const existingNames = new Set(stored.map((e) => e.name.toLowerCase()));
+    const missingDefaults = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
+    return missingDefaults.length > 0 ? [...stored, ...missingDefaults] : stored;
   }
 
   setPseudo(value: string): void {
