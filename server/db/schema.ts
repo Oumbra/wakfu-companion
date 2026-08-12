@@ -128,7 +128,7 @@ export const dungeons = pgTable(
     es: text('es').notNull(),
     pt: text('pt').notNull(),
     level: integer('level').notNull(),
-    tranche: integer('tranche').notNull(),
+    bracket: integer('bracket').notNull(),
     isBreach: boolean('is_breach').notNull(),
     isUltimateBreach: boolean('is_ultimate_breach').notNull(),
     bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)

@@ -83,7 +83,7 @@ interface RawDungeon {
   es: string;
   pt: string;
   level: number;
-  tranche: number;
+  bracket: number;
   isBreach: boolean;
   isUltimateBreach: boolean;
   bossMonsterId?: number | null;
@@ -229,7 +229,7 @@ async function main(): Promise<void> {
     es: dungeon.es,
     pt: dungeon.pt,
     level: dungeon.level,
-    tranche: dungeon.tranche,
+    bracket: dungeon.bracket,
     isBreach: dungeon.isBreach,
     isUltimateBreach: dungeon.isUltimateBreach,
     bossMonsterId: dungeon.bossMonsterId ?? null,
