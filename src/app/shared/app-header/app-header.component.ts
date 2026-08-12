@@ -46,8 +46,14 @@ export class AppHeaderComponent {
   protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
 
+  /** Oublie le fichier connecté ET ramène systématiquement sur la vue principale (sélection de
+   * fichier), quelle que soit la page où l'utilisateur se trouvait au moment du clic (le bouton
+   * reste visible partout, l'en-tête étant rendu une seule fois au niveau racine) — sans ce
+   * `goTo`, une page comme le profil restait affichée alors qu'elle nécessite justement un
+   * fichier connecté (voir le guard de route associé, core/routes/file-connected.guard.ts). */
   protected onChangeFile(): void {
     void this.logFileAccess.forgetFile();
+    this.nav.goTo('main');
   }
 
   /** Réinitialise toute la session en cours (kamas, combats, historique, watchlist...) — action

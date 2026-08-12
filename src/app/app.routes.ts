@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { RouteBridgeComponent } from './core/routes/route-bridge.component';
+import { fileConnectedGuard } from './core/routes/file-connected.guard';
 
 /**
  * URL dédiée par page (voir RouteBridgeComponent/RouteSyncService pour le mécanisme complet) :
@@ -10,7 +11,12 @@ import { RouteBridgeComponent } from './core/routes/route-bridge.component';
  */
 export const routes: Routes = [
   { path: '', component: RouteBridgeComponent, data: { view: 'main' } },
-  { path: 'profile', component: RouteBridgeComponent, data: { view: 'profile' } },
+  {
+    path: 'profile',
+    component: RouteBridgeComponent,
+    data: { view: 'profile' },
+    canActivate: [fileConnectedGuard],
+  },
   { path: 'account', component: RouteBridgeComponent, data: { view: 'account' } },
   {
     path: 'legal-notice',
