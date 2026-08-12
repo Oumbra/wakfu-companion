@@ -56,7 +56,12 @@
     />
   }
 
-  @if (combatPanel.hasActiveFight() && combatPanel.collapsed()) {
+  @if (
+    nav.view() === 'main' &&
+    logFileAccess.status() === 'connected' &&
+    combatPanel.hasActiveFight() &&
+    combatPanel.collapsed()
+  ) {
     <app-combat-edge-tab />
   }
 
