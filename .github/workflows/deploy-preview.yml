@@ -45,6 +45,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL_PREVIEW }}
 
+      # Garde-fou : "drizzle-kit migrate" peut annoncer un succès sans avoir
+      # réellement tout appliqué (vécu le 2026-08-12, voir le commentaire en
+      # tête de server/db/verify-migrations.ts) — fait échouer le job plutôt
+      # que de déployer silencieusement sur un schéma en retard.
+      - name: Verify DB migrations (preview)
+        run: npm run db:verify-migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL_PREVIEW }}
+
       # Pas de --base-href custom : Cloudflare Pages sert ce projet à la
       # racine de son propre domaine (*.pages.dev), contrairement au hack de
       # sous-dossier /wakfu-companion/preview/claude-dev/ nécessaire sur
