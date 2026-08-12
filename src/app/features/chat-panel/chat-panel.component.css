@@ -24,17 +24,25 @@
    (mobile, ou desktop avec beaucoup de canaux), les boutons débordaient sur 2-3 lignes et
    mangeaient la hauteur disponible pour les messages. `overflow-y: hidden` (même paire que
    `.kpi-strip`/tracker-strip.component.css) : les boutons de canal ne portent aucun tooltip, donc
-   aucun risque de clipping vertical à compenser ici. */
+   aucun risque de clipping vertical à compenser ici. Scrollbar masquée (`scrollbar-width: none` +
+   repli `::-webkit-scrollbar`) — même traitement que `.tab-bar-scroll` (tab-bar.component.css) : la
+   barre de défilement native, surtout visible en mode tactile/mobile, alourdit visuellement une
+   simple rangée de boutons alors que le glissement horizontal reste utilisable sans elle. */
 .channel-filters {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   gap: 6px;
   padding: 8px 10px;
   background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+.channel-filters::-webkit-scrollbar {
+  display: none;
 }
 .channel-filters .toggle-btn {
   flex-shrink: 0;

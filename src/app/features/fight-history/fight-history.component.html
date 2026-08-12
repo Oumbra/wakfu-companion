@@ -1,9 +1,14 @@
 <div class="fight-group-controls">
-  <div class="icon-switch icon-switch-3 fight-group-switch">
+  <!-- "Origine" (session/compte) n'a de sens qu'en mode connecté (voir constructeur du composant)
+       — invité, un switch à 2 options (Jour/Type) réutilise la variante de base `.icon-switch`
+       (fond glissant à 50%) plutôt que `.icon-switch-3` (33%, réservée aux 3 options). -->
+  <div class="icon-switch fight-group-switch" [class.icon-switch-3]="auth.isAuthenticated()">
     <span
       class="icon-switch-highlight"
-      [class.is-right]="groupMode() === 'location'"
-      [class.is-far-right]="groupMode() === 'type'"
+      [class.is-right]="
+        auth.isAuthenticated() ? groupMode() === 'location' : groupMode() === 'type'
+      "
+      [class.is-far-right]="auth.isAuthenticated() && groupMode() === 'type'"
     ></span>
     <button
       type="button"
@@ -15,16 +20,18 @@
       <app-icon name="calendar" [size]="13" [strokeWidth]="2" />
       <span class="fight-group-switch-label">{{ 'history.group.day' | t }}</span>
     </button>
-    <button
-      type="button"
-      class="icon-switch-option fight-group-switch-option"
-      [class.selected]="groupMode() === 'location'"
-      [attr.data-tooltip]="'history.group.origin' | t"
-      (click)="setGroupMode('location')"
-    >
-      <app-icon name="map-pin" [size]="13" [strokeWidth]="2" />
-      <span class="fight-group-switch-label">{{ 'history.group.origin' | t }}</span>
-    </button>
+    @if (auth.isAuthenticated()) {
+      <button
+        type="button"
+        class="icon-switch-option fight-group-switch-option"
+        [class.selected]="groupMode() === 'location'"
+        [attr.data-tooltip]="'history.group.origin' | t"
+        (click)="setGroupMode('location')"
+      >
+        <app-icon name="map-pin" [size]="13" [strokeWidth]="2" />
+        <span class="fight-group-switch-label">{{ 'history.group.origin' | t }}</span>
+      </button>
+    }
     <button
       type="button"
       class="icon-switch-option fight-group-switch-option"
@@ -86,17 +93,6 @@
                   />
                 </span>
                 <span class="dungeon-run-name">{{ entry.dungeon[i18n.locale()] }}</span>
-                <span
-                  class="fight-badge"
-                  [class.won]="entry.representative.result === 'won'"
-                  [class.lost]="entry.representative.result === 'lost'"
-                >
-                  {{
-                    entry.representative.result === 'won'
-                      ? ('damageMeter.won' | t)
-                      : ('damageMeter.lost' | t)
-                  }}
-                </span>
                 <span class="dungeon-run-meta">
                   {{ fightCountLabel(entry.fights.length) }} - {{
                     formatDuration(dungeonRunDurationMs(entry))
