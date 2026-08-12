@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  padding: 0;
 }
 
 /* Switch de regroupement (jour/lieu/type, voir FightGroupMode) — même emplacement/gabarit que
