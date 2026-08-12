@@ -134,10 +134,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarLabel': 'Avatar',
     'profile.colorblindLabel': 'Mode daltonien',
     'profile.colorblindOff': 'Désact.',
-    'profile.colorblindProtanopia': 'Protanopie',
-    'profile.colorblindProtanopiaShort': 'Prot.',
-    'profile.colorblindDeuteranopia': 'Deutéranopie',
-    'profile.colorblindDeuteranopiaShort': 'Deut.',
+    'profile.colorblindRedGreen': 'Protanopie & Deutéranopie',
+    'profile.colorblindRedGreenShort': 'Prot./Deut.',
     'profile.colorblindTritanopia': 'Tritanopie',
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
@@ -148,6 +146,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindSwatchRare': 'Rareté rare',
     'profile.colorblindSwatchLegendary': 'Rareté légendaire',
     'profile.tabAvatar': 'Avatar',
+    'profile.tabColorblind': 'Daltonisme',
     'profile.tabAlerts': 'Alertes',
     'profile.tabCharacters': 'Personnages',
     'profile.tabConnection': 'Connexion',
@@ -235,6 +234,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Profil > Alertes',
     'help.profileAlerts.body':
       "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
+    'help.profileColorblind.title': 'Profil > Daltonisme',
+    'help.profileColorblind.body':
+      "Adapte les couleurs les plus sensibles de l'application (victoire/défaite, dégâts élémentaires, rareté d'objet, canaux de chat) au type de daltonisme choisi, pour qu'elles restent distinguables.\n\nProtanopie et deutéranopie sont regroupées sous une seule option : les deux se traduisent par la même confusion rouge-vert, donc la même correction s'applique.\n\nL'aperçu avant/après sous le sélecteur montre exactement les couleurs qui changent avec le profil actuellement choisi.",
     'help.profileCharacters.title': 'Profil > Personnages',
     'help.profileCharacters.body':
       "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte) ; glisser-déposer permet de réordonner les personnages d'un compte.",
@@ -473,10 +475,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarLabel': 'Avatar',
     'profile.colorblindLabel': 'Colorblind mode',
     'profile.colorblindOff': 'Off',
-    'profile.colorblindProtanopia': 'Protanopia',
-    'profile.colorblindProtanopiaShort': 'Prot.',
-    'profile.colorblindDeuteranopia': 'Deuteranopia',
-    'profile.colorblindDeuteranopiaShort': 'Deut.',
+    'profile.colorblindRedGreen': 'Protanopia & Deuteranopia',
+    'profile.colorblindRedGreenShort': 'Prot./Deut.',
     'profile.colorblindTritanopia': 'Tritanopia',
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
@@ -487,6 +487,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindSwatchRare': 'Rare rarity',
     'profile.colorblindSwatchLegendary': 'Legendary rarity',
     'profile.tabAvatar': 'Avatar',
+    'profile.tabColorblind': 'Colorblindness',
     'profile.tabAlerts': 'Alerts',
     'profile.tabCharacters': 'Characters',
     'profile.tabConnection': 'Sign in',
@@ -574,6 +575,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
       "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
+    'help.profileColorblind.title': 'Profile > Colorblindness',
+    'help.profileColorblind.body':
+      "Adapts the app's most sensitive colors (win/loss, elemental damage, item rarity, chat channels) to the colorblindness type you choose, so they stay distinguishable.\n\nProtanopia and deuteranopia are grouped under a single option: both cause the same red-green confusion, so the same correction applies to both.\n\nThe before/after preview under the selector shows exactly which colors change with the currently chosen profile.",
     'help.profileConnection.title': 'Profile > Sign in',
     'help.profileConnection.body':
       'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.',
@@ -806,10 +810,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarLabel': 'Avatar',
     'profile.colorblindLabel': 'Modo daltónico',
     'profile.colorblindOff': 'Desact.',
-    'profile.colorblindProtanopia': 'Protanopia',
-    'profile.colorblindProtanopiaShort': 'Prot.',
-    'profile.colorblindDeuteranopia': 'Deuteranopia',
-    'profile.colorblindDeuteranopiaShort': 'Deut.',
+    'profile.colorblindRedGreen': 'Protanopia y Deuteranopia',
+    'profile.colorblindRedGreenShort': 'Prot./Deut.',
     'profile.colorblindTritanopia': 'Tritanopia',
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
@@ -820,6 +822,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindSwatchRare': 'Rareza rara',
     'profile.colorblindSwatchLegendary': 'Rareza legendaria',
     'profile.tabAvatar': 'Avatar',
+    'profile.tabColorblind': 'Daltonismo',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personajes',
     'profile.tabConnection': 'Inicio de sesión',
@@ -907,6 +910,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
       'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
+    'help.profileColorblind.title': 'Perfil > Daltonismo',
+    'help.profileColorblind.body':
+      'Adapta los colores más sensibles de la aplicación (victoria/derrota, daño elemental, rareza de objeto, canales de chat) al tipo de daltonismo elegido, para que sigan siendo distinguibles.\n\nProtanopia y deuteranopia se agrupan en una sola opción: ambas provocan la misma confusión rojo-verde, así que se aplica la misma corrección.\n\nLa vista previa antes/después bajo el selector muestra exactamente qué colores cambian con el perfil elegido.',
     'help.profileCharacters.title': 'Perfil > Personajes',
     'help.profileCharacters.body':
       'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta); arrastra y suelta para reordenar los personajes de una cuenta.',
@@ -1142,10 +1148,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarLabel': 'Avatar',
     'profile.colorblindLabel': 'Modo daltônico',
     'profile.colorblindOff': 'Desat.',
-    'profile.colorblindProtanopia': 'Protanopia',
-    'profile.colorblindProtanopiaShort': 'Prot.',
-    'profile.colorblindDeuteranopia': 'Deuteranopia',
-    'profile.colorblindDeuteranopiaShort': 'Deut.',
+    'profile.colorblindRedGreen': 'Protanopia e Deuteranopia',
+    'profile.colorblindRedGreenShort': 'Prot./Deut.',
     'profile.colorblindTritanopia': 'Tritanopia',
     'profile.colorblindTritanopiaShort': 'Trit.',
     'profile.colorblindHint':
@@ -1156,6 +1160,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.colorblindSwatchRare': 'Raridade rara',
     'profile.colorblindSwatchLegendary': 'Raridade lendária',
     'profile.tabAvatar': 'Avatar',
+    'profile.tabColorblind': 'Daltonismo',
     'profile.tabAlerts': 'Alertas',
     'profile.tabCharacters': 'Personagens',
     'profile.tabConnection': 'Iniciar sessão',
@@ -1243,6 +1248,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
       'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
+    'help.profileColorblind.title': 'Perfil > Daltonismo',
+    'help.profileColorblind.body':
+      'Adapta as cores mais sensíveis do aplicativo (vitória/derrota, dano elemental, raridade de item, canais de chat) ao tipo de daltonismo escolhido, para que continuem distinguíveis.\n\nProtanopia e deuteranopia são agrupadas em uma única opção: ambas causam a mesma confusão vermelho-verde, logo a mesma correção se aplica.\n\nA pré-visualização antes/depois abaixo do seletor mostra exatamente quais cores mudam com o perfil escolhido.',
     'help.profileCharacters.title': 'Perfil > Personagens',
     'help.profileCharacters.body':
       'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta); arraste e solte para reordenar os personagens de uma conta.',

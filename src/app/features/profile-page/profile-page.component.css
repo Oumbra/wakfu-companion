@@ -285,7 +285,7 @@
   margin-bottom: 4px;
 }
 
-/* Switch daltonien (4 positions, voir `.icon-switch-4` générique dans styles.css) — largeur fixe
+/* Switch daltonien (3 positions, voir `.icon-switch-3` générique dans styles.css) — largeur fixe
    raisonnable plutôt que pleine largeur, les libellés étant courts. */
 .colorblind-switch {
   width: 220px;

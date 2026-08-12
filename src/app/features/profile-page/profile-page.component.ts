@@ -47,7 +47,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
 
-type ProfileTab = 'avatar' | 'alerts' | 'characters' | 'connection';
+type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
 
 interface ColorblindSwatch {
   labelKey: string;
@@ -60,16 +60,9 @@ interface ColorblindSwatch {
  * à l'utilisateur de voir en un coup d'œil, avant/après, tout ce que le profil choisi va changer
  * dans l'app, sans avoir à chercher ces éléments un par un dans l'interface. */
 const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindSwatch[]> = {
-  protanopia: [
-    { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
-    { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
-    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
-    { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
-    { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
-    { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
-  ],
-  // Corrections identiques à protanopia : même axe de confusion rouge-vert pour les deux profils.
-  deuteranopia: [
+  // Protanopie et deutéranopie sont mutualisées sous une seule option ('redGreen') : même axe de
+  // confusion rouge-vert, donc même correction pour les deux — voir ColorblindService.
+  redGreen: [
     { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
     { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
     { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
@@ -123,8 +116,10 @@ export class ProfilePageComponent implements OnDestroy {
     (_, i) => i,
   );
 
-  /** 4 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché,
-   * libellé complet en tooltip. Ordre = ordre visuel du switch. */
+  /** 3 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché, libellé
+   * complet en tooltip. Ordre = ordre visuel du switch ; `.icon-switch-3` générique de styles.css
+   * suffit désormais (fond glissant en `.is-right`/`.is-far-right`, plus besoin d'un calcul JS
+   * depuis la fusion protanopie/deutéranopie en une seule option). */
   protected readonly colorblindOptions: readonly {
     value: ColorblindProfile;
     labelKey: string;
@@ -132,14 +127,9 @@ export class ProfilePageComponent implements OnDestroy {
   }[] = [
     { value: 'off', labelKey: 'profile.colorblindOff', tooltipKey: 'profile.colorblindOff' },
     {
-      value: 'protanopia',
-      labelKey: 'profile.colorblindProtanopiaShort',
-      tooltipKey: 'profile.colorblindProtanopia',
-    },
-    {
-      value: 'deuteranopia',
-      labelKey: 'profile.colorblindDeuteranopiaShort',
-      tooltipKey: 'profile.colorblindDeuteranopia',
+      value: 'redGreen',
+      labelKey: 'profile.colorblindRedGreenShort',
+      tooltipKey: 'profile.colorblindRedGreen',
     },
     {
       value: 'tritanopia',
@@ -147,14 +137,6 @@ export class ProfilePageComponent implements OnDestroy {
       tooltipKey: 'profile.colorblindTritanopia',
     },
   ];
-
-  /** Position du fond glissant du switch daltonien (4 positions, `.icon-switch-4` pose déjà la
-   * largeur à 25% — voir styles.css) : calculée ici plutôt que via les classes `.is-right`/
-   * `.is-far-right` génériques (pensées pour 2/3 positions, pas 4). */
-  protected readonly colorblindHighlightTransform = computed(() => {
-    const index = this.colorblindOptions.findIndex((o) => o.value === this.colorblind.profile());
-    return `translateX(${Math.max(index, 0) * 100}%)`;
-  });
 
   /** Aperçu avant/après des couleurs réellement affectées par le profil actuellement sélectionné —
    * vide pour 'off' (rien n'est masqué, `[class.hidden]`/`@if` côté template). */
@@ -182,6 +164,7 @@ export class ProfilePageComponent implements OnDestroy {
    * d'empilement desktop, voir le template). */
   private static readonly TAB_DEFS: readonly TabBarItem[] = [
     { id: 'avatar', label: 'profile.tabAvatar' },
+    { id: 'colorblind', label: 'profile.tabColorblind', helpSection: 'profileColorblind' },
     { id: 'connection', label: 'profile.tabConnection', helpSection: 'profileConnection' },
     { id: 'alerts', label: 'profile.tabAlerts', helpSection: 'profileAlerts' },
     { id: 'characters', label: 'profile.tabCharacters', helpSection: 'profileCharacters' },

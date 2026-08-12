@@ -11,7 +11,8 @@ export type HelpSection =
   | 'chat'
   | 'profileAlerts'
   | 'profileCharacters'
-  | 'profileConnection';
+  | 'profileConnection'
+  | 'profileColorblind';
 
 /**
  * Pilote la modale d'aide générique (HelpModalComponent, rendue une seule fois au niveau racine —
