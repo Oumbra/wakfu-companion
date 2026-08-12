@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { EntityDamageRow, FightRecord, LootRow } from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
@@ -14,19 +15,26 @@ import {
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
-import { DEFAULT_FIGHT_IMAGE_URL, resolveFightImageInfo } from '../../core/utils/fight-image.util';
+import {
+  DEFAULT_FIGHT_IMAGE_URL,
+  findDungeonForEnemies,
+  resolveFightImageInfo,
+} from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
+import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
+
+type HistoryFight = FightRecord & { origin: HistoryOrigin };
 
 interface FightGroup {
   /** Identifiant stable non traduit (date ISO courte / 'session' / 'account' / nom de type) —
    * sert de clé de tracking et de clé de repli, jamais affiché tel quel. */
   key: string;
   label: string;
-  records: (FightRecord & { origin: HistoryOrigin })[];
+  records: DungeonHistoryEntry<HistoryFight>[];
 }
 
 /**
@@ -45,6 +53,7 @@ interface FightGroup {
     TranslatePipe,
     LootListComponent,
     IconComponent,
+    NgTemplateOutlet,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
@@ -65,10 +74,27 @@ export class FightHistoryComponent {
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
+  /** Combats de donjon actuellement repliés (vide par défaut, tout déplié — même convention que
+   * `collapsedGroupKeys` ci-dessous), clé = `id` du combat représentatif (le plus récent du run,
+   * voir `DungeonHistoryEntry.representative`), stable et unique. */
+  private readonly collapsedDungeonRunIds = signal<ReadonlySet<number>>(new Set());
 
   /** Combats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedFights). */
   protected readonly fightHistory = this.archive.mergedFights;
+
+  /** Combats de donjon (salles + tentatives de boss) regroupés en entrées de collapse — voir
+   * dungeon-run-grouping.util.ts. `fightHistory()` reste trié du plus récent au plus ancien,
+   * `groupDungeonRuns` préserve cet ordre global (une entrée de donjon prend la position de son
+   * combat le plus récent). */
+  protected readonly historyEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() =>
+    groupDungeonRuns(this.fightHistory(), (record) =>
+      findDungeonForEnemies(
+        this.catalog,
+        this.enemyRowsFor(record).map((row) => row.name),
+      ),
+    ),
+  );
 
   /** Regroupement (voir `FightGroupMode`) — Jour par défaut, comme toute liste de l'historique. */
   protected readonly groupMode = signal<FightGroupMode>('day');
@@ -81,13 +107,13 @@ export class FightHistoryComponent {
 
   protected readonly fightGroups = computed<FightGroup[]>(() => {
     const mode = this.groupMode();
-    const records = this.fightHistory();
+    const entries = this.historyEntries();
     const groups = new Map<string, FightGroup>();
-    for (const record of records) {
-      const { key, label } = this.groupKeyFor(record, mode);
+    for (const entry of entries) {
+      const { key, label } = this.groupKeyFor(this.representativeOf(entry), mode);
       const existing = groups.get(key);
-      if (existing) existing.records.push(record);
-      else groups.set(key, { key, label, records: [record] });
+      if (existing) existing.records.push(entry);
+      else groups.set(key, { key, label, records: [entry] });
     }
     const list = [...groups.values()];
     if (mode === 'location') {
@@ -100,10 +126,17 @@ export class FightHistoryComponent {
     return list;
   });
 
-  private groupKeyFor(
-    record: FightRecord & { origin: HistoryOrigin },
-    mode: FightGroupMode,
-  ): { key: string; label: string } {
+  /** Combat représentatif d'une entrée d'historique pour le regroupement jour/lieu/type (date,
+   * origine, image...) — le combat de boss/le plus récent pour un donjon, l'unique combat sinon. */
+  protected representativeOf(entry: DungeonHistoryEntry<HistoryFight>): HistoryFight {
+    return entry.kind === 'single' ? entry.record : entry.representative;
+  }
+
+  protected entryTrackId(entry: DungeonHistoryEntry<HistoryFight>): number {
+    return this.representativeOf(entry).id;
+  }
+
+  private groupKeyFor(record: HistoryFight, mode: FightGroupMode): { key: string; label: string } {
     if (mode === 'location') {
       const label = this.i18n.t(
         record.origin === 'session' ? 'history.group.session' : 'history.group.account',
@@ -138,6 +171,28 @@ export class FightHistoryComponent {
     if (next.has(compositeKey)) next.delete(compositeKey);
     else next.add(compositeKey);
     this.collapsedGroupKeys.set(next);
+  }
+
+  /** État de repli d'un collapse de donjon, indexé par `id` du combat représentatif (le plus
+   * récent du run) — même convention "vide = tout déplié" que `collapsedGroupKeys` ci-dessus. */
+  protected isDungeonRunCollapsed(representativeId: number): boolean {
+    return this.collapsedDungeonRunIds().has(representativeId);
+  }
+
+  protected toggleDungeonRunCollapsed(representativeId: number): void {
+    const next = new Set(this.collapsedDungeonRunIds());
+    if (next.has(representativeId)) next.delete(representativeId);
+    else next.add(representativeId);
+    this.collapsedDungeonRunIds.set(next);
+  }
+
+  /** Nombre total de combats individuels d'un groupe jour/lieu/type — un run de donjon replié
+   * compte pour tous ses combats, pas pour 1 seule "ligne" d'historique (voir `fightGroups`). */
+  protected groupFightCount(group: FightGroup): number {
+    return group.records.reduce(
+      (total, entry) => total + (entry.kind === 'single' ? 1 : entry.fights.length),
+      0,
+    );
   }
 
   protected fightCountLabel(count: number): string {
@@ -207,6 +262,21 @@ export class FightHistoryComponent {
   protected onFightImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
     if (img.src !== DEFAULT_FIGHT_IMAGE_URL) img.src = DEFAULT_FIGHT_IMAGE_URL;
+  }
+
+  /** Tooltip nom du donjon pour l'en-tête d'un collapse de donjon — `null` pour une brèche (même
+   * règle que `fightImageTooltip`/resolveFightImageInfo, aucun donjon multi-salles n'est en
+   * pratique une brèche mais autant rester cohérent). */
+  protected dungeonRunTooltip(entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>): string | null {
+    return entry.dungeon.isBreach ? null : entry.dungeon[this.i18n.locale()];
+  }
+
+  /** Durée totale d'un run de donjon (somme des combats qui le composent, victoires et défaites
+   * comprises — voir CLAUDE.md). */
+  protected dungeonRunDurationMs(
+    entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>,
+  ): number {
+    return entry.fights.reduce((total, fight) => total + fight.durationMs, 0);
   }
 
   protected formatDuration(durationMs: number): string {

@@ -19,6 +19,8 @@ const DUNGEON_ROW = {
   bossMonsterId: 42,
   pictureUrl: 'https://static.ankama.com/dungeon.png',
   wakassetsAvailable: true,
+  roomCount: null,
+  hasPreBossArchi: false,
 };
 
 function ok<T>(data: T): ApiResult<T> {

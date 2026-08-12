@@ -48,6 +48,8 @@ const DUNGEON_FOR_BOSS = {
   bossMonsterId: 101,
   pictureUrl: 'https://example.test/dungeon-500.png',
   wakassetsAvailable: true,
+  roomCount: null,
+  hasPreBossArchi: false,
 };
 
 function ok<T>(data: T): ApiResult<T> {

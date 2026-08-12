@@ -191,6 +191,29 @@
   color: var(--accent);
 }
 
+/* Regroupement des combats d'un même donjon (salles + tentatives de boss) — voir
+   dungeon-run-grouping.util.ts. Même gabarit que `.fight-entry`/`.fight-summary` (classe
+   `.fight-summary` réutilisée telle quelle sur l'en-tête, voir le template), un liseré latéral en
+   plus pour le distinguer d'un simple combat isolé au premier coup d'œil. */
+.dungeon-run {
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.dungeon-run-summary {
+  border-left: 3px solid var(--accent);
+}
+/* Combats du run une fois déplié : fond légèrement distinct + léger retrait, pour rester lisible
+   comme "contenu d'un groupe" plutôt que de se confondre avec les combats isolés du reste de la
+   liste. `.fight-entry`/`.fight-summary` internes gardent leur apparence habituelle (aucun style
+   propre à dupliquer, voir le template qui réutilise le même `ng-template`). */
+.dungeon-run-fights {
+  background: var(--surface-well);
+  border-left: 3px solid var(--accent);
+}
+.dungeon-run-fights .fight-entry:last-child {
+  border-bottom: none;
+}
+
 .fight-details {
   display: flex;
   flex-direction: column;
