@@ -149,6 +149,12 @@ export class ProfilePageComponent implements OnDestroy {
     this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
   );
 
+  /** Tous comptes confondus — affiché en badge à côté de l'onglet "Personnages" du rail (voir
+   * CLAUDE.md, proposition A). */
+  protected readonly totalCharacterCount = computed(() =>
+    this.roster.accounts().reduce((sum, account) => sum + account.characters.length, 0),
+  );
+
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
 
@@ -314,10 +320,9 @@ export class ProfilePageComponent implements OnDestroy {
     this.alertSound.playLoot();
   }
 
-  protected manualCloseTooltip(): string {
-    if (this.profile.alertManualClose()) {
-      return this.i18n.t('profile.manualCloseTooltip');
-    }
+  /** Tooltip de l'option "Auto" du switch de fermeture (voir CLAUDE.md) — dépend de la durée
+   * réglée, contrairement à celui de "Manuelle" (texte fixe, posé directement dans le template). */
+  protected autoCloseTooltip(): string {
     const seconds = this.profile.alertDurationSeconds();
     const key =
       seconds === 1 ? 'profile.autoCloseTooltipSingular' : 'profile.autoCloseTooltipPlural';

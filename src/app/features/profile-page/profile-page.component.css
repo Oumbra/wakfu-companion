@@ -19,15 +19,15 @@
    (media query plus bas), passe en hauteur 100% + overflow:hidden pour laisser les onglets
    internes (.panel-body) gérer leur propre scroll dans une zone de hauteur fixe. */
 .profile-page-content {
-  height: 100%;
+  padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
 }
 .profile-layout {
-  height: 100%;
   width: 100%;
   display: flex;
   align-items: flex-start;
+  gap: 20px;
 }
 /* Rail de navigation desktop (proposition A, voir CLAUDE.md) — masqué sous 800px (media query
    mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
@@ -35,14 +35,14 @@
    manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu. */
 .profile-rail {
   flex: none;
-  height: 100%;
   width: 220px;
   display: flex;
-  gap: 2.5px;
   flex-direction: column;
-  padding: 15px;
+  gap: 3px;
+  padding: 10px;
   background: var(--panel-bg);
-  border-right: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   position: sticky;
   top: 0;
 }
@@ -51,17 +51,16 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
   gap: 10px;
-  padding: 18px 12px;
+  padding: 10px 12px;
   border-radius: 7px;
+  color: var(--text-muted);
   font-size: 0.83rem;
+  font-weight: 600;
   text-align: left;
   transition:
-  background 0.15s ease,
-  color 0.15s ease;
-  color: var(--text-muted);
-  background: unset;
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .profile-rail-btn:hover {
   background: var(--tint-weak);
@@ -72,7 +71,6 @@
 .profile-rail-btn.active {
   background: color-mix(in srgb, var(--accent) 16%, var(--panel-bg));
   color: var(--accent);
-  font-weight: 700 !important;
 }
 .profile-rail-icon {
   display: flex;
@@ -83,10 +81,28 @@
   height: 17px;
 }
 .profile-rail-label {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-weight: 500;
+}
+/* Nombre de personnages tous comptes confondus (voir CLAUDE.md, maquette proposée) — pastille
+   discrète par défaut, teintée à l'accent comme le reste du bouton une fois actif. */
+.profile-rail-count {
+  flex-shrink: 0;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--tint-medium);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+}
+.profile-rail-btn.active .profile-rail-count {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
 }
 
 .panels-row {
@@ -96,7 +112,6 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  height: 100%;
 }
 /* Une seule section à la fois à côté du rail (comme en mobile, voir plus haut) — c'est ce qui
    rend enfin à "Personnages" toute la largeur/hauteur du panneau au lieu de l'étrangler dans la
@@ -106,9 +121,9 @@
 }
 .tool-panel {
   width: 100%;
-  background: unset;
-  border: unset;
-  border-radius: unset;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
   overflow: hidden;
   align-items: center;
 }
@@ -117,7 +132,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 25px;
+  padding: 22px 24px;
   overflow: visible;
 }
 
@@ -288,12 +303,6 @@
   border-color: #dadce0;
   color: #3c4043;
 }
-.login-intro {
-  margin: 0;
-  color: var(--text-color);
-  line-height: 1.5;
-  font-size: 0.9rem;
-}
 .login-guest-note {
   margin: 0;
   color: var(--text-muted);
@@ -330,10 +339,13 @@
 }
 .profile-field {
   width: 100%;
-  max-width: 950px;
+  max-width: 480px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+.profile-field-wide {
+  max-width: 720px;
 }
 .profile-label {
   display: flex;
@@ -357,6 +369,8 @@
   align-items: center;
   gap: 10px;
   width: 100%;
+  max-width: 720px;
+  margin-bottom: 6px;
 }
 .profile-label-row .profile-label {
   font-size: 1.05rem;
@@ -365,16 +379,31 @@
   letter-spacing: normal;
   color: var(--text-bright);
 }
+/* Ligne de description sous le titre de section (voir CLAUDE.md) — un paragraphe par onglet, la
+   séparation d'avec les contrôles qui suivent (au lieu du titre ci-dessus, désormais tout collé à
+   elle) pour qu'un onglet à qui il manquerait un jour cette description garde quand même un
+   ancrage visuel avant son contenu. Volontairement PAS masqué par la media query mobile
+   (contrairement à `.profile-label-row`) : reste une info utile même quand le titre lui-même est
+   redondant avec celui de la barre d'onglets mobile. */
+.profile-section-desc {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 0 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
 
+/* Switch daltonien (3 positions, voir `.icon-switch-3` générique dans styles.css) — largeur fixe
+   raisonnable plutôt que pleine largeur, les libellés étant courts. */
+.colorblind-switch {
+  width: 220px;
+}
 .colorblind-switch-option {
   font-size: 0.68rem;
   font-weight: 700;
-}
-.colorblind-hint {
-  margin: 0 0 12px;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  line-height: 1.4;
 }
 
 /* Aperçu avant/après (voir `colorblindSwatches()`) : une ligne par élément réellement affecté par
@@ -385,7 +414,9 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 0 12px;
+  padding: 10px 12px;
+  background: var(--surface-well);
+  border-radius: 8px;
 }
 .colorblind-swatch-row {
   display: flex;
@@ -417,6 +448,11 @@
 .colorblind-swatch-arrow {
   color: var(--text-muted);
   font-size: 0.75rem;
+}
+@media (max-width: 480px) {
+  .colorblind-switch {
+    width: 100%;
+  }
 }
 
 .avatar-grid {
@@ -455,76 +491,57 @@
   gap: 10px;
 }
 
-/* Bloc "quand fermer le toast d'alerte" : icône + libellé + durée (grisée en
-   mode manuel) + interrupteur explicite, plutôt qu'un simple nombre isolé.
-   Déclaré avant la media query mobile ci-dessous : à spécificité égale,
-   l'ordre du fichier tranche — après elle, ses overrides ne l'emporteraient
-   plus (piège déjà rencontré une fois avec .switch-hand-icon, cf. historique
-   git — évité ici en gardant systématiquement "base avant media query"). */
+.test-sound-btn {
+  flex-shrink: 0;
+}
+.profile-inline-label {
+  font-size: 0.8rem;
+  color: var(--text-color);
+}
+
+/* Bloc "quand fermer le toast d'alerte" (voir CLAUDE.md, maquette proposée) : une phrase
+   ("Fermeture de l'alerte : 3,5 sec.", la durée éditable inline plutôt que dans un champ encadré)
+   à gauche, et un switch à 2 options Auto/Manuelle (réutilise `.icon-switch` générique de
+   styles.css, comme le switch daltonien 3 positions plus haut) à droite — remplace l'ancien
+   interrupteur à bascule custom (`.switch-track`/`.switch-thumb`), qui n'exprimait pas aussi
+   clairement les deux états. Déclaré avant la media query mobile ci-dessous : à spécificité égale,
+   l'ordre du fichier tranche — après elle, ses overrides ne l'emporteraient plus. */
 .alert-timing-control {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 10px 14px;
   margin-bottom: 8px;
   background: var(--surface-raised);
   border-radius: 8px;
   flex-wrap: wrap;
 }
-.alert-timing-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.alert-timing-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.test-sound-btn {
-  flex-shrink: 0;
-}
-.alert-timing-icon {
-  display: flex;
-  color: var(--accent);
-  flex-shrink: 0;
-  transition: opacity 0.15s;
-}
-.alert-timing-icon.is-disabled {
-  opacity: 0.35;
-}
-.alert-timing-text,
-.profile-inline-label {
+.alert-timing-text {
   font-size: 0.8rem;
   color: var(--text-color);
 }
-.alert-timing-duration {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: opacity 0.15s;
-}
-.alert-timing-duration.is-disabled {
-  opacity: 0.35;
-}
 .alert-duration-input {
-  width: 56px;
+  width: 44px;
   flex-shrink: 0;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--text-color);
-  padding: 6px 8px;
+  color: var(--text-bright);
+  padding: 2px 4px;
   border-radius: 4px;
   font-family: inherit;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
   /* Pas de `color-scheme` forcé ici : hérite de `:root`/`:root[data-theme='light']`
      (styles.css), pour que les commandes natives du spinner suivent le thème actif
      plutôt que de rester figées en sombre. */
   transition:
     background 0.15s ease,
     border-color 0.15s ease;
+}
+.alert-duration-input:disabled {
+  color: var(--text-muted);
 }
 .alert-duration-input:focus {
   outline: none;
@@ -535,64 +552,14 @@
   font-size: 0.75rem;
   color: var(--text-muted);
 }
-
-.manual-close-switch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.78rem;
-  color: var(--text-color);
-  user-select: none;
-}
-.switch-input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  overflow: hidden;
-}
-.switch-track {
-  position: relative;
-  width: 32px;
-  height: 18px;
-  border-radius: 999px;
-  background: var(--border-strong);
+.alert-mode-switch {
   flex-shrink: 0;
-  transition: background 0.15s ease;
+  width: 170px;
+  height: 26px;
 }
-.switch-thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--toggle-thumb);
-  transition:
-    transform 0.15s ease,
-    background 0.15s ease;
-}
-.switch-input:checked + .switch-track {
-  background: var(--accent);
-}
-.switch-input:checked + .switch-track .switch-thumb {
-  transform: translateX(14px);
-  background: #04222a;
-}
-.switch-input:focus-visible + .switch-track {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 45%, transparent);
-}
-.switch-hand-icon {
-  display: none;
-  flex-shrink: 0;
-  width: 15px;
-  height: 15px;
-  transition: opacity 0.15s;
-}
-.switch-label.is-disabled,
-.switch-hand-icon.is-disabled {
-  opacity: 0.35;
+.alert-mode-switch .icon-switch-option {
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 /* Breakpoint mobile (ex. Galaxy S23, 360px de large) : `identity-left` (160px
@@ -614,59 +581,16 @@
     grid-template-columns: repeat(6, 1fr);
   }
 
-  /* "Fermeture de l'alerte" sur une seule ligne : le libellé tronque en
-     ellipsis plutôt que de forcer un retour à la ligne. L'unité "sec." reste
-     affichée (sans elle le nombre seul est incompréhensible) ; seul le
-     libellé "Manuelle" est masqué visuellement (déjà porté par le tooltip du
-     switch) mais reste lisible par un lecteur d'écran. */
+  /* Repasse sur 2 lignes plutôt que de comprimer le texte (voir base plus haut,
+     `flex-wrap: wrap` déjà présent) : plus simple et tout aussi lisible que l'ancienne
+     compaction dédiée (icône seule, libellé masqué visuellement...) qu'imposait
+     l'ancien interrupteur à bascule custom. */
   .alert-timing-control {
-    flex-wrap: nowrap;
-    gap: 5px;
-    padding: 8px 8px;
+    padding: 8px 10px;
     background: var(--surface-well) !important;
   }
-  .alert-timing-actions {
-    flex-wrap: nowrap;
-    flex-shrink: 0;
-    gap: 5px;
-  }
-  .alert-timing-label {
-    min-width: 0;
-    gap: 5px;
-  }
   .alert-timing-text {
-    flex-shrink: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 0.68rem;
-  }
-  .alert-timing-duration {
-    flex-shrink: 0;
-    gap: 2px;
-  }
-  .alert-duration-input {
-    width: 36px;
-    padding: 6px 2px;
-    font-size: 0.78rem;
-  }
-  .alert-timing-unit {
-    font-size: 0.68rem;
-  }
-  .manual-close-switch .switch-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-  .manual-close-switch {
-    flex-shrink: 0;
-    gap: 4px;
-  }
-  .switch-hand-icon {
-    display: block;
+    font-size: 0.75rem;
   }
 }
 
@@ -770,7 +694,53 @@
 
 /* Section "Personnages déclarés" (voir CharacterRosterService) : un compte = un onglet — voir
    TabBarComponent pour la barre elle-même (défilement horizontal, soulignement mesuré sur le
-   DOM, feuille de repli). */
+   DOM, feuille de repli), remplacée en desktop (voir CLAUDE.md, proposition A) par
+   `.roster-account-rail` ci-dessous (`app-tab-bar` y devient `mobileOnly`). Aucune contrainte de
+   largeur (contrairement à `.profile-field-wide`, 720px, qui ne cadre plus que le titre/la
+   description au-dessus) : la liste de personnages profite de toute la largeur du panneau. */
+.roster-layout {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.roster-account-rail {
+  flex: none;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.roster-account-rail-btn {
+  font-size: 0.8rem;
+}
+.roster-account-rail-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 3px;
+  border-radius: 7px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.roster-account-rail-add:hover {
+  background: var(--tint-weak);
+  color: var(--text-color);
+}
+.roster-account-rail-add svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+.roster-tabs-wrapper {
+  flex: 1;
+  min-width: 0;
+}
 .roster-character-name {
   min-width: 0;
   overflow: hidden;
@@ -799,6 +769,11 @@
   font-size: 0.8125rem;
   color: var(--text-muted);
 }
+/* Bordure/radius complets par défaut (desktop) : plus rien ne le précède directement dans
+   `.roster-tabs-wrapper` (le rail de comptes vit à côté, pas au-dessus, voir `.roster-layout`
+   plus bas) — redevient une carte autonome plutôt qu'un panneau "attaché" sous une barre
+   d'onglets. La media query mobile plus bas restaure l'ancien raccord (barre d'onglets toujours
+   au-dessus là-bas, voir `.roster-tabs-wrapper .tab-bar-row`). */
 .roster-account-panel {
   display: flex;
   flex-direction: column;
@@ -806,8 +781,7 @@
   padding: 10px 12px;
   background: var(--surface-raised);
   border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 8px 8px;
+  border-radius: 8px;
 }
 .roster-character-list {
   display: flex;
@@ -877,6 +851,8 @@
    voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
   .profile-page-content {
+    height: 100%;
+    padding: unset;
     overflow: hidden;
   }
   /* Rail desktop remplacé par `app-tab-bar` (mobileOnly, voir plus haut) : `.profile-layout`
@@ -927,5 +903,14 @@
   .profile-label,
   .profile-label-row {
     display: none;
+  }
+  /* Rail de comptes desktop remplacé par la barre d'onglets `app-tab-bar` (mobileOnly, voir plus
+     haut) : `.roster-account-panel` retrouve son raccord "attaché sous la barre" d'origine. */
+  .roster-account-rail {
+    display: none;
+  }
+  .roster-account-panel {
+    border-top: none;
+    border-radius: 0 0 8px 8px;
   }
 }
