@@ -1,4 +1,9 @@
-import { CatalogDungeonEntry, CatalogMonsterEntry, CatalogService } from '../api/catalog.service';
+import {
+  CatalogDungeonEntry,
+  CatalogMonsterEntry,
+  CatalogService,
+  isDungeonBreach,
+} from '../api/catalog.service';
 
 /** Illustration générique wakassets, utilisée aussi bien en repli erreur réseau qu'en cas de trop grande diversité de monstres (voir resolveFightImageUrl). */
 export const DEFAULT_FIGHT_IMAGE_URL =
@@ -76,7 +81,7 @@ export function findDungeonForEnemies(
  * FightRecord.rows, déjà trié ainsi) pour que le repli n°5 pointe vers le
  * bon monstre. Les noms sans entrée catalogue connue sont ignorés à
  * chaque étape (aucune image disponible pour eux). `tooltipSource` est
- * `null` pour une illustration de donjon-brèche (`isBreach`) ou pour
+ * `null` pour une illustration de donjon-brèche (`isDungeonBreach`) ou pour
  * l'illustration générique de repli (horde hétérogène/inconnue) — voir
  * feature "tooltip sur les images d'historique de combat".
  *
@@ -98,7 +103,7 @@ export function resolveFightImageInfo(
     if (dungeon) {
       return {
         url: dungeon.pictureUrl,
-        tooltipSource: dungeon.isBreach ? null : { kind: 'dungeon', names: dungeon },
+        tooltipSource: isDungeonBreach(dungeon) ? null : { kind: 'dungeon', names: dungeon },
       };
     }
     return {

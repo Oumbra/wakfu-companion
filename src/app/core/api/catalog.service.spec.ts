@@ -14,12 +14,10 @@ const DUNGEON_ROW = {
   pt: 'Masmorra Teste',
   level: 20,
   bracket: 1,
-  isBreach: false,
-  isUltimateBreach: false,
+  type: 'ULTIMATE_BOSS',
   bossMonsterId: 42,
   pictureUrl: 'https://static.ankama.com/dungeon.png',
   wakassetsAvailable: true,
-  roomCount: null,
   hasPreBossArchi: false,
 };
 

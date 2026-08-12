@@ -43,12 +43,10 @@ const DUNGEON_FOR_BOSS = {
   pt: 'Masmorra Chefe',
   level: 1,
   bracket: 1,
-  isBreach: false,
-  isUltimateBreach: false,
+  type: 'ULTIMATE_BOSS',
   bossMonsterId: 101,
   pictureUrl: 'https://example.test/dungeon-500.png',
   wakassetsAvailable: true,
-  roomCount: null,
   hasPreBossArchi: false,
 };
 

@@ -39,6 +39,29 @@ export interface CatalogMonsterEntry {
   isDominant: boolean;
 }
 
+/** Catégorie d'un donjon, curée à la main dans referentiel/dungeons_wakfu.json (miroir de
+ * WakfuDungeonType côté serveur, server/db/schema.ts). `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`
+ * portent le nombre de salles précédant le boss (voir dungeonRoomCount,
+ * core/utils/dungeon-run-grouping.util.ts) ; `BREACH`/`ULTIMATE_BREACH` remplacent les anciens
+ * booléens `isBreach`/`isUltimateBreach` ; `THREE_PLAYERS`/`ULTIMATE_BOSS`/`ARCADE` désignent des
+ * donjons à un seul combat (aucune salle à rattacher). */
+export type WakfuDungeonType =
+  | 'TWO_ROOMS'
+  | 'THREE_ROOMS'
+  | 'FOUR_ROOMS'
+  | 'THREE_PLAYERS'
+  | 'ULTIMATE_BOSS'
+  | 'BREACH'
+  | 'ULTIMATE_BREACH'
+  | 'ARCADE';
+
+/** Vrai pour une brèche dimensionnelle (`BREACH`/`ULTIMATE_BREACH`) — remplace l'ancien booléen
+ * `CatalogDungeonEntry.isBreach`. Utilisé pour masquer le tooltip/nom de donjon sur ces
+ * illustrations (voir fight-image.util.ts, fight-history.component.ts). */
+export function isDungeonBreach(dungeon: CatalogDungeonEntry): boolean {
+  return dungeon.type === 'BREACH' || dungeon.type === 'ULTIMATE_BREACH';
+}
+
 export interface CatalogDungeonEntry {
   id: number;
   fr: string;
@@ -47,16 +70,10 @@ export interface CatalogDungeonEntry {
   pt: string;
   level: number;
   bracket: number;
-  isBreach: boolean;
-  isUltimateBreach: boolean;
+  type: WakfuDungeonType;
   bossMonsterId: number | null;
   pictureUrl: string;
   wakassetsAvailable: boolean;
-  /** Nombre total de combats d'un clear "propre" (boss compris) — `null` tant que ce donjon n'a
-   * pas encore été catégorisé (voir server/db/schema.ts, `dungeons.roomCount`). Utilisé par
-   * core/utils/dungeon-run-grouping.util.ts pour regrouper les combats de salles d'un même
-   * donjon dans l'historique. */
-  roomCount: number | null;
   /** Vrai pour les rares donjons avec un combat d'archimonstre supplémentaire avant le boss (ex.
    * Kokokolantha, Nécropoil de Morbax, La Pichine) — voir dungeon-run-grouping.util.ts. */
   hasPreBossArchi: boolean;

@@ -22,6 +22,24 @@ import {
 export type WakfuRarityCode =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
+/** Miroir de CatalogDungeonEntry['type'] (src/app/core/api/catalog.service.ts) — même convention
+ * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
+ * type TypeScript n'a de valeur que côté scripts d'import/endpoints. Remplace depuis ce lot les
+ * anciens champs `isBreach`/`isUltimateBreach`/`roomCount` (curation manuelle du référentiel,
+ * `referentiel/dungeons_wakfu.json`) : `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` portent maintenant
+ * eux-mêmes le nombre de salles (voir dungeonRoomCount, core/utils/dungeon-run-grouping.util.ts),
+ * `BREACH`/`ULTIMATE_BREACH` remplacent les deux booléens de brèche, et `THREE_PLAYERS` /
+ * `ULTIMATE_BOSS` / `ARCADE` couvrent les donjons à un seul combat (pas de salle à rattacher). */
+export type WakfuDungeonType =
+  | 'TWO_ROOMS'
+  | 'THREE_ROOMS'
+  | 'FOUR_ROOMS'
+  | 'THREE_PLAYERS'
+  | 'ULTIMATE_BOSS'
+  | 'BREACH'
+  | 'ULTIMATE_BREACH'
+  | 'ARCADE';
+
 /**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très
  * peu de lignes, quasi jamais modifiée — sert de clé étrangère à tout ce qui
@@ -129,21 +147,20 @@ export const dungeons = pgTable(
     pt: text('pt').notNull(),
     level: integer('level').notNull(),
     bracket: integer('bracket').notNull(),
-    isBreach: boolean('is_breach').notNull(),
-    isUltimateBreach: boolean('is_ultimate_breach').notNull(),
     bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
     pictureUrl: text('picture_url').notNull(),
     wakassetsAvailable: boolean('wakassets_available').notNull(),
-    // Nombre total de combats d'un clear "propre" de ce donjon, boss compris (2/3/4 salles, 1 pour
-    // un donjon 3 joueurs ou un boss ultime) — voir core/utils/dungeon-run-grouping.util.ts côté
+    // Catégorie du donjon (curée à la main dans referentiel/dungeons_wakfu.json, JAMAIS déductible
+    // du reste du référentiel) — remplace les anciens `isBreach`/`isUltimateBreach`/`roomCount`.
+    // Toujours renseignée (contrairement à l'ancien `roomCount`, longtemps `null` pour les donjons
+    // pas encore catégorisés) : les 151 donjons du référentiel ont désormais tous un `type`. Voir
+    // WakfuDungeonType ci-dessus et core/utils/dungeon-run-grouping.util.ts (dungeonRoomCount) côté
     // client, qui l'utilise pour regrouper les combats de salles précédant un boss détecté dans
-    // l'historique. Nullable : donnée curée à la main (pas déductible du reste du référentiel),
-    // `null` tant qu'un donjon n'a pas encore été catégorisé — le regroupement ne s'applique alors
-    // qu'aux tentatives répétées contre le boss lui-même (aucune salle rattachée).
-    roomCount: integer('room_count'),
+    // l'historique.
+    type: text('type').notNull().$type<WakfuDungeonType>(),
     // Vrai pour les rares donjons avec un combat d'archimonstre supplémentaire avant le boss (ex.
-    // Kokokolantha, Nécropoil de Morbax, La Pichine) — ce combat s'ajoute à `roomCount` plutôt que
-    // d'y être inclus (garde-fou dédié dans dungeon-run-grouping.util.ts).
+    // Kokokolantha, Nécropoil de Morbax, La Pichine) — ce combat s'ajoute au nombre de salles de
+    // `type` plutôt que d'y être inclus (garde-fou dédié dans dungeon-run-grouping.util.ts).
     hasPreBossArchi: boolean('has_pre_boss_archi').notNull().default(false),
   },
   (table) => [index('dungeons_boss_monster_id_idx').on(table.bossMonsterId)],
