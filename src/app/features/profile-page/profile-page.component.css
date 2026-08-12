@@ -19,15 +19,15 @@
    (media query plus bas), passe en hauteur 100% + overflow:hidden pour laisser les onglets
    internes (.panel-body) gérer leur propre scroll dans une zone de hauteur fixe. */
 .profile-page-content {
-  padding: 16px 20px 24px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 .profile-layout {
+  height: 100%;
   width: 100%;
   display: flex;
   align-items: flex-start;
-  gap: 20px;
 }
 /* Rail de navigation desktop (proposition A, voir CLAUDE.md) — masqué sous 800px (media query
    mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
@@ -35,14 +35,14 @@
    manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu. */
 .profile-rail {
   flex: none;
+  height: 100%;
   width: 220px;
   display: flex;
+  gap: 2.5px;
   flex-direction: column;
-  gap: 3px;
-  padding: 10px;
+  padding: 15px;
   background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  border-right: 1px solid var(--border);
   position: sticky;
   top: 0;
 }
@@ -51,16 +51,17 @@
   min-width: 0;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 18px 12px;
   border-radius: 7px;
-  color: var(--text-muted);
   font-size: 0.83rem;
-  font-weight: 600;
   text-align: left;
   transition:
-    background 0.15s ease,
-    color 0.15s ease;
+  background 0.15s ease,
+  color 0.15s ease;
+  color: var(--text-muted);
+  background: unset;
 }
 .profile-rail-btn:hover {
   background: var(--tint-weak);
@@ -71,6 +72,7 @@
 .profile-rail-btn.active {
   background: color-mix(in srgb, var(--accent) 16%, var(--panel-bg));
   color: var(--accent);
+  font-weight: 700 !important;
 }
 .profile-rail-icon {
   display: flex;
@@ -84,6 +86,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 500;
 }
 
 .panels-row {
@@ -93,6 +96,7 @@
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  height: 100%;
 }
 /* Une seule section à la fois à côté du rail (comme en mobile, voir plus haut) — c'est ce qui
    rend enfin à "Personnages" toute la largeur/hauteur du panneau au lieu de l'étrangler dans la
@@ -102,9 +106,9 @@
 }
 .tool-panel {
   width: 100%;
-  background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: unset;
+  border: unset;
+  border-radius: unset;
   overflow: hidden;
   align-items: center;
 }
@@ -113,7 +117,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 22px 24px;
+  padding: 25px;
   overflow: visible;
 }
 
@@ -326,13 +330,10 @@
 }
 .profile-field {
   width: 100%;
-  max-width: 480px;
+  max-width: 950px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-.profile-field-wide {
-  max-width: 720px;
 }
 .profile-label {
   display: flex;
@@ -356,10 +357,6 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  max-width: 720px;
-  margin-bottom: 18px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--border);
 }
 .profile-label-row .profile-label {
   font-size: 1.05rem;
@@ -369,17 +366,12 @@
   color: var(--text-bright);
 }
 
-/* Switch daltonien (3 positions, voir `.icon-switch-3` générique dans styles.css) — largeur fixe
-   raisonnable plutôt que pleine largeur, les libellés étant courts. */
-.colorblind-switch {
-  width: 220px;
-}
 .colorblind-switch-option {
   font-size: 0.68rem;
   font-weight: 700;
 }
 .colorblind-hint {
-  margin: 6px 0 0;
+  margin: 0 0 12px;
   font-size: 0.8rem;
   color: var(--text-muted);
   line-height: 1.4;
@@ -393,9 +385,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  padding: 10px 12px;
-  background: var(--surface-well);
-  border-radius: 8px;
+  padding: 0 12px;
 }
 .colorblind-swatch-row {
   display: flex;
@@ -427,11 +417,6 @@
 .colorblind-swatch-arrow {
   color: var(--text-muted);
   font-size: 0.75rem;
-}
-@media (max-width: 480px) {
-  .colorblind-switch {
-    width: 100%;
-  }
 }
 
 .avatar-grid {
@@ -892,8 +877,6 @@
    voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
   .profile-page-content {
-    height: 100%;
-    padding: unset;
     overflow: hidden;
   }
   /* Rail desktop remplacé par `app-tab-bar` (mobileOnly, voir plus haut) : `.profile-layout`
