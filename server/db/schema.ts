@@ -134,6 +134,17 @@ export const dungeons = pgTable(
     bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
     pictureUrl: text('picture_url').notNull(),
     wakassetsAvailable: boolean('wakassets_available').notNull(),
+    // Nombre total de combats d'un clear "propre" de ce donjon, boss compris (2/3/4 salles, 1 pour
+    // un donjon 3 joueurs ou un boss ultime) — voir core/utils/dungeon-run-grouping.util.ts côté
+    // client, qui l'utilise pour regrouper les combats de salles précédant un boss détecté dans
+    // l'historique. Nullable : donnée curée à la main (pas déductible du reste du référentiel),
+    // `null` tant qu'un donjon n'a pas encore été catégorisé — le regroupement ne s'applique alors
+    // qu'aux tentatives répétées contre le boss lui-même (aucune salle rattachée).
+    roomCount: integer('room_count'),
+    // Vrai pour les rares donjons avec un combat d'archimonstre supplémentaire avant le boss (ex.
+    // Kokokolantha, Nécropoil de Morbax, La Pichine) — ce combat s'ajoute à `roomCount` plutôt que
+    // d'y être inclus (garde-fou dédié dans dungeon-run-grouping.util.ts).
+    hasPreBossArchi: boolean('has_pre_boss_archi').notNull().default(false),
   },
   (table) => [index('dungeons_boss_monster_id_idx').on(table.bossMonsterId)],
 );

@@ -71,6 +71,13 @@
       "when": 1786564800000,
       "tag": "0009_rename_dungeons_bracket",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786532710856,
+      "tag": "0010_peaceful_brood",
+      "breakpoints": true
     }
   ]
 }

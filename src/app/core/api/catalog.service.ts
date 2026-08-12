@@ -52,6 +52,14 @@ export interface CatalogDungeonEntry {
   bossMonsterId: number | null;
   pictureUrl: string;
   wakassetsAvailable: boolean;
+  /** Nombre total de combats d'un clear "propre" (boss compris) — `null` tant que ce donjon n'a
+   * pas encore été catégorisé (voir server/db/schema.ts, `dungeons.roomCount`). Utilisé par
+   * core/utils/dungeon-run-grouping.util.ts pour regrouper les combats de salles d'un même
+   * donjon dans l'historique. */
+  roomCount: number | null;
+  /** Vrai pour les rares donjons avec un combat d'archimonstre supplémentaire avant le boss (ex.
+   * Kokokolantha, Nécropoil de Morbax, La Pichine) — voir dungeon-run-grouping.util.ts. */
+  hasPreBossArchi: boolean;
 }
 
 export interface CatalogItemDetail extends CatalogItemEntry {

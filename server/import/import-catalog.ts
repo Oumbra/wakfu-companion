@@ -89,6 +89,8 @@ interface RawDungeon {
   bossMonsterId?: number | null;
   picture_url: string;
   wakassets_available: boolean;
+  room_count?: number | null;
+  has_pre_boss_archi?: boolean;
 }
 
 // Seule implémentation de cette logique depuis le lot 3.1 étape 8 (l'équivalent client,
@@ -235,6 +237,8 @@ async function main(): Promise<void> {
     bossMonsterId: dungeon.bossMonsterId ?? null,
     pictureUrl: dungeon.picture_url,
     wakassetsAvailable: dungeon.wakassets_available,
+    roomCount: dungeon.room_count ?? null,
+    hasPreBossArchi: dungeon.has_pre_boss_archi ?? false,
   }));
 
   const compactIndex = buildCompactIndex(itemRows, monsterRows);

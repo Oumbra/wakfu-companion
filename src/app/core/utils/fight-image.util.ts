@@ -1,4 +1,4 @@
-import { CatalogMonsterEntry, CatalogService } from '../api/catalog.service';
+import { CatalogDungeonEntry, CatalogMonsterEntry, CatalogService } from '../api/catalog.service';
 
 /** Illustration générique wakassets, utilisée aussi bien en repli erreur réseau qu'en cas de trop grande diversité de monstres (voir resolveFightImageUrl). */
 export const DEFAULT_FIGHT_IMAGE_URL =
@@ -42,6 +42,24 @@ export interface FightImageInfo {
   tooltipSource: FightImageTooltipSource;
 }
 
+/** Donjon dont un boss présent parmi `enemyNames` est le boss attitré, ou `null` (aucun boss
+ * reconnu parmi les ennemis, ou boss sans donjon référencé) — première étape de
+ * `resolveFightImageInfo` ci-dessous, extraite pour être réutilisée telle quelle par
+ * core/utils/dungeon-run-grouping.util.ts (regroupement des combats d'un même donjon dans
+ * l'historique, qui a besoin de cette détection indépendamment de la résolution d'illustration). */
+export function findDungeonForEnemies(
+  catalog: CatalogService,
+  enemyNames: readonly string[],
+): CatalogDungeonEntry | null {
+  for (const name of enemyNames) {
+    const entry = catalog.findWakfuMonsterEntry(name);
+    if (!entry?.isBoss) continue;
+    const dungeon = catalog.findWakfuDungeonByBossMonsterId(entry.id);
+    if (dungeon) return dungeon;
+  }
+  return null;
+}
+
 /**
  * Détermine l'illustration à afficher pour une entrée de l'historique des
  * combats, par ordre de priorité :
@@ -76,7 +94,7 @@ export function resolveFightImageInfo(
 
   const bossEntry = entries.find((entry) => entry.isBoss);
   if (bossEntry) {
-    const dungeon = catalog.findWakfuDungeonByBossMonsterId(bossEntry.id);
+    const dungeon = findDungeonForEnemies(catalog, enemyNames);
     if (dungeon) {
       return {
         url: dungeon.pictureUrl,
