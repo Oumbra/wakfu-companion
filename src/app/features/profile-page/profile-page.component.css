@@ -6,12 +6,12 @@
 }
 
 /* Onglets Avatar/Connexion/Alertes/Personnages : voir TabBarComponent (défilement horizontal,
-   soulignement mesuré sur le DOM, feuille de repli) — `mobileOnly` le cache par défaut en desktop
-   (sections empilées sans onglets), visible seulement en mobile. `.panels-row`/`.tool-panel`/
-   `.panel-body` reprennent un principe similaire : `.tool-panel`/`.panel-body` sont globaux
-   (styles.css, boîte + header + body), neutralisés ici en desktop (voir plus bas) pour ne pas
-   changer la mise en page empilée d'origine, et ne prennent leur habillage "carte" qu'en mobile,
-   connectée sans vide sous la barre d'onglets (comme `.panels-row .tool-panel` sur le dashboard). */
+   soulignement mesuré sur le DOM, feuille de repli) — `mobileOnly` le cache par défaut en desktop,
+   remplacé là par `.profile-rail` (rail vertical, voir plus bas) qui pilote le même signal
+   `activeTab()`/`selectTab()`. `.panels-row`/`.tool-panel`/`.panel-body` sont globaux (styles.css) ;
+   en desktop comme en mobile, seule la section active reste montée visible (`.tab-hidden`), la
+   différence entre les deux tient uniquement au sélecteur (rail vs barre d'onglets, voir media
+   query mobile plus bas) et à l'habillage du panneau actif. */
 
 /* Le scroll (desktop) appartient à .app-page-body, l'ancêtre générique (voir AppPageComponent) :
    ce wrapper ne fait que porter le padding/la mise en page en flux normal, sans overflow propre —
@@ -23,23 +23,96 @@
   display: flex;
   flex-direction: column;
 }
-.panels-row {
+.profile-layout {
   width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+/* Rail de navigation desktop (proposition A, voir CLAUDE.md) — masqué sous 800px (media query
+   mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
+   sticky` plutôt que `fixed` : reste dans le flux de `.profile-layout` (pas de calcul de largeur
+   manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu. */
+.profile-rail {
+  flex: none;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  position: sticky;
+  top: 0;
+}
+.profile-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.profile-rail-btn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  color: var(--text-muted);
+  font-size: 0.83rem;
+  font-weight: 600;
+  text-align: left;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.profile-rail-btn:hover {
+  background: var(--tint-weak);
+  color: var(--text-color);
+}
+.profile-rail-item.active .profile-rail-btn {
+  background: var(--surface-active);
+  color: var(--accent);
+}
+.profile-rail-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+.profile-rail-icon svg {
+  width: 17px;
+  height: 17px;
+}
+.profile-rail-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-rail-item .help-icon-btn {
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.panels-row {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
 }
-/* Neutralisé en desktop (boîte/ombre/padding globaux de styles.css retirés)
-   pour garder la pile de sections d'origine — voir media query mobile plus
-   bas pour l'habillage carte réel, connecté à la barre d'onglets (TabBarComponent). */
+/* Une seule section à la fois à côté du rail (comme en mobile, voir plus haut) — c'est ce qui
+   rend enfin à "Personnages" toute la largeur/hauteur du panneau au lieu de l'étrangler dans la
+   même colonne étroite que les sections courtes (voir CLAUDE.md, décalage signalé). */
+.panels-row .tab-hidden {
+  display: none;
+}
 .tool-panel {
   width: 100%;
-  background: none;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-  overflow: visible;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
   align-items: center;
 }
 .panel-body {
@@ -47,7 +120,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-right: 0;
+  padding: 22px 24px;
   overflow: visible;
 }
 
@@ -812,6 +885,19 @@
     padding: unset;
     overflow: hidden;
   }
+  /* Rail desktop remplacé par `app-tab-bar` (mobileOnly, voir plus haut) : `.profile-layout`
+     redevient une simple colonne pleine hauteur, comme l'était `.profile-page-content` avant
+     l'ajout du rail. */
+  .profile-rail {
+    display: none;
+  }
+  .profile-layout {
+    flex-direction: column;
+    align-items: stretch;
+    flex-grow: 1;
+    min-height: 0;
+    gap: 0;
+  }
   .panels-row {
     flex-grow: 1;
     min-height: 0;
@@ -822,9 +908,12 @@
     display: none;
   }
   /* Se connecte sans vide sous la barre d'onglets (même principe que
-     .panels-row .tool-panel sur le dashboard) : pas de bordure/radius haut. */
+     .panels-row .tool-panel sur le dashboard) : pas de bordure/radius (annule le cadre du rail
+     desktop, voir base plus haut). */
   .tool-panel {
     background: var(--panel-bg);
+    border: none;
+    border-radius: 0;
     overflow: hidden;
     align-items: stretch;
     flex-grow: 1;

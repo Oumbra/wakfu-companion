@@ -54,276 +54,238 @@
       [mobileOnly]="true"
     />
 
-    <div class="panels-row">
-      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
-        <div class="panel-body">
-          <div class="identity-row">
-            <div class="identity-left">
-              <div class="avatar-preview">
-                @if (profile.avatarIndex() !== null) {
-                  <app-avatar-icon [index]="profile.avatarIndex()!" />
-                } @else {
-                  <span class="avatar-preview-question">?</span>
+    <div class="profile-layout">
+      <!-- Rail de navigation desktop (voir CLAUDE.md, proposition A retenue) : réutilise
+           `tabDefs`/`activeTab()`/`selectTab()`, déjà la source de vérité pour la barre
+           d'onglets mobile ci-dessus — seul l'habillage change, pas le mécanisme. Masqué
+           sous 800px (voir media query CSS) : le mobile garde `app-tab-bar` tel quel. -->
+      <nav class="profile-rail">
+        @for (tab of tabDefs; track tab.id) {
+          <div class="profile-rail-item" [class.active]="activeTab() === tab.id">
+            <button type="button" class="profile-rail-btn" (click)="selectTab(tab.id)">
+              <span class="profile-rail-icon">
+                @switch (tab.id) {
+                  @case ('avatar') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="7" r="4" />
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    </svg>
+                  }
+                  @case ('colorblind') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  }
+                  @case ('connection') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                    </svg>
+                  }
+                  @case ('alerts') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                  }
+                  @case ('characters') {
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                  }
                 }
-              </div>
-              @if (editingPseudo()) {
-                <input
-                  #pseudoEditInput
-                  type="text"
-                  class="pseudo-edit-input"
-                  [placeholder]="'profile.pseudoPlaceholder' | t"
-                  [value]="profile.pseudo()"
-                  (blur)="commitPseudo($any($event.target).value)"
-                  (keydown)="onPseudoKeydown($event)"
-                />
-              } @else {
-                <div class="profile-preview-name-row">
-                  <span class="profile-preview-name">{{
-                    profile.pseudo() || ('profile.noPseudo' | t)
-                  }}</span>
-                  <button
-                    class="icon-btn pseudo-edit-btn"
-                    type="button"
-                    [attr.data-tooltip]="'profile.editPseudo' | t"
-                    (click)="startEditPseudo()"
-                  >
-                    <app-icon name="edit" [size]="13" />
-                  </button>
-                </div>
-              }
-            </div>
-
-            <div class="profile-field identity-right">
-              <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
-              <div class="avatar-grid">
-                @for (i of avatarIndexes; track i) {
-                  <button
-                    class="avatar-cell-btn"
-                    [class.selected]="profile.avatarIndex() === i"
-                    (click)="chooseAvatar(i)"
-                  >
-                    <app-avatar-icon [index]="i" />
-                  </button>
-                }
-              </div>
-            </div>
+              </span>
+              <span class="profile-rail-label">{{ tab.label | t }}</span>
+            </button>
+            @if (tab.helpSection; as section) {
+              <button
+                type="button"
+                class="icon-btn help-icon-btn"
+                [attr.data-tooltip]="'help.tooltip' | t"
+                (click)="helpModal.open(section)"
+              >
+                ?
+              </button>
+            }
           </div>
-        </div>
-      </div>
+        }
+      </nav>
 
-      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'colorblind'">
-        <div class="panel-body">
-          <div class="profile-field profile-field-wide">
-            <div class="profile-label-row">
-              <label class="profile-label">
-                {{ 'profile.colorblindLabel' | t }}
-                <button
-                  type="button"
-                  class="icon-btn help-icon-btn"
-                  [attr.data-tooltip]="'help.tooltip' | t"
-                  (click)="helpModal.open('profileColorblind')"
-                >
-                  ?
-                </button>
-              </label>
-            </div>
-            <div class="icon-switch icon-switch-3 colorblind-switch">
-              <span
-                class="icon-switch-highlight"
-                [class.is-right]="colorblind.profile() === 'redGreen'"
-                [class.is-far-right]="colorblind.profile() === 'tritanopia'"
-              ></span>
-              @for (opt of colorblindOptions; track opt.value) {
-                <button
-                  type="button"
-                  class="icon-switch-option colorblind-switch-option"
-                  [class.selected]="colorblind.profile() === opt.value"
-                  [attr.data-tooltip]="opt.tooltipKey | t"
-                  (click)="colorblind.setProfile(opt.value)"
-                >
-                  {{ opt.labelKey | t }}
-                </button>
-              }
-            </div>
-            <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
-            @if (colorblindSwatches().length > 0) {
-              <div class="colorblind-swatches">
-                @for (swatch of colorblindSwatches(); track swatch.labelKey) {
-                  <div class="colorblind-swatch-row">
-                    <span class="colorblind-swatch-label">{{ swatch.labelKey | t }}</span>
-                    <span class="colorblind-swatch-pair">
-                      <span
-                        class="colorblind-swatch-dot"
-                        [style.background]="swatch.before"
-                      ></span>
-                      <span class="colorblind-swatch-arrow">→</span>
-                      <span
-                        class="colorblind-swatch-dot"
-                        [style.background]="swatch.after"
-                      ></span>
-                    </span>
+      <div class="panels-row">
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
+          <div class="panel-body">
+            <div class="identity-row">
+              <div class="identity-left">
+                <div class="avatar-preview">
+                  @if (profile.avatarIndex() !== null) {
+                    <app-avatar-icon [index]="profile.avatarIndex()!" />
+                  } @else {
+                    <span class="avatar-preview-question">?</span>
+                  }
+                </div>
+                @if (editingPseudo()) {
+                  <input
+                    #pseudoEditInput
+                    type="text"
+                    class="pseudo-edit-input"
+                    [placeholder]="'profile.pseudoPlaceholder' | t"
+                    [value]="profile.pseudo()"
+                    (blur)="commitPseudo($any($event.target).value)"
+                    (keydown)="onPseudoKeydown($event)"
+                  />
+                } @else {
+                  <div class="profile-preview-name-row">
+                    <span class="profile-preview-name">{{
+                      profile.pseudo() || ('profile.noPseudo' | t)
+                    }}</span>
+                    <button
+                      class="icon-btn pseudo-edit-btn"
+                      type="button"
+                      [attr.data-tooltip]="'profile.editPseudo' | t"
+                      (click)="startEditPseudo()"
+                    >
+                      <app-icon name="edit" [size]="13" />
+                    </button>
                   </div>
                 }
               </div>
-            }
-          </div>
-        </div>
-      </div>
 
-      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'connection'">
-        <div class="panel-body">
-          <div class="profile-field profile-field-wide">
-            <div class="profile-label-row">
-              <label class="profile-label">
-                {{ 'auth.login.panelTitle' | t }}
-                <button
-                  type="button"
-                  class="icon-btn help-icon-btn"
-                  [attr.data-tooltip]="'help.tooltip' | t"
-                  (click)="helpModal.open('profileConnection')"
-                >
-                  ?
-                </button>
-              </label>
-            </div>
-
-            @if (auth.isAuthenticated()) {
-              <button type="button" class="manage-account-btn" (click)="openAccount()">
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                  <circle cx="12" cy="7" r="4" />
-                </svg>
-                <span>{{ 'auth.account.title' | t }}</span>
-              </button>
-            }
-
-            @if (auth.error(); as errorKey) {
-              <p class="login-error" role="alert">{{ errorKey | t }}</p>
-            }
-
-            <div class="provider-buttons">
-              <button
-                type="button"
-                class="provider-btn discord"
-                [disabled]="auth.busy()"
-                (click)="login('discord')"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                  <path
-                    d="M20.32 4.94A19.8 19.8 0 0 0 15.43 3.4a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.26a18.3 18.3 0 0 0-5.48 0c-.16-.4-.4-.88-.62-1.26a.08.08 0 0 0-.08-.04c-1.71.3-3.35.81-4.89 1.54a.07.07 0 0 0-.03.03C.53 9.6-.32 14.13.1 18.6a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .09-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.05-.11c-.65-.25-1.27-.55-1.87-.89a.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08 0 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08 0l.37.3a.08.08 0 0 1-.01.12c-.6.35-1.22.64-1.87.89a.08.08 0 0 0-.04.11c.36.7.77 1.36 1.22 1.99a.08.08 0 0 0 .09.03 19.9 19.9 0 0 0 6.02-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.63a.06.06 0 0 0-.03-.03ZM8.02 15.88c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.95-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42Z"
-                  />
-                </svg>
-                <span>{{ 'auth.login.discord' | t }}</span>
-              </button>
-
-              <button
-                type="button"
-                class="provider-btn google"
-                [disabled]="auth.busy()"
-                (click)="login('google')"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path
-                    fill="#4285F4"
-                    d="M21.6 12.23c0-.68-.06-1.36-.18-2.02H12v3.82h5.4a4.62 4.62 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.33Z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.6 0-4.8-1.76-5.59-4.12H3.08v2.59A10 10 0 0 0 12 22Z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M6.41 13.89a5.99 5.99 0 0 1 0-3.78V7.52H3.08a10 10 0 0 0 0 8.96l3.33-2.59Z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 5.99c1.47 0 2.79.51 3.83 1.5l2.86-2.86C16.95 2.98 14.7 2 12 2a10 10 0 0 0-8.92 5.52l3.33 2.59C7.2 7.75 9.4 5.99 12 5.99Z"
-                  />
-                </svg>
-                <span>{{ 'auth.login.google' | t }}</span>
-              </button>
-            </div>
-
-            <p class="login-intro login-mobile-only">{{ 'auth.login.intro' | t }}</p>
-            <p class="login-guest-note login-mobile-only">{{ 'auth.login.guestNote' | t }}</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'alerts'">
-        <div class="panel-body">
-          <div class="profile-field profile-field-wide">
-            <div class="profile-label-row">
-              <label class="profile-label">
-                {{ 'profile.soundItemsLabel' | t }}
-                <button
-                  type="button"
-                  class="icon-btn help-icon-btn"
-                  [attr.data-tooltip]="'help.tooltip' | t"
-                  (click)="helpModal.open('profileAlerts')"
-                >
-                  ?
-                </button>
-              </label>
-            </div>
-
-            <div class="alert-timing-test">
-              <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
-              <button
-                class="icon-btn test-sound-btn"
-                type="button"
-                [attr.data-tooltip]="'profile.testSound' | t"
-                (click)="testAlertSound()"
-              >
-                <app-icon name="volume-on" [size]="14" />
-              </button>
-            </div>
-
-            <div class="alert-timing-control">
-              <div class="alert-timing-label">
-                <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
-                  <app-icon name="clock-long" [strokeWidth]="1.8" [size]="17" />
+              <div class="profile-field identity-right">
+                <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
+                <div class="avatar-grid">
+                  @for (i of avatarIndexes; track i) {
+                    <button
+                      class="avatar-cell-btn"
+                      [class.selected]="profile.avatarIndex() === i"
+                      (click)="chooseAvatar(i)"
+                    >
+                      <app-avatar-icon [index]="i" />
+                    </button>
+                  }
                 </div>
-                <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
               </div>
-              <div class="alert-timing-actions">
-                <div class="alert-timing-duration" [class.is-disabled]="profile.alertManualClose()">
-                  <input
-                    type="number"
-                    class="alert-duration-input"
-                    min="0.5"
-                    step="0.5"
-                    [disabled]="profile.alertManualClose()"
-                    [value]="profile.alertDurationSeconds()"
-                    (input)="onDurationInput($any($event.target).value)"
-                  />
-                  <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
-                </div>
+            </div>
+          </div>
+        </div>
 
-                <label
-                  class="manual-close-switch tooltip-align-right tooltip-multiline"
-                  [attr.data-tooltip]="manualCloseTooltip()"
-                >
-                  <input
-                    type="checkbox"
-                    class="switch-input"
-                    [checked]="profile.alertManualClose()"
-                    (change)="setManualClose($any($event.target).checked)"
-                  />
-                  <span class="switch-track"><span class="switch-thumb"></span></span>
-                  <span class="switch-label" [class.is-disabled]="!profile.alertManualClose()">{{
-                    'profile.manualCloseLabel' | t
-                  }}</span>
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'colorblind'">
+          <div class="panel-body">
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
+                  {{ 'profile.colorblindLabel' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [attr.data-tooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileColorblind')"
+                  >
+                    ?
+                  </button>
+                </label>
+              </div>
+              <div class="icon-switch icon-switch-3 colorblind-switch">
+                <span
+                  class="icon-switch-highlight"
+                  [class.is-right]="colorblind.profile() === 'redGreen'"
+                  [class.is-far-right]="colorblind.profile() === 'tritanopia'"
+                ></span>
+                @for (opt of colorblindOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="icon-switch-option colorblind-switch-option"
+                    [class.selected]="colorblind.profile() === opt.value"
+                    [attr.data-tooltip]="opt.tooltipKey | t"
+                    (click)="colorblind.setProfile(opt.value)"
+                  >
+                    {{ opt.labelKey | t }}
+                  </button>
+                }
+              </div>
+              <p class="colorblind-hint">{{ 'profile.colorblindHint' | t }}</p>
+              @if (colorblindSwatches().length > 0) {
+                <div class="colorblind-swatches">
+                  @for (swatch of colorblindSwatches(); track swatch.labelKey) {
+                    <div class="colorblind-swatch-row">
+                      <span class="colorblind-swatch-label">{{ swatch.labelKey | t }}</span>
+                      <span class="colorblind-swatch-pair">
+                        <span
+                          class="colorblind-swatch-dot"
+                          [style.background]="swatch.before"
+                        ></span>
+                        <span class="colorblind-swatch-arrow">→</span>
+                        <span
+                          class="colorblind-swatch-dot"
+                          [style.background]="swatch.after"
+                        ></span>
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'connection'">
+          <div class="panel-body">
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
+                  {{ 'auth.login.panelTitle' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [attr.data-tooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileConnection')"
+                  >
+                    ?
+                  </button>
+                </label>
+              </div>
+
+              @if (auth.isAuthenticated()) {
+                <button type="button" class="manage-account-btn" (click)="openAccount()">
                   <svg
-                    class="switch-hand-icon"
-                    [class.is-disabled]="!profile.alertManualClose()"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -331,302 +293,378 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                    <circle cx="12" cy="7" r="4" />
+                  </svg>
+                  <span>{{ 'auth.account.title' | t }}</span>
+                </button>
+              }
+
+              @if (auth.error(); as errorKey) {
+                <p class="login-error" role="alert">{{ errorKey | t }}</p>
+              }
+
+              <div class="provider-buttons">
+                <button
+                  type="button"
+                  class="provider-btn discord"
+                  [disabled]="auth.busy()"
+                  (click)="login('discord')"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path
-                      d="M9 11.5V5a1.5 1.5 0 0 1 3 0v5.5M12 10.5V4a1.5 1.5 0 0 1 3 0v6.5M15 10.5V6a1.5 1.5 0 0 1 3 0v8c0 3.5-2 6.5-6 6.5s-6-1.8-7-4l-1.6-3.4a1.4 1.4 0 0 1 2.5-1.3L7 14"
+                      d="M20.32 4.94A19.8 19.8 0 0 0 15.43 3.4a.07.07 0 0 0-.08.04c-.21.38-.45.87-.61 1.26a18.3 18.3 0 0 0-5.48 0c-.16-.4-.4-.88-.62-1.26a.08.08 0 0 0-.08-.04c-1.71.3-3.35.81-4.89 1.54a.07.07 0 0 0-.03.03C.53 9.6-.32 14.13.1 18.6a.08.08 0 0 0 .03.06 19.9 19.9 0 0 0 6 3.03.08.08 0 0 0 .09-.03c.46-.63.87-1.29 1.23-1.99a.08.08 0 0 0-.05-.11c-.65-.25-1.27-.55-1.87-.89a.08.08 0 0 1-.01-.13l.37-.29a.07.07 0 0 1 .08 0 14.2 14.2 0 0 0 12.06 0 .07.07 0 0 1 .08 0l.37.3a.08.08 0 0 1-.01.12c-.6.35-1.22.64-1.87.89a.08.08 0 0 0-.04.11c.36.7.77 1.36 1.22 1.99a.08.08 0 0 0 .09.03 19.9 19.9 0 0 0 6.02-3.03.08.08 0 0 0 .03-.06c.5-5.18-.84-9.67-3.55-13.63a.06.06 0 0 0-.03-.03ZM8.02 15.88c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.96-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.96 2.42-2.16 2.42Zm7.97 0c-1.18 0-2.16-1.09-2.16-2.42 0-1.33.95-2.42 2.16-2.42 1.21 0 2.18 1.1 2.16 2.42 0 1.33-.95 2.42-2.16 2.42Z"
                     />
                   </svg>
-                </label>
-              </div>
-            </div>
+                  <span>{{ 'auth.login.discord' | t }}</span>
+                </button>
 
-            <div class="sound-item-add">
-              <app-wakfu-autocomplete
-                domain="item"
-                [placeholder]="'profile.soundItemPlaceholder' | t"
-                [existingNames]="existingSoundItemNames()"
-                (selected)="addSoundItem($event)"
-              />
-            </div>
-            <div class="sound-item-grid" #soundGrid>
-              @for (entry of profile.soundItems(); track entry.name; let i = $index) {
-                <div class="sound-item-tile" [class]="rarityClass(entry.name)">
-                  <button
-                    class="sound-toggle-btn tooltip-align-left"
-                    [class.tooltip-below]="i < soundGridColumns.columns()"
-                    [attr.data-tooltip]="
-                      (entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t
-                    "
-                    (click)="toggleSound(entry.name)"
-                  >
-                    @if (entry.enabled) {
-                      <app-icon name="volume-on" [size]="13" />
-                    } @else {
-                      <app-icon name="volume-off" [size]="13" />
-                    }
-                  </button>
-                  @if (!entry.isDefault) {
-                    <button
-                      class="remove-btn tooltip-align-right"
-                      [class.tooltip-below]="i < soundGridColumns.columns()"
-                      [attr.data-tooltip]="'tracker.remove' | t"
-                      (click)="removeSoundItem(entry.name)"
-                    >
-                      ×
-                    </button>
-                  }
-                  <app-item-icon [name]="entry.name" [size]="32" />
-                  <span
-                    #nameEl
-                    class="sound-item-name"
-                    (mouseenter)="onNameHover(nameEl, i18n.translateItemName(entry.name))"
-                    (mouseleave)="onNameLeave()"
-                    >{{ i18n.translateItemName(entry.name) }}</span
-                  >
-                </div>
-              }
+                <button
+                  type="button"
+                  class="provider-btn google"
+                  [disabled]="auth.busy()"
+                  (click)="login('google')"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      fill="#4285F4"
+                      d="M21.6 12.23c0-.68-.06-1.36-.18-2.02H12v3.82h5.4a4.62 4.62 0 0 1-2 3.03v2.5h3.23c1.89-1.74 2.97-4.3 2.97-7.33Z"
+                    />
+                    <path
+                      fill="#34A853"
+                      d="M12 22c2.7 0 4.96-.9 6.62-2.44l-3.23-2.5c-.9.6-2.05.95-3.39.95-2.6 0-4.8-1.76-5.59-4.12H3.08v2.59A10 10 0 0 0 12 22Z"
+                    />
+                    <path
+                      fill="#FBBC05"
+                      d="M6.41 13.89a5.99 5.99 0 0 1 0-3.78V7.52H3.08a10 10 0 0 0 0 8.96l3.33-2.59Z"
+                    />
+                    <path
+                      fill="#EA4335"
+                      d="M12 5.99c1.47 0 2.79.51 3.83 1.5l2.86-2.86C16.95 2.98 14.7 2 12 2a10 10 0 0 0-8.92 5.52l3.33 2.59C7.2 7.75 9.4 5.99 12 5.99Z"
+                    />
+                  </svg>
+                  <span>{{ 'auth.login.google' | t }}</span>
+                </button>
+              </div>
+
+              <p class="login-intro login-mobile-only">{{ 'auth.login.intro' | t }}</p>
+              <p class="login-guest-note login-mobile-only">{{ 'auth.login.guestNote' | t }}</p>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
-        <div class="panel-body roster-panel-body">
-          <div class="profile-field profile-field-wide">
-            <div class="profile-label-row">
-              <label class="profile-label">
-                {{ 'profile.rosterLabel' | t }}
-                <button
-                  type="button"
-                  class="icon-btn help-icon-btn"
-                  [attr.data-tooltip]="'help.tooltip' | t"
-                  (click)="helpModal.open('profileCharacters')"
-                >
-                  ?
-                </button>
-              </label>
-            </div>
-
-            <div class="roster-tabs-wrapper">
-              <app-tab-bar
-                [items]="rosterTabItems()"
-                [activeId]="selectedAccountId() ?? ''"
-                (activeIdChange)="selectAccount($event)"
-                (remove)="removeAccount($event)"
-                sheetTitle="profile.rosterLabel"
-              >
-                <button
-                  class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
-                  type="button"
-                  [attr.data-tooltip]="'profile.rosterAddAccount' | t"
-                  (click)="addAccount()"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'alerts'">
+          <div class="panel-body">
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
+                  {{ 'profile.soundItemsLabel' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [attr.data-tooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileAlerts')"
                   >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                </button>
-              </app-tab-bar>
+                    ?
+                  </button>
+                </label>
+              </div>
 
-              @if (selectedAccount(); as account) {
-                <div class="roster-account-panel">
-                  @if (!account.isDefault) {
-                    <div class="roster-account-header">
-                      <ng-container
-                        *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
-                      ></ng-container>
-                      <input
-                        type="text"
-                        class="roster-account-label-input"
-                        [value]="account.label"
-                        [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                        (change)="renameAccount(account.id, $any($event.target).value)"
+              <div class="alert-timing-test">
+                <span class="profile-inline-label">{{ 'profile.testSound' | t }}</span>
+                <button
+                  class="icon-btn test-sound-btn"
+                  type="button"
+                  [attr.data-tooltip]="'profile.testSound' | t"
+                  (click)="testAlertSound()"
+                >
+                  <app-icon name="volume-on" [size]="14" />
+                </button>
+              </div>
+
+              <div class="alert-timing-control">
+                <div class="alert-timing-label">
+                  <div class="alert-timing-icon" [class.is-disabled]="profile.alertManualClose()">
+                    <app-icon name="clock-long" [strokeWidth]="1.8" [size]="17" />
+                  </div>
+                  <span class="alert-timing-text">{{ 'profile.alertTimingLabel' | t }}</span>
+                </div>
+                <div class="alert-timing-actions">
+                  <div
+                    class="alert-timing-duration"
+                    [class.is-disabled]="profile.alertManualClose()"
+                  >
+                    <input
+                      type="number"
+                      class="alert-duration-input"
+                      min="0.5"
+                      step="0.5"
+                      [disabled]="profile.alertManualClose()"
+                      [value]="profile.alertDurationSeconds()"
+                      (input)="onDurationInput($any($event.target).value)"
+                    />
+                    <span class="alert-timing-unit">{{ 'profile.secondsUnit' | t }}</span>
+                  </div>
+
+                  <label
+                    class="manual-close-switch tooltip-align-right tooltip-multiline"
+                    [attr.data-tooltip]="manualCloseTooltip()"
+                  >
+                    <input
+                      type="checkbox"
+                      class="switch-input"
+                      [checked]="profile.alertManualClose()"
+                      (change)="setManualClose($any($event.target).checked)"
+                    />
+                    <span class="switch-track"><span class="switch-thumb"></span></span>
+                    <span class="switch-label" [class.is-disabled]="!profile.alertManualClose()">{{
+                      'profile.manualCloseLabel' | t
+                    }}</span>
+                    <svg
+                      class="switch-hand-icon"
+                      [class.is-disabled]="!profile.alertManualClose()"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path
+                        d="M9 11.5V5a1.5 1.5 0 0 1 3 0v5.5M12 10.5V4a1.5 1.5 0 0 1 3 0v6.5M15 10.5V6a1.5 1.5 0 0 1 3 0v8c0 3.5-2 6.5-6 6.5s-6-1.8-7-4l-1.6-3.4a1.4 1.4 0 0 1 2.5-1.3L7 14"
                       />
+                    </svg>
+                  </label>
+                </div>
+              </div>
+
+              <div class="sound-item-add">
+                <app-wakfu-autocomplete
+                  domain="item"
+                  [placeholder]="'profile.soundItemPlaceholder' | t"
+                  [existingNames]="existingSoundItemNames()"
+                  (selected)="addSoundItem($event)"
+                />
+              </div>
+              <div class="sound-item-grid" #soundGrid>
+                @for (entry of profile.soundItems(); track entry.name; let i = $index) {
+                  <div class="sound-item-tile" [class]="rarityClass(entry.name)">
+                    <button
+                      class="sound-toggle-btn tooltip-align-left"
+                      [class.tooltip-below]="i < soundGridColumns.columns()"
+                      [attr.data-tooltip]="
+                        (entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t
+                      "
+                      (click)="toggleSound(entry.name)"
+                    >
+                      @if (entry.enabled) {
+                        <app-icon name="volume-on" [size]="13" />
+                      } @else {
+                        <app-icon name="volume-off" [size]="13" />
+                      }
+                    </button>
+                    @if (!entry.isDefault) {
                       <button
-                        class="icon-btn reset-btn tooltip-align-right"
-                        type="button"
-                        [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
-                        (click)="removeAccount(account.id)"
+                        class="remove-btn tooltip-align-right"
+                        [class.tooltip-below]="i < soundGridColumns.columns()"
+                        [attr.data-tooltip]="'tracker.remove' | t"
+                        (click)="removeSoundItem(entry.name)"
                       >
                         ×
                       </button>
-                    </div>
-                  }
-                  <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
-
-                  @if (account.characters.length > 0) {
-                    <div class="roster-view-row">
-                      <div class="roster-view-header">
-                        @if (account.isDefault) {
-                          <ng-container
-                            *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
-                          ></ng-container>
-                        }
-                        <span class="roster-character-count">{{
-                          characterCountLabel(account.characters.length)
-                        }}</span>
-                      </div>
-                      <div class="icon-switch">
-                        <span
-                          class="icon-switch-highlight"
-                          [class.is-right]="profile.characterViewMode() === 'grid'"
-                        ></span>
-                        <button
-                          type="button"
-                          class="icon-switch-option"
-                          [class.selected]="profile.characterViewMode() === 'list'"
-                          [attr.data-tooltip]="'profile.rosterViewList' | t"
-                          (click)="profile.setCharacterViewMode('list')"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <line x1="4" y1="6" x2="20" y2="6" />
-                            <line x1="4" y1="12" x2="20" y2="12" />
-                            <line x1="4" y1="18" x2="20" y2="18" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-switch-option"
-                          [class.selected]="profile.characterViewMode() === 'grid'"
-                          [attr.data-tooltip]="'profile.rosterViewGrid' | t"
-                          (click)="profile.setCharacterViewMode('grid')"
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <rect x="4" y="4" width="7" height="7" rx="1.5" />
-                            <rect x="13" y="4" width="7" height="7" rx="1.5" />
-                            <rect x="4" y="13" width="7" height="7" rx="1.5" />
-                            <rect x="13" y="13" width="7" height="7" rx="1.5" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div
-                      class="roster-character-scroll"
-                      [ngClass]="{ 'roster-account-default': account.isDefault }"
-                      style="
-                        max-height: 400px;
-                        overflow-y: auto;
-                        overflow-x: hidden;
-                        padding: 14px 12px 4px;
-                      "
+                    }
+                    <app-item-icon [name]="entry.name" [size]="32" />
+                    <span
+                      #nameEl
+                      class="sound-item-name"
+                      (mouseenter)="onNameHover(nameEl, i18n.translateItemName(entry.name))"
+                      (mouseleave)="onNameLeave()"
+                      >{{ i18n.translateItemName(entry.name) }}</span
                     >
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
+          <div class="panel-body roster-panel-body">
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
+                  {{ 'profile.rosterLabel' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [attr.data-tooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileCharacters')"
+                  >
+                    ?
+                  </button>
+                </label>
+              </div>
+
+              <div class="roster-tabs-wrapper">
+                <app-tab-bar
+                  [items]="rosterTabItems()"
+                  [activeId]="selectedAccountId() ?? ''"
+                  (activeIdChange)="selectAccount($event)"
+                  (remove)="removeAccount($event)"
+                  sheetTitle="profile.rosterLabel"
+                >
+                  <button
+                    class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
+                    type="button"
+                    [attr.data-tooltip]="'profile.rosterAddAccount' | t"
+                    (click)="addAccount()"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                  </button>
+                </app-tab-bar>
+
+                @if (selectedAccount(); as account) {
+                  <div class="roster-account-panel">
+                    @if (!account.isDefault) {
+                      <div class="roster-account-header">
+                        <ng-container
+                          *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                        ></ng-container>
+                        <input
+                          type="text"
+                          class="roster-account-label-input"
+                          [value]="account.label"
+                          [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                          (change)="renameAccount(account.id, $any($event.target).value)"
+                        />
+                        <button
+                          class="icon-btn reset-btn tooltip-align-right"
+                          type="button"
+                          [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
+                          (click)="removeAccount(account.id)"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    }
+                    <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
+
+                    @if (account.characters.length > 0) {
+                      <div class="roster-view-row">
+                        <div class="roster-view-header">
+                          @if (account.isDefault) {
+                            <ng-container
+                              *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                            ></ng-container>
+                          }
+                          <span class="roster-character-count">{{
+                            characterCountLabel(account.characters.length)
+                          }}</span>
+                        </div>
+                        <div class="icon-switch">
+                          <span
+                            class="icon-switch-highlight"
+                            [class.is-right]="profile.characterViewMode() === 'grid'"
+                          ></span>
+                          <button
+                            type="button"
+                            class="icon-switch-option"
+                            [class.selected]="profile.characterViewMode() === 'list'"
+                            [attr.data-tooltip]="'profile.rosterViewList' | t"
+                            (click)="profile.setCharacterViewMode('list')"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <line x1="4" y1="6" x2="20" y2="6" />
+                              <line x1="4" y1="12" x2="20" y2="12" />
+                              <line x1="4" y1="18" x2="20" y2="18" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-switch-option"
+                            [class.selected]="profile.characterViewMode() === 'grid'"
+                            [attr.data-tooltip]="'profile.rosterViewGrid' | t"
+                            (click)="profile.setCharacterViewMode('grid')"
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
                       <div
-                        #charGrid
-                        class="roster-character-list"
-                        [class.is-grid]="profile.characterViewMode() === 'grid'"
+                        class="roster-character-scroll"
+                        [ngClass]="{ 'roster-account-default': account.isDefault }"
+                        style="
+                          max-height: 400px;
+                          overflow-y: auto;
+                          overflow-x: hidden;
+                          padding: 14px 12px 4px;
+                        "
                       >
-                        @for (char of account.characters; track char.name; let i = $index) {
-                          @if (profile.characterViewMode() === 'grid') {
-                            <div
-                              class="roster-character-tile"
-                              draggable="true"
-                              (dragstart)="onCharDragStart(i)"
-                              (dragover)="$event.preventDefault()"
-                              (drop)="onCharDrop(account.id, i)"
-                            >
-                              <button
-                                class="icon-btn reset-btn badge-close-btn tooltip-align-right"
-                                [class.tooltip-below]="i < charGridColumns.columns()"
-                                type="button"
-                                draggable="false"
-                                [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
-                                (click)="requestRemoveCharacter($event, account.id, char.name)"
-                              >
-                                ×
-                              </button>
-                              <div class="roster-character-avatar">
-                                <app-avatar-icon
-                                  [index]="avatarIndexForChar(char)"
-                                  style="width: 100%; height: 100%"
-                                />
-                              </div>
-                              @if (isEditingCharacter(account.id, char.name)) {
-                                <input
-                                  #charEditInput
-                                  type="text"
-                                  class="pseudo-edit-input"
-                                  [value]="char.name"
-                                  (blur)="
-                                    commitCharacterRename(
-                                      account.id,
-                                      char.name,
-                                      $any($event.target).value
-                                    )
-                                  "
-                                  (keydown)="
-                                    onCharacterRenameKeydown($event, account.id, char.name)
-                                  "
-                                />
-                              } @else {
-                                <div class="profile-preview-name-row">
-                                  <span
-                                    #nameEl
-                                    class="roster-character-name"
-                                    (mouseenter)="onNameHover(nameEl, char.name)"
-                                    (mouseleave)="onNameLeave()"
-                                    >{{ char.name }}</span
-                                  >
-                                  <button
-                                    class="icon-btn pseudo-edit-btn plain-icon-btn"
-                                    type="button"
-                                    draggable="false"
-                                    [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
-                                    (click)="startEditCharacter(account.id, char.name)"
-                                  >
-                                    <app-icon name="edit" [size]="13" />
-                                  </button>
-                                </div>
-                              }
-                            </div>
-                          } @else {
-                            <div
-                              class="roster-character-row"
-                              draggable="true"
-                              (dragstart)="onCharDragStart(i)"
-                              (dragover)="$event.preventDefault()"
-                              (drop)="onCharDrop(account.id, i)"
-                            >
-                              <img
-                                [src]="characterIcon(char)"
-                                class="roster-character-icon"
-                                alt=""
-                              />
+                        <div
+                          #charGrid
+                          class="roster-character-list"
+                          [class.is-grid]="profile.characterViewMode() === 'grid'"
+                        >
+                          @for (char of account.characters; track char.name; let i = $index) {
+                            @if (profile.characterViewMode() === 'grid') {
                               <div
-                                style="
-                                  display: flex;
-                                  align-items: center;
-                                  gap: 8px;
-                                  flex-grow: 1;
-                                  min-width: 0;
-                                "
+                                class="roster-character-tile"
+                                draggable="true"
+                                (dragstart)="onCharDragStart(i)"
+                                (dragover)="$event.preventDefault()"
+                                (drop)="onCharDrop(account.id, i)"
                               >
+                                <button
+                                  class="icon-btn reset-btn badge-close-btn tooltip-align-right"
+                                  [class.tooltip-below]="i < charGridColumns.columns()"
+                                  type="button"
+                                  draggable="false"
+                                  [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
+                                  (click)="requestRemoveCharacter($event, account.id, char.name)"
+                                >
+                                  ×
+                                </button>
+                                <div class="roster-character-avatar">
+                                  <app-avatar-icon
+                                    [index]="avatarIndexForChar(char)"
+                                    style="width: 100%; height: 100%"
+                                  />
+                                </div>
                                 @if (isEditingCharacter(account.id, char.name)) {
                                   <input
                                     #charEditInput
                                     type="text"
-                                    class="pseudo-edit-input roster-character-edit-input"
-                                    style="flex-grow: 1; text-align: left"
+                                    class="pseudo-edit-input"
                                     [value]="char.name"
                                     (blur)="
                                       commitCharacterRename(
@@ -640,43 +678,107 @@
                                     "
                                   />
                                 } @else {
-                                  <span
-                                    #nameEl
-                                    class="roster-character-name"
-                                    (mouseenter)="onNameHover(nameEl, char.name)"
-                                    (mouseleave)="onNameLeave()"
-                                    >{{ char.name }}</span
-                                  >
+                                  <div class="profile-preview-name-row">
+                                    <span
+                                      #nameEl
+                                      class="roster-character-name"
+                                      (mouseenter)="onNameHover(nameEl, char.name)"
+                                      (mouseleave)="onNameLeave()"
+                                      >{{ char.name }}</span
+                                    >
+                                    <button
+                                      class="icon-btn pseudo-edit-btn plain-icon-btn"
+                                      type="button"
+                                      draggable="false"
+                                      [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
+                                      (click)="startEditCharacter(account.id, char.name)"
+                                    >
+                                      <app-icon name="edit" [size]="13" />
+                                    </button>
+                                  </div>
                                 }
-                                <div class="roster-character-actions">
-                                  <button
-                                    class="icon-btn pseudo-edit-btn"
-                                    type="button"
-                                    draggable="false"
-                                    [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
-                                    (click)="startEditCharacter(account.id, char.name)"
-                                  >
-                                    <app-icon name="edit" [size]="13" />
-                                  </button>
-                                  <button
-                                    class="icon-btn reset-btn tooltip-align-right"
-                                    type="button"
-                                    draggable="false"
-                                    [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
-                                    (click)="requestRemoveCharacter($event, account.id, char.name)"
-                                  >
-                                    ×
-                                  </button>
+                              </div>
+                            } @else {
+                              <div
+                                class="roster-character-row"
+                                draggable="true"
+                                (dragstart)="onCharDragStart(i)"
+                                (dragover)="$event.preventDefault()"
+                                (drop)="onCharDrop(account.id, i)"
+                              >
+                                <img
+                                  [src]="characterIcon(char)"
+                                  class="roster-character-icon"
+                                  alt=""
+                                />
+                                <div
+                                  style="
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    flex-grow: 1;
+                                    min-width: 0;
+                                  "
+                                >
+                                  @if (isEditingCharacter(account.id, char.name)) {
+                                    <input
+                                      #charEditInput
+                                      type="text"
+                                      class="pseudo-edit-input roster-character-edit-input"
+                                      style="flex-grow: 1; text-align: left"
+                                      [value]="char.name"
+                                      (blur)="
+                                        commitCharacterRename(
+                                          account.id,
+                                          char.name,
+                                          $any($event.target).value
+                                        )
+                                      "
+                                      (keydown)="
+                                        onCharacterRenameKeydown($event, account.id, char.name)
+                                      "
+                                    />
+                                  } @else {
+                                    <span
+                                      #nameEl
+                                      class="roster-character-name"
+                                      (mouseenter)="onNameHover(nameEl, char.name)"
+                                      (mouseleave)="onNameLeave()"
+                                      >{{ char.name }}</span
+                                    >
+                                  }
+                                  <div class="roster-character-actions">
+                                    <button
+                                      class="icon-btn pseudo-edit-btn"
+                                      type="button"
+                                      draggable="false"
+                                      [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
+                                      (click)="startEditCharacter(account.id, char.name)"
+                                    >
+                                      <app-icon name="edit" [size]="13" />
+                                    </button>
+                                    <button
+                                      class="icon-btn reset-btn tooltip-align-right"
+                                      type="button"
+                                      draggable="false"
+                                      [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
+                                      (click)="
+                                        requestRemoveCharacter($event, account.id, char.name)
+                                      "
+                                    >
+                                      ×
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            }
                           }
-                        }
+                        </div>
                       </div>
-                    </div>
-                  }
-                </div>
-              }
+                    }
+                  </div>
+                }
+              </div>
             </div>
           </div>
         </div>
