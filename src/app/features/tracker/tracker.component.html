@@ -46,7 +46,7 @@
         >
           −
         </button>
-        @if (watchlist.selectMode() && watchlist.selectedNames().size > 0) {
+        @if (watchlist.selectMode() && watchlist.selectedKeys().size > 0) {
           <button type="button" class="kpi-bulk-delete-btn" (click)="watchlist.confirmBulkDelete()">
             {{ watchlist.bulkDeleteLabel() }}
           </button>
@@ -60,25 +60,23 @@
       <div class="empty-state">{{ 'tracker.empty' | t }}</div>
     } @else {
       <div class="kpi-mobile-grid">
-        @for (entry of stats.watchlist(); track entry.name) {
+        @for (entry of stats.watchlist(); track entry.name + '::' + (entry.catalogId ?? '')) {
           <div
             class="kpi-card"
             [class]="watchlist.rarityClass(entry)"
             [class.is-monster]="entry.kind === 'enemy'"
-            [class.is-selected]="
-              watchlist.selectMode() && watchlist.selectedNames().has(entry.name)
-            "
-            (click)="onCardClick(entry.name)"
+            [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
+            (click)="onCardClick(entry)"
           >
             @if (watchlist.selectMode()) {
               <button
                 type="button"
                 class="kpi-card-select-checkbox"
-                [class.checked]="watchlist.selectedNames().has(entry.name)"
+                [class.checked]="watchlist.isSelected(entry)"
                 [attr.data-tooltip]="'tracker.bulkDeleteCheckboxTooltip' | t"
-                (click)="$event.stopPropagation(); watchlist.toggleSelected(entry.name)"
+                (click)="$event.stopPropagation(); watchlist.toggleSelected(entry)"
               >
-                @if (watchlist.selectedNames().has(entry.name)) {
+                @if (watchlist.isSelected(entry)) {
                   <app-icon name="check" [strokeWidth]="3" [size]="11" />
                 }
               </button>
@@ -86,15 +84,21 @@
               <button
                 class="kpi-card-del"
                 [attr.data-tooltip]="'tracker.remove' | t"
-                (click)="watchlist.requestDelete($event, entry.name)"
+                (click)="watchlist.requestDelete($event, entry)"
               >
                 ×
               </button>
             }
             @if (entry.kind === 'enemy') {
-              <app-entity-icon [name]="entry.name" side="enemy" class="kpi-card-icon" [size]="32" />
+              <app-entity-icon
+                [name]="entry.name"
+                [id]="entry.catalogId"
+                side="enemy"
+                class="kpi-card-icon"
+                [size]="32"
+              />
             } @else {
-              <app-item-icon [name]="entry.name" class="kpi-card-icon" [size]="32" />
+              <app-item-icon [name]="entry.name" [id]="entry.catalogId" class="kpi-card-icon" [size]="32" />
             }
             <div class="kpi-card-info">
               <span
@@ -118,7 +122,7 @@
                     [attr.data-tooltip]="'tracker.countdownTargetHint' | t"
                     (click)="$event.stopPropagation()"
                     (keydown)="watchlist.onCountdownKeydown($event, entry)"
-                    (change)="watchlist.onCountdownInput($event, entry.name)"
+                    (change)="watchlist.onCountdownInput($event, entry)"
                   />
                 } @else {
                   <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
@@ -133,7 +137,7 @@
                     class="icon-switch-option"
                     [class.selected]="entry.mode === 'up'"
                     [attr.data-tooltip]="'tracker.countUpMode' | t"
-                    (click)="watchlist.setMode($event, entry.name, 'up')"
+                    (click)="watchlist.setMode($event, entry, 'up')"
                   >
                     ▲
                   </button>
@@ -142,7 +146,7 @@
                     class="icon-switch-option"
                     [class.selected]="entry.mode === 'down'"
                     [attr.data-tooltip]="'tracker.countDownMode' | t"
-                    (click)="watchlist.setMode($event, entry.name, 'down')"
+                    (click)="watchlist.setMode($event, entry, 'down')"
                   >
                     ▼
                   </button>
@@ -151,7 +155,7 @@
                   <button
                     class="kpi-card-reset"
                     [attr.data-tooltip]="'tracker.reset' | t"
-                    (click)="watchlist.resetCount($event, entry.name)"
+                    (click)="watchlist.resetCount($event, entry)"
                   >
                     <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
                   </button>

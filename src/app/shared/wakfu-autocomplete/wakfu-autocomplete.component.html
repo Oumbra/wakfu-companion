@@ -31,9 +31,9 @@
             }
             <span class="wakfu-autocomplete-item-icon">
               @if (r.kind === 'item') {
-                <app-item-icon [name]="r.name" [size]="24" />
+                <app-item-icon [name]="r.name" [id]="r.id" [size]="24" />
               } @else {
-                <app-entity-icon [name]="r.name" side="enemy" [size]="24" />
+                <app-entity-icon [name]="r.name" [id]="r.id" side="enemy" [size]="24" />
               }
             </span>
             <span
@@ -43,7 +43,7 @@
               >{{ r.label }}</span
             >
           </button>
-          @if (r.kind === 'item' && r.hasRecipe) {
+          @if (showRecipeButton() && r.kind === 'item' && r.hasRecipe) {
             <button
               type="button"
               class="wakfu-autocomplete-recipe-btn tooltip-align-right"

@@ -30,6 +30,12 @@ export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
 export interface WakfuAutocompleteExisting {
   name: string;
   kind: WakfuSearchKind;
+  /** Id Ankama déjà résolu pour cette entrée existante, `null` si jamais résolu (voir
+   * WatchlistEntry.catalogId/SoundItemEntry.catalogId) — permet de ne désactiver, dans la liste
+   * de suggestions, que la suggestion correspondant EXACTEMENT à cette entrée (même id), pas
+   * toute suggestion homonyme (voir `results`, deux objets/monstres peuvent partager un nom, ex.
+   * "Larme d'Ogrest"). */
+  id: number | null;
 }
 
 export interface WakfuAutocompleteOption extends WakfuSearchResult {
@@ -61,6 +67,11 @@ export class WakfuAutocompleteComponent {
   readonly placeholder = input('');
   /** Entrées déjà présentes dans la liste cible : marquées non sélectionnables dans les suggestions. */
   readonly existingNames = input<readonly WakfuAutocompleteExisting[]>([]);
+  /** Icône "suivre les objets de la recette" (voir `openRecipe`) : visible par défaut, à
+   * désactiver explicitement là où l'ajout ne concerne pas le suivi principal (ex. sélecteur
+   * d'objets pour les alertes sonores de la page profil) — seul le suivi (tracker/tracker-strip)
+   * a vocation à ouvrir la modale de recette depuis cette liste. */
+  readonly showRecipeButton = input(true);
 
   readonly selected = output<WakfuSearchResult>();
   /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
@@ -95,7 +106,36 @@ export class WakfuAutocompleteComponent {
     this.inputEl()?.nativeElement.focus();
   }
 
-  private readonly existingSet = computed(
+  /**
+   * Trois ensembles pour désactiver une suggestion sans confondre deux objets/monstres
+   * homonymes d'id différent (ex. les deux "Larme d'Ogrest") :
+   * - `existingByKindId` : entrées déjà suivies dont l'id est connu — une suggestion partageant
+   *   ce même id précis est désactivée, mais PAS une suggestion homonyme d'id différent.
+   * - `existingByKindNameUnresolved` : entrées déjà suivies dont l'id n'est PAS connu (legacy,
+   *   voir StatsStoreService.normalizeWatchlistEntry) — par prudence, toute suggestion de même
+   *   nom reste désactivée tant qu'on ne peut pas garantir qu'il s'agit d'un objet différent.
+   * - `existingByKindNameAny` : n'entre en jeu que pour une suggestion dont l'id est lui-même
+   *   inconnu (`r.id === null`, rare — objets historiques sans id Ankama) : dans ce cas
+   *   impossible de la distinguer d'une entrée déjà suivie, id connu ou non, donc repli complet
+   *   sur le nom, comme avant l'introduction de l'id.
+   */
+  private readonly existingByKindId = computed(
+    () =>
+      new Set(
+        this.existingNames()
+          .filter((e) => e.id !== null)
+          .map((e) => `${e.kind}:${e.id}`),
+      ),
+  );
+  private readonly existingByKindNameUnresolved = computed(
+    () =>
+      new Set(
+        this.existingNames()
+          .filter((e) => e.id === null)
+          .map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`),
+      ),
+  );
+  private readonly existingByKindNameAny = computed(
     () => new Set(this.existingNames().map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`)),
   );
 
@@ -108,11 +148,16 @@ export class WakfuAutocompleteComponent {
         : domain === 'enemy'
           ? this.search.searchEnemies(q)
           : this.search.searchAll(q);
-    const existing = this.existingSet();
-    return raw.map((r) => ({
-      ...r,
-      disabled: existing.has(`${r.kind}:${normalizeWakfuName(r.name)}`),
-    }));
+    const byId = this.existingByKindId();
+    const byNameUnresolved = this.existingByKindNameUnresolved();
+    const byNameAny = this.existingByKindNameAny();
+    return raw.map((r) => {
+      const disabled =
+        r.id !== null
+          ? byId.has(`${r.kind}:${r.id}`) || byNameUnresolved.has(`${r.kind}:${normalizeWakfuName(r.name)}`)
+          : byNameAny.has(`${r.kind}:${normalizeWakfuName(r.name)}`);
+      return { ...r, disabled };
+    });
   });
 
   /** Vrai tant qu'une recette ouverte par CETTE instance (voir `openRecipe`) est en attente —

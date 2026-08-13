@@ -376,19 +376,24 @@
                   domain="item"
                   [placeholder]="'profile.soundItemPlaceholder' | t"
                   [existingNames]="existingSoundItemNames()"
+                  [showRecipeButton]="false"
                   (selected)="addSoundItem($event)"
                 />
               </div>
               <div class="sound-item-grid" #soundGrid>
-                @for (entry of profile.soundItems(); track entry.name; let i = $index) {
-                  <div class="sound-item-tile" [class]="rarityClass(entry.name)">
+                @for (
+                  entry of profile.soundItems();
+                  track entry.name + '::' + (entry.catalogId ?? '');
+                  let i = $index
+                ) {
+                  <div class="sound-item-tile" [class]="rarityClass(entry.name, entry.catalogId)">
                     <button
                       class="sound-toggle-btn tooltip-align-left"
                       [class.tooltip-below]="i < soundGridColumns.columns()"
                       [attr.data-tooltip]="
                         (entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t
                       "
-                      (click)="toggleSound(entry.name)"
+                      (click)="toggleSound(entry.name, entry.catalogId)"
                     >
                       @if (entry.enabled) {
                         <app-icon name="volume-on" [size]="13" />
@@ -401,12 +406,12 @@
                         class="remove-btn tooltip-align-right"
                         [class.tooltip-below]="i < soundGridColumns.columns()"
                         [attr.data-tooltip]="'tracker.remove' | t"
-                        (click)="removeSoundItem(entry.name)"
+                        (click)="removeSoundItem(entry.name, entry.catalogId)"
                       >
                         ×
                       </button>
                     }
-                    <app-item-icon [name]="entry.name" [size]="32" />
+                    <app-item-icon [name]="entry.name" [id]="entry.catalogId" [size]="32" />
                     <span
                       #nameEl
                       class="sound-item-name"

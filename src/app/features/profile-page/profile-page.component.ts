@@ -146,7 +146,9 @@ export class ProfilePageComponent implements OnDestroy {
   });
 
   protected readonly existingSoundItemNames = computed(() =>
-    this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
+    this.profile
+      .soundItems()
+      .map((entry) => ({ name: entry.name, kind: 'item' as const, id: entry.catalogId })),
   );
 
   /** Tous comptes confondus — affiché à côté de l'onglet "Personnages" du rail (voir CLAUDE.md,
@@ -330,19 +332,19 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   protected addSoundItem(result: WakfuSearchResult): void {
-    this.profile.addSoundItem(result.name);
+    this.profile.addSoundItem(result.name, result.id);
   }
 
-  protected toggleSound(name: string): void {
-    this.profile.toggleSoundItem(name);
+  protected toggleSound(name: string, catalogId: number | null): void {
+    this.profile.toggleSoundItem(name, catalogId);
   }
 
-  protected removeSoundItem(name: string): void {
-    this.profile.removeSoundItem(name);
+  protected removeSoundItem(name: string, catalogId: number | null): void {
+    this.profile.removeSoundItem(name, catalogId);
   }
 
-  protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(this.catalog, name)}`;
+  protected rarityClass(name: string, catalogId: number | null): string {
+    return `rarity-${getWakfuItemRarity(this.catalog, name, catalogId)}`;
   }
 
   protected characterIcon(char: RosterCharacter): string {
