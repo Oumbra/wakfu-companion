@@ -45,6 +45,8 @@ export interface FightSpellInput {
 export interface FightParticipantInput {
   side: 'ally' | 'enemy';
   name: string;
+  /** Id Ankama du monstre (côté 'enemy' uniquement), `null` sinon — miroir de `loot.itemId`. */
+  monsterId: number | null;
   instanceIndex: number;
   className: string | null;
   damage: number;
@@ -257,6 +259,8 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   }
   const name = parseText(entry['name'], 'participant.name');
   if (!name.ok) return name;
+  const monsterId = parseCount(entry['monsterId'], 'participant.monsterId', true);
+  if (!monsterId.ok) return monsterId;
   const instanceIndex = parseCount(entry['instanceIndex'] ?? 1, 'participant.instanceIndex');
   if (!instanceIndex.ok) return instanceIndex;
   const damage = parseCount(entry['damage'] ?? 0, 'participant.damage');
@@ -292,6 +296,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
     value: {
       side: entry['side'],
       name: name.value,
+      monsterId: monsterId.value,
       instanceIndex: instanceIndex.value ?? 1,
       className: typeof className === 'string' ? className.slice(0, MAX_NAME_LENGTH) : null,
       damage: damage.value ?? 0,

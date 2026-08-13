@@ -66,6 +66,7 @@ describe('parseFightsBody', () => {
     expect(parsed.value[0].participants[0]).toEqual({
       side: 'ally',
       name: 'Oumbra',
+      monsterId: null,
       instanceIndex: 1,
       className: null,
       damage: 1234,
@@ -73,6 +74,28 @@ describe('parseFightsBody', () => {
       spells: [],
       xpGained: 0,
     });
+  });
+
+  it('accepte et transporte un monsterId résolu côté ennemi', () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [{ side: 'enemy', name: 'Bouftou', instanceIndex: 1, monsterId: 1 }],
+        }),
+      ],
+    });
+    expect(parsed.ok && parsed.value[0].participants[0].monsterId).toBe(1);
+  });
+
+  it('refuse un monsterId non entier', () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [{ side: 'enemy', name: 'Bouftou', instanceIndex: 1, monsterId: 1.5 }],
+        }),
+      ],
+    });
+    expect(parsed).toEqual({ ok: false, error: expect.stringContaining('monsterId') });
   });
 
   it('accepte un lot vide (rien à ingérer)', () => {

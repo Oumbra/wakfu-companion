@@ -587,6 +587,16 @@ export const fightParticipants = pgTable(
       .references(() => fights.id, { onDelete: 'cascade' }),
     side: text('side').notNull(), // 'ally' | 'enemy'
     name: text('name').notNull(),
+    /**
+     * `monsterId` référence `monsters.id` quand le catalogue a pu résoudre le nom (côté ennemi
+     * uniquement — toujours `NULL` pour un allié, qui est un joueur, jamais dans ce catalogue),
+     * `NULL` sinon ; pas de FK stricte, même raison que `fightLoot.itemId`. Résolu **une seule
+     * fois** côté client (voir `HistorySyncService.monsterId`) au moment de construire le
+     * payload envoyé au serveur — le log ne référence jamais un monstre par id, seulement par
+     * nom, et `repository/monsters.json` contient des homonymes (ex. "Corbac", "Malopo") que
+     * `name` seul ne permet pas de distinguer.
+     */
+    monsterId: integer('monster_id'),
     instanceIndex: integer('instance_index').notNull().default(1),
     className: text('class_name'),
     damage: bigint('damage', { mode: 'number' }).notNull().default(0),

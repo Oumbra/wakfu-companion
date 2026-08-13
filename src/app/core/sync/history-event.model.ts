@@ -59,6 +59,10 @@ export interface FightSpellPayload {
 export interface FightParticipantPayload {
   side: 'ally' | 'enemy';
   name: string;
+  /** Id Ankama du monstre (côté 'enemy' uniquement, `null` pour un allié — voir
+   * HistorySyncService.monsterId) — résolution non ambiguë en cas d'homonymes
+   * (repository/monsters.json en contient, ex. "Corbac", "Malopo"). */
+  monsterId: number | null;
   instanceIndex: number;
   className: string | null;
   damage: number;

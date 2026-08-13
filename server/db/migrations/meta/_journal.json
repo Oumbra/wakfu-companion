@@ -85,6 +85,13 @@
       "when": 1786564800001,
       "tag": "0011_dungeon_type_category",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1786656619695,
+      "tag": "0012_adorable_zemo",
+      "breakpoints": true
     }
   ]
 }

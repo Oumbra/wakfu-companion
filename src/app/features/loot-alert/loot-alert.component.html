@@ -14,9 +14,9 @@
     </div>
     <div class="loot-alert-card">
       @if (kind() === 'enemy') {
-        <app-entity-icon [name]="itemName()" side="enemy" [size]="34" />
+        <app-entity-icon [name]="itemName()" [id]="itemId()" side="enemy" [size]="34" />
       } @else {
-        <app-item-icon [name]="itemName()" [size]="34" />
+        <app-item-icon [name]="itemName()" [id]="itemId()" [size]="34" />
       }
       <div class="loot-alert-text">
         <span class="loot-alert-title">{{

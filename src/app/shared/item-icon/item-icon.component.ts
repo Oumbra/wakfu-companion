@@ -77,6 +77,11 @@ function itemImageCandidates(entry: CatalogItemEntry): string[] {
 })
 export class ItemIconComponent {
   readonly name = input.required<string>();
+  /** Id Ankama de l'objet, quand déjà connu (ex. capturé à la sélection dans l'autocomplétion) —
+   * résolution non ambiguë à préférer à `name` seul, qui ne suffit pas à distinguer deux objets
+   * homonymes (ex. "Larme d'Ogrest", deux ids distincts dans le référentiel). `null` (défaut) :
+   * repli sur la résolution par nom, comme avant ce champ. */
+  readonly id = input<number | null>(null);
   /** Taille en px (carrée). Par défaut 18px, comme dans les listes de suivi/butin. */
   readonly size = input(18);
 
@@ -87,7 +92,10 @@ export class ItemIconComponent {
     const key = normalizeWakfuName(this.name());
     const override = WAKFU_ITEM_IMAGE_OVERRIDES[key];
     if (override) return [override];
-    const entry = this.catalog.findWakfuItemEntry(this.name());
+    const byId = this.id();
+    const entry =
+      (byId !== null ? this.catalog.findWakfuItemEntryById(byId) : undefined) ??
+      this.catalog.findWakfuItemEntry(this.name());
     return entry ? itemImageCandidates(entry) : [];
   });
 

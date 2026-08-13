@@ -10,6 +10,15 @@ import { CatalogService } from '../api/catalog.service';
 import { getWakfuItemRarity } from '../data/wakfu-item-rarity.data';
 import { resolveNumericKeyAction } from './numeric-keydown.util';
 
+/** Identifie une entrée de watchlist de façon unique, y compris quand deux entrées partagent le
+ * même nom (catalogue avec homonymes, ex. les deux "Larme d'Ogrest") — utilisé pour tout ce qui
+ * doit cibler UNE ligne précise dans ce contrôleur (sélection groupée, `@for track` côté
+ * template). Jamais utilisé pour le comptage/la détection depuis le log, qui reste basé sur le
+ * nom seul (voir StatsStoreService.incrementWatched). */
+export function watchlistEntryKey(entry: Pick<WatchlistEntry, 'name' | 'catalogId'>): string {
+  return `${entry.name}::${entry.catalogId ?? ''}`;
+}
+
 /**
  * Logique commune aux deux vues de la watchlist (TrackerComponent mobile en grille de cartes,
  * TrackerStripComponent desktop en bande de KPI) : même modèle (WatchlistEntry), mêmes actions de
@@ -42,14 +51,18 @@ export class WatchlistTileController {
    * cochée — suppression immédiate au clic, sans popover de confirmation (le passage par ce mode
    * dédié + une sélection explicite tient lieu de confirmation). */
   readonly selectMode = signal(false);
-  readonly selectedNames = signal<ReadonlySet<string>>(new Set());
+  /** Clés composites (voir `watchlistEntryKey`), pas des noms bruts : deux entrées homonymes
+   * d'id différent doivent pouvoir être sélectionnées/supprimées indépendamment. */
+  readonly selectedKeys = signal<ReadonlySet<string>>(new Set());
   readonly canBulkDelete = computed(() => this.stats.watchlist().length > 2);
   readonly bulkDeleteLabel = computed(() =>
-    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedNames().size }),
+    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedKeys().size }),
   );
 
   rarityClass(entry: WatchlistEntry): string {
-    return entry.kind === 'item' ? `rarity-${getWakfuItemRarity(this.catalog, entry.name)}` : '';
+    return entry.kind === 'item'
+      ? `rarity-${getWakfuItemRarity(this.catalog, entry.name, entry.catalogId)}`
+      : '';
   }
 
   displayName(entry: WatchlistEntry): string {
@@ -74,14 +87,19 @@ export class WatchlistTileController {
 
   exitSelectMode(): void {
     this.selectMode.set(false);
-    this.selectedNames.set(new Set());
+    this.selectedKeys.set(new Set());
   }
 
-  toggleSelected(name: string): void {
-    this.selectedNames.update((set) => {
+  isSelected(entry: WatchlistEntry): boolean {
+    return this.selectedKeys().has(watchlistEntryKey(entry));
+  }
+
+  toggleSelected(entry: WatchlistEntry): void {
+    const key = watchlistEntryKey(entry);
+    this.selectedKeys.update((set) => {
       const next = new Set(set);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
       return next;
     });
   }
@@ -89,27 +107,28 @@ export class WatchlistTileController {
   /** Supprime toutes les tuiles cochées en un clic, sans popover de confirmation — le passage par
    * le mode sélection puis une sélection explicite tiennent lieu de confirmation. */
   confirmBulkDelete(): void {
-    for (const name of this.selectedNames()) {
-      this.stats.removeWatched(name);
+    const selected = this.selectedKeys();
+    for (const entry of this.stats.watchlist()) {
+      if (selected.has(watchlistEntryKey(entry))) this.stats.removeWatched(entry.name, entry.catalogId);
     }
     this.exitSelectMode();
   }
 
-  resetCount(event: Event, name: string): void {
+  resetCount(event: Event, entry: WatchlistEntry): void {
     event.stopPropagation();
-    this.stats.resetWatchedCount(name);
+    this.stats.resetWatchedCount(entry.name, entry.catalogId);
   }
 
-  setMode(event: Event, name: string, mode: WatchlistCounterMode): void {
+  setMode(event: Event, entry: WatchlistEntry, mode: WatchlistCounterMode): void {
     event.stopPropagation();
-    this.stats.setWatchlistMode(name, mode);
+    this.stats.setWatchlistMode(entry.name, mode, entry.catalogId);
   }
 
   /** Édition directe de la valeur de départ du décompte (mode 'down'). */
-  onCountdownInput(event: Event, name: string): void {
+  onCountdownInput(event: Event, entry: WatchlistEntry): void {
     event.stopPropagation();
     const value = Number((event.target as HTMLInputElement).value);
-    this.stats.setWatchlistCountdownTarget(name, value);
+    this.stats.setWatchlistCountdownTarget(entry.name, value, entry.catalogId);
   }
 
   /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
@@ -121,10 +140,10 @@ export class WatchlistTileController {
       event.preventDefault();
     } else if (action === 'increment') {
       event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1);
+      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1, entry.catalogId);
     } else if (action === 'decrement') {
       event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1));
+      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1), entry.catalogId);
     }
   }
 
@@ -133,7 +152,7 @@ export class WatchlistTileController {
    * réinitialise sa tuile active une fois l'entrée supprimée — voir tracker-strip.component.ts). */
   requestDelete(
     event: Event,
-    name: string,
+    entry: WatchlistEntry,
     onRequested?: () => void,
     onRemoved?: () => void,
   ): void {
@@ -141,7 +160,7 @@ export class WatchlistTileController {
     onRequested?.();
     const button = event.currentTarget as HTMLElement;
     this.confirmDelete.open(button, this.i18n.t('tracker.confirmDelete'), () => {
-      this.stats.removeWatched(name);
+      this.stats.removeWatched(entry.name, entry.catalogId);
       onRemoved?.();
     });
   }

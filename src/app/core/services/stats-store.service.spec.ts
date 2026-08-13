@@ -554,6 +554,7 @@ describe('StatsStoreService', () => {
         quantity: 0,
         kind: 'item',
         reason: 'countdown',
+        id: null,
       });
     });
 
@@ -585,6 +586,63 @@ describe('StatsStoreService', () => {
       ]);
 
       expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(5);
+    });
+  });
+
+  describe('Suivi (watchlist) : homonymes distingués par catalogId', () => {
+    it("deux entrées de même nom mais d'id différent coexistent (ex. les deux \"Larme d'Ogrest\")", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem("Larme d'Ogrest", 24029);
+      stats.addWatchedItem("Larme d'Ogrest", 21602);
+
+      const matches = stats.watchlist().filter((w) => w.name === "Larme d'Ogrest");
+      expect(matches).toHaveLength(2);
+      expect(matches.map((w) => w.catalogId).sort()).toEqual([21602, 24029]);
+    });
+
+    it("refuse un vrai doublon (même id) mais accepte un id différent", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem("Larme d'Ogrest", 24029);
+      stats.addWatchedItem("Larme d'Ogrest", 24029); // même id : refusé
+      stats.addWatchedItem("Larme d'Ogrest", 21602); // id différent : accepté
+
+      expect(stats.watchlist().filter((w) => w.name === "Larme d'Ogrest")).toHaveLength(2);
+    });
+
+    it('supprimer une entrée par (nom, catalogId) ne retire pas son homonyme', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem("Larme d'Ogrest", 24029);
+      stats.addWatchedItem("Larme d'Ogrest", 21602);
+
+      stats.removeWatched("Larme d'Ogrest", 24029);
+
+      const remaining = stats.watchlist().filter((w) => w.name === "Larme d'Ogrest");
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0].catalogId).toBe(21602);
+    });
+
+    it('un ramassage crédite toutes les entrées homonymes (le log ne permet pas de les distinguer)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem("Larme d'Ogrest", 24029);
+      stats.addWatchedItem("Larme d'Ogrest", 21602);
+
+      feedMore(access, [
+        "INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Larme d'Ogrest.",
+      ]);
+
+      const matches = stats.watchlist().filter((w) => w.name === "Larme d'Ogrest");
+      expect(matches.every((w) => w.count === 1)).toBe(true);
+    });
+
+    it("removeWatched sans catalogId (repli historique) retire toutes les entrées de ce nom", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem("Larme d'Ogrest", 24029);
+      stats.addWatchedItem("Larme d'Ogrest", 21602);
+
+      stats.removeWatched("Larme d'Ogrest");
+
+      expect(stats.watchlist().filter((w) => w.name === "Larme d'Ogrest")).toHaveLength(0);
     });
   });
 

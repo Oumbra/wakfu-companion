@@ -47,6 +47,7 @@ export class LootAlertComponent {
 
   protected readonly visible = signal(false);
   protected readonly itemName = signal('');
+  protected readonly itemId = signal<number | null>(null);
   protected readonly quantity = signal(1);
   protected readonly kind = signal<'item' | 'enemy'>('item');
   protected readonly reason = signal<'loot' | 'countdown'>('loot');
@@ -58,17 +59,19 @@ export class LootAlertComponent {
     effect(() => {
       const event = this.lootAlertService.current();
       if (!event) return;
-      this.show(event.name, event.quantity, event.kind, event.reason);
+      this.show(event.name, event.id, event.quantity, event.kind, event.reason);
     });
   }
 
   private show(
     name: string,
+    id: number | null,
     quantity: number,
     kind: 'item' | 'enemy',
     reason: 'loot' | 'countdown',
   ): void {
     this.itemName.set(name);
+    this.itemId.set(id);
     this.quantity.set(quantity);
     this.kind.set(kind);
     this.reason.set(reason);

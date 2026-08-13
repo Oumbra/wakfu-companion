@@ -89,6 +89,13 @@ export interface CatalogItemDetail extends CatalogItemEntry {
 /** Voir CatalogService.resolveRecipeIngredients. */
 export interface CatalogResolvedIngredient {
   name: string;
+  /** Id Ankama EXACT de cet ingrédient (voir `items.recipe[].itemId` côté serveur) — à utiliser
+   * pour le suivi (findWakfuItemEntryById), jamais une résolution par nom seul : un ingrédient
+   * peut partager son nom avec une autre variante de rareté différente du même objet (ex. une
+   * recette qui demande l'objet lui-même à un palier inférieur), et `findWakfuItemEntry(name)`
+   * ne garantit pas de retomber sur CE palier précis. */
+  id: number;
+  rarity: WakfuRarity;
   quantity: number;
   hasRecipe: boolean;
   recipeIngredients: readonly CatalogResolvedIngredient[];
@@ -224,6 +231,14 @@ export class CatalogService {
     return this.monstersByFrName.get(key) ?? this.monstersByOtherLocaleName.get(key);
   }
 
+  /** Miroir de findWakfuItemEntryById — voir findWakfuItemEntryById. Résolution non ambiguë par id,
+   * à préférer à findWakfuMonsterEntry(name) partout où l'id est déjà connu (ex. capturé une fois à
+   * la sélection dans l'autocomplétion) : le nom seul ne suffit pas à distinguer deux monstres
+   * homonymes (25 cas constatés dans repository/monsters.json, ex. "Corbac", "Malopo"). */
+  findWakfuMonsterEntryById(id: number): CatalogMonsterEntry | undefined {
+    return this.monstersById.get(id);
+  }
+
   isKnownWakfuMonsterName(name: string): boolean {
     return this.findWakfuMonsterEntry(name) !== undefined;
   }
@@ -283,8 +298,8 @@ export class CatalogService {
         )
         .map(async (ingredient) => {
           const isCycle = ancestorIds.has(ingredient.itemId);
-          const hasRecipe =
-            (this.findWakfuItemEntryById(ingredient.itemId)?.hasRecipe ?? false) && !isCycle;
+          const entry = this.findWakfuItemEntryById(ingredient.itemId);
+          const hasRecipe = (entry?.hasRecipe ?? false) && !isCycle;
           const recipeIngredients = hasRecipe
             ? await this.resolveRecipeIngredients(
                 ingredient.itemId,
@@ -293,6 +308,8 @@ export class CatalogService {
             : [];
           return {
             name: ingredient.name,
+            id: ingredient.itemId,
+            rarity: entry?.rarity ?? 'common',
             quantity: ingredient.quantity,
             hasRecipe,
             recipeIngredients,

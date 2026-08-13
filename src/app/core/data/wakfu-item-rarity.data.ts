@@ -27,8 +27,17 @@ import type { CatalogService } from '../api/catalog.service';
 export type WakfuRarity =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
-export function getWakfuItemRarity(catalog: CatalogService, name: string): WakfuRarity {
-  return catalog.findWakfuItemEntry(name)?.rarity ?? 'common';
+/** `id` (optionnel) : résolution non ambiguë par id Ankama quand déjà connu (voir
+ * CatalogService.findWakfuItemEntryById) — préférée à la résolution par nom pour deux objets
+ * homonymes de rareté différente. `undefined`/non résolu : repli sur la résolution par nom,
+ * comme avant ce paramètre. */
+export function getWakfuItemRarity(
+  catalog: CatalogService,
+  name: string,
+  id?: number | null,
+): WakfuRarity {
+  const entry = (id != null ? catalog.findWakfuItemEntryById(id) : undefined) ?? catalog.findWakfuItemEntry(name);
+  return entry?.rarity ?? 'common';
 }
 
 /** Ordre de tri croissant des raretés (pas de rapport avec leur valeur en jeu). */

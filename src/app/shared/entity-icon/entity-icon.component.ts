@@ -52,6 +52,11 @@ function monsterImageCandidates(entry: CatalogMonsterEntry): string[] {
 export class EntityIconComponent {
   readonly name = input.required<string>();
   readonly side = input.required<EntitySide>();
+  /** Id Ankama du monstre, quand déjà connu (ex. capturé à la sélection dans l'autocomplétion) —
+   * résolution non ambiguë à préférer à `name` seul, qui ne suffit pas à distinguer deux monstres
+   * homonymes (25 cas constatés, ex. "Corbac", "Malopo"). `null` (défaut) : repli sur la
+   * résolution par nom, comme avant ce champ. Sans effet côté allié (jamais dans ce catalogue). */
+  readonly id = input<number | null>(null);
   /** Taille en px (carrée). Par défaut 22px, comme dans les listes de dégâts/suivi. */
   readonly size = input(22);
 
@@ -61,7 +66,10 @@ export class EntityIconComponent {
   private readonly candidates = computed(() => {
     this.catalog.revision(); // dépendance réactive : recalcule une fois le catalogue chargé
     if (this.side() === 'ally') return [];
-    const entry = this.catalog.findWakfuMonsterEntry(this.name());
+    const byId = this.id();
+    const entry =
+      (byId !== null ? this.catalog.findWakfuMonsterEntryById(byId) : undefined) ??
+      this.catalog.findWakfuMonsterEntry(this.name());
     return entry ? monsterImageCandidates(entry) : [];
   });
 
