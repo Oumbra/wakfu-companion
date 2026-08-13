@@ -14,7 +14,7 @@
  * et tools/generate-wakfu-items-data.mjs, qui les excluent tous deux de ce
  * qui est exposé côté client (jamais résolus par findWakfuItemEntry, donc
  * getWakfuItemRarity() ne retourne jamais `old` au runtime ; conservé
- * uniquement pour typer correctement referentiel/items_wakfu.json).
+ * uniquement pour typer correctement repository/items.json).
  *
  * Fonction PARAMÉTRÉE (pas injectable elle-même, c'est une fonction libre,
  * pas un service) : l'appelant (déjà dans un contexte d'injection — composant

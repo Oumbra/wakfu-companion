@@ -352,7 +352,7 @@ Architecture attendue :
    reconnaît plus aucun objet.
 5. Supprime wakfu-items.data.ts / wakfu-monsters.data.ts / wakfu-dungeons.data.ts
    et les scripts tools/generate-* correspondants (l'import vit côté serveur
-   depuis le lot 2), ainsi que le dossier referentiel/ s'il n'a plus d'usage.
+   depuis le lot 2), ainsi que le dossier repository/ s'il n'a plus d'usage.
 
 Vérifie dans le navigateur : autocomplétion d'objet et de monstre (latence
 perçue nulle), affichage d'une recette, icônes d'objets et de monstres,

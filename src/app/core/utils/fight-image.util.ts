@@ -69,7 +69,7 @@ export function findDungeonForEnemies(
  * Détermine l'illustration à afficher pour une entrée de l'historique des
  * combats, par ordre de priorité :
  * 1. Un ennemi boss (`isBoss`) présent -> illustration du donjon dont il est
- *    le boss (`bossMonsterId` dans referentiel/dungeons_wakfu.json), ou à
+ *    le boss (`bossMonsterId` dans repository/dungeons.json), ou à
  *    défaut (aucun donjon référencé pour ce boss) sa propre `pictureUrl`.
  * 2. Plus de ${DISTINCT_FAMILY_THRESHOLD} familles de monstres distinctes parmi les ennemis
  *    (horde hétérogène, pas un combat de donjon/archi/dominant) -> illustration générique.

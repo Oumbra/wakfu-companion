@@ -6,7 +6,7 @@ on:
       - master
       - claude/dev
     paths:
-      - 'referentiel/**'
+      - 'repository/**'
   # Déclenchement manuel : utile pour rejouer un import sans toucher au
   # référentiel (ex. après une migration de schéma catalogue), ou si
   # l'événement push n'a pas déclenché le workflow (voir l'incident GitHub

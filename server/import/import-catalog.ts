@@ -1,9 +1,9 @@
 #!/usr/bin/env -S npx tsx
 /**
  * Importe le référentiel Ankama (objets, monstres, donjons, recettes) depuis
- * referentiel/*.json vers les tables catalogue (voir server/db/schema.ts) —
+ * repository/*.json vers les tables catalogue (voir server/db/schema.ts) —
  * prompt 2.2. Déclenché par .github/workflows/import-catalog.yml quand
- * referentiel/*.json change (décision actée : PAS de fetch direct de
+ * repository/*.json change (décision actée : PAS de fetch direct de
  * wakfu.cdn.ankama.com depuis ce dépôt, PAS de cron quotidien — ces fichiers
  * sont régénérés à la main via les skills externes wakfu-items-sync /
  * wakfu-monsters-sync, très rarement, voir server/README.md). Exécuté via
@@ -40,7 +40,7 @@ import {
 import { buildCompactIndex } from '../catalog/compact-index';
 
 const projectRoot = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
-const REFERENTIEL_DIR = path.join(projectRoot, 'referentiel');
+const REFERENTIEL_DIR = path.join(projectRoot, 'repository');
 
 interface RawItem {
   id?: number;
@@ -166,16 +166,16 @@ async function main(): Promise<void> {
   if (!databaseUrl) throw new Error('DATABASE_URL manquant.');
 
   const [rawItems, rawRecipes, rawMonsters, rawDungeons] = await Promise.all([
-    readFile(path.join(REFERENTIEL_DIR, 'items_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'items.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawItem[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'recipes_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'recipes.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawRecipe[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'monsters_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'monsters.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawMonster[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'dungeons_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'dungeons.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawDungeon[],
     ),
   ]);

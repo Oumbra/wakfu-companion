@@ -26,7 +26,7 @@ export type WakfuRarityCode =
  * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
  * type TypeScript n'a de valeur que côté scripts d'import/endpoints. Remplace depuis ce lot les
  * anciens champs `isBreach`/`isUltimateBreach`/`roomCount` (curation manuelle du référentiel,
- * `referentiel/dungeons_wakfu.json`) : `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` portent maintenant
+ * `repository/dungeons.json`) : `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` portent maintenant
  * eux-mêmes le nombre de salles (voir dungeonRoomCount, core/utils/dungeon-run-grouping.util.ts),
  * `BREACH`/`ULTIMATE_BREACH` remplacent les deux booléens de brèche, et `THREE_PLAYERS` /
  * `ULTIMATE_BOSS` / `ARCADE` couvrent les donjons à un seul combat (pas de salle à rattacher). */
@@ -60,7 +60,7 @@ export const gameServers = pgTable('game_servers', {
 /**
  * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
  * server/import/import-catalog.ts pour l'import et server/README.md pour
- * l'origine des données (referentiel/*.json, régénérés à la main via les
+ * l'origine des données (repository/*.json, régénérés à la main via les
  * skills externes wakfu-items-sync/wakfu-monsters-sync, PAS un fetch direct
  * de wakfu.cdn.ankama.com depuis ce dépôt).
  *
@@ -113,7 +113,7 @@ export const itemRecipes = pgTable(
  * Monstres — `id` Ankama utilisable comme clé primaire directe ici
  * (contrairement aux objets) : vérifié unique sur les 851 monstres du
  * référentiel actuel. `family` référence un id de
- * referentiel/monster-families_wakfu.json, jamais résolu vers son libellé
+ * repository/monster-families.json, jamais résolu vers son libellé
  * côté serveur pour l'instant (exploité côté client uniquement comme clé de
  * regroupement brute — voir resolveFightImageInfo dans
  * core/utils/fight-image.util.ts, qui compte les familles distinctes sans
@@ -150,7 +150,7 @@ export const dungeons = pgTable(
     bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
     pictureUrl: text('picture_url').notNull(),
     wakassetsAvailable: boolean('wakassets_available').notNull(),
-    // Catégorie du donjon (curée à la main dans referentiel/dungeons_wakfu.json, JAMAIS déductible
+    // Catégorie du donjon (curée à la main dans repository/dungeons.json, JAMAIS déductible
     // du reste du référentiel) — remplace les anciens `isBreach`/`isUltimateBreach`/`roomCount`.
     // Toujours renseignée (contrairement à l'ancien `roomCount`, longtemps `null` pour les donjons
     // pas encore catégorisés) : les 151 donjons du référentiel ont désormais tous un `type`. Voir
@@ -171,7 +171,7 @@ export const dungeons = pgTable(
  * réussi — sert de base à GET /api/v1/catalog/version (prompt 2.2). Pas de
  * vraie "version gamedata" ici (le dépôt n'interroge plus l'API Ankama en
  * direct, voir server/README.md) : `sourceCommit` est le SHA du commit
- * ayant déclenché l'import (referentiel/*.json modifié), `indexHash` une
+ * ayant déclenché l'import (repository/*.json modifié), `indexHash` une
  * empreinte du contenu de l'index compact servi par /catalog/index.
  */
 export const catalogMeta = pgTable('catalog_meta', {

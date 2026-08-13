@@ -39,7 +39,7 @@ export interface CatalogMonsterEntry {
   isDominant: boolean;
 }
 
-/** Catégorie d'un donjon, curée à la main dans referentiel/dungeons_wakfu.json (miroir de
+/** Catégorie d'un donjon, curée à la main dans repository/dungeons.json (miroir de
  * WakfuDungeonType côté serveur, server/db/schema.ts). `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`
  * portent le nombre de salles précédant le boss (voir dungeonRoomCount,
  * core/utils/dungeon-run-grouping.util.ts) ; `BREACH`/`ULTIMATE_BREACH` remplacent les anciens
@@ -320,7 +320,7 @@ export class CatalogService {
     if (versionResult.data.indexHash === cachedHash) {
       // `indexHash` ne couvre QUE l'index compact (objets/monstres, voir buildCompactIndex côté
       // serveur) — les donjons n'y participent pas (payload séparé, /dungeons). Un changement
-      // portant uniquement sur `referentiel/dungeons_wakfu.json` (ex. type de donjon corrigé) ne
+      // portant uniquement sur `repository/dungeons.json` (ex. type de donjon corrigé) ne
       // fait donc jamais bouger ce hash : sans ce rafraîchissement dédié, un navigateur ayant déjà
       // un catalogue en cache ne réapprendrait JAMAIS une correction de donjon, potentiellement
       // indéfiniment (bug réel constaté : "Repaire des Super-Vilains" resté mal typé côté client

@@ -123,12 +123,12 @@ DATABASE_URL=... npm run db:migrate
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
-### D'où viennent les données : `referentiel/*.json`, pas un fetch direct
+### D'où viennent les données : `repository/*.json`, pas un fetch direct
 
 Contrairement à ce que le prompt 2.2 envisageait initialement, le script
 d'import (`server/import/import-catalog.ts`) **ne lit pas**
 `wakfu.cdn.ankama.com` directement : il lit les fichiers déjà committés dans
-`referentiel/*.json`. Raison : la transformation brut Ankama → JSON curé
+`repository/*.json`. Raison : la transformation brut Ankama → JSON curé
 (fusion `items.json`/`jobsItems.json`, résolution des noms, vérification de
 disponibilité d'image sur les CDN tiers, identification de la rareté "old")
 ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
@@ -144,7 +144,7 @@ côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
 Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
 une version gamedata (il n'y a plus de fetch live à comparer). À la place,
 `.github/workflows/import-catalog.yml` se déclenche sur tout push modifiant
-`referentiel/**` (+ `workflow_dispatch` pour un rejeu manuel) — l'import
+`repository/**` (+ `workflow_dispatch` pour un rejeu manuel) — l'import
 suit donc directement les mises à jour du référentiel committé, sans
 polling.
 
@@ -162,7 +162,7 @@ Réutilise `server/db/client.ts` (driver `neon-http`, voir plus haut) : pas
 de vraies transactions inter-requêtes ici non plus. Un échec en cours
 d'exécution peut laisser une table partiellement vidée — risque jugé
 acceptable vu la fréquence d'exécution très faible (import déclenché par un
-humain modifiant `referentiel/*.json`, pas par du trafic utilisateur). À
+humain modifiant `repository/*.json`, pas par du trafic utilisateur). À
 revoir avec `neon-serverless` si ce script doit un jour tourner sans
 supervision.
 
