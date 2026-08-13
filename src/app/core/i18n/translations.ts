@@ -159,7 +159,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.alertsDesc':
       "Objets qui déclenchent une alerte sonore et un message à l'écran lorsqu'ils sont ramassés.",
     'profile.testSound': "Tester le son de l'alerte",
-    'profile.soundItemPlaceholder': "Nom de l'objet...",
+    'profile.soundItemPlaceholder': 'Ajouter un objet à surveiller…',
+    'profile.followedItemsLabel': 'Objets suivis',
     'profile.soundOn': 'Son activé',
     'profile.soundOff': 'Son désactivé',
     'profile.lootAlertTitle': 'Objet obtenu !',
@@ -176,6 +177,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterLabel': 'Personnages',
     'profile.rosterDesc':
       'Déclarez vos personnages pour les distinguer des ennemis dans le suivi et calculer vos gains par compte.',
+    'profile.rosterEmptyState':
+      'Aucun personnage sur ce compte pour le moment — ajoutez-en un ci-dessus pour le retrouver dans le suivi.',
     'profile.gameServerNone': 'Serveur ?',
     'profile.rosterAddAccount': 'Ajouter un compte',
     'profile.rosterEmpty': 'Aucun compte déclaré.',
@@ -509,7 +512,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundItemsLabel': 'Alert',
     'profile.alertsDesc': 'Items that trigger a sound alert and an on-screen toast when picked up.',
     'profile.testSound': 'Test the alert sound',
-    'profile.soundItemPlaceholder': 'Item name...',
+    'profile.soundItemPlaceholder': 'Add an item to watch…',
+    'profile.followedItemsLabel': 'Watched items',
     'profile.soundOn': 'Sound on',
     'profile.soundOff': 'Sound off',
     'profile.lootAlertTitle': 'Item obtained!',
@@ -526,6 +530,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterLabel': 'Characters',
     'profile.rosterDesc':
       'Declare your characters to tell them apart from enemies in the tracker and compute your earnings per account.',
+    'profile.rosterEmptyState':
+      'No characters on this account yet — add one above to see it in the tracker.',
     'profile.gameServerNone': 'Server ?',
     'profile.rosterAddAccount': 'Add an account',
     'profile.rosterEmpty': 'No account declared.',
@@ -854,7 +860,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.alertsDesc':
       'Objetos que activan una alerta sonora y un aviso en pantalla al recogerlos.',
     'profile.testSound': 'Probar el sonido de la alerta',
-    'profile.soundItemPlaceholder': 'Nombre del objeto...',
+    'profile.soundItemPlaceholder': 'Añadir un objeto para vigilar…',
+    'profile.followedItemsLabel': 'Objetos vigilados',
     'profile.soundOn': 'Sonido activado',
     'profile.soundOff': 'Sonido desactivado',
     'profile.lootAlertTitle': '¡Objeto obtenido!',
@@ -871,6 +878,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterLabel': 'Personajes',
     'profile.rosterDesc':
       'Declara tus personajes para distinguirlos de los enemigos en el seguimiento y calcular tus ganancias por cuenta.',
+    'profile.rosterEmptyState':
+      'Aún no hay personajes en esta cuenta — añade uno arriba para verlo en el seguimiento.',
     'profile.gameServerNone': '¿Servidor?',
     'profile.rosterAddAccount': 'Añadir una cuenta',
     'profile.rosterEmpty': 'Ninguna cuenta declarada.',
@@ -1202,7 +1211,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.alertsDesc':
       'Itens que disparam um alerta sonoro e um aviso na tela ao serem coletados.',
     'profile.testSound': 'Testar o som do alerta',
-    'profile.soundItemPlaceholder': 'Nome do item...',
+    'profile.soundItemPlaceholder': 'Adicionar um item para monitorar…',
+    'profile.followedItemsLabel': 'Itens monitorados',
     'profile.soundOn': 'Som ativado',
     'profile.soundOff': 'Som desativado',
     'profile.lootAlertTitle': 'Item obtido!',
@@ -1219,6 +1229,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterLabel': 'Personagens',
     'profile.rosterDesc':
       'Declare seus personagens para distingui-los dos inimigos no acompanhamento e calcular seus ganhos por conta.',
+    'profile.rosterEmptyState':
+      'Nenhum personagem nesta conta ainda — adicione um acima para vê-lo no acompanhamento.',
     'profile.gameServerNone': 'Servidor ?',
     'profile.rosterAddAccount': 'Adicionar uma conta',
     'profile.rosterEmpty': 'Nenhuma conta declarada.',
