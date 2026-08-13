@@ -46,18 +46,34 @@ export class WatchlistTileController {
    * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout (mobile) / fermeture (desktop). */
   readonly addMode = signal<WatchlistCounterMode>('up');
 
-  /** Mode "sélection multiple" : chaque tuile affiche une case à cocher à la place de sa croix de
-   * suppression individuelle, et un bouton "Supprimer (N)" apparaît dès qu'au moins une tuile est
-   * cochée — suppression immédiate au clic, sans popover de confirmation (le passage par ce mode
-   * dédié + une sélection explicite tient lieu de confirmation). */
+  /**
+   * Mode "sélection multiple" : chaque tuile affiche une case à cocher à la place de sa croix de
+   * suppression individuelle, et un bouton de suppression groupée est visible dès l'entrée dans
+   * ce mode — suppression immédiate au clic, sans popover de confirmation (le passage par ce mode
+   * dédié + une sélection explicite tient lieu de confirmation).
+   *
+   * AUCUNE tuile cochée par défaut (voir `enterSelectMode`) : cocher tout par défaut forcerait à
+   * décocher chaque tuile une à une pour n'en supprimer que quelques-unes parmi 10-15 suivies —
+   * l'inverse de ce que la sélection multiple sert à faire rapidement. Une sélection VIDE se lit
+   * donc comme "aucune exclusion" — le bouton affiche "Supprimer tout" et agit sur l'intégralité
+   * de la liste (voir `confirmBulkDelete`) — jusqu'à ce que l'utilisateur coche une ou plusieurs
+   * tuiles précises, moment où le bouton bascule sur "Supprimer (N)" et ne cible plus qu'elles.
+   * Cocher explicitement TOUTES les tuiles à la main ramène au même libellé "Supprimer tout" par
+   * cohérence (même résultat, deux chemins pour y arriver).
+   */
   readonly selectMode = signal(false);
   /** Clés composites (voir `watchlistEntryKey`), pas des noms bruts : deux entrées homonymes
    * d'id différent doivent pouvoir être sélectionnées/supprimées indépendamment. */
   readonly selectedKeys = signal<ReadonlySet<string>>(new Set());
   readonly canBulkDelete = computed(() => this.stats.watchlist().length > 2);
-  readonly bulkDeleteLabel = computed(() =>
-    this.i18n.t('tracker.bulkDeleteConfirm', { count: this.selectedKeys().size }),
-  );
+  /** "Supprimer tout" quand rien n'est coché (aucune exclusion, voir doc de `selectMode`) ou que
+   * tout est coché — "Supprimer (N)" pour une sélection partielle explicite. */
+  readonly bulkDeleteLabel = computed(() => {
+    const count = this.selectedKeys().size;
+    return count === 0 || count === this.stats.watchlist().length
+      ? this.i18n.t('tracker.bulkDeleteAllConfirm')
+      : this.i18n.t('tracker.bulkDeleteConfirm', { count });
+  });
 
   rarityClass(entry: WatchlistEntry): string {
     return entry.kind === 'item'
@@ -104,12 +120,16 @@ export class WatchlistTileController {
     });
   }
 
-  /** Supprime toutes les tuiles cochées en un clic, sans popover de confirmation — le passage par
-   * le mode sélection puis une sélection explicite tiennent lieu de confirmation. */
+  /** Supprime les tuiles cochées en un clic, sans popover de confirmation — le passage par le
+   * mode sélection puis une sélection explicite (ou son absence, voir doc de `selectMode`)
+   * tiennent lieu de confirmation. Sélection vide : supprime TOUT (aucune exclusion cochée). */
   confirmBulkDelete(): void {
     const selected = this.selectedKeys();
+    const deleteAll = selected.size === 0;
     for (const entry of this.stats.watchlist()) {
-      if (selected.has(watchlistEntryKey(entry))) this.stats.removeWatched(entry.name, entry.catalogId);
+      if (deleteAll || selected.has(watchlistEntryKey(entry))) {
+        this.stats.removeWatched(entry.name, entry.catalogId);
+      }
     }
     this.exitSelectMode();
   }
