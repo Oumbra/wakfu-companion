@@ -159,6 +159,17 @@
   background: var(--surface-well);
   border-radius: 4px;
 }
+/* Fond en dégradé par rareté, de gauche à droite — même formule que .loot-row (loot-list.component.css) :
+   chaque ingrédient a sa propre rareté, potentiellement différente de l'objet source (voir
+   RecipeTrackingIngredient.rarity) et différente d'un autre ingrédient homonyme d'une variante
+   de rareté distincte (ce que ce dégradé rend visible, en plus de fiabiliser l'id suivi). */
+.recipe-modal-ingredient-row[class*='rarity-'] {
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 35%, var(--surface-well)),
+    var(--surface-well) 70%
+  );
+}
 
 .recipe-modal-ingredient-name {
   flex-grow: 1;

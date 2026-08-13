@@ -3,6 +3,13 @@ import { WakfuRarity } from '../data/wakfu-item-rarity.data';
 
 export interface RecipeTrackingIngredient {
   name: string;
+  /** Id Ankama EXACT de cet ingrédient — voir CatalogResolvedIngredient.id : à transmettre au
+   * suivi (StatsStoreService.addWatchedItem) plutôt que de laisser une résolution par nom seul
+   * retomber sur une variante de rareté différente du même nom (voir tracker.recipeConfirm). */
+  id: number;
+  /** Rareté de cet ingrédient — pilote le dégradé de fond de sa ligne (voir
+   * RecipeQuantityModalComponent), même principe que `itemRarity` sur l'objet source. */
+  rarity: WakfuRarity;
   /** Quantité de cet ingrédient nécessaire pour UNE unité de l'objet parent (source ou, en
    * imbrication, ingrédient parent). */
   quantity: number;
