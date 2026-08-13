@@ -25,7 +25,8 @@ export type WakfuRarityCode =
 /** Miroir de CatalogDungeonEntry['type'] (src/app/core/api/catalog.service.ts) — même convention
  * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
  * type TypeScript n'a de valeur que côté scripts d'import/endpoints. Remplace depuis ce lot les
- * anciens champs `isBreach`/`isUltimateBreach`/`roomCount` (curation manuelle du référentiel,
+ * anciens champs `isBreach`/`isUltimateBreach`/`roomCount` (curation manuelle du référentiel
+ * des donjons) : `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` portent maintenant
  * eux-mêmes le nombre de salles (voir dungeonRoomCount, core/utils/dungeon-run-grouping.util.ts),
  * `BREACH`/`ULTIMATE_BREACH` remplacent les deux booléens de brèche, et `THREE_PLAYERS` /
  * `ULTIMATE_BOSS` / `ARCADE` couvrent les donjons à un seul combat (pas de salle à rattacher). */
@@ -145,6 +146,7 @@ export const dungeons = pgTable(
     bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
     pictureUrl: text('picture_url').notNull(),
     wakassetsAvailable: boolean('wakassets_available').notNull(),
+    // Catégorie du donjon (curée à la main dans le référentiel, JAMAIS déductible
     // du reste du référentiel) — remplace les anciens `isBreach`/`isUltimateBreach`/`roomCount`.
     // Toujours renseignée (contrairement à l'ancien `roomCount`, longtemps `null` pour les donjons
     // pas encore catégorisés) : les 151 donjons du référentiel ont désormais tous un `type`. Voir
@@ -163,7 +165,8 @@ export const dungeons = pgTable(
 /**
  * Une seule ligne (id constant `'catalog'`) : métadonnées du dernier import
  * réussi — sert de base à GET /api/v1/catalog/version (prompt 2.2). Pas de
- * direct, voir server/README.md) : `sourceCommit` est le SHA du commit
+ * numéro de version du référentiel : `sourceCommit` est le SHA du commit
+ * ayant déclenché l'import, `indexHash` une
  * empreinte du contenu de l'index compact servi par /catalog/index.
  */
 export const catalogMeta = pgTable('catalog_meta', {

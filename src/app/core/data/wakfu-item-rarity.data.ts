@@ -9,9 +9,10 @@
  * `old`, 1 "Inhabituel" -> `common`, 2 "Rare" -> `rare`, 3 "Mythique" ->
  * `mythical`, 4 "Légendaire" -> `legendary`, 5 "Relique" -> `relic`,
  * 6 "PVP" -> `memory`, 7 "Epique" -> `epic`. `old` (trad. FR "Ancien") désigne
- * des objets historiques retirés du jeu — voir server/import/import-catalog.ts
- * qui est exposé côté client (jamais résolus par findWakfuItemEntry, donc
- * getWakfuItemRarity() ne retourne jamais `old` au runtime ; conservé
+ * des objets historiques retirés du jeu — voir server/import/import-catalog.ts,
+ * qui les exclut de ce qui est exposé côté client (jamais résolus par
+ * findWakfuItemEntry, donc getWakfuItemRarity() ne retourne jamais `old` au
+ * runtime ; conservé uniquement pour typer correctement le référentiel).
  *
  * Fonction PARAMÉTRÉE (pas injectable elle-même, c'est une fonction libre,
  * pas un service) : l'appelant (déjà dans un contexte d'injection — composant

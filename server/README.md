@@ -155,6 +155,7 @@ Réutilise `server/db/client.ts` (driver `neon-http`, voir plus haut) : pas
 de vraies transactions inter-requêtes ici non plus. Un échec en cours
 d'exécution peut laisser une table partiellement vidée — risque jugé
 acceptable vu la fréquence d'exécution très faible (import déclenché par un
+humain, pas par du trafic utilisateur). À
 revoir avec `neon-serverless` si ce script doit un jour tourner sans
 supervision.
 

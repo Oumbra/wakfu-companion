@@ -38,7 +38,7 @@ export interface CatalogMonsterEntry {
   isDominant: boolean;
 }
 
-/**
+/** Catégorie d'un donjon, curée à la main dans le référentiel (miroir de
  * WakfuDungeonType côté serveur, server/db/schema.ts). `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`
  * portent le nombre de salles précédant le boss (voir dungeonRoomCount,
  * core/utils/dungeon-run-grouping.util.ts) ; `BREACH`/`ULTIMATE_BREACH` remplacent les anciens

@@ -35,7 +35,7 @@ import {
 import { buildCompactIndex } from '../catalog/compact-index';
 
 const projectRoot = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
-const REFERENTIEL_DIR = path.join(projectRoot, 'referentiel');
+const REFERENTIEL_DIR = path.join(projectRoot, 'repository');
 
 interface RawItem {
   id?: number;
@@ -161,16 +161,16 @@ async function main(): Promise<void> {
   if (!databaseUrl) throw new Error('DATABASE_URL manquant.');
 
   const [rawItems, rawRecipes, rawMonsters, rawDungeons] = await Promise.all([
-    readFile(path.join(REFERENTIEL_DIR, 'items_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'items.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawItem[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'recipes_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'recipes.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawRecipe[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'monsters_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'monsters.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawMonster[],
     ),
-    readFile(path.join(REFERENTIEL_DIR, 'dungeons_wakfu.json'), 'utf-8').then(
+    readFile(path.join(REFERENTIEL_DIR, 'dungeons.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawDungeon[],
     ),
   ]);
