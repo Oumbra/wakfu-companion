@@ -1,5 +1,5 @@
 import { Component, computed, inject } from '@angular/core';
-import { StatsStoreService } from '../../core/services/stats-store.service';
+import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -48,16 +48,18 @@ export class TrackerComponent {
   );
 
   protected readonly existingNames = computed(() =>
-    this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
+    this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind, id: w.catalogId })),
   );
 
   protected add(result: WakfuSearchResult): void {
     if (result.kind === 'enemy') {
-      this.stats.addWatchedEnemy(result.name);
+      this.stats.addWatchedEnemy(result.name, result.id);
     } else {
-      this.stats.addWatchedItem(result.name);
+      this.stats.addWatchedItem(result.name, result.id);
     }
-    if (this.watchlist.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
+    if (this.watchlist.addMode() === 'down') {
+      this.stats.setWatchlistMode(result.name, 'down', result.id);
+    }
     this.watchlist.addMode.set('up');
   }
 
@@ -73,8 +75,8 @@ export class TrackerComponent {
 
   /** Clic sur la carte entière (pas seulement la case à cocher) : plus grande zone tactile en
    * mode sélection — sans effet en mode normal (pas de comportement de survol/dépli sur mobile). */
-  protected onCardClick(name: string): void {
+  protected onCardClick(entry: WatchlistEntry): void {
     if (!this.watchlist.selectMode()) return;
-    this.watchlist.toggleSelected(name);
+    this.watchlist.toggleSelected(entry);
   }
 }

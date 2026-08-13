@@ -79,7 +79,7 @@ export class TrackerStripComponent {
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
 
   protected readonly existingNames = computed(() =>
-    this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind })),
+    this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind, id: w.catalogId })),
   );
 
   protected readonly addOpen = signal(false);
@@ -160,11 +160,12 @@ export class TrackerStripComponent {
    * clics sur les boutons reset/suppression internes stoppent leur propre
    * propagation (voir `resetCount`/`requestDelete`) et n'atteignent donc
    * jamais ce handler. */
-  protected onTileClick(event: MouseEvent, name: string): void {
+  protected onTileClick(event: MouseEvent, entry: WatchlistEntry): void {
     if (this.watchlist.selectMode()) {
-      this.watchlist.toggleSelected(name);
+      this.watchlist.toggleSelected(entry);
       return;
     }
+    const name = entry.name;
     this.clearHoverTimer();
     if (this.activeName() === name) {
       this.activeName.set(null);
@@ -239,9 +240,11 @@ export class TrackerStripComponent {
   }
 
   protected add(result: WakfuSearchResult): void {
-    if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name);
-    else this.stats.addWatchedItem(result.name);
-    if (this.watchlist.addMode() === 'down') this.stats.setWatchlistMode(result.name, 'down');
+    if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name, result.id);
+    else this.stats.addWatchedItem(result.name, result.id);
+    if (this.watchlist.addMode() === 'down') {
+      this.stats.setWatchlistMode(result.name, 'down', result.id);
+    }
     this.closeAdd();
   }
 
@@ -274,10 +277,11 @@ export class TrackerStripComponent {
     this.watchlist.enterSelectMode();
   }
 
-  protected requestDelete(event: Event, name: string): void {
+  protected requestDelete(event: Event, entry: WatchlistEntry): void {
+    const name = entry.name;
     this.watchlist.requestDelete(
       event,
-      name,
+      entry,
       () => this.confirmDeleteOpenFor.set(name),
       () => {
         if (this.activeName() === name) this.activeName.set(null);
