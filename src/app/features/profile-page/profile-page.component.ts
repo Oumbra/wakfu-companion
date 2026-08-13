@@ -149,8 +149,8 @@ export class ProfilePageComponent implements OnDestroy {
     this.profile.soundItems().map((entry) => ({ name: entry.name, kind: 'item' as const })),
   );
 
-  /** Tous comptes confondus — affiché en badge à côté de l'onglet "Personnages" du rail (voir
-   * CLAUDE.md, proposition A). */
+  /** Tous comptes confondus — affiché à côté de l'onglet "Personnages" du rail (voir CLAUDE.md,
+   * proposition A). */
   protected readonly totalCharacterCount = computed(() =>
     this.roster.accounts().reduce((sum, account) => sum + account.characters.length, 0),
   );
