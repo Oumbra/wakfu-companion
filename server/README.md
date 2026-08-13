@@ -154,9 +154,13 @@ polling.
 remplacement complet des tables `items`/`monsters`/`dungeons`/`item_recipes`
 à chaque exécution (DELETE puis INSERT par lots de 1000 lignes), pas de
 diff incrémental. Réutilise scrupuleusement les règles déjà établies côté
-client (exclusion des objets de rareté "old", pas de déduplication par id
-pour les objets — voir le commentaire de `server/db/schema.ts` sur la clé
-primaire synthétique `items.pk`).
+client (exclusion des objets de rareté "old"), et dédoublonne les objets par
+`(fr, rareté, gfxId)` avant insertion (`dedupeItemRows`, cas apparu en volume
+le 2026-08-13 après un élargissement des sources du skill wakfu-items-sync :
+283 groupes de vrais doublons, même objet mais ankamaId différent) — pas de
+déduplication par ankamaId seul, qui reste non fiable comme clé (voir le
+commentaire de `server/db/schema.ts` sur la clé primaire synthétique
+`items.pk` : ~142 objets sans ankamaId, 2 ids en collision).
 
 Réutilise `server/db/client.ts` (driver `neon-http`, voir plus haut) : pas
 de vraies transactions inter-requêtes ici non plus. Un échec en cours

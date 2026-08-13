@@ -120,6 +120,57 @@ function normalizeRarity(item: RawItem): WakfuRarityCode {
  * volontairement peu typée (`unknown[]`) : les types précis des lignes par table (ItemRow,
  * MonsterRow...) sont déjà vérifiés à leur construction plus bas, ce wrapper générique n'a pas
  * besoin de les reporter. */
+/**
+ * Écarte les vrais doublons d'objets : même fr/rareté/gfxId (donc visuellement et
+ * fonctionnellement le même objet), mais un ankamaId différent — cas apparu en volume (283
+ * groupes, 569 lignes en trop) après l'élargissement des sources du skill wakfu-items-sync,
+ * confirmé en base (requête `GROUP BY fr, rarity, gfx_id HAVING COUNT(*) > 1`, 2026-08-13). Le
+ * champ `en`/`es`/`pt` n'entre PAS dans la clé : vérifié que ces doublons ne diffèrent que par
+ * de la casse ou des variantes mineures de traduction sur `pt` (ex. "Amuleto Amargo" vs "Amuleto
+ * Inorme" pour la même "Amulette Amer") — les inclure aurait laissé passer 45 des 283 groupes.
+ *
+ * `ankamaId` reste la clé de `items.pk` n'existant pas côté source, donc pas de fusion possible :
+ * un seul des doublons est conservé, les autres sont écartés. Le choix n'est jamais ambigu :
+ * vérifié qu'aucun groupe ne voit deux de ses ids référencés à la fois par `recipes.json` (ni
+ * comme itemId ni comme ingrédient) — on privilégie donc l'id référencé par une recette quand il
+ * y en a un (pour ne jamais casser un lien recette/ingrédient), sinon l'ankamaId le plus bas
+ * (déterministe, stable d'un import à l'autre).
+ */
+function dedupeItemRows(rows: ItemRow[], referencedAnkamaIds: ReadonlySet<number>): ItemRow[] {
+  const groups = new Map<string, ItemRow[]>();
+  for (const row of rows) {
+    const key = `${row.fr}|${row.rarity}|${row.gfxId}`;
+    const group = groups.get(key);
+    if (group) group.push(row);
+    else groups.set(key, [row]);
+  }
+
+  const byAscendingAnkamaId = (a: ItemRow, b: ItemRow) =>
+    (a.ankamaId ?? Infinity) - (b.ankamaId ?? Infinity);
+
+  const deduped: ItemRow[] = [];
+  let droppedCount = 0;
+  for (const group of groups.values()) {
+    if (group.length === 1) {
+      deduped.push(group[0]);
+      continue;
+    }
+    const referenced = group
+      .filter((row) => row.ankamaId !== null && referencedAnkamaIds.has(row.ankamaId))
+      .sort(byAscendingAnkamaId);
+    const winner = referenced[0] ?? group.slice().sort(byAscendingAnkamaId)[0];
+    deduped.push(winner);
+    droppedCount += group.length - 1;
+  }
+
+  if (droppedCount > 0) {
+    console.log(
+      `[import-catalog] ${droppedCount} doublons d'objets écartés (même fr/rareté/gfxId, ankamaId différent).`,
+    );
+  }
+  return deduped;
+}
+
 async function insertInBatches(
   db: ReturnType<typeof createDb>,
   table: Parameters<typeof db.insert>[0],
@@ -180,10 +231,11 @@ async function main(): Promise<void> {
     ),
   ]);
 
-  // Objets : exclusion "old", pas de déduplication par id (voir server/db/schema.ts pour la clé
-  // primaire synthétique).
+  // Objets : exclusion "old", puis dédoublonnage par (fr, rareté, gfxId) — voir dedupeItemRows.
+  // Pas de déduplication par ankamaId seul (voir server/db/schema.ts pour la clé primaire
+  // synthétique `items.pk` : ~142 objets sans ankamaId, 2 ids en collision).
   const oldCount = rawItems.filter((item) => normalizeRarity(item) === 'old').length;
-  const itemRows: ItemRow[] = rawItems
+  const itemRowsWithDuplicates: ItemRow[] = rawItems
     .filter((item) => normalizeRarity(item) !== 'old')
     .map((item) => ({
       ankamaId: typeof item.id === 'number' ? item.id : null,
@@ -206,6 +258,13 @@ async function main(): Promise<void> {
       quantity: ingredient.quantity,
     })),
   );
+
+  const referencedAnkamaIds = new Set<number>();
+  for (const entry of rawRecipes) {
+    referencedAnkamaIds.add(entry.itemId);
+    for (const ingredient of entry.recipe) referencedAnkamaIds.add(ingredient.itemId);
+  }
+  const itemRows = dedupeItemRows(itemRowsWithDuplicates, referencedAnkamaIds);
 
   const monsterRows: MonsterRow[] = rawMonsters.map((monster) => ({
     id: monster.id,
