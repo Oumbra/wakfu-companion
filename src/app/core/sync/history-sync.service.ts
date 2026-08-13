@@ -96,6 +96,11 @@ export class HistorySyncService {
     return this.catalog.findWakfuItemEntry(name)?.id ?? null;
   }
 
+  /** Miroir de itemId, côté monstre — voir FightParticipantPayload.monsterId. */
+  private monsterId(name: string): number | null {
+    return this.catalog.findWakfuMonsterEntry(name)?.id ?? null;
+  }
+
   recordFight(record: FightRecord): void {
     if (!this.queue.isActive()) return;
 
@@ -110,6 +115,7 @@ export class HistorySyncService {
       return {
         side,
         name: row.name,
+        monsterId: side === 'enemy' ? this.monsterId(row.name) : null,
         instanceIndex: row.instanceIndex,
         // La classe n'a de sens que pour un allié : `getDetectedClass` renvoie
         // une classe de personnage jouable, jamais une espèce de monstre.

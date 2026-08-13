@@ -76,6 +76,14 @@ export interface WatchlistEntry {
   /** Valeur de départ du décompte en mode 'down' (ignorée en mode 'up') — aussi la valeur
    * restaurée par resetWatchedCount() dans ce mode. */
   countdownTarget: number;
+  /** Id Ankama de l'objet/monstre, capturé à l'ajout (voir WakfuSearchResult.id, résolu sans
+   * ambiguïté par l'autocomplétion) — résolution non ambiguë de l'icône affichée en cas
+   * d'homonymes (ex. "Larme d'Ogrest", deux objets distincts de même nom). `null` pour les
+   * entrées persistées avant l'introduction de ce champ (voir normalizeWatchlistEntry, qui
+   * tente un repli par nom au chargement) ou si le référentiel ne connaît pas ce nom. Le
+   * comptage/la détection restent basés sur `name` (le log ne référence jamais un id) : seule
+   * l'identification/l'affichage bénéficient de cet id. */
+  catalogId: number | null;
 }
 
 export interface LootRow {
@@ -344,24 +352,34 @@ export class StatsStoreService {
 
   /** Complète les entrées persistées avant l'introduction du mode décompte (`mode`/`countdownTarget`
    * absents du JSON stocké, y compris pour la migration ponctuelle depuis les anciennes listes
-   * séparées) — traitées comme le comportement historique ('up'). */
+   * séparées) — traitées comme le comportement historique ('up'). Complète aussi `catalogId`
+   * (absent des entrées persistées avant l'introduction de ce champ) par un repli best-effort par
+   * nom : ne peut pas lever l'ambiguïté d'un homonyme pour une entrée déjà en place (l'id exact
+   * choisi par l'utilisateur à l'époque n'a jamais été capturé), mais reste déterministe et vaut
+   * mieux qu'aucun id du tout. */
   private normalizeWatchlistEntry(
-    entry: Partial<Pick<WatchlistEntry, 'mode' | 'countdownTarget'>> &
-      Omit<WatchlistEntry, 'mode' | 'countdownTarget'>,
+    entry: Partial<Pick<WatchlistEntry, 'mode' | 'countdownTarget' | 'catalogId'>> &
+      Omit<WatchlistEntry, 'mode' | 'countdownTarget' | 'catalogId'>,
   ): WatchlistEntry {
+    const catalogId =
+      entry.catalogId ??
+      (entry.kind === 'enemy'
+        ? (this.catalog.findWakfuMonsterEntry(entry.name)?.id ?? null)
+        : (this.catalog.findWakfuItemEntry(entry.name)?.id ?? null));
     return {
       ...entry,
       mode: entry.mode ?? 'up',
       countdownTarget: entry.countdownTarget ?? 0,
+      catalogId,
     };
   }
 
-  addWatchedEnemy(rawName: string): void {
-    this.addWatched(rawName, 'enemy');
+  addWatchedEnemy(rawName: string, catalogId: number | null = null): void {
+    this.addWatched(rawName, 'enemy', catalogId);
   }
 
-  addWatchedItem(rawName: string): void {
-    this.addWatched(rawName, 'item');
+  addWatchedItem(rawName: string, catalogId: number | null = null): void {
+    this.addWatched(rawName, 'item', catalogId);
   }
 
   /** Utilisé pour masquer l'invite "clic droit pour suivre" une fois l'entrée déjà suivie. */
@@ -370,17 +388,31 @@ export class StatsStoreService {
     return this.watchlist().some((w) => w.name.toLowerCase() === name);
   }
 
-  removeWatched(name: string): void {
-    const updated = this.watchlist().filter((w) => w.name !== name);
+  /**
+   * Vrai si `w` est la ligne visée par `(name, catalogId)`. `catalogId` **non fourni**
+   * (`undefined`, distinct d'un `null` explicite) : repli sur une correspondance par nom seul,
+   * comportement historique — utilisé par les appelants qui n'ont pas connaissance d'un id
+   * précis (ex. `recipe-quantity-modal`, un simple ajout name-only). `catalogId` fourni
+   * (y compris `null`) : correspondance exacte sur la paire, nécessaire pour cibler UNE ligne
+   * précise quand deux entrées partagent le même nom (catalogue avec homonymes, voir
+   * `Larme d'Ogrest`) — sans quoi supprimer/modifier une des deux affecterait les deux à la fois.
+   */
+  private matchesWatched(w: WatchlistEntry, name: string, catalogId?: number | null): boolean {
+    if (w.name !== name) return false;
+    return catalogId === undefined ? true : w.catalogId === catalogId;
+  }
+
+  removeWatched(name: string, catalogId?: number | null): void {
+    const updated = this.watchlist().filter((w) => !this.matchesWatched(w, name, catalogId));
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
   }
 
   /** Remet le compteur d'une seule entrée suivie à sa valeur de départ (0 en mode 'up',
    * `countdownTarget` en mode 'down') — sans la retirer de la liste. */
-  resetWatchedCount(name: string): void {
+  resetWatchedCount(name: string, catalogId?: number | null): void {
     const updated = this.watchlist().map((w) =>
-      w.name === name ? { ...w, count: this.startingCount(w) } : w,
+      this.matchesWatched(w, name, catalogId) ? { ...w, count: this.startingCount(w) } : w,
     );
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
@@ -388,9 +420,9 @@ export class StatsStoreService {
 
   /** Bascule le mode de comptage d'une entrée suivie ('up' <-> 'down') et réinitialise son
    * compteur à la valeur de départ correspondante — voir WatchlistCounterMode. */
-  setWatchlistMode(name: string, mode: WatchlistCounterMode): void {
+  setWatchlistMode(name: string, mode: WatchlistCounterMode, catalogId?: number | null): void {
     const updated = this.watchlist().map((w) => {
-      if (w.name !== name || w.mode === mode) return w;
+      if (!this.matchesWatched(w, name, catalogId) || w.mode === mode) return w;
       const next = { ...w, mode };
       return { ...next, count: this.startingCount(next) };
     });
@@ -400,10 +432,10 @@ export class StatsStoreService {
 
   /** Change la valeur de départ du décompte d'une entrée suivie (mode 'down') et réinitialise
    * aussitôt son compteur courant sur cette nouvelle valeur. */
-  setWatchlistCountdownTarget(name: string, target: number): void {
+  setWatchlistCountdownTarget(name: string, target: number, catalogId?: number | null): void {
     const clamped = Math.max(0, Math.floor(Number.isFinite(target) ? target : 0));
     const updated = this.watchlist().map((w) =>
-      w.name === name ? { ...w, countdownTarget: clamped, count: clamped } : w,
+      this.matchesWatched(w, name, catalogId) ? { ...w, countdownTarget: clamped, count: clamped } : w,
     );
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
@@ -909,7 +941,7 @@ export class StatsStoreService {
     if (!this.currentBatchIsInitialLoad) {
       this.incrementWatched(item, quantity);
       const soundEntry = this.profile.findEnabledSoundItem(item);
-      if (soundEntry) this.lootAlert.trigger(item, quantity);
+      if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
     }
 
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
@@ -977,12 +1009,27 @@ export class StatsStoreService {
     this.historySync.recordTrade(record);
   }
 
-  private addWatched(rawName: string, kind: WatchlistKind): void {
+  /**
+   * Refuse un doublon : même id (`catalogId`) déjà suivi, ou — quand l'un des deux (le candidat
+   * ou une entrée déjà suivie) n'a pas d'id résolu — même nom, par prudence (impossible de
+   * garantir qu'il s'agit d'objets/monstres distincts sans id des deux côtés). Deux entrées de
+   * même nom mais d'id différent (ex. les deux "Larme d'Ogrest") peuvent donc coexister.
+   */
+  private addWatched(rawName: string, kind: WatchlistKind, catalogId: number | null): void {
     const name = rawName.trim();
     if (!name) return;
     const current = this.watchlist();
-    if (current.some((w) => w.name.toLowerCase() === name.toLowerCase())) return;
-    const updated = [...current, { name, count: 0, kind, mode: 'up' as const, countdownTarget: 0 }];
+    const normalized = name.toLowerCase();
+    const isDuplicate = current.some((w) => {
+      if (w.kind !== kind) return false;
+      if (catalogId !== null && w.catalogId !== null) return w.catalogId === catalogId;
+      return w.name.toLowerCase() === normalized;
+    });
+    if (isDuplicate) return;
+    const updated = [
+      ...current,
+      { name, count: 0, kind, mode: 'up' as const, countdownTarget: 0, catalogId },
+    ];
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
   }
@@ -993,22 +1040,38 @@ export class StatsStoreService {
    * LootAlertService/LootAlertComponent) exactement au moment où le compteur atteint 0 — jamais en
    * dessous (une entrée déjà à 0 en 'down' n'alerte plus tant qu'elle n'a pas été remontée via
    * resetWatchedCount/setWatchlistCountdownTarget).
+   *
+   * Applique le changement à TOUTES les entrées partageant ce nom, pas seulement la première
+   * trouvée : le log ne référence un ramassage/une mise KO que par nom, jamais par id (voir
+   * addWatched) — quand deux entrées homonymes d'id différent sont suivies simultanément
+   * (ex. les deux "Larme d'Ogrest"), impossible de savoir laquelle des deux est réellement
+   * concernée. Créditer les deux est plus honnête que d'en créditer une arbitrairement et de
+   * laisser l'autre bloquée à 0 indéfiniment.
    */
   private incrementWatched(name: string, by = 1): void {
     const normalized = name.trim().toLowerCase();
     const current = this.watchlist();
-    const idx = current.findIndex((w) => w.name.toLowerCase() === normalized);
-    if (idx === -1) return;
-    const entry = current[idx];
+    const matchingIndexes = current.reduce<number[]>((acc, w, i) => {
+      if (w.name.toLowerCase() === normalized) acc.push(i);
+      return acc;
+    }, []);
+    if (matchingIndexes.length === 0) return;
     const updated = current.slice();
-    if (entry.mode === 'down') {
-      const next = Math.max(0, entry.count - by);
-      updated[idx] = { ...entry, count: next };
-      if (entry.count > 0 && next === 0) {
-        this.lootAlert.trigger(entry.name, 0, { kind: entry.kind, reason: 'countdown' });
+    for (const idx of matchingIndexes) {
+      const entry = updated[idx];
+      if (entry.mode === 'down') {
+        const next = Math.max(0, entry.count - by);
+        updated[idx] = { ...entry, count: next };
+        if (entry.count > 0 && next === 0) {
+          this.lootAlert.trigger(entry.name, 0, {
+            kind: entry.kind,
+            reason: 'countdown',
+            id: entry.catalogId,
+          });
+        }
+      } else {
+        updated[idx] = { ...entry, count: entry.count + by };
       }
-    } else {
-      updated[idx] = { ...entry, count: entry.count + by };
     }
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);

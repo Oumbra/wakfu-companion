@@ -99,6 +99,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       fightId,
       side: participant.side,
       name: participant.name,
+      monsterId: participant.monsterId,
       instanceIndex: participant.instanceIndex,
       className: participant.className,
       damage: participant.damage,
@@ -124,6 +125,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           fightParticipants.instanceIndex,
         ],
         set: {
+          monsterId: sql`excluded.monster_id`,
           className: sql`excluded.class_name`,
           damage: sql`excluded.damage`,
           defeated: sql`excluded.defeated`,
@@ -232,6 +234,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       participants: (participantsByFight.get(row.id) ?? []).map((participant) => ({
         side: participant.side,
         name: participant.name,
+        monsterId: participant.monsterId,
         instanceIndex: participant.instanceIndex,
         className: participant.className,
         damage: participant.damage,
