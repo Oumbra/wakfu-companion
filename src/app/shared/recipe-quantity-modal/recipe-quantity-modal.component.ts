@@ -87,12 +87,16 @@ export class RecipeQuantityModalComponent {
     const multiplier = this.quantity();
     const nested = this.nestedPaths();
 
-    /** Cible cumulée par nom d'objet final : un même objet peut apparaître à la fois comme
-     * ingrédient direct et comme (sous-)ingrédient d'une ou plusieurs lignes imbriquées à
-     * différents niveaux — les quantités doivent alors s'additionner plutôt que s'écraser. */
-    const targets = new Map<string, number>();
-    const addTarget = (name: string, amount: number): void => {
-      targets.set(name, (targets.get(name) ?? 0) + amount);
+    /** Cible cumulée par ingrédient final, clé sur son id (voir RecipeTrackingIngredient.id) —
+     * PAS sur son nom seul : un même nom peut désigner deux variantes de rareté différente du
+     * même objet (ex. une recette qui redemande l'objet lui-même à un palier inférieur), qu'il
+     * ne faut surtout pas fusionner sous une même cible. Un même objet (même id) peut en
+     * revanche apparaître à la fois comme ingrédient direct et comme (sous-)ingrédient d'une ou
+     * plusieurs lignes imbriquées à différents niveaux — dans ce cas les quantités s'additionnent. */
+    const targets = new Map<number, { name: string; target: number }>();
+    const addTarget = (name: string, id: number, amount: number): void => {
+      const existing = targets.get(id);
+      targets.set(id, { name, target: (existing?.target ?? 0) + amount });
     };
 
     /** Descend récursivement dans l'arbre tant qu'une ligne est imbriquée : seules les feuilles
@@ -108,16 +112,16 @@ export class RecipeQuantityModalComponent {
         if (ingredient.hasRecipe && nested.has(path)) {
           walk(ingredient.recipeIngredients, target, path);
         } else {
-          addTarget(ingredient.name, target);
+          addTarget(ingredient.name, ingredient.id, target);
         }
       });
     };
     walk(req.ingredients, multiplier, '');
 
-    for (const [name, target] of targets) {
-      this.stats.addWatchedItem(name);
-      this.stats.setWatchlistMode(name, 'down');
-      this.stats.setWatchlistCountdownTarget(name, target);
+    for (const [id, { name, target }] of targets) {
+      this.stats.addWatchedItem(name, id);
+      this.stats.setWatchlistMode(name, 'down', id);
+      this.stats.setWatchlistCountdownTarget(name, target, id);
     }
     this.recipeTracking.confirm();
   }

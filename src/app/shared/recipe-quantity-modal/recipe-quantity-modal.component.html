@@ -35,7 +35,7 @@
         </label>
 
         <div class="recipe-modal-ingredients">
-          @for (ing of req.ingredients; track ing.name; let i = $index; let first = $first) {
+          @for (ing of req.ingredients; track ing.id; let i = $index; let first = $first) {
             <ng-container
               [ngTemplateOutlet]="ingredientRow"
               [ngTemplateOutletContext]="{
@@ -59,8 +59,8 @@
        ligne est imbriquée) — voir la doc de classe du composant pour le schéma de `path`. -->
   <ng-template #ingredientRow let-ing let-multiplier="multiplier" let-path="path" let-first="first">
     <div class="recipe-modal-ingredient-block">
-      <div class="recipe-modal-ingredient-row">
-        <app-item-icon [name]="ing.name" [size]="22" />
+      <div class="recipe-modal-ingredient-row" [class]="'rarity-' + ing.rarity">
+        <app-item-icon [name]="ing.name" [id]="ing.id" [size]="22" />
         <span
           class="recipe-modal-ingredient-name"
           [class.tooltip-below]="first"
@@ -88,7 +88,7 @@
       </div>
       @if (ing.hasRecipe && nestedPaths().has(path)) {
         <div class="recipe-modal-sub-ingredients">
-          @for (sub of ing.recipeIngredients; track sub.name; let j = $index) {
+          @for (sub of ing.recipeIngredients; track sub.id; let j = $index) {
             <ng-container
               [ngTemplateOutlet]="ingredientRow"
               [ngTemplateOutletContext]="{
