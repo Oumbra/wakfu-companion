@@ -38,13 +38,32 @@
   height: 100%;
   width: 220px;
   display: flex;
-  gap: 2.5px;
+  gap: 8px;
   flex-direction: column;
   padding: 15px;
   background: var(--panel-bg);
   border-right: 1px solid var(--border);
   position: sticky;
   top: 0;
+  /* Largeur repliée (voir .profile-rail-collapse-toggle) — transition douce plutôt qu'un saut sec,
+     `width` seul suffit puisque tout le reste (padding, contenu des boutons) découle du flex. */
+  transition: width 0.15s ease;
+}
+.profile-rail.is-collapsed {
+  width: 64px;
+}
+/* Seule zone qui défile : sépare la liste des boutons de l'icône de repli (dernier enfant direct de
+   `.profile-rail`, hors de cette zone) pour qu'elle reste TOUJOURS accessible en bas du rail, même
+   si la liste venait à déborder (`flex: 1` grandit pour occuper tout l'espace restant, ce qui pousse
+   d'autant l'icône vers le bas). */
+.profile-rail-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
 }
 .profile-rail-btn {
   position: relative;
@@ -83,6 +102,9 @@
   width: 17px;
   height: 17px;
 }
+.is-collapsed .profile-rail-icon {
+    font-size: 17px;
+}
 .profile-rail-label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -109,6 +131,74 @@
 }
 .profile-rail-btn.active .profile-rail-count {
   color: var(--accent);
+}
+
+/* Rail replié (voir ProfilePageComponent.isNavRailCollapsed/isRosterRailCollapsed) : ne plus
+   montrer que `.profile-rail-icon` (ou `.profile-rail-index-badge` pour les boutons qui n'en ont
+   pas, ex. les comptes du rail de personnages) de chaque bouton, centrée. Règle partagée entre
+   `.profile-rail` (principal) et `.roster-account-rail` — cette dernière porte aussi la classe
+   `.profile-rail`, donc `.profile-rail.is-collapsed` la cible tout autant. */
+.profile-rail.is-collapsed .profile-rail-btn {
+  justify-content: center;
+  padding: 20px 0;
+  gap: 0;
+}
+.profile-rail.is-collapsed .profile-rail-label,
+.profile-rail.is-collapsed .profile-rail-count,
+.profile-rail.is-collapsed .profile-rail-desc {
+  display: none;
+}
+/* Un seul badge par bouton (comptes sans `.profile-rail-icon`, voir template) — même gabarit qu'une
+   pastille de compteur générique de l'app (cf. `.notif-dot` de combat-edge-tab.component.css, taille
+   adaptée à ce contexte inline plutôt que chevauchant un bord). */
+.profile-rail-index-badge {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--tint-weak);
+  color: var(--text-muted);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.7rem;
+}
+.profile-rail-btn.active .profile-rail-index-badge {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--accent);
+}
+
+/* Icône de repli/dépli, dernier enfant direct du rail (hors `.profile-rail-scroll`, voir template)
+   — `flex-shrink: 0` : ne doit jamais se comprimer si le rail lui-même venait à manquer de place. */
+.profile-rail-collapse-toggle {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+  height: 32px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.profile-rail-collapse-toggle:hover {
+  background: var(--tint-weak);
+  color: var(--text-color);
+}
+/* Rotation sur un `<span>` wrapper plutôt que directement sur `<app-icon>` : `IconComponent` a
+   `:host{display:contents}`, qui n'a pas de boîte propre sur laquelle `transform` puisse s'appliquer
+   (et l'encapsulation de vue empêcherait de toute façon d'atteindre le `<svg>` interne depuis ce
+   fichier, voir CLAUDE.md). Pointe vers la gauche (replier) déplié, vers la droite (déplier) replié. */
+.profile-rail-collapse-icon {
+  display: flex;
+  transition: transform 0.15s ease;
+}
+.profile-rail-collapse-icon.is-collapsed {
+  transform: rotate(180deg);
 }
 
 .panels-row {
@@ -695,6 +785,13 @@
   background: color-mix(in srgb, var(--rarity-color) 16%, var(--surface-raised));
 }
 
+/* `position: absolute` (plutôt que le `position: sticky` hérité de `.profile-rail`) : sort le rail
+   du flux pour que `.panel-body.roster-panel-body` (flex row, `justify-content: center`) ne centre
+   QUE `.profile-field-wide` sur toute la largeur du panneau, comme s'il était seul — le rail flotte
+   par-dessus, collé au bord gauche. Ça donne le rendu voulu en desktop large (grand espace entre le
+   rail et la grille, grille centrée sur la page). Sous le seuil de la `@container` plus bas, ce
+   choix se retourne contre nous (la grille centrée peut passer sous le rail) : on y repasse le rail
+   en flux normal pour que les deux se poussent au lieu de se chevaucher. */
 .roster-account-rail {
   position: absolute;
   left: 0;
@@ -712,15 +809,52 @@
   flex-shrink: 0;
 }
 
+/* `container-type: inline-size` posé sur `.roster-tool-panel` (l'ANCÊTRE), pas sur
+   `.roster-panel-body` elle-même : un élément qui interroge son propre conteneur pour se restyler
+   lui-même se voit ignorer silencieusement les déclarations conditionnelles dans Chromium (`@container`
+   plus bas sans effet sur `justify-content` de `.roster-panel-body` quand elle est aussi l'élément
+   `container-type`, vérifié empiriquement) — vraisemblablement pour éviter tout risque de boucle de
+   layout, même quand la propriété concernée (`justify-content`) n'affecte pas la taille du
+   conteneur. Interroger un ANCÊTRE (`.roster-tool-panel`, largeur identique à 2px de bordure près)
+   fait fonctionner la même règle sans ce piège. Largeur = celle de ce panneau (déjà amputé des
+   220px du rail principal `.profile-rail`), pas celle du viewport — un `@media` sur la largeur de
+   fenêtre décalerait le seuil selon que le rail principal est présent ou non. Voir la `@container`
+   plus bas pour le seuil lui-même. */
+.roster-tool-panel {
+  container-type: inline-size;
+  container-name: roster-panel;
+}
 .panel-body.roster-panel-body {
   flex-direction: row;
-  padding: 0;
   justify-content: center;
+  gap: 20px;
+  padding: 0;
 }
 .panel-body.roster-panel-body .profile-field.profile-field-wide {
   height: 100%;
   max-width: 950px;
   padding: 25px;
+  padding-left: 5px;
+}
+
+/* Sous ce seuil, `.roster-account-rail` (position: absolute) + `.profile-field-wide` (centré sur
+   toute la largeur du panneau, cf. ci-dessus) finissent par se chevaucher : le rail est large de
+   220px (`.profile-rail`) + 1px de bordure, et la grille peut s'étendre jusqu'au bord gauche du
+   panneau dès que celui-ci passe sous ~950px (sa `max-width`). 1430px = le point où l'écart restant
+   en mode centré (`(largeur-950)/2 - 221`) retombe au même ~20px que le `gap` du mode flux normal
+   ci-dessus — sous ce seuil l'écart continuerait de rétrécir jusqu'à se pincer à quelques px puis
+   chevaucher ; 1430px coupe donc avant que ce soit visuellement gênant, pas seulement avant le
+   chevauchement strict. En dessous, le rail repasse en flux normal (participe au flex row comme
+   n'importe quel enfant, `position: sticky` hérité de `.profile-rail` — reste visible pendant le
+   défilement vertical du panneau) : la grille (`flex-shrink: 1` par défaut sur `.profile-field`,
+   le rail lui `flex: none`) se réduit d'autant à sa droite au lieu de passer dessous. */
+@container roster-panel (max-width: 1430px) {
+  .roster-account-rail {
+    position: sticky;
+  }
+  .panel-body.roster-panel-body {
+    justify-content: flex-start;
+  }
 }
 
 .roster-tabs-wrapper {
@@ -764,6 +898,7 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  height: calc(100% - 16px - 24px);
 }
 .roster-character-list {
   display: flex;
@@ -925,6 +1060,11 @@
     background: var(--border);
   }
   .panels-row .roster-panel-body {
+    /* Restaure le centrage : la `@container` desktop plus haut passe en `flex-start` dès que ce
+       panneau passe sous 1400px de large (cas systématique ici, rail masqué juste au-dessus), ce
+       qui décentrerait `.profile-field-wide` en mobile sans cette réaffirmation explicite (même
+       spécificité, gagne par ordre de déclaration — ce bloc vient après). */
+    justify-content: center;
     padding: 0;
     overflow-x: hidden;
   }

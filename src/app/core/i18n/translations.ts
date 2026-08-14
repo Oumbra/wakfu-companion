@@ -156,6 +156,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.railIdentity': 'Identité',
     'profile.railAccessibility': 'Accessibilité',
     'profile.railSoundAlerts': 'Alertes sonores',
+    'profile.railCollapse': 'Replier le menu',
+    'profile.railExpand': 'Déplier le menu',
     'profile.soundItemsLabel': 'Alerte',
     'profile.alertsDesc':
       "Objets qui déclenchent une alerte sonore et un message à l'écran lorsqu'ils sont ramassés.",
@@ -511,6 +513,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.railIdentity': 'Identity',
     'profile.railAccessibility': 'Accessibility',
     'profile.railSoundAlerts': 'Sound alerts',
+    'profile.railCollapse': 'Collapse menu',
+    'profile.railExpand': 'Expand menu',
     'profile.soundItemsLabel': 'Alert',
     'profile.alertsDesc': 'Items that trigger a sound alert and an on-screen toast when picked up.',
     'profile.testSound': 'Test the alert sound',
@@ -859,6 +863,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.railIdentity': 'Identidad',
     'profile.railAccessibility': 'Accesibilidad',
     'profile.railSoundAlerts': 'Alertas sonoras',
+    'profile.railCollapse': 'Contraer el menú',
+    'profile.railExpand': 'Expandir el menú',
     'profile.soundItemsLabel': 'Alerta',
     'profile.alertsDesc':
       'Objetos que activan una alerta sonora y un aviso en pantalla al recogerlos.',
@@ -1211,6 +1217,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.railIdentity': 'Identidade',
     'profile.railAccessibility': 'Acessibilidade',
     'profile.railSoundAlerts': 'Alertas sonoros',
+    'profile.railCollapse': 'Recolher o menu',
+    'profile.railExpand': 'Expandir o menu',
     'profile.soundItemsLabel': 'Alerta',
     'profile.alertsDesc':
       'Itens que disparam um alerta sonoro e um aviso na tela ao serem coletados.',
