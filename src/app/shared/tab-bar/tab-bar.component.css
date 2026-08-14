@@ -22,18 +22,6 @@
   background: var(--panel-header-bg);
   padding: 6px 6px 0;
 }
-/* Barre "mobile only" (page profil, dashboard) : cachée par défaut — l'agencement desktop empile
-   les sections sans onglets — visible seulement sous le seuil mobile (800px, seuil déjà utilisé
-   partout ailleurs dans l'app pour ce même besoin). Sans cette classe (défaut), la barre reste
-   toujours affichée (sous-onglets de compte de Profil > Personnages, par exemple). */
-.tab-bar-row.mobile-only {
-  display: none;
-}
-@media (max-width: 800px) {
-  .tab-bar-row.mobile-only {
-    display: flex;
-  }
-}
 
 .tab-bar-list-btn {
   flex-shrink: 0;

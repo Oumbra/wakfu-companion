@@ -171,10 +171,10 @@ export class ProfilePageComponent implements OnDestroy {
    * état, à l'ordre `TAB_DEFS` près (source unique de vérité pour la barre d'onglets ET l'ordre
    * d'empilement desktop, voir le template). */
   private static readonly TAB_DEFS: readonly TabBarItem[] = [
-    { id: 'avatar', label: 'profile.tabAvatar' },
-    { id: 'colorblind', label: 'profile.tabColorblind', helpSection: 'profileColorblind' },
+    { id: 'avatar', label: 'profile.railIdentity' },
+    { id: 'colorblind', label: 'profile.railAccessibility', helpSection: 'profileColorblind' },
     { id: 'connection', label: 'profile.tabConnection', helpSection: 'profileConnection' },
-    { id: 'alerts', label: 'profile.tabAlerts', helpSection: 'profileAlerts' },
+    { id: 'alerts', label: 'profile.railSoundAlerts', helpSection: 'profileAlerts' },
     { id: 'characters', label: 'profile.tabCharacters', helpSection: 'profileCharacters' },
   ];
   protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
