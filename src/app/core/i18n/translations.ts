@@ -30,7 +30,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.themeDark': 'Thème sombre',
     'app.themeLight': 'Thème clair',
     'app.language': 'Langue',
-    'app.gameServerUnset': 'Serveur ?',
+    'app.gameServerUnset': 'Non renseigné',
     'app.gameServerUnsetTooltip': 'Serveur de jeu non renseigné',
     'app.gameServerFromCharacter': 'Serveur déduit du personnage {{name}}',
     'app.catalogUnavailable':
@@ -182,7 +182,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Déclarez vos personnages pour les distinguer des ennemis dans le suivi et calculer vos gains par compte.',
     'profile.rosterEmptyState':
       'Aucun personnage sur ce compte pour le moment — ajoutez-en un ci-dessus pour le retrouver dans le suivi.',
-    'profile.gameServerNone': 'Serveur ?',
+    'profile.gameServerNone': 'Aucun',
     'profile.rosterAddAccount': 'Ajouter un compte',
     'profile.rosterEmpty': 'Aucun compte déclaré.',
     'profile.rosterAccountPlaceholder': 'Nom du compte...',
@@ -387,7 +387,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.themeDark': 'Dark theme',
     'app.themeLight': 'Light theme',
     'app.language': 'Language',
-    'app.gameServerUnset': 'Server?',
+    'app.gameServerUnset': 'Not specified',
     'app.gameServerUnsetTooltip': 'Game server not set',
     'app.gameServerFromCharacter': 'Server inferred from character {{name}}',
     'app.catalogUnavailable':
@@ -538,7 +538,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declare your characters to tell them apart from enemies in the tracker and compute your earnings per account.',
     'profile.rosterEmptyState':
       'No characters on this account yet — add one above to see it in the tracker.',
-    'profile.gameServerNone': 'Server ?',
+    'profile.gameServerNone': 'None',
     'profile.rosterAddAccount': 'Add an account',
     'profile.rosterEmpty': 'No account declared.',
     'profile.rosterAccountPlaceholder': 'Account name...',
@@ -737,7 +737,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.themeDark': 'Tema oscuro',
     'app.themeLight': 'Tema claro',
     'app.language': 'Idioma',
-    'app.gameServerUnset': '¿Servidor?',
+    'app.gameServerUnset': 'No especificado',
     'app.gameServerUnsetTooltip': 'Servidor de juego sin definir',
     'app.gameServerFromCharacter': 'Servidor deducido del personaje {{name}}',
     'app.catalogUnavailable':
@@ -889,7 +889,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declara tus personajes para distinguirlos de los enemigos en el seguimiento y calcular tus ganancias por cuenta.',
     'profile.rosterEmptyState':
       'Aún no hay personajes en esta cuenta — añade uno arriba para verlo en el seguimiento.',
-    'profile.gameServerNone': '¿Servidor?',
+    'profile.gameServerNone': 'Ninguno',
     'profile.rosterAddAccount': 'Añadir una cuenta',
     'profile.rosterEmpty': 'Ninguna cuenta declarada.',
     'profile.rosterAccountPlaceholder': 'Nombre de la cuenta...',
@@ -1091,7 +1091,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.themeDark': 'Tema escuro',
     'app.themeLight': 'Tema claro',
     'app.language': 'Idioma',
-    'app.gameServerUnset': 'Servidor?',
+    'app.gameServerUnset': 'Não especificado',
     'app.gameServerUnsetTooltip': 'Servidor de jogo não definido',
     'app.gameServerFromCharacter': 'Servidor deduzido da personagem {{name}}',
     'app.catalogUnavailable':
@@ -1243,7 +1243,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declare seus personagens para distingui-los dos inimigos no acompanhamento e calcular seus ganhos por conta.',
     'profile.rosterEmptyState':
       'Nenhum personagem nesta conta ainda — adicione um acima para vê-lo no acompanhamento.',
-    'profile.gameServerNone': 'Servidor ?',
+    'profile.gameServerNone': 'Nenhum',
     'profile.rosterAddAccount': 'Adicionar uma conta',
     'profile.rosterEmpty': 'Nenhuma conta declarada.',
     'profile.rosterAccountPlaceholder': 'Nome da conta...',
