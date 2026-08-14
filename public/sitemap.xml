@@ -3,21 +3,85 @@
   Wakfu Companion — sitemap.xml
 
   Domaine canonique en dur (GH Pages, hébergement de prod actuel — voir
-  docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, robots.txt, llms.txt) le
-  jour où la prod bascule sur Cloudflare/domaine personnalisé.
+  docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, robots.txt, llms.txt,
+  core/services/seo.service.ts) le jour où la prod bascule sur Cloudflare/domaine personnalisé.
 
-  Une seule URL volontairement : c'est une application (SPA) à page unique, pas un site de contenu
-  — /profile, /account, /legal-notice, /privacy-policy existent comme routes Angular (voir
-  app.routes.ts) mais (1) n'ont aucune valeur de recherche propre pour les requêtes ciblées
-  (wakfu tracker/companion/historique pointent toutes vers la page d'accueil), et (2) un accès direct
-  à ces URLs sur l'hébergement de prod actuel (GitHub Pages, pas de fallback SPA côté serveur —
-  contrairement à Cloudflare Pages qui a public/_redirects) répond 404 : les y référencer inviterait
-  un crawler à indexer des liens cassés. À revoir une fois la prod migrée sur Cloudflare.
+  Une URL par langue pour l'accueil (/fr, /en, /es, /pt — voir app.routes.ts), pas plus :
+  /profile, /account, /legal-notice, /privacy-policy existent comme routes Angular mais n'ont
+  aucune valeur de recherche propre pour les requêtes ciblées (wakfu tracker/companion/historique
+  pointent toutes vers la page d'accueil) — voir core/services/seo.service.ts, qui canonicalise lui
+  aussi ces sous-pages vers l'accueil de leur langue plutôt que de leur donner une URL indexée à
+  part. Chaque entrée liste les 3 autres langues en alternate (`xhtml:link`, format recommandé par
+  Google pour un sitemap multilingue) en plus de l'annotation `hreflang` déjà posée côté HTML
+  (src/index.html statique + SeoService dynamique) — les deux mécanismes sont complémentaires, pas
+  redondants : celui-ci aide un crawler qui indexe par sitemap avant de visiter les pages.
+
+  L'ancienne URL racine sans préfixe (https://oumbra.github.io/wakfu-companion/) n'est plus listée
+  ici : elle continue de fonctionner (redirection côté client vers la langue préférée, voir
+  app.routes.ts) mais n'est plus une page indexable à part entière — un crawler qui la visiterait
+  directement obtiendrait un contenu qui varie selon la locale détectée, jamais stable.
 -->
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
   <url>
-    <loc>https://oumbra.github.io/wakfu-companion/</loc>
-    <lastmod>2026-08-11</lastmod>
+    <loc>https://oumbra.github.io/wakfu-companion/fr</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <xhtml:link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://oumbra.github.io/wakfu-companion/fr"
+    />
+    <lastmod>2026-08-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://oumbra.github.io/wakfu-companion/en</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <xhtml:link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://oumbra.github.io/wakfu-companion/fr"
+    />
+    <lastmod>2026-08-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://oumbra.github.io/wakfu-companion/es</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <xhtml:link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://oumbra.github.io/wakfu-companion/fr"
+    />
+    <lastmod>2026-08-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://oumbra.github.io/wakfu-companion/pt</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <xhtml:link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://oumbra.github.io/wakfu-companion/fr"
+    />
+    <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>

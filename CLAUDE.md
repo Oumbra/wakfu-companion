@@ -89,38 +89,68 @@ tracker », « wakfu companion », « wakfu historique » et toute variante plau
 de l'app (fr/en/es/pt).
 
 - **Domaine canonique en dur, à plusieurs endroits.** L'app n'a pas de rendu serveur (SPA pure, voir
-  plus haut) : `src/index.html`, `public/robots.txt`, `public/sitemap.xml` et `public/llms.txt`
-  contiennent chacun l'URL canonique de prod (`https://oumbra.github.io/wakfu-companion/`, GitHub
-  Pages — hébergement de prod actuel) codée en dur, faute de templating au build sur `public/`. **Le
-  jour où la prod bascule sur Cloudflare/un domaine personnalisé (voir `docs/plan-migration-serveur.md`),
-  mettre à jour les 4 fichiers ensemble** — un grep sur `oumbra.github.io/wakfu-companion` les
-  retrouve tous. Ce même domaine figure aussi en canonical/`og:url` sur les déploiements de preview
-  (`*.pages.dev`) : volontaire, ça dit aux moteurs de ne pas indexer la preview séparément (doublon
-  de la prod) sans avoir besoin de config par environnement.
-  - **Piège correctif inverse** : à la bascule finale sur Cloudflare, `public/sitemap.xml` ne liste
-    QUE `/` — voir le commentaire dans le fichier : GitHub Pages n'a pas de fallback SPA côté serveur
-    (contrairement à Cloudflare Pages + `public/_redirects`), donc un accès direct à `/profile`,
-    `/account`, `/legal-notice`, `/privacy-policy` y répond 404 aujourd'hui. Une fois sur Cloudflare
-    (où ces URLs répondent bien 200), réévaluer s'il faut les ajouter au sitemap — ceci dit leur
-    valeur de référencement reste faible (aucune ne cible les requêtes visées, toutes convergent vers
-    la page d'accueil).
+  plus haut) : `src/index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` et
+  `core/services/seo.service.ts` (constante `SITE_ORIGIN`) contiennent chacun l'URL canonique de prod
+  (`https://oumbra.github.io/wakfu-companion`, GitHub Pages — hébergement de prod actuel) codée en
+  dur, faute de templating au build sur `public/` (et pour `seo.service.ts`, par cohérence avec les
+  fichiers statiques plutôt que déduite de `location.origin` — voir raison juste après). **Le jour où
+  la prod bascule sur Cloudflare/un domaine personnalisé (voir `docs/plan-migration-serveur.md`),
+  mettre à jour les 5 endroits ensemble** — un grep sur `oumbra.github.io/wakfu-companion` les
+  retrouve tous. Ce même domaine figure aussi en canonical/`og:url`/`hreflang` sur les déploiements de
+  preview (`*.pages.dev`) : volontaire, ça dit aux moteurs de ne pas indexer la preview séparément
+  (doublon de la prod) sans avoir besoin de config par environnement.
+  - **GitHub Pages vs Cloudflare Pages, un état transitoire à garder en tête.** La prod (branche
+    `master`) reste sur GitHub Pages (`--base-href /wakfu-companion/`, voir `deploy-main.yml`), sans
+    fallback SPA côté serveur : un accès direct à une URL de page (`/fr/profile`, `/en`...) y répond
+    404 aujourd'hui, seule `/` (qui redirige côté client une fois le JS chargé) fonctionne vraiment
+    en lien direct. La preview (branche `claude/dev`, déployée automatiquement sur Cloudflare Pages —
+    voir `deploy-preview.yml`, base href racine) a bien `public/_redirects` (`/* /index.html 200`),
+    donc toutes les URLs de page y répondent 200 en lien direct, y compris `/fr/profile`. Le sitemap
+    liste les 4 accueils par langue (`/fr`, `/en`, `/es`, `/pt`) en ciblant néanmoins toujours le
+    domaine GH Pages canonique (voir point ci-dessus) — cohérent avec le reste du fichier, pas une
+    incohérence à corriger : la bascule finale sur Cloudflare changera ce domaine partout d'un coup,
+    pas seulement dans le sitemap.
 - **Deux couches de meta/title distinctes, à ne pas confondre.** (1) Le `<head>` statique de
   `src/index.html` (meta description, Open Graph, Twitter Card, JSON-LD `WebApplication` +
-  `FAQPage`, bloc `<noscript>` multilingue) est ce que voient les crawlers qui **n'exécutent pas de
-  JavaScript** (GPTBot, ClaudeBot, PerplexityBot, CCBot...) — la seule chose qu'ils indexent. (2)
-  `SeoService` (`core/services/seo.service.ts`, injecté une fois dans `app.ts` comme
-  `RouteSyncService`) met à jour `<title>`/meta description/`<html lang>` **dynamiquement** une fois
-  l'app démarrée, par page (`NavigationService.view()`) et par langue (`I18nService.locale()`), via
-  les clés `seo.title.*`/`seo.description.*` de `translations.ts` (4 locales, à mettre à jour
-  ensemble comme toute clé i18n — voir plus bas). Ne sert qu'aux utilisateurs réels, à Google/Bing
-  (qui rendent le JS) et aux aperçus de partage générés après exécution — **jamais** vu par un
-  crawler non-JS, d'où l'importance que (1) reste correct et suffisant à lui seul.
-- **Pas de balises `hreflang`.** L'app propose une seule URL pour les 4 langues (changement de
-  langue côté client, pas de sous-chemin `/en/`, `/es/`, `/pt/`) — `hreflang` n'a de sens documenté
-  par Google que pour des URLs **distinctes** par langue ; en poser sur une URL unique serait
-  incorrect plutôt qu'utile. La couverture multilingue passe par `inLanguage` (JSON-LD) et le bloc
-  `<noscript>` (une traduction par langue) à la place. Une vraie amélioration future serait des URLs
-  préfixées par langue, mais c'est un changement d'architecture de routing, pas fait ici.
+  `FAQPage`, bloc `<noscript>` multilingue, alternates `hreflang` statiques — voir point suivant) est
+  ce que voient les crawlers qui **n'exécutent pas de JavaScript** (GPTBot, ClaudeBot,
+  PerplexityBot, CCBot...) — la seule chose qu'ils indexent. (2) `SeoService`
+  (`core/services/seo.service.ts`, injecté une fois dans `app.ts` comme `RouteSyncService`) met à
+  jour `<title>`/meta description/`<html lang>`/canonical/alternates `hreflang`
+  **dynamiquement** une fois l'app démarrée, par page (`NavigationService.view()`) et par langue
+  (`I18nService.locale()`), via les clés `seo.title.*`/`seo.description.*` de `translations.ts` (4
+  locales, à mettre à jour ensemble comme toute clé i18n — voir plus bas). Ne sert qu'aux
+  utilisateurs réels, à Google/Bing (qui rendent le JS) et aux aperçus de partage générés après
+  exécution — **jamais** vu par un crawler non-JS, d'où l'importance que (1) reste correct et
+  suffisant à lui seul.
+- **URLs préfixées par langue (`/fr`, `/en`, `/es`, `/pt`) et balises `hreflang`.** L'app propose
+  désormais une URL distincte par langue (`app.routes.ts` : route `:lang`, validée par
+  `localeGuard`) plutôt qu'un simple changement de langue côté client sur une URL unique — ce qui
+  rend `hreflang` pertinent (Google ne le documente que pour des URLs distinctes par langue).
+  Mécanique complète :
+  - `LocaleRouteComponent` (`core/routes/`) traduit le segment `:lang` de l'URL en
+    `I18nService.setLocale()` (sens URL → état, pendant de `RouteBridgeComponent` pour la page) ;
+    contrairement à `RouteBridgeComponent`, il doit rester réactif au changement de paramètre après
+    coup (`/fr/profile` → `/en/profile` réutilise la même instance de composant, Angular ne la
+    détruit/recrée pas puisque seul `:lang` change).
+  - `RouteSyncService` fait le sens inverse (état → URL) : préfixe désormais chaque chemin de page
+    par `i18n.locale()` — `LanguageSwitcherComponent` n'a donc rien de spécial à faire, il continue
+    d'appeler `i18n.setLocale()` comme avant, la navigation suit automatiquement.
+  - `pagePathFor()` (`navigation.service.ts`) centralise le chemin par vue (sans préfixe de langue),
+    partagé entre `RouteSyncService` et `SeoService` pour ne pas dupliquer ce mapping.
+  - Les anciennes URLs sans préfixe (`/`, `/profile`...) restent résolues mais redirigent (`redirectTo`
+    en fonction, pas une chaîne — la cible dépend de la détection ci-dessous) vers leur équivalent
+    préfixé, via `detectPreferredLocale()` (`i18n.service.ts` : préférence mémorisée, sinon
+    `navigator.language`, sinon français) — ce qui sert aussi de valeur initiale à `I18nService` au
+    tout premier rendu, avant que le Router n'ait résolu l'URL.
+  - `SeoService` pose canonical + alternates `hreflang` (+ `x-default` → français) vers l'**accueil**
+    de chaque langue uniquement (`SITE_ORIGIN/{locale}`), jamais vers la sous-page courante — même
+    logique que `public/sitemap.xml`, qui ne liste lui aussi que les 4 accueils (les sous-pages
+    n'ont toujours aucune valeur de recherche propre, voir plus bas). `SITE_ORIGIN` y est dupliqué en
+    dur (même valeur, même raison qu'ailleurs — voir le point suivant), à garder synchronisé.
+  - Un `:lang` hors des 4 locales supportées (lien mort, faute de frappe) est intercepté par
+    `localeGuard` (redirige vers `/`, qui redétecte) plutôt que d'être silencieusement ignoré par
+    `LocaleRouteComponent`.
 - **`public/llms.txt`** : convention émergente (pas encore un standard formel) pour donner aux
   agents/LLM un résumé structuré du site en Markdown, séparé du HTML. Même règle de mise à jour que
   le reste (contenu/fonctionnalités à synchroniser si l'app évolue significativement).

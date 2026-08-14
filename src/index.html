@@ -2,6 +2,16 @@
 <html lang="fr">
   <head>
     <meta charset="utf-8" />
+    <!-- Requis depuis l'introduction des URLs préfixées par langue (`/fr/profile`, `/en/account`...
+         — voir app.routes.ts) : sans `<base href>`, le navigateur résout les URLs relatives
+         (`styles.css`, `main.js`...) par rapport au chemin COURANT, pas à la racine du site — sur un
+         chemin à un seul segment (`/profile`, comme avant cette fonctionnalité) ça donnait par
+         hasard la bonne URL (`/styles.css`), mais sur un chemin à deux segments (`/fr/profile`) ça
+         résout en `/fr/styles.css`, une 404 qui casse le chargement de toute l'app. `ng build
+         --base-href /wakfu-companion/` (voir deploy-main.yml, GitHub Pages) réécrit cette balise à la
+         volée pour la prod ; le build preview Cloudflare (deploy-preview.yml, servi à la racine de
+         son domaine) et le serveur de dev gardent celle-ci telle quelle. -->
+    <base href="/" />
     <title>Wakfu Companion — Tracker de combat, historique et suivi en temps réel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
@@ -10,20 +20,36 @@
     <!-- ═══════════════════════ SEO / référencement (moteurs classiques + IA) ═══════════════════════
          Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
          docs/plan-migration-serveur.md) : À METTRE À JOUR PARTOUT (ce fichier, public/robots.txt,
-         public/sitemap.xml, public/llms.txt) le jour où la prod bascule sur Cloudflare/domaine
-         personnalisé. Volontairement en dur (canonical/og:url identiques sur TOUTES les URLs de
-         déploiement, y compris les previews *.pages.dev) : ça dit explicitement aux moteurs
-         "n'indexe pas cette URL séparément, c'est un doublon de la prod" — technique standard pour
-         un environnement de preview/staging, sans avoir besoin de config par environnement.
+         public/sitemap.xml, public/llms.txt, core/services/seo.service.ts) le jour où la prod bascule
+         sur Cloudflare/domaine personnalisé. Volontairement en dur (canonical/og:url identiques sur
+         TOUTES les URLs de déploiement, y compris les previews *.pages.dev) : ça dit explicitement
+         aux moteurs "n'indexe pas cette URL séparément, c'est un doublon de la prod" — technique
+         standard pour un environnement de preview/staging, sans avoir besoin de config par
+         environnement.
          Le titre/la description ci-dessous sont repris (mêmes clés `seo.*`) et mis à jour
          dynamiquement par page/langue une fois l'app démarrée (voir core/services/seo.service.ts) ;
          ce contenu STATIQUE reste ce que voient les crawlers qui n'exécutent PAS de JavaScript
          (GPTBot, ClaudeBot, PerplexityBot, CCBot...), d'où l'importance qu'il soit correct et
-         suffisant à lui seul. Pas de balises hreflang par langue : l'app ne propose qu'une seule URL
-         pour les 4 langues (changement de langue côté client, pas de sous-chemin /en//es//pt/), et
-         hreflang n'a de sens documenté par Google que pour des URLs DISTINCTES par langue — en mettre
-         sur une URL unique serait incorrect plutôt qu'utile. La couverture multilingue passe donc par
-         le JSON-LD (`inLanguage`) et le bloc <noscript> ci-dessous plutôt que par hreflang. -->
+         suffisant à lui seul.
+         Balises hreflang : l'app propose désormais une URL DISTINCTE par langue (`/fr`, `/en`, `/es`,
+         `/pt`, voir app.routes.ts) — hreflang a donc du sens ici. Le canonical/les alternates
+         ci-dessous restent volontairement figés sur l'accueil racine (pas de version par page) : un
+         crawler qui n'exécute pas de JS ne voit de toute façon toujours que CE fichier statique quel
+         que soit le chemin réellement demandé (identique pour /, /fr, /profile...), donc lui fournir
+         des variantes par langue reste utile, des variantes par sous-page ne le serait pas (même
+         contenu HTML servi dans tous les cas). `SeoService` prend le relais une fois l'app démarrée
+         pour les moteurs qui exécutent le JS (Google, Bing) : canonical/alternates mis à jour selon
+         la locale ACTIVE (voir son commentaire) — cette même URL statique de repli fait office de
+         valeur par défaut avant que le JS ne s'exécute. -->
+    <link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
+    <link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
+    <link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://oumbra.github.io/wakfu-companion/fr"
+    />
     <meta
       name="description"
       content="Wakfu Companion est le compagnon de jeu gratuit pour Wakfu : tracker de combat (damage meter) en temps réel, historique de combats, suivi des kamas, de l'XP, du butin et du chat, à partir de votre wakfu.log. Disponible en français, anglais, espagnol et portugais."
