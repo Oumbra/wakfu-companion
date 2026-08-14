@@ -147,11 +147,12 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
-/* `<img>` est un élément remplacé : les navigateurs ne génèrent pas de
-   pseudo-élément `::after` dessus (vérifié — le `[data-tooltip]::after`
-   générique de styles.css calcule bien un style mais ne s'affiche jamais à
-   l'écran). Le tooltip est donc porté par ce wrapper `<span>`, pas par l'img
-   elle-même. */
+/* Le tooltip (`TooltipDirective`) est porté par ce wrapper `<span>`, pas par
+   l'`<img>` elle-même : historiquement nécessaire car `<img>` est un élément
+   remplacé sans pseudo-élément `::after` (l'ancien système CSS générique n'y
+   fonctionnait pas) — la directive ne dépend plus de `::after` mais garder le
+   wrapper reste plus simple (une seule zone de survol/focus pour toute la
+   vignette). */
 .fight-image-wrap {
   display: inline-flex;
   flex-shrink: 0;

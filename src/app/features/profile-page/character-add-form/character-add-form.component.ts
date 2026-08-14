@@ -2,6 +2,7 @@ import { Component, computed, inject, output, signal } from '@angular/core';
 import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { Gender, getClassIconUri } from '../../../core/data/class-icons.data';
 import { TranslatePipe } from '../../../shared/translate.pipe';
+import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 export interface NewRosterCharacter {
   name: string;
@@ -17,7 +18,7 @@ export interface NewRosterCharacter {
  */
 @Component({
   selector: 'app-character-add-form',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './character-add-form.component.html',
   styleUrl: './character-add-form.component.css',
 })

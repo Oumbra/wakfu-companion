@@ -4,9 +4,10 @@
     <div class="recipe-modal-header">
       <span class="recipe-modal-title">{{ 'tracker.recipeModalTitle' | t }}</span>
       <button
-        class="icon-btn recipe-modal-close tooltip-below tooltip-align-right"
+        class="icon-btn recipe-modal-close"
         type="button"
-        [attr.data-tooltip]="'profile.closeToast' | t"
+        [appTooltip]="'profile.closeToast' | t"
+        tooltipPosition="bottom-right"
         (click)="close()"
       >
         ×
@@ -63,8 +64,8 @@
         <app-item-icon [name]="ing.name" [id]="ing.id" [size]="22" />
         <span
           class="recipe-modal-ingredient-name"
-          [class.tooltip-below]="first"
-          [attr.data-tooltip]="ing.name"
+          [appTooltip]="ing.name"
+          [tooltipPosition]="first ? 'bottom' : 'top'"
           >{{ ing.name }}</span
         >
         <span class="recipe-modal-ingredient-qty">{{ ing.quantity * multiplier }}</span>
@@ -75,8 +76,8 @@
           [class.active]="nestedPaths().has(path)"
           [attr.tabindex]="ing.hasRecipe ? 0 : -1"
           [attr.aria-hidden]="!ing.hasRecipe"
-          [class.tooltip-below]="first"
-          [attr.data-tooltip]="ing.hasRecipe ? ('tracker.recipeNestTooltip' | t) : null"
+          [appTooltip]="ing.hasRecipe ? ('tracker.recipeNestTooltip' | t) : null"
+          [tooltipPosition]="first ? 'bottom' : 'top'"
           (click)="toggleNested(path, ing.hasRecipe)"
         >
           <svg role="img" viewBox="0 0 512 512" fill="currentColor">

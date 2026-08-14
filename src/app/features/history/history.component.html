@@ -14,7 +14,7 @@
       <button
         type="button"
         class="icon-btn help-icon-btn meter-tab-help-btn"
-        [attr.data-tooltip]="'help.tooltip' | t"
+        [appTooltip]="'help.tooltip' | t"
         (click)="helpModal.open('fightHistory')"
       >
         ?
@@ -27,7 +27,7 @@
       <button
         type="button"
         class="icon-btn help-icon-btn meter-tab-help-btn"
-        [attr.data-tooltip]="'help.tooltip' | t"
+        [appTooltip]="'help.tooltip' | t"
         (click)="helpModal.open('purchases')"
       >
         ?
@@ -39,8 +39,9 @@
       </button>
       <button
         type="button"
-        class="icon-btn help-icon-btn meter-tab-help-btn tooltip-align-right"
-        [attr.data-tooltip]="'help.tooltip' | t"
+        class="icon-btn help-icon-btn meter-tab-help-btn"
+        [appTooltip]="'help.tooltip' | t"
+        tooltipPosition="top-right"
         (click)="helpModal.open('trades')"
       >
         ?

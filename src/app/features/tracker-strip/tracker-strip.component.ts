@@ -16,6 +16,7 @@ import { HelpModalService } from '../../core/services/help-modal.service';
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
  * parasite en balayant la bande du regard/de la souris. Seul point à
@@ -55,6 +56,7 @@ const KPI_EXPANDED_WIDTH_PX = 250;
     TranslatePipe,
     WakfuAutocompleteComponent,
     IconComponent,
+    TooltipDirective,
   ],
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
@@ -89,15 +91,6 @@ export class TrackerStripComponent {
    * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
    * la popover elle-même vit au niveau racine, hors de ce composant. */
   protected readonly confirmDeleteOpenFor = signal<string | null>(null);
-  /** Tooltip du nom tronqué actuellement survolé (texte + position relative au host) — voir
-   * `hostRelativePos` : ne peut pas être un simple `[title]`/`[data-tooltip]` CSS ici, la classe
-   * globale `[title]::after` (styles.css) serait de toute façon rognée par `.kpi-strip`
-   * (`overflow-y:hidden`, scroll horizontal seul), donc positionnée en JS comme la popover de
-   * suppression plutôt que de dupliquer le système CSS générique dans ce contexte particulier. */
-  protected readonly nameTooltip = signal<{ text: string; right: number; bottom: number } | null>(
-    null,
-  );
-
   /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en
    * JS (pas de simple `:hover` CSS) pour pouvoir imposer un délai avant
    * ouverture ET un verrou anti-cascade (voir `onTileEnter`/`onTileLeave`) :
@@ -201,42 +194,6 @@ export class TrackerStripComponent {
       left: Math.max(0, Math.min(targetScrollLeft, maxScrollLeft)),
       behavior: 'smooth',
     });
-  }
-
-  /** Position (right/bottom en px) d'un élément relativement au host — sert à sortir les
-   * popovers/tooltips de `.kpi-strip` (qui les rognerait via son overflow) sans pour autant les
-   * ancrer en `position:fixed` (le host vit sous `.view-slider`, qui porte un `transform` :
-   * `position:fixed` s'y positionnerait relativement à cet ancêtre, pas au viewport — voir
-   * CLAUDE.md). `:host{position:relative}`, sans overflow, sert donc de containing block. */
-  private hostRelativePos(
-    target: HTMLElement,
-    gap: number,
-  ): { right: number; top: number; bottom: number } {
-    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    return {
-      right: hostRect.right - targetRect.right - gap,
-      // Au-dessus de `target` (tooltip de nom).
-      bottom: hostRect.bottom - targetRect.top + gap,
-      // En dessous de `target` (popover de suppression).
-      top: targetRect.bottom - hostRect.top + gap,
-    };
-  }
-
-  protected onNameHover(nameEl: HTMLElement, entry: WatchlistEntry): void {
-    if (nameEl.scrollWidth <= nameEl.clientWidth) {
-      this.nameTooltip.set(null);
-      return;
-    }
-    // Positionné par rapport au libellé lui-même (pas toute la tuile) pour
-    // s'afficher juste au-dessus du texte, quelle que soit la largeur réelle
-    // de la tuile déployée.
-    const { right, bottom } = this.hostRelativePos(nameEl, 8);
-    this.nameTooltip.set({ text: this.watchlist.displayName(entry), right, bottom });
-  }
-
-  protected onNameLeave(): void {
-    this.nameTooltip.set(null);
   }
 
   protected add(result: WakfuSearchResult): void {

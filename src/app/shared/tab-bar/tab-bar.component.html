@@ -1,8 +1,9 @@
 <div class="tab-bar-row" [class.mobile-only]="mobileOnly()">
   <button
     type="button"
-    class="icon-btn tab-bar-list-btn tooltip-below tooltip-align-left"
-    [attr.data-tooltip]="listTooltip() | t"
+    class="icon-btn tab-bar-list-btn"
+    [appTooltip]="listTooltip() | t"
+    tooltipPosition="bottom-left"
     (click)="openSheet()"
   >
     <svg
@@ -28,7 +29,7 @@
         type="button"
         class="tab-bar-btn"
         [class.active]="item.id === activeId()"
-        [attr.data-tooltip]="item.tooltip ? (item.tooltip | t) : null"
+        [appTooltip]="item.tooltip ? (item.tooltip | t) : null"
         (click)="select(item.id)"
       >
         <span class="tab-bar-label">{{ item.label | t }}</span>
@@ -36,7 +37,7 @@
           <button
             type="button"
             class="icon-btn help-icon-btn"
-            [attr.data-tooltip]="'help.tooltip' | t"
+            [appTooltip]="'help.tooltip' | t"
             (click)="helpModal.open(section)"
           >
             ?
@@ -45,7 +46,7 @@
         @if (item.removable && item.id === activeId()) {
           <span
             class="tab-bar-remove"
-            [attr.data-tooltip]="item.removeTooltip ? (item.removeTooltip | t) : null"
+            [appTooltip]="item.removeTooltip ? (item.removeTooltip | t) : null"
             (click)="onRemove($event, item.id)"
           >
             ×

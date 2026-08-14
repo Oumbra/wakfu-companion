@@ -16,6 +16,7 @@ import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.mo
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
 const BOTTOM_THRESHOLD_PX = 24;
@@ -51,7 +52,7 @@ function messageMatchesAnyFilter(msg: ChatMessageEntry, filters: readonly ChatFi
 
 @Component({
   selector: 'app-chat-panel',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './chat-panel.component.html',
   styleUrl: './chat-panel.component.css',
 })

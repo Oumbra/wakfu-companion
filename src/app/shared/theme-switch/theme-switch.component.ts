@@ -1,6 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { ThemeService } from '../../core/services/theme.service';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /** Icônes wakassets (chat noir/blanc) fournies pour ce switch — pas de rapport avec les icônes de
  * monstre affichées ailleurs dans l'app (dégâts, suivi...), uniquement réutilisées ici pour leur
@@ -16,7 +17,7 @@ const LIGHT_ICON_URL = 'https://vertylo.github.io/wakassets/monsters/117601209.p
  */
 @Component({
   selector: 'app-theme-switch',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './theme-switch.component.html',
   styleUrl: './theme-switch.component.css',
   host: {

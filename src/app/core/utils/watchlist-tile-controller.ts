@@ -37,11 +37,6 @@ export class WatchlistTileController {
     private readonly catalog: CatalogService,
   ) {}
 
-  /** Noms actuellement tronqués par l'ellipsis CSS (détecté au survol, voir `checkTruncation`) :
-   * seuls ceux-là reçoivent un `title`, pour n'afficher la tooltip que quand le nom complet n'est
-   * pas déjà visible. */
-  readonly truncatedNames = signal<ReadonlySet<string>>(new Set());
-
   /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
    * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout (mobile) / fermeture (desktop). */
   readonly addMode = signal<WatchlistCounterMode>('up');
@@ -85,16 +80,6 @@ export class WatchlistTileController {
     return entry.kind === 'item'
       ? this.i18n.translateItemName(entry.name)
       : this.i18n.translateMonsterName(entry.name);
-  }
-
-  checkTruncation(el: HTMLElement, name: string): void {
-    const isTruncated = el.scrollWidth > el.clientWidth;
-    const current = this.truncatedNames();
-    if (isTruncated === current.has(name)) return;
-    const updated = new Set(current);
-    if (isTruncated) updated.add(name);
-    else updated.delete(name);
-    this.truncatedNames.set(updated);
   }
 
   enterSelectMode(): void {

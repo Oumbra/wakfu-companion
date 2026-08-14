@@ -1,10 +1,9 @@
 <button
   class="profile-btn"
-  [class.tooltip-align-right]="variant() === 'header'"
-  [class.tooltip-below]="variant() === 'header'"
   [class.profile-btn-row]="variant() === 'row'"
   (click)="open()"
-  [attr.data-tooltip]="variant() === 'header' ? ('profile.button' | t) : null"
+  [appTooltip]="variant() === 'header' ? ('profile.button' | t) : null"
+  tooltipPosition="bottom-right"
 >
   @if (profile.avatarIndex() !== null) {
     <div class="profile-avatar-wrapper">

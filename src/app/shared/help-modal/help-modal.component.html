@@ -4,9 +4,10 @@
     <div class="help-modal-header">
       <span class="help-modal-title">{{ 'help.' + section + '.title' | t }}</span>
       <button
-        class="icon-btn help-modal-close tooltip-below tooltip-align-right"
+        class="icon-btn help-modal-close"
         type="button"
-        [attr.data-tooltip]="'profile.closeToast' | t"
+        [appTooltip]="'profile.closeToast' | t"
+        tooltipPosition="bottom-right"
         (click)="helpModal.close()"
       >
         ×

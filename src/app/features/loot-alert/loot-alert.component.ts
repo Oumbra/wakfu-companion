@@ -6,6 +6,7 @@ import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 interface ConfettiPiece {
   left: string;
@@ -35,7 +36,7 @@ const CONFETTI_PIECE_COUNT = 28;
  */
 @Component({
   selector: 'app-loot-alert',
-  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe],
+  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe, TooltipDirective],
   templateUrl: './loot-alert.component.html',
   styleUrl: './loot-alert.component.css',
 })

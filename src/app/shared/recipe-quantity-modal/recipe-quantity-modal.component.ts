@@ -8,6 +8,7 @@ import { StatsStoreService } from '../../core/services/stats-store.service';
 import { TranslatePipe } from '../translate.pipe';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Modale "suivre les objets de la recette" (voir RecipeTrackingService, ouverte depuis l'icône
@@ -25,7 +26,7 @@ import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
  */
 @Component({
   selector: 'app-recipe-quantity-modal',
-  imports: [TranslatePipe, ItemIconComponent, NgTemplateOutlet],
+  imports: [TranslatePipe, ItemIconComponent, NgTemplateOutlet, TooltipDirective],
   templateUrl: './recipe-quantity-modal.component.html',
   styleUrl: './recipe-quantity-modal.component.css',
 })

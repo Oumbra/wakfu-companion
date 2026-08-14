@@ -7,8 +7,9 @@
     </div>
     @if (catalog.status() === 'unavailable') {
       <span
-        class="catalog-unavailable-badge tooltip-below"
-        [attr.data-tooltip]="'app.catalogUnavailable' | t"
+        class="catalog-unavailable-badge"
+        [appTooltip]="'app.catalogUnavailable' | t"
+        tooltipPosition="bottom"
       >
         <svg
           viewBox="0 0 24 24"
@@ -33,8 +34,9 @@
     @if (logFileAccess.status() === 'connected') {
       @if (gameServers.activeServer(); as active) {
         <span
-          class="game-server-badge game-server-badge-desktop tooltip-below"
-          [attr.data-tooltip]="serverTooltip()"
+          class="game-server-badge game-server-badge-desktop"
+          [appTooltip]="serverTooltip()"
+          tooltipPosition="bottom"
         >
           <span class="game-server-dot"></span>
           {{ active.server.label }}
@@ -42,8 +44,9 @@
       } @else {
         <button
           type="button"
-          class="game-server-badge game-server-badge-desktop game-server-badge-empty tooltip-below"
-          [attr.data-tooltip]="'app.gameServerUnsetTooltip' | t"
+          class="game-server-badge game-server-badge-desktop game-server-badge-empty"
+          [appTooltip]="'app.gameServerUnsetTooltip' | t"
+          tooltipPosition="bottom"
           (click)="openServerSetup()"
         >
           <span class="game-server-dot"></span>
@@ -55,15 +58,17 @@
       <div class="app-header-file-group">
         <span class="file-chip">{{ logFileAccess.fileName() }}</span>
         <button
-          class="icon-btn tooltip-below"
-          [attr.data-tooltip]="'app.changeFile' | t"
+          class="icon-btn"
+          [appTooltip]="'app.changeFile' | t"
+          tooltipPosition="bottom"
           (click)="onChangeFile()"
         >
           <span class="icon-btn-text">⇄</span>
         </button>
         <button
-          class="icon-btn reset-btn tooltip-below"
-          [attr.data-tooltip]="'app.reset' | t"
+          class="icon-btn reset-btn"
+          [appTooltip]="'app.reset' | t"
+          tooltipPosition="bottom"
           (click)="onReset($event)"
         >
           <span class="icon-btn-text">↺</span>
@@ -74,8 +79,9 @@
   <div class="app-header-right app-header-right-desktop">
     @if (logFileAccess.status() === 'connected') {
       <button
-        class="icon-btn session-recap-btn tooltip-below"
-        [attr.data-tooltip]="'app.sessionRecap' | t"
+        class="icon-btn session-recap-btn"
+        [appTooltip]="'app.sessionRecap' | t"
+        tooltipPosition="bottom"
         (click)="sessionRecapService.toggle()"
       >
         <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
@@ -90,8 +96,9 @@
 
   <div class="app-header-burger">
     <button
-      class="icon-btn tooltip-below tooltip-align-right"
-      [attr.data-tooltip]="'app.menu' | t"
+      class="icon-btn"
+      [appTooltip]="'app.menu' | t"
+      tooltipPosition="bottom-right"
       (click)="toggleMobileMenu()"
     >
       <svg

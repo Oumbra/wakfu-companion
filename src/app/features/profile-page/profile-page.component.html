@@ -1,17 +1,19 @@
 <app-page [title]="'profile.title' | t" (back)="goBack()">
   <ng-container pageActions>
     <button
-      class="icon-btn tooltip-below tooltip-align-right"
+      class="icon-btn"
       type="button"
-      [attr.data-tooltip]="'profile.exportData' | t"
+      [appTooltip]="'profile.exportData' | t"
+      tooltipPosition="bottom-right"
       (click)="exportData()"
     >
       ↓
     </button>
     <button
-      class="icon-btn tooltip-below tooltip-align-right"
+      class="icon-btn"
       type="button"
-      [attr.data-tooltip]="'profile.importData' | t"
+      [appTooltip]="'profile.importData' | t"
+      tooltipPosition="bottom-right"
       (click)="triggerImport(importFileInput)"
     >
       ↑
@@ -48,13 +50,13 @@
         <div class="profile-rail-scroll">
           @for (tab of tabDefs; track tab.id) {
             <button
-              #railBtn
               type="button"
               class="profile-rail-btn"
               [class.active]="activeTab() === tab.id"
               (click)="selectTab(tab.id)"
-              (mouseenter)="onRailBtnHover(railBtn, railButtonLabel(tab.id), isNavRailCollapsed())"
-              (mouseleave)="onRailBtnLeave()"
+              [appTooltip]="railButtonLabel(tab.id)"
+              tooltipPosition="top-left"
+              [tooltipDisabled]="!isNavRailCollapsed()"
             >
               <span class="profile-rail-icon">
                 @switch (tab.id) {
@@ -100,18 +102,12 @@
           }
         </div>
         <button
-          #railToggleBtn
           type="button"
           class="profile-rail-collapse-toggle"
           (click)="toggleNavRailCollapsed()"
-          (mouseenter)="
-            onRailBtnHover(
-              railToggleBtn,
-              i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse'),
-              isNavRailCollapsed()
-            )
-          "
-          (mouseleave)="onRailBtnLeave()"
+          [appTooltip]="i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')"
+          tooltipPosition="top-left"
+          [tooltipDisabled]="!isNavRailCollapsed()"
         >
           <!-- `[class.is-collapsed]` sur ce `<span>` wrapper, PAS directement sur `<app-icon>` :
                `IconComponent` a `:host{display:contents}` (voir icon.component.ts), qui empêche
@@ -162,7 +158,7 @@
                       <button
                         class="icon-btn pseudo-edit-btn"
                         type="button"
-                        [attr.data-tooltip]="'profile.editPseudo' | t"
+                        [appTooltip]="'profile.editPseudo' | t"
                         (click)="startEditPseudo()"
                       >
                         <app-icon name="edit" [size]="13" />
@@ -199,7 +195,7 @@
                   <button
                     type="button"
                     class="icon-btn help-icon-btn"
-                    [attr.data-tooltip]="'help.tooltip' | t"
+                    [appTooltip]="'help.tooltip' | t"
                     (click)="helpModal.open('profileColorblind')"
                   >
                     ?
@@ -218,7 +214,7 @@
                     type="button"
                     class="icon-switch-option colorblind-switch-option"
                     [class.selected]="colorblind.profile() === opt.value"
-                    [attr.data-tooltip]="opt.tooltipKey | t"
+                    [appTooltip]="opt.tooltipKey | t"
                     (click)="colorblind.setProfile(opt.value)"
                   >
                     {{ opt.labelKey | t }}
@@ -258,7 +254,7 @@
                   <button
                     type="button"
                     class="icon-btn help-icon-btn"
-                    [attr.data-tooltip]="'help.tooltip' | t"
+                    [appTooltip]="'help.tooltip' | t"
                     (click)="helpModal.open('profileConnection')"
                   >
                     ?
@@ -343,7 +339,7 @@
                   <button
                     type="button"
                     class="icon-btn help-icon-btn"
-                    [attr.data-tooltip]="'help.tooltip' | t"
+                    [appTooltip]="'help.tooltip' | t"
                     (click)="helpModal.open('profileAlerts')"
                   >
                     ?
@@ -357,7 +353,7 @@
                 <button
                   class="icon-btn test-sound-btn"
                   type="button"
-                  [attr.data-tooltip]="'profile.testSound' | t"
+                  [appTooltip]="'profile.testSound' | t"
                   (click)="testAlertSound()"
                 >
                   <app-icon name="volume-on" [size]="14" />
@@ -387,7 +383,7 @@
                     type="button"
                     class="icon-switch-option"
                     [class.selected]="!profile.alertManualClose()"
-                    [attr.data-tooltip]="autoCloseTooltip()"
+                    [appTooltip]="autoCloseTooltip()"
                     (click)="setManualClose(false)"
                   >
                     {{ 'profile.autoCloseLabel' | t }}
@@ -396,7 +392,8 @@
                     type="button"
                     class="icon-switch-option"
                     [class.selected]="profile.alertManualClose()"
-                    [attr.data-tooltip]="'profile.manualCloseTooltip' | t"
+                    [appTooltip]="'profile.manualCloseTooltip' | t"
+                    [tooltipMultiline]="true"
                     (click)="setManualClose(true)"
                   >
                     {{ 'profile.manualCloseLabel' | t }}
@@ -422,11 +419,9 @@
                 ) {
                   <div class="sound-item-tile" [class]="rarityClass(entry.name, entry.catalogId)">
                     <button
-                      class="sound-toggle-btn tooltip-align-left"
-                      [class.tooltip-below]="i < soundGridColumns.columns()"
-                      [attr.data-tooltip]="
-                        (entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t
-                      "
+                      class="sound-toggle-btn"
+                      [appTooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
+                      [tooltipPosition]="i < soundGridColumns.columns() ? 'bottom-left' : 'top-left'"
                       (click)="toggleSound(entry.name, entry.catalogId)"
                     >
                       @if (entry.enabled) {
@@ -437,9 +432,9 @@
                     </button>
                     @if (!entry.isDefault) {
                       <button
-                        class="remove-btn tooltip-align-right"
-                        [class.tooltip-below]="i < soundGridColumns.columns()"
-                        [attr.data-tooltip]="'tracker.remove' | t"
+                        class="remove-btn"
+                        [appTooltip]="'tracker.remove' | t"
+                        [tooltipPosition]="i < soundGridColumns.columns() ? 'bottom-right' : 'top-right'"
                         (click)="removeSoundItem(entry.name, entry.catalogId)"
                       >
                         ×
@@ -447,10 +442,10 @@
                     }
                     <app-item-icon [name]="entry.name" [id]="entry.catalogId" [size]="32" />
                     <span
-                      #nameEl
                       class="sound-item-name"
-                      (mouseenter)="onNameHover(nameEl, i18n.translateItemName(entry.name))"
-                      (mouseleave)="onNameLeave()"
+                      [appTooltip]="i18n.translateItemName(entry.name)"
+                      tooltipPosition="top-right"
+                      [tooltipOnlyIfTruncated]="true"
                       >{{ i18n.translateItemName(entry.name) }}</span
                     >
                   </div>
@@ -474,13 +469,13 @@
               <div class="profile-rail-scroll">
                 @for (account of roster.accounts(); track account.id; let i = $index) {
                   <button
-                    #railBtn
                     type="button"
                     class="profile-rail-btn roster-account-rail-btn"
                     [class.active]="selectedAccountId() === account.id"
                     (click)="selectAccount(account.id)"
-                    (mouseenter)="onRailBtnHover(railBtn, tabLabel(account, i), isRosterRailCollapsed())"
-                    (mouseleave)="onRailBtnLeave()"
+                    [appTooltip]="tabLabel(account, i)"
+                    tooltipPosition="top-left"
+                    [tooltipDisabled]="!isRosterRailCollapsed()"
                   >
                     @if (isRosterRailCollapsed()) {
                       <!-- Ces boutons de compte n'ont pas de `.profile-rail-icon` (juste un libellé
@@ -498,18 +493,12 @@
                   </button>
                 }
                 <button
-                  #railAddBtn
                   type="button"
                   class="profile-rail-btn roster-account-rail-add"
                   (click)="addAccount()"
-                  (mouseenter)="
-                    onRailBtnHover(
-                      railAddBtn,
-                      i18n.t('profile.rosterAddAccount'),
-                      isRosterRailCollapsed()
-                    )
-                  "
-                  (mouseleave)="onRailBtnLeave()"
+                  [appTooltip]="i18n.t('profile.rosterAddAccount')"
+                  tooltipPosition="top-left"
+                  [tooltipDisabled]="!isRosterRailCollapsed()"
                 >
                   <span class="profile-rail-icon">
                     <svg
@@ -528,18 +517,14 @@
                 </button>
               </div>
               <button
-                #railToggleBtn
                 type="button"
                 class="profile-rail-collapse-toggle"
                 (click)="toggleRosterRailCollapsed()"
-                (mouseenter)="
-                  onRailBtnHover(
-                    railToggleBtn,
-                    i18n.t(isRosterRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse'),
-                    isRosterRailCollapsed()
-                  )
+                [appTooltip]="
+                  i18n.t(isRosterRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')
                 "
-                (mouseleave)="onRailBtnLeave()"
+                tooltipPosition="top-left"
+                [tooltipDisabled]="!isRosterRailCollapsed()"
               >
                 <span class="profile-rail-collapse-icon" [class.is-collapsed]="isRosterRailCollapsed()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" fill="none" viewBox="0 0 16 17" role="img" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z" clip-rule="evenodd"></path></svg>
@@ -557,7 +542,7 @@
                   <button
                     type="button"
                     class="icon-btn help-icon-btn"
-                    [attr.data-tooltip]="'help.tooltip' | t"
+                    [appTooltip]="'help.tooltip' | t"
                     (click)="helpModal.open('profileCharacters')"
                   >
                     ?
@@ -576,9 +561,10 @@
                   [mobileOnly]="true"
                 >
                   <button
-                    class="icon-btn roster-add-account-btn tooltip-below tooltip-align-right"
+                    class="icon-btn roster-add-account-btn"
                     type="button"
-                    [attr.data-tooltip]="'profile.rosterAddAccount' | t"
+                    [appTooltip]="'profile.rosterAddAccount' | t"
+                    tooltipPosition="bottom-right"
                     (click)="addAccount()"
                   >
                     <svg
@@ -607,9 +593,10 @@
                         (change)="renameAccount(account.id, $any($event.target).value)"
                       />
                       <button
-                        class="icon-btn reset-btn tooltip-align-right"
+                        class="icon-btn reset-btn"
                         type="button"
-                        [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
+                        [appTooltip]="'profile.rosterRemoveAccount' | t"
+                        tooltipPosition="top-right"
                         (click)="removeAccount(account.id)"
                       >
                         ×
@@ -626,9 +613,10 @@
                           (change)="renameAccount(account.id, $any($event.target).value)"
                         />
                         <button
-                          class="icon-btn reset-btn tooltip-align-right"
+                          class="icon-btn reset-btn"
                           type="button"
-                          [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
+                          [appTooltip]="'profile.rosterRemoveAccount' | t"
+                          tooltipPosition="top-right"
                           (click)="removeAccount(account.id)"
                         >
                           ×
@@ -656,7 +644,7 @@
                             type="button"
                             class="icon-switch-option"
                             [class.selected]="profile.characterViewMode() === 'list'"
-                            [attr.data-tooltip]="'profile.rosterViewList' | t"
+                            [appTooltip]="'profile.rosterViewList' | t"
                             (click)="profile.setCharacterViewMode('list')"
                           >
                             <svg
@@ -676,7 +664,7 @@
                             type="button"
                             class="icon-switch-option"
                             [class.selected]="profile.characterViewMode() === 'grid'"
-                            [attr.data-tooltip]="'profile.rosterViewGrid' | t"
+                            [appTooltip]="'profile.rosterViewGrid' | t"
                             (click)="profile.setCharacterViewMode('grid')"
                           >
                             <svg
@@ -712,11 +700,15 @@
                                 (drop)="onCharDrop(account.id, i)"
                               >
                                 <button
-                                  class="icon-btn reset-btn badge-close-btn tooltip-align-right"
-                                  [class.tooltip-below]="i < charGridColumns.columns() && isMobile.matches()"
+                                  class="icon-btn reset-btn badge-close-btn"
                                   type="button"
                                   draggable="false"
-                                  [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
+                                  [appTooltip]="'profile.rosterRemoveCharacter' | t"
+                                  [tooltipPosition]="
+                                    i < charGridColumns.columns() && isMobile.matches()
+                                      ? 'bottom-right'
+                                      : 'top-right'
+                                  "
                                   (click)="requestRemoveCharacter($event, account.id, char.name)"
                                 >
                                   ×
@@ -747,17 +739,17 @@
                                 } @else {
                                   <div class="profile-preview-name-row">
                                     <span
-                                      #nameEl
                                       class="roster-character-name"
-                                      (mouseenter)="onNameHover(nameEl, char.name)"
-                                      (mouseleave)="onNameLeave()"
+                                      [appTooltip]="char.name"
+                                      tooltipPosition="top-right"
+                                      [tooltipOnlyIfTruncated]="true"
                                       >{{ char.name }}</span
                                     >
                                     <button
                                       class="icon-btn pseudo-edit-btn plain-icon-btn"
                                       type="button"
                                       draggable="false"
-                                      [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
+                                      [appTooltip]="'profile.rosterRenameCharacter' | t"
                                       (click)="startEditCharacter(account.id, char.name)"
                                     >
                                       <app-icon name="edit" [size]="13" />
@@ -808,10 +800,10 @@
                                     />
                                   } @else {
                                     <span
-                                      #nameEl
                                       class="roster-character-name"
-                                      (mouseenter)="onNameHover(nameEl, char.name)"
-                                      (mouseleave)="onNameLeave()"
+                                      [appTooltip]="char.name"
+                                      tooltipPosition="top-right"
+                                      [tooltipOnlyIfTruncated]="true"
                                       >{{ char.name }}</span
                                     >
                                   }
@@ -820,16 +812,17 @@
                                       class="icon-btn pseudo-edit-btn"
                                       type="button"
                                       draggable="false"
-                                      [attr.data-tooltip]="'profile.rosterRenameCharacter' | t"
+                                      [appTooltip]="'profile.rosterRenameCharacter' | t"
                                       (click)="startEditCharacter(account.id, char.name)"
                                     >
                                       <app-icon name="edit" [size]="13" />
                                     </button>
                                     <button
-                                      class="icon-btn reset-btn tooltip-align-right"
+                                      class="icon-btn reset-btn"
                                       type="button"
                                       draggable="false"
-                                      [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
+                                      [appTooltip]="'profile.rosterRemoveCharacter' | t"
+                                      tooltipPosition="top-right"
                                       (click)="
                                         requestRemoveCharacter($event, account.id, char.name)
                                       "
@@ -871,18 +864,6 @@
     </div>
   </div>
 </app-page>
-
-@if (nameTooltip(); as tip) {
-  <div class="floating-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
-    {{ tip.text }}
-  </div>
-}
-
-@if (railTooltip(); as tip) {
-  <div class="floating-name-tooltip" [style.left.px]="tip.left" [style.bottom.px]="tip.bottom">
-    {{ tip.text }}
-  </div>
-}
 
 <!-- Serveur de jeu du compte (lot 7). ⚠ La sélection courante se pose sur les
      `<option>` (`[selected]`), JAMAIS via `[value]` sur le `<select>` : Angular

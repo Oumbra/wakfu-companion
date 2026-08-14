@@ -69,8 +69,8 @@
 }
 
 /* Serveur de jeu actif (lot 7) — jamais lu dans le log, toujours déclaré :
-   le tooltip dit d'où vient la déduction. `.tooltip-below` obligatoire dans un
-   header (voir CLAUDE.md, conventions de tooltip). */
+   le tooltip dit d'où vient la déduction. `tooltipPosition="bottom"`
+   obligatoire dans un header (voir CLAUDE.md, conventions de tooltip). */
 .game-server-badge {
   display: flex;
   align-items: center;

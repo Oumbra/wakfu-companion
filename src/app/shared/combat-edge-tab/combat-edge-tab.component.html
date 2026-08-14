@@ -1,6 +1,7 @@
 <button
-  class="combat-edge-tab tooltip-side-right"
-  [attr.data-tooltip]="'damageMeter.expandHint' | t"
+  class="combat-edge-tab"
+  [appTooltip]="'damageMeter.expandHint' | t"
+  tooltipPosition="right"
   (click)="expand()"
 >
   <img [src]="icon" class="combat-edge-tab-icon" alt="" />

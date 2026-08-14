@@ -48,6 +48,7 @@ import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
 
@@ -94,6 +95,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
     IconComponent,
     TabBarComponent,
     NgTemplateOutlet,
+    TooltipDirective,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -111,7 +113,6 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
-  private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly persistence = inject(PersistenceService);
 
   /** Seuil mobile réactif (même 800px que `.mobile-only`/`@media` un peu partout côté CSS) — sert
@@ -413,70 +414,6 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected characterIcon(char: RosterCharacter): string {
     return getClassIconUri(char.className, char.gender);
-  }
-
-  /** Tooltip JS des noms de personnage tronqués (liste et grille) — même
-   * principe que `.kpi-name-tooltip` dans tracker-strip (mutualisé en
-   * `.floating-name-tooltip`, styles.css) : un `[title]` classique serait
-   * rogné par `overflow` de `.roster-character-scroll`. */
-  protected readonly nameTooltip = signal<{ text: string; right: number; bottom: number } | null>(
-    null,
-  );
-
-  protected onNameHover(nameEl: HTMLElement, name: string): void {
-    if (nameEl.scrollWidth <= nameEl.clientWidth) {
-      this.nameTooltip.set(null);
-      return;
-    }
-    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
-    const targetRect = nameEl.getBoundingClientRect();
-    const gap = 6;
-    this.nameTooltip.set({
-      text: name,
-      right: hostRect.right - targetRect.right - gap,
-      bottom: hostRect.bottom - targetRect.top + gap,
-    });
-  }
-
-  protected onNameLeave(): void {
-    this.nameTooltip.set(null);
-  }
-
-  /** Tooltip JS des boutons de rail repliés (`.profile-rail`/`.roster-account-rail`, voir
-   * `.profile-rail-collapse-toggle`) — même principe et même raison que `nameTooltip` ci-dessus
-   * (un `[data-tooltip]` classique serait rogné), mais pour deux causes différentes et cumulables
-   * ici : (1) `.profile-rail-scroll` (voir CSS) doit défiler verticalement ET masquer tout
-   * débordement horizontal pour que l'icône de repli reste calée en bas SANS élargir le rail —
-   * un tooltip natif qui s'étend horizontalement depuis un bouton replié (64px de large) se fait
-   * donc rogner par cette même boîte ; (2) même quand le tooltip natif n'est pas rogné (boutons de
-   * repli eux-mêmes, hors de `.profile-rail-scroll`), il reste prisonnier du contexte d'empilement
-   * propre à SON rail (`position: sticky` crée toujours son propre contexte, voir MDN) et ne peut
-   * pas gagner le duel d'empilement face au second rail voisin, qui peint après lui. Rendu tout en
-   * bas du template (`.floating-name-tooltip`, hors de tout rail/`overflow`), ce flottant échappe
-   * aux deux problèmes à la fois. Ancré à GAUCHE (pas à droite comme `nameTooltip`) : ces boutons
-   * sont près du bord gauche de l'écran, le tooltip doit s'étendre vers la droite pour rester
-   * visible. */
-  protected readonly railTooltip = signal<{ text: string; left: number; bottom: number } | null>(
-    null,
-  );
-
-  protected onRailBtnHover(el: HTMLElement, text: string, enabled: boolean): void {
-    if (!enabled) {
-      this.railTooltip.set(null);
-      return;
-    }
-    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
-    const targetRect = el.getBoundingClientRect();
-    const gap = 6;
-    this.railTooltip.set({
-      text,
-      left: targetRect.left - hostRect.left,
-      bottom: hostRect.bottom - targetRect.top + gap,
-    });
-  }
-
-  protected onRailBtnLeave(): void {
-    this.railTooltip.set(null);
   }
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */

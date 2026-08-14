@@ -13,6 +13,7 @@ import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.
 import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { GameServerService } from '../../core/services/game-server.service';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
@@ -29,7 +30,13 @@ import { GameServerService } from '../../core/services/game-server.service';
  */
 @Component({
   selector: 'app-header',
-  imports: [LanguageSwitcherComponent, ThemeSwitchComponent, TranslatePipe, ProfileComponent],
+  imports: [
+    LanguageSwitcherComponent,
+    ThemeSwitchComponent,
+    TranslatePipe,
+    ProfileComponent,
+    TooltipDirective,
+  ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',
 })

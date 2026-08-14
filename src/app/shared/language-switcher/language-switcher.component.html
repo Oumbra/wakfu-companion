@@ -2,10 +2,9 @@
   <button
     class="lang-current"
     [class.lang-current-row]="variant() === 'row'"
-    [class.tooltip-align-right]="variant() === 'header'"
-    [class.tooltip-below]="variant() === 'header'"
     (click)="toggle()"
-    [attr.data-tooltip]="variant() === 'header' ? current().label : null"
+    [appTooltip]="variant() === 'header' ? current().label : null"
+    tooltipPosition="bottom-right"
   >
     <app-flag-icon class="lang-current-glyph" [country]="current().flagCountry" />
     @if (variant() === 'row') {

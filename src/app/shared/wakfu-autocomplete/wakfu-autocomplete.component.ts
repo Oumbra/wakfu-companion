@@ -24,6 +24,7 @@ import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
 
@@ -58,7 +59,7 @@ export interface WakfuAutocompleteOption extends WakfuSearchResult {
  */
 @Component({
   selector: 'app-wakfu-autocomplete',
-  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe],
+  imports: [ItemIconComponent, EntityIconComponent, TranslatePipe, TooltipDirective],
   templateUrl: './wakfu-autocomplete.component.html',
   styleUrl: './wakfu-autocomplete.component.css',
 })

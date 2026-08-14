@@ -33,14 +33,14 @@
             class="entity-row"
             [class.no-toggle]="row.total === 0"
             [class.ko-zero]="row.total === 0 && row.defeated"
-            [class.tooltip-below]="first"
-            [attr.data-tooltip]="
+            [appTooltip]="
               side() === 'enemy'
                 ? !isTracked(row.name)
                   ? ('damageMeter.trackHint' | t)
                   : null
                 : ('damageMeter.classHint' | t)
             "
+            [tooltipPosition]="first ? 'bottom' : 'top'"
             [attr.draggable]="interactive() ? 'true' : null"
             (dragstart)="onDragStart($event, row.name)"
             (click)="toggle(row)"
@@ -54,8 +54,8 @@
             @if (row.defeated) {
               <span
                 class="ko-icon"
-                [class.tooltip-below]="first"
-                [attr.data-tooltip]="'damageMeter.koTitle' | t"
+                [appTooltip]="'damageMeter.koTitle' | t"
+                [tooltipPosition]="first ? 'bottom' : 'top'"
               >
                 <app-ko-icon />
               </span>
@@ -74,8 +74,8 @@
               @for (spell of row.spells; track spell.spell) {
                 <div
                   class="spell-row"
-                  [class.tooltip-below]="first"
-                  [attr.data-tooltip]="fightId() !== null ? ('damageMeter.reassignHint' | t) : null"
+                  [appTooltip]="fightId() !== null ? ('damageMeter.reassignHint' | t) : null"
+                  [tooltipPosition]="first ? 'bottom' : 'top'"
                   (contextmenu)="onSpellContextMenu($event, row, spell)"
                 >
                   <span class="spell-name">{{ spell.spell }}</span>

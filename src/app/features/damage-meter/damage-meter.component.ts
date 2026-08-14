@@ -8,6 +8,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { IconComponent } from '../../shared/icon/icon.component';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /**
  * Combat en cours uniquement — l'historique des combats a été extrait vers
@@ -19,7 +20,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
  */
 @Component({
   selector: 'app-damage-meter',
-  imports: [EntityDamageListComponent, TranslatePipe, IconComponent],
+  imports: [EntityDamageListComponent, TranslatePipe, IconComponent, TooltipDirective],
   templateUrl: './damage-meter.component.html',
   styleUrl: './damage-meter.component.css',
 })
