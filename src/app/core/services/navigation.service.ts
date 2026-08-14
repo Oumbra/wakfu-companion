@@ -4,6 +4,23 @@ export type AppView = 'main' | 'profile' | 'legal' | 'account';
 
 type SlideDirection = 'forward' | 'backward';
 
+/** Chemin de page (sans préfixe de langue) pour une vue donnée — partagé entre `RouteSyncService`
+ * (état → URL) et `SeoService` (canonical/hreflang) pour que les deux restent forcément
+ * synchronisés avec `app.routes.ts` plutôt que de dupliquer ce switch à deux endroits. */
+export function pagePathFor(view: AppView, legalKind: 'notice' | 'privacy' | null): string {
+  switch (view) {
+    case 'profile':
+      return '/profile';
+    case 'account':
+      return '/account';
+    case 'legal':
+      return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
+    case 'main':
+    default:
+      return '';
+  }
+}
+
 /**
  * Vue actuellement affichée et mécanique de navigation avec animation directionnelle : chaque vue
  * (main/profile/legal) est un panneau toujours monté, positionné en absolu et translaté

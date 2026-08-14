@@ -17,6 +17,51 @@ const LOCALE_TAGS: Record<AppLocale, string> = {
 };
 
 /**
+ * Locale à utiliser à défaut d'indication explicite dans l'URL (voir `app.routes.ts`,
+ * `LocaleRouteComponent`) : préférence mémorisée en premier (choix explicite d'une visite
+ * précédente), sinon langue du navigateur si elle fait partie des 4 supportées, sinon français.
+ * Utilisée par les redirections `redirectTo` de `app.routes.ts` (URL sans préfixe de langue : `/`,
+ * `/profile`...) ET par le constructeur ci-dessous en dernier recours (voir `localeFromCurrentUrl`
+ * juste en dessous, prioritaire quand l'URL initiale porte déjà un préfixe de langue) — d'où
+ * l'export en fonction indépendante plutôt qu'une méthode d'instance.
+ */
+export function detectPreferredLocale(persistence: PersistenceService): AppLocale {
+  const stored = persistence.getJson<AppLocale>(LOCALE_KEY);
+  if (stored && SUPPORTED_LOCALES.includes(stored)) {
+    return stored;
+  }
+  const browserLang = (typeof navigator !== 'undefined' ? navigator.language : '').slice(
+    0,
+    2,
+  ) as AppLocale;
+  return SUPPORTED_LOCALES.includes(browserLang) ? browserLang : 'fr';
+}
+
+/**
+ * Lit le préfixe de langue directement dans l'URL du navigateur (`/fr/...`, `/en/...`...),
+ * `null` si absent (URL sans préfixe, sur le point d'être redirigée par `app.routes.ts`) — priorité
+ * la plus haute pour la valeur INITIALE de `I18nService.locale` (voir constructeur ci-dessous) :
+ * sans ça, une préférence mémorisée périmée (ex. "en" stocké lors d'une visite précédente) gagnerait
+ * temporairement contre un lien direct explicite vers `/fr`, le temps que `LocaleRouteComponent`
+ * corrige — fenêtre suffisante pour que `RouteSyncService` (dont l'effect peut s'exécuter avant que
+ * `LocaleRouteComponent` n'ait eu la main, l'un et l'autre étant construits à des moments différents
+ * de l'amorçage du Router) recalcule un chemin depuis cette valeur périmée et détourne la navigation
+ * en cours vers `/en` au lieu de `/fr` — bug réel observé en vérification navigateur avant ce correctif.
+ * Retire le `<base href>` (voir `--base-href` de `deploy-main.yml`, GitHub Pages sous
+ * `/wakfu-companion/`) avant de lire le premier segment.
+ */
+function localeFromCurrentUrl(): AppLocale | null {
+  if (typeof location === 'undefined' || typeof document === 'undefined') return null;
+  const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
+  let path = location.pathname;
+  if (baseHref !== '/' && path.startsWith(baseHref)) {
+    path = path.slice(baseHref.length);
+  }
+  const firstSegment = path.split('/').filter(Boolean)[0] as AppLocale | undefined;
+  return firstSegment && SUPPORTED_LOCALES.includes(firstSegment) ? firstSegment : null;
+}
+
+/**
  * Traduction d'exécution (pas de compilation par locale à la `@angular/localize`) :
  * nécessaire pour permettre à l'utilisateur de changer de langue en un clic,
  * sans recharger l'application.
@@ -28,10 +73,7 @@ export class I18nService {
   readonly locale = signal<AppLocale>('fr');
 
   constructor(private readonly persistence: PersistenceService) {
-    const stored = this.persistence.getJson<AppLocale>(LOCALE_KEY);
-    if (stored && SUPPORTED_LOCALES.includes(stored)) {
-      this.locale.set(stored);
-    }
+    this.locale.set(localeFromCurrentUrl() ?? detectPreferredLocale(persistence));
   }
 
   setLocale(locale: AppLocale): void {

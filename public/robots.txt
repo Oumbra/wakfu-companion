@@ -1,8 +1,8 @@
 # Wakfu Companion — robots.txt
 #
 # Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
-# docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, sitemap.xml, llms.txt) le
-# jour où la prod bascule sur Cloudflare/domaine personnalisé.
+# docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, sitemap.xml, llms.txt,
+# core/services/seo.service.ts) le jour où la prod bascule sur Cloudflare/domaine personnalisé.
 #
 # Politique volontairement permissive : cette application est un outil communautaire gratuit sans
 # contenu utilisateur sensible indexable (le tracker/l'historique ne sont jamais servis en HTML côté

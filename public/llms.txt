@@ -27,10 +27,15 @@ d'Ankama Games.
 
 ## Pages
 
-- [Application](https://oumbra.github.io/wakfu-companion/) : page unique (SPA) donnant accès à
-  l'ensemble des fonctionnalités ci-dessus.
-- [Mentions légales](https://oumbra.github.io/wakfu-companion/legal-notice)
-- [Politique de confidentialité](https://oumbra.github.io/wakfu-companion/privacy-policy)
+Une URL dédiée par langue (`/fr`, `/en`, `/es`, `/pt`) donne accès à l'ensemble des fonctionnalités
+ci-dessus dans la langue correspondante ; l'URL racine redirige vers la langue préférée du visiteur.
+
+- [Application (français)](https://oumbra.github.io/wakfu-companion/fr)
+- [Application (English)](https://oumbra.github.io/wakfu-companion/en)
+- [Application (Español)](https://oumbra.github.io/wakfu-companion/es)
+- [Application (Português)](https://oumbra.github.io/wakfu-companion/pt)
+- [Mentions légales](https://oumbra.github.io/wakfu-companion/fr/legal-notice)
+- [Politique de confidentialité](https://oumbra.github.io/wakfu-companion/fr/privacy-policy)
 - [Dépôt de code source (GitHub)](https://github.com/oumbra/wakfu-companion)
 
 ## Questions fréquentes
