@@ -1,0 +1,59 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+:host([data-variant='centered']) {
+  justify-content: center;
+}
+/* Prend toute la place restante d'une ligne flex (nom de personnage en vue liste, nom de compte) —
+   `min-width: 0` est ce qui permet à `.editable-name-value` de se tronquer au lieu de faire
+   déborder ses voisins (bouton crayon, actions...). */
+:host([data-variant='inline']) {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.editable-name-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+:host([data-variant='centered']) .editable-name-value {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-bright);
+}
+:host([data-variant='inline']) .editable-name-value {
+  flex-grow: 1;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.editable-name-edit-btn {
+  flex-shrink: 0;
+}
+
+.editable-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--text-color);
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-align: center;
+}
+:host([data-variant='inline']) .editable-name-input {
+  text-align: left;
+  font-size: 0.85rem;
+}
+.editable-name-input:focus {
+  outline: none;
+  background: var(--surface-well);
+}

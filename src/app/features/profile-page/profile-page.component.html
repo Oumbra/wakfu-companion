@@ -140,31 +140,14 @@
                       <span class="avatar-preview-question">?</span>
                     }
                   </div>
-                  @if (editingPseudo()) {
-                    <input
-                      #pseudoEditInput
-                      type="text"
-                      class="pseudo-edit-input"
-                      [placeholder]="'profile.pseudoPlaceholder' | t"
-                      [value]="profile.pseudo()"
-                      (blur)="commitPseudo($any($event.target).value)"
-                      (keydown)="onPseudoKeydown($event)"
-                    />
-                  } @else {
-                    <div class="profile-preview-name-row">
-                      <span class="profile-preview-name">{{
-                        profile.pseudo() || ('profile.noPseudo' | t)
-                      }}</span>
-                      <button
-                        class="icon-btn pseudo-edit-btn"
-                        type="button"
-                        [appTooltip]="'profile.editPseudo' | t"
-                        (click)="startEditPseudo()"
-                      >
-                        <app-icon name="edit" [size]="13" />
-                      </button>
-                    </div>
-                  }
+                  <app-editable-name
+                    [value]="profile.pseudo()"
+                    [placeholder]="'profile.pseudoPlaceholder' | t"
+                    [emptyText]="'profile.noPseudo' | t"
+                    [editTooltip]="'profile.editPseudo' | t"
+                    variant="centered"
+                    (renamed)="commitPseudo($event)"
+                  />
                 </div>
 
                 <div class="profile-field identity-right">
@@ -588,12 +571,13 @@
                       @if (!account.isDefault) {
                         <div class="roster-account-header">
                           <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
-                          <input
-                            type="text"
-                            class="roster-account-label-input"
+                          <app-editable-name
                             [value]="account.label"
                             [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                            (change)="renameAccount(account.id, $any($event.target).value)"
+                            [emptyText]="'profile.rosterAccountPlaceholder' | t"
+                            [editTooltip]="'profile.rosterRenameAccount' | t"
+                            variant="inline"
+                            (renamed)="renameAccount(account.id, $event)"
                           />
                           <button
                             class="icon-btn reset-btn"
@@ -613,13 +597,17 @@
                         <div class="field-group-row">
                           @if (!account.isDefault) {
                             <div class="field-group">
-                              <label class="field-label" for="accountLabelInput">Nom de compte</label>
-                              <input
-                                type="text"
-                                class="field-input"
+                              <label class="field-label" [attr.for]="'account-name-' + account.id">{{
+                                'profile.rosterAccountNameLabel' | t
+                              }}</label>
+                              <app-editable-name
+                                [inputId]="'account-name-' + account.id"
                                 [value]="account.label"
                                 [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                                (change)="renameAccount(account.id, $any($event.target).value)"
+                                [emptyText]="'profile.rosterAccountPlaceholder' | t"
+                                [editTooltip]="'profile.rosterRenameAccount' | t"
+                                variant="inline"
+                                (renamed)="renameAccount(account.id, $event)"
                               />
                             </div>
 
@@ -637,12 +625,18 @@
                         </div>
                         <div class="field-group-row">
                           <div class="field-group">
-                            <label class="field-label" for="accountLabelInput">Serveur</label>
+                            <label class="field-label" [attr.for]="'account-server-' + account.id">{{
+                              'profile.rosterAccountServerLabel' | t
+                            }}</label>
                             <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
                           </div>
                         </div>
-                        
-                        <button type="button" class="primary-btn roster-character-add-btn">
+
+                        <button
+                          type="button"
+                          class="primary-btn roster-character-add-btn"
+                          (click)="openAddCharacterModal(account.id)"
+                        >
                           <svg
                               viewBox="0 0 24 24"
                               fill="none"
@@ -654,7 +648,7 @@
                             <line x1="12" y1="5" x2="12" y2="19" />
                             <line x1="5" y1="12" x2="19" y2="12" />
                           </svg>
-                          <span>Ajouter un personnage</span>
+                          <span>{{ 'profile.rosterAddCharacter' | t }}</span>
                         </button>
                         
                         <div class="field-group-row">
@@ -758,44 +752,15 @@
                                     style="width: 100%; height: 100%"
                                   />
                                 </div>
-                                @if (isEditingCharacter(account.id, char.name)) {
-                                  <input
-                                    #charEditInput
-                                    type="text"
-                                    class="pseudo-edit-input"
-                                    [value]="char.name"
-                                    (blur)="
-                                      commitCharacterRename(
-                                        account.id,
-                                        char.name,
-                                        $any($event.target).value
-                                      )
-                                    "
-                                    (keydown)="
-                                      onCharacterRenameKeydown($event, account.id, char.name)
-                                    "
-                                  />
-                                } @else {
-                                  <div class="profile-preview-name-row">
-                                    <span
-                                      class="roster-character-name"
-                                      [appTooltip]="char.name"
-                                      tooltipPosition="top-right"
-                                      [tooltipOnlyIfTruncated]="true"
-                                      >{{ char.name }}</span
-                                    >
-                                    <button
-                                      class="icon-btn pseudo-edit-btn plain-icon-btn"
-                                      type="button"
-                                      draggable="false"
-                                      [appTooltip]="'profile.rosterRenameCharacter' | t"
-                                      (click)="startEditCharacter(account.id, char.name)"
-                                    >
-                                      <app-icon name="edit" [size]="13" />
-                                    </button>
-                                  </div>
-                                  <span class="roster-character-class">{{ char.className }}</span>
-                                }
+                                <app-editable-name
+                                  [value]="char.name"
+                                  [editTooltip]="'profile.rosterRenameCharacter' | t"
+                                  [showValueTooltip]="true"
+                                  [plainEditButton]="true"
+                                  variant="centered"
+                                  (renamed)="renameCharacter(account.id, char.name, $event)"
+                                />
+                                <span class="roster-character-class">{{ char.className }}</span>
                               </div>
                             } @else {
                               <div
@@ -819,43 +784,14 @@
                                     min-width: 0;
                                   "
                                 >
-                                  @if (isEditingCharacter(account.id, char.name)) {
-                                    <input
-                                      #charEditInput
-                                      type="text"
-                                      class="pseudo-edit-input roster-character-edit-input"
-                                      style="flex-grow: 1; text-align: left"
-                                      [value]="char.name"
-                                      (blur)="
-                                        commitCharacterRename(
-                                          account.id,
-                                          char.name,
-                                          $any($event.target).value
-                                        )
-                                      "
-                                      (keydown)="
-                                        onCharacterRenameKeydown($event, account.id, char.name)
-                                      "
-                                    />
-                                  } @else {
-                                    <span
-                                      class="roster-character-name"
-                                      [appTooltip]="char.name"
-                                      tooltipPosition="top-right"
-                                      [tooltipOnlyIfTruncated]="true"
-                                      >{{ char.name }}</span
-                                    >
-                                  }
+                                  <app-editable-name
+                                    [value]="char.name"
+                                    [editTooltip]="'profile.rosterRenameCharacter' | t"
+                                    [showValueTooltip]="true"
+                                    variant="inline"
+                                    (renamed)="renameCharacter(account.id, char.name, $event)"
+                                  />
                                   <div class="roster-character-actions">
-                                    <button
-                                      class="icon-btn pseudo-edit-btn"
-                                      type="button"
-                                      draggable="false"
-                                      [appTooltip]="'profile.rosterRenameCharacter' | t"
-                                      (click)="startEditCharacter(account.id, char.name)"
-                                    >
-                                      <app-icon name="edit" [size]="13" />
-                                    </button>
                                     <button
                                       class="icon-btn reset-btn"
                                       type="button"
