@@ -13,6 +13,7 @@ import {
 import { HelpModalService, HelpSection } from '../../core/services/help-modal.service';
 import { TabSheetService } from '../../core/services/tab-sheet.service';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export interface TabBarItem {
   id: string;
@@ -50,7 +51,7 @@ export interface TabBarItem {
  */
 @Component({
   selector: 'app-tab-bar',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './tab-bar.component.html',
   styleUrl: './tab-bar.component.css',
 })

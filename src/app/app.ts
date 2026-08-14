@@ -32,6 +32,7 @@ import { TabSheetComponent } from './shared/tab-sheet/tab-sheet.component';
 import { AuthService } from './core/auth/auth.service';
 import { GameServerService } from './core/services/game-server.service';
 import { Gender } from './core/data/class-icons.data';
+import { TooltipComponent } from './shared/tooltip/tooltip.component';
 
 @Component({
   selector: 'app-root',
@@ -53,6 +54,7 @@ import { Gender } from './core/data/class-icons.data';
     AppPageComponent,
     AccountPageComponent,
     TabSheetComponent,
+    TooltipComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

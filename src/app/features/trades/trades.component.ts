@@ -10,6 +10,7 @@ import { HistoryListHeaderComponent } from '../../shared/history-list-header/his
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 type TradeSortOrder = 'desc' | 'asc';
 
@@ -36,6 +37,7 @@ interface TradeDateGroup {
     ItemIconComponent,
     HistoryListHeaderComponent,
     IconComponent,
+    TooltipDirective,
   ],
   templateUrl: './trades.component.html',
   styleUrl: './trades.component.css',

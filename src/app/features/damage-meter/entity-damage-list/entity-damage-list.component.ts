@@ -17,6 +17,7 @@ import { TranslatePipe } from '../../../shared/translate.pipe';
 import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { DamageReassignService } from '../../../core/services/damage-reassign.service';
 import { DamageElement } from '../../../core/models/log-entry.model';
+import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import {
   HEADER_ICON_ALLIES_DATA_URI,
   HEADER_ICON_ENEMIES_DATA_URI,
@@ -40,7 +41,14 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
  */
 @Component({
   selector: 'app-entity-damage-list',
-  imports: [NumberFrPipe, KeyValuePipe, EntityIconComponent, KoIconComponent, TranslatePipe],
+  imports: [
+    NumberFrPipe,
+    KeyValuePipe,
+    EntityIconComponent,
+    KoIconComponent,
+    TranslatePipe,
+    TooltipDirective,
+  ],
   templateUrl: './entity-damage-list.component.html',
   styleUrl: './entity-damage-list.component.css',
 })

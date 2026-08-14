@@ -37,18 +37,18 @@
               }
             </span>
             <span
-              class="wakfu-autocomplete-item-name tooltip-align-left"
-              [class.tooltip-below]="i === 0"
-              [attr.data-tooltip]="r.label"
+              class="wakfu-autocomplete-item-name"
+              [appTooltip]="r.label"
+              [tooltipPosition]="i === 0 ? 'bottom-left' : 'top-left'"
               >{{ r.label }}</span
             >
           </button>
           @if (showRecipeButton() && r.kind === 'item' && r.hasRecipe) {
             <button
               type="button"
-              class="wakfu-autocomplete-recipe-btn tooltip-align-right"
-              [class.tooltip-below]="i === 0"
-              [attr.data-tooltip]="'tracker.recipeTooltip' | t"
+              class="wakfu-autocomplete-recipe-btn"
+              [appTooltip]="'tracker.recipeTooltip' | t"
+              [tooltipPosition]="i === 0 ? 'bottom-right' : 'top-right'"
               [disabled]="recipeLoading()"
               (click)="openRecipe($event, r)"
             >

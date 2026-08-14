@@ -8,6 +8,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 import type { HistoryEventKind } from '../../core/sync/history-event.model';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 type HistoryTab = 'combats' | 'purchases' | 'trades';
 
@@ -34,6 +35,7 @@ const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
     TradesComponent,
     TranslatePipe,
     IconComponent,
+    TooltipDirective,
   ],
   templateUrl: './history.component.html',
   styleUrl: './history.component.css',

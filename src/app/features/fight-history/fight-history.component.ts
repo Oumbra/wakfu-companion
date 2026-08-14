@@ -25,6 +25,7 @@ import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service'
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -55,6 +56,7 @@ interface FightGroup {
     LootListComponent,
     IconComponent,
     NgTemplateOutlet,
+    TooltipDirective,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',

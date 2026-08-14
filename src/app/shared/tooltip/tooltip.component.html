@@ -1,0 +1,13 @@
+@if (request(); as req) {
+  <div
+    class="app-tooltip"
+    [id]="req.id"
+    role="tooltip"
+    [class.app-tooltip-multiline]="req.multiline"
+    [style.left.px]="style()!.left"
+    [style.top.px]="style()!.top"
+    [style.transform]="style()!.transform"
+  >
+    {{ req.text }}
+  </div>
+}

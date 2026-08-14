@@ -2,10 +2,11 @@
   @if (title(); as pageTitle) {
     <header class="app-page-header">
       <button
-        class="back-btn tooltip-align-left tooltip-below"
+        class="back-btn"
         type="button"
         (click)="back.emit()"
-        [attr.data-tooltip]="'profile.back' | t"
+        [appTooltip]="'profile.back' | t"
+        tooltipPosition="bottom-left"
       >
         <app-icon name="chevron-left" [strokeWidth]="2" [size]="18" />
         <span>{{ 'profile.back' | t }}</span>

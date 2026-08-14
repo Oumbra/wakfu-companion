@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export type HistoryListSortOrder = 'desc' | 'asc';
 
@@ -12,7 +13,7 @@ export type HistoryListSortOrder = 'desc' | 'asc';
  */
 @Component({
   selector: 'app-history-list-header',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './history-list-header.component.html',
   styleUrl: './history-list-header.component.css',
 })

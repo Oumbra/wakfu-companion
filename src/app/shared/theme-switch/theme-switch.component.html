@@ -5,9 +5,9 @@
       type="button"
       class="icon-switch-option theme-switch-option"
       [class.selected]="theme.theme() === 'dark'"
-      [class.tooltip-below]="variant() === 'header'"
       [disabled]="theme.theme() === 'dark'"
-      [attr.data-tooltip]="variant() === 'header' ? ('app.themeDark' | t) : null"
+      [appTooltip]="variant() === 'header' ? ('app.themeDark' | t) : null"
+      tooltipPosition="bottom"
       (click)="theme.setTheme('dark')"
     >
       <img [src]="darkIcon" alt="" referrerpolicy="no-referrer" draggable="false" />
@@ -16,9 +16,9 @@
       type="button"
       class="icon-switch-option theme-switch-option"
       [class.selected]="theme.theme() === 'light'"
-      [class.tooltip-below]="variant() === 'header'"
       [disabled]="theme.theme() === 'light'"
-      [attr.data-tooltip]="variant() === 'header' ? ('app.themeLight' | t) : null"
+      [appTooltip]="variant() === 'header' ? ('app.themeLight' | t) : null"
+      tooltipPosition="bottom"
       (click)="theme.setTheme('light')"
     >
       <img [src]="lightIcon" alt="" referrerpolicy="no-referrer" draggable="false" />

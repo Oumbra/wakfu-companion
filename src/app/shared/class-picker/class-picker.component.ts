@@ -15,6 +15,7 @@ import {
   Gender,
 } from '../../core/data/class-icons.data';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export interface ClassPickerPosition {
   name: string;
@@ -50,7 +51,7 @@ function buildOptions(gender: Gender): ClassOption[] {
  */
 @Component({
   selector: 'app-class-picker',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './class-picker.component.html',
   styleUrl: './class-picker.component.css',
 })

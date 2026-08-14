@@ -19,6 +19,7 @@ import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /**
  * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
@@ -27,7 +28,7 @@ import { CatalogService } from '../../core/api/catalog.service';
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, LootListComponent],
+  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, LootListComponent, TooltipDirective],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })

@@ -6,6 +6,7 @@ import { I18nService } from '../../../core/services/i18n.service';
 import { NavigationService } from '../../../core/services/navigation.service';
 import { AppPageComponent } from '../../../shared/app-page/app-page.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
+import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
  * Page compte (lot 5, prompt 5.2) : identité, fournisseurs liés, sessions
@@ -22,7 +23,7 @@ import { TranslatePipe } from '../../../shared/translate.pipe';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [AppPageComponent, TranslatePipe],
+  imports: [AppPageComponent, TranslatePipe, TooltipDirective],
   templateUrl: './account-page.component.html',
   styleUrl: './account-page.component.css',
 })

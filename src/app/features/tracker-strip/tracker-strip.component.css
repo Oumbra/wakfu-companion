@@ -519,25 +519,3 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
 }
-
-/* Tooltip du nom tronqué — positionné en JS (voir `nameTooltip`/
-   `hostRelativePos`) : reprend le style visuel du système de tooltip
-   générique (styles.css) sans pouvoir en réutiliser le mécanisme CSS pur
-   (`[title]::after`), rogné ici par `.kpi-strip`. La popover de suppression
-   elle-même n'est plus locale : voir ConfirmDeleteService/
-   ConfirmDeletePopoverComponent (mutualisée avec le profil). */
-/* Toujours sombre, dans les deux thèmes (comme .confirm-delete-popover et
-   .floating-name-tooltip/styles.css) — convention "tooltip toujours foncé"
-   du système de tooltip générique, gardée volontairement hors palette. */
-.kpi-name-tooltip {
-  position: absolute;
-  background: #000;
-  color: #fff;
-  font-size: 0.72rem;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #333;
-  white-space: nowrap;
-  pointer-events: none;
-  z-index: 6;
-}

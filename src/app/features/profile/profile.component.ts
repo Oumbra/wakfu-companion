@@ -3,11 +3,12 @@ import { ProfileService } from '../../core/services/profile.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /** Bouton profil (haut à droite) : avatar choisi ou "?" par défaut, ouvre la page profil (voir ProfilePageComponent). */
 @Component({
   selector: 'app-profile',
-  imports: [AvatarIconComponent, TranslatePipe],
+  imports: [AvatarIconComponent, TranslatePipe, TooltipDirective],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css',
 })

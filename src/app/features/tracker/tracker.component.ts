@@ -11,6 +11,7 @@ import { ConfirmDeleteService } from '../../core/services/confirm-delete.service
 import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -32,6 +33,7 @@ import { CatalogService } from '../../core/api/catalog.service';
     TranslatePipe,
     WakfuAutocompleteComponent,
     IconComponent,
+    TooltipDirective,
   ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',

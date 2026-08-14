@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Modale d'aide générique (règles/contraintes/bénéfices d'une section) — rendue une seule fois au
@@ -11,7 +12,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-help-modal',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './help-modal.component.html',
   styleUrl: './help-modal.component.css',
 })

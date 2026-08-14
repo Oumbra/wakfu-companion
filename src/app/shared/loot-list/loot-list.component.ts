@@ -6,6 +6,7 @@ import { CatalogService } from '../../core/api/catalog.service';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { NumberFrPipe } from '../number-fr.pipe';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Liste de lignes de butin, mutualisée entre FightHistoryComponent (section butin d'un combat,
@@ -18,7 +19,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-loot-list',
-  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe],
+  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe, TooltipDirective],
   templateUrl: './loot-list.component.html',
   styleUrl: './loot-list.component.css',
 })

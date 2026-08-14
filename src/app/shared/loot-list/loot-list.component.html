@@ -12,8 +12,8 @@
       <div
         class="loot-row"
         [class]="rarityClass(item.name)"
-        [class.tooltip-below]="first"
-        [attr.data-tooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+        [appTooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+        [tooltipPosition]="first ? 'bottom' : 'top'"
         (contextmenu)="onContextMenu($event, item.name)"
       >
         <app-item-icon [name]="item.name" />

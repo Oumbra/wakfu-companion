@@ -2,6 +2,7 @@ import { Component, input, output } from '@angular/core';
 import { AppFooterComponent } from '../app-footer/app-footer.component';
 import { TranslatePipe } from '../translate.pipe';
 import { IconComponent } from '../icon/icon.component';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Shell générique pour le contenu de toute page — page principale (dashboard/setup), profil,
@@ -30,7 +31,7 @@ import { IconComponent } from '../icon/icon.component';
  */
 @Component({
   selector: 'app-page',
-  imports: [AppFooterComponent, TranslatePipe, IconComponent],
+  imports: [AppFooterComponent, TranslatePipe, IconComponent, TooltipDirective],
   templateUrl: './app-page.component.html',
   styleUrl: './app-page.component.css',
 })

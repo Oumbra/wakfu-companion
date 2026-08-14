@@ -2,6 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { FlagCountry, FlagIconComponent } from '../flag-icon/flag-icon.component';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 interface LocaleOption {
   code: AppLocale;
@@ -19,7 +20,7 @@ const LOCALES: readonly LocaleOption[] = [
 /** Drapeau de langue courante ; clic pour choisir une autre langue parmi celles proposées. */
 @Component({
   selector: 'app-language-switcher',
-  imports: [FlagIconComponent, TranslatePipe],
+  imports: [FlagIconComponent, TranslatePipe, TooltipDirective],
   templateUrl: './language-switcher.component.html',
   styleUrl: './language-switcher.component.css',
 })

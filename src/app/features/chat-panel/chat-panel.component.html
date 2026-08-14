@@ -5,8 +5,9 @@
     </span>
     <button
       type="button"
-      class="icon-btn help-icon-btn tooltip-below tooltip-align-right"
-      [attr.data-tooltip]="'help.tooltip' | t"
+      class="icon-btn help-icon-btn"
+      [appTooltip]="'help.tooltip' | t"
+      tooltipPosition="bottom-right"
       (click)="helpModal.open('chat')"
     >
       ?
@@ -61,12 +62,12 @@
             <span
               class="filter-chip"
               [style.--ch]="filterChannelColorVar(filter.channel)"
-              [attr.data-tooltip]="filterChannelLabelKey(filter.channel) | t"
+              [appTooltip]="filterChannelLabelKey(filter.channel) | t"
             >
               {{ filter.text }}
               <button
                 class="icon-btn reset-btn chip-remove-btn"
-                [attr.data-tooltip]="'tracker.remove' | t"
+                [appTooltip]="'tracker.remove' | t"
                 (click)="removeFilter(filter)"
               >
                 ×

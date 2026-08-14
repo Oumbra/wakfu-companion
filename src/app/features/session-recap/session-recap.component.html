@@ -32,8 +32,8 @@
             @for (row of stats.xpByCharacter(); track row.name; let first = $first) {
               <div
                 class="xp-row"
-                [class.tooltip-below]="first"
-                [attr.data-tooltip]="'damageMeter.classHint' | t"
+                [appTooltip]="'damageMeter.classHint' | t"
+                [tooltipPosition]="first ? 'bottom' : 'top'"
                 (contextmenu)="onXpNameContextMenu($event, row.name)"
               >
                 <app-entity-icon [name]="row.name" side="ally" />
@@ -134,7 +134,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'name'"
-                        [attr.data-tooltip]="'damageMeter.sortName' | t"
+                        [appTooltip]="'damageMeter.sortName' | t"
                         (click)="setLootSort('name')"
                       >
                         Az
@@ -143,7 +143,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'quantity'"
-                        [attr.data-tooltip]="'damageMeter.sortQuantity' | t"
+                        [appTooltip]="'damageMeter.sortQuantity' | t"
                         (click)="setLootSort('quantity')"
                       >
                         Nb
@@ -152,7 +152,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'rarity'"
-                        [attr.data-tooltip]="'damageMeter.sortRarity' | t"
+                        [appTooltip]="'damageMeter.sortRarity' | t"
                         (click)="setLootSort('rarity')"
                       >
                         <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />

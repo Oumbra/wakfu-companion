@@ -24,9 +24,9 @@
             <div class="trade-entry">
               <div class="trade-header">
                 <span
-                  class="trade-clock tooltip-align-left"
-                  [class.tooltip-below]="firstGroup && firstRecord"
-                  [attr.data-tooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+                  class="trade-clock"
+                  [appTooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+                  [tooltipPosition]="firstGroup && firstRecord ? 'bottom-left' : 'top-left'"
                 >
                   <app-icon name="clock-long" [strokeWidth]="1.8" [size]="15" />
                 </span>

@@ -19,6 +19,7 @@ import { EntityDamageRow } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 import {
   HEADER_ICON_ALLIES_DATA_URI,
   HEADER_ICON_ENEMIES_DATA_URI,
@@ -32,7 +33,7 @@ import {
  */
 @Component({
   selector: 'app-damage-reassign-picker',
-  imports: [EntityIconComponent, TranslatePipe],
+  imports: [EntityIconComponent, TranslatePipe, TooltipDirective],
   templateUrl: './damage-reassign-picker.component.html',
   styleUrl: './damage-reassign-picker.component.css',
 })

@@ -109,9 +109,10 @@
         <div class="panel-header">
           {{ 'auth.account.sessions' | t }}
           <button
-            class="icon-btn tooltip-align-right"
+            class="icon-btn"
             type="button"
-            [attr.data-tooltip]="'auth.account.refresh' | t"
+            [appTooltip]="'auth.account.refresh' | t"
+            tooltipPosition="top-right"
             (click)="refreshSessions()"
           >
             <span class="icon-btn-text">↻</span>
@@ -139,9 +140,9 @@
                   </div>
                   <button
                     class="icon-btn reset-btn"
-                    [class.tooltip-below]="i === 0"
                     type="button"
-                    [attr.data-tooltip]="'auth.account.revoke' | t"
+                    [appTooltip]="'auth.account.revoke' | t"
+                    [tooltipPosition]="i === 0 ? 'bottom' : 'top'"
                     [disabled]="auth.busy()"
                     (click)="revokeSession(session)"
                   >

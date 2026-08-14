@@ -17,7 +17,7 @@
         type="button"
         class="icon-switch-option side-switch-option"
         [class.selected]="side() === 'ally'"
-        [attr.data-tooltip]="'damageMeter.allies' | t"
+        [appTooltip]="'damageMeter.allies' | t"
         (click)="setSide('ally')"
       >
         <img [src]="alliesIcon" alt="" class="side-switch-icon" />
@@ -26,7 +26,7 @@
         type="button"
         class="icon-switch-option side-switch-option"
         [class.selected]="side() === 'enemy'"
-        [attr.data-tooltip]="'damageMeter.enemies' | t"
+        [appTooltip]="'damageMeter.enemies' | t"
         (click)="setSide('enemy')"
       >
         <img [src]="enemiesIcon" alt="" class="side-switch-icon" />

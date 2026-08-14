@@ -17,7 +17,7 @@
         type="button"
         class="icon-switch-option gender-switch-option"
         [class.selected]="gender() === 'm'"
-        [attr.data-tooltip]="'classPicker.showMale' | t"
+        [appTooltip]="'classPicker.showMale' | t"
         (click)="setGender('m')"
       >
         ♂
@@ -26,7 +26,7 @@
         type="button"
         class="icon-switch-option gender-switch-option"
         [class.selected]="gender() === 'f'"
-        [attr.data-tooltip]="'classPicker.showFemale' | t"
+        [appTooltip]="'classPicker.showFemale' | t"
         (click)="setGender('f')"
       >
         ♀
@@ -37,7 +37,7 @@
     @for (option of classOptions(); track option.key) {
       <button
         class="class-picker-item"
-        [attr.data-tooltip]="option.label"
+        [appTooltip]="option.label"
         (click)="choose(option.key)"
       >
         <img [src]="option.icon" alt="" />

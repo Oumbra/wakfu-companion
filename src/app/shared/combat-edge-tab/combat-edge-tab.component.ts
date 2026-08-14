@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { TranslatePipe } from '../translate.pipe';
 import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 /**
  * Petit onglet collé au bord gauche de l'écran, visible quand le panneau
@@ -14,7 +15,7 @@ import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
  */
 @Component({
   selector: 'app-combat-edge-tab',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './combat-edge-tab.component.html',
   styleUrl: './combat-edge-tab.component.css',
 })
