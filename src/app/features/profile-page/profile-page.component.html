@@ -39,56 +39,92 @@
            `tabDefs`/`activeTab()`/`selectTab()`, déjà la source de vérité pour la barre
            d'onglets mobile ci-dessus — seul l'habillage change, pas le mécanisme. Masqué
            sous 800px (voir media query CSS) : le mobile garde `app-tab-bar` tel quel. -->
-      <nav class="profile-rail">
-        @for (tab of tabDefs; track tab.id) {
-          <button
-            type="button"
-            class="profile-rail-btn"
-            [class.active]="activeTab() === tab.id"
-            (click)="selectTab(tab.id)"
-          >
-            <span class="profile-rail-icon">
-              @switch (tab.id) {
-                @case ('avatar') {
-                  ◐
+      <nav class="profile-rail" [class.is-collapsed]="isNavRailCollapsed()">
+        <!-- `.profile-rail-scroll` (flex:1, seule zone qui défile) sépare la liste des onglets de
+             l'icône de repli ci-dessous : celle-ci reste TOUJOURS accessible en bas du rail même si
+             la liste venait à déborder, sans avoir besoin d'un vrai `position: fixed` (qui exigerait
+             de recalculer sa position en JS pour suivre le rail, voir la remarque sur
+             `.roster-account-rail` plus bas — inutile ici tant que ce wrapper existe). -->
+        <div class="profile-rail-scroll">
+          @for (tab of tabDefs; track tab.id) {
+            <button
+              #railBtn
+              type="button"
+              class="profile-rail-btn"
+              [class.active]="activeTab() === tab.id"
+              (click)="selectTab(tab.id)"
+              (mouseenter)="onRailBtnHover(railBtn, railButtonLabel(tab.id), isNavRailCollapsed())"
+              (mouseleave)="onRailBtnLeave()"
+            >
+              <span class="profile-rail-icon">
+                @switch (tab.id) {
+                  @case ('avatar') {
+                    ◐
+                  }
+                  @case ('colorblind') {
+                    ◎
+                  }
+                  @case ('connection') {
+                    ⇄
+                  }
+                  @case ('alerts') {
+                    ♪
+                  }
+                  @case ('characters') {
+                    ☰
+                  }
                 }
-                @case ('colorblind') {
-                  ◎
+              </span>
+              <span class="profile-rail-label">
+                <!-- Libellés rail plus explicites que les onglets mobile (voir CLAUDE.md) : rail
+                     seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
+                @switch (tab.id) {
+                  @case ('avatar') {
+                    {{ 'profile.railIdentity' | t }}
+                  }
+                  @case ('colorblind') {
+                    {{ 'profile.railAccessibility' | t }}
+                  }
+                  @case ('alerts') {
+                    {{ 'profile.railSoundAlerts' | t }}
+                  }
+                  @default {
+                    {{ tab.label | t }}
+                  }
                 }
-                @case ('connection') {
-                  ⇄
-                }
-                @case ('alerts') {
-                  ♪
-                }
-                @case ('characters') {
-                  ☰
-                }
+              </span>
+              @if (tab.id === 'characters') {
+                <span class="profile-rail-count">{{ totalCharacterCount() }}</span>
               }
-            </span>
-            <span class="profile-rail-label">
-              <!-- Libellés rail plus explicites que les onglets mobile (voir CLAUDE.md) : rail
-                   seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
-              @switch (tab.id) {
-                @case ('avatar') {
-                  {{ 'profile.railIdentity' | t }}
-                }
-                @case ('colorblind') {
-                  {{ 'profile.railAccessibility' | t }}
-                }
-                @case ('alerts') {
-                  {{ 'profile.railSoundAlerts' | t }}
-                }
-                @default {
-                  {{ tab.label | t }}
-                }
-              }
-            </span>
-            @if (tab.id === 'characters') {
-              <span class="profile-rail-count">{{ totalCharacterCount() }}</span>
-            }
-          </button>
-        }
+            </button>
+          }
+        </div>
+        <button
+          #railToggleBtn
+          type="button"
+          class="profile-rail-collapse-toggle"
+          (click)="toggleNavRailCollapsed()"
+          (mouseenter)="
+            onRailBtnHover(
+              railToggleBtn,
+              i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse'),
+              isNavRailCollapsed()
+            )
+          "
+          (mouseleave)="onRailBtnLeave()"
+        >
+          <!-- `[class.is-collapsed]` sur ce `<span>` wrapper, PAS directement sur `<app-icon>` :
+               `IconComponent` a `:host{display:contents}` (voir icon.component.ts), qui empêche
+               `transform` de s'appliquer sur l'hôte lui-même (aucune boîte propre à transformer) —
+               et l'encapsulation de vue Angular empêche de toute façon d'atteindre le `<svg>` interne
+               depuis ce template (voir CLAUDE.md, icônes SVG génériques). -->
+          <span class="profile-rail-collapse-icon" [class.is-collapsed]="isNavRailCollapsed()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" fill="none" viewBox="0 0 16 17" role="img" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z" clip-rule="evenodd"></path></svg>
+          </span>
+          <span class="desktop-only" [style.display]="isNavRailCollapsed() ? 'none !important' : 'flex !important'">
+            {{ 'profile.railCollapse' | t }}
+          </span>
+        </button>
       </nav>
 
       <div class="panels-row">
@@ -424,40 +460,93 @@
           </div>
         </div>
 
-        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
+        <div class="tool-panel roster-tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
           <div class="panel-body roster-panel-body">
-            <nav class="profile-rail roster-account-rail">
-              @for (account of roster.accounts(); track account.id; let i = $index) {
+            <!-- `.profile-rail-collapse-toggle` reste un enfant en FLUX de ce rail (via
+                 `.profile-rail-scroll`, pas de `position: fixed`) plutôt que fixé au viewport :
+                 contrairement au rail principal, ce rail change lui-même de position (`absolute` en
+                 grand écran / `sticky` repositionné en flux sous ~1430px, voir `@container
+                 roster-panel` plus bas) ET dépend de la largeur du rail principal voisin (repliable
+                 lui aussi) — un `position: fixed` daterait un `left` à recalculer en JS à chaque
+                 changement de l'un ou l'autre. En restant en flux, l'icône suit la position du rail
+                 quelle qu'elle soit, sans aucun calcul. -->
+            <nav class="profile-rail roster-account-rail" [class.is-collapsed]="isRosterRailCollapsed()">
+              <div class="profile-rail-scroll">
+                @for (account of roster.accounts(); track account.id; let i = $index) {
+                  <button
+                    #railBtn
+                    type="button"
+                    class="profile-rail-btn roster-account-rail-btn"
+                    [class.active]="selectedAccountId() === account.id"
+                    (click)="selectAccount(account.id)"
+                    (mouseenter)="onRailBtnHover(railBtn, tabLabel(account, i), isRosterRailCollapsed())"
+                    (mouseleave)="onRailBtnLeave()"
+                  >
+                    @if (isRosterRailCollapsed()) {
+                      <!-- Ces boutons de compte n'ont pas de `.profile-rail-icon` (juste un libellé
+                           texte, contrairement au rail principal) : repliés, un badge numéroté en tient
+                           lieu plutôt que de laisser le bouton vide. -->
+                      <span class="profile-rail-index-badge">{{ i + 1 }}</span>
+                    }
+                    <span class="profile-rail-label">
+                      {{ tabLabel(account, i) }}
+                    </span>
+                    @if (account.gameServer){
+                      <span class="profile-rail-desc">{{ account.gameServer }}</span>
+                    }
+                    <span class="profile-rail-count">{{ account.characters.length }}</span>
+                  </button>
+                }
                 <button
+                  #railAddBtn
                   type="button"
-                  class="profile-rail-btn roster-account-rail-btn"
-                  [class.active]="selectedAccountId() === account.id"
-                  (click)="selectAccount(account.id)"
+                  class="profile-rail-btn roster-account-rail-add"
+                  (click)="addAccount()"
+                  (mouseenter)="
+                    onRailBtnHover(
+                      railAddBtn,
+                      i18n.t('profile.rosterAddAccount'),
+                      isRosterRailCollapsed()
+                    )
+                  "
+                  (mouseleave)="onRailBtnLeave()"
                 >
-                  <span class="profile-rail-label">
-                    {{ tabLabel(account, i) }}
+                  <span class="profile-rail-icon">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
                   </span>
-                  @if (account.gameServer){
-                    <span class="profile-rail-desc">{{ account.gameServer }}</span>
-                  }
-                  <span class="profile-rail-count">{{ account.characters.length }}</span>
+                  <span class="profile-rail-label">{{ 'profile.rosterAddAccount' | t }}</span>
                 </button>
-              }
-              <button type="button" class="profile-rail-btn roster-account-rail-add" (click)="addAccount()">
-                <span class="profile-rail-icon">
-                  <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+              </div>
+              <button
+                #railToggleBtn
+                type="button"
+                class="profile-rail-collapse-toggle"
+                (click)="toggleRosterRailCollapsed()"
+                (mouseenter)="
+                  onRailBtnHover(
+                    railToggleBtn,
+                    i18n.t(isRosterRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse'),
+                    isRosterRailCollapsed()
+                  )
+                "
+                (mouseleave)="onRailBtnLeave()"
+              >
+                <span class="profile-rail-collapse-icon" [class.is-collapsed]="isRosterRailCollapsed()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" fill="none" viewBox="0 0 16 17" role="img" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z" clip-rule="evenodd"></path></svg>
                 </span>
-                <span class="profile-rail-label">{{ 'profile.rosterAddAccount' | t }}</span>
+                <span class="desktop-only" [style.display]="isRosterRailCollapsed() ? 'none !important' : 'flex !important'">
+                  {{ 'profile.railCollapse' | t }}
+                </span>
               </button>
             </nav>
 
@@ -508,6 +597,24 @@
 
                 @if (selectedAccount(); as account) {
                   <div class="roster-account-panel">
+                    <div class="roster-account-header desktop-only">
+                      <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
+                      <input
+                        type="text"
+                        class="roster-account-label-input"
+                        [value]="account.label"
+                        [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                        (change)="renameAccount(account.id, $any($event.target).value)"
+                      />
+                      <button
+                        class="icon-btn reset-btn tooltip-align-right"
+                        type="button"
+                        [attr.data-tooltip]="'profile.rosterRemoveAccount' | t"
+                        (click)="removeAccount(account.id)"
+                      >
+                        ×
+                      </button>
+                    </div>
                     @if (!account.isDefault) {
                       <div class="roster-account-header mobile-only">
                         <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
@@ -533,8 +640,7 @@
                     @if (account.characters.length > 0) {
                       <div class="roster-view-row">
                         <div class="roster-view-header">
-                          <!-- TODO : n'afficher qu'en mode mobile ! -->
-                          @if (account.isDefault) {
+                          @if (account.isDefault && isMobile.matches()) {
                             <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
                           }
                           <span class="roster-character-count">{{
@@ -592,12 +698,12 @@
 
                       <div
                         class="roster-character-scroll"
-                        [class.is-grid]="profile.characterViewMode() === 'grid'"
+                        [class.is-grid]="effectiveCharacterViewMode() === 'grid'"
                         [ngClass]="{ 'roster-account-default': account.isDefault }"
                       >
                         <div #charGrid class="roster-character-list">
                           @for (char of account.characters; track char.name; let i = $index) {
-                            @if (profile.characterViewMode() === 'grid') {
+                            @if (effectiveCharacterViewMode() === 'grid') {
                               <div
                                 class="roster-character-tile"
                                 draggable="true"
@@ -605,14 +711,9 @@
                                 (dragover)="$event.preventDefault()"
                                 (drop)="onCharDrop(account.id, i)"
                               >
-                                <!--  
-                                  TODO
-                                  Avoir un signal pour savoir si on est sur mobile ou pas
-                                  [class.tooltip-below]="i < charGridColumns.columns() && isMobile()"
-                                -->
                                 <button
                                   class="icon-btn reset-btn badge-close-btn tooltip-align-right"
-                                  [class.tooltip-below]="i < charGridColumns.columns()"
+                                  [class.tooltip-below]="i < charGridColumns.columns() && isMobile.matches()"
                                   type="button"
                                   draggable="false"
                                   [attr.data-tooltip]="'profile.rosterRemoveCharacter' | t"
@@ -764,11 +865,6 @@
                 }
               </div>
             </div>
-<!--             
-            <div class="roster-layout">
-
-            </div>
--->
           </div>
         </div>
       </div>
@@ -778,6 +874,12 @@
 
 @if (nameTooltip(); as tip) {
   <div class="floating-name-tooltip" [style.right.px]="tip.right" [style.bottom.px]="tip.bottom">
+    {{ tip.text }}
+  </div>
+}
+
+@if (railTooltip(); as tip) {
+  <div class="floating-name-tooltip" [style.left.px]="tip.left" [style.bottom.px]="tip.bottom">
     {{ tip.text }}
   </div>
 }

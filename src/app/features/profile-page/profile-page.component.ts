@@ -9,7 +9,8 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
-import { ProfileService } from '../../core/services/profile.service';
+import { CharacterViewMode, ProfileService } from '../../core/services/profile.service';
+import { PersistenceService } from '../../core/services/persistence.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
@@ -42,6 +43,7 @@ import {
 } from './character-add-form/character-add-form.component';
 import { AppPageComponent } from '../../shared/app-page/app-page.component';
 import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
+import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
@@ -110,6 +112,12 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly alertSound = inject(AlertSoundService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
+  private readonly persistence = inject(PersistenceService);
+
+  /** Seuil mobile réactif (même 800px que `.mobile-only`/`@media` un peu partout côté CSS) — sert
+   * uniquement là où le template a besoin de brancher sur ce seuil en JS, pas juste d'un
+   * `display:none/flex` pur CSS (voir `effectiveCharacterViewMode` ci-dessous). */
+  protected readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
 
   protected readonly avatarIndexes = Array.from(
     { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
@@ -157,6 +165,15 @@ export class ProfilePageComponent implements OnDestroy {
     this.roster.accounts().reduce((sum, account) => sum + account.characters.length, 0),
   );
 
+  /** Vue de `.roster-character-list` réellement affichée : `profile.characterViewMode()` (voir
+   * ProfileService) reste la préférence mémorisée/synchronisée, modifiable seulement depuis le
+   * switch mobile (`.icon-switch.mobile-only`) — mais le desktop l'ignore et affiche TOUJOURS la
+   * grille, quel que soit le dernier choix fait sur mobile. En repassant en mobile, c'est bien ce
+   * dernier choix qui reprend la main (pas de valeur distincte stockée pour le mode desktop). */
+  protected readonly effectiveCharacterViewMode = computed<CharacterViewMode>(() =>
+    this.isMobile.matches() ? this.profile.characterViewMode() : 'grid',
+  );
+
   private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
   protected readonly editingPseudo = signal(false);
 
@@ -180,6 +197,21 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
 
   protected readonly activeTab = signal<ProfileTab>('avatar');
+
+  /** Repli desktop des 2 rails de navigation (`.profile-rail` principal ET `.roster-account-rail`,
+   * voir icône `.profile-rail-collapse-toggle` en bas de chacun) — préférence purement locale
+   * (device courant), pas un des 6 domaines synchronisés (voir CLAUDE.md) : même mécanisme que
+   * `CombatPanelService.collapsed` (PersistenceService direct, pas ProfileService/UserDataService).
+   * Deux clés indépendantes : rien n'oblige les deux rails à être repliés ensemble. */
+  private static readonly NAV_RAIL_COLLAPSED_KEY = 'wakfu-profile-nav-rail-collapsed';
+  private static readonly ROSTER_RAIL_COLLAPSED_KEY = 'wakfu-profile-roster-rail-collapsed';
+
+  protected readonly isNavRailCollapsed = signal<boolean>(
+    this.persistence.getJson<boolean>(ProfilePageComponent.NAV_RAIL_COLLAPSED_KEY) ?? false,
+  );
+  protected readonly isRosterRailCollapsed = signal<boolean>(
+    this.persistence.getJson<boolean>(ProfilePageComponent.ROSTER_RAIL_COLLAPSED_KEY) ?? false,
+  );
 
   /** Nombre de colonnes réellement affichées dans `.sound-item-grid` (grid en `auto-fill`, donc
    * variable selon la largeur disponible) — voir AutoFillColumnsObserver. Valeurs en dur = copie
@@ -256,6 +288,7 @@ export class ProfilePageComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.soundGridColumns.disconnect();
     this.charGridColumns.disconnect();
+    this.isMobile.disconnect();
   }
 
   protected goBack(): void {
@@ -266,6 +299,37 @@ export class ProfilePageComponent implements OnDestroy {
    * seule source des items passés à `<app-tab-bar>`), l'assertion est sûre. */
   protected selectTab(id: string): void {
     this.activeTab.set(id as ProfileTab);
+  }
+
+  protected toggleNavRailCollapsed(): void {
+    const next = !this.isNavRailCollapsed();
+    this.isNavRailCollapsed.set(next);
+    this.persistence.setJson(ProfilePageComponent.NAV_RAIL_COLLAPSED_KEY, next);
+  }
+
+  protected toggleRosterRailCollapsed(): void {
+    const next = !this.isRosterRailCollapsed();
+    this.isRosterRailCollapsed.set(next);
+    this.persistence.setJson(ProfilePageComponent.ROSTER_RAIL_COLLAPSED_KEY, next);
+  }
+
+  /** Libellé texte d'un bouton du rail principal — même logique que le `@switch` du template (voir
+   * `.profile-rail-label`), dupliquée ici sous forme de chaîne pour alimenter le `[attr.data-tooltip]`
+   * affiché quand le rail est replié (l'élément `<span class="profile-rail-label">` correspondant
+   * est alors masqué en CSS, donc inutilisable comme source de tooltip natif). */
+  protected railButtonLabel(tabId: string): string {
+    switch (tabId) {
+      case 'avatar':
+        return this.i18n.t('profile.railIdentity');
+      case 'colorblind':
+        return this.i18n.t('profile.railAccessibility');
+      case 'alerts':
+        return this.i18n.t('profile.railSoundAlerts');
+      default: {
+        const tab = this.tabDefs.find((t) => t.id === tabId);
+        return tab ? this.i18n.t(tab.label) : '';
+      }
+    }
   }
 
   /** Bouton "Gérer mon compte" de l'onglet Connexion (état authentifié uniquement) — seul point
@@ -376,6 +440,43 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected onNameLeave(): void {
     this.nameTooltip.set(null);
+  }
+
+  /** Tooltip JS des boutons de rail repliés (`.profile-rail`/`.roster-account-rail`, voir
+   * `.profile-rail-collapse-toggle`) — même principe et même raison que `nameTooltip` ci-dessus
+   * (un `[data-tooltip]` classique serait rogné), mais pour deux causes différentes et cumulables
+   * ici : (1) `.profile-rail-scroll` (voir CSS) doit défiler verticalement ET masquer tout
+   * débordement horizontal pour que l'icône de repli reste calée en bas SANS élargir le rail —
+   * un tooltip natif qui s'étend horizontalement depuis un bouton replié (64px de large) se fait
+   * donc rogner par cette même boîte ; (2) même quand le tooltip natif n'est pas rogné (boutons de
+   * repli eux-mêmes, hors de `.profile-rail-scroll`), il reste prisonnier du contexte d'empilement
+   * propre à SON rail (`position: sticky` crée toujours son propre contexte, voir MDN) et ne peut
+   * pas gagner le duel d'empilement face au second rail voisin, qui peint après lui. Rendu tout en
+   * bas du template (`.floating-name-tooltip`, hors de tout rail/`overflow`), ce flottant échappe
+   * aux deux problèmes à la fois. Ancré à GAUCHE (pas à droite comme `nameTooltip`) : ces boutons
+   * sont près du bord gauche de l'écran, le tooltip doit s'étendre vers la droite pour rester
+   * visible. */
+  protected readonly railTooltip = signal<{ text: string; left: number; bottom: number } | null>(
+    null,
+  );
+
+  protected onRailBtnHover(el: HTMLElement, text: string, enabled: boolean): void {
+    if (!enabled) {
+      this.railTooltip.set(null);
+      return;
+    }
+    const hostRect = this.elementRef.nativeElement.getBoundingClientRect();
+    const targetRect = el.getBoundingClientRect();
+    const gap = 6;
+    this.railTooltip.set({
+      text,
+      left: targetRect.left - hostRect.left,
+      bottom: hostRect.bottom - targetRect.top + gap,
+    });
+  }
+
+  protected onRailBtnLeave(): void {
+    this.railTooltip.set(null);
   }
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
