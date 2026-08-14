@@ -93,8 +93,8 @@
 
       <div class="panels-row">
         <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'avatar'">
-          <div class="profile-field profile-field-wide">
-            <div class="panel-body">
+          <div class="panel-body">
+            <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
                 <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
               </div>
@@ -294,8 +294,6 @@
                   <span>{{ 'auth.login.google' | t }}</span>
                 </button>
               </div>
-
-              <p class="login-guest-note login-mobile-only">{{ 'auth.login.guestNote' | t }}</p>
             </div>
           </div>
         </div>
@@ -428,6 +426,41 @@
 
         <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'characters'">
           <div class="panel-body roster-panel-body">
+            <nav class="profile-rail roster-account-rail">
+              @for (account of roster.accounts(); track account.id; let i = $index) {
+                <button
+                  type="button"
+                  class="profile-rail-btn roster-account-rail-btn"
+                  [class.active]="selectedAccountId() === account.id"
+                  (click)="selectAccount(account.id)"
+                >
+                  <span class="profile-rail-label">
+                    {{ tabLabel(account, i) }}
+                  </span>
+                  @if (account.gameServer){
+                    <span class="profile-rail-desc">{{ account.gameServer }}</span>
+                  }
+                  <span class="profile-rail-count">{{ account.characters.length }}</span>
+                </button>
+              }
+              <button type="button" class="profile-rail-btn roster-account-rail-add" (click)="addAccount()">
+                <span class="profile-rail-icon">
+                  <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                </span>
+                <span class="profile-rail-label">{{ 'profile.rosterAddAccount' | t }}</span>
+              </button>
+            </nav>
+
             <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
                 <label class="profile-label">
@@ -443,39 +476,6 @@
                 </label>
               </div>
               <p class="profile-section-desc">{{ 'profile.rosterDesc' | t }}</p>
-            </div>
-
-            <div class="roster-layout">
-              <!-- Liste verticale des comptes, desktop uniquement (voir CLAUDE.md, proposition A) —
-                   remplace la barre d'onglets horizontale ci-dessous, devenue mobileOnly. Mêmes
-                   `selectedAccountId()`/`selectAccount()`/`tabLabel()` que la barre : seul
-                   l'habillage change. -->
-              <nav class="roster-account-rail">
-                @for (account of roster.accounts(); track account.id; let i = $index) {
-                  <button
-                    type="button"
-                    class="profile-rail-btn roster-account-rail-btn"
-                    [class.active]="selectedAccountId() === account.id"
-                    (click)="selectAccount(account.id)"
-                  >
-                    {{ tabLabel(account, i) }}
-                  </button>
-                }
-                <button type="button" class="roster-account-rail-add" (click)="addAccount()">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
-                  <span>{{ 'profile.rosterAddAccount' | t }}</span>
-                </button>
-              </nav>
 
               <div class="roster-tabs-wrapper">
                 <app-tab-bar
@@ -509,10 +509,8 @@
                 @if (selectedAccount(); as account) {
                   <div class="roster-account-panel">
                     @if (!account.isDefault) {
-                      <div class="roster-account-header">
-                        <ng-container
-                          *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
-                        ></ng-container>
+                      <div class="roster-account-header mobile-only">
+                        <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
                         <input
                           type="text"
                           class="roster-account-label-input"
@@ -530,21 +528,20 @@
                         </button>
                       </div>
                     }
-                    <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
+                    <app-character-add-form class="mobile-only" (added)="addCharacterFromForm(account.id, $event)" />
 
                     @if (account.characters.length > 0) {
                       <div class="roster-view-row">
                         <div class="roster-view-header">
+                          <!-- TODO : n'afficher qu'en mode mobile ! -->
                           @if (account.isDefault) {
-                            <ng-container
-                              *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
-                            ></ng-container>
+                            <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
                           }
                           <span class="roster-character-count">{{
                             characterCountLabel(account.characters.length)
                           }}</span>
                         </div>
-                        <div class="icon-switch">
+                        <div class="icon-switch mobile-only">
                           <span
                             class="icon-switch-highlight"
                             [class.is-right]="profile.characterViewMode() === 'grid'"
@@ -595,19 +592,10 @@
 
                       <div
                         class="roster-character-scroll"
+                        [class.is-grid]="profile.characterViewMode() === 'grid'"
                         [ngClass]="{ 'roster-account-default': account.isDefault }"
-                        style="
-                          max-height: 400px;
-                          overflow-y: auto;
-                          overflow-x: hidden;
-                          padding: 14px 12px 4px;
-                        "
                       >
-                        <div
-                          #charGrid
-                          class="roster-character-list"
-                          [class.is-grid]="profile.characterViewMode() === 'grid'"
-                        >
+                        <div #charGrid class="roster-character-list">
                           @for (char of account.characters; track char.name; let i = $index) {
                             @if (profile.characterViewMode() === 'grid') {
                               <div
@@ -617,6 +605,11 @@
                                 (dragover)="$event.preventDefault()"
                                 (drop)="onCharDrop(account.id, i)"
                               >
+                                <!--  
+                                  TODO
+                                  Avoir un signal pour savoir si on est sur mobile ou pas
+                                  [class.tooltip-below]="i < charGridColumns.columns() && isMobile()"
+                                -->
                                 <button
                                   class="icon-btn reset-btn badge-close-btn tooltip-align-right"
                                   [class.tooltip-below]="i < charGridColumns.columns()"
@@ -771,6 +764,11 @@
                 }
               </div>
             </div>
+<!--             
+            <div class="roster-layout">
+
+            </div>
+-->
           </div>
         </div>
       </div>

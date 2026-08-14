@@ -47,6 +47,7 @@
   top: 0;
 }
 .profile-rail-btn {
+  position: relative;
   width: 100%;
   min-width: 0;
   display: flex;
@@ -98,6 +99,13 @@
   color: var(--text-muted);
   font-size: 0.78rem;
   font-weight: 600;
+}
+.profile-rail-desc {
+  font-size: 10px;
+  text-transform: capitalize;
+  font-style: italic;
+  position: absolute;
+  right: 35px;
 }
 .profile-rail-btn.active .profile-rail-count {
   color: var(--accent);
@@ -302,12 +310,6 @@
   border-color: #dadce0;
   color: #3c4043;
 }
-.login-guest-note {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
 /* Desktop (> seuil des onglets mobiles de cette page, voir @media (max-width: 800px) plus bas) :
    boutons Discord/Google côte à côte, même largeur — plus de place qu'en mobile pour un rendu plus
    soigné qu'un simple empilement plein-largeur. La description détaillée n'y est plus répétée
@@ -318,9 +320,6 @@
   }
   .provider-btn {
     flex: 1;
-  }
-  .login-mobile-only {
-    display: none;
   }
 }
 
@@ -593,7 +592,7 @@
 }
 
 .sound-item-grid,
-.roster-character-list.is-grid {
+.roster-character-scroll.is-grid .roster-character-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 8px;
@@ -696,39 +695,12 @@
   background: color-mix(in srgb, var(--rarity-color) 16%, var(--surface-raised));
 }
 
-/* Section "Personnages déclarés" (voir CharacterRosterService) : un compte = un onglet — voir
-   TabBarComponent pour la barre elle-même (défilement horizontal, soulignement mesuré sur le
-   DOM, feuille de repli), remplacée en desktop (voir CLAUDE.md, proposition A) par
-   `.roster-account-rail` ci-dessous (`app-tab-bar` y devient `mobileOnly`). */
-.roster-layout {
-  width: 100%;
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
 .roster-account-rail {
-  flex: none;
-  width: 180px;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-.roster-account-rail-btn {
-  font-size: 0.8rem;
+  position: absolute;
+  left: 0;
 }
 .roster-account-rail-add {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  margin-top: 3px;
-  border-radius: 7px;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 600;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+  background: var(--tint-weak);
 }
 .roster-account-rail-add:hover {
   background: var(--tint-weak);
@@ -739,6 +711,18 @@
   height: 14px;
   flex-shrink: 0;
 }
+
+.panel-body.roster-panel-body {
+  flex-direction: row;
+  padding: 0;
+  justify-content: center;
+}
+.panel-body.roster-panel-body .profile-field.profile-field-wide {
+  height: 100%;
+  max-width: 950px;
+  padding: 25px;
+}
+
 .roster-tabs-wrapper {
   flex: 1;
   min-width: 0;
@@ -780,10 +764,6 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
-  border-radius: 8px;
 }
 .roster-character-list {
   display: flex;
@@ -934,22 +914,47 @@
     flex-grow: 1;
     min-height: 0;
   }
-  /* Seul le libellé texte est masqué (redondant avec le titre d'onglet "PERSONNAGES" déjà visible
-     dans la barre d'onglets) — la ligne elle-même reste affichée, sinon son icône d'aide "?"
-     (voir helpModal.open('profileCharacters')) disparaîtrait entièrement en mobile, comme pour
-     l'onglet Alertes qui suit exactement le même principe (seul .profile-label y est masqué). */
-  .profile-label,
-  .profile-label-row,
-  .profile-section-desc {
-    display: none;
-  }
   /* Rail de comptes desktop remplacé par la barre d'onglets `app-tab-bar` (mobileOnly, voir plus
      haut) : `.roster-account-panel` retrouve son raccord "attaché sous la barre" d'origine. */
   .roster-account-rail {
     display: none;
   }
-  .roster-account-panel {
-    border-top: none;
-    border-radius: 0 0 8px 8px;
+  /* Vue grille mobile : portrait sans carte/fond autour (taille inchangée, 64x64). */
+  .roster-character-tile {
+    border-radius: 8px;
+    background: var(--border);
+  }
+  .panels-row .roster-panel-body {
+    padding: 0;
+    overflow-x: hidden;
+  }
+  .panels-row .roster-panel-body .profile-field-wide {
+    padding: 0;
+  }
+  .panels-row .roster-panel-body .profile-label-row {
+    padding: 12px 15px 0;
+  }
+  .panels-row .roster-panel-body .profile-section-desc {
+    padding: 0 15px;
+  }
+  .panels-row .roster-tabs-wrapper {
+    padding: 0;
+  }
+  .panels-row .roster-tabs-wrapper .tab-bar-row {
+    border-radius: 0;
+  }
+  .panels-row .roster-account-panel {
+    padding: 10px 12px;
+    background: var(--surface-raised);
+  }
+  .panels-row .roster-character-scroll {
+    max-height: none !important;
+    padding: 0 !important;
+  }
+  .panels-row .roster-character-scroll.is-grid {
+    padding: 14px 12px 0 0 !important;
+  }
+  .panels-row .roster-character-row .pseudo-edit-input {
+    width: calc(100% - 62px) !important;
   }
 }
