@@ -190,10 +190,10 @@ export class ProfilePageComponent implements OnDestroy {
    * d'empilement desktop, voir le template). */
   private static readonly TAB_DEFS: readonly TabBarItem[] = [
     { id: 'avatar', label: 'profile.railIdentity' },
-    { id: 'colorblind', label: 'profile.railAccessibility', helpSection: 'profileColorblind' },
-    { id: 'connection', label: 'profile.tabConnection', helpSection: 'profileConnection' },
-    { id: 'alerts', label: 'profile.railSoundAlerts', helpSection: 'profileAlerts' },
-    { id: 'characters', label: 'profile.tabCharacters', helpSection: 'profileCharacters' },
+    { id: 'colorblind', label: 'profile.railAccessibility' },
+    { id: 'connection', label: 'profile.tabConnection' },
+    { id: 'alerts', label: 'profile.railSoundAlerts' },
+    { id: 'characters', label: 'profile.tabCharacters' },
   ];
   protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
 

@@ -55,7 +55,7 @@
               [class.active]="activeTab() === tab.id"
               (click)="selectTab(tab.id)"
               [appTooltip]="railButtonLabel(tab.id)"
-              tooltipPosition="top-left"
+              tooltipPosition="right"
               [tooltipDisabled]="!isNavRailCollapsed()"
             >
               <span class="profile-rail-icon">
@@ -106,7 +106,7 @@
           class="profile-rail-collapse-toggle"
           (click)="toggleNavRailCollapsed()"
           [appTooltip]="i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')"
-          tooltipPosition="top-left"
+          tooltipPosition="right"
           [tooltipDisabled]="!isNavRailCollapsed()"
         >
           <!-- `[class.is-collapsed]` sur ce `<span>` wrapper, PAS directement sur `<app-icon>` :
@@ -474,7 +474,7 @@
                     [class.active]="selectedAccountId() === account.id"
                     (click)="selectAccount(account.id)"
                     [appTooltip]="tabLabel(account, i)"
-                    tooltipPosition="top-left"
+                    tooltipPosition="right"
                     [tooltipDisabled]="!isRosterRailCollapsed()"
                   >
                     @if (isRosterRailCollapsed()) {
@@ -497,7 +497,7 @@
                   class="profile-rail-btn roster-account-rail-add"
                   (click)="addAccount()"
                   [appTooltip]="i18n.t('profile.rosterAddAccount')"
-                  tooltipPosition="top-left"
+                  tooltipPosition="right"
                   [tooltipDisabled]="!isRosterRailCollapsed()"
                 >
                   <span class="profile-rail-icon">
@@ -523,7 +523,7 @@
                 [appTooltip]="
                   i18n.t(isRosterRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')
                 "
-                tooltipPosition="top-left"
+                tooltipPosition="right"
                 [tooltipDisabled]="!isRosterRailCollapsed()"
               >
                 <span class="profile-rail-collapse-icon" [class.is-collapsed]="isRosterRailCollapsed()">
@@ -564,7 +564,7 @@
                     class="icon-btn roster-add-account-btn"
                     type="button"
                     [appTooltip]="'profile.rosterAddAccount' | t"
-                    tooltipPosition="bottom-right"
+                    tooltipPosition="top-left"
                     (click)="addAccount()"
                   >
                     <svg
@@ -578,111 +578,150 @@
                       <line x1="12" y1="5" x2="12" y2="19" />
                       <line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
+                    <span class="profile-rail-label">{{ 'profile.rosterAddAccount' | t }}</span>
                   </button>
                 </app-tab-bar>
 
                 @if (selectedAccount(); as account) {
                   <div class="roster-account-panel">
-                    <div class="roster-account-header desktop-only">
-                      <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
-                      <input
-                        type="text"
-                        class="roster-account-label-input"
-                        [value]="account.label"
-                        [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                        (change)="renameAccount(account.id, $any($event.target).value)"
-                      />
-                      <button
-                        class="icon-btn reset-btn"
-                        type="button"
-                        [appTooltip]="'profile.rosterRemoveAccount' | t"
-                        tooltipPosition="top-right"
-                        (click)="removeAccount(account.id)"
-                      >
-                        ×
-                      </button>
-                    </div>
-                    @if (!account.isDefault) {
-                      <div class="roster-account-header mobile-only">
-                        <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
-                        <input
-                          type="text"
-                          class="roster-account-label-input"
-                          [value]="account.label"
-                          [placeholder]="'profile.rosterAccountPlaceholder' | t"
-                          (change)="renameAccount(account.id, $any($event.target).value)"
-                        />
-                        <button
-                          class="icon-btn reset-btn"
-                          type="button"
-                          [appTooltip]="'profile.rosterRemoveAccount' | t"
-                          tooltipPosition="top-right"
-                          (click)="removeAccount(account.id)"
-                        >
-                          ×
+                    @if (isMobile.matches()) {
+                      @if (!account.isDefault) {
+                        <div class="roster-account-header">
+                          <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
+                          <input
+                            type="text"
+                            class="roster-account-label-input"
+                            [value]="account.label"
+                            [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                            (change)="renameAccount(account.id, $any($event.target).value)"
+                          />
+                          <button
+                            class="icon-btn reset-btn"
+                            type="button"
+                            [appTooltip]="'profile.rosterRemoveAccount' | t"
+                            tooltipPosition="top-right"
+                            (click)="removeAccount(account.id)"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      }
+                      <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
+                    }
+                    @else {
+                      <div class="roster-account-header">
+                        <div class="field-group-row">
+                          @if (!account.isDefault) {
+                            <div class="field-group">
+                              <label class="field-label" for="accountLabelInput">Nom de compte</label>
+                              <input
+                                type="text"
+                                class="field-input"
+                                [value]="account.label"
+                                [placeholder]="'profile.rosterAccountPlaceholder' | t"
+                                (change)="renameAccount(account.id, $any($event.target).value)"
+                              />
+                            </div>
+
+                            <button
+                              class="icon-btn reset-btn"
+                              type="button"
+                              (click)="removeAccount(account.id)"
+                            >
+                              ×
+                              <span>{{'profile.rosterRemoveAccount' | t}}</span>
+                            </button>
+                          } @else {
+                            {{ 'profile.rosterDefaultAccountLabel' | t }}
+                          }
+                        </div>
+                        <div class="field-group-row">
+                          <div class="field-group">
+                            <label class="field-label" for="accountLabelInput">Serveur</label>
+                            <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
+                          </div>
+                        </div>
+                        
+                        <button type="button" class="primary-btn roster-character-add-btn">
+                          <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            >
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                          </svg>
+                          <span>Ajouter un personnage</span>
                         </button>
+                        
+                        <div class="field-group-row">
+                          <span></span>
+                          <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                        </div>
                       </div>
                     }
-                    <app-character-add-form class="mobile-only" (added)="addCharacterFromForm(account.id, $event)" />
 
                     @if (account.characters.length > 0) {
-                      <div class="roster-view-row">
-                        <div class="roster-view-header">
-                          @if (account.isDefault && isMobile.matches()) {
-                            <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
-                          }
-                          <span class="roster-character-count">{{
-                            characterCountLabel(account.characters.length)
-                          }}</span>
-                        </div>
-                        <div class="icon-switch mobile-only">
-                          <span
-                            class="icon-switch-highlight"
-                            [class.is-right]="profile.characterViewMode() === 'grid'"
-                          ></span>
-                          <button
-                            type="button"
-                            class="icon-switch-option"
-                            [class.selected]="profile.characterViewMode() === 'list'"
-                            [appTooltip]="'profile.rosterViewList' | t"
-                            (click)="profile.setCharacterViewMode('list')"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
+                      @if (isMobile.matches()) {
+                        <div class="roster-view-row">
+                          <div class="roster-view-header">
+                            @if (account.isDefault) {
+                              <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
+                            }
+                            <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                          </div>
+                          <div class="icon-switch">
+                            <span
+                              class="icon-switch-highlight"
+                              [class.is-right]="profile.characterViewMode() === 'grid'"
+                            ></span>
+                            <button
+                              type="button"
+                              class="icon-switch-option"
+                              [class.selected]="profile.characterViewMode() === 'list'"
+                              [appTooltip]="'profile.rosterViewList' | t"
+                              (click)="profile.setCharacterViewMode('list')"
                             >
-                              <line x1="4" y1="6" x2="20" y2="6" />
-                              <line x1="4" y1="12" x2="20" y2="12" />
-                              <line x1="4" y1="18" x2="20" y2="18" />
-                            </svg>
-                          </button>
-                          <button
-                            type="button"
-                            class="icon-switch-option"
-                            [class.selected]="profile.characterViewMode() === 'grid'"
-                            [appTooltip]="'profile.rosterViewGrid' | t"
-                            (click)="profile.setCharacterViewMode('grid')"
-                          >
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <line x1="4" y1="6" x2="20" y2="6" />
+                                <line x1="4" y1="12" x2="20" y2="12" />
+                                <line x1="4" y1="18" x2="20" y2="18" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              class="icon-switch-option"
+                              [class.selected]="profile.characterViewMode() === 'grid'"
+                              [appTooltip]="'profile.rosterViewGrid' | t"
+                              (click)="profile.setCharacterViewMode('grid')"
                             >
-                              <rect x="4" y="4" width="7" height="7" rx="1.5" />
-                              <rect x="13" y="4" width="7" height="7" rx="1.5" />
-                              <rect x="4" y="13" width="7" height="7" rx="1.5" />
-                              <rect x="13" y="13" width="7" height="7" rx="1.5" />
-                            </svg>
-                          </button>
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <rect x="4" y="4" width="7" height="7" rx="1.5" />
+                                <rect x="13" y="4" width="7" height="7" rx="1.5" />
+                                <rect x="4" y="13" width="7" height="7" rx="1.5" />
+                                <rect x="13" y="13" width="7" height="7" rx="1.5" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      }
 
                       <div
                         class="roster-character-scroll"
@@ -875,7 +914,7 @@
      changement d'onglet de compte comme au rechargement. -->
 <ng-template #gameServerSelect let-account>
   <select
-    class="game-server-select"
+    class="game-server-select field-input"
     [id]="'account-server-' + account.id"
     (change)="setAccountServer(account.id, $any($event.target).value)"
   >

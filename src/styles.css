@@ -535,6 +535,28 @@ button.icon-btn.help-icon-btn {
   color: var(--dmg-inconnu);
 }
 
+.field-group-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.field-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-group > .field-label {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  width: 110px;
+}
+.field-group > .field-input {
+  flex-grow: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
 .desktop-only {
   display: flex !important;
 }
