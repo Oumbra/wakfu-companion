@@ -1,0 +1,30 @@
+@if (editing()) {
+  <input
+    #editInput
+    type="text"
+    class="editable-name-input"
+    [attr.id]="inputId()"
+    [placeholder]="placeholder()"
+    [value]="value()"
+    (blur)="commit($any($event.target).value)"
+    (keydown)="onKeydown($event)"
+  />
+} @else {
+  <span
+    class="editable-name-value"
+    [appTooltip]="showValueTooltip() ? value() : null"
+    [tooltipPosition]="valueTooltipPosition()"
+    [tooltipOnlyIfTruncated]="true"
+    >{{ value() || emptyText() }}</span
+  >
+  <button
+    class="icon-btn editable-name-edit-btn"
+    [class.plain-icon-btn]="plainEditButton()"
+    type="button"
+    draggable="false"
+    [appTooltip]="editTooltip()"
+    (click)="start()"
+  >
+    <app-icon name="edit" [size]="13" />
+  </button>
+}

@@ -280,42 +280,7 @@
   font-size: 1.8rem;
   color: var(--accent);
 }
-.profile-preview-name-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  max-width: 100%;
-}
-.profile-preview-name {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--text-bright);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.pseudo-edit-btn {
-  flex-shrink: 0;
-  width: 26px;
-  height: 26px;
-}
-.pseudo-edit-input {
-  width: 100%;
-  background: transparent;
-  border: 1px solid var(--accent);
-  color: var(--text-color);
-  padding: 5px 8px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 700;
-  text-align: center;
-}
-.pseudo-edit-input:focus {
-  outline: none;
-  background: var(--surface-well);
-}
+/* Pseudo affiché/édité : voir EditableNameComponent (app-editable-name, variant="centered"). */
 
 /* Section connexion Discord/Google (voir CLAUDE.md), onglet dédié au même titre qu'Avatar/Alertes/
    Personnages : mêmes classes `.profile-field-wide`/`.profile-label-row`/`.profile-label` que les
@@ -867,12 +832,6 @@
   flex: 1;
   min-width: 0;
 }
-.roster-character-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 /* Selecteur de server et nombre de personnages du compte affiché, sur la même ligne que le switch liste/grille. */
 .roster-view-row {
   display: flex;
@@ -959,16 +918,6 @@
   display: flex;
   gap: 2px;
 }
-/* Réutilise le style de `.pseudo-edit-input` (même besoin : petit champ
-   inline, fond sombre au focus) plutôt que de dupliquer ces règles. */
-.roster-character-edit-input {
-  width: auto;
-}
-.roster-account-label-input {
-  flex-grow: 1;
-  min-width: 0;
-  font-weight: 700;
-}
 .roster-add-account-btn {
   flex-shrink: 0;
   width: auto;
@@ -985,10 +934,6 @@
   height: 22px;
   object-fit: contain;
   flex-shrink: 0;
-}
-.roster-character-name {
-  flex-grow: 1;
-  font-size: 0.85rem;
 }
 /* Classe sous le nom, vue grille uniquement (voir CLAUDE.md, idée d'aération §5) — plus lisible
    qu'un simple nom seul, déjà connue via `char.className` (pas besoin de traduction, voir
@@ -1124,8 +1069,5 @@
   }
   .panels-row .roster-character-scroll.is-grid {
     padding: 14px 12px 0 0 !important;
-  }
-  .panels-row .roster-character-row .pseudo-edit-input {
-    width: calc(100% - 62px) !important;
   }
 }

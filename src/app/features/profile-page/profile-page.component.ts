@@ -44,11 +44,12 @@ import {
 import { AppPageComponent } from '../../shared/app-page/app-page.component';
 import { AutoFillColumnsObserver } from '../../core/utils/auto-fill-grid-columns';
 import { MediaQuerySignal } from '../../core/utils/media-query-signal';
-import { focusInlineEditInput } from '../../core/utils/inline-edit-focus';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
+import { CharacterAddModalService } from '../../core/services/character-add-modal.service';
 
 type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
 
@@ -96,6 +97,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
     TabBarComponent,
     NgTemplateOutlet,
     TooltipDirective,
+    EditableNameComponent,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -108,6 +110,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly gameServers = inject(GameServerService);
   protected readonly colorblind = inject(ColorblindService);
   protected readonly helpModal = inject(HelpModalService);
+  protected readonly characterAddModal = inject(CharacterAddModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
@@ -175,13 +178,6 @@ export class ProfilePageComponent implements OnDestroy {
     this.isMobile.matches() ? this.profile.characterViewMode() : 'grid',
   );
 
-  private readonly pseudoEditInput = viewChild<ElementRef<HTMLInputElement>>('pseudoEditInput');
-  protected readonly editingPseudo = signal(false);
-
-  /** Personnage actuellement en cours de renommage (un seul à la fois, tous
-   * comptes confondus) — même principe que `editingPseudo`/`pseudoEditInput`. */
-  protected readonly editingCharacter = signal<{ accountId: string; name: string } | null>(null);
-  private readonly charEditInput = viewChild<ElementRef<HTMLInputElement>>('charEditInput');
   private charDragIndex: number | null = null;
 
   /** Onglets de la page profil (Avatar/Connexion/Alertes/Personnages) — voir TabBarComponent.
@@ -250,12 +246,6 @@ export class ProfilePageComponent implements OnDestroy {
   );
 
   constructor() {
-    focusInlineEditInput(this.editingPseudo, this.pseudoEditInput);
-    focusInlineEditInput(
-      computed(() => this.editingCharacter() !== null),
-      this.charEditInput,
-    );
-
     effect(() => this.soundGridColumns.observe(this.soundGrid()?.nativeElement));
     effect(() => this.charGridColumns.observe(this.charGrid()?.nativeElement));
 
@@ -341,26 +331,11 @@ export class ProfilePageComponent implements OnDestroy {
     this.nav.openAccount();
   }
 
-  protected startEditPseudo(): void {
-    this.editingPseudo.set(true);
-  }
-
-  /** Appelé à la fois par (blur) et par Entrée (voir onPseudoKeydown) — le garde-fou
-   * `!editingPseudo()` évite qu'un blur déclenché par la fermeture du champ (Entrée déjà commitée,
-   * ou Échap qui annule) ne recommite la valeur tapée : Échap doit vraiment annuler, pas juste
-   * fermer le champ pendant qu'un commit résiduel s'exécute derrière. */
+  /** Voir EditableNameComponent (`(renamed)`) — appelé avec la valeur brute saisie, le trim/le
+   * rejet éventuel restent de la responsabilité de l'appelant (ici : accepter une valeur vide,
+   * pour effacer le pseudo). */
   protected commitPseudo(value: string): void {
-    if (!this.editingPseudo()) return;
     this.profile.setPseudo(value.trim());
-    this.editingPseudo.set(false);
-  }
-
-  protected onPseudoKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') {
-      this.commitPseudo((event.target as HTMLInputElement).value);
-    } else if (event.key === 'Escape') {
-      this.editingPseudo.set(false);
-    }
   }
 
   protected chooseAvatar(index: number): void {
@@ -473,36 +448,17 @@ export class ProfilePageComponent implements OnDestroy {
     this.roster.addCharacter(accountId, character.name, character.className, character.gender);
   }
 
-  protected isEditingCharacter(accountId: string, name: string): boolean {
-    const editing = this.editingCharacter();
-    return editing?.accountId === accountId && editing?.name === name;
+  /** Bouton "Ajouter un personnage" desktop (voir CharacterAddModalService) — équivalent du
+   * formulaire inline `app-character-add-form` déjà utilisé tel quel en mobile, présenté ici dans
+   * une modale plutôt qu'embarqué en permanence dans le panneau. */
+  protected openAddCharacterModal(accountId: string): void {
+    this.characterAddModal.open(accountId);
   }
 
-  protected startEditCharacter(accountId: string, name: string): void {
-    this.editingCharacter.set({ accountId, name });
-  }
-
-  /** Appelé à la fois par (blur) et par Entrée (voir onCharacterRenameKeydown) — le garde-fou
-   * `isEditingCharacter` évite qu'un blur déclenché par la fermeture du champ (Entrée déjà
-   * commitée, ou Échap qui annule) ne recommite la valeur tapée : Échap doit vraiment annuler, pas
-   * juste fermer le champ pendant qu'un commit résiduel s'exécute derrière. */
-  protected commitCharacterRename(accountId: string, oldName: string, value: string): void {
-    if (!this.isEditingCharacter(accountId, oldName)) return;
-    const trimmed = value.trim();
-    if (trimmed && trimmed !== oldName) this.roster.renameCharacter(accountId, oldName, trimmed);
-    this.editingCharacter.set(null);
-  }
-
-  protected onCharacterRenameKeydown(
-    event: KeyboardEvent,
-    accountId: string,
-    oldName: string,
-  ): void {
-    if (event.key === 'Enter') {
-      this.commitCharacterRename(accountId, oldName, (event.target as HTMLInputElement).value);
-    } else if (event.key === 'Escape') {
-      this.editingCharacter.set(null);
-    }
+  /** Voir EditableNameComponent (`(renamed)`) — `CharacterRosterService.renameCharacter` gère
+   * déjà lui-même le trim et le rejet d'une valeur vide/inchangée. */
+  protected renameCharacter(accountId: string, oldName: string, value: string): void {
+    this.roster.renameCharacter(accountId, oldName, value);
   }
 
   protected onCharDragStart(index: number): void {

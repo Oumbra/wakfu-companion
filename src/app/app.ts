@@ -24,6 +24,7 @@ import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab
 import { CombatPanelService } from './core/services/combat-panel.service';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
 import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
+import { CharacterAddModalComponent } from './shared/character-add-modal/character-add-modal.component';
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
 import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppPageComponent } from './shared/app-page/app-page.component';
@@ -49,6 +50,7 @@ import { TooltipComponent } from './shared/tooltip/tooltip.component';
     CombatEdgeTabComponent,
     HelpModalComponent,
     RecipeQuantityModalComponent,
+    CharacterAddModalComponent,
     LegalPageComponent,
     AppHeaderComponent,
     AppPageComponent,
