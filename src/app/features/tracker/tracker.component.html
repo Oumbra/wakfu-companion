@@ -80,19 +80,6 @@
             [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
             (click)="onCardClick(entry)"
           >
-            <span
-              class="kpi-card-mode-badge"
-              [class.is-up]="entry.mode === 'up'"
-              [class.is-down]="entry.mode === 'down'"
-              [appTooltip]="watchlist.modeTooltip(entry)"
-              (click)="$event.stopPropagation()"
-            >
-              <app-icon
-                [name]="entry.mode === 'up' ? 'arrow-up' : 'arrow-down'"
-                [size]="10"
-                [strokeWidth]="2.6"
-              />
-            </span>
             @if (watchlist.selectMode()) {
               <button
                 type="button"
@@ -114,23 +101,24 @@
                 ×
               </button>
             }
-            @if (entry.kind === 'enemy') {
-              <app-entity-icon
-                [name]="entry.name"
-                [id]="entry.catalogId"
-                side="enemy"
-                class="kpi-card-icon"
-                [size]="32"
-              />
-            } @else {
-              <app-item-icon
-                [name]="entry.name"
-                [id]="entry.catalogId"
-                class="kpi-card-icon"
-                [size]="32"
-              />
-            }
-            <div class="kpi-card-info">
+
+            <div class="kpi-card-top">
+              @if (entry.kind === 'enemy') {
+                <app-entity-icon
+                  [name]="entry.name"
+                  [id]="entry.catalogId"
+                  side="enemy"
+                  class="kpi-card-icon"
+                  [size]="30"
+                />
+              } @else {
+                <app-item-icon
+                  [name]="entry.name"
+                  [id]="entry.catalogId"
+                  class="kpi-card-icon"
+                  [size]="30"
+                />
+              }
               <span
                 class="kpi-card-name"
                 [appTooltip]="watchlist.displayName(entry)"
@@ -138,37 +126,42 @@
               >
                 {{ watchlist.displayName(entry) }}
               </span>
-              <div class="kpi-card-count-row">
-                @if (entry.mode === 'down') {
-                  <input
-                    class="kpi-card-count kpi-card-countdown-current-input"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    [value]="entry.count"
-                    (click)="$event.stopPropagation()"
-                    (keydown)="watchlist.onCountdownKeydown($event, entry)"
-                    (change)="watchlist.onCountdownInput($event, entry)"
-                  />
-                  <span class="kpi-card-count-sep">/</span>
-                  <span
-                    class="kpi-card-target-static"
-                    [appTooltip]="'tracker.countdownTargetLocked' | t"
-                    >{{ entry.countdownTarget }}</span
-                  >
-                  <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
-                } @else {
-                  <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
-                }
-                <button
-                  class="kpi-card-reset"
-                  [appTooltip]="'tracker.reset' | t"
-                  (click)="watchlist.resetCount($event, entry)"
-                >
-                  <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
-                </button>
-              </div>
+              @if (entry.mode === 'down') {
+                <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+              }
             </div>
+
+            <div class="kpi-card-value-row">
+              @if (entry.mode === 'down') {
+                <input
+                  class="kpi-card-value-input"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  [value]="entry.count"
+                  (click)="$event.stopPropagation()"
+                  (keydown)="watchlist.onCountdownKeydown($event, entry)"
+                  (change)="watchlist.onCountdownInput($event, entry)"
+                />
+              } @else {
+                <span class="kpi-card-value">{{ entry.count | numberFr }}</span>
+              }
+              <button
+                class="kpi-card-reset"
+                [appTooltip]="'tracker.reset' | t"
+                (click)="watchlist.resetCount($event, entry)"
+              >
+                <app-icon name="reset" [strokeWidth]="2.2" [size]="17" />
+              </button>
+            </div>
+
+            @if (entry.mode === 'down') {
+              <div class="kpi-card-target-row">
+                <span class="kpi-card-target" [appTooltip]="'tracker.countdownTargetLocked' | t">{{
+                  entry.countdownTarget
+                }}</span>
+              </div>
+            }
           </div>
         }
       </div>
