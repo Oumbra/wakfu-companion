@@ -80,19 +80,6 @@
             [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
             (click)="onCardClick(entry)"
           >
-            <span
-              class="kpi-card-mode-badge"
-              [class.is-up]="entry.mode === 'up'"
-              [class.is-down]="entry.mode === 'down'"
-              [appTooltip]="watchlist.modeTooltip(entry)"
-              (click)="$event.stopPropagation()"
-            >
-              <app-icon
-                [name]="entry.mode === 'up' ? 'arrow-up' : 'arrow-down'"
-                [size]="10"
-                [strokeWidth]="2.6"
-              />
-            </span>
             @if (watchlist.selectMode()) {
               <button
                 type="button"

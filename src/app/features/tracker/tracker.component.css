@@ -39,7 +39,7 @@
   flex-shrink: 0;
 }
 /* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
-   encore : le mode est figé une fois le KPI créé (voir `.kpi-card-mode-badge`, lecture seule). */
+   encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la carte. */
 .tracker-add-mode-switch {
   width: 34px;
   flex-shrink: 0;
@@ -202,7 +202,7 @@
    (tracker-strip, même principe desktop). La cible, elle, ne se modifie plus après la création
    (voir `.kpi-card-target-static` ci-dessous et CLAUDE.md). */
 .kpi-card-countdown-current-input {
-  width: 34px;
+  width: 50px;
   padding: 1px 4px;
   border: 1px solid var(--tint-strong);
   border-radius: 3px;
@@ -226,32 +226,6 @@
 .kpi-card-pct {
   color: var(--text-muted);
   font-size: 0.75rem;
-}
-/* Repère de mode (incrémental/décompte) : badge coin HAUT-GAUCHE de la carte, en miroir de
-   `.kpi-card-del`/`.kpi-card-select-checkbox` (coin haut-droit) — toujours visible, la carte
-   mobile n'a pas d'état replié/déplié (voir tracker-strip.component.css, même principe desktop).
-   Tooltip au survol/appui long = 'Incrémental'/'Décompte' (voir template). */
-.kpi-card-mode-badge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--surface-active);
-  border: 1px solid var(--border-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-}
-/* Même paire de tokens que victoire/défaite (--btn-active-green/red, styles.css) — bénéficie déjà
-   du remplacement daltonien (bleu/orange) sans rien de spécifique à gérer ici. */
-.kpi-card-mode-badge.is-up {
-  color: var(--btn-active-green);
-}
-.kpi-card-mode-badge.is-down {
-  color: var(--btn-active-red);
 }
 .kpi-card-reset {
   flex-shrink: 0;

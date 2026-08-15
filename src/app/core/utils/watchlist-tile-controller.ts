@@ -184,15 +184,9 @@ export class WatchlistTileController {
     const digitCount = (n: number) => Math.abs(Math.trunc(n)).toString().length;
     const total =
       entry.mode === 'down'
-        ? digitCount(entry.count) + digitCount(entry.countdownTarget)
+        ? digitCount(entry.count) + digitCount(entry.countdownTarget) + 1
         : digitCount(entry.count);
-    return total > 6;
-  }
-
-  /** Texte du tooltip du badge de mode (coin haut-gauche de la tuile/carte, voir
-   * `.kpi-mode-badge`/`.kpi-card-mode-badge`) — mêmes clés que le switch du formulaire d'ajout. */
-  modeTooltip(entry: WatchlistEntry): string {
-    return this.i18n.t(entry.mode === 'up' ? 'tracker.countUpMode' : 'tracker.countDownMode');
+    return total >= 6;
   }
 
   /** Texte du tooltip affiché au survol d'une tuile décompte EN MODE COMPACT (bande desktop
