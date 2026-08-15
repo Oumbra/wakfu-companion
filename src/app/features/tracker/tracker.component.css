@@ -180,6 +180,7 @@
   flex-shrink: 0;
   color: var(--text-muted);
   font-size: 0.72rem;
+  font-style: italic;
 }
 
 .kpi-card-value-row {
@@ -192,11 +193,13 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--accent);
+  color: var(--kama-color);
 }
 /* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
    `.kpi-card-value` en lecture seule (mode 'up'). La cible, elle, ne se modifie plus après la
-   création (voir `.kpi-card-target` plus bas et CLAUDE.md). */
+   création (voir `.kpi-card-target` plus bas et CLAUDE.md). Couleur alignée sur --kama-color
+   (plutôt que --accent) : cohérent avec la bande desktop, où le même choix a été fait pour la
+   valeur courante du décompte (voir tracker-strip.component.css). */
 .kpi-card-value-input {
   min-width: 64px;
   max-width: 100px;
@@ -207,12 +210,12 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 1.05rem;
-  color: var(--accent);
+  color: var(--kama-color);
   text-align: center;
 }
 .kpi-card-value-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--kama-color);
 }
 .kpi-card-reset {
   flex-shrink: 0;
@@ -232,7 +235,8 @@
 }
 
 /* Cible : séparée de la valeur actuelle par un filet, texte simple non éditable — fixée à la
-   création (voir CLAUDE.md), au même titre que le mode. */
+   création (voir CLAUDE.md), au même titre que le mode. Poids réduit (500) : reste secondaire
+   face à la valeur actuelle, seule à vraiment bouger. */
 .kpi-card-target-row {
   margin-top: 2px;
   padding-top: 6px;
@@ -241,7 +245,7 @@
 }
 .kpi-card-target {
   font-family: monospace;
-  font-weight: 700;
+  font-weight: 500;
   font-size: 0.8rem;
   color: var(--text-muted);
 }
