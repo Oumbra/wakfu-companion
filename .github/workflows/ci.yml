@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - master
+      - main
       - claude/dev
   pull_request:
 
