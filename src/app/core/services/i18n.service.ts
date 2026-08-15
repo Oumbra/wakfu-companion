@@ -81,11 +81,35 @@ export class I18nService {
     this.persistence.setJson(LOCALE_KEY, locale);
   }
 
-  t(key: string, params?: Record<string, string | number>): string {
+  /** `params` accepte `null`/`undefined` en plus de `string | number` : un paramètre "absent" au
+   * sens des blocs conditionnels ci-dessous (ex. `position().name` du ClassPicker, `string |
+   * null`) doit pouvoir être passé tel quel sans caster côté appelant. */
+  t(key: string, params?: Record<string, string | number | null | undefined>): string {
     const locale = this.locale();
     const raw = TRANSLATIONS[locale]?.[key] ?? TRANSLATIONS.fr[key] ?? key;
-    if (!params) return raw;
-    return raw.replace(/\{\{(\w+)\}\}/g, (_, name) => String(params[name] ?? ''));
+    return this.interpolate(raw, params);
+  }
+
+  /** Interpolation `{{placeholder}}` (substitution simple) + blocs conditionnels optionnels
+   * `{{#if param}}...{{else}}...{{/if}}` (le bloc "si" ne s'affiche que si `params[param]` est
+   * défini et non vide — chaîne vide/`null`/`undefined` comptent comme "absent", `{{else}}`
+   * facultatif). Permet à UNE clé de couvrir un paramètre optionnel (ex. `damageMeter.classOf` :
+   * nom de personnage pas toujours connu) sans la dupliquer en deux versions choisies côté code —
+   * qui reste la bonne approche pour un vrai singulier/pluriel (voir CLAUDE.md), ce mécanisme
+   * couvre le cas complémentaire "paramètre optionnel", pas la pluralisation générale. */
+  private interpolate(
+    raw: string,
+    params?: Record<string, string | number | null | undefined>,
+  ): string {
+    const withConditionals = raw.replace(
+      /\{\{#if (\w+)\}\}([\s\S]*?)(?:\{\{else\}\}([\s\S]*?))?\{\{\/if\}\}/g,
+      (_match, name: string, truthyBranch: string, falsyBranch = '') =>
+        params?.[name] ? truthyBranch : falsyBranch,
+    );
+    if (!params) return withConditionals;
+    return withConditionals.replace(/\{\{(\w+)\}\}/g, (_match, name: string) =>
+      String(params[name] ?? ''),
+    );
   }
 
   /** Formate un horodatage (epoch ms) selon les conventions de la langue courante. */

@@ -18,8 +18,11 @@ export const BREEDS_SPRITE_CELL_SIZE = 35;
  * SAUF pour `REVERSED_GENDER_ROW_CLASSES` ci-dessous (lignes inversées pour
  * ces 2 colonnes précises, déduit de tests utilisateur réels après une 1ère
  * comparaison visuelle erronée sur ces 7 classes, corrigée depuis).
+ *
+ * Exporté aussi pour `class-portraits.data.ts` (migration ponctuelle des anciens `avatarIndex`
+ * vers le nouveau schéma sans sexe, voir ce fichier).
  */
-const BREED_CLASS_COLUMNS: Readonly<Record<string, number>> = {
+export const BREED_CLASS_COLUMNS: Readonly<Record<string, number>> = {
   feca: 0,
   osamodas: 1,
   enutrof: 2,

@@ -10,38 +10,85 @@
   [style.top.px]="displayPosition().top"
 >
   <div class="class-picker-title-row">
-    <span class="class-picker-title">{{ 'damageMeter.classOf' | t }} {{ position().name }}</span>
-    <div class="icon-switch gender-switch">
-      <span class="icon-switch-highlight" [class.is-right]="gender() === 'f'"></span>
-      <button
-        type="button"
-        class="icon-switch-option gender-switch-option"
-        [class.selected]="gender() === 'm'"
-        [appTooltip]="'classPicker.showMale' | t"
-        (click)="setGender('m')"
-      >
-        ♂
-      </button>
-      <button
-        type="button"
-        class="icon-switch-option gender-switch-option"
-        [class.selected]="gender() === 'f'"
-        [appTooltip]="'classPicker.showFemale' | t"
-        (click)="setGender('f')"
-      >
-        ♀
-      </button>
+    <span class="class-picker-title">{{ 'damageMeter.classOf' | t:{ name: position().name } }}</span>
+    <div class="class-picker-switches">
+      @if (!switchModeBlocked()) {
+        <div class="icon-switch mode-switch">
+          <span class="icon-switch-highlight" [class.is-right]="mode() === 'portraits'"></span>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="mode() === 'icons'"
+            [appTooltip]="'classPicker.showIcons' | t"
+            (click)="setMode('icons')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="4" width="7" height="7" rx="1.5" />
+              <rect x="13" y="4" width="7" height="7" rx="1.5" />
+              <rect x="4" y="13" width="7" height="7" rx="1.5" />
+              <rect x="13" y="13" width="7" height="7" rx="1.5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="mode() === 'portraits'"
+            [appTooltip]="'classPicker.showPortraits' | t"
+            (click)="setMode('portraits')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4" />
+              <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
+            </svg>
+          </button>
+        </div>
+      }
+      <div class="icon-switch gender-switch">
+        <span class="icon-switch-highlight" [class.is-right]="gender() === 'f'"></span>
+        <button
+          type="button"
+          class="icon-switch-option gender-switch-option"
+          [class.selected]="gender() === 'm'"
+          [appTooltip]="'classPicker.showMale' | t"
+          (click)="setGender('m')"
+        >
+          ♂
+        </button>
+        <button
+          type="button"
+          class="icon-switch-option gender-switch-option"
+          [class.selected]="gender() === 'f'"
+          [appTooltip]="'classPicker.showFemale' | t"
+          (click)="setGender('f')"
+        >
+          ♀
+        </button>
+      </div>
     </div>
   </div>
-  <div class="class-picker-grid">
-    @for (option of classOptions(); track option.key) {
-      <button
-        class="class-picker-item"
-        [appTooltip]="option.label"
-        (click)="choose(option.key)"
-      >
-        <img [src]="option.icon" alt="" />
-      </button>
-    }
-  </div>
+  @if (mode() === 'icons') {
+    <div class="class-picker-grid">
+      @for (option of classOptions(); track option.key) {
+        <button
+          class="class-picker-item"
+          [appTooltip]="option.label"
+          (click)="choose(option.key)"
+        >
+          <img [src]="option.icon" alt="" />
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="class-picker-grid class-picker-grid-portraits">
+      @for (option of classOptions(); track option.key) {
+        <button
+          class="class-picker-item class-picker-item-portrait"
+          [appTooltip]="option.label"
+          (click)="choose(option.key)"
+        >
+          <app-class-portrait [className]="option.key" [gender]="gender()" />
+        </button>
+      }
+    </div>
+  }
 </div>

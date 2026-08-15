@@ -43,6 +43,8 @@
   @if (classPickerService.request(); as req) {
     <app-class-picker
       [position]="{ name: req.name, x: req.x, y: req.y }"
+      [initialMode]="req.initialMode"
+      [switchModeBlocked]="req.switchModeBlocked"
       (classChosen)="onClassChosen($event)"
       (closed)="classPickerService.close()"
     />
@@ -69,6 +71,5 @@
   <app-help-modal />
   <app-tab-sheet />
   <app-recipe-quantity-modal />
-  <app-character-add-modal />
   <app-tooltip />
 </div>

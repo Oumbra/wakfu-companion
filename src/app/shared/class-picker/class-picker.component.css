@@ -33,9 +33,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.class-picker-switches {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+}
 /* Réutilise la mécanique générique `.icon-switch`/`.icon-switch-highlight`/`.icon-switch-option`
-   (styles.css) — seules les spécificités propres à ce switch (largeur, apparence des symboles
+   (styles.css) — seules les spécificités propres à chaque switch (largeur, apparence des symboles
    ♂/♀) restent ici. */
+.icon-switch.mode-switch {
+  width: 44px;
+}
 .icon-switch.gender-switch {
   width: 52px;
 }
@@ -69,4 +77,27 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* Mode 'portraits' (voir ClassPickerComponent.mode) : grille plus large et plus lisible, portraits
+   "grand format" Ankama (app-class-portrait, encyclopédie officielle) plutôt que les icônes
+   carrées — réservé aux choix "posés" (ex. création de personnage) plutôt qu'un menu contextuel
+   rapide. */
+.class-picker-grid-portraits {
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+/* Pas de légende permanente sous la tuile (contrairement à l'ancienne version, planche
+   `class-breeds.data.ts`) : le nom de la classe est maintenant porté par le tooltip générique
+   (`[appTooltip]`, voir le template), affiché au survol — comme sur le site officiel. */
+.class-picker-item-portrait {
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 6px;
+}
+.class-picker-item-portrait app-class-portrait {
+  width: 100%;
+  height: 100%;
 }

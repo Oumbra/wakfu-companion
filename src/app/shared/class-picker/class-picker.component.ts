@@ -3,6 +3,7 @@ import {
   computed,
   effect,
   ElementRef,
+  inject,
   input,
   OnDestroy,
   output,
@@ -14,11 +15,15 @@ import {
   CLASS_ICON_FEMALE_DATA_URI,
   Gender,
 } from '../../core/data/class-icons.data';
+import { getClassName } from '../../core/data/class-names.data';
+import { ClassPickerMode } from '../../core/services/class-picker.service';
+import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { ClassPortraitComponent } from '../class-portrait/class-portrait.component';
 
 export interface ClassPickerPosition {
-  name: string;
+  name: string | null;
   x: number;
   y: number;
 }
@@ -29,17 +34,20 @@ interface ClassOption {
   icon: string;
 }
 
+// Ordre stable par clé interne (indépendant de la locale) : trier par libellé localisé
+// mélangerait l'agencement de la grille à chaque changement de langue — voir class-names.data.ts
+// pour les libellés eux-mêmes, très différents d'une langue à l'autre.
 const CLASS_KEYS = Object.keys(CLASS_ICON_DATA_URI).sort();
 const ICON_MAPS: Record<Gender, Readonly<Record<string, string>>> = {
   m: CLASS_ICON_DATA_URI,
   f: CLASS_ICON_FEMALE_DATA_URI,
 };
 
-function buildOptions(gender: Gender): ClassOption[] {
+function buildOptions(gender: Gender, locale: AppLocale): ClassOption[] {
   const icons = ICON_MAPS[gender];
   return CLASS_KEYS.map((key) => ({
     key,
-    label: key.charAt(0).toUpperCase() + key.slice(1),
+    label: getClassName(key, locale),
     icon: icons[key],
   }));
 }
@@ -51,12 +59,18 @@ function buildOptions(gender: Gender): ClassOption[] {
  */
 @Component({
   selector: 'app-class-picker',
-  imports: [TranslatePipe, TooltipDirective],
+  imports: [TranslatePipe, TooltipDirective, ClassPortraitComponent],
   templateUrl: './class-picker.component.html',
   styleUrl: './class-picker.component.css',
 })
 export class ClassPickerComponent implements OnDestroy {
+  private readonly i18n = inject(I18nService);
+
   readonly position = input.required<ClassPickerPosition>();
+  /** Mode d'affichage à l'ouverture — l'utilisateur peut ensuite basculer librement via le switch
+   * du picker (voir `mode`/`setMode` ci-dessous). */
+  readonly initialMode = input<ClassPickerMode>('icons');
+  readonly switchModeBlocked = input<boolean>(false);
   readonly classChosen = output<{ className: string; gender: Gender }>();
   readonly closed = output<void>();
 
@@ -64,7 +78,15 @@ export class ClassPickerComponent implements OnDestroy {
    * que l'entité choisie affiche ensuite une icône du même sexe partout
    * (combat, historique, récap, expérience). */
   protected readonly gender = signal<Gender>('m');
-  protected readonly classOptions = computed(() => buildOptions(this.gender()));
+  protected readonly classOptions = computed(() =>
+    buildOptions(this.gender(), this.i18n.locale()),
+  );
+
+  /** 'icons' : grille compacte d'icônes carrées (comportement historique, adapté à un menu
+   * contextuel rapide). 'portraits' : grille de portraits "grand format" Ankama (planche
+   * `class-portraits.data.ts`, encyclopédie officielle — bien plus détaillée que les icônes) pour
+   * un choix "posé" comme la création d'un personnage — voir `app-character-add-form`. */
+  protected readonly mode = signal<ClassPickerMode>('icons');
 
   private readonly pickerEl = viewChild<ElementRef<HTMLDivElement>>('picker');
   /** Position affichée, recalée pour ne jamais déborder du viewport (le clic
@@ -81,6 +103,7 @@ export class ClassPickerComponent implements OnDestroy {
   constructor() {
     effect(() => {
       this.position();
+      this.mode.set(this.initialMode());
       const el = this.pickerEl()?.nativeElement;
       this.resizeObserver?.disconnect();
       if (!el) return;
@@ -107,6 +130,10 @@ export class ClassPickerComponent implements OnDestroy {
 
   protected setGender(gender: Gender): void {
     this.gender.set(gender);
+  }
+
+  protected setMode(mode: ClassPickerMode): void {
+    this.mode.set(mode);
   }
 
   protected choose(className: string): void {

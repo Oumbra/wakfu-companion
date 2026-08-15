@@ -271,7 +271,7 @@
   justify-content: center;
   background: linear-gradient(145deg, var(--surface-raised), var(--surface-well));
 }
-.avatar-preview app-avatar-icon {
+.avatar-preview app-class-portrait {
   width: 100%;
   height: 100%;
 }
@@ -515,7 +515,7 @@
   overflow: hidden;
   background: var(--surface-well);
 }
-.avatar-cell-btn app-avatar-icon {
+.avatar-cell-btn app-class-portrait {
   width: 100%;
   height: 100%;
   display: block;
@@ -630,9 +630,13 @@
   .alert-timing-control {
     padding: 8px 10px;
     background: var(--surface-well) !important;
+    gap: 0;
   }
   .alert-timing-text {
     font-size: 0.75rem;
+  }
+  .alert-mode-switch {
+    width: 115px;
   }
 }
 
@@ -900,6 +904,45 @@
   flex-shrink: 0;
   width: 14px;
   height: 14px;
+  transition: transform 0.2s ease;
+}
+/* "+" pivote en "×" quand le formulaire inline est déplié (voir .character-add-collapse) — pas de
+   changement de libellé, la rotation suffit à signaler l'état ouvert/fermé. */
+.roster-account-header .roster-character-add-btn.open svg {
+  transform: rotate(45deg);
+}
+
+/* Formulaire d'ajout de personnage (desktop) : replié par défaut, se déplie en glissant de haut en
+   bas depuis le bouton "+ Ajouter un personnage" au clic (`addCharacterFormOpen`), comme s'il
+   sortait d'un tiroir caché derrière le bouton — remplace l'ancienne modale centrée
+   (CharacterAddModalComponent, retirée). Hauteur en px pilotée par JS (`characterAddPanelHeight`,
+   mesurée via ResizeObserver sur `.character-add-collapse-inner`, toujours rendu même replié) plutôt
+   qu'une animation CSS pure `grid-template-rows: 0fr -> 1fr` (essayée d'abord — technique connue,
+   voir https://css-tricks.com/css-grid-height-animation/ — mais qui reste bloquée à la hauteur
+   ouverte à la fermeture dans certains moteurs, vérifié en session). `.character-add-collapse-inner`
+   n'est jamais retiré du DOM : seul `overflow: hidden` sur le conteneur le clippe visuellement à 0,
+   donc sa hauteur réelle est toujours connue, y compris avant la toute première ouverture. */
+.character-add-collapse {
+  overflow: hidden;
+  transition: height 0.3s ease;
+}
+.character-add-collapse-inner {
+  padding-top: 10px;
+}
+.character-add-collapse-panel {
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  opacity: 0;
+  transform: translateY(-8px);
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+.character-add-collapse.open .character-add-collapse-panel {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .roster-character-row {

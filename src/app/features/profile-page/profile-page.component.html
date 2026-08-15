@@ -135,7 +135,11 @@
                 <div class="identity-left">
                   <div class="avatar-preview">
                     @if (profile.avatarIndex() !== null) {
-                      <app-avatar-icon [index]="profile.avatarIndex()!" />
+                      <app-class-portrait
+                        [className]="avatarClassOrder[profile.avatarIndex()!]"
+                        [gender]="avatarClassGender(avatarClassOrder[profile.avatarIndex()!])"
+                        [alwaysColored]="true"
+                      />
                     } @else {
                       <span class="avatar-preview-question">?</span>
                     }
@@ -145,6 +149,7 @@
                     [placeholder]="'profile.pseudoPlaceholder' | t"
                     [emptyText]="'profile.noPseudo' | t"
                     [editTooltip]="'profile.editPseudo' | t"
+                    [plainEditButton]="true"
                     variant="centered"
                     (renamed)="commitPseudo($event)"
                   />
@@ -153,13 +158,14 @@
                 <div class="profile-field identity-right">
                   <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
                   <div class="avatar-grid">
-                    @for (i of avatarIndexes; track i) {
+                    @for (key of avatarClassOrder; track key; let i = $index) {
                       <button
                         class="avatar-cell-btn"
                         [class.selected]="profile.avatarIndex() === i"
+                        [appTooltip]="avatarClassLabel(key)"
                         (click)="chooseAvatar(i)"
                       >
-                        <app-avatar-icon [index]="i" />
+                        <app-class-portrait [className]="key" [gender]="avatarClassGender(key)" />
                       </button>
                     }
                   </div>
@@ -418,7 +424,7 @@
                         class="remove-btn"
                         [appTooltip]="'tracker.remove' | t"
                         [tooltipPosition]="i < soundGridColumns.columns() ? 'bottom-right' : 'top-right'"
-                        (click)="removeSoundItem(entry.name, entry.catalogId)"
+                        (click)="requestRemoveSoundItem($event, entry.name, entry.catalogId)"
                       >
                         ×
                       </button>
@@ -539,7 +545,7 @@
                   [items]="rosterTabItems()"
                   [activeId]="selectedAccountId() ?? ''"
                   (activeIdChange)="selectAccount($event)"
-                  (remove)="removeAccount($event)"
+                  (remove)="requestRemoveAccount($event.event, $event.id)"
                   sheetTitle="profile.rosterLabel"
                   [mobileOnly]="true"
                 >
@@ -576,6 +582,7 @@
                             [placeholder]="'profile.rosterAccountPlaceholder' | t"
                             [emptyText]="'profile.rosterAccountPlaceholder' | t"
                             [editTooltip]="'profile.rosterRenameAccount' | t"
+                            [plainEditButton]="true"
                             variant="inline"
                             (renamed)="renameAccount(account.id, $event)"
                           />
@@ -584,13 +591,13 @@
                             type="button"
                             [appTooltip]="'profile.rosterRemoveAccount' | t"
                             tooltipPosition="top-right"
-                            (click)="removeAccount(account.id)"
+                            (click)="requestRemoveAccount($event, account.id)"
                           >
                             ×
                           </button>
                         </div>
                       }
-                      <app-character-add-form (added)="addCharacterFromForm(account.id, $event)" />
+                      <app-character-add-form [switchModeBlocked]="true" (added)="addCharacterFromForm(account.id, $event)" />
                     }
                     @else {
                       <div class="roster-account-header">
@@ -606,6 +613,7 @@
                                 [placeholder]="'profile.rosterAccountPlaceholder' | t"
                                 [emptyText]="'profile.rosterAccountPlaceholder' | t"
                                 [editTooltip]="'profile.rosterRenameAccount' | t"
+                                [plainEditButton]="true"
                                 variant="inline"
                                 (renamed)="renameAccount(account.id, $event)"
                               />
@@ -614,7 +622,7 @@
                             <button
                               class="icon-btn reset-btn"
                               type="button"
-                              (click)="removeAccount(account.id)"
+                              (click)="requestRemoveAccount($event, account.id)"
                             >
                               ×
                               <span>{{'profile.rosterRemoveAccount' | t}}</span>
@@ -635,7 +643,9 @@
                         <button
                           type="button"
                           class="primary-btn roster-character-add-btn"
-                          (click)="openAddCharacterModal(account.id)"
+                          [class.open]="addCharacterFormOpen()"
+                          [attr.aria-expanded]="addCharacterFormOpen()"
+                          (click)="toggleAddCharacterForm()"
                         >
                           <svg
                               viewBox="0 0 24 24"
@@ -650,11 +660,25 @@
                           </svg>
                           <span>{{ 'profile.rosterAddCharacter' | t }}</span>
                         </button>
-                        
-                        <div class="field-group-row">
-                          <span></span>
-                          <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+
+                        <div
+                          class="character-add-collapse"
+                          [class.open]="addCharacterFormOpen()"
+                          [style.height.px]="addCharacterFormOpen() ? characterAddPanelHeight() : 0"
+                        >
+                          <div class="character-add-collapse-inner" #characterAddPanelInner>
+                            <div class="character-add-collapse-panel">
+                              <app-character-add-form [switchModeBlocked]="true" (added)="addCharacterFromForm(account.id, $event)" />
+                            </div>
+                          </div>
                         </div>
+
+                        @if (account.characters.length > 0) {
+                          <div class="field-group-row">
+                            <span></span>
+                            <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                          </div>
+                        }
                       </div>
                     }
 
@@ -760,7 +784,7 @@
                                   variant="centered"
                                   (renamed)="renameCharacter(account.id, char.name, $event)"
                                 />
-                                <span class="roster-character-class">{{ char.className }}</span>
+                                <span class="roster-character-class">{{ characterClassName(char) }}</span>
                               </div>
                             } @else {
                               <div
@@ -814,17 +838,7 @@
                     } @else {
                       <div class="roster-empty-state">
                         <span class="roster-empty-state-icon">
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <circle cx="12" cy="7" r="4" />
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                          </svg>
+                          <svg _ngcontent-ng-c2788938618="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle _ngcontent-ng-c2788938618="" cx="12" cy="7" r="4"></circle><path _ngcontent-ng-c2788938618="" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><line _ngcontent-ng-c2788938618="" x1="19" y1="8" x2="19" y2="12"></line><line _ngcontent-ng-c2788938618="" x1="17" y1="10" x2="21" y2="10"></line></svg>
                         </span>
                         <p>{{ 'profile.rosterEmptyState' | t }}</p>
                       </div>
