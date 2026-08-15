@@ -14,6 +14,23 @@
   border-bottom: 1px solid var(--border);
 }
 
+/* Logo + titre : un seul élément cliquable ramenant à la page principale (voir goHome), reset des
+   styles natifs de <button> pour reproduire exactement l'ancien agencement (deux enfants directs
+   de .app-header-left avec gap: 14px). */
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .app-title {
   position: relative;
   font-weight: 700;
@@ -21,6 +38,12 @@
   color: var(--accent);
   text-transform: uppercase;
   font-size: 1.05rem;
+}
+
+/* Preview Cloudflare Pages (claude/dev, voir CLAUDE.md) : couleur distincte du titre pour ne
+   jamais confondre avec la prod — même teinte que le badge de canal "guilde" du chat. */
+.app-title-preview {
+  color: var(--channel-guilde);
 }
 
 .app-title-badge {

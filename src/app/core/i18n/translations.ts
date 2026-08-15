@@ -21,6 +21,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.unsupported.message':
       "Ce navigateur ne permet pas de lire wakfu.log en continu. Utilisez l'un des navigateurs compatibles ci-dessous.",
 
+    'app.goHome': "Retour à l'accueil",
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Réinitialiser',
     'app.confirmReset': 'Réinitialiser la session ?',
@@ -385,6 +386,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.unsupported.message':
       'This browser cannot read wakfu.log continuously. Use one of the compatible browsers below.',
 
+    'app.goHome': 'Back to home',
     'app.sessionRecap': 'Session recap',
     'app.reset': 'Reset',
     'app.confirmReset': 'Reset the session?',
@@ -742,6 +744,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.unsupported.message':
       'Este navegador no puede leer wakfu.log de forma continua. Usa uno de los navegadores compatibles a continuación.',
 
+    'app.goHome': 'Volver al inicio',
     'app.sessionRecap': 'Resumen de sesión',
     'app.reset': 'Reiniciar',
     'app.confirmReset': '¿Reiniciar la sesión?',
@@ -1103,6 +1106,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.unsupported.message':
       'Este navegador não consegue ler o wakfu.log continuamente. Use um dos navegadores compatíveis abaixo.',
 
+    'app.goHome': 'Voltar ao início',
     'app.sessionRecap': 'Resumo da sessão',
     'app.reset': 'Reiniciar',
     'app.confirmReset': 'Reiniciar a sessão?',
