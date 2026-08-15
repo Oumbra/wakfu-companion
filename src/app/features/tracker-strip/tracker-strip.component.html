@@ -2,9 +2,7 @@
   <div class="kpi-add" [class.expanded]="addOpen()">
     @if (!addOpen()) {
       <div class="kpi-add-wrap">
-        <button class="kpi-add-btn" [appTooltip]="'tracker.add' | t" (click)="openAdd()">
-          +
-        </button>
+        <button class="kpi-add-btn" [appTooltip]="'tracker.add' | t" (click)="openAdd()">+</button>
         <button
           type="button"
           class="icon-btn help-icon-btn"
@@ -86,7 +84,11 @@
     [style.--kpi-expand-duration.ms]="expandDurationMs"
     [style.--kpi-expanded-width.px]="expandedWidthPx"
   >
-    @for (entry of stats.watchlist(); track entry.name + '::' + (entry.catalogId ?? ''); let i = $index) {
+    @for (
+      entry of stats.watchlist();
+      track entry.name + '::' + (entry.catalogId ?? '');
+      let i = $index
+    ) {
       <div
         class="kpi"
         [class]="watchlist.rarityClass(entry)"

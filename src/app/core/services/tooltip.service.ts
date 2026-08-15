@@ -10,14 +10,7 @@ import { Injectable, signal } from '@angular/core';
  * l'élément (centré verticalement), pour un élément collé au bord haut/bas.
  */
 export type TooltipPosition =
-  | 'top'
-  | 'top-left'
-  | 'top-right'
-  | 'bottom'
-  | 'bottom-left'
-  | 'bottom-right'
-  | 'left'
-  | 'right';
+  'top' | 'top-left' | 'top-right' | 'bottom' | 'bottom-left' | 'bottom-right' | 'left' | 'right';
 
 export interface TooltipRequest {
   readonly id: string;

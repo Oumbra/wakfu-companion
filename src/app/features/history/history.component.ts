@@ -57,6 +57,8 @@ export class HistoryComponent {
     const kind = TAB_EVENT_KIND[this.activeTab()];
     // Les achats se chargent toujours par jour complet (voir CLAUDE.md / HistoryArchiveService) —
     // les combats/échanges suivent la pagination "une page à la fois" habituelle.
-    void (kind === 'purchase' ? this.archive.loadMorePurchasesUntilDayComplete() : this.archive.loadMore(kind));
+    void (kind === 'purchase'
+      ? this.archive.loadMorePurchasesUntilDayComplete()
+      : this.archive.loadMore(kind));
   }
 }

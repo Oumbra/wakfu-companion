@@ -103,7 +103,7 @@
   height: 17px;
 }
 .is-collapsed .profile-rail-icon {
-    font-size: 17px;
+  font-size: 17px;
 }
 .profile-rail-label {
   overflow: hidden;
@@ -166,8 +166,8 @@
   font-weight: 700;
   font-size: 0.7rem;
   transition:
-  background 0.15s ease,
-  color 0.15s ease;
+    background 0.15s ease,
+    color 0.15s ease;
 }
 .profile-rail-btn:hover .profile-rail-index-badge,
 .profile-rail-btn.active .profile-rail-index-badge {

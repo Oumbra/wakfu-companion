@@ -37,7 +37,11 @@ const LAST_COL = CLASS_PORTRAITS_SPRITE_COLS - 1;
   // qui échoue puisque ce chemin est une ressource PUBLIQUE servie au runtime (public/assets/...),
   // pas un module importable — erreur réelle rencontrée en session ("Could not resolve...").
   template: `
-    <div class="class-portrait-layer" [style.background-image]="bgImage" [style.background-position]="position()"></div>
+    <div
+      class="class-portrait-layer"
+      [style.background-image]="bgImage"
+      [style.background-position]="position()"
+    ></div>
   `,
   styles: [
     `

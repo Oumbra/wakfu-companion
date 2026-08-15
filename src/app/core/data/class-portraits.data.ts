@@ -96,7 +96,9 @@ export function getAvatarGridEntry(index: number | null | undefined): {
   className: string;
   gender: Gender;
 } {
-  return (index !== null && index !== undefined && AVATAR_GRID_ENTRIES[index]) || AVATAR_GRID_ENTRIES[0];
+  return (
+    (index !== null && index !== undefined && AVATAR_GRID_ENTRIES[index]) || AVATAR_GRID_ENTRIES[0]
+  );
 }
 
 /** Index (0-35) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case. */
@@ -206,7 +208,10 @@ const LEGACY_V1_REVERSED_GENDER_ROW_CLASSES = new Set(['huppermage', 'ouginak'])
  * fonction (voir le test `avatarSchemaVersion` dans ProfileService), mais un round-trip par une
  * classe connue reste inoffensif si jamais appelé par erreur.
  */
-export function migrateLegacyAvatarIndex(oldIndex: number, fromVersion: number | undefined): number {
+export function migrateLegacyAvatarIndex(
+  oldIndex: number,
+  fromVersion: number | undefined,
+): number {
   if (fromVersion === 4) {
     const className = CLASS_PORTRAIT_ORDER[oldIndex];
     return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
