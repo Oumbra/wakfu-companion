@@ -187,7 +187,7 @@
   flex-shrink: 0;
 }
 /* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
-   encore : le mode est figé une fois le KPI créé (voir `.kpi-mode-badge`, lecture seule). */
+   encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. */
 .kpi-add-mode-switch {
   width: 34px;
   flex-shrink: 0;
@@ -360,7 +360,7 @@
    garde une largeur fixe en toutes circonstances (masqué par l'`overflow:hidden` du parent quand
    la tuile est repliée). */
 .kpi-countdown-current-input {
-  width: 30px;
+  width: 50px;
   padding: 1px 3px;
   border: 1px solid var(--border-strong);
   border-radius: 3px;
@@ -368,13 +368,13 @@
   font-family: monospace;
   font-weight: 700;
   font-size: 0.8rem;
-  color: var(--accent);
+  color: var(--kama-color);
   text-align: center;
   flex-shrink: 0;
 }
 .kpi-countdown-current-input:focus {
   outline: none;
-  border-color: var(--accent);
+  border-color: var(--kama-color);
 }
 .kpi-count-sep {
   color: var(--text-muted);
@@ -384,40 +384,14 @@
    se distinguer visuellement de la valeur actuelle, éditable elle. */
 .kpi-target-static {
   color: var(--text-muted);
-  font-weight: 700;
+  font-weight: 500;
 }
 .kpi-pct {
+  margin-left: 10px;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 12px;
   font-weight: 400;
-}
-
-/* Repère de mode (incrémental/décompte) : badge coin HAUT-GAUCHE, en miroir de la croix de
-   suppression (`.kpi-del`, coin haut-droit) — toujours visible, compact ET déplié (contrairement
-   à l'ancien switch de mode, qui ne pouvait de toute façon plus changer le mode après création,
-   voir CLAUDE.md). Tooltip au survol = 'Incrémental'/'Décompte' (voir template). */
-.kpi-mode-badge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--surface-active);
-  border: 1px solid var(--border-strong);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  cursor: default;
-}
-/* Même paire de tokens que victoire/défaite (--btn-active-green/red, styles.css) — bénéficie déjà
-   du remplacement daltonien (bleu/orange) sans rien de spécifique à gérer ici. */
-.kpi-mode-badge.is-up {
-  color: var(--btn-active-green);
-}
-.kpi-mode-badge.is-down {
-  color: var(--btn-active-red);
+  font-style: italic;
 }
 
 .kpi-count-badge {
@@ -437,14 +411,18 @@
    reste des valeurs de décompte, le % correspondant n'apparaît qu'au survol (tooltip, voir
    `countdownProgressTooltip` — pas de barre de progression, jugée trop lourde pour 58px). */
 .kpi-count-badge.is-fraction {
-  color: var(--accent);
+  color: var(--kama-color);
+}
+.kpi-count-badge-target {
+  color: var(--text-muted);
+  font-size: 10px;
 }
 /* Au-delà de 6 chiffres affichés (voir `isLongCount`), le décalage `right:-7px` fait déborder le
    badge bien au-delà de la tuile 58px — trop large pour rester lisible (le texte le plus à gauche,
    ex. la valeur actuelle d'un "3800/10800", sort du cadre visible). Retiré au-delà du seuil : le
    badge reste flush avec le bord droit de la tuile plutôt que de déborder dessus. */
 .kpi-count-badge.is-long {
-  right: 0;
+  right: unset;
 }
 
 .kpi-del {

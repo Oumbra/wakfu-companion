@@ -1,4 +1,4 @@
-import { Directive, ElementRef, HostListener, inject, input, OnDestroy } from '@angular/core';
+import { Directive, ElementRef, HostListener, inject, input, model, OnDestroy } from '@angular/core';
 import { TooltipPosition, TooltipService } from '../../core/services/tooltip.service';
 
 let nextId = 0;
@@ -24,7 +24,7 @@ let nextId = 0;
   selector: '[appTooltip]',
 })
 export class TooltipDirective implements OnDestroy {
-  readonly appTooltip = input<string | null | undefined>();
+  readonly appTooltip = model<string | null | undefined>();
   readonly tooltipPosition = input<TooltipPosition>('top');
   readonly tooltipMultiline = input(false);
   readonly tooltipOnlyIfTruncated = input(false);
@@ -86,7 +86,7 @@ export class TooltipDirective implements OnDestroy {
     });
   }
 
-  private hide(): void {
+  hide(): void {
     if (!this.visible) return;
     this.visible = false;
     this.el.nativeElement.removeAttribute('aria-describedby');

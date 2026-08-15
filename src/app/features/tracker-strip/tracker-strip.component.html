@@ -11,7 +11,7 @@
           type="button"
           class="icon-btn help-icon-btn"
           [appTooltip]="'help.tooltip' | t"
-          tooltipPosition="bottom-left"
+          tooltipPosition="top"
           (click)="helpModal.open('tracker')"
         >
           ?
@@ -122,20 +122,6 @@
         (drop)="onDrop(i)"
         (click)="onTileClick($event, entry)"
       >
-        <span
-          class="kpi-mode-badge"
-          [class.is-up]="entry.mode === 'up'"
-          [class.is-down]="entry.mode === 'down'"
-          [appTooltip]="watchlist.modeTooltip(entry)"
-          tooltipPosition="bottom-right"
-          (click)="$event.stopPropagation()"
-        >
-          <app-icon
-            [name]="entry.mode === 'up' ? 'arrow-up' : 'arrow-down'"
-            [size]="11"
-            [strokeWidth]="2.6"
-          />
-        </span>
         @if (entry.kind === 'enemy') {
           <app-entity-icon
             [name]="entry.name"
@@ -190,7 +176,7 @@
           [class.is-long]="watchlist.isLongCount(entry)"
         >
           @if (entry.mode === 'down') {
-            {{ entry.count }}/{{ entry.countdownTarget }}
+            {{ entry.count }}<span class="kpi-count-badge-target">/{{ entry.countdownTarget }}</span> 
           } @else {
             {{ entry.count | numberFr }}
           }
