@@ -64,11 +64,11 @@ jobs:
       # Rend DATABASE_URL disponible à l'exécution dans les Pages
       # Functions (functions/api/v1/*, context.env.DATABASE_URL) — distinct
       # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du
-      # build/CI. --env preview cible spécifiquement l'environnement preview
+      # build/CI. --env production cible spécifiquement l'environnement preview
       # du projet Cloudflare Pages (à vérifier au premier run : si le flag
       # n'est pas reconnu par cette version de wrangler, adapter ici).
       - name: Push DB secret to Cloudflare Pages (preview)
-        run: echo "$DATABASE_URL" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env preview
+        run: echo "$DATABASE_URL" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env production
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -80,7 +80,7 @@ jobs:
       # PRICE_SERVICE_TOKEN (prod, pas encore utilisé — prod reste sur GitHub Pages sans Functions
       # pour l'instant), même convention que DATABASE_URL/DATABASE_URL.
       - name: Push price service token to Cloudflare Pages (preview)
-        run: echo "$PRICE_SERVICE_TOKEN" | npx wrangler pages secret put PRICE_SERVICE_TOKEN --project-name wakfu-companion --env preview
+        run: echo "$PRICE_SERVICE_TOKEN" | npx wrangler pages secret put PRICE_SERVICE_TOKEN --project-name wakfu-companion --env production
         env:
           PRICE_SERVICE_TOKEN: ${{ secrets.PRICE_SERVICE_TOKEN }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -95,7 +95,7 @@ jobs:
         run: |
           push_secret() {
             if [ -n "$2" ]; then
-              echo "$2" | npx wrangler pages secret put "$1" --project-name wakfu-companion --env preview
+              echo "$2" | npx wrangler pages secret put "$1" --project-name wakfu-companion --env production
             else
               echo "Secret $1 non défini, ignoré."
             fi
