@@ -38,8 +38,10 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
-   encore : le mode est figé une fois le KPI créé (voir `.kpi-card-mode-badge`, lecture seule). */
+/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait,
+   le mode étant figé une fois le KPI créé (contrairement à la bande desktop, la carte mobile n'a
+   plus de badge de repère : la présence de `.kpi-card-pct`/`.kpi-card-target-row` suffit à
+   signaler un décompte, voir maquette fournie par l'utilisateur). */
 .tracker-add-mode-switch {
   width: 34px;
   flex-shrink: 0;
@@ -122,154 +124,132 @@
 
 /* `.panel-body` (classe globale, styles.css) passe en overflow-x/y:auto dès
    que overflow-y:auto est posé (règle d'interop CSS : un axe non-`visible`
-   force l'autre à `auto` aussi) — sans ce `hidden` explicite, la croix de
-   suppression d'une carte de la colonne de droite (`.kpi-card-del`, décalée
-   de -9px hors de sa carte, voir plus bas) dépassait de quelques pixels le
-   padding-box de la grille et faisait apparaître un scroll horizontal
-   inutile sur mobile. */
+   force l'autre à `auto` aussi) — verrouillé explicitement pour ne jamais
+   faire apparaître de scroll horizontal sur cette grille mobile. */
 .panel-body {
   overflow-x: hidden;
 }
 
-/* Grille de cartes en flex-wrap (voir CLAUDE.md) : icône centrée à gauche,
-   nom+compteur+reset à droite, croix de suppression sur la bordure haute-droite.
-   Padding droit un peu plus large que les autres côtés pour laisser de la
-   place à `.kpi-card-del` (voir commentaire ci-dessus) sans la rogner. */
+/* Grille de cartes en flex-wrap (voir CLAUDE.md), 2 colonnes environ sur un mobile standard —
+   chaque carte s'organise maintenant en 3 rangées empilées (icône+nom+%, valeur+reset, cible),
+   voir `.kpi-card` ci-dessous, plutôt que l'ancienne rangée unique icône-à-gauche/infos-à-droite
+   (maquette fournie par l'utilisateur, voir CLAUDE.md si le format doit être documenté). */
 .kpi-mobile-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 14px 8px 8px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .kpi-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1 1 150px;
-  min-width: 150px;
-  padding: 8px 10px;
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 160px;
+  min-width: 160px;
+  padding: 10px 12px;
+  border-radius: 10px;
   border: 2px solid transparent;
   background: var(--surface-raised);
 }
 
+.kpi-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Réserve la place de `.kpi-card-del`/`.kpi-card-select-checkbox` (position:absolute, coin
+     haut-droit) — sans quoi `.kpi-card-pct` se retrouverait dessous. */
+  padding-right: 20px;
+}
 .kpi-card-icon {
   flex-shrink: 0;
-  border-radius: 4px;
-}
-
-.kpi-card-info {
-  flex-grow: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  border-radius: 6px;
 }
 .kpi-card-name {
-  align-self: stretch;
+  flex: 1;
+  min-width: 0;
   display: block;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-weight: 700;
+  font-size: 0.84rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.kpi-card-name > span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.kpi-card-count-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  width: 100%;
-}
-.kpi-card-count {
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 0.85rem;
-}
-/* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
-   `.kpi-card-count` en lecture seule (mode 'up'), voir `.kpi-countdown-current-input`
-   (tracker-strip, même principe desktop). La cible, elle, ne se modifie plus après la création
-   (voir `.kpi-card-target-static` ci-dessous et CLAUDE.md). */
-.kpi-card-countdown-current-input {
-  width: 34px;
-  padding: 1px 4px;
-  border: 1px solid var(--tint-strong);
-  border-radius: 3px;
-  background: var(--tint-weak);
-  text-align: center;
-}
-.kpi-card-countdown-current-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.kpi-card-count-sep {
-  color: var(--text-muted);
-}
-/* Texte simple, non éditable — grisée pour se distinguer de la valeur actuelle, éditable elle. */
-.kpi-card-target-static {
-  color: var(--text-muted);
-  font-family: monospace;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
 .kpi-card-pct {
+  flex-shrink: 0;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
 }
-/* Repère de mode (incrémental/décompte) : badge coin HAUT-GAUCHE de la carte, en miroir de
-   `.kpi-card-del`/`.kpi-card-select-checkbox` (coin haut-droit) — toujours visible, la carte
-   mobile n'a pas d'état replié/déplié (voir tracker-strip.component.css, même principe desktop).
-   Tooltip au survol/appui long = 'Incrémental'/'Décompte' (voir template). */
-.kpi-card-mode-badge {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--surface-active);
-  border: 1px solid var(--border-strong);
+
+.kpi-card-value-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  gap: 8px;
 }
-/* Même paire de tokens que victoire/défaite (--btn-active-green/red, styles.css) — bénéficie déjà
-   du remplacement daltonien (bleu/orange) sans rien de spécifique à gérer ici. */
-.kpi-card-mode-badge.is-up {
-  color: var(--btn-active-green);
+.kpi-card-value {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--accent);
 }
-.kpi-card-mode-badge.is-down {
-  color: var(--btn-active-red);
+/* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
+   `.kpi-card-value` en lecture seule (mode 'up'). La cible, elle, ne se modifie plus après la
+   création (voir `.kpi-card-target` plus bas et CLAUDE.md). */
+.kpi-card-value-input {
+  min-width: 64px;
+  max-width: 100px;
+  padding: 4px 8px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-well);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--accent);
+  text-align: center;
+}
+.kpi-card-value-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 .kpi-card-reset {
   flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   color: var(--text-muted);
   background: transparent;
   border: none;
   padding: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .kpi-card-reset:hover {
   color: var(--accent);
 }
 
+/* Cible : séparée de la valeur actuelle par un filet, texte simple non éditable — fixée à la
+   création (voir CLAUDE.md), au même titre que le mode. */
+.kpi-card-target-row {
+  margin-top: 2px;
+  padding-top: 6px;
+  border-top: 1px solid var(--tint-strong);
+  text-align: center;
+}
+.kpi-card-target {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .kpi-card-del {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 8px;
+  right: 8px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -295,8 +275,8 @@
    case à cocher plutôt que croix, coche SVG affichée uniquement à l'état coché (voir template). */
 .kpi-card-select-checkbox {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 8px;
+  right: 8px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -316,11 +296,13 @@
   color: #04222a;
 }
 
-/* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx). */
+/* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
+   Dégradé diagonal (haut-gauche vers bas-droit, où vit l'icône) plutôt qu'horizontal — plus
+   proche de la maquette fournie. */
 .kpi-card[class*='rarity-'] {
   border-color: var(--rarity-color);
   background: linear-gradient(
-    to right,
+    135deg,
     color-mix(in srgb, var(--rarity-color) 25%, var(--surface-raised)),
     var(--surface-raised) 85%
   );
