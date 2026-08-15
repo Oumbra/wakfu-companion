@@ -14,6 +14,8 @@
 # Environment files
 /.env
 # Secrets locaux Wrangler (wrangler pages dev) — jamais commités
+.vars
+.vars.*
 .dev.vars
 .dev.vars.*
 /.wrangler/
