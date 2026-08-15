@@ -80,9 +80,7 @@ export class SeoService {
   /** Réutilise l'élément déjà présent dans `src/index.html` (canonical statique) s'il existe, sinon
    * en crée un — évite le doublon plutôt que d'empiler un second `<link>` à chaque appel. */
   private setLink(rel: 'canonical' | 'alternate', href: string, hreflang?: string): void {
-    const selector = hreflang
-      ? `link[rel="${rel}"][hreflang="${hreflang}"]`
-      : `link[rel="${rel}"]`;
+    const selector = hreflang ? `link[rel="${rel}"][hreflang="${hreflang}"]` : `link[rel="${rel}"]`;
     let el = this.document.head.querySelector<HTMLLinkElement>(selector);
     if (!el) {
       el = this.document.createElement('link');

@@ -160,9 +160,7 @@ export class HistoryArchiveService {
       ...record,
       origin: (sessionKeys.has(fightDedupKey(record)) ? 'session' : 'account') as HistoryOrigin,
     }));
-    return [...sessionOnly, ...accountTagged].sort(
-      (a, b) => b.fullTimestampMs - a.fullTimestampMs,
-    );
+    return [...sessionOnly, ...accountTagged].sort((a, b) => b.fullTimestampMs - a.fullTimestampMs);
   });
 
   readonly mergedPurchases = computed<readonly PurchaseRecord[]>(() => {
@@ -194,7 +192,9 @@ export class HistoryArchiveService {
     await Promise.all(
       (Object.keys(HISTORY_ENDPOINTS) as HistoryEventKind[])
         .filter((kind) => !this.loaded.has(kind))
-        .map((kind) => (kind === 'purchase' ? this.loadMorePurchasesUntilDayComplete() : this.loadMore(kind))),
+        .map((kind) =>
+          kind === 'purchase' ? this.loadMorePurchasesUntilDayComplete() : this.loadMore(kind),
+        ),
     );
   }
 

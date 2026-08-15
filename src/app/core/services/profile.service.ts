@@ -2,7 +2,10 @@ import { Injectable, inject, signal } from '@angular/core';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
 import { CatalogService } from '../api/catalog.service';
-import { AVATAR_INDEX_SCHEMA_VERSION, migrateLegacyAvatarIndex } from '../data/class-portraits.data';
+import {
+  AVATAR_INDEX_SCHEMA_VERSION,
+  migrateLegacyAvatarIndex,
+} from '../data/class-portraits.data';
 
 /** @deprecated Réexportée pour les consommateurs historiques — la clé fait
  * désormais autorité dans `core/data-access/user-data.keys.ts`. */
@@ -49,10 +52,10 @@ const DEFAULT_SOUND_ITEM_NAMES: readonly string[] = [
   'Pierre de vitesse',
   'Pierre ultime',
   'Influence III',
-  'Plan "Epée de Bonta"', 
+  'Plan "Epée de Bonta"',
   'Plan "Epée de Brâkmar"',
   'Plan "Epée de Sufokia"',
-  'Plan "Epée d\'Amakna"'
+  'Plan "Epée d\'Amakna"',
 ];
 
 /** Profil joueur local : pseudo, avatar (planche de classes Ankama) et liste d'objets à alerte sonore au ramassage. */
@@ -115,7 +118,9 @@ export class ProfileService {
   /** Résout `catalogId` par nom pour un objet, best-effort — utilisé pour les défauts (jamais
    * persistés avec un id) et pour les entrées stockées avant l'introduction de ce champ. Ne lève
    * pas l'ambiguïté d'un homonyme (voir WatchlistEntry.catalogId), mais reste déterministe. */
-  private normalizeSoundItem(entry: Partial<Pick<SoundItemEntry, 'catalogId'>> & Omit<SoundItemEntry, 'catalogId'>): SoundItemEntry {
+  private normalizeSoundItem(
+    entry: Partial<Pick<SoundItemEntry, 'catalogId'>> & Omit<SoundItemEntry, 'catalogId'>,
+  ): SoundItemEntry {
     return {
       ...entry,
       catalogId: entry.catalogId ?? this.catalog.findWakfuItemEntry(entry.name)?.id ?? null,
@@ -142,7 +147,9 @@ export class ProfileService {
     const normalizedStored = needsBackfill ? stored.map((e) => this.normalizeSoundItem(e)) : stored;
     const existingNames = new Set(normalizedStored.map((e) => e.name.toLowerCase()));
     const missingDefaults = defaults.filter((d) => !existingNames.has(d.name.toLowerCase()));
-    return missingDefaults.length > 0 ? [...normalizedStored, ...missingDefaults] : normalizedStored;
+    return missingDefaults.length > 0
+      ? [...normalizedStored, ...missingDefaults]
+      : normalizedStored;
   }
 
   setPseudo(value: string): void {
@@ -196,7 +203,9 @@ export class ProfileService {
   removeSoundItem(name: string, catalogId?: number | null): void {
     this.soundItems.set(
       this.soundItems().filter(
-        (e) => e.isDefault || !(e.name === name && (catalogId === undefined || e.catalogId === catalogId)),
+        (e) =>
+          e.isDefault ||
+          !(e.name === name && (catalogId === undefined || e.catalogId === catalogId)),
       ),
     );
     this.persist();

@@ -105,7 +105,9 @@
           type="button"
           class="profile-rail-collapse-toggle"
           (click)="toggleNavRailCollapsed()"
-          [appTooltip]="i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')"
+          [appTooltip]="
+            i18n.t(isNavRailCollapsed() ? 'profile.railExpand' : 'profile.railCollapse')
+          "
           tooltipPosition="right"
           [tooltipDisabled]="!isNavRailCollapsed()"
         >
@@ -115,9 +117,27 @@
                et l'encapsulation de vue Angular empêche de toute façon d'atteindre le `<svg>` interne
                depuis ce template (voir CLAUDE.md, icônes SVG génériques). -->
           <span class="profile-rail-collapse-icon" [class.is-collapsed]="isNavRailCollapsed()">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" fill="none" viewBox="0 0 16 17" role="img" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z" clip-rule="evenodd"></path></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16px"
+              height="16px"
+              fill="none"
+              viewBox="0 0 16 17"
+              role="img"
+              aria-hidden="true"
+            >
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+                clip-rule="evenodd"
+              ></path>
+            </svg>
           </span>
-          <span class="desktop-only" [style.display]="isNavRailCollapsed() ? 'none !important' : 'flex !important'">
+          <span
+            class="desktop-only"
+            [style.display]="isNavRailCollapsed() ? 'none !important' : 'flex !important'"
+          >
             {{ 'profile.railCollapse' | t }}
           </span>
         </button>
@@ -158,7 +178,11 @@
                 <div class="profile-field identity-right">
                   <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
                   <div class="avatar-grid">
-                    @for (entry of avatarGridEntries; track entry.className + entry.gender; let i = $index) {
+                    @for (
+                      entry of avatarGridEntries;
+                      track entry.className + entry.gender;
+                      let i = $index
+                    ) {
                       <button
                         class="avatar-cell-btn"
                         [class.selected]="profile.avatarIndex() === i"
@@ -414,7 +438,9 @@
                     <button
                       class="sound-toggle-btn"
                       [appTooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
-                      [tooltipPosition]="i < soundGridColumns.columns() ? 'bottom-left' : 'top-left'"
+                      [tooltipPosition]="
+                        i < soundGridColumns.columns() ? 'bottom-left' : 'top-left'
+                      "
                       (click)="toggleSound(entry.name, entry.catalogId)"
                     >
                       @if (entry.enabled) {
@@ -427,7 +453,9 @@
                       <button
                         class="remove-btn"
                         [appTooltip]="'tracker.remove' | t"
-                        [tooltipPosition]="i < soundGridColumns.columns() ? 'bottom-right' : 'top-right'"
+                        [tooltipPosition]="
+                          i < soundGridColumns.columns() ? 'bottom-right' : 'top-right'
+                        "
                         (click)="requestRemoveSoundItem($event, entry.name, entry.catalogId)"
                       >
                         ×
@@ -458,7 +486,10 @@
                  lui aussi) — un `position: fixed` daterait un `left` à recalculer en JS à chaque
                  changement de l'un ou l'autre. En restant en flux, l'icône suit la position du rail
                  quelle qu'elle soit, sans aucun calcul. -->
-            <nav class="profile-rail roster-account-rail" [class.is-collapsed]="isRosterRailCollapsed()">
+            <nav
+              class="profile-rail roster-account-rail"
+              [class.is-collapsed]="isRosterRailCollapsed()"
+            >
               <div class="profile-rail-scroll">
                 @for (account of roster.accounts(); track account.id; let i = $index) {
                   <button
@@ -479,7 +510,7 @@
                     <span class="profile-rail-label">
                       {{ tabLabel(account, i) }}
                     </span>
-                    @if (account.gameServer){
+                    @if (account.gameServer) {
                       <span class="profile-rail-desc">{{ account.gameServer }}</span>
                     }
                     <span class="profile-rail-count">{{ account.characters.length }}</span>
@@ -495,13 +526,13 @@
                 >
                   <span class="profile-rail-icon">
                     <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      >
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
                       <line x1="12" y1="5" x2="12" y2="19" />
                       <line x1="5" y1="12" x2="19" y2="12" />
                     </svg>
@@ -519,10 +550,31 @@
                 tooltipPosition="right"
                 [tooltipDisabled]="!isRosterRailCollapsed()"
               >
-                <span class="profile-rail-collapse-icon" [class.is-collapsed]="isRosterRailCollapsed()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16px" height="16px" fill="none" viewBox="0 0 16 17" role="img" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z" clip-rule="evenodd"></path></svg>
+                <span
+                  class="profile-rail-collapse-icon"
+                  [class.is-collapsed]="isRosterRailCollapsed()"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16px"
+                    height="16px"
+                    fill="none"
+                    viewBox="0 0 16 17"
+                    role="img"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill="currentColor"
+                      fill-rule="evenodd"
+                      d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+                      clip-rule="evenodd"
+                    ></path>
+                  </svg>
                 </span>
-                <span class="desktop-only" [style.display]="isRosterRailCollapsed() ? 'none !important' : 'flex !important'">
+                <span
+                  class="desktop-only"
+                  [style.display]="isRosterRailCollapsed() ? 'none !important' : 'flex !important'"
+                >
                   {{ 'profile.railCollapse' | t }}
                 </span>
               </button>
@@ -580,7 +632,9 @@
                     @if (isMobile.matches()) {
                       @if (!account.isDefault) {
                         <div class="roster-account-header">
-                          <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
+                          <ng-container
+                            *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                          ></ng-container>
                           <app-editable-name
                             [value]="account.label"
                             [placeholder]="'profile.rosterAccountPlaceholder' | t"
@@ -601,16 +655,20 @@
                           </button>
                         </div>
                       }
-                      <app-character-add-form [switchModeBlocked]="true" (added)="addCharacterFromForm(account.id, $event)" />
-                    }
-                    @else {
+                      <app-character-add-form
+                        [switchModeBlocked]="true"
+                        (added)="addCharacterFromForm(account.id, $event)"
+                      />
+                    } @else {
                       <div class="roster-account-header">
                         <div class="field-group-row">
                           @if (!account.isDefault) {
                             <div class="field-group">
-                              <label class="field-label" [attr.for]="'account-name-' + account.id">{{
-                                'profile.rosterAccountNameLabel' | t
-                              }}</label>
+                              <label
+                                class="field-label"
+                                [attr.for]="'account-name-' + account.id"
+                                >{{ 'profile.rosterAccountNameLabel' | t }}</label
+                              >
                               <app-editable-name
                                 [inputId]="'account-name-' + account.id"
                                 [value]="account.label"
@@ -629,7 +687,7 @@
                               (click)="requestRemoveAccount($event, account.id)"
                             >
                               ×
-                              <span>{{'profile.rosterRemoveAccount' | t}}</span>
+                              <span>{{ 'profile.rosterRemoveAccount' | t }}</span>
                             </button>
                           } @else {
                             {{ 'profile.rosterDefaultAccountLabel' | t }}
@@ -637,10 +695,14 @@
                         </div>
                         <div class="field-group-row">
                           <div class="field-group">
-                            <label class="field-label" [attr.for]="'account-server-' + account.id">{{
-                              'profile.rosterAccountServerLabel' | t
-                            }}</label>
-                            <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"></ng-container>
+                            <label
+                              class="field-label"
+                              [attr.for]="'account-server-' + account.id"
+                              >{{ 'profile.rosterAccountServerLabel' | t }}</label
+                            >
+                            <ng-container
+                              *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }"
+                            ></ng-container>
                           </div>
                         </div>
 
@@ -652,13 +714,13 @@
                           (click)="toggleAddCharacterForm()"
                         >
                           <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              stroke-width="2"
-                              stroke-linecap="round"
-                              stroke-linejoin="round"
-                            >
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
                             <line x1="12" y1="5" x2="12" y2="19" />
                             <line x1="5" y1="12" x2="19" y2="12" />
                           </svg>
@@ -672,7 +734,10 @@
                         >
                           <div class="character-add-collapse-inner" #characterAddPanelInner>
                             <div class="character-add-collapse-panel">
-                              <app-character-add-form [switchModeBlocked]="true" (added)="addCharacterFromForm(account.id, $event)" />
+                              <app-character-add-form
+                                [switchModeBlocked]="true"
+                                (added)="addCharacterFromForm(account.id, $event)"
+                              />
                             </div>
                           </div>
                         </div>
@@ -680,7 +745,9 @@
                         @if (account.characters.length > 0) {
                           <div class="field-group-row">
                             <span></span>
-                            <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                            <span class="roster-character-count">{{
+                              characterCountLabel(account.characters.length)
+                            }}</span>
                           </div>
                         }
                       </div>
@@ -691,9 +758,16 @@
                         <div class="roster-view-row">
                           <div class="roster-view-header">
                             @if (account.isDefault) {
-                              <ng-container *ngTemplateOutlet="gameServerSelect; context: { $implicit: account }" ></ng-container>
+                              <ng-container
+                                *ngTemplateOutlet="
+                                  gameServerSelect;
+                                  context: { $implicit: account }
+                                "
+                              ></ng-container>
                             }
-                            <span class="roster-character-count">{{ characterCountLabel(account.characters.length) }}</span>
+                            <span class="roster-character-count">{{
+                              characterCountLabel(account.characters.length)
+                            }}</span>
                           </div>
                           <div class="icon-switch">
                             <span
@@ -788,7 +862,9 @@
                                   variant="centered"
                                   (renamed)="renameCharacter(account.id, char.name, $event)"
                                 />
-                                <span class="roster-character-class">{{ characterClassName(char) }}</span>
+                                <span class="roster-character-class">{{
+                                  characterClassName(char)
+                                }}</span>
                               </div>
                             } @else {
                               <div
@@ -842,7 +918,35 @@
                     } @else {
                       <div class="roster-empty-state">
                         <span class="roster-empty-state-icon">
-                          <svg _ngcontent-ng-c2788938618="" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle _ngcontent-ng-c2788938618="" cx="12" cy="7" r="4"></circle><path _ngcontent-ng-c2788938618="" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><line _ngcontent-ng-c2788938618="" x1="19" y1="8" x2="19" y2="12"></line><line _ngcontent-ng-c2788938618="" x1="17" y1="10" x2="21" y2="10"></line></svg>
+                          <svg
+                            _ngcontent-ng-c2788938618=""
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <circle _ngcontent-ng-c2788938618="" cx="12" cy="7" r="4"></circle>
+                            <path
+                              _ngcontent-ng-c2788938618=""
+                              d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+                            ></path>
+                            <line
+                              _ngcontent-ng-c2788938618=""
+                              x1="19"
+                              y1="8"
+                              x2="19"
+                              y2="12"
+                            ></line>
+                            <line
+                              _ngcontent-ng-c2788938618=""
+                              x1="17"
+                              y1="10"
+                              x2="21"
+                              y2="10"
+                            ></line>
+                          </svg>
                         </span>
                         <p>{{ 'profile.rosterEmptyState' | t }}</p>
                       </div>

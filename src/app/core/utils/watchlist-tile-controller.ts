@@ -148,7 +148,11 @@ export class WatchlistTileController {
       this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1, entry.catalogId);
     } else if (action === 'decrement') {
       event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, Math.max(0, entry.count - 1), entry.catalogId);
+      this.stats.setWatchlistCountdownTarget(
+        entry.name,
+        Math.max(0, entry.count - 1),
+        entry.catalogId,
+      );
     }
   }
 

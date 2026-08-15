@@ -18,7 +18,9 @@ function fight(
   return { id, label, result, bossOf, hasArchi };
 }
 
-function makeDungeon(overrides: Partial<CatalogDungeonEntry> & { id: number }): CatalogDungeonEntry {
+function makeDungeon(
+  overrides: Partial<CatalogDungeonEntry> & { id: number },
+): CatalogDungeonEntry {
   return {
     fr: `Donjon ${overrides.id}`,
     en: `Dungeon ${overrides.id}`,
@@ -65,7 +67,7 @@ describe('groupDungeonRuns', () => {
     expect(group(records)).toEqual([{ kind: 'single', record: records[0] }]);
   });
 
-  it("laisse un boss gagné du premier coup sans salle rattachable en entrée single (type à 1 combat)", () => {
+  it('laisse un boss gagné du premier coup sans salle rattachable en entrée single (type à 1 combat)', () => {
     const records = [fight(1, 'Boss ultime', 'won', DUNGEON_ONE_ROOM.id)];
     expect(group(records)).toEqual([{ kind: 'single', record: records[0] }]);
   });
@@ -89,7 +91,7 @@ describe('groupDungeonRuns', () => {
     ]);
   });
 
-  it('regroupe les tentatives de boss consécutives (défaites) jusqu\'à la première victoire', () => {
+  it("regroupe les tentatives de boss consécutives (défaites) jusqu'à la première victoire", () => {
     const win = fight(4, 'Boss A - victoire', 'won', DUNGEON_A.id);
     const lose2 = fight(3, 'Boss A - défaite 2', 'lost', DUNGEON_A.id);
     const lose1 = fight(2, 'Boss A - défaite 1', 'lost', DUNGEON_A.id);

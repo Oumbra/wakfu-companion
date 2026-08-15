@@ -95,7 +95,11 @@ export class FightHistoryComponent {
   protected readonly historyEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() =>
     groupDungeonRuns(
       this.fightHistory(),
-      (record) => findDungeonForEnemies(this.catalog, this.enemyRowsFor(record).map((row) => row.name)),
+      (record) =>
+        findDungeonForEnemies(
+          this.catalog,
+          this.enemyRowsFor(record).map((row) => row.name),
+        ),
       (record) => this.hasArchiEnemy(record),
     ),
   );
@@ -213,9 +217,12 @@ export class FightHistoryComponent {
   }
 
   protected fightCountLabel(count: number): string {
-    return this.i18n.t(count === 1 ? 'history.group.fightCount' : 'history.group.fightCountPlural', {
-      count,
-    });
+    return this.i18n.t(
+      count === 1 ? 'history.group.fightCount' : 'history.group.fightCountPlural',
+      {
+        count,
+      },
+    );
   }
 
   protected toggleFight(id: number): void {
@@ -298,7 +305,9 @@ export class FightHistoryComponent {
   /** Tooltip nom du donjon pour l'en-tête d'un collapse de donjon — `null` pour une brèche (même
    * règle que `fightImageTooltip`/resolveFightImageInfo, aucun donjon multi-salles n'est en
    * pratique une brèche mais autant rester cohérent). */
-  protected dungeonRunTooltip(entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>): string | null {
+  protected dungeonRunTooltip(
+    entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>,
+  ): string | null {
     return isDungeonBreach(entry.dungeon) ? null : entry.dungeon[this.i18n.locale()];
   }
 

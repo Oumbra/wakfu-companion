@@ -34,7 +34,9 @@ export function getWakfuItemRarity(
   name: string,
   id?: number | null,
 ): WakfuRarity {
-  const entry = (id != null ? catalog.findWakfuItemEntryById(id) : undefined) ?? catalog.findWakfuItemEntry(name);
+  const entry =
+    (id != null ? catalog.findWakfuItemEntryById(id) : undefined) ??
+    catalog.findWakfuItemEntry(name);
   return entry?.rarity ?? 'common';
 }
 

@@ -78,9 +78,7 @@ export class ClassPickerComponent implements OnDestroy {
    * que l'entité choisie affiche ensuite une icône du même sexe partout
    * (combat, historique, récap, expérience). */
   protected readonly gender = signal<Gender>('m');
-  protected readonly classOptions = computed(() =>
-    buildOptions(this.gender(), this.i18n.locale()),
-  );
+  protected readonly classOptions = computed(() => buildOptions(this.gender(), this.i18n.locale()));
 
   /** 'icons' : grille compacte d'icônes carrées (comportement historique, adapté à un menu
    * contextuel rapide). 'portraits' : grille de portraits "grand format" Ankama (planche

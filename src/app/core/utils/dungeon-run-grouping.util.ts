@@ -123,7 +123,12 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
 
     // Créneau archimonstre optionnel (voir étape 2) : consommé seulement s'il est réellement
     // présent dans ce combat précis, jamais sur la seule foi de `hasPreBossArchi`.
-    if (dungeon.hasPreBossArchi && j < records.length && !findDungeon(records[j]) && hasArchiEnemy(records[j])) {
+    if (
+      dungeon.hasPreBossArchi &&
+      j < records.length &&
+      !findDungeon(records[j]) &&
+      hasArchiEnemy(records[j])
+    ) {
       j++;
     }
 

@@ -155,7 +155,8 @@ export class WakfuAutocompleteComponent {
     return raw.map((r) => {
       const disabled =
         r.id !== null
-          ? byId.has(`${r.kind}:${r.id}`) || byNameUnresolved.has(`${r.kind}:${normalizeWakfuName(r.name)}`)
+          ? byId.has(`${r.kind}:${r.id}`) ||
+            byNameUnresolved.has(`${r.kind}:${normalizeWakfuName(r.name)}`)
           : byNameAny.has(`${r.kind}:${normalizeWakfuName(r.name)}`);
       return { ...r, disabled };
     });

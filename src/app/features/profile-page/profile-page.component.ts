@@ -236,9 +236,8 @@ export class ProfilePageComponent implements OnDestroy {
    * session). Une transition `height` en px, elle, est universellement supportée. Mesuré même
    * replié (l'élément observé n'est pas retiré du DOM, seul un ancêtre le clippe visuellement à 0),
    * donc la 1ère ouverture connaît déjà la bonne hauteur sans à-coup. */
-  private readonly characterAddPanelInner = viewChild<ElementRef<HTMLDivElement>>(
-    'characterAddPanelInner',
-  );
+  private readonly characterAddPanelInner =
+    viewChild<ElementRef<HTMLDivElement>>('characterAddPanelInner');
   protected readonly characterAddPanelHeight = signal(0);
   private characterAddPanelResizeObserver?: ResizeObserver;
 
