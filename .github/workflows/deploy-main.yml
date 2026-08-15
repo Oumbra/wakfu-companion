@@ -1,25 +1,26 @@
-name: Deploy production (GitHub Pages)
+name: Deploy main (Cloudflare Pages)
 
 on:
   push:
     branches:
-      - master
+      - main
+  # Déclenchement manuel via l'API (dispatch direct), indépendant de la
+  # livraison webhook des push — utile pendant l'incident GitHub Actions du
+  # 2026-08-06 (webhooks throttled), qui empêchait tout run de démarrer même
+  # sur un push tout neuf. Voir docs/plan-migration-serveur.md.
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  pages: write
-  id-token: write
+  contents: read
+  deployments: write
 
 concurrency:
-  group: pages-deploy
+  group: preview-deploy
   cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,65 +36,99 @@ jobs:
       - name: Generate data tables
         run: npm run generate
 
-      # --base-href explicite : ce dépôt n'est pas un user.github.io, le site
-      # est donc servi sous /wakfu-companion/ (pas à la racine du domaine).
-      # Le build standalone n'avait jamais eu besoin de <base href> (tout
-      # inliné dans un seul fichier, aucune requête d'asset relative) — ce
-      # réglage est nouveau avec un build classique multi-fichiers.
+      # Branche Neon DÉDIÉE à la preview (jamais la production, voir
+      # server/README.md) : DATABASE_URL, secret distinct de
+      # DATABASE_URL (utilisé par la prod, encore sur GitHub Pages — voir
+      # plus bas). Migrations jouées AVANT le build/déploiement du front.
+      - name: Run DB migrations (preview)
+        run: npm run db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Garde-fou : "drizzle-kit migrate" peut annoncer un succès sans avoir
+      # réellement tout appliqué (vécu le 2026-08-12, voir le commentaire en
+      # tête de server/db/verify-migrations.ts) — fait échouer le job plutôt
+      # que de déployer silencieusement sur un schéma en retard.
+      - name: Verify DB migrations (preview)
+        run: npm run db:verify-migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Pas de --base-href custom : Cloudflare Pages sert ce projet à la
+      # racine de son propre domaine (*.pages.dev), contrairement au hack de
+      # sous-dossier /wakfu-companion/preview/claude-dev/ nécessaire sur
+      # GitHub Pages (voir deploy-main.yml, qui reste sur GitHub Pages).
       - name: Build
-        run: npx ng build --base-href /wakfu-companion/
+        run: npx ng build
 
-      - name: Prepare deploy directory
+      # Rend DATABASE_URL disponible à l'exécution dans les Pages
+      # Functions (functions/api/v1/*, context.env.DATABASE_URL) — distinct
+      # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du
+      # build/CI. --env preview cible spécifiquement l'environnement preview
+      # du projet Cloudflare Pages (à vérifier au premier run : si le flag
+      # n'est pas reconnu par cette version de wrangler, adapter ici).
+      - name: Push DB secret to Cloudflare Pages (preview)
+        run: echo "$DATABASE_URL" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env preview
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Jeton de service statique protégeant les endpoints prix d'écriture/export (lot 4, prompt
+      # 4.2, voir functions/api/_price-auth.ts) — même mécanisme que le secret DB ci-dessus, sans
+      # rapport avec une session utilisateur. PRICE_SERVICE_TOKEN distinct de
+      # PRICE_SERVICE_TOKEN (prod, pas encore utilisé — prod reste sur GitHub Pages sans Functions
+      # pour l'instant), même convention que DATABASE_URL/DATABASE_URL.
+      - name: Push price service token to Cloudflare Pages (preview)
+        run: echo "$PRICE_SERVICE_TOKEN" | npx wrangler pages secret put PRICE_SERVICE_TOKEN --project-name wakfu-companion --env preview
+        env:
+          PRICE_SERVICE_TOKEN: ${{ secrets.PRICE_SERVICE_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Identifiants OAuth Discord/Google + origine publique (lot 5, prompt 5.1, voir
+      # functions/api/_auth.ts). Chaque secret est poussé SEULEMENT s'il est défini : tant qu'une
+      # application OAuth n'est pas créée côté fournisseur, les routes /auth/{provider}/* répondent
+      # 503 « fournisseur non configuré » et le reste de l'application (mode invité) est intact —
+      # jamais un déploiement en échec pour un secret manquant.
+      - name: Push OAuth secrets to Cloudflare Pages (preview)
         run: |
-          mkdir -p public_deploy
-          cp -r dist/wakfu-companion/browser/. public_deploy/
+          push_secret() {
+            if [ -n "$2" ]; then
+              echo "$2" | npx wrangler pages secret put "$1" --project-name wakfu-companion --env preview
+            else
+              echo "Secret $1 non défini, ignoré."
+            fi
+          }
+          push_secret DISCORD_CLIENT_ID "$DISCORD_CLIENT_ID"
+          push_secret DISCORD_CLIENT_SECRET "$DISCORD_CLIENT_SECRET"
+          push_secret GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
+          push_secret GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
+          push_secret PUBLIC_BASE_URL "$PUBLIC_BASE_URL"
+        env:
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          PUBLIC_BASE_URL: ${{ vars.PUBLIC_BASE_URL }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # keep_files: true est nécessaire car ce dépôt publie deux déploiements
-      # (production ici, preview dans deploy-preview.yml) sur la MÊME branche
-      # gh-pages, à des destination_dir différents — désactiver keep_files
-      # effacerait tout le contenu de la branche, y compris l'autre
-      # déploiement. Contrepartie acceptée : avec outputHashing "all", les
-      # fichiers JS/CSS hashés des anciens déploiements s'accumulent sans
-      # jamais être nettoyés (seul index.html est réellement remplacé à
-      # chaque déploiement). Sans impact fonctionnel, juste un peu de
-      # contenu mort sur gh-pages — pont temporaire avant la migration vers
-      # Cloudflare Pages (voir docs/plan-migration-serveur.md), qui fait des
-      # déploiements atomiques sans ce problème.
-      #
-      # gh-pages sert ici uniquement de zone de fusion entre prod (racine) et
-      # preview (preview/claude-dev/) — voir les étapes suivantes pour la
-      # publication réelle.
-      - name: Merge into gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      # La preview (claude/dev) est passée sur Cloudflare Pages (déploiement
+      # natif, sans hack de sous-dossier ni dépendance au workflow système
+      # GitHub instable — voir l'historique de deploy-main.yml) : le workflow
+      # système "pages build and deployment" de GitHub restait bloqué en
+      # deployment_queued jusqu'au timeout dès le passage au build
+      # multi-fichiers (lot 1, commit 3ab11c78), y compris via le pipeline
+      # Actions natif (upload-pages-artifact + deploy-pages, cf. tentatives
+      # du 2026-08-06). La prod (master) reste sur GitHub Pages pendant la
+      # migration (voir docs/plan-migration-serveur.md) — seule la preview
+      # est avancée sur la cible finale, functions/api/ compris.
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public_deploy
-          destination_dir: .
-          keep_files: true
-
-      # Publication via le pipeline GitHub Actions natif (upload-pages-artifact
-      # + deploy-pages) plutôt que de laisser le workflow système "pages build
-      # and deployment" (déclenché automatiquement par GitHub sur push
-      # gh-pages) s'en charger. Ce workflow système s'est révélé instable dès
-      # le passage au build multi-fichiers (lot 1, commit 3ab11c78) : la
-      # publication reste bloquée en "deployment_queued" jusqu'au timeout de
-      # 10 min sans jamais aboutir, y compris en repoussant un commit tout
-      # neuf sur gh-pages. En pilotant nous-mêmes le déploiement, on obtient
-      # la méthode officielle recommandée par GitHub (au lieu de dépendre du
-      # mécanisme "Deploy from a branch" historique) sans changer la
-      # coexistence prod/preview sur un seul site (contrainte de la
-      # plateforme, indépendante du mécanisme de déploiement).
-      - name: Checkout gh-pages (fusionné)
-        uses: actions/checkout@v4
-        with:
-          ref: gh-pages
-          path: gh-pages-site
-
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: gh-pages-site
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: wakfu-companion
+          directory: dist/wakfu-companion/browser
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
