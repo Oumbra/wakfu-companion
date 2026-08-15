@@ -136,8 +136,8 @@
                   <div class="avatar-preview">
                     @if (profile.avatarIndex() !== null) {
                       <app-class-portrait
-                        [className]="avatarClassOrder[profile.avatarIndex()!]"
-                        [gender]="avatarClassGender(avatarClassOrder[profile.avatarIndex()!])"
+                        [className]="avatarGridEntries[profile.avatarIndex()!].className"
+                        [gender]="avatarGridEntries[profile.avatarIndex()!].gender"
                         [alwaysColored]="true"
                       />
                     } @else {
@@ -158,14 +158,18 @@
                 <div class="profile-field identity-right">
                   <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
                   <div class="avatar-grid">
-                    @for (key of avatarClassOrder; track key; let i = $index) {
+                    @for (entry of avatarGridEntries; track entry.className + entry.gender; let i = $index) {
                       <button
                         class="avatar-cell-btn"
                         [class.selected]="profile.avatarIndex() === i"
-                        [appTooltip]="avatarClassLabel(key)"
+                        [appTooltip]="avatarEntryLabel(entry)"
                         (click)="chooseAvatar(i)"
                       >
-                        <app-class-portrait [className]="key" [gender]="avatarClassGender(key)" />
+                        <app-class-portrait
+                          [className]="entry.className"
+                          [gender]="entry.gender"
+                          [alwaysColored]="profile.avatarIndex() === i"
+                        />
                       </button>
                     }
                   </div>
