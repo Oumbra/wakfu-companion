@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Gender } from '../data/class-icons.data';
+import { MediaQuerySignal } from '../utils/media-query-signal';
 
 export type ClassPickerMode = 'icons' | 'portraits';
 
@@ -25,6 +26,8 @@ export interface ClassPickerRequest {
 export class ClassPickerService {
   readonly request = signal<ClassPickerRequest | null>(null);
 
+  private readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
+
   /** `initialMode` : mode d'affichage à l'ouverture ('icons' par défaut, comme avant) — l'utilisateur
    * peut ensuite basculer librement via le switch du picker, voir ClassPickerComponent. */
   open(
@@ -35,7 +38,15 @@ export class ClassPickerService {
     initialMode: ClassPickerMode = 'icons',
     switchModeBlocked: boolean = false,
   ): void {
-    this.request.set({ name, x, y, initialMode, switchModeBlocked, onChosen });
+    const isMobileMatches = this.isMobile.matches();
+    this.request.set({
+      name,
+      x,
+      y,
+      initialMode: isMobileMatches ? 'icons' : initialMode,
+      switchModeBlocked: isMobileMatches || switchModeBlocked,
+      onChosen,
+    });
   }
 
   close(): void {
