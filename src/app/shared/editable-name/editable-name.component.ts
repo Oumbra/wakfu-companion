@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, output, signal, viewChild } from '@angular/core';
+import { Component, computed, effect, ElementRef, inject, input, output, signal, viewChild } from '@angular/core';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { TooltipPosition } from '../../core/services/tooltip.service';
 import { IconComponent } from '../icon/icon.component';
@@ -25,7 +25,10 @@ export type EditableNameVariant = 'centered' | 'inline';
   imports: [TooltipDirective, IconComponent],
   host: {
     '[attr.data-variant]': 'variant()',
+    '[style.cursor]': 'editing() ? "text": "pointer"',
+    '(click)': 'start()'
   },
+  hostDirectives: [TooltipDirective],
   templateUrl: './editable-name.component.html',
   styleUrl: './editable-name.component.css',
 })
@@ -56,13 +59,18 @@ export class EditableNameComponent {
 
   protected readonly editing = signal(false);
   private readonly editInput = viewChild<ElementRef<HTMLInputElement>>('editInput');
+  private readonly tooltipDirective = inject(TooltipDirective);
+  private readonly tooltipText = computed(() => this.editing() ? null : this.editTooltip())
 
   constructor() {
     focusInlineEditInput(this.editing, this.editInput);
+    effect(() => this.tooltipDirective.appTooltip.set(this.tooltipText()))
   }
 
   protected start(): void {
+    if (this.editing()) return;
     this.editing.set(true);
+    this.tooltipDirective.hide();
   }
 
   /** Appelé à la fois par (blur) et par Entrée — le garde-fou `editing()` évite qu'un blur

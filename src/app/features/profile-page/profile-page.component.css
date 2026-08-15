@@ -664,15 +664,24 @@
   background: var(--surface-well);
   transition: border-color 0.15s ease;
 }
-.sound-item-add:focus-within {
-  border-color: var(--accent);
-}
 .sound-item-add-icon {
   flex-shrink: 0;
   font-size: 1.3rem;
   line-height: 1;
-  color: var(--accent);
   font-weight: 400;
+  color: var(--text-muted);
+}
+.sound-item-add:hover,
+.sound-item-add:focus-within {
+  border-color: var(--accent);
+}
+.sound-item-add:hover .sound-item-add-icon,
+.sound-item-add:focus-within .sound-item-add-icon {
+  color: var(--accent);
+}
+.sound-item-add:hover input::placeholder,
+.sound-item-add:focus-within input::placeholder {
+  color: var(--text-color);
 }
 
 .sound-item-grid,

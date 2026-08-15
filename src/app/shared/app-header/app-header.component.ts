@@ -57,7 +57,7 @@ export class AppHeaderComponent {
    * sur `*.pages.dev`, contrairement à la prod (GitHub Pages, `oumbra.github.io`) — seul signal
    * fiable côté client, aucun flag d'environnement n'est embarqué au build. Sert à distinguer
    * visuellement le titre de l'app pour ne jamais confondre les deux avec de vraies données. */
-  protected readonly isPreviewEnv = location.hostname.endsWith('.pages.dev');
+  protected readonly isPreviewEnv = location.hostname.startsWith('claude-dev.');
 
   /** Logo + titre ramènent à la page principale, quelle que soit la vue courante — même
    * comportement que `onChangeFile` mais sans oublier le fichier connecté. */
