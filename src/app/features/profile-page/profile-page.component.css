@@ -651,9 +651,28 @@
   color: var(--text-muted);
 }
 
+/* Cadre pointillé façon "zone de dépôt" (même pattern que `.drop-zone` en page setup, voir
+   CLAUDE.md — `--border-strong` sert explicitement aux bordures pointillées) plutôt qu'un simple
+   champ de recherche : appuie le côté "ajouter" de l'action, avec le glyphe + en accent. */
 .sound-item-add {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 2px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-well);
+  transition: border-color 0.15s ease;
+}
+.sound-item-add:focus-within {
+  border-color: var(--accent);
+}
+.sound-item-add-icon {
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--accent);
+  font-weight: 400;
 }
 
 .sound-item-grid,

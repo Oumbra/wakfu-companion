@@ -10,6 +10,17 @@
 .wakfu-autocomplete input {
   width: 100%;
 }
+/* Variante `bare` (voir `bare` @Input) : le fond/bordure/radius habituels de `input[type='text']`
+   (styles.css) sont neutralisés, l'appelant les remplace par son propre habillage autour. */
+.wakfu-autocomplete.bare input {
+  background: transparent;
+  border: none;
+  padding: 0;
+  border-radius: 0;
+}
+.wakfu-autocomplete.bare input:focus {
+  outline: none;
+}
 
 .wakfu-autocomplete-list {
   position: absolute;
