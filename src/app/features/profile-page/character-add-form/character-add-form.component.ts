@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { Gender } from '../../../core/data/class-icons.data';
-import { getBreedAvatarIndex } from '../../../core/data/class-breeds.data';
+import { getAvatarGridIndex } from '../../../core/data/class-portraits.data';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import { AvatarIconComponent } from '../../../shared/avatar-icon/avatar-icon.component';
@@ -34,11 +34,11 @@ export class CharacterAddFormComponent {
   protected readonly pendingClass = signal<{ className: string; gender: Gender } | null>(null);
   protected readonly name = signal('');
 
-  /** Portrait (planche Ankama, voir class-breeds.data.ts) plutôt que la petite icône carrée : plus
-   * lisible dans ce formulaire, cohérent avec le mode 'portraits' du picker ouvert ci-dessous. */
+  /** Portrait (planche Ankama, voir class-portraits.data.ts) plutôt que la petite icône carrée :
+   * plus lisible dans ce formulaire, cohérent avec le mode 'portraits' du picker ouvert ci-dessous. */
   protected readonly avatarIndex = computed(() => {
     const pending = this.pendingClass();
-    return pending ? getBreedAvatarIndex(pending.className, pending.gender) : null;
+    return pending ? getAvatarGridIndex(pending.className, pending.gender) : null;
   });
 
   protected readonly canAdd = computed(
