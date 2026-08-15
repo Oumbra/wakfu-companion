@@ -77,6 +77,38 @@
 .filters-toggle:hover {
   background: var(--surface-raised);
 }
+/* Dégradé animé, actif uniquement quand au moins un filtre est appliqué (`has-filters`, posé
+   depuis le template selon `filters().length`) : signale doucement en continu qu'un filtrage est
+   en cours, même repliée. Le `:hover` ci-dessus reprend la main sur `background` normalement,
+   mais un dégradé anime `background-position`, pas `background` lui-même — donc pas de conflit. */
+.filters-toggle.has-filters {
+  background: linear-gradient(
+    135deg,
+    var(--surface-well) 0%,
+    color-mix(in srgb, var(--accent) 18%, var(--surface-well)) 50%,
+    var(--surface-well) 100%
+  );
+  background-size: 220% 220%;
+  animation: filters-toggle-glow 7s ease-in-out infinite;
+}
+.filters-toggle.has-filters:hover {
+  background: var(--surface-raised);
+  animation: none;
+}
+@keyframes filters-toggle-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .filters-toggle.has-filters {
+    animation: none;
+  }
+}
 .filters-toggle-count {
   font-family: monospace;
   font-size: 0.7rem;
