@@ -16,6 +16,7 @@ import {
   Gender,
 } from '../../core/data/class-icons.data';
 import { getClassName } from '../../core/data/class-names.data';
+import { CLASS_PORTRAIT_ORDER } from '../../core/data/class-portraits.data';
 import { ClassPickerMode } from '../../core/services/class-picker.service';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
@@ -34,10 +35,12 @@ interface ClassOption {
   icon: string;
 }
 
-// Ordre stable par clé interne (indépendant de la locale) : trier par libellé localisé
-// mélangerait l'agencement de la grille à chaque changement de langue — voir class-names.data.ts
-// pour les libellés eux-mêmes, très différents d'une langue à l'autre.
-const CLASS_KEYS = Object.keys(CLASS_ICON_DATA_URI).sort();
+// Même ordre que la grille "Avatar" du profil (CLASS_PORTRAIT_ORDER) plutôt qu'un tri
+// alphabétique par clé interne — cohérence visuelle entre les deux endroits où l'utilisateur
+// parcourt les 18 classes. Indépendant de la locale : trier par libellé localisé mélangerait
+// l'agencement de la grille à chaque changement de langue — voir class-names.data.ts pour les
+// libellés eux-mêmes, très différents d'une langue à l'autre.
+const CLASS_KEYS = CLASS_PORTRAIT_ORDER;
 const ICON_MAPS: Record<Gender, Readonly<Record<string, string>>> = {
   m: CLASS_ICON_DATA_URI,
   f: CLASS_ICON_FEMALE_DATA_URI,
