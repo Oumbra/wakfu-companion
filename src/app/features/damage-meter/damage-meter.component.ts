@@ -7,7 +7,6 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { IconComponent } from '../../shared/icon/icon.component';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /**
@@ -20,7 +19,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-damage-meter',
-  imports: [EntityDamageListComponent, TranslatePipe, IconComponent, TooltipDirective],
+  imports: [EntityDamageListComponent, TranslatePipe, TooltipDirective],
   templateUrl: './damage-meter.component.html',
   styleUrl: './damage-meter.component.css',
 })
