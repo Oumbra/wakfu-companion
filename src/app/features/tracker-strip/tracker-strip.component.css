@@ -56,10 +56,10 @@
      la hauteur de `.kpi-strip`, laquelle varie légèrement selon qu'une
      scrollbar horizontale native s'affiche ou non. */
   align-items: flex-start;
-  gap: 12px;
+  gap: 20px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 10px 4px 16px;
+  padding: 10px 15px 16px;
   flex: 1;
   min-width: 0;
 }
@@ -405,12 +405,19 @@
   border-radius: 50%;
   background: var(--surface-active);
   border: 1px solid var(--border-strong);
-  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
   cursor: default;
+}
+/* Même paire de tokens que victoire/défaite (--btn-active-green/red, styles.css) — bénéficie déjà
+   du remplacement daltonien (bleu/orange) sans rien de spécifique à gérer ici. */
+.kpi-mode-badge.is-up {
+  color: var(--btn-active-green);
+}
+.kpi-mode-badge.is-down {
+  color: var(--btn-active-red);
 }
 
 .kpi-count-badge {
@@ -431,6 +438,13 @@
    `countdownProgressTooltip` — pas de barre de progression, jugée trop lourde pour 58px). */
 .kpi-count-badge.is-fraction {
   color: var(--accent);
+}
+/* Au-delà de 6 chiffres affichés (voir `isLongCount`), le décalage `right:-7px` fait déborder le
+   badge bien au-delà de la tuile 58px — trop large pour rester lisible (le texte le plus à gauche,
+   ex. la valeur actuelle d'un "3800/10800", sort du cadre visible). Retiré au-delà du seuil : le
+   badge reste flush avec le bord droit de la tuile plutôt que de déborder dessus. */
+.kpi-count-badge.is-long {
+  right: 0;
 }
 
 .kpi-del {

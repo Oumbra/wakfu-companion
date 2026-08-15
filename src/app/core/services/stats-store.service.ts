@@ -388,6 +388,14 @@ export class StatsStoreService {
     return this.watchlist().some((w) => w.name.toLowerCase() === name);
   }
 
+  /** Entrée déjà suivie correspondant exactement à `(name, catalogId)`, ou `undefined` — utilisé
+   * par les appelants qui doivent décider create-vs-update plutôt que toujours créer/écraser (ex.
+   * RecipeQuantityModalComponent : cumuler la cible sur une entrée décompte déjà suivie plutôt que
+   * l'écraser, voir increaseWatchlistCountdownTarget). */
+  findWatchedEntry(name: string, catalogId?: number | null): WatchlistEntry | undefined {
+    return this.watchlist().find((w) => this.matchesWatched(w, name, catalogId));
+  }
+
   /**
    * Vrai si `w` est la ligne visée par `(name, catalogId)`. `catalogId` **non fourni**
    * (`undefined`, distinct d'un `null` explicite) : repli sur une correspondance par nom seul,
@@ -458,6 +466,24 @@ export class StatsStoreService {
         Math.min(w.countdownTarget, Math.floor(Number.isFinite(count) ? count : 0)),
       );
       return { ...w, count: clamped };
+    });
+    this.watchlist.set(updated);
+    this.userData.write('watchlist', updated);
+  }
+
+  /** Ajoute `amount` à LA FOIS à la cible et à la valeur actuelle d'une entrée décompte déjà
+   * suivie — à la différence de setWatchlistCountdownTarget (qui remplace la cible et repart d'un
+   * décompte plein), ceci CUMULE un nouveau besoin sur un décompte déjà entamé sans perdre
+   * l'avancement déjà comptabilisé (ex. RecipeQuantityModalComponent, confirmer une 2e recette qui
+   * redemande un objet déjà suivi : le besoin s'additionne). Sans effet si l'entrée n'existe pas
+   * encore ou n'est pas en mode 'down' — l'appelant doit vérifier via findWatchedEntry et créer
+   * l'entrée lui-même le cas échéant (voir confirm() de RecipeQuantityModalComponent). */
+  increaseWatchlistCountdownTarget(name: string, amount: number, catalogId?: number | null): void {
+    const delta = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
+    if (delta === 0) return;
+    const updated = this.watchlist().map((w) => {
+      if (!this.matchesWatched(w, name, catalogId) || w.mode !== 'down') return w;
+      return { ...w, countdownTarget: w.countdownTarget + delta, count: w.count + delta };
     });
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);

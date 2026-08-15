@@ -24,7 +24,7 @@ export type AppIconName =
   | 'arrow-down';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-f38823eb.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-e68e6a00.svg';
 
 @Component({
   selector: 'app-icon',

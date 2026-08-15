@@ -51,11 +51,17 @@
   <!-- Repère de mode KPI suivi (incrémental/décompte, tracker-strip / tracker) : deux symboles
        distincts plutôt qu'une rotation CSS de l'un vers l'autre — IconComponent pose
        `:host{display:contents}` (voir icon.component.css), donc un transform posé par l'appelant
-       sur <app-icon> n'a aucune boîte à transformer. -->
+       sur <app-icon> n'a aucune boîte à transformer. Chaque flèche porte une étincelle isolée
+       (mirroir l'une de l'autre par rapport au centre) : "+" en haut-droite pour l'incrémental,
+       "−" en bas-gauche pour le décompte (mêmes coordonnées tournées à 180°, "+" -> "−" en
+       retirant la branche verticale) — couleur posée par l'appelant (voir .kpi-mode-badge.is-up/
+       .is-down), pas ici. -->
   <symbol id="arrow-up" viewBox="0 0 24 24">
     <path d="M12 19V5M6 11l6-6 6 6" />
+    <path d="M16.2 4.5h5.6M19 1.7v5.6" />
   </symbol>
   <symbol id="arrow-down" viewBox="0 0 24 24">
     <path d="M12 5v14M6 13l6 6 6-6" />
+    <path d="M2.2 19.5h5.6" />
   </symbol>
 </svg>

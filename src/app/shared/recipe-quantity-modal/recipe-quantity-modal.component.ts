@@ -120,9 +120,19 @@ export class RecipeQuantityModalComponent {
     walk(req.ingredients, multiplier, '');
 
     for (const [id, { name, target }] of targets) {
-      this.stats.addWatchedItem(name, id);
-      this.stats.setWatchlistMode(name, 'down', id);
-      this.stats.setWatchlistCountdownTarget(name, target, id);
+      // Un objet déjà suivi en décompte (ex. confirmation d'une recette précédente qui le
+      // redemandait déjà) cumule le nouveau besoin sur l'existant au lieu de repartir d'un
+      // décompte plein — sans quoi valider une 2e recette écraserait la progression déjà faite
+      // sur la 1re (bug réel signalé). Toute autre situation (pas encore suivi, ou suivi en
+      // mode 'up') garde le comportement d'origine : (re)crée l'entrée en décompte plein.
+      const existing = this.stats.findWatchedEntry(name, id);
+      if (existing?.mode === 'down') {
+        this.stats.increaseWatchlistCountdownTarget(name, target, id);
+      } else {
+        this.stats.addWatchedItem(name, id);
+        this.stats.setWatchlistMode(name, 'down', id);
+        this.stats.setWatchlistCountdownTarget(name, target, id);
+      }
     }
     this.recipeTracking.confirm();
   }

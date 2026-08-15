@@ -124,6 +124,8 @@
       >
         <span
           class="kpi-mode-badge"
+          [class.is-up]="entry.mode === 'up'"
+          [class.is-down]="entry.mode === 'down'"
           [appTooltip]="watchlist.modeTooltip(entry)"
           tooltipPosition="bottom-right"
           (click)="$event.stopPropagation()"
@@ -182,7 +184,11 @@
         >
           <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
         </button>
-        <span class="kpi-count-badge" [class.is-fraction]="entry.mode === 'down'">
+        <span
+          class="kpi-count-badge"
+          [class.is-fraction]="entry.mode === 'down'"
+          [class.is-long]="watchlist.isLongCount(entry)"
+        >
           @if (entry.mode === 'down') {
             {{ entry.count }}/{{ entry.countdownTarget }}
           } @else {
