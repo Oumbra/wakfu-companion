@@ -174,6 +174,21 @@ export class WatchlistTileController {
       : 0;
   }
 
+  /** Vrai quand le badge compact (`.kpi-count-badge`/`.kpi-card-count-badge`) affiche plus de 6
+   * chiffres au total — en décompte, cumul des chiffres du compteur ET de la cible (le texte est
+   * une fraction "actuel/cible", voir template), en incrémental juste ceux du compteur. Un texte
+   * aussi long déborde largement de la tuile 58px si le badge garde son décalage `right:-7px`
+   * habituel (conçu pour "50/50", pas "3800/10800", voir CLAUDE.md/bug réel signalé) — le template
+   * s'appuie sur ce booléen pour retirer ce décalage au-delà du seuil (voir `.is-long`). */
+  isLongCount(entry: WatchlistEntry): boolean {
+    const digitCount = (n: number) => Math.abs(Math.trunc(n)).toString().length;
+    const total =
+      entry.mode === 'down'
+        ? digitCount(entry.count) + digitCount(entry.countdownTarget)
+        : digitCount(entry.count);
+    return total > 6;
+  }
+
   /** Texte du tooltip du badge de mode (coin haut-gauche de la tuile/carte, voir
    * `.kpi-mode-badge`/`.kpi-card-mode-badge`) — mêmes clés que le switch du formulaire d'ajout. */
   modeTooltip(entry: WatchlistEntry): string {

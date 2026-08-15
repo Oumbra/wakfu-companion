@@ -82,6 +82,8 @@
           >
             <span
               class="kpi-card-mode-badge"
+              [class.is-up]="entry.mode === 'up'"
+              [class.is-down]="entry.mode === 'down'"
               [appTooltip]="watchlist.modeTooltip(entry)"
               (click)="$event.stopPropagation()"
             >

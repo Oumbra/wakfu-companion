@@ -240,11 +240,18 @@
   border-radius: 50%;
   background: var(--surface-active);
   border: 1px solid var(--border-strong);
-  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
+}
+/* Même paire de tokens que victoire/défaite (--btn-active-green/red, styles.css) — bénéficie déjà
+   du remplacement daltonien (bleu/orange) sans rien de spécifique à gérer ici. */
+.kpi-card-mode-badge.is-up {
+  color: var(--btn-active-green);
+}
+.kpi-card-mode-badge.is-down {
+  color: var(--btn-active-red);
 }
 .kpi-card-reset {
   flex-shrink: 0;
