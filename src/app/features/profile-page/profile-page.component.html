@@ -420,11 +420,13 @@
 
               <div class="subheading">{{ 'profile.followedItemsLabel' | t }}</div>
               <div class="sound-item-add">
+                <span class="sound-item-add-icon" aria-hidden="true">+</span>
                 <app-wakfu-autocomplete
                   domain="item"
                   [placeholder]="'profile.soundItemPlaceholder' | t"
                   [existingNames]="existingSoundItemNames()"
                   [showRecipeButton]="false"
+                  [bare]="true"
                   (selected)="addSoundItem($event)"
                 />
               </div>

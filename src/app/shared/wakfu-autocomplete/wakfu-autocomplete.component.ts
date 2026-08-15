@@ -73,6 +73,10 @@ export class WakfuAutocompleteComponent {
    * d'objets pour les alertes sonores de la page profil) — seul le suivi (tracker/tracker-strip)
    * a vocation à ouvrir la modale de recette depuis cette liste. */
   readonly showRecipeButton = input(true);
+  /** Dépouille le champ de son fond/bordure propres (voir wakfu-autocomplete.component.css) —
+   * pour un appelant qui pose déjà son propre habillage autour (ex. `.sound-item-add` en page
+   * profil, cadre pointillé façon zone de dépôt) et ne veut pas d'un double encadrement. */
+  readonly bare = input(false);
 
   readonly selected = output<WakfuSearchResult>();
   /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
