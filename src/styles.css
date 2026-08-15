@@ -450,6 +450,10 @@ button.icon-btn.help-icon-btn {
 /* --- Scrollbars --- */
 ::-webkit-scrollbar {
   width: 8px;
+  /* `height` (épaisseur d'une barre HORIZONTALE, ex. `.kpi-strip`) manquait ici : sans elle, le
+     navigateur retombe sur une épaisseur par défaut bien plus grosse que les 8px de `width`
+     (barre verticale) — décalage visible signalé par l'utilisateur sur la bande de Suivi. */
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
