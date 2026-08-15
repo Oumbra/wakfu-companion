@@ -12,7 +12,7 @@ import { Gender } from './class-icons.data';
  * annulée (2026-08-15) faute d'un résultat correct sur certaines cases ; à refaire proprement, ne
  * pas répéter la même approche sans corriger le défaut signalé.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-db1a9e34.png';
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-ade44514.png';
 export const CLASS_PORTRAITS_SPRITE_COLS = 2;
 export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
 
