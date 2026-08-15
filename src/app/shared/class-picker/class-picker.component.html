@@ -10,7 +10,9 @@
   [style.top.px]="displayPosition().top"
 >
   <div class="class-picker-title-row">
-    <span class="class-picker-title">{{ 'damageMeter.classOf' | t:{ name: position().name } }}</span>
+    <span class="class-picker-title">{{
+      'damageMeter.classOf' | t: { name: position().name }
+    }}</span>
     <div class="class-picker-switches">
       @if (!switchModeBlocked()) {
         <div class="icon-switch mode-switch">
@@ -22,7 +24,14 @@
             [appTooltip]="'classPicker.showIcons' | t"
             (click)="setMode('icons')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <rect x="4" y="4" width="7" height="7" rx="1.5" />
               <rect x="13" y="4" width="7" height="7" rx="1.5" />
               <rect x="4" y="13" width="7" height="7" rx="1.5" />
@@ -36,7 +45,14 @@
             [appTooltip]="'classPicker.showPortraits' | t"
             (click)="setMode('portraits')"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <circle cx="12" cy="8" r="4" />
               <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" />
             </svg>
@@ -69,11 +85,7 @@
   @if (mode() === 'icons') {
     <div class="class-picker-grid">
       @for (option of classOptions(); track option.key) {
-        <button
-          class="class-picker-item"
-          [appTooltip]="option.label"
-          (click)="choose(option.key)"
-        >
+        <button class="class-picker-item" [appTooltip]="option.label" (click)="choose(option.key)">
           <img [src]="option.icon" alt="" />
         </button>
       }
@@ -81,16 +93,14 @@
   } @else {
     <div class="class-picker-grid class-picker-grid-portraits">
       @for (option of classOptions(); track option.key) {
-        <button
-          class="class-picker-item class-picker-item-portrait"
-          (click)="choose(option.key)"
-        >
+        <button class="class-picker-item class-picker-item-portrait" (click)="choose(option.key)">
           <app-class-portrait [className]="option.key" [gender]="gender()" [alwaysColored]="true" />
           <span
             class="class-picker-portrait-label"
             [appTooltip]="option.label"
             [tooltipOnlyIfTruncated]="true"
-          >{{ option.label }}</span>
+            >{{ option.label }}</span
+          >
         </button>
       }
     </div>

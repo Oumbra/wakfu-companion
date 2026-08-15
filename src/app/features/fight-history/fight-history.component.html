@@ -66,7 +66,10 @@
                  quasi identique à celui d'un combat isolé (horloge/tooltip date, image, badge de
                  résultat), remplacé ici par le nombre de combats + la durée totale du run — voir
                  dungeon-run-grouping.util.ts pour les règles de regroupement. -->
-            <div class="dungeon-run" [class.expanded]="!isDungeonRunCollapsed(entry.representative.id)">
+            <div
+              class="dungeon-run"
+              [class.expanded]="!isDungeonRunCollapsed(entry.representative.id)"
+            >
               <div
                 class="fight-summary dungeon-run-summary"
                 (click)="toggleDungeonRunCollapsed(entry.representative.id)"
@@ -94,11 +97,12 @@
                 </span>
                 <span class="dungeon-run-name">{{ entry.dungeon[i18n.locale()] }}</span>
                 <span class="dungeon-run-meta">
-                  {{ fightCountLabel(entry.fights.length) }} - {{
-                    formatDuration(dungeonRunDurationMs(entry))
-                  }}
+                  {{ fightCountLabel(entry.fights.length) }} -
+                  {{ formatDuration(dungeonRunDurationMs(entry)) }}
                 </span>
-                <span class="caret" [class.expanded]="!isDungeonRunCollapsed(entry.representative.id)"
+                <span
+                  class="caret"
+                  [class.expanded]="!isDungeonRunCollapsed(entry.representative.id)"
                   >▸</span
                 >
               </div>
@@ -194,7 +198,9 @@
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
                   @if (record.loot.length > 0) {
-                    <span class="loot-count">{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span>
+                    <span class="loot-count"
+                      >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
+                    >
                   }
                 </div>
                 @if (record.loot.length > 1) {

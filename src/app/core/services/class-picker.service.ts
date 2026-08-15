@@ -33,7 +33,7 @@ export class ClassPickerService {
     y: number,
     onChosen: (className: string, gender: Gender) => void,
     initialMode: ClassPickerMode = 'icons',
-    switchModeBlocked: boolean = false
+    switchModeBlocked: boolean = false,
   ): void {
     this.request.set({ name, x, y, initialMode, switchModeBlocked, onChosen });
   }

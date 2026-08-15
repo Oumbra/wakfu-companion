@@ -52,7 +52,9 @@ export class PurchasesComponent {
 
   /** Achats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedPurchases). */
-  private readonly records = computed<readonly PurchaseRecord[]>(() => this.archive.mergedPurchases());
+  private readonly records = computed<readonly PurchaseRecord[]>(() =>
+    this.archive.mergedPurchases(),
+  );
 
   protected readonly searchQuery = signal('');
   protected readonly sortOrder = signal<PurchaseSortOrder>('desc');
