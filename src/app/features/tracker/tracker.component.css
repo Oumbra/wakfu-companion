@@ -144,31 +144,38 @@
 .kpi-card {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
-  flex: 1 1 160px;
-  min-width: 160px;
-  padding: 10px 12px;
+  flex: 1 1 150px;
+  min-width: 150px;
+  padding: 8px;
   border-radius: 10px;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   background: var(--surface-raised);
 }
 
-.kpi-card-top {
+.kpi-card-icon {
   display: flex;
   align-items: center;
-  gap: 8px;
-  /* Réserve la place de `.kpi-card-del`/`.kpi-card-select-checkbox` (position:absolute, coin
-     haut-droit) — sans quoi `.kpi-card-pct` se retrouverait dessous. */
-  padding-right: 20px;
-}
-.kpi-card-icon {
   flex-shrink: 0;
   border-radius: 6px;
+}
+.kpi-card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: calc(100% - 35px);
+}
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 .kpi-card-name {
   flex: 1;
   min-width: 0;
+  max-width: calc(100% - 35px);
   display: block;
   font-weight: 700;
   font-size: 0.84rem;
@@ -186,14 +193,16 @@
 .kpi-card-value-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: space-between;
+  width: 100px;
 }
 .kpi-card-value {
   font-family: monospace;
   font-weight: 700;
   font-size: 1.05rem;
   color: var(--kama-color);
+  width: 100px;
+  text-align: center;
 }
 /* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
    `.kpi-card-value` en lecture seule (mode 'up'). La cible, elle, ne se modifie plus après la
@@ -201,15 +210,14 @@
    (plutôt que --accent) : cohérent avec la bande desktop, où le même choix a été fait pour la
    valeur courante du décompte (voir tracker-strip.component.css). */
 .kpi-card-value-input {
-  min-width: 64px;
-  max-width: 100px;
+  width: 50px;
   padding: 4px 8px;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
-  background: var(--surface-well);
+  background: transparent;
   font-family: monospace;
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-weight: 600;
+  font-size: 14;
   color: var(--kama-color);
   text-align: center;
 }
@@ -219,8 +227,8 @@
 }
 .kpi-card-reset {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   color: var(--text-muted);
   background: transparent;
@@ -238,22 +246,24 @@
    création (voir CLAUDE.md), au même titre que le mode. Poids réduit (500) : reste secondaire
    face à la valeur actuelle, seule à vraiment bouger. */
 .kpi-card-target-row {
-  margin-top: 2px;
-  padding-top: 6px;
-  border-top: 1px solid var(--tint-strong);
-  text-align: center;
+  display: flex;
+  width: 100px;
 }
 .kpi-card-target {
+  width: 50px;
+  text-align: center;
+  border-top: 1px solid var(--tint-strong);
   font-family: monospace;
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 14px;
   color: var(--text-muted);
+  padding-top: 4px;
 }
 
 .kpi-card-del {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: -8.5px;
+  right: -8.5px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -279,8 +289,8 @@
    case à cocher plutôt que croix, coche SVG affichée uniquement à l'état coché (voir template). */
 .kpi-card-select-checkbox {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: -8.5px;
+  right: -8.5px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
