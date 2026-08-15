@@ -1,10 +1,14 @@
 import { Injectable, signal } from '@angular/core';
 import { Gender } from '../data/class-icons.data';
 
+export type ClassPickerMode = 'icons' | 'portraits';
+
 export interface ClassPickerRequest {
-  name: string;
+  name: string | null;
   x: number;
   y: number;
+  initialMode: ClassPickerMode;
+  switchModeBlocked: boolean;
   onChosen: (className: string, gender: Gender) => void;
 }
 
@@ -21,13 +25,17 @@ export interface ClassPickerRequest {
 export class ClassPickerService {
   readonly request = signal<ClassPickerRequest | null>(null);
 
+  /** `initialMode` : mode d'affichage à l'ouverture ('icons' par défaut, comme avant) — l'utilisateur
+   * peut ensuite basculer librement via le switch du picker, voir ClassPickerComponent. */
   open(
-    name: string,
+    name: string | null,
     x: number,
     y: number,
     onChosen: (className: string, gender: Gender) => void,
+    initialMode: ClassPickerMode = 'icons',
+    switchModeBlocked: boolean = false
   ): void {
-    this.request.set({ name, x, y, onChosen });
+    this.request.set({ name, x, y, initialMode, switchModeBlocked, onChosen });
   }
 
   close(): void {

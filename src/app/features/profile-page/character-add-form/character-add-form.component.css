@@ -1,23 +1,70 @@
 .character-add-form {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
   width: 100%;
+  flex-wrap: wrap;
 }
-.roster-class-pick-icon {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
+
+/* Déclencheur du ClassPicker (mode 'portraits', voir character-add-form.component.ts) : même
+   traitement visuel que .avatar-preview (profile-page.component.css) pour rester cohérent avec
+   l'avatar de profil, en bouton interactif. */
+.character-add-class-trigger {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: linear-gradient(145deg, var(--surface-raised), var(--surface-well));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
-.roster-character-name-input {
-  flex-grow: 1;
+.character-add-class-trigger:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+.character-add-class-trigger app-avatar-icon {
+  width: 100%;
+  height: 100%;
+}
+.character-add-class-trigger-empty {
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--accent);
+}
+
+.character-add-fields {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 220px;
   min-width: 0;
 }
-.roster-class-pick-btn {
-  width: 32px;
-  height: 32px;
+.character-add-name-input {
+  flex: 1 1 auto;
+  min-width: 0;
 }
-.roster-character-add-btn {
-  width: 32px;
-  height: 32px;
+.character-add-submit-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 800px) {
+  .character-add-class-trigger {
+    width: 32px;
+    height: 32px;
+    border-width: 1px;
+  }
+  .character-add-class-trigger-empty {
+    font-size: 15px;
+    font-weight: 400px;
+  }
 }

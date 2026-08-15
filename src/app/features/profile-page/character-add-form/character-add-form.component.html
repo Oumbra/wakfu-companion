@@ -1,27 +1,32 @@
 <div class="character-add-form">
   <button
-    class="icon-btn roster-class-pick-btn"
+    class="character-add-class-trigger"
     type="button"
     [appTooltip]="'profile.rosterPickClass' | t"
     (click)="openClassPicker($event)"
   >
-    <img [src]="icon()" alt="" class="roster-class-pick-icon" />
+    @if (avatarIndex() !== null) {
+      <app-avatar-icon [index]="avatarIndex()!" />
+    } @else {
+      <span class="character-add-class-trigger-empty">?</span>
+    }
   </button>
-  <input
-    type="text"
-    class="roster-character-name-input"
-    [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
-    [value]="name()"
-    (input)="setName($any($event.target).value)"
-    (keydown.enter)="commit(); $event.preventDefault()"
-  />
-  <button
-    class="icon-btn roster-character-add-btn"
-    type="button"
-    [disabled]="!canAdd()"
-    [appTooltip]="'tracker.add' | t"
-    (click)="commit()"
-  >
-    +
-  </button>
+  <div class="character-add-fields">
+    <input
+      type="text"
+      class="character-add-name-input"
+      [placeholder]="'profile.rosterCharacterNamePlaceholder' | t"
+      [value]="name()"
+      (input)="setName($any($event.target).value)"
+      (keydown.enter)="commit(); $event.preventDefault()"
+    />
+    <button
+      class="primary-btn character-add-submit-btn"
+      type="button"
+      [disabled]="!canAdd()"
+      (click)="commit()"
+    >
+      {{ 'tracker.add' | t }}
+    </button>
+  </div>
 </div>

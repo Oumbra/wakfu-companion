@@ -69,7 +69,10 @@ export class TabBarComponent implements OnDestroy {
   readonly listTooltip = input('profile.tabListTooltip');
 
   readonly activeIdChange = output<string>();
-  readonly remove = output<string>();
+  /** Émet l'`Event` d'origine avec l'id (pas juste l'id) : l'appelant en a besoin comme ancre pour
+   * une popover de confirmation de suppression (voir ConfirmDeleteService) positionnée sur la
+   * croix cliquée. */
+  readonly remove = output<{ id: string; event: Event }>();
 
   private readonly barEl = viewChild<ElementRef<HTMLDivElement>>('barEl');
   private readonly tabBtns = viewChildren<ElementRef<HTMLButtonElement>>('tabBtn');
@@ -141,7 +144,7 @@ export class TabBarComponent implements OnDestroy {
 
   protected onRemove(event: Event, id: string): void {
     event.stopPropagation();
-    this.remove.emit(id);
+    this.remove.emit({ id, event });
   }
 
   /** Ouvre la feuille listant tous les onglets (voir TabSheetService) — utile quand la barre

@@ -10,9 +10,11 @@ import { I18nService } from '../core/services/i18n.service';
 export class TranslatePipe implements PipeTransform {
   private readonly i18n = inject(I18nService);
 
-  /** `params` : interpolation `{{placeholder}}` (voir I18nService.t), pour les libellés
-   * paramétrés directement en template plutôt que via une méthode du composant. */
-  transform(key: string, params?: Record<string, string | number>): string {
+  /** `params` : interpolation `{{placeholder}}` + blocs conditionnels `{{#if param}}` (voir
+   * I18nService.t), pour les libellés paramétrés directement en template plutôt que via une
+   * méthode du composant. `null`/`undefined` acceptés (paramètre optionnel non casté côté
+   * appelant, ex. `position().name` du ClassPicker). */
+  transform(key: string, params?: Record<string, string | number | null | undefined>): string {
     return this.i18n.t(key, params);
   }
 }

@@ -20,13 +20,14 @@ import { ConfirmDeleteService } from '../../core/services/confirm-delete.service
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
+import { ClassPortraitComponent } from '../../shared/class-portrait/class-portrait.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { getBreedAvatarIndex } from '../../core/data/class-breeds.data';
 import {
-  BREEDS_SPRITE_COLS,
-  BREEDS_SPRITE_ROWS,
-  getBreedAvatarIndex,
-} from '../../core/data/class-breeds.data';
+  CLASS_PORTRAIT_ORDER,
+  getClassPortraitDefaultGender,
+} from '../../core/data/class-portraits.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -36,7 +37,8 @@ import {
   RosterAccount,
   RosterCharacter,
 } from '../../core/services/character-roster.service';
-import { getClassIconUri } from '../../core/data/class-icons.data';
+import { Gender, getClassIconUri } from '../../core/data/class-icons.data';
+import { getClassName } from '../../core/data/class-names.data';
 import {
   CharacterAddFormComponent,
   NewRosterCharacter,
@@ -49,7 +51,6 @@ import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
-import { CharacterAddModalService } from '../../core/services/character-add-modal.service';
 
 type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
 
@@ -87,6 +88,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
   selector: 'app-profile-page',
   imports: [
     AvatarIconComponent,
+    ClassPortraitComponent,
     ItemIconComponent,
     TranslatePipe,
     WakfuAutocompleteComponent,
@@ -110,7 +112,6 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly gameServers = inject(GameServerService);
   protected readonly colorblind = inject(ColorblindService);
   protected readonly helpModal = inject(HelpModalService);
-  protected readonly characterAddModal = inject(CharacterAddModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
@@ -123,10 +124,9 @@ export class ProfilePageComponent implements OnDestroy {
    * `display:none/flex` pur CSS (voir `effectiveCharacterViewMode` ci-dessous). */
   protected readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
 
-  protected readonly avatarIndexes = Array.from(
-    { length: BREEDS_SPRITE_COLS * BREEDS_SPRITE_ROWS },
-    (_, i) => i,
-  );
+  /** Ordre des tuiles de la grille "Avatar" (voir class-portraits.data.ts) — l'index dans ce
+   * tableau EST `profile.avatarIndex()` (schéma v2, voir ProfileService). */
+  protected readonly avatarClassOrder = CLASS_PORTRAIT_ORDER;
 
   /** 3 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché, libellé
    * complet en tooltip. Ordre = ordre visuel du switch ; `.icon-switch-3` générique de styles.css
@@ -229,6 +229,22 @@ export class ProfilePageComponent implements OnDestroy {
     () => this.roster.accounts().find((a) => a.id === this.selectedAccountId()) ?? null,
   );
 
+  /** Formulaire inline "Ajouter un personnage" (desktop) — replié par défaut, voir
+   * `character-add-collapse` dans le template/CSS. Un seul compte est affiché à la fois donc un
+   * simple booléen suffit (pas besoin de le clé sur l'id du compte). */
+  protected readonly addCharacterFormOpen = signal(false);
+  /** Hauteur réelle du contenu du formulaire, mesurée via ResizeObserver plutôt qu'une animation
+   * CSS `grid-template-rows: 0fr -> 1fr` (technique essayée d'abord, mais empiriquement peu fiable
+   * pour la fermeture : reste bloquée à la hauteur ouverte dans certains moteurs — vérifié en
+   * session). Une transition `height` en px, elle, est universellement supportée. Mesuré même
+   * replié (l'élément observé n'est pas retiré du DOM, seul un ancêtre le clippe visuellement à 0),
+   * donc la 1ère ouverture connaît déjà la bonne hauteur sans à-coup. */
+  private readonly characterAddPanelInner = viewChild<ElementRef<HTMLDivElement>>(
+    'characterAddPanelInner',
+  );
+  protected readonly characterAddPanelHeight = signal(0);
+  private characterAddPanelResizeObserver?: ResizeObserver;
+
   /** Items de la barre d'onglets de comptes (voir TabBarComponent) — un compte retirable (croix)
    * dès qu'il n'est pas le compte par défaut, tooltip = libellé complet (toujours affiché, pas
    * seulement en cas de troncature, comme avant). */
@@ -248,6 +264,17 @@ export class ProfilePageComponent implements OnDestroy {
   constructor() {
     effect(() => this.soundGridColumns.observe(this.soundGrid()?.nativeElement));
     effect(() => this.charGridColumns.observe(this.charGrid()?.nativeElement));
+
+    effect(() => {
+      const el = this.characterAddPanelInner()?.nativeElement;
+      this.characterAddPanelResizeObserver?.disconnect();
+      if (!el) return;
+      this.characterAddPanelResizeObserver = new ResizeObserver(() => {
+        this.characterAddPanelHeight.set(el.scrollHeight);
+      });
+      this.characterAddPanelResizeObserver.observe(el);
+      this.characterAddPanelHeight.set(el.scrollHeight);
+    });
 
     // Consomme le flag posé par la page compte (voir NavigationService) : forcer l'onglet
     // Connexion quand on arrive ici depuis son CTA "Se connecter" (état invité).
@@ -279,6 +306,7 @@ export class ProfilePageComponent implements OnDestroy {
   ngOnDestroy(): void {
     this.soundGridColumns.disconnect();
     this.charGridColumns.disconnect();
+    this.characterAddPanelResizeObserver?.disconnect();
     this.isMobile.disconnect();
   }
 
@@ -379,8 +407,14 @@ export class ProfilePageComponent implements OnDestroy {
     this.profile.toggleSoundItem(name, catalogId);
   }
 
-  protected removeSoundItem(name: string, catalogId: number | null): void {
-    this.profile.removeSoundItem(name, catalogId);
+  /** Suppression confirmée via la même popover partagée que le reste (voir ConfirmDeleteService) —
+   * réutilise `tracker.confirmDelete` ("Retirer ?"), déjà utilisé pour le retrait des KPI de suivi. */
+  protected requestRemoveSoundItem(event: Event, name: string, catalogId: number | null): void {
+    event.stopPropagation();
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('tracker.confirmDelete'), () => {
+      this.profile.removeSoundItem(name, catalogId);
+    });
   }
 
   protected rarityClass(name: string, catalogId: number | null): string {
@@ -389,6 +423,24 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected characterIcon(char: RosterCharacter): string {
     return getClassIconUri(char.className, char.gender);
+  }
+
+  /** Nom de classe localisé (voir class-names.data.ts) — la clé interne (`char.className`, proche
+   * de l'anglais) n'est pas affichable telle quelle, plusieurs classes ayant un nom radicalement
+   * différent selon la langue. */
+  protected characterClassName(char: RosterCharacter): string {
+    return getClassName(char.className, this.i18n.locale());
+  }
+
+  /** Libellé de la tuile de la grille "Avatar" (tooltip au survol, voir class-portrait.component). */
+  protected avatarClassLabel(className: string): string {
+    return getClassName(className, this.i18n.locale());
+  }
+
+  /** Sexe affiché pour une tuile de la grille "Avatar" — toujours le même par classe (voir
+   * CLASS_PORTRAIT_DEFAULT_GENDER), cette grille n'a jamais demandé le sexe à l'utilisateur. */
+  protected avatarClassGender(className: string): Gender {
+    return getClassPortraitDefaultGender(className);
   }
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
@@ -401,8 +453,16 @@ export class ProfilePageComponent implements OnDestroy {
     this.selectedAccountId.set(id);
   }
 
-  protected removeAccount(id: string): void {
-    this.roster.removeAccount(id);
+  /** Suppression confirmée via la même popover partagée que le reste (voir ConfirmDeleteService,
+   * même schéma que `requestRemoveCharacter`) — `event.currentTarget` sert d'ancre, que l'appel
+   * vienne d'un clic direct sur la croix (en-tête de compte) ou du `remove` de TabBarComponent
+   * (onglet actif du roster en mobile), qui réémet l'event d'origine pour ce même usage. */
+  protected requestRemoveAccount(event: Event, id: string): void {
+    event.stopPropagation();
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('profile.confirmRemoveAccount'), () => {
+      this.roster.removeAccount(id);
+    });
   }
 
   protected renameAccount(id: string, value: string): void {
@@ -417,6 +477,7 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected selectAccount(id: string): void {
     this.selectedAccountId.set(id);
+    this.addCharacterFormOpen.set(false);
   }
 
   /** Libellé affiché sur l'onglet : "Principal" pour le compte par défaut
@@ -444,15 +505,17 @@ export class ProfilePageComponent implements OnDestroy {
     });
   }
 
+  /** Referme aussi le formulaire desktop après ajout (`addCharacterFormOpen`) — sans effet côté
+   * mobile, où le formulaire reste de toute façon en permanence affiché. */
   protected addCharacterFromForm(accountId: string, character: NewRosterCharacter): void {
     this.roster.addCharacter(accountId, character.name, character.className, character.gender);
+    this.addCharacterFormOpen.set(false);
   }
 
-  /** Bouton "Ajouter un personnage" desktop (voir CharacterAddModalService) — équivalent du
-   * formulaire inline `app-character-add-form` déjà utilisé tel quel en mobile, présenté ici dans
-   * une modale plutôt qu'embarqué en permanence dans le panneau. */
-  protected openAddCharacterModal(accountId: string): void {
-    this.characterAddModal.open(accountId);
+  /** Bouton "Ajouter un personnage" desktop : déplie/replie le formulaire inline juste en dessous
+   * (voir `character-add-collapse` dans le template/CSS) — remplace l'ancienne modale centrée. */
+  protected toggleAddCharacterForm(): void {
+    this.addCharacterFormOpen.update((open) => !open);
   }
 
   /** Voir EditableNameComponent (`(renamed)`) — `CharacterRosterService.renameCharacter` gère

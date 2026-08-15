@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
 import { CatalogService } from '../api/catalog.service';
+import { AVATAR_INDEX_SCHEMA_VERSION, migrateLegacyAvatarIndex } from '../data/class-portraits.data';
 
 /** @deprecated Réexportée pour les consommateurs historiques — la clé fait
  * désormais autorité dans `core/data-access/user-data.keys.ts`. */
@@ -24,6 +25,11 @@ export type CharacterViewMode = 'list' | 'grid';
 interface StoredProfile {
   pseudo: string;
   avatarIndex: number | null;
+  /** Absent (profils créés avant ce champ) = ancien schéma `avatarIndex` (0-35, planche
+   * `class-breeds.data.ts` : 18 classes x 2 sexes) — migré à la volée vers le nouveau schéma
+   * (`AVATAR_INDEX_SCHEMA_VERSION`, planche `class-portraits.data.ts`, 1 seul portrait par classe)
+   * à la prochaine lecture, voir loadFromStorage. */
+  avatarSchemaVersion?: number;
   soundItems: SoundItemEntry[];
   /** Durée d'affichage du toast d'alerte sonore, en secondes (utilisée seulement si !alertManualClose). */
   alertDurationSeconds: number;
@@ -74,7 +80,18 @@ export class ProfileService {
   private loadFromStorage(): void {
     const stored = this.userData.read<StoredProfile>('profile');
     this.pseudo.set(stored?.pseudo ?? '');
-    this.avatarIndex.set(stored?.avatarIndex ?? null);
+    // Migration one-shot : un `avatarIndex` stocké sous un ancien schéma (voir avatarSchemaVersion
+    // ci-dessus, et migrateLegacyAvatarIndex pour le détail v1/v2) est reconverti vers le schéma
+    // courant. Un `avatarIndex` déjà à jour (avatarSchemaVersion === AVATAR_INDEX_SCHEMA_VERSION)
+    // n'est jamais retouché.
+    const rawAvatarIndex = stored?.avatarIndex ?? null;
+    const needsAvatarMigration =
+      rawAvatarIndex !== null && stored?.avatarSchemaVersion !== AVATAR_INDEX_SCHEMA_VERSION;
+    this.avatarIndex.set(
+      needsAvatarMigration
+        ? migrateLegacyAvatarIndex(rawAvatarIndex, stored?.avatarSchemaVersion)
+        : rawAvatarIndex,
+    );
     const mergedSoundItems = this.mergeWithDefaultSoundItems(stored?.soundItems);
     this.soundItems.set(mergedSoundItems);
     // Migration : une ancienne version stockait 0 = "fermeture manuelle" dans alertDurationSeconds.
@@ -86,10 +103,11 @@ export class ProfileService {
       this.alertManualClose.set(stored?.alertManualClose ?? false);
     }
     this.characterViewMode.set(stored?.characterViewMode ?? 'list');
-    // Un profil existant dont la fusion a ajouté de nouveaux objets par défaut doit être
-    // re-sauvegardé, sinon la fusion (mémoire uniquement) est perdue au prochain rechargement
-    // tant que l'utilisateur ne déclenche pas lui-même une autre écriture (persist()).
-    if (stored?.soundItems && mergedSoundItems !== stored.soundItems) {
+    // Un profil existant dont la fusion a ajouté de nouveaux objets par défaut, ou dont
+    // l'avatar vient d'être migré, doit être re-sauvegardé — sinon le changement (mémoire
+    // uniquement) est perdu au prochain rechargement tant que l'utilisateur ne déclenche pas
+    // lui-même une autre écriture (persist()).
+    if (needsAvatarMigration || (stored?.soundItems && mergedSoundItems !== stored.soundItems)) {
       this.persist();
     }
   }
@@ -205,6 +223,7 @@ export class ProfileService {
     const value: StoredProfile = {
       pseudo: this.pseudo(),
       avatarIndex: this.avatarIndex(),
+      avatarSchemaVersion: AVATAR_INDEX_SCHEMA_VERSION,
       soundItems: this.soundItems(),
       alertDurationSeconds: this.alertDurationSeconds(),
       alertManualClose: this.alertManualClose(),
