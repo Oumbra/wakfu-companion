@@ -23,8 +23,7 @@ import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.compon
 import { ClassPortraitComponent } from '../../shared/class-portrait/class-portrait.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
-import { getBreedAvatarIndex } from '../../core/data/class-breeds.data';
-import { AVATAR_GRID_ENTRIES } from '../../core/data/class-portraits.data';
+import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../core/data/class-portraits.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -435,7 +434,7 @@ export class ProfilePageComponent implements OnDestroy {
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
   protected avatarIndexForChar(char: RosterCharacter): number {
-    return getBreedAvatarIndex(char.className, char.gender);
+    return getAvatarGridIndex(char.className, char.gender);
   }
 
   protected addAccount(): void {
