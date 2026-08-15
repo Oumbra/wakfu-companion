@@ -1,60 +1,48 @@
 import { Gender } from './class-icons.data';
 
 /**
- * Portraits de classe "grand format" (2 sexes x 18 classes), reconstruits à partir des
- * illustrations officielles Ankama de l'encyclopédie (chaque page classe expose en fond un
- * `breed-{id}.jpg` contenant les DEUX personnages — mâle et femelle — côte à côte, voir
- * `CLAUDE.md`). Chaque case existe en 2 variantes pré-rendues — colorée et mate — pour reproduire
- * le rendu "survol = couleur, repos = mat" du site officiel sans filtre CSS (voir
- * ClassPortraitComponent).
- *
- * Historique : la planche officielle `.../breeds/assets/icons/big.png` (utilisée un temps, voir
- * git log) n'a qu'UN portrait par classe, pas les deux sexes — 18 des 36 cases ont dû être
- * recadrées à la main dans `breed-{id}.jpg` (repérage du personnage manquant à l'œil, planche par
- * planche) et calées sur le même traitement colorimétrique que les 18 déjà fournies par Ankama
- * (régression linéaire par canal RGB entre les 2 colonnes de big.png, appliquée aux nouveaux
- * recadrages — coefficients ci-dessous, `RAW_TO_COLORED`/`COLORED_TO_MUTED`). Résultat unique :
- * `class-portraits-v2-*.png`, 4 colonnes x 18 lignes de cases 80x81px : [mâle coloré, mâle mat,
- * femelle coloré, femelle mat].
+ * Portraits de classe "grand format" (2 sexes x 18 classes) — planche `class-avatars-sheet-*.png`,
+ * 2 colonnes (0 = féminin, 1 = masculin) x 18 lignes, une seule image par sexe (pas de variante
+ * mate pré-rendue, contrairement à l'ancienne planche `class-portraits-v2-*.png` sourcée depuis
+ * l'encyclopédie officielle — voir git log). Sources : `static.ankama.com/web-test/{id}.png`
+ * (icônes de sélection d'avatar du jeu, fournies directement par identifiant numérique plutôt que
+ * cadrées à la main comme la planche précédente), assemblées en une seule planche 2026-08-15.
+ * Fond opaque (blanc pour la plupart des classes, parfois une couleur saturée type feca/eliotrope)
+ * — une 1ère tentative de fond transparent par flood-fill (case par case) a été faite puis
+ * annulée (2026-08-15) faute d'un résultat correct sur certaines cases ; à refaire proprement, ne
+ * pas répéter la même approche sans corriger le défaut signalé.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-portraits-v2-d32417ee.png';
-export const CLASS_PORTRAITS_SPRITE_COLS = 4;
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-db1a9e34.png';
+export const CLASS_PORTRAITS_SPRITE_COLS = 2;
 export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
 
-/** Ordre RÉEL des lignes de la planche — PAS l'id interne Ankama (hypothèse initiale erronée,
- * corrigée le 2026-08-15) : relevé de façon fiable en lisant les `background-position` CSS
- * effectivement utilisés par le site officiel pour sa propre barre de sélection de classe
- * (`.ak-breed-icon-big.breed{id}_0` sur une page encyclopédie, ex. .../classes/4-sram), qui pointent
- * vers l'ANCIENNE planche à 1 colonne — `ligne = |offsetY| / 81`. Revérifié visuellement (ligne 9 =
- * crâne Sram, correspond bien à `breed4_0`, id Ankama du Sram). Ne PAS reconstruire "à l'œil"
- * depuis l'ordre des slugs de l'encyclopédie : sans lien avec l'ordre réel au-delà de la 1ère ligne
- * (Féca, id 1). Conservé tel quel pour la nouvelle planche (même ordre de lignes, colonnes
- * réarrangées en 4 : voir ci-dessus).
- */
+/** Ordre RÉEL des lignes de la planche `class-avatars-sheet-*.png` (spécifié explicitement par
+ * l'utilisateur au moment de l'assemblage — pas déduit d'une source externe, contrairement à
+ * l'ancienne planche). Toute reconstruction de cette planche doit conserver cet ordre. */
 export const CLASS_PORTRAIT_ORDER: readonly string[] = [
+  'cra',
+  'ecaflip',
+  'sacrier',
+  'zobal',
+  'sram',
+  'ouginak',
+  'iop',
+  'eniripsa',
   'feca',
   'sadida',
-  'sacrier',
+  'enutrof',
+  'eliotrope',
+  'foggernaut',
+  'huppermage',
+  'xelor',
+  'osamodas',
   'pandawa',
   'rogue',
-  'zobal',
-  'foggernaut',
-  'osamodas',
-  'enutrof',
-  'sram',
-  'xelor',
-  'ecaflip',
-  'eniripsa',
-  'iop',
-  'cra',
-  'eliotrope',
-  'huppermage',
-  'ouginak',
 ];
 
-/** Sexe déjà fourni par Ankama dans l'ancienne planche à 1 portrait/classe — utilisé uniquement
- * là où un affichage non-genré doit rester STABLE (ex. grille "Avatar" du profil, qui n'a jamais
- * demandé le sexe à l'utilisateur) : évite de changer l'apparence des portraits déjà en place. */
+/** Sexe "par défaut" d'une classe (repris de l'ancienne planche à 1 portrait/classe) — n'a plus
+ * d'usage pour la grille "Avatar" elle-même (voir AVATAR_GRID_ENTRIES, genrée) mais reste utile en
+ * repli pour migrer un ancien `avatarIndex` qui ne connaissait pas encore le sexe. */
 export const CLASS_PORTRAIT_DEFAULT_GENDER: Readonly<Record<string, Gender>> = {
   feca: 'f',
   sadida: 'f',
@@ -80,31 +68,78 @@ const CLASS_PORTRAIT_ROW: Readonly<Record<string, number>> = Object.fromEntries(
   CLASS_PORTRAIT_ORDER.map((key, i) => [key, i]),
 );
 
-/** Ligne (0-17) d'une classe dans la planche — 0 (Féca) si `className` inconnu/absent, pour rester
+/** Ligne (0-17) d'une classe dans la planche — 0 (Cra) si `className` inconnu/absent, pour rester
  * cohérent avec `getBreedAvatarIndex` (repli sur la 1ère case plutôt que planter). */
 export function getClassPortraitRow(className: string | undefined): number {
   return (className ? CLASS_PORTRAIT_ROW[className] : undefined) ?? 0;
 }
 
 /** Sexe par défaut d'une classe (voir CLASS_PORTRAIT_DEFAULT_GENDER) — 'f' si `className`
- * inconnu/absent (comportement arbitraire mais déterministe, jamais utilisé en pratique : la
- * grille "Avatar" itère toujours sur `CLASS_PORTRAIT_ORDER`, des classes connues). */
+ * inconnu/absent. Utilisé uniquement par `migrateLegacyAvatarIndex` (anciens schémas qui ne
+ * connaissaient pas le sexe choisi). */
 export function getClassPortraitDefaultGender(className: string | undefined): Gender {
   return (className && CLASS_PORTRAIT_DEFAULT_GENDER[className]) || 'f';
 }
 
-/** Version courante du schéma `avatarIndex` stocké (voir ProfileService) — incrémenter si
- * `CLASS_PORTRAIT_ORDER` change d'ordre un jour (forcerait une nouvelle migration). Le passage à
- * la planche genrée (v2 -> ce fichier) n'a PAS fait bouger l'ordre des lignes ni le sens de
- * l'index stocké (toujours 0-17, une classe) : pas de nouveau bump de version nécessaire, la
- * grille "Avatar" reste non-genrée (voir CLASS_PORTRAIT_DEFAULT_GENDER ci-dessus).
- */
-export const AVATAR_INDEX_SCHEMA_VERSION = 3;
+/** Une entrée par case de la grille "Avatar" du profil : 18 classes (voir CLASS_PORTRAIT_ORDER) x
+ * 2 sexes, féminin puis masculin pour chaque classe — mêmes colonnes que la planche
+ * (col 0 = féminin, col 1 = masculin), 36 cases au total. `profile.avatarIndex()` est un index
+ * dans CE tableau (0-35). */
+export const AVATAR_GRID_ENTRIES: readonly { className: string; gender: Gender }[] =
+  CLASS_PORTRAIT_ORDER.flatMap((className) => [
+    { className, gender: 'f' as Gender },
+    { className, gender: 'm' as Gender },
+  ]);
 
-/** Ordre (erroné — id Ankama, voir commentaire de `CLASS_PORTRAIT_ORDER` ci-dessus) utilisé un
- * temps sous schéma v2, avant correction. Conservé uniquement pour migrer les `avatarIndex` qui
- * auraient été persistés entre-temps (voir `migrateLegacyAvatarIndex`) — ne JAMAIS l'utiliser
- * ailleurs. */
+/** Entrée (classe + sexe) d'une case de la grille "Avatar" — 1ère case si `index` inconnu/absent. */
+export function getAvatarGridEntry(index: number | null | undefined): {
+  className: string;
+  gender: Gender;
+} {
+  return (index !== null && index !== undefined && AVATAR_GRID_ENTRIES[index]) || AVATAR_GRID_ENTRIES[0];
+}
+
+/** Index (0-35) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case. */
+function avatarGridIndexFor(className: string | undefined, gender: Gender): number {
+  const row = className ? CLASS_PORTRAIT_ORDER.indexOf(className) : -1;
+  const safeRow = row >= 0 ? row : 0;
+  return safeRow * 2 + (gender === 'f' ? 0 : 1);
+}
+
+/** Version courante du schéma `avatarIndex` stocké (voir ProfileService) — incrémenter à chaque
+ * changement de sens de l'index stocké (nouvel ordre de lignes, ou nouveau découpage des cases).
+ * v4 -> v5 (2026-08-15) : la grille "Avatar" redevient genrée (36 cases, voir AVATAR_GRID_ENTRIES)
+ * au lieu d'une case par classe seulement — voir `migrateLegacyAvatarIndex`.
+ */
+export const AVATAR_INDEX_SCHEMA_VERSION = 5;
+
+/** Ordre utilisé sous schéma v3 (planche `class-portraits-v2-*.png`, désormais remplacée) et
+ * repris tel quel par le schéma v4 (grille non genrée, 1 case/classe). Conservé uniquement pour
+ * migrer les `avatarIndex` qui auraient été persistés entre-temps — ne JAMAIS l'utiliser ailleurs. */
+const LEGACY_V3_ORDER: readonly string[] = [
+  'feca',
+  'sadida',
+  'sacrier',
+  'pandawa',
+  'rogue',
+  'zobal',
+  'foggernaut',
+  'osamodas',
+  'enutrof',
+  'sram',
+  'xelor',
+  'ecaflip',
+  'eniripsa',
+  'iop',
+  'cra',
+  'eliotrope',
+  'huppermage',
+  'ouginak',
+];
+
+/** Ordre (erroné — id Ankama) utilisé un temps sous schéma v2, avant correction. Conservé
+ * uniquement pour migrer les `avatarIndex` qui auraient été persistés entre-temps (voir
+ * `migrateLegacyAvatarIndex`) — ne JAMAIS l'utiliser ailleurs. */
 const LEGACY_V2_ORDER: readonly string[] = [
   'feca',
   'osamodas',
@@ -127,10 +162,10 @@ const LEGACY_V2_ORDER: readonly string[] = [
 ];
 
 /** Repli (colonne -> classe) de l'ancien schéma v1 (planche `class-breeds.data.ts`, 18 classes x
- * 2 sexes), utilisé uniquement par `migrateLegacyAvatarIndex` ci-dessous. Table dupliquée ici
- * (plutôt qu'importée de class-breeds.data.ts) pour ne plus dépendre de cette planche, dont
- * l'usage se limite maintenant à l'icône de classe miniature (class-icons.data.ts) — voir
- * BREED_CLASS_COLUMNS dans class-breeds.data.ts pour la table d'origine, à garder synchronisée. */
+ * 2 sexes, `index = ligne(sexe)*18 + colonne(classe)`), utilisé uniquement par
+ * `migrateLegacyAvatarIndex` ci-dessous. Table dupliquée ici (plutôt qu'importée de
+ * class-breeds.data.ts) pour ne plus dépendre de cette planche — voir BREED_CLASS_COLUMNS dans
+ * class-breeds.data.ts pour la table d'origine, à garder synchronisée. */
 const LEGACY_V1_COLUMN_TO_CLASS: readonly string[] = [
   'feca',
   'osamodas',
@@ -152,24 +187,44 @@ const LEGACY_V1_COLUMN_TO_CLASS: readonly string[] = [
   'ouginak',
 ];
 
+/** Classes dont la ligne homme/femme du schéma v1 était inversée (voir
+ * REVERSED_GENDER_ROW_CLASSES dans class-breeds.data.ts) — dupliqué ici pour la même raison que
+ * LEGACY_V1_COLUMN_TO_CLASS. */
+const LEGACY_V1_REVERSED_GENDER_ROW_CLASSES = new Set(['huppermage', 'ouginak']);
+
 /**
  * Migration ponctuelle d'un ancien `avatarIndex` vers le schéma courant (voir
  * ProfileService.loadFromStorage, appelée dès que `avatarSchemaVersion` stocké ne vaut pas
  * `AVATAR_INDEX_SCHEMA_VERSION`) :
- * - schéma v1 (absent) : 0-35, planche `class-breeds.data.ts` (18 classes x 2 sexes,
- *   `index = ligne(sexe)*18 + colonne(classe)`) — le sexe est perdu, seule la classe choisie est
- *   préservée.
- * - schéma v2 : 0-17 mais construit avec un ordre de lignes erroné (`LEGACY_V2_ORDER`, hypothèse
- *   initiale non vérifiée) — reconverti classe par classe vers l'ordre correct.
- * Un index déjà cohérent avec le schéma courant (v3) ne devrait jamais transiter par cette
+ * - schéma v1 (absent) : 0-35, planche `class-breeds.data.ts` (18 classes x 2 sexes) — le sexe
+ *   choisi EST préservé (encodé par la ligne, voir `LEGACY_V1_REVERSED_GENDER_ROW_CLASSES`).
+ * - schéma v2 : 0-17, ordre de lignes erroné (`LEGACY_V2_ORDER`) et sexe non mémorisé — repli sur
+ *   le sexe par défaut de la classe (`CLASS_PORTRAIT_DEFAULT_GENDER`).
+ * - schéma v3/v4 : 0-17, ordre correct (v4 = `CLASS_PORTRAIT_ORDER` actuel, v3 = `LEGACY_V3_ORDER`)
+ *   mais sexe non mémorisé — même repli.
+ * Un index déjà cohérent avec le schéma courant (v5) ne devrait jamais transiter par cette
  * fonction (voir le test `avatarSchemaVersion` dans ProfileService), mais un round-trip par une
  * classe connue reste inoffensif si jamais appelé par erreur.
  */
 export function migrateLegacyAvatarIndex(oldIndex: number, fromVersion: number | undefined): number {
-  const className =
-    fromVersion === 2
-      ? LEGACY_V2_ORDER[oldIndex]
-      : LEGACY_V1_COLUMN_TO_CLASS[((oldIndex % 18) + 18) % 18];
-  const newIndex = CLASS_PORTRAIT_ORDER.indexOf(className);
-  return newIndex >= 0 ? newIndex : 0;
+  if (fromVersion === 4) {
+    const className = CLASS_PORTRAIT_ORDER[oldIndex];
+    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+  }
+  if (fromVersion === 3) {
+    const className = LEGACY_V3_ORDER[oldIndex];
+    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+  }
+  if (fromVersion === 2) {
+    const className = LEGACY_V2_ORDER[oldIndex];
+    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+  }
+  // Schéma v1 (absent) : 0-35, sexe encodé par la ligne (0 ou 1) de l'ancienne planche.
+  const safeIndex = ((oldIndex % 36) + 36) % 36;
+  const col = safeIndex % 18;
+  const row = Math.floor(safeIndex / 18);
+  const className = LEGACY_V1_COLUMN_TO_CLASS[col];
+  const maleRow = className && LEGACY_V1_REVERSED_GENDER_ROW_CLASSES.has(className) ? 0 : 1;
+  const gender: Gender = row === maleRow ? 'm' : 'f';
+  return avatarGridIndexFor(className, gender);
 }

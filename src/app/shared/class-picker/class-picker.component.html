@@ -83,10 +83,14 @@
       @for (option of classOptions(); track option.key) {
         <button
           class="class-picker-item class-picker-item-portrait"
-          [appTooltip]="option.label"
           (click)="choose(option.key)"
         >
-          <app-class-portrait [className]="option.key" [gender]="gender()" />
+          <app-class-portrait [className]="option.key" [gender]="gender()" [alwaysColored]="true" />
+          <span
+            class="class-picker-portrait-label"
+            [appTooltip]="option.label"
+            [tooltipOnlyIfTruncated]="true"
+          >{{ option.label }}</span>
         </button>
       }
     </div>

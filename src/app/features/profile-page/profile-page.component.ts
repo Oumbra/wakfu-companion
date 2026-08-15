@@ -24,10 +24,7 @@ import { ClassPortraitComponent } from '../../shared/class-portrait/class-portra
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { getBreedAvatarIndex } from '../../core/data/class-breeds.data';
-import {
-  CLASS_PORTRAIT_ORDER,
-  getClassPortraitDefaultGender,
-} from '../../core/data/class-portraits.data';
+import { AVATAR_GRID_ENTRIES } from '../../core/data/class-portraits.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -124,9 +121,9 @@ export class ProfilePageComponent implements OnDestroy {
    * `display:none/flex` pur CSS (voir `effectiveCharacterViewMode` ci-dessous). */
   protected readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
 
-  /** Ordre des tuiles de la grille "Avatar" (voir class-portraits.data.ts) — l'index dans ce
-   * tableau EST `profile.avatarIndex()` (schéma v2, voir ProfileService). */
-  protected readonly avatarClassOrder = CLASS_PORTRAIT_ORDER;
+  /** Cases de la grille "Avatar" (18 classes x 2 sexes, voir class-portraits.data.ts) — l'index
+   * dans ce tableau EST `profile.avatarIndex()` (schéma v5, voir ProfileService). */
+  protected readonly avatarGridEntries = AVATAR_GRID_ENTRIES;
 
   /** 3 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché, libellé
    * complet en tooltip. Ordre = ordre visuel du switch ; `.icon-switch-3` générique de styles.css
@@ -433,14 +430,8 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   /** Libellé de la tuile de la grille "Avatar" (tooltip au survol, voir class-portrait.component). */
-  protected avatarClassLabel(className: string): string {
-    return getClassName(className, this.i18n.locale());
-  }
-
-  /** Sexe affiché pour une tuile de la grille "Avatar" — toujours le même par classe (voir
-   * CLASS_PORTRAIT_DEFAULT_GENDER), cette grille n'a jamais demandé le sexe à l'utilisateur. */
-  protected avatarClassGender(className: string): Gender {
-    return getClassPortraitDefaultGender(className);
+  protected avatarEntryLabel(entry: { className: string; gender: Gender }): string {
+    return getClassName(entry.className, this.i18n.locale());
   }
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
