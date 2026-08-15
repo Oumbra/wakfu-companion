@@ -33,6 +33,18 @@
         ▼
       </button>
     </div>
+    @if (watchlist.addMode() === 'down') {
+      <input
+        class="tracker-add-target-input"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]*"
+        [value]="watchlist.addTarget()"
+        [appTooltip]="'tracker.countdownTargetHint' | t"
+        (input)="watchlist.onAddTargetInput($event)"
+        (keydown)="watchlist.onAddTargetKeydown($event)"
+      />
+    }
     @if (watchlist.canBulkDelete()) {
       <div class="kpi-remove-wrap">
         <button
@@ -68,6 +80,17 @@
             [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
             (click)="onCardClick(entry)"
           >
+            <span
+              class="kpi-card-mode-badge"
+              [appTooltip]="watchlist.modeTooltip(entry)"
+              (click)="$event.stopPropagation()"
+            >
+              <app-icon
+                [name]="entry.mode === 'up' ? 'arrow-up' : 'arrow-down'"
+                [size]="10"
+                [strokeWidth]="2.6"
+              />
+            </span>
             @if (watchlist.selectMode()) {
               <button
                 type="button"
@@ -116,52 +139,32 @@
               <div class="kpi-card-count-row">
                 @if (entry.mode === 'down') {
                   <input
-                    class="kpi-card-count kpi-card-countdown-input"
+                    class="kpi-card-count kpi-card-countdown-current-input"
                     type="text"
                     inputmode="numeric"
                     pattern="[0-9]*"
                     [value]="entry.count"
-                    [appTooltip]="'tracker.countdownTargetHint' | t"
                     (click)="$event.stopPropagation()"
                     (keydown)="watchlist.onCountdownKeydown($event, entry)"
                     (change)="watchlist.onCountdownInput($event, entry)"
                   />
+                  <span class="kpi-card-count-sep">/</span>
+                  <span
+                    class="kpi-card-target-static"
+                    [appTooltip]="'tracker.countdownTargetLocked' | t"
+                    >{{ entry.countdownTarget }}</span
+                  >
+                  <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
                 } @else {
                   <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
                 }
-                <div class="icon-switch kpi-card-mode-switch" (click)="$event.stopPropagation()">
-                  <span
-                    class="icon-switch-highlight"
-                    [class.is-right]="entry.mode === 'down'"
-                  ></span>
-                  <button
-                    type="button"
-                    class="icon-switch-option"
-                    [class.selected]="entry.mode === 'up'"
-                    [appTooltip]="'tracker.countUpMode' | t"
-                    (click)="watchlist.setMode($event, entry, 'up')"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-switch-option"
-                    [class.selected]="entry.mode === 'down'"
-                    [appTooltip]="'tracker.countDownMode' | t"
-                    (click)="watchlist.setMode($event, entry, 'down')"
-                  >
-                    ▼
-                  </button>
-                </div>
-                @if (entry.mode === 'up') {
-                  <button
-                    class="kpi-card-reset"
-                    [appTooltip]="'tracker.reset' | t"
-                    (click)="watchlist.resetCount($event, entry)"
-                  >
-                    <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
-                  </button>
-                }
+                <button
+                  class="kpi-card-reset"
+                  [appTooltip]="'tracker.reset' | t"
+                  (click)="watchlist.resetCount($event, entry)"
+                >
+                  <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
+                </button>
               </div>
             </div>
           </div>

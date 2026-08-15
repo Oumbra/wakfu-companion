@@ -430,8 +430,11 @@ export class StatsStoreService {
     this.userData.write('watchlist', updated);
   }
 
-  /** Change la valeur de départ du décompte d'une entrée suivie (mode 'down') et réinitialise
-   * aussitôt son compteur courant sur cette nouvelle valeur. */
+  /** Change la valeur de départ (cible) du décompte d'une entrée suivie et réinitialise aussitôt
+   * son compteur courant sur cette nouvelle valeur — réservée à la CRÉATION du KPI (voir
+   * WatchlistTileController.add()) : la cible est ensuite figée (comme le mode), au même titre
+   * que la suppression/recréation est le seul moyen de la changer. Pour éditer le compteur courant
+   * après coup sans toucher la cible, voir setWatchlistCurrentCount. */
   setWatchlistCountdownTarget(name: string, target: number, catalogId?: number | null): void {
     const clamped = Math.max(0, Math.floor(Number.isFinite(target) ? target : 0));
     const updated = this.watchlist().map((w) =>
@@ -439,6 +442,23 @@ export class StatsStoreService {
         ? { ...w, countdownTarget: clamped, count: clamped }
         : w,
     );
+    this.watchlist.set(updated);
+    this.userData.write('watchlist', updated);
+  }
+
+  /** Édite la valeur ACTUELLE d'une entrée en mode décompte, sans toucher à sa cible — contrairement
+   * à setWatchlistCountdownTarget (réservée à la création). Bornée à [0, countdownTarget] : le
+   * compteur d'un décompte ne représente jamais plus que le nombre restant fixé au départ. Sans
+   * effet sur une entrée en mode 'up' (rien à éditer manuellement dans ce mode, voir resetWatchedCount). */
+  setWatchlistCurrentCount(name: string, count: number, catalogId?: number | null): void {
+    const updated = this.watchlist().map((w) => {
+      if (!this.matchesWatched(w, name, catalogId) || w.mode !== 'down') return w;
+      const clamped = Math.max(
+        0,
+        Math.min(w.countdownTarget, Math.floor(Number.isFinite(count) ? count : 0)),
+      );
+      return { ...w, count: clamped };
+    });
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
   }
