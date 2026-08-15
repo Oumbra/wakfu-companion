@@ -18,11 +18,6 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
-/** Délai (ms) de survol avant qu'un KPI ne se déploie — évite une ouverture
- * parasite en balayant la bande du regard/de la souris. Seul point à
- * modifier pour ajuster ce réglage (répercuté en JS ici et en CSS via la
- * variable `--kpi-expand-duration`, voir template). */
-const KPI_HOVER_INTENT_DELAY_MS = 500;
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
  * rester parfaitement synchronisés (voir tracker-strip.component.css). */
@@ -31,21 +26,23 @@ const KPI_EXPAND_DURATION_MS = 320;
  * (min-width) et pour calculer la position de défilement cible (voir
  * `scrollTileIntoView`, qui ne peut pas se fier à la largeur réelle au
  * moment du calcul : elle vaut encore 58px avant que la transition ne
- * démarre). Élargie de 210 à 250px pour laisser la place au switch
- * comptage croissant/décompte (voir `.kpi-mode-switch`). */
+ * démarre). */
 const KPI_EXPANDED_WIDTH_PX = 250;
 
 /**
  * Suivi (desktop) : bande horizontale de KPI compacts au-dessus de la ligne
  * de panneaux (voir dashboard.component.html), sans fond ni bordure propres
- * — chaque tuile se déploie au survol pour révéler nom + reset. Masqué en
- * dessous du breakpoint mobile (voir CSS) : le mobile garde Suivi comme un
- * onglet à part entière, affiché par TrackerComponent (grille de cartes).
+ * — chaque tuile se déploie au CLIC pour révéler nom + compteur + reset (le
+ * survol seul n'ouvre plus rien, voir CLAUDE.md : seuls deux tooltips
+ * natifs réagissent au survol, badge de mode et % de progression en
+ * décompte). Masqué en dessous du breakpoint mobile (voir CSS) : le mobile
+ * garde Suivi comme un onglet à part entière, affiché par TrackerComponent
+ * (grille de cartes).
  *
  * La logique commune avec TrackerComponent (rareté/nom affiché/troncature, sélection multiple,
- * reset/mode de comptage, suppression confirmée) vit dans WatchlistTileController — ce composant
- * ne garde que ce qui est propre à la bande desktop (survol différé/verrou anti-cascade, tooltip
- * de nom positionné en JS, drag&drop de réordonnancement).
+ * création/mode/cible, édition de la valeur courante en décompte, suppression confirmée) vit dans
+ * WatchlistTileController — ce composant ne garde que ce qui est propre à la bande desktop
+ * (ouverture/fermeture au clic, tooltip de nom positionné en JS, drag&drop de réordonnancement).
  */
 @Component({
   selector: 'app-tracker-strip',
@@ -76,7 +73,6 @@ export class TrackerStripComponent {
     this.catalog,
   );
 
-  protected readonly hoverIntentDelayMs = KPI_HOVER_INTENT_DELAY_MS;
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
 
@@ -87,27 +83,10 @@ export class TrackerStripComponent {
   protected readonly addOpen = signal(false);
   private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
 
-  /** Nom du KPI dont la popover de suppression partagée (ConfirmDeleteService) est actuellement
-   * ouverte — sert uniquement au garde-fou de `onTileLeave` ci-dessous (voir son commentaire) ;
-   * la popover elle-même vit au niveau racine, hors de ce composant. */
-  protected readonly confirmDeleteOpenFor = signal<string | null>(null);
-  /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en
-   * JS (pas de simple `:hover` CSS) pour pouvoir imposer un délai avant
-   * ouverture ET un verrou anti-cascade (voir `onTileEnter`/`onTileLeave`) :
-   * avec un déploiement qui repousse réellement les tuiles voisines, une
-   * fermeture peut faire reculer une autre tuile sous une souris restée
-   * immobile, qui se retrouve alors "survolée" sans mouvement réel — un vrai
-   * effet de cascade en chaîne, identifié en analysant une vidéo image par
-   * image (voir historique du projet). */
+  /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
+   * CSS) et exclusivement par clic (voir `onTileClick`) : plus de délai/verrou anti-cascade à
+   * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande. */
   protected readonly activeName = signal<string | null>(null);
-  private hoverTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Horodatage jusqu'auquel un nouveau survol est ignoré, le temps que la
-   * tuile qui vient de se refermer termine son animation — c'est ce délai
-   * qui neutralise le risque de cascade décrit ci-dessus : tant que le
-   * repli n'est pas terminé, aucune nouvelle tuile ne peut démarrer son
-   * propre délai de survol, quel que soit ce qui se retrouve sous la souris
-   * entre-temps. */
-  private blockedUntilMs = 0;
 
   constructor() {
     // Focus automatique du champ de recherche à l'ouverture (clic sur "+") —
@@ -115,65 +94,23 @@ export class TrackerStripComponent {
     effect(() => {
       if (this.addOpen()) this.autocomplete()?.focus();
     });
-
-    effect(() => {
-      if (!this.confirmDelete.request()) this.confirmDeleteOpenFor.set(null);
-    });
   }
 
-  protected onTileEnter(event: MouseEvent, name: string): void {
-    if (this.watchlist.selectMode()) return;
-    if (Date.now() < this.blockedUntilMs) return;
-    if (this.activeName() !== null && this.activeName() !== name) return;
-    this.clearHoverTimer();
-    const tile = event.currentTarget as HTMLElement;
-    this.hoverTimer = setTimeout(() => {
-      this.hoverTimer = null;
-      this.activeName.set(name);
-      this.scrollTileIntoView(tile);
-    }, KPI_HOVER_INTENT_DELAY_MS);
-  }
-
-  protected onTileLeave(name: string): void {
-    this.clearHoverTimer();
-    // Le rétrécissement de la tuile ne doit pas se produire pendant que sa
-    // popover de confirmation de suppression est ouverte : l'apparition de
-    // `.confirm-delete-backdrop` (position:fixed, plein écran) juste sous le
-    // curseur déclenche un `mouseleave` synthétique sur la tuile côté
-    // Chromium (le pointeur n'a pourtant pas bougé), ce qui refermait la
-    // tuile alors que la popover, elle, restait positionnée d'après sa
-    // géométrie déployée — décalage visible signalé par l'utilisateur.
-    if (this.confirmDeleteOpenFor() === name) return;
-    if (this.activeName() !== name) return;
-    this.activeName.set(null);
-    this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
-  }
-
-  /** Ouverture/fermeture au clic, en plus du survol (délai ignoré). Les
-   * clics sur les boutons reset/suppression internes stoppent leur propre
-   * propagation (voir `resetCount`/`requestDelete`) et n'atteignent donc
-   * jamais ce handler. */
+  /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
+   * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du
+   * décompte) stoppent leur propre propagation et n'atteignent donc jamais ce handler. */
   protected onTileClick(event: MouseEvent, entry: WatchlistEntry): void {
     if (this.watchlist.selectMode()) {
       this.watchlist.toggleSelected(entry);
       return;
     }
     const name = entry.name;
-    this.clearHoverTimer();
     if (this.activeName() === name) {
       this.activeName.set(null);
-      this.blockedUntilMs = Date.now() + KPI_EXPAND_DURATION_MS;
       return;
     }
     this.activeName.set(name);
     this.scrollTileIntoView(event.currentTarget as HTMLElement);
-  }
-
-  private clearHoverTimer(): void {
-    if (this.hoverTimer !== null) {
-      clearTimeout(this.hoverTimer);
-      this.hoverTimer = null;
-    }
   }
 
   /** Fait défiler la bande pour amener la tuile déployée au centre — ou, si
@@ -197,11 +134,7 @@ export class TrackerStripComponent {
   }
 
   protected add(result: WakfuSearchResult): void {
-    if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name, result.id);
-    else this.stats.addWatchedItem(result.name, result.id);
-    if (this.watchlist.addMode() === 'down') {
-      this.stats.setWatchlistMode(result.name, 'down', result.id);
-    }
+    this.watchlist.add(result);
     this.closeAdd();
   }
 
@@ -212,7 +145,7 @@ export class TrackerStripComponent {
 
   protected closeAdd(): void {
     this.addOpen.set(false);
-    this.watchlist.addMode.set('up');
+    this.watchlist.resetAddForm();
   }
 
   /** Ouvre le formulaire d'ajout — quitte le mode sélection au passage : les deux modes
@@ -229,28 +162,22 @@ export class TrackerStripComponent {
       this.watchlist.exitSelectMode();
       return;
     }
-    this.clearHoverTimer();
     this.activeName.set(null);
     this.watchlist.enterSelectMode();
   }
 
   protected requestDelete(event: Event, entry: WatchlistEntry): void {
     const name = entry.name;
-    this.watchlist.requestDelete(
-      event,
-      entry,
-      () => this.confirmDeleteOpenFor.set(name),
-      () => {
-        if (this.activeName() === name) this.activeName.set(null);
-      },
-    );
+    this.watchlist.requestDelete(event, entry, undefined, () => {
+      if (this.activeName() === name) this.activeName.set(null);
+    });
   }
 
   private dragIndex: number | null = null;
 
   /** Construit une image de drag minimaliste (juste l'icône, sur une tuile
    * neutre) plutôt que de capturer la tuile réelle : celle-ci peut être en
-   * cours de transition d'agrandissement au survol et porte des éléments
+   * cours de transition d'agrandissement au clic et porte des éléments
    * `position:absolute` (badge compteur, croix de suppression) qui, capturés
    * tels quels par `setDragImage`, produisaient un fantôme de drag confus
    * (superposition visible à l'usage). Détachée du DOM après capture (le
@@ -274,7 +201,6 @@ export class TrackerStripComponent {
     // Le drag démarre parfois sans mouseleave fiable (comportement natif du
     // navigateur) : on referme explicitement plutôt que de risquer une
     // tuile restée "déployée" alors qu'elle est en train d'être déplacée.
-    this.clearHoverTimer();
     this.activeName.set(null);
     this.dragIndex = index;
     const tile = event.currentTarget as HTMLElement;
