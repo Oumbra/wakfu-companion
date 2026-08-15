@@ -1,5 +1,7 @@
 /** Action à appliquer pour une touche pressée dans un input restreint aux chiffres et piloté par
- * les flèches haut/bas (voir suivi > mode décompte, `.kpi-countdown-input`/`.kpi-card-countdown-input`). */
+ * les flèches haut/bas (voir suivi > mode décompte, `.kpi-countdown-current-input`/
+ * `.kpi-card-countdown-current-input`, et le champ de cible du formulaire d'ajout,
+ * `.kpi-add-target-input`/`.tracker-add-target-input`). */
 export type NumericKeyAction = 'block' | 'increment' | 'decrement' | 'allow';
 
 /** Touches de navigation/édition à toujours laisser passer, même si elles ne sont pas des chiffres. */

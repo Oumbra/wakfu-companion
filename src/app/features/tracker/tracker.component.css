@@ -38,14 +38,32 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-/* Switch incrémental/décompte déterminant le mode du KPI créé — voir
-   `.kpi-card-mode-switch` (même mécanisme, une fois le KPI créé). */
+/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
+   encore : le mode est figé une fois le KPI créé (voir `.kpi-card-mode-badge`, lecture seule). */
 .tracker-add-mode-switch {
   width: 34px;
   flex-shrink: 0;
 }
 .tracker-add-mode-switch .icon-switch-option {
   font-size: 0.55rem;
+}
+/* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
+   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. */
+.tracker-add-target-input {
+  width: 44px;
+  flex-shrink: 0;
+  padding: 4px 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-well);
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+.tracker-add-target-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 /* Bouton "suppression multiple" (mobile) — même mécanisme/gabarit que .icon-btn (26x26, voir
@@ -179,29 +197,54 @@
   color: var(--accent);
   font-size: 0.85rem;
 }
-/* Édition directe de la valeur de départ du décompte (mode 'down') — même
-   emplacement que `.kpi-card-count` en lecture seule (mode 'up'), voir
-   `.kpi-countdown-input` (tracker-strip, même principe desktop). */
-.kpi-card-countdown-input {
-  width: 42px;
+/* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
+   `.kpi-card-count` en lecture seule (mode 'up'), voir `.kpi-countdown-current-input`
+   (tracker-strip, même principe desktop). La cible, elle, ne se modifie plus après la création
+   (voir `.kpi-card-target-static` ci-dessous et CLAUDE.md). */
+.kpi-card-countdown-current-input {
+  width: 34px;
   padding: 1px 4px;
   border: 1px solid var(--tint-strong);
   border-radius: 3px;
   background: var(--tint-weak);
   text-align: center;
 }
-.kpi-card-countdown-input:focus {
+.kpi-card-countdown-current-input:focus {
   outline: none;
   border-color: var(--accent);
 }
-/* Switch comptage croissant/décompte — voir `.icon-switch` (styles.css) et
-   `.kpi-mode-switch` (tracker-strip, même mécanisme en desktop). */
-.kpi-card-mode-switch {
-  width: 32px;
-  flex-shrink: 0;
+.kpi-card-count-sep {
+  color: var(--text-muted);
 }
-.kpi-card-mode-switch .icon-switch-option {
-  font-size: 0.52rem;
+/* Texte simple, non éditable — grisée pour se distinguer de la valeur actuelle, éditable elle. */
+.kpi-card-target-static {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.kpi-card-pct {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+/* Repère de mode (incrémental/décompte) : badge coin HAUT-GAUCHE de la carte, en miroir de
+   `.kpi-card-del`/`.kpi-card-select-checkbox` (coin haut-droit) — toujours visible, la carte
+   mobile n'a pas d'état replié/déplié (voir tracker-strip.component.css, même principe desktop).
+   Tooltip au survol/appui long = 'Incrémental'/'Décompte' (voir template). */
+.kpi-card-mode-badge {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
 }
 .kpi-card-reset {
   flex-shrink: 0;
