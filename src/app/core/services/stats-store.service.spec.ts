@@ -590,7 +590,7 @@ describe('StatsStoreService', () => {
   });
 
   describe('Suivi (watchlist) : homonymes distingués par catalogId', () => {
-    it("deux entrées de même nom mais d'id différent coexistent (ex. les deux \"Larme d'Ogrest\")", () => {
+    it('deux entrées de même nom mais d\'id différent coexistent (ex. les deux "Larme d\'Ogrest")', () => {
       const stats = TestBed.inject(StatsStoreService);
       stats.addWatchedItem("Larme d'Ogrest", 24029);
       stats.addWatchedItem("Larme d'Ogrest", 21602);
@@ -600,7 +600,7 @@ describe('StatsStoreService', () => {
       expect(matches.map((w) => w.catalogId).sort()).toEqual([21602, 24029]);
     });
 
-    it("refuse un vrai doublon (même id) mais accepte un id différent", () => {
+    it('refuse un vrai doublon (même id) mais accepte un id différent', () => {
       const stats = TestBed.inject(StatsStoreService);
       stats.addWatchedItem("Larme d'Ogrest", 24029);
       stats.addWatchedItem("Larme d'Ogrest", 24029); // même id : refusé
@@ -635,7 +635,7 @@ describe('StatsStoreService', () => {
       expect(matches.every((w) => w.count === 1)).toBe(true);
     });
 
-    it("removeWatched sans catalogId (repli historique) retire toutes les entrées de ce nom", () => {
+    it('removeWatched sans catalogId (repli historique) retire toutes les entrées de ce nom', () => {
       const stats = TestBed.inject(StatsStoreService);
       stats.addWatchedItem("Larme d'Ogrest", 24029);
       stats.addWatchedItem("Larme d'Ogrest", 21602);

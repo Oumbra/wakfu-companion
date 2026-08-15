@@ -32,7 +32,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { neon } from '@neondatabase/serverless';
 
-const MIGRATIONS_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'db', 'migrations');
+const MIGRATIONS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '..',
+  'db',
+  'migrations',
+);
 
 async function main(): Promise<void> {
   const databaseUrl = process.env['DATABASE_URL'];

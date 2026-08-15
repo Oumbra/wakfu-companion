@@ -57,8 +57,8 @@ export class CharacterAddFormComponent {
       (className, gender) => {
         this.pendingClass.set({ className, gender });
       },
-      this.isMobile.matches() ? 'icons': 'portraits',
-      this.switchModeBlocked()
+      this.isMobile.matches() ? 'icons' : 'portraits',
+      this.switchModeBlocked(),
     );
   }
 

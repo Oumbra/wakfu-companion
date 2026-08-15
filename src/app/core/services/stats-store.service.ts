@@ -435,7 +435,9 @@ export class StatsStoreService {
   setWatchlistCountdownTarget(name: string, target: number, catalogId?: number | null): void {
     const clamped = Math.max(0, Math.floor(Number.isFinite(target) ? target : 0));
     const updated = this.watchlist().map((w) =>
-      this.matchesWatched(w, name, catalogId) ? { ...w, countdownTarget: clamped, count: clamped } : w,
+      this.matchesWatched(w, name, catalogId)
+        ? { ...w, countdownTarget: clamped, count: clamped }
+        : w,
     );
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);

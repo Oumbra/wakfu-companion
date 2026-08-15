@@ -15,21 +15,37 @@ interface TooltipStyle {
 function computeStyle(rect: DOMRect, position: TooltipPosition): TooltipStyle {
   switch (position) {
     case 'top':
-      return { left: rect.left + rect.width / 2, top: rect.top - GAP, transform: 'translate(-50%, -100%)' };
+      return {
+        left: rect.left + rect.width / 2,
+        top: rect.top - GAP,
+        transform: 'translate(-50%, -100%)',
+      };
     case 'top-left':
       return { left: rect.left, top: rect.top - GAP, transform: 'translateY(-100%)' };
     case 'top-right':
       return { left: rect.right, top: rect.top - GAP, transform: 'translate(-100%, -100%)' };
     case 'bottom':
-      return { left: rect.left + rect.width / 2, top: rect.bottom + GAP, transform: 'translateX(-50%)' };
+      return {
+        left: rect.left + rect.width / 2,
+        top: rect.bottom + GAP,
+        transform: 'translateX(-50%)',
+      };
     case 'bottom-left':
       return { left: rect.left, top: rect.bottom + GAP, transform: 'none' };
     case 'bottom-right':
       return { left: rect.right, top: rect.bottom + GAP, transform: 'translateX(-100%)' };
     case 'left':
-      return { left: rect.left - GAP, top: rect.top + rect.height / 2, transform: 'translate(-100%, -50%)' };
+      return {
+        left: rect.left - GAP,
+        top: rect.top + rect.height / 2,
+        transform: 'translate(-100%, -50%)',
+      };
     case 'right':
-      return { left: rect.right + GAP, top: rect.top + rect.height / 2, transform: 'translateY(-50%)' };
+      return {
+        left: rect.right + GAP,
+        top: rect.top + rect.height / 2,
+        transform: 'translateY(-50%)',
+      };
   }
 }
 
