@@ -173,7 +173,7 @@ a.browser-item:hover .browser-item-name {
 
 .why-block {
   margin-top: 18px;
-  text-align: center;
+  text-align: right;
 }
 .why-link {
   background: none;
@@ -200,6 +200,12 @@ a.browser-item:hover .browser-item-name {
   color: var(--text-muted);
   text-align: left;
   animation: fadeSlideDown 0.3s ease;
+}
+.why-explanation a {
+  color: var(--accent);
+}
+.why-explanation a:hover {
+  filter: brightness(1.15);
 }
 
 @keyframes fadeSlideDown {

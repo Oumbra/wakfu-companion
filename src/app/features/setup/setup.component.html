@@ -70,7 +70,7 @@
           {{ 'setup.why.link' | t }}
         </button>
         @if (showWhy()) {
-          <p class="why-explanation">{{ 'setup.why.body' | t }}</p>
+          <p class="why-explanation" [innerHTML]="'setup.why.body' | tHtml"></p>
         }
       </div>
     }
