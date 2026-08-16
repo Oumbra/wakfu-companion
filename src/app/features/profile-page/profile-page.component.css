@@ -32,10 +32,27 @@
 /* Rail de navigation desktop (proposition A, voir CLAUDE.md) — masqué sous 800px (media query
    mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
    sticky` plutôt que `fixed` : reste dans le flux de `.profile-layout` (pas de calcul de largeur
-   manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu. */
+   manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu.
+   `max-height: var(--rail-max-h, none)` (posée dynamiquement en JS, voir
+   `ProfilePageComponent`/`railMaxHeight`) : sans elle, `position: sticky` ne colle PAS (bug réel
+   corrigé en session — ne se voit qu'avec assez de contenu pour que la page scrolle vraiment,
+   voir CLAUDE.md pour la méthode de test via import JSON). Cause : `.profile-rail` et `.panels-row`
+   (voisin, plus bas) sont tous deux `height: 100%` dans `.profile-layout` (flex row) dont la
+   hauteur dépend ELLE-MÊME du contenu (`.app-page-content { flex: 1 0 auto }`, volontaire — page
+   entière qui scrolle). Cette `%`-height ne peut pas se résoudre contre un ancêtre défini → les
+   deux enfants sont "stretchés" à la hauteur du plus grand des deux (ex. une longue grille de
+   personnages) — le rail sticky n'a alors plus aucune marge de manœuvre dans son bloc englobant
+   pour paraître figé : il est déjà collé bord à bord avec lui, et défile avec la page comme
+   n'importe quel élément statique. `max-height` (valeur px, pas `%`) n'a pas ce problème de
+   circularité : elle plafonne le rail à l'espace réellement visible sous les 2 en-têtes
+   (app-header + en-tête de page), laissant `.profile-rail-scroll` (overflow-y:auto) absorber le
+   surplus en interne, et redonnant au sticky la marge nécessaire. `100vh` seul serait trop généreux
+   (ne défalque pas le chrome au-dessus) et couperait le bas du rail une fois figé — d'où la mesure
+   dynamique plutôt qu'une valeur en dur fragile. */
 .profile-rail {
   flex: none;
   height: 100%;
+  max-height: var(--rail-max-h, none);
   width: 220px;
   display: flex;
   gap: 8px;
@@ -55,7 +72,8 @@
 /* Seule zone qui défile : sépare la liste des boutons de l'icône de repli (dernier enfant direct de
    `.profile-rail`, hors de cette zone) pour qu'elle reste TOUJOURS accessible en bas du rail, même
    si la liste venait à déborder (`flex: 1` grandit pour occuper tout l'espace restant, ce qui pousse
-   d'autant l'icône vers le bas). */
+   d'autant l'icône vers le bas). Ne devient réellement scrollable qu'une fois `.profile-rail`
+   lui-même plafonné par `max-height` ci-dessus — sinon rien ne borne sa hauteur non plus. */
 .profile-rail-scroll {
   flex: 1;
   min-height: 0;
@@ -65,6 +83,7 @@
   flex-direction: column;
   gap: 2.5px;
 }
+
 .profile-rail-btn {
   position: relative;
   width: 100%;
@@ -651,9 +670,37 @@
   color: var(--text-muted);
 }
 
+/* Cadre pointillé façon "zone de dépôt" (même pattern que `.drop-zone` en page setup, voir
+   CLAUDE.md — `--border-strong` sert explicitement aux bordures pointillées) plutôt qu'un simple
+   champ de recherche : appuie le côté "ajouter" de l'action, avec le glyphe + en accent. */
 .sound-item-add {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 2px dashed var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface-well);
+  transition: border-color 0.15s ease;
+}
+.sound-item-add-icon {
+  flex-shrink: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+.sound-item-add:hover,
+.sound-item-add:focus-within {
+  border-color: var(--accent);
+}
+.sound-item-add:hover .sound-item-add-icon,
+.sound-item-add:focus-within .sound-item-add-icon {
+  color: var(--accent);
+}
+.sound-item-add:hover input::placeholder,
+.sound-item-add:focus-within input::placeholder {
+  color: var(--text-color);
 }
 
 .sound-item-grid,
@@ -794,14 +841,32 @@
    fait fonctionner la même règle sans ce piège. Largeur = celle de ce panneau (déjà amputé des
    220px du rail principal `.profile-rail`), pas celle du viewport — un `@media` sur la largeur de
    fenêtre décalerait le seuil selon que le rail principal est présent ou non. Voir la `@container`
-   plus bas pour le seuil lui-même. */
+   plus bas pour le seuil lui-même.
+
+   `overflow: visible` (override du `.tool-panel { overflow: hidden }` générique, voir plus haut —
+   scopé à CETTE seule instance, les autres onglets gardent le clip) : sans ça, `position: sticky`
+   sur `.roster-account-rail` ne colle PAS du tout (bug réel corrigé en session, voir CLAUDE.md pour
+   la méthode de test). Cause : n'importe quel `overflow` autre que `visible` sur un ANCÊTRE — même
+   `hidden`, même si son contenu ne dépasse jamais sa propre boîte — en fait le "conteneur de
+   défilement" de référence pour le calcul du sticky (au sens CSS, pas au sens visuel), à la place
+   du vrai conteneur qui scrolle plus haut (`.app-page-body`, voir AppPageComponent). Comme
+   `.roster-tool-panel` lui-même ne scrolle jamais (son `scrollTop` reste toujours à 0, rien ne
+   l'anime), le rail sticky calé dessus n'a jamais l'occasion de "décrocher" : il suit `.roster-tool-
+   panel` comme un bloc rigide pendant que celui-ci défile normalement avec le reste de la page. */
 .roster-tool-panel {
   container-type: inline-size;
   container-name: roster-panel;
+  overflow: visible;
 }
+/* `align-items: flex-start` (override du `align-items: center` hérité de `.panel-body`, voir plus
+   haut) : sans ça, `.roster-account-rail` (désormais plus court que la grille de personnages grâce
+   à `max-height`, voir `.profile-rail`) se retrouve centré verticalement dans la ligne flex au lieu
+   d'aligné en haut — son sticky ne "s'active" alors qu'après avoir scrollé au-delà de ce centrage
+   initial, au lieu d'être collé dès le premier pixel de scroll (bug réel corrigé en session). */
 .panel-body.roster-panel-body {
   flex-direction: row;
   justify-content: center;
+  align-items: flex-start;
   gap: 20px;
   padding: 0;
 }

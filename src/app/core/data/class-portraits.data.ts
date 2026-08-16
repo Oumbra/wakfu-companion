@@ -7,12 +7,23 @@ import { Gender } from './class-icons.data';
  * l'encyclopédie officielle — voir git log). Sources : `static.ankama.com/web-test/{id}.png`
  * (icônes de sélection d'avatar du jeu, fournies directement par identifiant numérique plutôt que
  * cadrées à la main comme la planche précédente), assemblées en une seule planche 2026-08-15.
- * Fond opaque (blanc pour la plupart des classes, parfois une couleur saturée type feca/eliotrope)
- * — une 1ère tentative de fond transparent par flood-fill (case par case) a été faite puis
- * annulée (2026-08-15) faute d'un résultat correct sur certaines cases ; à refaire proprement, ne
- * pas répéter la même approche sans corriger le défaut signalé.
+ *
+ * Fond transparent (2026-08-16) — `class-avatars-sheet-transparent-*.png`, copie retraitée de la
+ * planche opaque d'origine (`class-avatars-sheet-ade44514.png`, conservée telle quelle, non
+ * référencée ailleurs). Une 1ère tentative de fond transparent par simple flood-fill à seuil
+ * "lâche" avait été faite puis annulée (2026-08-15) : sur certaines cases, la lisière tête/cheveux
+ * est rendue en dégradé doux sans trait d'encre net, si bien qu'un flood-fill à seuil lâche
+ * traverse ce dégradé et mange une partie du visage (fuite mesurée entre 165 et 175 de luminosité
+ * minimale sur la case la plus à risque). Traitement retenu cette fois : connexité stricte depuis
+ * la bordure de chaque case (seuil élevé, marge de sécurité large sous ce point de fuite) + anneau
+ * de dilatation borné (quelques px, pas une nouvelle traversée de connexité) pour rattraper le
+ * reliquat d'anti-aliasing, puis alpha + dématriçage couleur façon "color to alpha" (fond blanc
+ * pur) sur cette seule région — un pixel hors de cette région reste intégralement opaque quelle
+ * que soit sa couleur, ce qui protège les cheveux clairs/reflets blancs internes au personnage.
+ * Vérifié sur les 36 cases (composite sur fond magenta ET sombre + détection automatique de petits
+ * artefacts) avant intégration.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-db1a9e34.png';
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-ade44514.png';
 export const CLASS_PORTRAITS_SPRITE_COLS = 2;
 export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
 
@@ -69,7 +80,7 @@ const CLASS_PORTRAIT_ROW: Readonly<Record<string, number>> = Object.fromEntries(
 );
 
 /** Ligne (0-17) d'une classe dans la planche — 0 (Cra) si `className` inconnu/absent, pour rester
- * cohérent avec `getBreedAvatarIndex` (repli sur la 1ère case plutôt que planter). */
+ * cohérent avec `getAvatarGridIndex` (repli sur la 1ère case plutôt que planter). */
 export function getClassPortraitRow(className: string | undefined): number {
   return (className ? CLASS_PORTRAIT_ROW[className] : undefined) ?? 0;
 }
@@ -101,8 +112,11 @@ export function getAvatarGridEntry(index: number | null | undefined): {
   );
 }
 
-/** Index (0-35) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case. */
-function avatarGridIndexFor(className: string | undefined, gender: Gender): number {
+/** Index (0-35) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case.
+ * Utilisé aussi bien par `migrateLegacyAvatarIndex` ci-dessous que par `AvatarIconComponent` (petit
+ * portrait persistant, pas de choix interactif) — voir ce composant pour son propre repli si
+ * `className`/`gender` sont absents en amont. */
+export function getAvatarGridIndex(className: string | undefined, gender: Gender): number {
   const row = className ? CLASS_PORTRAIT_ORDER.indexOf(className) : -1;
   const safeRow = row >= 0 ? row : 0;
   return safeRow * 2 + (gender === 'f' ? 0 : 1);
@@ -163,11 +177,12 @@ const LEGACY_V2_ORDER: readonly string[] = [
   'huppermage',
 ];
 
-/** Repli (colonne -> classe) de l'ancien schéma v1 (planche `class-breeds.data.ts`, 18 classes x
- * 2 sexes, `index = ligne(sexe)*18 + colonne(classe)`), utilisé uniquement par
- * `migrateLegacyAvatarIndex` ci-dessous. Table dupliquée ici (plutôt qu'importée de
- * class-breeds.data.ts) pour ne plus dépendre de cette planche — voir BREED_CLASS_COLUMNS dans
- * class-breeds.data.ts pour la table d'origine, à garder synchronisée. */
+/** Repli (colonne -> classe) de l'ancien schéma v1 (planche `class-breeds-sprite-*.jpg`, 18 classes
+ * x 2 sexes, `index = ligne(sexe)*18 + colonne(classe)`), utilisé uniquement par
+ * `migrateLegacyAvatarIndex` ci-dessous. Ancienne source (`class-breeds.data.ts`, table
+ * `BREED_CLASS_COLUMNS`) supprimée depuis qu'`AvatarIconComponent` a basculé sur la planche
+ * courante (2026-08-15) — cette copie figée reste la seule trace de l'ordre d'origine, ne plus la
+ * faire évoluer. */
 const LEGACY_V1_COLUMN_TO_CLASS: readonly string[] = [
   'feca',
   'osamodas',
@@ -189,9 +204,8 @@ const LEGACY_V1_COLUMN_TO_CLASS: readonly string[] = [
   'ouginak',
 ];
 
-/** Classes dont la ligne homme/femme du schéma v1 était inversée (voir
- * REVERSED_GENDER_ROW_CLASSES dans class-breeds.data.ts) — dupliqué ici pour la même raison que
- * LEGACY_V1_COLUMN_TO_CLASS. */
+/** Classes dont la ligne homme/femme du schéma v1 était inversée — même copie figée que
+ * LEGACY_V1_COLUMN_TO_CLASS ci-dessus, pour la même raison. */
 const LEGACY_V1_REVERSED_GENDER_ROW_CLASSES = new Set(['huppermage', 'ouginak']);
 
 /**
@@ -214,15 +228,15 @@ export function migrateLegacyAvatarIndex(
 ): number {
   if (fromVersion === 4) {
     const className = CLASS_PORTRAIT_ORDER[oldIndex];
-    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+    return getAvatarGridIndex(className, getClassPortraitDefaultGender(className));
   }
   if (fromVersion === 3) {
     const className = LEGACY_V3_ORDER[oldIndex];
-    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+    return getAvatarGridIndex(className, getClassPortraitDefaultGender(className));
   }
   if (fromVersion === 2) {
     const className = LEGACY_V2_ORDER[oldIndex];
-    return avatarGridIndexFor(className, getClassPortraitDefaultGender(className));
+    return getAvatarGridIndex(className, getClassPortraitDefaultGender(className));
   }
   // Schéma v1 (absent) : 0-35, sexe encodé par la ligne (0 ou 1) de l'ancienne planche.
   const safeIndex = ((oldIndex % 36) + 36) % 36;
@@ -231,5 +245,5 @@ export function migrateLegacyAvatarIndex(
   const className = LEGACY_V1_COLUMN_TO_CLASS[col];
   const maleRow = className && LEGACY_V1_REVERSED_GENDER_ROW_CLASSES.has(className) ? 0 : 1;
   const gender: Gender = row === maleRow ? 'm' : 'f';
-  return avatarGridIndexFor(className, gender);
+  return getAvatarGridIndex(className, gender);
 }

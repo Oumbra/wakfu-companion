@@ -31,21 +31,102 @@
 
 .tracker-controls {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 8px;
   padding: 8px 10px;
   background: var(--surface-well);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
-/* Switch incrémental/décompte déterminant le mode du KPI créé — voir
-   `.kpi-card-mode-switch` (même mécanisme, une fois le KPI créé). */
+.tracker-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* Rangée dédiée à la cible du décompte (visible uniquement quand le mode 'down' est sélectionné,
+   voir template) : un panneau mobile peut être aussi étroit qu'un téléphone en portrait, les puces
+   de quantités (`.kpi-target-presets`) + le stepper n'ont pas la place de tenir sur la même ligne
+   que la recherche sans écraser cette dernière — une 2e rangée pleine largeur reste lisible quelle
+   que soit la largeur de l'écran, contrairement à la bande desktop (une seule ligne possible, voir
+   tracker-strip.component.css). */
+.tracker-target-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait,
+   le mode étant figé une fois le KPI créé (contrairement à la bande desktop, la carte mobile n'a
+   plus de badge de repère : la présence de `.kpi-card-pct`/`.kpi-card-target-row` suffit à
+   signaler un décompte, voir maquette fournie par l'utilisateur). Largeur `auto` (contenu = icône +
+   libellé en toutes lettres) : le mode se lit désormais sans survol, voir CLAUDE.md.  */
 .tracker-add-mode-switch {
-  width: 34px;
+  width: auto;
   flex-shrink: 0;
+  height: 32px;
 }
 .tracker-add-mode-switch .icon-switch-option {
-  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  white-space: nowrap;
+  width: 85px;
+  transition: width 0.2s ease;
+}
+.icon-switch-option.compact {
+  overflow: hidden;
+  width: 32px !important;
+  padding: 0 !important;
+}
+.icon-switch-option-label {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.icon-switch-option.compact .icon-switch-option-label {
+  display: none;
+}
+
+/* Puces de quantités courantes (voir `WatchlistTileController.targetPresets`) — un tap va plus
+   vite qu'une saisie clavier pour les décomptes les plus fréquents (recette, farm en rond). */
+.kpi-target-presets {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.kpi-target-chip {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-active);
+  color: var(--text-color);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.72rem;
+  border-radius: 999px;
+  padding: 4px 10px;
+  line-height: 1;
+}
+.kpi-target-chip:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04222a;
+}
+
+/* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
+   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. `app-input-number`
+   (shared/input-number/) plutôt qu'un stepper local, même gabarit que la bande desktop (voir
+   tracker-strip.component.css) à quelques px près (variables `--input-number-*` ci-dessous). */
+app-input-number.tracker-target-input {
+  --input-number-height: 28px;
+  --input-number-btn-width: 24px;
+  --input-number-btn-font-size: 0.9rem;
+  --input-number-field-width: 46px;
 }
 
 /* Bouton "suppression multiple" (mobile) — même mécanisme/gabarit que .icon-btn (26x26, voir
@@ -56,8 +137,8 @@
   flex-shrink: 0;
 }
 .kpi-remove-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: 5px;
   background: var(--tint-medium);
   border: 1px dashed var(--text-muted);
@@ -77,7 +158,7 @@
 .kpi-bulk-delete-btn {
   position: absolute;
   top: calc(100% + 8px);
-  right: 0;
+  left: 0;
   background: #b33939;
   color: var(--text-bright);
   border: none;
@@ -94,7 +175,7 @@
   content: '';
   position: absolute;
   bottom: 100%;
-  right: 8px;
+  left: 8px;
   border: 5px solid transparent;
   border-bottom-color: #b33939;
 }
@@ -104,122 +185,140 @@
 
 /* `.panel-body` (classe globale, styles.css) passe en overflow-x/y:auto dès
    que overflow-y:auto est posé (règle d'interop CSS : un axe non-`visible`
-   force l'autre à `auto` aussi) — sans ce `hidden` explicite, la croix de
-   suppression d'une carte de la colonne de droite (`.kpi-card-del`, décalée
-   de -9px hors de sa carte, voir plus bas) dépassait de quelques pixels le
-   padding-box de la grille et faisait apparaître un scroll horizontal
-   inutile sur mobile. */
+   force l'autre à `auto` aussi) — verrouillé explicitement pour ne jamais
+   faire apparaître de scroll horizontal sur cette grille mobile. */
 .panel-body {
   overflow-x: hidden;
 }
 
-/* Grille de cartes en flex-wrap (voir CLAUDE.md) : icône centrée à gauche,
-   nom+compteur+reset à droite, croix de suppression sur la bordure haute-droite.
-   Padding droit un peu plus large que les autres côtés pour laisser de la
-   place à `.kpi-card-del` (voir commentaire ci-dessus) sans la rogner. */
+/* Grille de cartes en flex-wrap (voir CLAUDE.md), 2 colonnes environ sur un mobile standard —
+   chaque carte s'organise maintenant en 3 rangées empilées (icône+nom+%, valeur+reset, cible),
+   voir `.kpi-card` ci-dessous, plutôt que l'ancienne rangée unique icône-à-gauche/infos-à-droite
+   (maquette fournie par l'utilisateur, voir CLAUDE.md si le format doit être documenté). */
 .kpi-mobile-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 8px 14px 8px 8px;
+  gap: 10px;
+  padding: 10px;
 }
 
 .kpi-card {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: row;
+  gap: 6px;
   flex: 1 1 150px;
   min-width: 150px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 2px solid transparent;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: var(--surface-raised);
 }
 
 .kpi-card-icon {
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
-  border-radius: 4px;
+  border-radius: 6px;
 }
-
-.kpi-card-info {
-  flex-grow: 1;
-  min-width: 0;
+.kpi-card-body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  align-items: flex-end;
+  gap: 8px;
+  width: calc(100% - 35px);
+}
+.kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
 }
 .kpi-card-name {
-  align-self: stretch;
+  flex: 1;
+  min-width: 0;
+  max-width: calc(100% - 35px);
   display: block;
-  text-align: left;
-  font-weight: 600;
-  font-size: 0.82rem;
+  font-weight: 700;
+  font-size: 0.84rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.kpi-card-name > span {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.kpi-card-pct {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-style: italic;
 }
-.kpi-card-count-row {
+
+.kpi-card-value-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  width: 100%;
+  justify-content: space-between;
+  width: 100px;
 }
-.kpi-card-count {
+.kpi-card-value {
   font-family: monospace;
   font-weight: 700;
-  color: var(--accent);
-  font-size: 0.85rem;
-}
-/* Édition directe de la valeur de départ du décompte (mode 'down') — même
-   emplacement que `.kpi-card-count` en lecture seule (mode 'up'), voir
-   `.kpi-countdown-input` (tracker-strip, même principe desktop). */
-.kpi-card-countdown-input {
-  width: 42px;
-  padding: 1px 4px;
-  border: 1px solid var(--tint-strong);
-  border-radius: 3px;
-  background: var(--tint-weak);
+  font-size: 1.05rem;
+  color: var(--kama-color);
+  width: 100px;
   text-align: center;
 }
-.kpi-card-countdown-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-/* Switch comptage croissant/décompte — voir `.icon-switch` (styles.css) et
-   `.kpi-mode-switch` (tracker-strip, même mécanisme en desktop). */
-.kpi-card-mode-switch {
-  width: 32px;
-  flex-shrink: 0;
-}
-.kpi-card-mode-switch .icon-switch-option {
-  font-size: 0.52rem;
+/* Édition directe de la valeur ACTUELLE du décompte (mode 'down') — même emplacement que
+   `.kpi-card-value` en lecture seule (mode 'up'). La cible, elle, ne se modifie plus après la
+   création (voir `.kpi-card-target` plus bas et CLAUDE.md). Couleur alignée sur --kama-color
+   (plutôt que --accent) : cohérent avec la bande desktop, où le même choix a été fait pour la
+   valeur courante du décompte (voir tracker-strip.component.css). `app-input-number` sans boutons
+   (`[showButtons]="false"`, voir template) : pas de place pour un stepper dans une carte 58px. */
+app-input-number.kpi-card-value-input {
+  --input-number-field-width: 50px;
+  --input-number-field-padding: 4px 8px;
+  --input-number-field-bg: transparent;
+  --input-number-field-focus-bg: transparent;
+  --input-number-field-color: var(--kama-color);
+  --input-number-field-font-size: 0.85rem;
+  --input-number-focus-color: var(--kama-color);
 }
 .kpi-card-reset {
   flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
   color: var(--text-muted);
   background: transparent;
   border: none;
   padding: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .kpi-card-reset:hover {
   color: var(--accent);
 }
 
+/* Cible : séparée de la valeur actuelle par un filet, texte simple non éditable — fixée à la
+   création (voir CLAUDE.md), au même titre que le mode. Poids réduit (500) : reste secondaire
+   face à la valeur actuelle, seule à vraiment bouger. */
+.kpi-card-target-row {
+  display: flex;
+  width: 100px;
+}
+.kpi-card-target {
+  width: 50px;
+  text-align: center;
+  border-top: 1px solid var(--tint-strong);
+  font-family: monospace;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-muted);
+  padding-top: 4px;
+}
+
 .kpi-card-del {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -8.5px;
+  right: -8.5px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -245,8 +344,8 @@
    case à cocher plutôt que croix, coche SVG affichée uniquement à l'état coché (voir template). */
 .kpi-card-select-checkbox {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: -8.5px;
+  right: -8.5px;
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -266,11 +365,13 @@
   color: #04222a;
 }
 
-/* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx). */
+/* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
+   Dégradé diagonal (haut-gauche vers bas-droit, où vit l'icône) plutôt qu'horizontal — plus
+   proche de la maquette fournie. */
 .kpi-card[class*='rarity-'] {
   border-color: var(--rarity-color);
   background: linear-gradient(
-    to right,
+    135deg,
     color-mix(in srgb, var(--rarity-color) 25%, var(--surface-raised)),
     var(--surface-raised) 85%
   );

@@ -6,6 +6,7 @@ import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
 
 const INDEX_CACHE_KEY = 'catalog-index';
 const DUNGEONS_CACHE_KEY = 'catalog-dungeons';
+const MONSTER_FAMILIES_CACHE_KEY = 'catalog-monster-families';
 
 /** Doit rester la même table que server/catalog/compact-index.ts (RARITY_SORT_ORDER) — construite
  * une seule fois par inversion de RARITY_SORT_ORDER (déjà défini côté client) plutôt que dupliquée
@@ -32,11 +33,26 @@ export interface CatalogMonsterEntry {
   es: string;
   pt: string;
   gfxId: string;
-  /** `null` si le monstre n'a pas de famille encyclopédie (28 monstres sur 851). */
+  /** `null` si le monstre n'a pas de famille encyclopédie (28 monstres sur 851). Référence
+   * `CatalogMonsterFamilyEntry.id` (voir findWakfuMonsterFamilyById), jamais résolue ici même : le
+   * nom de famille se lit dans une table séparée, pas dupliqué sur chaque monstre. */
   family: number | null;
   isBoss: boolean;
   isArchi: boolean;
   isDominant: boolean;
+}
+
+/** Famille encyclopédie d'un monstre (`repository/monster-families.json`, ~150 lignes) — sert
+ * uniquement à donner un libellé localisé au palier "famille de monstre" du regroupement "Type" de
+ * l'historique des combats (voir resolveFightTypeClassification, core/utils/fight-image.util.ts) ;
+ * pas utilisée dans le chemin chaud de parsing (contrairement à CatalogMonsterEntry), chargée et
+ * mise en cache comme CatalogDungeonEntry (petit volume, jamais dans l'index compact). */
+export interface CatalogMonsterFamilyEntry {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
 }
 
 /** Catégorie d'un donjon, curée à la main dans repository/dungeons.json (miroir de
@@ -192,16 +208,23 @@ export class CatalogService {
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
+  private monsterFamiliesById = new Map<number, CatalogMonsterFamilyEntry>();
 
   async initialize(): Promise<void> {
-    const [cachedIndex, cachedDungeons] = await Promise.all([
+    const [cachedIndex, cachedDungeons, cachedMonsterFamilies] = await Promise.all([
       this.persistence.getCacheEntry<CachedIndexPayload>(INDEX_CACHE_KEY),
       this.persistence.getCacheEntry<CatalogDungeonEntry[]>(DUNGEONS_CACHE_KEY),
+      this.persistence.getCacheEntry<CatalogMonsterFamilyEntry[]>(MONSTER_FAMILIES_CACHE_KEY),
     ]);
 
     if (cachedIndex && cachedDungeons) {
       this.applyIndex(cachedIndex);
       this.applyDungeons(cachedDungeons);
+      // Optionnel (pas requis pour le chemin rapide, contrairement à cachedDungeons) : absent au
+      // tout premier démarrage suivant l'ajout de cette table (cache existant plus ancien), il se
+      // remplira au prochain rafraîchissement en arrière-plan ci-dessous — jamais bloquant, le
+      // libellé de famille a un repli côté client (voir fight-image.util.ts) en son absence.
+      if (cachedMonsterFamilies) this.applyMonsterFamilies(cachedMonsterFamilies);
       this.status.set('ready');
       // Rafraîchissement en arrière-plan : ne bloque pas le démarrage, voir doc de classe.
       void this.refreshIfNeeded(cachedIndex.indexHash);
@@ -225,6 +248,24 @@ export class CatalogService {
     return this.itemsById.get(id);
   }
 
+  /** Toutes les entrées catalogue partageant ce nom (n'importe quelle langue), triées par id — sert
+   * à la désambiguïsation manuelle d'objets homonymes de rareté différente (ex. "Larme d'Ogrest",
+   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). Balaie tout
+   * `itemsById` (pas indexé par nom pour le cas multiple) : jamais un chemin chaud, seulement appelé
+   * à l'ouverture du sélecteur de correction (voir ItemPickerService). */
+  findAllWakfuItemEntriesByName(name: string): CatalogItemEntry[] {
+    const key = normalizeWakfuName(name);
+    return [...this.itemsById.values()]
+      .filter(
+        (entry) =>
+          normalizeWakfuName(entry.fr) === key ||
+          normalizeWakfuName(entry.en) === key ||
+          normalizeWakfuName(entry.es) === key ||
+          normalizeWakfuName(entry.pt) === key,
+      )
+      .sort((a, b) => a.id - b.id);
+  }
+
   /** Miroir de findWakfuMonsterEntry — voir findWakfuItemEntry. */
   findWakfuMonsterEntry(name: string): CatalogMonsterEntry | undefined {
     const key = normalizeWakfuName(name);
@@ -245,6 +286,14 @@ export class CatalogService {
 
   findWakfuDungeonByBossMonsterId(bossMonsterId: number): CatalogDungeonEntry | undefined {
     return this.dungeonsByBossMonsterId.get(bossMonsterId);
+  }
+
+  /** Résout `CatalogMonsterEntry.family` vers son libellé localisé — `undefined` si la famille
+   * n'a pas (encore) de nom connu (cache pas encore rafraîchi, voir `initialize`, ou id de famille
+   * absent du référentiel) : l'appelant doit alors se rabattre sur un autre libellé, voir
+   * `resolveFightTypeClassification` (fight-image.util.ts). */
+  findWakfuMonsterFamilyById(familyId: number): CatalogMonsterFamilyEntry | undefined {
+    return this.monsterFamiliesById.get(familyId);
   }
 
   /** Itère tous les objets connus — sert à l'autocomplétion (WakfuSearchService, étape 5), qui
@@ -336,18 +385,19 @@ export class CatalogService {
     }
     if (versionResult.data.indexHash === cachedHash) {
       // `indexHash` ne couvre QUE l'index compact (objets/monstres, voir buildCompactIndex côté
-      // serveur) — les donjons n'y participent pas (payload séparé, /dungeons). Un changement
-      // portant uniquement sur `repository/dungeons.json` (ex. type de donjon corrigé) ne
-      // fait donc jamais bouger ce hash : sans ce rafraîchissement dédié, un navigateur ayant déjà
-      // un catalogue en cache ne réapprendrait JAMAIS une correction de donjon, potentiellement
-      // indéfiniment (bug réel constaté : "Repaire des Super-Vilains" resté mal typé côté client
-      // alors que la base était déjà correcte). Fire-and-forget : ne bloque pas `initialize()`,
-      // les donjons sont un petit payload (quelques dizaines de Ko).
-      void this.refreshDungeonsOnly();
+      // serveur) — ni les donjons ni les familles de monstre n'y participent (payloads séparés,
+      // /dungeons et /monster-families). Un changement portant uniquement sur
+      // `repository/dungeons.json` (ex. type de donjon corrigé) ou `repository/monster-families.json`
+      // ne fait donc jamais bouger ce hash : sans ce rafraîchissement dédié, un navigateur ayant
+      // déjà un catalogue en cache ne réapprendrait JAMAIS une telle correction, potentiellement
+      // indéfiniment (bug réel constaté sur les donjons : "Repaire des Super-Vilains" resté mal
+      // typé côté client alors que la base était déjà correcte). Fire-and-forget : ne bloque pas
+      // `initialize()`, les deux payloads sont petits (quelques dizaines de Ko).
+      void this.refreshDungeonsAndFamiliesOnly();
       return true;
     }
 
-    const [indexResult, dungeonsResult] = await Promise.all([
+    const [indexResult, dungeonsResult, monsterFamiliesResult] = await Promise.all([
       // Chemin SANS le segment "index" : Cloudflare Pages Functions traite un fichier nommé
       // index.ts comme la route racine de son dossier (`/catalog/`), pas comme un segment
       // littéral `/index` — une requête vers `/catalog/index` se prend une redirection 308 vers
@@ -357,6 +407,7 @@ export class CatalogService {
         '/catalog/',
       ),
       this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
+      this.apiClient.getJson<CatalogMonsterFamilyEntry[]>('/monster-families'),
     ]);
     if (!indexResult.ok || !dungeonsResult.ok) {
       return cachedHash !== null;
@@ -369,23 +420,38 @@ export class CatalogService {
     };
     this.applyIndex(payload);
     this.applyDungeons(dungeonsResult.data);
+    // Non bloquant pour le statut `ready` (voir doc de `findWakfuMonsterFamilyById`) : un échec
+    // réseau isolé sur ce seul payload ne doit pas dégrader le reste du catalogue.
+    if (monsterFamiliesResult.ok) this.applyMonsterFamilies(monsterFamiliesResult.data);
     this.status.set('ready');
     await Promise.all([
       this.persistence.setCacheEntry(INDEX_CACHE_KEY, payload),
       this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data),
+      ...(monsterFamiliesResult.ok
+        ? [this.persistence.setCacheEntry(MONSTER_FAMILIES_CACHE_KEY, monsterFamiliesResult.data)]
+        : []),
     ]);
     return true;
   }
 
-  /** Rafraîchit UNIQUEMENT `/dungeons`, indépendamment de `indexHash` (voir le commentaire dans
-   * `refreshIfNeeded`) — seul moyen pour un navigateur avec un catalogue déjà en cache d'apprendre
-   * une correction de donjon qui ne s'accompagne d'aucun changement d'objet/monstre. Silencieux en
-   * cas d'échec réseau (le cache existant reste utilisable tel quel, comme le reste du service). */
-  private async refreshDungeonsOnly(): Promise<void> {
-    const dungeonsResult = await this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons');
-    if (!dungeonsResult.ok) return;
-    this.applyDungeons(dungeonsResult.data);
-    await this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data);
+  /** Rafraîchit UNIQUEMENT `/dungeons` + `/monster-families`, indépendamment de `indexHash` (voir
+   * le commentaire dans `refreshIfNeeded`) — seul moyen pour un navigateur avec un catalogue déjà
+   * en cache d'apprendre une correction de donjon ou de famille qui ne s'accompagne d'aucun
+   * changement d'objet/monstre. Silencieux en cas d'échec réseau, PAYLOAD PAR PAYLOAD (le cache
+   * existant de chacun reste utilisable tel quel si l'autre échoue). */
+  private async refreshDungeonsAndFamiliesOnly(): Promise<void> {
+    const [dungeonsResult, monsterFamiliesResult] = await Promise.all([
+      this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
+      this.apiClient.getJson<CatalogMonsterFamilyEntry[]>('/monster-families'),
+    ]);
+    if (dungeonsResult.ok) {
+      this.applyDungeons(dungeonsResult.data);
+      await this.persistence.setCacheEntry(DUNGEONS_CACHE_KEY, dungeonsResult.data);
+    }
+    if (monsterFamiliesResult.ok) {
+      this.applyMonsterFamilies(monsterFamiliesResult.data);
+      await this.persistence.setCacheEntry(MONSTER_FAMILIES_CACHE_KEY, monsterFamiliesResult.data);
+    }
   }
 
   private applyIndex(payload: CachedIndexPayload): void {
@@ -457,6 +523,11 @@ export class CatalogService {
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
+    this.revision.update((v) => v + 1);
+  }
+
+  private applyMonsterFamilies(families: CatalogMonsterFamilyEntry[]): void {
+    this.monsterFamiliesById = new Map(families.map((family) => [family.id, family]));
     this.revision.update((v) => v + 1);
   }
 }

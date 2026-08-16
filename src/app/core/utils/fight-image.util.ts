@@ -2,8 +2,10 @@ import {
   CatalogDungeonEntry,
   CatalogMonsterEntry,
   CatalogService,
+  WakfuDungeonType,
   isDungeonBreach,
 } from '../api/catalog.service';
+import { normalizeWakfuName } from './wakfu-name.util';
 
 /** Illustration générique wakassets, utilisée aussi bien en repli erreur réseau qu'en cas de trop grande diversité de monstres (voir resolveFightImageUrl). */
 export const DEFAULT_FIGHT_IMAGE_URL =
@@ -159,4 +161,118 @@ export function resolveFightImageUrl(
   enemyNames: readonly string[],
 ): string | null {
   return resolveFightImageInfo(catalog, enemyNames).url;
+}
+
+/**
+ * Rang de tri global des groupes du regroupement "Type" de l'historique — voir CLAUDE.md /
+ * fight-history.component.ts (`buildTypeGroups`) : donjons non-brèche (par nombre de salles, puis
+ * boss ultime, puis 3 joueurs, l'arcade fermant la marche faute de consigne dédiée), puis brèches,
+ * puis familles de monstres, puis repli générique (horde hétérogène/inconnue) en tout dernier.
+ * Un simple nombre plutôt qu'un enum : `resolveFightTypeClassification` s'en sert directement comme
+ * clé de tri, sans mapping supplémentaire côté appelant.
+ */
+const DUNGEON_TYPE_CATEGORY_RANK: Readonly<Record<WakfuDungeonType, number>> = {
+  TWO_ROOMS: 0,
+  THREE_ROOMS: 1,
+  FOUR_ROOMS: 2,
+  ULTIMATE_BOSS: 3,
+  THREE_PLAYERS: 4,
+  ARCADE: 5,
+  BREACH: 6,
+  ULTIMATE_BREACH: 6,
+};
+const FAMILY_CATEGORY_RANK = 7;
+const OTHER_CATEGORY_RANK = 8;
+
+export type FightTypeClassification =
+  | {
+      kind: 'dungeon';
+      categoryRank: number;
+      /** Clé de regroupement stable, un donjon = un id (jamais son nom : deux donjons distincts
+       * pourraient théoriquement partager une même traduction dans une langue donnée). */
+      key: string;
+      /** Nom localisé du donjon/brèche à afficher tel quel — contrairement à `resolveFightImageInfo`
+       * (illustration), le nom d'une brèche N'EST PAS masqué ici : c'est justement ce qui distingue
+       * la catégorie "brèches" de celle des donjons classiques dans le regroupement par type. */
+      names: FightImageLocalizedName;
+    }
+  | {
+      kind: 'family';
+      categoryRank: number;
+      /** Id de famille encyclopédie (voir `CatalogMonsterEntry.family`), ou nom de monstre normalisé
+       * en repli pour les 28 monstres sans famille (voir CLAUDE.md) — chacun forme alors sa propre
+       * "famille" à un seul membre, comme avant ce correctif. */
+      key: string;
+      /** Id de famille encyclopédie (`CatalogMonsterEntry.family`), `null` pour le repli par nom
+       * (28 monstres sans famille, voir `key` ci-dessus). Permet à l'appelant de résoudre le VRAI
+       * nom de famille via `CatalogService.findWakfuMonsterFamilyById` — préférable à
+       * `candidateNames` ci-dessous, qui reste nécessaire en repli (id `null`, ou nom de famille pas
+       * encore chargé côté client, voir CatalogService.initialize). */
+      familyId: number | null;
+      /** Nom du monstre "représentatif" choisi pour CE combat précis (même priorité que
+       * `resolveFightImageInfo` : archimonstre > dominant > plus gros dégât) — PAS un nom de famille.
+       * Un seul combat ne suffit pas à choisir un libellé stable pour tout le groupe : l'appelant
+       * doit agréger ce champ sur l'ensemble des combats d'une même famille (nom le plus fréquent)
+       * — voir `buildTypeGroups` dans fight-history.component.ts. */
+      candidateNames: FightImageLocalizedName;
+    }
+  | { kind: 'other'; categoryRank: number; key: 'other' };
+
+/** Variante de `resolveFightImageInfo` pour le regroupement "Type" de l'historique (pas
+ * l'illustration) : reprend la même priorité (boss+donjon > horde hétérogène > archi > dominant >
+ * plus gros dégât) mais renvoie une clé de regroupement PAR FAMILLE plutôt que par monstre pour le
+ * dernier palier (voir CatalogMonsterEntry.family) — bug corrigé, l'ancienne implémentation
+ * réutilisait telle quelle `resolveFightImageInfo().tooltipSource.names`, qui ne porte que le nom du
+ * monstre "représentatif" de CE combat, jamais un identifiant de famille : deux combats contre des
+ * monstres de la même famille mais de noms différents finissaient dans deux groupes distincts.
+ */
+export function resolveFightTypeClassification(
+  catalog: CatalogService,
+  enemyNames: readonly string[],
+): FightTypeClassification {
+  const entries = enemyNames
+    .map((name) => catalog.findWakfuMonsterEntry(name))
+    .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
+
+  const bossEntry = entries.find((entry) => entry.isBoss);
+  if (bossEntry) {
+    const dungeon = findDungeonForEnemies(catalog, enemyNames);
+    if (dungeon) {
+      return {
+        kind: 'dungeon',
+        categoryRank: DUNGEON_TYPE_CATEGORY_RANK[dungeon.type],
+        key: `dungeon:${dungeon.id}`,
+        names: dungeon,
+      };
+    }
+    // Boss sans donjon référencé pour son id : traité comme un monstre classique (famille), comme
+    // resolveFightImageInfo bascule alors sur sa propre illustration.
+    return familyClassification(bossEntry);
+  }
+
+  const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
+  if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
+    return { kind: 'other', categoryRank: OTHER_CATEGORY_RANK, key: 'other' };
+  }
+
+  const archiEntry = entries.find((entry) => entry.isArchi);
+  if (archiEntry) return familyClassification(archiEntry);
+
+  const dominantEntry = entries.find((entry) => entry.isDominant);
+  if (dominantEntry) return familyClassification(dominantEntry);
+
+  const topDamageEntry = entries[0];
+  if (topDamageEntry) return familyClassification(topDamageEntry);
+
+  return { kind: 'other', categoryRank: OTHER_CATEGORY_RANK, key: 'other' };
+}
+
+function familyClassification(entry: CatalogMonsterEntry): FightTypeClassification {
+  return {
+    kind: 'family',
+    categoryRank: FAMILY_CATEGORY_RANK,
+    key: entry.family !== null ? `family:${entry.family}` : `monster:${normalizeWakfuName(entry.fr)}`,
+    familyId: entry.family,
+    candidateNames: entry,
+  };
 }

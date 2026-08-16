@@ -1,0 +1,746 @@
+{
+  "app": "wakfu-companion",
+  "version": 1,
+  "exportedAt": "2026-08-16T09:53:08.431Z",
+  "data": {
+    "profile": {
+      "pseudo": "Oumbra",
+      "soundItems": [
+        {
+          "name": "Pierre d'aventure",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Pierre d'équilibre",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Pierre d'entourage",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Pierre de vitesse",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Pierre ultime",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Influence III",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Plan \"Epée de Bonta\"",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Plan \"Epée de Brâkmar\"",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Plan \"Epée de Sufokia\"",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        },
+        {
+          "name": "Plan \"Epée d'Amakna\"",
+          "enabled": true,
+          "catalogId": null,
+          "isDefault": true
+        }
+      ],
+      "avatarIndex": 8,
+      "alertManualClose": false,
+      "characterViewMode": "list",
+      "avatarSchemaVersion": 5,
+      "alertDurationSeconds": 4
+    },
+    "watchlist": [
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Poudre",
+        "count": 10800,
+        "catalogId": 27093,
+        "countdownTarget": 10800
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Griffe de Blérox",
+        "count": 600,
+        "catalogId": 21775,
+        "countdownTarget": 600
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Jute Lumineuse",
+        "count": 600,
+        "catalogId": 22062,
+        "countdownTarget": 600
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Scalp de Blérox",
+        "count": 10,
+        "catalogId": 21715,
+        "countdownTarget": 10
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Œil de Blérox",
+        "count": 500,
+        "catalogId": 21779,
+        "countdownTarget": 500
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Croc de Blérox",
+        "count": 5650,
+        "catalogId": 21774,
+        "countdownTarget": 5650
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Sioupère-Glou Eternelle",
+        "count": 4550,
+        "catalogId": 21125,
+        "countdownTarget": 4550
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Fil Eternel",
+        "count": 380,
+        "catalogId": 21669,
+        "countdownTarget": 380
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Orbe Eternel",
+        "count": 100,
+        "catalogId": 22488,
+        "countdownTarget": 100
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Eter Nite",
+        "count": 150,
+        "catalogId": 18475,
+        "countdownTarget": 150
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Larme d'Ogrest",
+        "count": 3150,
+        "catalogId": 24029,
+        "countdownTarget": 3150
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Marti-Fouette",
+        "count": 50,
+        "catalogId": 26585,
+        "countdownTarget": 50
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Ceinture du Tot'",
+        "count": 10,
+        "catalogId": 26063,
+        "countdownTarget": 10
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Toile de Chef Riktus",
+        "count": 50,
+        "catalogId": 26587,
+        "countdownTarget": 50
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Haleine de Brigand",
+        "count": 500,
+        "catalogId": 26584,
+        "countdownTarget": 500
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Sioupère-Glou Exquise",
+        "count": 1050,
+        "catalogId": 21123,
+        "countdownTarget": 1050
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Fibre Exquise",
+        "count": 260,
+        "catalogId": 21034,
+        "countdownTarget": 260
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Patte d'Arakne",
+        "count": 2000,
+        "catalogId": 15221,
+        "countdownTarget": 2000
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Patte de Mulou",
+        "count": 2000,
+        "catalogId": 8086,
+        "countdownTarget": 2000
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Amanite Phalu",
+        "count": 80,
+        "catalogId": 20185,
+        "countdownTarget": 80
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Pin's des Encapuchonnés",
+        "count": 80,
+        "catalogId": 26661,
+        "countdownTarget": 80
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Clou du Spectacle",
+        "count": 80,
+        "catalogId": 26662,
+        "countdownTarget": 80
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Tissu sombre",
+        "count": 770,
+        "catalogId": 26660,
+        "countdownTarget": 770
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Cuir Exquis",
+        "count": 140,
+        "catalogId": 21047,
+        "countdownTarget": 140
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Essence Exquise",
+        "count": 260,
+        "catalogId": 21634,
+        "countdownTarget": 260
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Essence Eternelle",
+        "count": 950,
+        "catalogId": 21636,
+        "countdownTarget": 950
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Feuille d'Ortie",
+        "count": 9500,
+        "catalogId": 22069,
+        "countdownTarget": 9500
+      },
+      {
+        "kind": "item",
+        "mode": "down",
+        "name": "Moumousse",
+        "count": 9500,
+        "catalogId": 22066,
+        "countdownTarget": 9500
+      }
+    ],
+    "damageReassignments": [
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "El Pochito",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226269,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "Troolk Hoogan",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226269,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "Rey Mystroolrio",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226269,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "The Undertroolker",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226269,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Zoroark Shiny",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "El Pochito",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226270,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Zoroark Shiny",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "Troolk Hoogan",
+          "instanceIndex": 1
+        },
+        "fightId": 1632226270,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "Kralaman",
+          "instanceIndex": 1
+        },
+        "fightId": 1648341674,
+        "spellName": "Contre-attaque"
+      },
+      {
+        "to": {
+          "name": "Canis Furiosus",
+          "instanceIndex": 1
+        },
+        "from": {
+          "name": "Mégathon",
+          "instanceIndex": 1
+        },
+        "fightId": 1648341674,
+        "spellName": "Contre-attaque"
+      }
+    ],
+    "roster": [
+      {
+        "id": "ms6a0da5-66o8ik",
+        "label": "",
+        "isDefault": true,
+        "characters": [
+          {
+            "name": "Oumbra",
+            "gender": "m",
+            "className": "sram"
+          },
+          {
+            "name": "Sagittarius Caecus",
+            "gender": "m",
+            "className": "cra"
+          },
+          {
+            "name": "Ebenus Sagittarius",
+            "gender": "m",
+            "className": "cra"
+          },
+          {
+            "name": "Caliburnus",
+            "gender": "m",
+            "className": "iop"
+          },
+          {
+            "name": "Zoroark Shiny",
+            "gender": "m",
+            "className": "ouginak"
+          },
+          {
+            "name": "Contra Horologii",
+            "gender": "m",
+            "className": "xelor"
+          },
+          {
+            "name": "Porta Divina",
+            "gender": "m",
+            "className": "eliotrope"
+          },
+          {
+            "name": "Malandresus",
+            "gender": "m",
+            "className": "rogue"
+          },
+          {
+            "name": "Monstrum Magister",
+            "gender": "m",
+            "className": "osamodas"
+          },
+          {
+            "name": "Magister Thesaurorum",
+            "gender": "m",
+            "className": "enutrof"
+          },
+          {
+            "name": "Cura Pictor",
+            "gender": "m",
+            "className": "eniripsa"
+          },
+          {
+            "name": "Scutum Tutelare",
+            "gender": "m",
+            "className": "feca"
+          },
+          {
+            "name": "Rhynchanthera Grandiflora",
+            "gender": "m",
+            "className": "sadida"
+          },
+          {
+            "name": "Cartarum Lusor",
+            "gender": "m",
+            "className": "ecaflip"
+          },
+          {
+            "name": "Fanaticus Personarum",
+            "gender": "m",
+            "className": "zobal"
+          },
+          {
+            "name": "Runae Desolationis",
+            "gender": "m",
+            "className": "huppermage"
+          },
+          {
+            "name": "Bambusa Vacillans",
+            "gender": "m",
+            "className": "pandawa"
+          },
+          {
+            "name": "Corpus Perditum",
+            "gender": "m",
+            "className": "pandawa"
+          },
+          {
+            "name": "Tenebrae Consecratae",
+            "gender": "m",
+            "className": "pandawa"
+          },
+          {
+            "name": "Lux Delapsa",
+            "gender": "m",
+            "className": "sram"
+          },
+          {
+            "name": "Machina Destructiva",
+            "gender": "m",
+            "className": "cra"
+          }
+        ],
+        "gameServer": "pandora"
+      },
+      {
+        "id": "ms6dn7ac-i0zerx",
+        "label": "Second",
+        "characters": [
+          {
+            "name": "Pugio Letalis",
+            "gender": "f",
+            "className": "sram"
+          },
+          {
+            "name": "Sagitta Lucis",
+            "gender": "f",
+            "className": "cra"
+          },
+          {
+            "name": "Sagitta Tenebrarum",
+            "gender": "f",
+            "className": "cra"
+          },
+          {
+            "name": "Ensis Orientalis",
+            "gender": "f",
+            "className": "iop"
+          },
+          {
+            "name": "Canis Furiosus",
+            "gender": "f",
+            "className": "ouginak"
+          },
+          {
+            "name": "Rota Metallica",
+            "gender": "f",
+            "className": "xelor"
+          },
+          {
+            "name": "Imago Speculi",
+            "gender": "f",
+            "className": "eliotrope"
+          },
+          {
+            "name": "Ignis Dolosus",
+            "gender": "f",
+            "className": "rogue"
+          },
+          {
+            "name": "Monstrum Amoris",
+            "gender": "f",
+            "className": "osamodas"
+          },
+          {
+            "name": "Bursa Auri",
+            "gender": "f",
+            "className": "enutrof"
+          },
+          {
+            "name": "Penicillus Vitae",
+            "gender": "f",
+            "className": "eniripsa"
+          },
+          {
+            "name": "Aegis Feminea",
+            "gender": "f",
+            "className": "feca"
+          },
+          {
+            "name": "Arbovenenum",
+            "gender": "f",
+            "className": "sadida"
+          },
+          {
+            "name": "Dimidium Trifolium",
+            "gender": "f",
+            "className": "ecaflip"
+          },
+          {
+            "name": "Mutatio Animi",
+            "gender": "f",
+            "className": "zobal"
+          },
+          {
+            "name": "Runa Luminis",
+            "gender": "f",
+            "className": "huppermage"
+          },
+          {
+            "name": "Liquor Explosivus",
+            "gender": "f",
+            "className": "pandawa"
+          },
+          {
+            "name": "Sanguis Vitiatus",
+            "gender": "f",
+            "className": "sacrier"
+          },
+          {
+            "name": "Machina Incorporata",
+            "gender": "f",
+            "className": "feca"
+          },
+          {
+            "name": "Toudoux Affaire",
+            "gender": "f",
+            "className": "ouginak"
+          },
+          {
+            "name": "Curoma",
+            "gender": "f",
+            "className": "eniripsa"
+          }
+        ],
+        "gameServer": "pandora"
+      },
+      {
+        "id": "ms6iu8kh-s9n99n",
+        "label": "Troisième",
+        "characters": [
+          {
+            "name": "Oumbra Dague",
+            "gender": "m",
+            "className": "sram"
+          },
+          {
+            "name": "Oumbra Arc",
+            "gender": "m",
+            "className": "cra"
+          },
+          {
+            "name": "Oumbra Epée",
+            "gender": "m",
+            "className": "iop"
+          },
+          {
+            "name": "Oumbra Canin",
+            "gender": "m",
+            "className": "ouginak"
+          },
+          {
+            "name": "Oumbra Horloge",
+            "gender": "m",
+            "className": "xelor"
+          },
+          {
+            "name": "Snybehe",
+            "gender": "m",
+            "className": "eliotrope"
+          },
+          {
+            "name": "Dralbuor Smiss",
+            "gender": "m",
+            "className": "rogue"
+          },
+          {
+            "name": "Oumbra Dresseur",
+            "gender": "m",
+            "className": "osamodas"
+          },
+          {
+            "name": "Oumbra Trésor",
+            "gender": "m",
+            "className": "enutrof"
+          },
+          {
+            "name": "Oumbra Soigneur",
+            "gender": "m",
+            "className": "eniripsa"
+          },
+          {
+            "name": "Oumbra Bouclier",
+            "gender": "m",
+            "className": "feca"
+          },
+          {
+            "name": "Oumbra Ecologiste",
+            "gender": "m",
+            "className": "sadida"
+          },
+          {
+            "name": "Isumoo",
+            "gender": "f",
+            "className": "ecaflip"
+          },
+          {
+            "name": "Oumbra Masqué",
+            "gender": "m",
+            "className": "zobal"
+          },
+          {
+            "name": "Oumbra Rune",
+            "gender": "m",
+            "className": "huppermage"
+          },
+          {
+            "name": "Oumbra Alcoolique",
+            "gender": "m",
+            "className": "pandawa"
+          },
+          {
+            "name": "Oumbra Hémophile",
+            "gender": "m",
+            "className": "sacrier"
+          },
+          {
+            "name": "Oumbra Robot",
+            "gender": "m",
+            "className": "foggernaut"
+          }
+        ],
+        "gameServer": "pandora"
+      }
+    ],
+    "chatActiveChannels": [
+      "guilde",
+      "groupe",
+      "recrutement",
+      "commerce",
+      "communaute"
+    ],
+    "chatFilters": [
+      {
+        "text": "influ iii",
+        "channel": "commerce"
+      },
+      {
+        "text": "influence iii",
+        "channel": "commerce"
+      },
+      {
+        "text": "ambition iii",
+        "channel": "commerce"
+      }
+    ]
+  }
+}

@@ -8,7 +8,7 @@ import { I18nService } from '../services/i18n.service';
 import { ConfirmDeleteService } from '../services/confirm-delete.service';
 import { CatalogService } from '../api/catalog.service';
 import { getWakfuItemRarity } from '../data/wakfu-item-rarity.data';
-import { resolveNumericKeyAction } from './numeric-keydown.util';
+import { WakfuSearchResult } from '../services/wakfu-search.service';
 
 /** Identifie une entrée de watchlist de façon unique, y compris quand deux entrées partagent le
  * même nom (catalogue avec homonymes, ex. les deux "Larme d'Ogrest") — utilisé pour tout ce qui
@@ -30,16 +30,36 @@ export function watchlistEntryKey(entry: Pick<WatchlistEntry, 'name' | 'catalogI
  * fonctionnalité/design entre les deux implémentations d'origine.
  */
 export class WatchlistTileController {
+  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
+   * WatchlistCounterMode). Initialisé au dernier mode choisi par l'utilisateur (voir
+   * StatsStoreService.defaultAddMode, settings synchronisé) plutôt qu'à 'up' en dur — remis à cette
+   * même valeur (pas 'up' fixe) après chaque ajout (mobile) / fermeture (desktop), voir
+   * `resetAddForm`. Valeur de départ posée dans le constructeur (pas dans l'initialiseur du champ) :
+   * `this.stats` n'est assigné qu'APRÈS l'exécution des initialiseurs de champ (`target: ES2022`
+   * → `useDefineForClassFields`), le lire ici lèverait "used before its initialization". */
+  readonly addMode = signal<WatchlistCounterMode>('up');
+
   constructor(
     private readonly stats: StatsStoreService,
     private readonly i18n: I18nService,
     private readonly confirmDelete: ConfirmDeleteService,
     private readonly catalog: CatalogService,
-  ) {}
+  ) {
+    this.addMode.set(this.stats.defaultAddMode());
+  }
+  /** Cible du décompte choisie au moment de la création (mode 'down' uniquement, voir
+   * `app-input-number` dans tracker/tracker-strip) — un KPI décompte n'a plus AUCUN moyen de
+   * changer sa cible une fois créé (voir setWatchlistCountdownTarget) : elle doit donc être fixée
+   * ICI, avant l'ajout, au même titre que le mode. Réinitialisée avec `addMode` (voir
+   * `resetAddForm`). Bornée à [1, 9999] par `app-input-number` lui-même (min/max) — pas de clamp
+   * ici, seul `add()` re-sécurise la valeur réellement utilisée. */
+  readonly addTarget = signal<number>(1);
 
-  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
-   * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout (mobile) / fermeture (desktop). */
-  readonly addMode = signal<WatchlistCounterMode>('up');
+  /** Quantités toutes faites proposées en un clic (chips) à côté du stepper manuel — la plupart
+   * des décomptes visent une quantité ronde (recette, farm...), un clic va plus vite qu'une saisie
+   * au clavier. Purement une aide de saisie : n'importe quelle valeur reste tapable/ajustable via
+   * `app-input-number` (voir `addTarget`), ces presets ne bornent rien. */
+  readonly targetPresets: readonly number[] = [10, 50, 100, 500, 1000];
 
   /**
    * Mode "sélection multiple" : chaque tuile affiche une case à cocher à la place de sa croix de
@@ -124,36 +144,89 @@ export class WatchlistTileController {
     this.stats.resetWatchedCount(entry.name, entry.catalogId);
   }
 
-  setMode(event: Event, entry: WatchlistEntry, mode: WatchlistCounterMode): void {
-    event.stopPropagation();
-    this.stats.setWatchlistMode(entry.name, mode, entry.catalogId);
+  /** Édition directe de la valeur ACTUELLE du décompte (mode 'down') — la cible, elle, ne se
+   * modifie plus après la création (voir addTarget/add()). Bornage [0, countdownTarget] délégué à
+   * `app-input-number` (min/max) plutôt que recalculé ici. */
+  setCurrentCount(entry: WatchlistEntry, value: number): void {
+    this.stats.setWatchlistCurrentCount(entry.name, value, entry.catalogId);
   }
 
-  /** Édition directe de la valeur de départ du décompte (mode 'down'). */
-  onCountdownInput(event: Event, entry: WatchlistEntry): void {
-    event.stopPropagation();
-    const value = Number((event.target as HTMLInputElement).value);
-    this.stats.setWatchlistCountdownTarget(entry.name, value, entry.catalogId);
+  /** Pourcentage d'avancement d'un décompte : part de 0% (cible tout juste choisie) à 100% (0
+   * restant). Toujours 0 pour une cible nulle (entrée pas encore configurée) — évite une division
+   * par zéro plutôt qu'un NaN affiché. */
+  countdownPercent(entry: WatchlistEntry): number {
+    return entry.countdownTarget > 0
+      ? Math.round(((entry.countdownTarget - entry.count) / entry.countdownTarget) * 100)
+      : 0;
   }
 
-  /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
-   * resolveNumericKeyAction. */
-  onCountdownKeydown(event: KeyboardEvent, entry: WatchlistEntry): void {
-    event.stopPropagation();
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.stats.setWatchlistCountdownTarget(entry.name, entry.count + 1, entry.catalogId);
-    } else if (action === 'decrement') {
-      event.preventDefault();
+  /** Vrai quand le badge compact (`.kpi-count-badge`/`.kpi-card-count-badge`) affiche au moins 6
+   * caractères au total — en décompte, cumul des chiffres du compteur ET de la cible, +1 pour le
+   * séparateur "/" (le texte est une fraction "actuel/cible", voir template), en incrémental juste
+   * les chiffres du compteur. Un texte aussi long déborde largement de la tuile 58px si le badge
+   * garde son décalage `right:-7px` habituel (conçu pour "50/50", pas "3800/10800", voir
+   * CLAUDE.md/bug réel signalé) — le template s'appuie sur ce booléen pour retirer ce décalage au-
+   * delà du seuil (voir `.is-long`). */
+  isLongCount(entry: WatchlistEntry, count: number = 6): boolean {
+    const digitCount = (n: number) => Math.abs(Math.trunc(n)).toString().length;
+    const total =
+      entry.mode === 'down'
+        ? digitCount(entry.count) + digitCount(entry.countdownTarget) + 1
+        : digitCount(entry.count);
+    return total >= count;
+  }
+
+  /** Texte du tooltip affiché au survol d'une tuile décompte EN MODE COMPACT (bande desktop
+   * uniquement, voir tracker-strip.component.html) : seul moyen d'y voir le pourcentage tant que
+   * la tuile n'est pas ouverte (plus de barre de progression, jugée trop lourde pour 58px). */
+  countdownProgressTooltip(entry: WatchlistEntry): string {
+    return this.i18n.t('tracker.countdownProgressTooltip', {
+      percent: this.countdownPercent(entry),
+    });
+  }
+
+  /** Sélectionne une quantité toute faite (voir `targetPresets`) — remplace intégralement la
+   * cible en cours de saisie, comme si l'utilisateur l'avait tapée directement. */
+  setAddTargetPreset(event: PointerEvent, value: number): void {
+    const symbole = event.altKey ? -1 : 1
+    this.addTarget.set(this.addTarget() + (value * symbole));
+  }
+
+  /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte, la cible) choisis
+   * dans le formulaire d'ajout — logique partagée entre la bande desktop et la grille mobile.
+   * Cible bornée à 1 minimum ici (jamais pendant la saisie, voir addTarget) : un décompte à cible
+   * 0 afficherait un pourcentage toujours à 0 (countdownPercent) sans jamais pouvoir avancer. */
+  add(result: WakfuSearchResult): void {
+    if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name, result.id);
+    else this.stats.addWatchedItem(result.name, result.id);
+    if (this.addMode() === 'down') {
+      this.stats.setWatchlistMode(result.name, 'down', result.id);
+      const target = Math.floor(this.addTarget());
       this.stats.setWatchlistCountdownTarget(
-        entry.name,
-        Math.max(0, entry.count - 1),
-        entry.catalogId,
+        result.name,
+        Number.isFinite(target) && target > 0 ? target : 1,
+        result.id,
       );
     }
+    this.resetAddForm();
+  }
+
+  /** Change le mode du formulaire d'ajout ET le mémorise comme valeur de départ des prochaines
+   * ouvertures (voir StatsStoreService.setDefaultAddMode) — seul point d'entrée pour changer
+   * `addMode`, à utiliser depuis les deux vues (desktop/mobile) plutôt que `addMode.set(...)`
+   * directement, qui laisserait le choix non persisté. */
+  setAddMode(mode: WatchlistCounterMode): void {
+    this.addMode.set(mode);
+    this.stats.setDefaultAddMode(mode);
+  }
+
+  /** Remet le formulaire d'ajout à son état par défaut — appelée après une création réussie
+   * (`add()`) et après un abandon (fermeture de la recherche sans avoir choisi de résultat). Le
+   * mode revient au dernier choisi par l'utilisateur (`defaultAddMode`), pas à 'up' en dur — c'est
+   * précisément le réglage qu'on vient de persister via `setAddMode`. */
+  resetAddForm(): void {
+    this.addMode.set(this.stats.defaultAddMode());
+    this.addTarget.set(1);
   }
 
   /** `onRequested`/`onRemoved` : hooks optionnels pour les besoins propres à chaque vue (ex.

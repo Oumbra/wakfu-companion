@@ -12,6 +12,7 @@ import { WatchlistTileController } from '../../core/utils/watchlist-tile-control
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { InputNumberComponent } from '../../shared/input-number/input-number.component';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -20,9 +21,10 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
  * bande persistante rendue par TrackerStripComponent, pas un onglet.
  *
  * La logique commune avec TrackerStripComponent (rareté/nom affiché/troncature, sélection
- * multiple, reset/mode de comptage, suppression confirmée) vit dans WatchlistTileController — ce
- * composant ne garde que ce qui est propre à la grille tactile (clic sur la carte entière en mode
- * sélection, pas de survol/drag&drop).
+ * multiple, création/mode/cible, édition de la valeur courante en décompte, suppression
+ * confirmée) vit dans WatchlistTileController — ce composant ne garde que ce qui est propre à la
+ * grille tactile (clic sur la carte entière en mode sélection ; pas d'ouverture/fermeture au clic
+ * ni de drag&drop, la carte affiche déjà tout en permanence).
  */
 @Component({
   selector: 'app-tracker',
@@ -34,6 +36,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
     WakfuAutocompleteComponent,
     IconComponent,
     TooltipDirective,
+    InputNumberComponent,
   ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',
@@ -54,15 +57,7 @@ export class TrackerComponent {
   );
 
   protected add(result: WakfuSearchResult): void {
-    if (result.kind === 'enemy') {
-      this.stats.addWatchedEnemy(result.name, result.id);
-    } else {
-      this.stats.addWatchedItem(result.name, result.id);
-    }
-    if (this.watchlist.addMode() === 'down') {
-      this.stats.setWatchlistMode(result.name, 'down', result.id);
-    }
-    this.watchlist.addMode.set('up');
+    this.watchlist.add(result);
   }
 
   /** Bascule le mode sélection (bouton "-") : un second clic pendant que le mode est actif le

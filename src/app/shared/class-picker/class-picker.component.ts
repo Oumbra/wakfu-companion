@@ -16,11 +16,13 @@ import {
   Gender,
 } from '../../core/data/class-icons.data';
 import { getClassName } from '../../core/data/class-names.data';
-import { ClassPickerMode } from '../../core/services/class-picker.service';
+import { CLASS_PORTRAIT_ORDER } from '../../core/data/class-portraits.data';
+import { ClassPickerMode, ClassPickerService } from '../../core/services/class-picker.service';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { ClassPortraitComponent } from '../class-portrait/class-portrait.component';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 export interface ClassPickerPosition {
   name: string | null;
@@ -34,10 +36,12 @@ interface ClassOption {
   icon: string;
 }
 
-// Ordre stable par clé interne (indépendant de la locale) : trier par libellé localisé
-// mélangerait l'agencement de la grille à chaque changement de langue — voir class-names.data.ts
-// pour les libellés eux-mêmes, très différents d'une langue à l'autre.
-const CLASS_KEYS = Object.keys(CLASS_ICON_DATA_URI).sort();
+// Même ordre que la grille "Avatar" du profil (CLASS_PORTRAIT_ORDER) plutôt qu'un tri
+// alphabétique par clé interne — cohérence visuelle entre les deux endroits où l'utilisateur
+// parcourt les 18 classes. Indépendant de la locale : trier par libellé localisé mélangerait
+// l'agencement de la grille à chaque changement de langue — voir class-names.data.ts pour les
+// libellés eux-mêmes, très différents d'une langue à l'autre.
+const CLASS_KEYS = CLASS_PORTRAIT_ORDER;
 const ICON_MAPS: Record<Gender, Readonly<Record<string, string>>> = {
   m: CLASS_ICON_DATA_URI,
   f: CLASS_ICON_FEMALE_DATA_URI,
@@ -59,12 +63,13 @@ function buildOptions(gender: Gender, locale: AppLocale): ClassOption[] {
  */
 @Component({
   selector: 'app-class-picker',
-  imports: [TranslatePipe, TooltipDirective, ClassPortraitComponent],
+  imports: [TranslatePipe, TooltipDirective, ClassPortraitComponent, EscapeCloseDirective],
   templateUrl: './class-picker.component.html',
   styleUrl: './class-picker.component.css',
 })
 export class ClassPickerComponent implements OnDestroy {
   private readonly i18n = inject(I18nService);
+  private readonly classPickerService = inject(ClassPickerService);
 
   readonly position = input.required<ClassPickerPosition>();
   /** Mode d'affichage à l'ouverture — l'utilisateur peut ensuite basculer librement via le switch
@@ -132,6 +137,10 @@ export class ClassPickerComponent implements OnDestroy {
 
   protected setMode(mode: ClassPickerMode): void {
     this.mode.set(mode);
+    // Le choix de l'utilisateur (icônes/portraits) vaut préférence générale, pas seulement pour ce
+    // picker précis — voir ClassPickerService.preferredMode, repris comme `initialMode` par défaut
+    // à la prochaine ouverture (tous appelants confondus, sauf ceux forçant un mode explicite).
+    this.classPickerService.setPreferredMode(mode);
   }
 
   protected choose(className: string): void {

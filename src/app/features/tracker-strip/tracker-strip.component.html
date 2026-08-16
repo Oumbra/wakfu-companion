@@ -1,13 +1,104 @@
-<div class="kpi-row">
-  <div class="kpi-add" [class.expanded]="addOpen()">
-    @if (!addOpen()) {
+<div class="kpi-row" [class.first-entry-is-long]="firstEntryHasLongCount()">
+  <div
+    class="kpi-add"
+    [class.expanded]="addOpen()"
+    [class.can-bulk-delete]="watchlist.canBulkDelete()"
+    [class.with-target]="addOpen() && watchlist.addMode() === 'down'"
+  >
+    @if (addOpen()) {
+      <div class="kpi-add-form">
+        <div class="icon-switch kpi-add-mode-switch">
+          <span
+            class="icon-switch-highlight"
+            [class.is-right]="watchlist.addMode() === 'down'"
+          ></span>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [appTooltip]="autocomplete.focused() ? ('tracker.countUpMode' | t) : null"
+            tooltipPosition="top-left"
+            [class.compact]="autocomplete.focused()"
+            [class.selected]="watchlist.addMode() === 'up'"
+            (click)="setAddMode($event, 'up')"
+          >
+            <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
+            <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countUpMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true"
+              >{{ 'tracker.countUpMode' | t }}</span
+            >
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [appTooltip]="autocomplete.focused() ? ('tracker.countDownMode' | t) : null"
+            tooltipPosition="top-left"
+            [class.compact]="autocomplete.focused()"
+            [class.selected]="watchlist.addMode() === 'down'"
+            (click)="setAddMode($event, 'down')"
+          >
+            <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
+            <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countDownMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true"
+              >{{ 'tracker.countDownMode' | t }}</span
+            >
+          </button>
+        </div>
+        <app-wakfu-autocomplete
+          #autocomplete
+          domain="both"
+          [placeholder]="'tracker.searchPlaceholder' | t"
+          [existingNames]="existingNames()"
+          (selected)="add($event)"
+          (recipeOpened)="closeAdd()"
+        />
+        <button
+          class="icon-btn kpi-add-close"
+          [appTooltip]="'tracker.closeSearch' | t"
+          (click)="closeAdd()"
+        >
+          ×
+        </button>
+      </div>
+      @if (watchlist.addMode() === 'down') {
+        <div class="kpi-target-wrapper">
+          <div class="kpi-target-presets">
+            @for (preset of watchlist.targetPresets; track preset) {
+              <button
+                type="button"
+                class="kpi-target-chip"
+                [class.selected]="watchlist.addTarget() === preset"
+                (click)="watchlist.setAddTargetPreset($event, preset)"
+              >
+                {{ preset }}
+              </button>
+            }
+          </div>
+          <app-input-number
+            class="kpi-add-target-input"
+            [value]="watchlist.addTarget()"
+            [min]="1"
+            [max]="9999"
+            [prevTooltip]="'tracker.countdownTargetDecrease' | t"
+            [nextTooltip]="'tracker.countdownTargetIncrease' | t"
+            [fieldTooltip]="'tracker.countdownTargetHint' | t"
+            (valueChange)="watchlist.addTarget.set($event)"
+          />
+        </div>
+      }
+    } @else {
       <div class="kpi-add-wrap">
         <button class="kpi-add-btn" [appTooltip]="'tracker.add' | t" (click)="openAdd()">+</button>
         <button
           type="button"
           class="icon-btn help-icon-btn"
           [appTooltip]="'help.tooltip' | t"
-          tooltipPosition="bottom-left"
+          tooltipPosition="top"
           (click)="helpModal.open('tracker')"
         >
           ?
@@ -37,45 +128,6 @@
           }
         </div>
       }
-    } @else {
-      <app-wakfu-autocomplete
-        domain="both"
-        [placeholder]="'tracker.searchPlaceholder' | t"
-        [existingNames]="existingNames()"
-        (selected)="add($event)"
-        (recipeConfirmed)="closeAdd()"
-      />
-      <div class="icon-switch kpi-add-mode-switch">
-        <span
-          class="icon-switch-highlight"
-          [class.is-right]="watchlist.addMode() === 'down'"
-        ></span>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="watchlist.addMode() === 'up'"
-          [appTooltip]="'tracker.countUpMode' | t"
-          (click)="setAddMode($event, 'up')"
-        >
-          ▲
-        </button>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="watchlist.addMode() === 'down'"
-          [appTooltip]="'tracker.countDownMode' | t"
-          (click)="setAddMode($event, 'down')"
-        >
-          ▼
-        </button>
-      </div>
-      <button
-        class="icon-btn kpi-add-close"
-        [appTooltip]="'tracker.closeSearch' | t"
-        (click)="closeAdd()"
-      >
-        ×
-      </button>
     }
   </div>
 
@@ -96,11 +148,14 @@
         [class.expanded]="activeName() === entry.name"
         [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
         [attr.draggable]="!watchlist.selectMode()"
+        [appTooltip]="
+          entry.mode === 'down' && activeName() !== entry.name
+            ? watchlist.countdownProgressTooltip(entry)
+            : null
+        "
         (dragstart)="onDragStart(i, $event)"
         (dragover)="$event.preventDefault()"
         (drop)="onDrop(i)"
-        (mouseenter)="onTileEnter($event, entry.name)"
-        (mouseleave)="onTileLeave(entry.name)"
         (click)="onTileClick($event, entry)"
       >
         @if (entry.kind === 'enemy') {
@@ -123,52 +178,45 @@
           >
         </span>
         @if (entry.mode === 'down') {
-          <input
-            class="kpi-count-inline kpi-countdown-input"
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            [value]="entry.count"
-            [appTooltip]="'tracker.countdownTargetHint' | t"
-            (click)="$event.stopPropagation()"
-            (keydown)="watchlist.onCountdownKeydown($event, entry)"
-            (change)="watchlist.onCountdownInput($event, entry)"
-          />
+          <span class="kpi-count-inline is-countdown">
+            <app-input-number
+              class="kpi-countdown-current-input"
+              [value]="entry.count"
+              [min]="0"
+              [max]="entry.countdownTarget"
+              [showButtons]="false"
+              (click)="$event.stopPropagation()"
+              (valueChange)="watchlist.setCurrentCount(entry, $event)"
+            />
+            <span class="kpi-count-sep">/</span>
+            <span class="kpi-target-static" [appTooltip]="'tracker.countdownTargetLocked' | t">{{
+              entry.countdownTarget
+            }}</span>
+            <span class="kpi-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+          </span>
         } @else {
           <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
         }
-        <div class="icon-switch kpi-mode-switch" (click)="$event.stopPropagation()">
-          <span class="icon-switch-highlight" [class.is-right]="entry.mode === 'down'"></span>
-          <button
-            type="button"
-            class="icon-switch-option"
-            [class.selected]="entry.mode === 'up'"
-            [appTooltip]="'tracker.countUpMode' | t"
-            (click)="watchlist.setMode($event, entry, 'up')"
-          >
-            ▲
-          </button>
-          <button
-            type="button"
-            class="icon-switch-option"
-            [class.selected]="entry.mode === 'down'"
-            [appTooltip]="'tracker.countDownMode' | t"
-            (click)="watchlist.setMode($event, entry, 'down')"
-          >
-            ▼
-          </button>
-        </div>
-        @if (entry.mode === 'up') {
-          <button
-            class="kpi-reset"
-            draggable="false"
-            [appTooltip]="'tracker.reset' | t"
-            (click)="watchlist.resetCount($event, entry)"
-          >
-            <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
-          </button>
-        }
-        <span class="kpi-count-badge">{{ entry.count | numberFr }}</span>
+        <button
+          class="kpi-reset"
+          draggable="false"
+          [appTooltip]="'tracker.reset' | t"
+          (click)="watchlist.resetCount($event, entry)"
+        >
+          <app-icon name="reset" [strokeWidth]="2.2" [size]="15" />
+        </button>
+        <span
+          class="kpi-count-badge"
+          [class.is-fraction]="entry.mode === 'down'"
+          [class.is-long]="watchlist.isLongCount(entry)"
+        >
+          @if (entry.mode === 'down') {
+            {{ entry.count
+            }}<span class="kpi-count-badge-target">/{{ entry.countdownTarget }}</span>
+          } @else {
+            {{ entry.count | numberFr }}
+          }
+        </span>
         @if (watchlist.selectMode()) {
           <button
             type="button"

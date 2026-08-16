@@ -15,7 +15,9 @@
 export const USER_DATA_KEYS = {
   profile: 'wakfu-profile',
   watchlist: 'wakfu-watchlist',
+  watchlistAddMode: 'wakfu-watchlist-add-mode',
   damageReassignments: 'wakfu-damage-reassignments',
+  itemReassignments: 'wakfu-item-reassignments',
   roster: 'wakfu-character-roster',
   chatActiveChannels: 'wakfu-active-chat-channels',
   chatFilters: 'wakfu-chat-filters',

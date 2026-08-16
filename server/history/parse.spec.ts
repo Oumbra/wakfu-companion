@@ -250,7 +250,7 @@ describe('parseFightsBody', () => {
       expect(parsed).toEqual({ ok: false, error: expect.stringContaining('sort en double') });
     });
 
-    it('accepte le butin du combat', () => {
+    it('accepte le butin du combat (itemId résolu ⇒ itemName forcé à null)', () => {
       const parsed = parseFightsBody({
         entries: [
           fightEntry({
@@ -262,8 +262,8 @@ describe('parseFightsBody', () => {
         ],
       });
       expect(parsed.ok && parsed.value[0].loot).toEqual([
-        { itemId: 1234, itemName: 'Laine de Bouftou', quantity: 3 },
-        { itemId: null, itemName: 'Objet inconnu du catalogue', quantity: 1 },
+        { lineIndex: 0, itemId: 1234, itemName: null, quantity: 3 },
+        { lineIndex: 1, itemId: null, itemName: 'Objet inconnu du catalogue', quantity: 1 },
       ]);
     });
 
@@ -271,7 +271,10 @@ describe('parseFightsBody', () => {
       expect(parseFightsBody({ entries: [fightEntry()] })).toMatchObject({ ok: true });
     });
 
-    it('refuse deux lignes de butin du même objet (collision de clé primaire)', () => {
+    it('accepte deux lignes de butin homonymes non résolues, distinguées par lineIndex', () => {
+      // Depuis le retrait d'item_name de la clé primaire de fight_loot (nullable désormais, voir
+      // server/db/schema.ts), deux objets non résolus de même nom dans un même combat ne sont plus
+      // une collision : lineIndex (position dans le lot envoyé) les distingue.
       const parsed = parseFightsBody({
         entries: [
           fightEntry({
@@ -282,7 +285,10 @@ describe('parseFightsBody', () => {
           }),
         ],
       });
-      expect(parsed).toEqual({ ok: false, error: expect.stringContaining('butin en double') });
+      expect(parsed.ok && parsed.value[0].loot).toEqual([
+        { lineIndex: 0, itemId: null, itemName: 'Poudre', quantity: 1 },
+        { lineIndex: 1, itemId: null, itemName: 'Poudre', quantity: 2 },
+      ]);
     });
 
     it("accepte l'XP par participant", () => {
@@ -325,10 +331,10 @@ describe('parseFightsBody', () => {
 });
 
 describe('parsePurchasesBody', () => {
-  it('accepte un achat complet', () => {
+  it('accepte un achat complet (itemId résolu ⇒ itemName forcé à null)', () => {
     const parsed = parsePurchasesBody({ entries: [purchaseEntry()] });
     expect(parsed.ok && parsed.value[0]).toMatchObject({
-      itemName: 'Pain Complet',
+      itemName: null,
       quantity: 4,
       totalCost: 340,
       itemId: 1234,
@@ -336,9 +342,9 @@ describe('parsePurchasesBody', () => {
     });
   });
 
-  it('accepte un objet inconnu du catalogue (itemId absent)', () => {
+  it('accepte un objet inconnu du catalogue (itemId absent ⇒ itemName conservé)', () => {
     const parsed = parsePurchasesBody({ entries: [purchaseEntry({ itemId: null })] });
-    expect(parsed.ok && parsed.value[0].itemId).toBe(null);
+    expect(parsed.ok && parsed.value[0]).toMatchObject({ itemId: null, itemName: 'Pain Complet' });
   });
 
   it('refuse un coût négatif', () => {
@@ -355,11 +361,18 @@ describe('parsePurchasesBody', () => {
     });
   });
 
-  it("refuse un nom d'objet vide", () => {
-    expect(parsePurchasesBody({ entries: [purchaseEntry({ itemName: '' })] })).toEqual({
+  it("refuse un nom d'objet vide quand itemId n'est pas résolu (seule source d'identité restante)", () => {
+    expect(
+      parsePurchasesBody({ entries: [purchaseEntry({ itemId: null, itemName: '' })] }),
+    ).toEqual({
       ok: false,
       error: expect.stringContaining('itemName'),
     });
+  });
+
+  it('ignore un itemName invalide quand itemId est déjà résolu (redondant, jamais stocké)', () => {
+    const parsed = parsePurchasesBody({ entries: [purchaseEntry({ itemName: '' })] });
+    expect(parsed.ok && parsed.value[0]).toMatchObject({ itemId: 1234, itemName: null });
   });
 });
 

@@ -56,9 +56,14 @@ export interface FightParticipantInput {
   xpGained: number;
 }
 
+/** `itemId`/`itemName` mutuellement exclusifs — voir `parseItemIdentity` et `server/db/schema.ts`
+ * (`fightLoot`, même invariant sur les 3 tables d'historique). `lineIndex` : position du butin dans
+ * le lot envoyé, attribuée ici plutôt que fournie par le client — remplace `item_name` (peut être
+ * `NULL`) dans la clé primaire `fight_loot`, même principe que `TradeItemInput.lineIndex`. */
 export interface FightLootInput {
+  lineIndex: number;
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
 }
 
@@ -79,7 +84,7 @@ export interface FightInput {
 export interface PurchaseInput {
   clientKey: string;
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
   totalCost: number;
   occurredAt: Date;
@@ -90,7 +95,7 @@ export interface TradeItemInput {
   direction: 'acquired' | 'given';
   lineIndex: number;
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
 }
 
@@ -141,6 +146,27 @@ function parseCount(raw: unknown, field: string, optional = false): ParseResult<
     return { ok: false, error: `${field} invalide : ${String(raw)}` };
   }
   return { ok: true, value: raw };
+}
+
+/**
+ * `itemId`/`itemName` : mutuellement exclusifs (voir `server/db/schema.ts`, `fightLoot`/`purchases`/
+ * `tradeItems`) — id résolu ⇒ nom `null` (redondant, résolu à l'affichage via le catalogue) ;
+ * sinon nom requis (seule donnée qui identifie encore la ligne). Invariant renforcé ICI plutôt que
+ * fait confiance côté client : un client qui enverrait les deux, ou l'ancien format `itemName`
+ * toujours renseigné, ne doit ni faire échouer la requête ni stocker une redondance.
+ */
+function parseItemIdentity(
+  itemIdRaw: unknown,
+  itemNameRaw: unknown,
+  field: string,
+): ParseResult<{ itemId: number | null; itemName: string | null }> {
+  const itemId = parseCount(itemIdRaw, `${field}.itemId`, true);
+  if (!itemId.ok) return itemId;
+  if (itemId.value !== null) return { ok: true, value: { itemId: itemId.value, itemName: null } };
+
+  const itemName = parseText(itemNameRaw, `${field}.itemName`);
+  if (!itemName.ok) return itemName;
+  return { ok: true, value: { itemId: null, itemName: itemName.value } };
 }
 
 function parseFlag(raw: unknown, field: string): ParseResult<boolean | null> {
@@ -231,21 +257,19 @@ function parseSpell(raw: unknown): ParseResult<FightSpellInput> {
   return { ok: true, value: { spell: spell.value, total: total.value ?? 0, byElement } };
 }
 
-function parseLootRow(raw: unknown): ParseResult<FightLootInput> {
+function parseLootRow(raw: unknown, lineIndex: number): ParseResult<FightLootInput> {
   const record = asRecord(raw, 'butin');
   if (!record.ok) return record;
   const entry = record.value;
 
-  const itemName = parseText(entry['itemName'], 'loot.itemName');
-  if (!itemName.ok) return itemName;
+  const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'loot');
+  if (!identity.ok) return identity;
   const quantity = parseCount(entry['quantity'], 'loot.quantity');
   if (!quantity.ok) return quantity;
-  const itemId = parseCount(entry['itemId'], 'loot.itemId', true);
-  if (!itemId.ok) return itemId;
 
   return {
     ok: true,
-    value: { itemId: itemId.value, itemName: itemName.value, quantity: quantity.value ?? 0 },
+    value: { lineIndex, ...identity.value, quantity: quantity.value ?? 0 },
   };
 }
 
@@ -355,17 +379,13 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
         return { ok: false, error: `trop d'objets ramassés (max ${MAX_LOOT_PER_FIGHT})` };
       }
       const loot: FightLootInput[] = [];
-      // Clé primaire `(fight_id, item_name)` : deux lignes du même objet feraient
-      // échouer l'insertion entière. Le client les agrège déjà (`registerLoot`),
-      // on refuse donc franchement plutôt que de fusionner en silence.
-      const seenLoot = new Set<string>();
-      for (const rawRow of rawLoot) {
-        const parsed = parseLootRow(rawRow);
+      // `lineIndex` = position dans le lot envoyé, attribuée ici (voir FightLootInput) — remplace
+      // `item_name` (peut être `NULL` désormais) comme clé primaire `(fight_id, line_index)`.
+      // Déterministe pour un même contenu rejoué (`registerLoot` construit ce tableau dans un ordre
+      // stable), donc un rejeu du même log ne crée jamais de doublon.
+      for (let i = 0; i < rawLoot.length; i++) {
+        const parsed = parseLootRow(rawLoot[i], i);
         if (!parsed.ok) return parsed;
-        if (seenLoot.has(parsed.value.itemName)) {
-          return { ok: false, error: `butin en double : ${parsed.value.itemName}` };
-        }
-        seenLoot.add(parsed.value.itemName);
         loot.push(parsed.value);
       }
 
@@ -396,16 +416,14 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
       if (!clientKey.ok) return clientKey;
-      const itemName = parseText(entry['itemName'], 'itemName');
-      if (!itemName.ok) return itemName;
+      const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'purchase');
+      if (!identity.ok) return identity;
       const quantity = parseCount(entry['quantity'], 'quantity');
       if (!quantity.ok) return quantity;
       const totalCost = parseCount(entry['totalCost'], 'totalCost');
       if (!totalCost.ok) return totalCost;
       const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
       if (!occurredAt.ok) return occurredAt;
-      const itemId = parseCount(entry['itemId'], 'itemId', true);
-      if (!itemId.ok) return itemId;
       const gameServer = parseGameServer(entry['gameServer']);
       if (!gameServer.ok) return gameServer;
 
@@ -413,8 +431,7 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
         ok: true,
         value: {
           clientKey: clientKey.value,
-          itemId: itemId.value,
-          itemName: itemName.value,
+          ...identity.value,
           quantity: quantity.value ?? 0,
           totalCost: totalCost.value ?? 0,
           occurredAt: occurredAt.value,
@@ -463,18 +480,15 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
         if (item['direction'] !== 'acquired' && item['direction'] !== 'given') {
           return { ok: false, error: 'direction invalide (acquired|given attendu)' };
         }
-        const name = parseText(item['itemName'], 'items.itemName');
-        if (!name.ok) return name;
+        const identity = parseItemIdentity(item['itemId'], item['itemName'], 'items');
+        if (!identity.ok) return identity;
         const quantity = parseCount(item['quantity'], 'items.quantity');
         if (!quantity.ok) return quantity;
-        const itemId = parseCount(item['itemId'], 'items.itemId', true);
-        if (!itemId.ok) return itemId;
 
         items.push({
           direction: item['direction'],
           lineIndex: nextIndex[item['direction']]++,
-          itemId: itemId.value,
-          itemName: name.value,
+          ...identity.value,
           quantity: quantity.value ?? 0,
         });
       }

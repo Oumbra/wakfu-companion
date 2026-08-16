@@ -9,7 +9,7 @@ import { LootAlertService } from './loot-alert.service';
 import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
-const FIXTURES_DIR = join(process.cwd(), 'assets/logs/tests/fr');
+const FIXTURES_DIR = join(process.cwd(), 'tests/logs/fr');
 
 function readFixture(name: string): string[] {
   const content = readFileSync(join(FIXTURES_DIR, name), 'utf-8');
@@ -103,10 +103,10 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].acquired).toEqual([
-        { name: 'Feuilluchon de Fortune', quantity: 1 },
-        { name: 'Havre-Gemme Marchande', quantity: 1 },
+        { name: 'Feuilluchon de Fortune', catalogId: null, quantity: 1 },
+        { name: 'Havre-Gemme Marchande', catalogId: null, quantity: 1 },
       ]);
-      expect(trades[0].given).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].given).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
     });
 
     it('gère un échange où le compte courant ne donne rien (trade_2.log)', () => {
@@ -119,7 +119,7 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].given).toEqual([]);
-      expect(trades[0].acquired).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].acquired).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
     });
 
     it('gère un échange incluant des kamas côté partenaire (trade_3.log)', () => {
@@ -132,7 +132,9 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].selfName).toBe('Oumbra');
       expect(trades[0].characterName).toBe('Briggitt');
-      expect(trades[0].acquired).toEqual([{ name: "Les Doigts d'Enutrof", quantity: 1 }]);
+      expect(trades[0].acquired).toEqual([
+        { name: "Les Doigts d'Enutrof", catalogId: null, quantity: 1 },
+      ]);
       expect(trades[0].kamasAcquired).toBe(10);
       expect(trades[0].kamasGiven).toBe(0);
       // Les 10 kamas gagnés sont comptés séparément (kamasEarned), en plus du détail sur le TradeRecord.
@@ -216,7 +218,7 @@ describe('StatsStoreService', () => {
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].kamasGiven).toBe(10);
       expect(trades[0].kamasAcquired).toBe(0);
-      expect(trades[0].given).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].given).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
       expect(trades[0].acquired).toEqual([]);
 
       expect(trades[1].kamasAcquired).toBe(20);
@@ -401,6 +403,92 @@ describe('StatsStoreService', () => {
 
       expect(stats.fightHistory()).toHaveLength(0);
       expect(stats.damageByAttacker().length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Ventilation des dégâts par tour (SpellBreakdownRow.byTurn, switch Total/Tour)', () => {
+    it('ventile chaque sort par tour de jeu, sans altérer son total cumulé', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Tour 1 : Oumbra puis Caliburnus jouent chacun une fois (round-robin, voir registerFightTurn).
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Blop: -100 PV (Terre)',
+        ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Caliburnus lance le sort Tacle',
+        ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Blop: -50 PV (Terre)',
+        // Tour 2 : Oumbra rejoue (le siège a déjà joué ce tour-ci => bascule au tour suivant).
+        ' INFO 10:00:03,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+        ' INFO 10:00:03,500 [T] (a:1) - [Information (combat)] Blop: -30 PV (Terre)',
+        ' INFO 10:00:04,000 [T] (a:1) - [Information (combat)] Caliburnus lance le sort Tacle',
+        ' INFO 10:00:04,500 [T] (a:1) - [Information (combat)] Blop: -20 PV (Terre)',
+        ' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      ]);
+
+      const fight = stats.fightHistory().find((f) => f.id === 1)!;
+      expect(fight.turns).toBe(2);
+
+      const oumbraFrappe = fight.rows
+        .find((r) => r.name === 'Oumbra')!
+        .spells.find((s) => s.spell === 'Frappe')!;
+      expect(oumbraFrappe.total).toBe(130);
+      // Le total cumulé reste la somme de tous les tours, jamais recalculé depuis byTurn.
+      expect(oumbraFrappe.byTurn.reduce((sum, t) => sum + t.total, 0)).toBe(oumbraFrappe.total);
+      expect(oumbraFrappe.byTurn).toEqual([
+        { turn: 1, total: 100, byElement: { Terre: 100 } },
+        { turn: 2, total: 30, byElement: { Terre: 30 } },
+      ]);
+
+      const caliburnusTacle = fight.rows
+        .find((r) => r.name === 'Caliburnus')!
+        .spells.find((s) => s.spell === 'Tacle')!;
+      expect(caliburnusTacle.total).toBe(70);
+      expect(caliburnusTacle.byTurn).toEqual([
+        { turn: 1, total: 50, byElement: { Terre: 50 } },
+        { turn: 2, total: 20, byElement: { Terre: 20 } },
+      ]);
+    });
+
+    it('une réattribution de sort fusionne les ventilations par tour des deux côtés (tour commun cumulé, tour propre à la source ajouté tel quel)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Tour 1 : Oumbra ET Caliburnus font chacun un "Frappe" (attribution automatique erronée
+        // côté Oumbra, à corriger). Tour 2 : seul Oumbra en refait un.
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Blop: -40 PV (Terre)',
+        ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Caliburnus lance le sort Frappe',
+        ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Blop: -25 PV (Terre)',
+        ' INFO 10:00:03,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+        ' INFO 10:00:03,500 [T] (a:1) - [Information (combat)] Blop: -10 PV (Terre)',
+        ' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      ]);
+
+      const beforeFight = stats.fightHistory().find((f) => f.id === 1)!;
+      expect(beforeFight.turns).toBe(2);
+
+      stats.reassignSpell(
+        1,
+        'Frappe',
+        { name: 'Oumbra', instanceIndex: 1 },
+        { name: 'Caliburnus', instanceIndex: 1 },
+      );
+
+      const fight = stats.fightHistory().find((f) => f.id === 1)!;
+      expect(fight.rows.find((r) => r.name === 'Oumbra')!.spells).toHaveLength(0);
+      const caliburnusFrappe = fight.rows
+        .find((r) => r.name === 'Caliburnus')!
+        .spells.find((s) => s.spell === 'Frappe')!;
+      expect(caliburnusFrappe.total).toBe(75);
+      expect(caliburnusFrappe.byTurn).toEqual([
+        { turn: 1, total: 65, byElement: { Terre: 65 } },
+        { turn: 2, total: 10, byElement: { Terre: 10 } },
+      ]);
     });
   });
 

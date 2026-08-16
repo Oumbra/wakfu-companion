@@ -2,6 +2,8 @@
   class="damage-reassign-backdrop"
   (click)="close()"
   (contextmenu)="$event.preventDefault(); close()"
+  appEscapeClose
+  (appEscapeClose)="close()"
 ></div>
 <div
   class="damage-reassign-picker"

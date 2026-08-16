@@ -1,5 +1,10 @@
 @if (helpModal.openSection(); as section) {
-  <div class="help-modal-backdrop" (click)="helpModal.close()"></div>
+  <div
+    class="help-modal-backdrop"
+    (click)="helpModal.close()"
+    appEscapeClose
+    (appEscapeClose)="helpModal.close()"
+  ></div>
   <div class="help-modal">
     <div class="help-modal-header">
       <span class="help-modal-title">{{ 'help.' + section + '.title' | t }}</span>
@@ -7,7 +12,7 @@
         class="icon-btn help-modal-close"
         type="button"
         [appTooltip]="'profile.closeToast' | t"
-        tooltipPosition="bottom-right"
+        tooltipPosition="top"
         (click)="helpModal.close()"
       >
         ×

@@ -1,0 +1,44 @@
+<div class="input-number" [class.no-buttons]="!showButtons()">
+  @if (showButtons()) {
+    <button
+      type="button"
+      class="input-number-step"
+      tabindex="-1"
+      [appTooltip]="prevTooltip()"
+      tooltipPosition="top"
+      [disabled]="!canDecrement()"
+      (click)="move(-1)"
+    >
+      −
+    </button>
+  }
+  <input
+    #field
+    type="number"
+    class="input-number-field"
+    inputmode="numeric"
+    [value]="value()"
+    [attr.min]="min()"
+    [attr.max]="max()"
+    [attr.step]="step()"
+    [appTooltip]="fieldTooltip()"
+    tooltipPosition="top"
+    (input)="onInput($event)"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur($event)"
+    (wheel)="onWheel($event)"
+  />
+  @if (showButtons()) {
+    <button
+      type="button"
+      class="input-number-step"
+      tabindex="-1"
+      [appTooltip]="nextTooltip()"
+      tooltipPosition="top"
+      [disabled]="!canIncrement()"
+      (click)="move(1)"
+    >
+      +
+    </button>
+  }
+</div>

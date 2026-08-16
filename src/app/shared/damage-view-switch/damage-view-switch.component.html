@@ -1,0 +1,32 @@
+<div class="damage-view-switch">
+  <div class="icon-switch damage-view-mode-switch">
+    <span class="icon-switch-highlight" [class.is-right]="mode() === 'turn'"></span>
+    <button
+      type="button"
+      class="icon-switch-option"
+      [class.selected]="mode() === 'total'"
+      (click)="setMode('total')"
+    >
+      {{ 'damageMeter.viewTotal' | t }}
+    </button>
+    <button
+      type="button"
+      class="icon-switch-option"
+      [class.selected]="mode() === 'turn'"
+      (click)="setMode('turn')"
+    >
+      {{ 'damageMeter.viewTurn' | t }}
+    </button>
+  </div>
+  @if (mode() === 'turn') {
+    <app-stepper
+      [label]="'damageMeter.turnLabel' | t: { n: turn() }"
+      [value]="turn()"
+      [min]="1"
+      [max]="maxTurn()"
+      [prevTooltip]="'damageMeter.prevTurn' | t"
+      [nextTooltip]="'damageMeter.nextTurn' | t"
+      (valueChange)="turnChange.emit($event)"
+    />
+  }
+</div>

@@ -73,6 +73,10 @@ export class WakfuAutocompleteComponent {
    * d'objets pour les alertes sonores de la page profil) — seul le suivi (tracker/tracker-strip)
    * a vocation à ouvrir la modale de recette depuis cette liste. */
   readonly showRecipeButton = input(true);
+  /** Dépouille le champ de son fond/bordure propres (voir wakfu-autocomplete.component.css) —
+   * pour un appelant qui pose déjà son propre habillage autour (ex. `.sound-item-add` en page
+   * profil, cadre pointillé façon zone de dépôt) et ne veut pas d'un double encadrement. */
+  readonly bare = input(false);
 
   readonly selected = output<WakfuSearchResult>();
   /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
@@ -80,7 +84,7 @@ export class WakfuAutocompleteComponent {
    * d'ajout repliable (voir tracker-strip.component.ts) de se refermer, comme si l'utilisateur
    * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond)
    * n'émet volontairement rien. */
-  readonly recipeConfirmed = output<void>();
+  readonly recipeOpened = output<void>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
   protected readonly rarityIconUrl = wakfuRarityIconUrl;
@@ -90,8 +94,9 @@ export class WakfuAutocompleteComponent {
   private readonly recipeTracking = inject(RecipeTrackingService);
   private readonly catalog = inject(CatalogService);
 
-  protected readonly query = signal('');
+  readonly focused = signal(false);
   protected readonly open = signal(false);
+  protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
   /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
    * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
@@ -187,7 +192,6 @@ export class WakfuAutocompleteComponent {
       lastConfirmedAt = confirmedAt;
       if (!requestClosed || !this.awaitingOwnRecipeConfirm) return;
       this.awaitingOwnRecipeConfirm = false;
-      if (didConfirm) this.recipeConfirmed.emit();
     });
   }
 
@@ -199,6 +203,11 @@ export class WakfuAutocompleteComponent {
 
   protected onFocus(): void {
     this.open.set(true);
+    this.focused.set(true);
+  }
+
+  protected onBlur(): void {
+    this.focused.set(false);
   }
 
   protected moveActive(delta: number): void {
@@ -236,6 +245,7 @@ export class WakfuAutocompleteComponent {
    * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` pilote l'état de chargement
    * pendant l'appel (voir template, boutons recette désactivés). */
   protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
+    this.recipeOpened.emit();
     event.stopPropagation();
     if (entry.id === null || this.recipeLoading()) return;
     this.recipeLoading.set(true);

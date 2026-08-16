@@ -19,6 +19,8 @@ import {
   DamageReassignEntity,
   DamageReassignService,
 } from './core/services/damage-reassign.service';
+import { ItemPickerComponent } from './shared/item-picker/item-picker.component';
+import { ItemPickerService } from './core/services/item-picker.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
 import { CombatPanelService } from './core/services/combat-panel.service';
@@ -45,6 +47,7 @@ import { TooltipComponent } from './shared/tooltip/tooltip.component';
     LootAlertComponent,
     ClassPickerComponent,
     DamageReassignPickerComponent,
+    ItemPickerComponent,
     ConfirmDeletePopoverComponent,
     CombatEdgeTabComponent,
     HelpModalComponent,
@@ -65,6 +68,7 @@ export class App implements OnInit {
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly damageReassignService = inject(DamageReassignService);
+  protected readonly itemPickerService = inject(ItemPickerService);
   protected readonly combatPanel = inject(CombatPanelService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
@@ -113,5 +117,10 @@ export class App implements OnInit {
   protected onDamageReassignChosen(to: DamageReassignEntity): void {
     this.damageReassignService.request()?.onChosen(to);
     this.damageReassignService.close();
+  }
+
+  protected onItemChosen(event: { id: number; quantity: number }): void {
+    this.itemPickerService.request()?.onChosen?.(event.id, event.quantity);
+    this.itemPickerService.close();
   }
 }

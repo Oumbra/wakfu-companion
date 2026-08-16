@@ -50,6 +50,46 @@ const browser = await firefox.launch({
 
 Écrire ces scripts de vérification dans le dossier scratchpad de la session (jamais dans le repo), et les supprimer une fois la vérification terminée.
 
+**Jeu de données réaliste pour la page profil (comptes/personnages/watchlist...)** : `tests/wakfu-companion-export.json` (fourni par l'utilisateur, à conserver) — un export réel de l'app (profil, watchlist, roster de comptes/personnages...). À utiliser via le vrai système d'import de l'app plutôt qu'en reconstituant des données à la main, dès qu'un test touche à la page profil/roster :
+
+```js
+// 1. Se placer sur la page profil (le rail "Personnages" n'existe qu'une fois `fileConnectedGuard`
+//    satisfait — voir app.routes.ts — donc simuler `status: 'connected'` avant de naviguer) :
+const root = ng.getComponent(document.querySelector('app-root'));
+root.logFileAccess.status.set('connected');
+root.nav.openProfile();
+// 2. Basculer sur l'onglet "Personnages" (bouton du rail, texte traduit selon la langue) :
+document.querySelectorAll('.profile-rail-btn')
+  .find(b => b.textContent.toLowerCase().includes('personnage'))?.click();
+// 3. Importer via le VRAI <input type="file"> (accept="application/json", voir
+//    profile-page.component.html) — fonctionne même sans FSA, Playwright peut lui assigner un
+//    fichier directement :
+// (côté Playwright, pas dans la page) await page.locator('input[type="file"]').setInputFiles(
+//   '/chemin/vers/wakfu-companion-export.json'
+// );
+```
+
+⚠️ **`onImportFileSelected` fait `window.location.reload()` après un import réussi** (réinitialise proprement tout l'état applicatif depuis les nouvelles données, voir le composant) — attendre `page.waitForLoadState('load')` puis **refaire les étapes 1-2** (le rechargement repart de zéro, `status`/`nav` ne sont plus `'connected'`/sur la page profil).
+
+Pour tester un cas de débordement (ex. très nombreux comptes/personnages, qu'aucun jeu de données réel n'atteint confortablement) plutôt que de gonfler le JSON à la main, injecter directement dans `CharacterRosterService` après import (mêmes services accessibles via `ng.getComponent(document.querySelector('app-profile-page'))`) :
+```js
+const comp = ng.getComponent(document.querySelector('app-profile-page'));
+comp.roster.accounts.set([{ id: 'fake', label: 'Compte test', gameServer: null, characters: [...] }]);
+```
+
+⚠️ **Piège : plusieurs `.app-page-body`/`.profile-rail` coexistent dans le DOM** (un jeu par vue `AppPageComponent`, la vue `main`/dashboard ET la vue `profile` sont toutes deux montées via `@defer` dans `app.html`) — `document.querySelector('.app-page-body')` peut renvoyer celui de la MAUVAISE vue (silencieusement, sans erreur : juste un élément qui ne scrolle jamais quand on agit dessus). Toujours scoper la recherche à la vue active, ex. `document.querySelector('app-profile-page .app-page-body')` ou `[...document.querySelectorAll(...)].find(el => el.closest('app-profile-page'))`.
+
+⚠️ **Piège CSS proche, à ne pas confondre avec le précédent** : `Element.closest()` cherche parmi les ANCÊTRES (et l'élément lui-même), jamais les descendants. Un composant dont le template englobe entièrement un autre composant partagé (ex. `<app-profile-page>` qui contient `<app-page>`, lequel rend `.app-page-body` plus bas dans SON PROPRE template) a cet élément comme **descendant**, pas ancêtre, dans le DOM final — `hostEl.nativeElement.closest('.app-page-body')` échoue toujours (retourne `null`) dans ce sens-là ; c'est `querySelector('.app-page-body')` (recherche descendante) qu'il faut utiliser depuis le composant hôte. Confondu une fois en session (`ProfilePageComponent` cherchant son propre `.app-page-body` pour y poser un `ResizeObserver`, voir plus bas).
+
+## Sticky (`position: sticky`) : deux pièges CSS qui l'empêchent silencieusement de fonctionner
+
+Rencontrés (et corrigés) sur le rail de navigation desktop de la page profil (`.profile-rail`/`.roster-account-rail`, `profile-page.component.css`) — un `position: sticky; top: 0` posé sur un élément peut être syntaxiquement correct, `getComputedStyle` peut même confirmer `position: sticky`, et pourtant ne produire **aucun** effet visible au scroll, pour deux raisons indépendantes et non évidentes à la lecture du CSS seul (vérifiées uniquement via `getBoundingClientRect()` en boucle pendant un scroll simulé, voir méthode de test ci-dessus) :
+
+1. **Sticky sur le seul enfant d'un conteneur défilant, sans rien d'autre autour** : si l'élément sticky occupe déjà 100% de la zone défilante de son parent (rien à scroller "sous" ou "au-dessus" de lui dans ce même conteneur), le sticky équivaut exactement à `position: static` — il n'y a tout simplement rien pour lui donner l'occasion de "décrocher". Piège rencontré en ajoutant `position: sticky` sur un wrapper qui était le SEUL enfant de son `overflow-y: auto` — inutile, à retirer plutôt qu'à déboguer.
+2. **N'importe quel ancêtre avec un `overflow` autre que `visible` — y compris `hidden`, même s'il ne clippe jamais rien en pratique** — devient, au sens CSS, le "conteneur de défilement" de référence pour le calcul du sticky, à la place du vrai conteneur qui scrolle plus loin dans l'arbre. Si cet ancêtre-écran ne scrolle lui-même jamais (`scrollTop` toujours à 0 — cas d'un `overflow: hidden` posé "au cas où" sur un panneau dont le contenu ne dépasse en réalité jamais sa propre boîte), l'élément sticky suit cet ancêtre comme un bloc rigide pendant que celui-ci défile normalement plus haut : aucun effet de collage visible, alors que le sticky est bien actif. Repérer ce cas en listant, dans `getComputedStyle`, l'`overflow`/`overflow-x`/`overflow-y` de CHAQUE ancêtre entre l'élément sticky et le véritable conteneur qui scrolle (`.app-page-body` sur cette page) — le premier qui n'est pas `visible` est le coupable, qu'il ait ou non un rôle visuel évident.
+
+Une 3ᵉ cause, plus générale et déjà documentée ailleurs dans ce fichier (voir `.tool-panel`/`.panel-body`, gating `isInitialLoad`... non — voir plutôt le principe `height: 100%` sous un ancêtre flex à hauteur non définie, section suivante) peut aussi supprimer toute "marge de manœuvre" nécessaire au sticky en stretchant l'élément à la hauteur totale de son bloc englobant (plus de place pour "décrocher") : plafonner sa hauteur (`max-height`, mesuré dynamiquement — `railMaxHeight`/`ResizeObserver` dans `ProfilePageComponent`, jamais une valeur `vh` en dur qui ne défalquerait pas le chrome au-dessus) est alors nécessaire en plus des deux points ci-dessus, pas à leur place.
+
 ## Principe d'architecture : gating `isInitialLoad`
 
 `LogFileAccessService.newLines$` émet `{ lines, isInitialLoad }` — `isInitialLoad` est vrai uniquement pour le tout premier lot d'une (re)connexion (contenu déjà présent dans le fichier avant l'ouverture). Toute (re)connexion — clic sur "Changer de fichier" puis resélection du même fichier y compris — relit **tout le fichier depuis le début** comme un nouveau `isInitialLoad`.
@@ -174,6 +214,43 @@ de l'app (fr/en/es/pt).
 
 ## Conventions UI transverses (réutiliser, ne pas recréer)
 
+- **Toujours un composant, jamais un bloc HTML+CSS+JS local recopié.** Dès qu'un morceau d'UI a un
+  comportement propre (état interne, gestion clavier, options de configuration) — même s'il ne
+  semble utilisé qu'à un seul endroit au départ — l'extraire en composant partagé (`shared/`)
+  plutôt que de le garder inline dans le template/CSS/TS du composant parent. Un composant partagé
+  se teste, se documente et évolue (nouvelles options/flags) indépendamment de son ou ses
+  appelants ; un bloc local complexifie le parent et finit tôt ou tard copié-collé ailleurs (cas
+  réel : `.kpi-target-stepper` était dupliqué à l'identique dans `tracker.component.html` ET
+  `tracker-strip.component.html`, plus 4 variantes proches ailleurs dans l'app — voir
+  `app-input-number` ci-dessous). Concevoir le composant pour la réutilisation dès le départ
+  (inputs/options plutôt que valeurs figées) plutôt que de le généraliser seulement au 2ᵉ appelant.
+- **Pas-à-pas numérique (`app-stepper`, `shared/stepper/`)** : `‹ label ›` générique — `[label]`
+  (texte déjà traduit/interpolé par l'appelant, ce composant ne connaît pas l'i18n), `[value]`,
+  `[min]`, `[max]`, `[step]` (pas de l'incrément, défaut 1), `[prevTooltip]`/`[nextTooltip]`
+  (optionnels), `(valueChange)` (déjà borné à `[min, max]`). Un seul tabstop (`role="spinbutton"`
+  sur le conteneur, boutons en `tabindex="-1"`) : `Tab` cible le composant comme un champ de
+  saisie, flèche gauche/droite pour reculer/avancer au clavier, en plus du clic sur les boutons.
+  Utilisé par `DamageViewSwitchComponent` pour le pas-à-pas de tour (‹ Tour N ›). Non éditable au
+  clavier (`label` est un texte affiché, pas une saisie) — voir `app-input-number` ci-dessous pour
+  un vrai champ numérique éditable.
+- **Champ numérique éditable (`app-input-number`, `shared/input-number/`)** : un vrai `<input
+  type="number">` (ciblable au `Tab`, chiffres tapables directement) entouré de boutons +/-
+  optionnels — `[value]` (valeur de départ/affichée, composant contrôlé, même principe que
+  `app-stepper`), `[min]`/`[max]` (optionnels, `null` = pas de borne), `[step]` (défaut 1),
+  `[showButtons]` (défaut `true` — `false` pour un champ compact sans place pour des boutons, ex.
+  tuile KPI repliée), `[prevTooltip]`/`[nextTooltip]`/`[fieldTooltip]`, `(valueChange)`. Les 4
+  flèches clavier pilotent la valeur (← et ↓ diminuent, → et ↑ augmentent — **pas** le déplacement
+  de curseur standard ni le stepper natif du navigateur), en plus du clic sur les boutons et de la
+  molette. Habillage visuel (tailles/couleurs, qui différaient légèrement selon l'appelant d'origine)
+  personnalisable via des variables CSS `--input-number-*` posées sur la balise `<app-input-number>`
+  depuis le CSS de l'appelant (héritées à travers `:host{display:contents}`, voir
+  `input-number.component.css` pour la liste complète et les valeurs par défaut) — jamais en
+  essayant d'atteindre `.input-number-field` depuis l'extérieur (encapsulation de vue, voir
+  `IconComponent.size`). A remplacé 6 implémentations quasi identiques dispersées dans l'app
+  (`.kpi-target-stepper` ×2, `.item-picker-qty-stepper`, `.kpi-card-value-input`,
+  `.kpi-countdown-current-input`, `.recipe-modal-qty-input`) et l'utilitaire `resolveNumericKeyAction`
+  qui les pilotait (supprimé, plus aucun appelant) — à réutiliser pour tout futur champ numérique
+  plutôt qu'un nouveau bloc dédié.
 - **Tooltips** : directive générique `TooltipDirective` (`[appTooltip]`, `shared/tooltip/tooltip.directive.ts`) — ne JAMAIS écrire un bloc CSS `::after` local dans un composant, ni utiliser `[title]`/`[attr.data-tooltip]` (ancien système CSS, retiré). Mettre le texte dans `[appTooltip]="'xxx' | t"` (statique) ou `[appTooltip]="expression()"` (texte dynamique/calculé, ex. `manualCloseTooltip()`) sur l'élément — quel que soit son type (bouton, span, label...). Rendu via `TooltipService`/`<app-tooltip />` (un seul exemplaire, rendu au niveau racine dans `app.html`, comme `ClassPickerService`) : le tooltip est un `position: fixed` calculé depuis `getBoundingClientRect()` au survol/focus, **jamais un descendant DOM de l'élément survolé**. Conséquence directe : totalement insensible à tout `overflow: hidden`/`auto` ancestral (conteneur à défilement horizontal ou vertical) ET à tout contexte d'empilement local (`z-index`, `position: sticky`) — la catégorie de bug qui justifiait cette migration (tooltip invisible/rogné dans un `.tool-panel`, une bande de scroll horizontal comme `app-tab-bar`, un rail replié...) ne peut plus se produire, quel que soit l'endroit où l'élément vit dans l'arbre DOM.
   - `[tooltipPosition]` (défaut `'top'`, centré au-dessus) : `'top' | 'top-left' | 'top-right' | 'bottom' | 'bottom-left' | 'bottom-right' | 'left' | 'right'`.
     - `bottom*` : en dessous au lieu d'au-dessus — réservé (1) aux éléments situés dans un header (`.app-header` principal ou `.profile-page-header`), qui n'ont pas de place au-dessus (bord haut de l'écran/de la vue) ; (2) au **premier élément (ou 1ère ligne) d'une liste/grille à défilement** dans un `.tool-panel`, par cohérence visuelle avec le reste de la liste (plus une nécessité de clipping depuis cette migration, mais toujours la bonne position pour ne pas coller le tooltip du 1er élément au bord haut du panneau).

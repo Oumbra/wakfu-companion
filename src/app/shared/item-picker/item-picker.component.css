@@ -1,0 +1,113 @@
+/* Même z-index que .class-picker/.damage-reassign-picker (au-dessus de .recap-panel/
+   .loot-alert-overlay, 500) — voir leur commentaire respectif. */
+.item-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.4);
+}
+.item-picker {
+  position: fixed;
+  z-index: 601;
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  width: 280px;
+}
+.item-picker-title-row {
+  margin-bottom: 8px;
+}
+.item-picker-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.item-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  color: var(--text-bright);
+  font-size: 0.8rem;
+  text-align: left;
+}
+.item-picker-item:hover {
+  border-color: var(--accent);
+  background: var(--surface-active);
+}
+/* L'entrée courante est indicative uniquement (voir ItemPickerComponent.isCurrent) : `disabled`
+   empêche déjà le clic, `opacity`/`cursor` le signalent visuellement sans avoir besoin d'un état
+   `:hover` distinct (un élément désactivé n'en déclenche de toute façon aucun). */
+.item-picker-item.current {
+  border-color: var(--accent);
+  background: var(--surface-active);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.item-picker-item-rarity {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.item-picker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bouton "+ Suivre" : pleine largeur, distinct visuellement des entrées de la liste ci-dessous
+   (fond plein plutôt que le cadre discret de `.item-picker-item`) — même esprit que
+   `.primary-btn` (styles.css) mais gabarit compact assorti au reste du menu. */
+.item-picker-follow-btn {
+  width: 100%;
+  padding: 6px 8px;
+  background: var(--tint-medium);
+  border: 1px solid var(--tint-strong);
+  border-radius: 5px;
+  color: var(--text-bright);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+.item-picker-follow-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: #04222a;
+  border-color: var(--accent);
+}
+.item-picker-follow-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.item-picker-modify-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 2px;
+  color: var(--text-bright);
+  font-size: 0.75rem;
+}
+
+/* `app-input-number` (shared/input-number/) — le gabarit par défaut du composant EST celui qui
+   servait de référence documentée pour ce stepper (voir input-number.component.css), aucune
+   variable `--input-number-*` à surcharger ici. */
