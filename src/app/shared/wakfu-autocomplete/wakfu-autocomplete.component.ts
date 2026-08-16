@@ -94,8 +94,9 @@ export class WakfuAutocompleteComponent {
   private readonly recipeTracking = inject(RecipeTrackingService);
   private readonly catalog = inject(CatalogService);
 
-  protected readonly query = signal('');
+  readonly focused = signal(false);
   protected readonly open = signal(false);
+  protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
   /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
    * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
@@ -203,6 +204,11 @@ export class WakfuAutocompleteComponent {
 
   protected onFocus(): void {
     this.open.set(true);
+    this.focused.set(true);
+  }
+
+  protected onBlur(): void {
+    this.focused.set(false);
   }
 
   protected moveActive(delta: number): void {

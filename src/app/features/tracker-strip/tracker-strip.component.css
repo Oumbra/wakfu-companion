@@ -43,9 +43,11 @@
      deux au même repère fixe (10px depuis le haut) élimine cette
      dépendance. */
   align-items: flex-start;
-  gap: 12px;
   width: 100%;
   min-width: 0;
+}
+.kpi-row.first-entry-is-long {
+  gap: 12px;
 }
 
 .kpi-strip {
@@ -68,6 +70,7 @@
   position: relative;
   display: flex;
   align-items: center;
+  justify-content: center;
   /* Espace "+"/"-" (voir `.kpi-remove-wrap`) à l'état replié — écrasé par
      `.kpi-add.expanded` ci-dessous une fois la recherche ouverte (un seul
      enfant flex-growable à cet instant, donc sans effet visible). */
@@ -77,8 +80,8 @@
      repère que les tuiles, indépendamment de la hauteur réelle de la bande. */
   margin-top: 10px;
   height: 58px;
-  border-radius: 10px;
-  transition: width 0.4s ease;
+  width: 126px;
+  transition: width 0.2s ease;
 }
 
 /* `position:relative` propre (pas `.kpi-add` directement) : une fois le bouton "-" affiché à côté
@@ -177,34 +180,73 @@
      icônes-seules (34px) puisque le mode se lit désormais en toutes lettres, sans survol. */
   width: 400px;
   gap: 6px;
+  flex-direction: column;
 }
 /* Le mode décompte ajoute les puces de quantités courantes (`.kpi-target-presets`) ET le stepper
    manuel (`.kpi-target-stepper`) à la suite du switch — largeur mesurée en Playwright (contenu
    exact des contrôles + marge confortable pour le champ de recherche, qui absorbe tout le reste). */
 .kpi-add.expanded.with-target {
-  width: 620px;
+  gap: 7px;
 }
 .kpi-add-close {
   flex-shrink: 0;
+  height: 32px;
+  width: 32px;
+}
+.kpi-add-close:hover {
+  background: var(--text-color);
+  color: var(--panel-header-bg);
+  border-color: var(--text-color);
 }
 /* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
    encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. Largeur
-   `auto` (contenu = icône + libellé en toutes lettres, clés déjà traduites dans les 4 locales,
-   voir CLAUDE.md) plutôt qu'un gabarit fixe icônes seules : le mode se lit désormais sans survol. */
+   des options gérée individuellement par `.icon-switch-option` (icône + libellé en toutes lettres,
+   clés déjà traduites dans les 4 locales, voir CLAUDE.md), qui se compacte en icône seule une fois
+   la recherche focus (`.compact`) pour laisser la place au champ. */
 .kpi-add-mode-switch {
-  width: auto;
   flex-shrink: 0;
+  height: 32px;
 }
 .kpi-add-mode-switch .icon-switch-option {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 0 8px;
+  padding: 0 15px 0 8px;
   font-size: 0.68rem;
   font-weight: 700;
+  width: 110px;
+  transition: width 0.2s ease;
+}
+.icon-switch-option.compact {
+  overflow: hidden;
+  width: 32px !important;
+  padding: 0 !important;
+}
+.icon-switch-option-label {
+  width: 100%;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
+.icon-switch-option.compact .icon-switch-option-label {
+  display: none;
+}
 
+.kpi-add-form {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+.kpi-target-wrapper {
+  display: flex;
+  gap: 6px;
+}
 /* Puces de quantités courantes (voir `WatchlistTileController.targetPresets`) — un clic va plus
    vite qu'une saisie clavier pour les décomptes les plus fréquents (recette, farm en rond). */
 .kpi-target-presets {

@@ -2,10 +2,12 @@
   <input
     #inputEl
     type="text"
+    autocomplete="off"
     [placeholder]="placeholder()"
     [value]="query()"
     (input)="onInput($any($event.target).value)"
     (focus)="onFocus()"
+    (blur)="onBlur()"
     (keydown.arrowdown)="moveActive(1); $event.preventDefault()"
     (keydown.arrowup)="moveActive(-1); $event.preventDefault()"
     (keydown.enter)="selectActive(); $event.preventDefault()"
