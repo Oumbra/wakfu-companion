@@ -13,9 +13,8 @@
             type="button"
             class="kpi-remove-btn"
             [class.active]="watchlist.selectMode()"
-            [appTooltip]="
-              (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
-            "
+            [appTooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+            tooltipPosition="top-left"
             (click)="toggleSelectMode()"
           >
             −
@@ -39,23 +38,42 @@
         <button
           type="button"
           class="icon-switch-option"
+          [appTooltip]="autocomplete.focused() ? ('tracker.countUpMode' | t) : null"
+          tooltipPosition="top-left"
+          [class.compact]="autocomplete.focused()"
           [class.selected]="watchlist.addMode() === 'up'"
           (click)="watchlist.setAddMode('up')"
         >
           <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
-          <span>{{ 'tracker.countUpMode' | t }}</span>
+          <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countUpMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true">
+              {{ 'tracker.countUpMode' | t }}
+            </span>
         </button>
         <button
           type="button"
           class="icon-switch-option"
+          [appTooltip]="autocomplete.focused() ? ('tracker.countDownMode' | t) : null"
+          tooltipPosition="top-left"
+          [class.compact]="autocomplete.focused()"
           [class.selected]="watchlist.addMode() === 'down'"
           (click)="watchlist.setAddMode('down')"
         >
           <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
-          <span>{{ 'tracker.countDownMode' | t }}</span>
+          <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countDownMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true">
+              {{ 'tracker.countDownMode' | t }}
+            </span>
         </button>
       </div>
       <app-wakfu-autocomplete
+        #autocomplete
         domain="both"
         [placeholder]="'tracker.searchPlaceholder' | t"
         [existingNames]="existingNames()"
