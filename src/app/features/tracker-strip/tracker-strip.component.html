@@ -2,6 +2,7 @@
   <div
     class="kpi-add"
     [class.expanded]="addOpen()"
+    [class.can-bulk-delete]="watchlist.canBulkDelete()"
     [class.with-target]="addOpen() && watchlist.addMode() === 'down'"
   >
     @if (addOpen()) {
@@ -14,6 +15,8 @@
           <button
             type="button"
             class="icon-switch-option"
+            [appTooltip]="autocomplete.focused() ? ('tracker.countUpMode' | t) : null"
+            tooltipPosition="top-left"
             [class.compact]="autocomplete.focused()"
             [class.selected]="watchlist.addMode() === 'up'"
             (click)="setAddMode($event, 'up')"
@@ -23,13 +26,15 @@
               class="icon-switch-option-label"
               [appTooltip]="'tracker.countUpMode' | t"
               tooltipPosition="top-left"
-              [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
+              [tooltipOnlyIfTruncated]="true"
               >{{ 'tracker.countUpMode' | t }}</span
             >
           </button>
           <button
             type="button"
             class="icon-switch-option"
+            [appTooltip]="autocomplete.focused() ? ('tracker.countDownMode' | t) : null"
+            tooltipPosition="top-left"
             [class.compact]="autocomplete.focused()"
             [class.selected]="watchlist.addMode() === 'down'"
             (click)="setAddMode($event, 'down')"
@@ -39,7 +44,7 @@
               class="icon-switch-option-label"
               [appTooltip]="'tracker.countDownMode' | t"
               tooltipPosition="top-left"
-              [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
+              [tooltipOnlyIfTruncated]="true"
               >{{ 'tracker.countDownMode' | t }}</span
             >
           </button>

@@ -93,7 +93,7 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected readonly firstEntryHasLongCount = computed(() => {
     const entries = this.stats.watchlist();
-    return entries.length > 0 ? this.watchlist.isLongCount(entries[0]) : false;
+    return entries.length > 0 ? this.watchlist.isLongCount(entries[0], 10) : false;
   });
 
   protected readonly addOpen = signal(false);
