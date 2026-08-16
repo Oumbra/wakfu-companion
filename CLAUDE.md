@@ -50,6 +50,46 @@ const browser = await firefox.launch({
 
 Écrire ces scripts de vérification dans le dossier scratchpad de la session (jamais dans le repo), et les supprimer une fois la vérification terminée.
 
+**Jeu de données réaliste pour la page profil (comptes/personnages/watchlist...)** : `tests/wakfu-companion-export.json` (fourni par l'utilisateur, à conserver) — un export réel de l'app (profil, watchlist, roster de comptes/personnages...). À utiliser via le vrai système d'import de l'app plutôt qu'en reconstituant des données à la main, dès qu'un test touche à la page profil/roster :
+
+```js
+// 1. Se placer sur la page profil (le rail "Personnages" n'existe qu'une fois `fileConnectedGuard`
+//    satisfait — voir app.routes.ts — donc simuler `status: 'connected'` avant de naviguer) :
+const root = ng.getComponent(document.querySelector('app-root'));
+root.logFileAccess.status.set('connected');
+root.nav.openProfile();
+// 2. Basculer sur l'onglet "Personnages" (bouton du rail, texte traduit selon la langue) :
+document.querySelectorAll('.profile-rail-btn')
+  .find(b => b.textContent.toLowerCase().includes('personnage'))?.click();
+// 3. Importer via le VRAI <input type="file"> (accept="application/json", voir
+//    profile-page.component.html) — fonctionne même sans FSA, Playwright peut lui assigner un
+//    fichier directement :
+// (côté Playwright, pas dans la page) await page.locator('input[type="file"]').setInputFiles(
+//   '/chemin/vers/wakfu-companion-export.json'
+// );
+```
+
+⚠️ **`onImportFileSelected` fait `window.location.reload()` après un import réussi** (réinitialise proprement tout l'état applicatif depuis les nouvelles données, voir le composant) — attendre `page.waitForLoadState('load')` puis **refaire les étapes 1-2** (le rechargement repart de zéro, `status`/`nav` ne sont plus `'connected'`/sur la page profil).
+
+Pour tester un cas de débordement (ex. très nombreux comptes/personnages, qu'aucun jeu de données réel n'atteint confortablement) plutôt que de gonfler le JSON à la main, injecter directement dans `CharacterRosterService` après import (mêmes services accessibles via `ng.getComponent(document.querySelector('app-profile-page'))`) :
+```js
+const comp = ng.getComponent(document.querySelector('app-profile-page'));
+comp.roster.accounts.set([{ id: 'fake', label: 'Compte test', gameServer: null, characters: [...] }]);
+```
+
+⚠️ **Piège : plusieurs `.app-page-body`/`.profile-rail` coexistent dans le DOM** (un jeu par vue `AppPageComponent`, la vue `main`/dashboard ET la vue `profile` sont toutes deux montées via `@defer` dans `app.html`) — `document.querySelector('.app-page-body')` peut renvoyer celui de la MAUVAISE vue (silencieusement, sans erreur : juste un élément qui ne scrolle jamais quand on agit dessus). Toujours scoper la recherche à la vue active, ex. `document.querySelector('app-profile-page .app-page-body')` ou `[...document.querySelectorAll(...)].find(el => el.closest('app-profile-page'))`.
+
+⚠️ **Piège CSS proche, à ne pas confondre avec le précédent** : `Element.closest()` cherche parmi les ANCÊTRES (et l'élément lui-même), jamais les descendants. Un composant dont le template englobe entièrement un autre composant partagé (ex. `<app-profile-page>` qui contient `<app-page>`, lequel rend `.app-page-body` plus bas dans SON PROPRE template) a cet élément comme **descendant**, pas ancêtre, dans le DOM final — `hostEl.nativeElement.closest('.app-page-body')` échoue toujours (retourne `null`) dans ce sens-là ; c'est `querySelector('.app-page-body')` (recherche descendante) qu'il faut utiliser depuis le composant hôte. Confondu une fois en session (`ProfilePageComponent` cherchant son propre `.app-page-body` pour y poser un `ResizeObserver`, voir plus bas).
+
+## Sticky (`position: sticky`) : deux pièges CSS qui l'empêchent silencieusement de fonctionner
+
+Rencontrés (et corrigés) sur le rail de navigation desktop de la page profil (`.profile-rail`/`.roster-account-rail`, `profile-page.component.css`) — un `position: sticky; top: 0` posé sur un élément peut être syntaxiquement correct, `getComputedStyle` peut même confirmer `position: sticky`, et pourtant ne produire **aucun** effet visible au scroll, pour deux raisons indépendantes et non évidentes à la lecture du CSS seul (vérifiées uniquement via `getBoundingClientRect()` en boucle pendant un scroll simulé, voir méthode de test ci-dessus) :
+
+1. **Sticky sur le seul enfant d'un conteneur défilant, sans rien d'autre autour** : si l'élément sticky occupe déjà 100% de la zone défilante de son parent (rien à scroller "sous" ou "au-dessus" de lui dans ce même conteneur), le sticky équivaut exactement à `position: static` — il n'y a tout simplement rien pour lui donner l'occasion de "décrocher". Piège rencontré en ajoutant `position: sticky` sur un wrapper qui était le SEUL enfant de son `overflow-y: auto` — inutile, à retirer plutôt qu'à déboguer.
+2. **N'importe quel ancêtre avec un `overflow` autre que `visible` — y compris `hidden`, même s'il ne clippe jamais rien en pratique** — devient, au sens CSS, le "conteneur de défilement" de référence pour le calcul du sticky, à la place du vrai conteneur qui scrolle plus loin dans l'arbre. Si cet ancêtre-écran ne scrolle lui-même jamais (`scrollTop` toujours à 0 — cas d'un `overflow: hidden` posé "au cas où" sur un panneau dont le contenu ne dépasse en réalité jamais sa propre boîte), l'élément sticky suit cet ancêtre comme un bloc rigide pendant que celui-ci défile normalement plus haut : aucun effet de collage visible, alors que le sticky est bien actif. Repérer ce cas en listant, dans `getComputedStyle`, l'`overflow`/`overflow-x`/`overflow-y` de CHAQUE ancêtre entre l'élément sticky et le véritable conteneur qui scrolle (`.app-page-body` sur cette page) — le premier qui n'est pas `visible` est le coupable, qu'il ait ou non un rôle visuel évident.
+
+Une 3ᵉ cause, plus générale et déjà documentée ailleurs dans ce fichier (voir `.tool-panel`/`.panel-body`, gating `isInitialLoad`... non — voir plutôt le principe `height: 100%` sous un ancêtre flex à hauteur non définie, section suivante) peut aussi supprimer toute "marge de manœuvre" nécessaire au sticky en stretchant l'élément à la hauteur totale de son bloc englobant (plus de place pour "décrocher") : plafonner sa hauteur (`max-height`, mesuré dynamiquement — `railMaxHeight`/`ResizeObserver` dans `ProfilePageComponent`, jamais une valeur `vh` en dur qui ne défalquerait pas le chrome au-dessus) est alors nécessaire en plus des deux points ci-dessus, pas à leur place.
+
 ## Principe d'architecture : gating `isInitialLoad`
 
 `LogFileAccessService.newLines$` émet `{ lines, isInitialLoad }` — `isInitialLoad` est vrai uniquement pour le tout premier lot d'une (re)connexion (contenu déjà présent dans le fichier avant l'ouverture). Toute (re)connexion — clic sur "Changer de fichier" puis resélection du même fichier y compris — relit **tout le fichier depuis le début** comme un nouveau `isInitialLoad`.

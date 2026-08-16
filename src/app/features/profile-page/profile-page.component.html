@@ -41,7 +41,11 @@
            `tabDefs`/`activeTab()`/`selectTab()`, déjà la source de vérité pour la barre
            d'onglets mobile ci-dessus — seul l'habillage change, pas le mécanisme. Masqué
            sous 800px (voir media query CSS) : le mobile garde `app-tab-bar` tel quel. -->
-      <nav class="profile-rail" [class.is-collapsed]="isNavRailCollapsed()">
+      <nav
+        class="profile-rail"
+        [class.is-collapsed]="isNavRailCollapsed()"
+        [style.--rail-max-h.px]="railMaxHeight()"
+      >
         <!-- `.profile-rail-scroll` (flex:1, seule zone qui défile) sépare la liste des onglets de
              l'icône de repli ci-dessous : celle-ci reste TOUJOURS accessible en bas du rail même si
              la liste venait à déborder, sans avoir besoin d'un vrai `position: fixed` (qui exigerait
@@ -79,7 +83,7 @@
               </span>
               <span class="profile-rail-label">
                 <!-- Libellés rail plus explicites que les onglets mobile (voir CLAUDE.md) : rail
-                     seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
+                    seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
                 @switch (tab.id) {
                   @case ('avatar') {
                     {{ 'profile.railIdentity' | t }}
@@ -491,6 +495,7 @@
             <nav
               class="profile-rail roster-account-rail"
               [class.is-collapsed]="isRosterRailCollapsed()"
+              [style.--rail-max-h.px]="railMaxHeight()"
             >
               <div class="profile-rail-scroll">
                 @for (account of roster.accounts(); track account.id; let i = $index) {
@@ -505,8 +510,8 @@
                   >
                     @if (isRosterRailCollapsed()) {
                       <!-- Ces boutons de compte n'ont pas de `.profile-rail-icon` (juste un libellé
-                           texte, contrairement au rail principal) : repliés, un badge numéroté en tient
-                           lieu plutôt que de laisser le bouton vide. -->
+                            texte, contrairement au rail principal) : repliés, un badge numéroté en tient
+                            lieu plutôt que de laisser le bouton vide. -->
                       <span class="profile-rail-index-badge">{{ i + 1 }}</span>
                     }
                     <span class="profile-rail-label">
