@@ -172,46 +172,121 @@
 }
 
 .kpi-add.expanded {
-  /* +34px par rapport aux 260px d'origine : laisse la place au switch
-     incrémental/décompte (voir `.kpi-add-mode-switch`) sans réduire d'autant
-     la largeur utile du champ de recherche. */
-  width: 294px;
+  /* Largeur mesurée en Playwright pour loger le switch étiqueté (voir `.kpi-add-mode-switch`) sans
+     réduire d'autant la largeur utile du champ de recherche — plus large que l'ancien switch
+     icônes-seules (34px) puisque le mode se lit désormais en toutes lettres, sans survol. */
+  width: 400px;
   gap: 6px;
 }
-/* +52px (largeur de `.kpi-add-target-input` + son gap) quand le mode décompte est sélectionné,
-   pour ne pas rogner le champ de recherche le temps que la cible est visible. */
+/* Le mode décompte ajoute les puces de quantités courantes (`.kpi-target-presets`) ET le stepper
+   manuel (`.kpi-target-stepper`) à la suite du switch — largeur mesurée en Playwright (contenu
+   exact des contrôles + marge confortable pour le champ de recherche, qui absorbe tout le reste). */
 .kpi-add.expanded.with-target {
-  width: 346px;
+  width: 620px;
 }
 .kpi-add-close {
   flex-shrink: 0;
 }
 /* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
-   encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. */
+   encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. Largeur
+   `auto` (contenu = icône + libellé en toutes lettres, clés déjà traduites dans les 4 locales,
+   voir CLAUDE.md) plutôt qu'un gabarit fixe icônes seules : le mode se lit désormais sans survol. */
 .kpi-add-mode-switch {
-  width: 34px;
+  width: auto;
   flex-shrink: 0;
 }
 .kpi-add-mode-switch .icon-switch-option {
-  font-size: 0.55rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
 }
-/* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
-   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. */
-.kpi-add-target-input {
-  width: 46px;
+
+/* Puces de quantités courantes (voir `WatchlistTileController.targetPresets`) — un clic va plus
+   vite qu'une saisie clavier pour les décomptes les plus fréquents (recette, farm en rond). */
+.kpi-target-presets {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   flex-shrink: 0;
-  padding: 4px 6px;
+}
+.kpi-target-chip {
+  border: 1px solid var(--border-strong);
+  background: var(--surface-active);
+  color: var(--text-color);
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.7rem;
+  border-radius: 999px;
+  padding: 3px 8px;
+  line-height: 1;
+}
+.kpi-target-chip:hover {
+  border-color: var(--accent);
+}
+.kpi-target-chip.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #04222a;
+}
+
+/* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
+   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. Stepper
+   (boutons +/- autour d'un vrai `input type="number"`) plutôt qu'un champ texte nu : un `type`
+   sémantiquement correct (clavier numérique mobile) mais les spinners natifs du navigateur restent
+   masqués (incohérents d'un navigateur à l'autre, voir `::-webkit-inner-spin-button` plus bas) au
+   profit de ces boutons, dans l'esprit de `.icon-btn` déjà utilisé partout ailleurs dans l'app. */
+.kpi-target-stepper {
+  display: inline-flex;
+  align-items: stretch;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-active);
+  height: 26px;
+  flex-shrink: 0;
+}
+.kpi-target-step {
+  width: 20px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.kpi-target-step:hover {
+  background: var(--tint-strong);
+  color: var(--accent);
+}
+.kpi-add-target-input {
+  width: 40px;
+  flex-shrink: 0;
+  padding: 4px 2px;
+  border: none;
+  border-left: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
   background: var(--surface-well);
   font-family: monospace;
   font-weight: 700;
   color: var(--accent);
   text-align: center;
+  -moz-appearance: textfield;
+}
+.kpi-add-target-input::-webkit-inner-spin-button,
+.kpi-add-target-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
 .kpi-add-target-input:focus {
   outline: none;
-  border-color: var(--accent);
+  background: var(--surface-active);
 }
 
 /* Refoulement RÉEL : `.kpi` reste un item flex normal de `.kpi-strip` (pas de

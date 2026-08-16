@@ -6,63 +6,106 @@
   </div>
 
   <div class="tracker-controls">
-    <app-wakfu-autocomplete
-      domain="both"
-      [placeholder]="'tracker.searchPlaceholder' | t"
-      [existingNames]="existingNames()"
-      (selected)="add($event)"
-    />
-    <div class="icon-switch tracker-add-mode-switch">
-      <span class="icon-switch-highlight" [class.is-right]="watchlist.addMode() === 'down'"></span>
-      <button
-        type="button"
-        class="icon-switch-option"
-        [class.selected]="watchlist.addMode() === 'up'"
-        [appTooltip]="'tracker.countUpMode' | t"
-        (click)="watchlist.addMode.set('up')"
-      >
-        ▲
-      </button>
-      <button
-        type="button"
-        class="icon-switch-option"
-        [class.selected]="watchlist.addMode() === 'down'"
-        [appTooltip]="'tracker.countDownMode' | t"
-        (click)="watchlist.addMode.set('down')"
-      >
-        ▼
-      </button>
-    </div>
-    @if (watchlist.addMode() === 'down') {
-      <input
-        class="tracker-add-target-input"
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        [value]="watchlist.addTarget()"
-        [appTooltip]="'tracker.countdownTargetHint' | t"
-        (input)="watchlist.onAddTargetInput($event)"
-        (keydown)="watchlist.onAddTargetKeydown($event)"
+    <div class="tracker-controls-row">
+      <app-wakfu-autocomplete
+        domain="both"
+        [placeholder]="'tracker.searchPlaceholder' | t"
+        [existingNames]="existingNames()"
+        (selected)="add($event)"
       />
-    }
-    @if (watchlist.canBulkDelete()) {
-      <div class="kpi-remove-wrap">
+      <div class="icon-switch tracker-add-mode-switch">
+        <span
+          class="icon-switch-highlight"
+          [class.is-right]="watchlist.addMode() === 'down'"
+        ></span>
         <button
           type="button"
-          class="kpi-remove-btn"
-          [class.active]="watchlist.selectMode()"
-          [appTooltip]="
-            (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
-          "
-          (click)="toggleSelectMode()"
+          class="icon-switch-option"
+          [class.selected]="watchlist.addMode() === 'up'"
+          (click)="watchlist.addMode.set('up')"
         >
-          −
+          <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
+          <span>{{ 'tracker.countUpMode' | t }}</span>
         </button>
-        @if (watchlist.selectMode()) {
-          <button type="button" class="kpi-bulk-delete-btn" (click)="watchlist.confirmBulkDelete()">
-            {{ watchlist.bulkDeleteLabel() }}
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="watchlist.addMode() === 'down'"
+          (click)="watchlist.addMode.set('down')"
+        >
+          <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
+          <span>{{ 'tracker.countDownMode' | t }}</span>
+        </button>
+      </div>
+      @if (watchlist.canBulkDelete()) {
+        <div class="kpi-remove-wrap">
+          <button
+            type="button"
+            class="kpi-remove-btn"
+            [class.active]="watchlist.selectMode()"
+            [appTooltip]="
+              (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
+            "
+            (click)="toggleSelectMode()"
+          >
+            −
           </button>
-        }
+          @if (watchlist.selectMode()) {
+            <button
+              type="button"
+              class="kpi-bulk-delete-btn"
+              (click)="watchlist.confirmBulkDelete()"
+            >
+              {{ watchlist.bulkDeleteLabel() }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (watchlist.addMode() === 'down') {
+      <div class="tracker-target-row">
+        <div class="kpi-target-presets">
+          @for (preset of watchlist.targetPresets; track preset) {
+            <button
+              type="button"
+              class="kpi-target-chip"
+              [class.selected]="watchlist.addTarget() === preset"
+              (click)="watchlist.setAddTargetPreset(preset)"
+            >
+              {{ preset }}
+            </button>
+          }
+        </div>
+        <div class="kpi-target-stepper">
+          <button
+            type="button"
+            class="kpi-target-step"
+            [appTooltip]="'tracker.countdownTargetDecrease' | t"
+            (click)="watchlist.stepAddTarget(-1)"
+          >
+            −
+          </button>
+          <input
+            class="tracker-add-target-input"
+            type="number"
+            min="1"
+            max="9999"
+            inputmode="numeric"
+            [value]="watchlist.addTarget()"
+            [appTooltip]="'tracker.countdownTargetHint' | t"
+            (input)="watchlist.onAddTargetInput($event)"
+            (keydown)="watchlist.onAddTargetKeydown($event)"
+            (wheel)="watchlist.onAddTargetWheel($event)"
+          />
+          <button
+            type="button"
+            class="kpi-target-step"
+            [appTooltip]="'tracker.countdownTargetIncrease' | t"
+            (click)="watchlist.stepAddTarget(1)"
+          >
+            +
+          </button>
+        </div>
       </div>
     }
   </div>

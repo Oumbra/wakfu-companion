@@ -19,10 +19,12 @@ export type AppIconName =
   | 'volume-off'
   | 'calendar'
   | 'map-pin'
-  | 'swords';
+  | 'swords'
+  | 'trending-up'
+  | 'target';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-48a8cd3a.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-67a62de8.svg';
 
 @Component({
   selector: 'app-icon',

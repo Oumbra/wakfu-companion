@@ -50,6 +50,12 @@ export class WatchlistTileController {
    * valeur n'est clampée qu'à l'usage réel, dans `add()`. */
   readonly addTarget = signal<number>(1);
 
+  /** Quantités toutes faites proposées en un clic (chips) à côté du stepper manuel — la plupart
+   * des décomptes visent une quantité ronde (recette, farm...), un clic va plus vite qu'une saisie
+   * au clavier. Purement une aide de saisie : n'importe quelle valeur reste tapable/ajustable via
+   * `onAddTargetInput`/`stepAddTarget`, ces presets ne bornent rien. */
+  readonly targetPresets: readonly number[] = [10, 50, 100, 200];
+
   /**
    * Mode "sélection multiple" : chaque tuile affiche une case à cocher à la place de sa croix de
    * suppression individuelle, et un bouton de suppression groupée est visible dès l'entrée dans
@@ -219,6 +225,27 @@ export class WatchlistTileController {
       event.preventDefault();
       this.addTarget.update((v) => Math.max(0, v - 1));
     }
+  }
+
+  /** Ajuste la cible via les boutons +/- du stepper (contrairement à `onAddTargetKeydown`,
+   * toujours une action explicite au clic, jamais une étape intermédiaire d'une saisie au clavier
+   * en cours) — bornée à 1 minimum immédiatement, pas seulement à l'usage réel dans `add()`. */
+  stepAddTarget(delta: number): void {
+    this.addTarget.update((v) => Math.max(1, Math.floor(Number.isFinite(v) ? v : 0) + delta));
+  }
+
+  /** Même geste que les boutons +/- du stepper, au fil de la molette plutôt qu'au clic — pratique
+   * ergonomique courante sur un champ numérique déjà focus/survolé. `preventDefault` empêche le
+   * scroll de la page de "fuiter" pendant l'ajustement. */
+  onAddTargetWheel(event: WheelEvent): void {
+    event.preventDefault();
+    this.stepAddTarget(event.deltaY < 0 ? 1 : -1);
+  }
+
+  /** Sélectionne une quantité toute faite (voir `targetPresets`) — remplace intégralement la
+   * cible en cours de saisie, comme si l'utilisateur l'avait tapée directement. */
+  setAddTargetPreset(value: number): void {
+    this.addTarget.set(value);
   }
 
   /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte, la cible) choisis
