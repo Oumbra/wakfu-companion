@@ -16,26 +16,32 @@
             class="icon-switch-option"
             [class.compact]="autocomplete.focused()"
             [class.selected]="watchlist.addMode() === 'up'"
-            [appTooltip]="'tracker.countUpMode' | t"
-            tooltipPosition="top-left"
-            [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
             (click)="setAddMode($event, 'up')"
           >
             <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
-            <span class="icon-switch-option-label">{{ 'tracker.countUpMode' | t }}</span>
+            <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countUpMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
+              >{{ 'tracker.countUpMode' | t }}</span
+            >
           </button>
           <button
             type="button"
             class="icon-switch-option"
             [class.compact]="autocomplete.focused()"
             [class.selected]="watchlist.addMode() === 'down'"
-            [appTooltip]="'tracker.countDownMode' | t"
-            tooltipPosition="top-left"
-            [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
             (click)="setAddMode($event, 'down')"
           >
             <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
-            <span class="icon-switch-option-label">{{ 'tracker.countDownMode' | t }}</span>
+            <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countDownMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="autocomplete.focused() ? false : true"
+              >{{ 'tracker.countDownMode' | t }}</span
+            >
           </button>
         </div>
         <app-wakfu-autocomplete

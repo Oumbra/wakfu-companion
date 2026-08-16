@@ -1,4 +1,13 @@
-import { Component, computed, ElementRef, inject, signal } from '@angular/core';
+import {
+  Component,
+  computed,
+  effect,
+  ElementRef,
+  inject,
+  OnDestroy,
+  signal,
+  untracked,
+} from '@angular/core';
 import {
   StatsStoreService,
   WatchlistCounterMode,
@@ -17,6 +26,7 @@ import { WatchlistTileController } from '../../core/utils/watchlist-tile-control
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { NavigationService } from '../../core/services/navigation.service';
 
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
@@ -58,13 +68,14 @@ const KPI_EXPANDED_WIDTH_PX = 250;
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
 })
-export class TrackerStripComponent {
+export class TrackerStripComponent implements OnDestroy {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly catalog = inject(CatalogService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   protected readonly helpModal = inject(HelpModalService);
+  private readonly nav = inject(NavigationService);
 
   protected readonly watchlist = new WatchlistTileController(
     this.stats,
@@ -86,6 +97,43 @@ export class TrackerStripComponent {
   });
 
   protected readonly addOpen = signal(false);
+
+  /** Ferme le formulaire d'ajout (`.kpi-add.expanded`) dès qu'un clic tombe en dehors du composant
+   * — écouteur posé/retiré au fil de `addOpen()` plutôt que branché en permanence (voir l'`effect`
+   * du constructeur). Posé en phase `capture` : il s'exécute avant la phase bulle où un bouton
+   * interne pourrait appeler `stopPropagation()` (ex. `setAddMode`), ce qui n'a donc aucune
+   * incidence sur sa détection. */
+  private readonly onDocumentClick = (event: MouseEvent): void => {
+    const target = event.target as Node | null;
+    if (target && !this.elementRef.nativeElement.contains(target)) {
+      this.closeAdd();
+    }
+  };
+
+  constructor() {
+    // Un seul écouteur document actif à la fois : posé uniquement pendant que le formulaire est
+    // ouvert (voir `onDocumentClick` ci-dessus). Posé/retiré ici (pas dans openAdd/closeAdd) pour
+    // rester correct même si `addOpen` change par un autre chemin (ex. `recipeConfirmed` → closeAdd
+    // interne à WakfuAutocompleteComponent).
+    effect(() => {
+      if (this.addOpen()) {
+        document.addEventListener('click', this.onDocumentClick, { capture: true });
+      } else {
+        document.removeEventListener('click', this.onDocumentClick, { capture: true });
+      }
+    });
+    // Ferme aussi le formulaire à tout changement de vue (profil, légal...) — `nav.view()` est le
+    // seul dépendance suivie (via `untracked` sur `addOpen()`) pour ne pas re-déclencher cet effet
+    // à chaque ouverture/fermeture du formulaire lui-même.
+    effect(() => {
+      this.nav.view();
+      if (untracked(() => this.addOpen())) this.closeAdd();
+    });
+  }
+
+  ngOnDestroy(): void {
+    document.removeEventListener('click', this.onDocumentClick, { capture: true });
+  }
 
   /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
    * CSS) et exclusivement par clic (voir `onTileClick`) : plus de délai/verrou anti-cascade à
