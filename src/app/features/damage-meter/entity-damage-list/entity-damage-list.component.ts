@@ -18,6 +18,7 @@ import { ClassPickerService } from '../../../core/services/class-picker.service'
 import { DamageReassignService } from '../../../core/services/damage-reassign.service';
 import { DamageElement } from '../../../core/models/log-entry.model';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
+import { DamageViewMode } from '../../../shared/damage-view-switch/damage-view-switch.component';
 import {
   HEADER_ICON_ALLIES_DATA_URI,
   HEADER_ICON_ENEMIES_DATA_URI,
@@ -58,6 +59,13 @@ export class EntityDamageListComponent {
   readonly rows = input<EntityDamageRow[]>([]);
   readonly interactive = input(false);
   readonly emptyMessage = input('Aucun dégât enregistré.');
+  /** Voir DamageViewSwitchComponent — 'total' (défaut) préserve le comportement historique (somme
+   * de tout le combat). 'turn' recalcule chaque ligne/sort pour ne montrer que le tour visé
+   * (`turn()`) ; la réattribution (voir onSpellContextMenu) reste inchangée dans les deux modes,
+   * elle continue de déplacer TOUT l'historique du sort, pas seulement le tour affiché. */
+  readonly viewMode = input<DamageViewMode>('total');
+  /** Tour affiché (1-based) — ignoré tant que `viewMode()` vaut `'total'`. */
+  readonly turn = input(1);
   /** Combat auquel appartiennent ces lignes (combat en cours ou déjà terminé) — nécessaire pour
    * résoudre les candidats et appliquer une réattribution d'attaque (voir onSpellContextMenu).
    * `null` : réattribution non proposée (ne devrait pas arriver en pratique, chaque appelant
@@ -80,10 +88,49 @@ export class EntityDamageListComponent {
     this.side() === 'ally' ? HEADER_ICON_ALLIES_DATA_URI : HEADER_ICON_ENEMIES_DATA_URI,
   );
 
-  protected readonly total = computed(() => this.rows().reduce((sum, r) => sum + r.total, 0));
-  private readonly maxTotal = computed(
-    () => this.rows().reduce((max, r) => Math.max(max, r.total), 0) || 1,
+  /** Lignes effectivement affichées : identiques à `rows()` en mode 'total', recalculées pour ne
+   * garder que les dégâts du tour sélectionné en mode 'turn' (voir DamageViewSwitchComponent) —
+   * seul point de la vue qui connaît le détail par tour, tout le reste du template (barres, total
+   * d'en-tête, dépliage par sort...) continue de lire `row.total`/`row.spells` sans distinction. */
+  protected readonly displayRows = computed<EntityDamageRow[]>(() => {
+    if (this.viewMode() === 'total') return this.rows();
+    const turn = this.turn();
+    return this.rows()
+      .map((row) => this.rowForTurn(row, turn))
+      .sort((a, b) => b.total - a.total);
+  });
+
+  protected readonly total = computed(() =>
+    this.displayRows().reduce((sum, r) => sum + r.total, 0),
   );
+  private readonly maxTotal = computed(
+    () => this.displayRows().reduce((max, r) => Math.max(max, r.total), 0) || 1,
+  );
+
+  /** Ne garde, pour ce tour, que les sorts ayant effectivement fait des dégâts (voir
+   * SpellBreakdownRow.byTurn) — les autres champs de la ligne (nom, KO, instance...) restent ceux
+   * du combat entier, seul `total`/`spells` sont restreints à ce tour. */
+  private rowForTurn(row: EntityDamageRow, turn: number): EntityDamageRow {
+    const spells: SpellBreakdownRow[] = row.spells
+      .flatMap((spell) => {
+        const turnAgg = spell.byTurn.find((t) => t.turn === turn);
+        if (!turnAgg || turnAgg.total === 0) return [];
+        return [
+          {
+            spell: spell.spell,
+            total: turnAgg.total,
+            byElement: turnAgg.byElement,
+            byTurn: spell.byTurn,
+          },
+        ];
+      })
+      .sort((a, b) => b.total - a.total);
+    return {
+      ...row,
+      total: spells.reduce((sum, s) => sum + s.total, 0),
+      spells,
+    };
+  }
 
   protected displayName(row: EntityDamageRow): string {
     const base = this.side() === 'enemy' ? this.i18n.translateMonsterName(row.name) : row.name;

@@ -251,6 +251,13 @@
   border-top: 1px solid var(--border);
 }
 
+.history-view-switch-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
 .collapsible-section {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
