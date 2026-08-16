@@ -5,6 +5,7 @@ import {
   BrowserKind,
 } from '../../shared/browser-icon/browser-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { TranslateHtmlPipe } from '../../shared/translate-html.pipe';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 interface CompatibleBrowser {
@@ -21,7 +22,7 @@ const COMPATIBLE_BROWSERS: readonly CompatibleBrowser[] = [
 
 @Component({
   selector: 'app-setup',
-  imports: [TranslatePipe, BrowserIconComponent, TooltipDirective],
+  imports: [TranslatePipe, TranslateHtmlPipe, BrowserIconComponent, TooltipDirective],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',
 })
