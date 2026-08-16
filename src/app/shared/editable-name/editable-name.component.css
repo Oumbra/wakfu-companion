@@ -4,6 +4,9 @@
   gap: 4px;
   max-width: 100%;
 }
+:host:hover .icon-btn {
+  color: var(--accent);
+}
 :host([data-variant='centered']) {
   justify-content: center;
 }

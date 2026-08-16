@@ -58,6 +58,14 @@
     />
   }
 
+  @if (itemPickerService.request(); as req) {
+    <app-item-picker
+      [request]="req"
+      (itemChosen)="onItemChosen($event)"
+      (closed)="itemPickerService.close()"
+    />
+  }
+
   @if (
     nav.view() === 'main' &&
     logFileAccess.status() === 'connected' &&

@@ -8,16 +8,18 @@
     [class.scrollable]="items().length > 5"
     [class.recap-variant]="emptyVariant() === 'recap'"
   >
-    @for (item of items(); track item.name; let first = $first) {
+    @for (item of items(); track item.name + '#' + $index; let first = $first; let i = $index) {
       <div
         class="loot-row"
-        [class]="rarityClass(item.name)"
-        [appTooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
+        [class]="rarityClass(item)"
+        [appTooltip]="'items.interactTooltip' | t"
         [tooltipPosition]="first ? 'bottom' : 'top'"
-        (contextmenu)="onContextMenu($event, item.name)"
+        (contextmenu)="openInteractMenu($event, item, i)"
       >
-        <app-item-icon [name]="item.name" />
-        <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
+        <app-item-icon [name]="item.name" [id]="item.catalogId" />
+        <span class="loot-name">{{
+          i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
+        }}</span>
         <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
       </div>
     }

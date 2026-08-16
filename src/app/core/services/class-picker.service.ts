@@ -1,7 +1,11 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Gender } from '../data/class-icons.data';
+import { MediaQuerySignal } from '../utils/media-query-signal';
+import { PersistenceService } from './persistence.service';
 
 export type ClassPickerMode = 'icons' | 'portraits';
+
+const PREFERRED_MODE_KEY = 'wakfu-class-picker-mode';
 
 export interface ClassPickerRequest {
   name: string | null;
@@ -23,19 +27,45 @@ export interface ClassPickerRequest {
  */
 @Injectable({ providedIn: 'root' })
 export class ClassPickerService {
+  private readonly persistence = inject(PersistenceService);
+
   readonly request = signal<ClassPickerRequest | null>(null);
 
-  /** `initialMode` : mode d'affichage à l'ouverture ('icons' par défaut, comme avant) — l'utilisateur
-   * peut ensuite basculer librement via le switch du picker, voir ClassPickerComponent. */
+  private readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
+
+  /** Dernier mode choisi par l'utilisateur (icônes/portraits), persisté (localStorage) — repris
+   * comme `initialMode` par défaut à chaque ouverture, voir `open()`. */
+  readonly preferredMode = signal<ClassPickerMode>(
+    this.persistence.getJson<ClassPickerMode>(PREFERRED_MODE_KEY) ?? 'icons',
+  );
+
+  setPreferredMode(mode: ClassPickerMode): void {
+    this.preferredMode.set(mode);
+    this.persistence.setJson(PREFERRED_MODE_KEY, mode);
+  }
+
+  /** `initialMode` : mode d'affichage à l'ouverture — par défaut le dernier mode choisi par
+   * l'utilisateur (`preferredMode`, persisté) ; un appelant peut forcer une valeur précise (ex.
+   * `app-character-add-form` force 'portraits', choix "posé" indépendant de la préférence
+   * générale, voir son commentaire) en la passant explicitement. L'utilisateur peut ensuite
+   * basculer librement via le switch du picker, voir ClassPickerComponent. */
   open(
     name: string | null,
     x: number,
     y: number,
     onChosen: (className: string, gender: Gender) => void,
-    initialMode: ClassPickerMode = 'icons',
+    initialMode?: ClassPickerMode,
     switchModeBlocked: boolean = false,
   ): void {
-    this.request.set({ name, x, y, initialMode, switchModeBlocked, onChosen });
+    const isMobileMatches = this.isMobile.matches();
+    this.request.set({
+      name,
+      x,
+      y,
+      initialMode: isMobileMatches ? 'icons' : (initialMode ?? this.preferredMode()),
+      switchModeBlocked: isMobileMatches || switchModeBlocked,
+      onChosen,
+    });
   }
 
   close(): void {

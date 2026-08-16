@@ -26,17 +26,16 @@
   width: 24px;
   height: 24px;
   border-radius: 4px;
-  background: var(--tint-medium);
-  border: 1px solid var(--tint-strong);
-  color: var(--text-color);
+  background: transparent;
+  color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  transition: all 0.2s ease;
 }
 .collapse-btn:hover {
-  background: var(--tint-strong);
   color: var(--text-bright);
 }
 @media (max-width: 800px) {
@@ -102,4 +101,11 @@
 }
 .fight-stats-sep {
   color: var(--border-strong);
+}
+
+.view-switch-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
 }

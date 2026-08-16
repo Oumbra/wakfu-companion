@@ -1,6 +1,7 @@
 import { Component, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { TranslatePipe } from '../translate.pipe';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Popover de confirmation de suppression, mutualisée entre les KPI de suivi
@@ -11,7 +12,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-confirm-delete-popover',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, EscapeCloseDirective],
   templateUrl: './confirm-delete-popover.component.html',
   styleUrl: './confirm-delete-popover.component.css',
 })

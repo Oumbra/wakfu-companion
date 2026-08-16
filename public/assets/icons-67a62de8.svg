@@ -48,4 +48,15 @@
     <path d="M4 4l16 16M20 4L4 20" />
     <path d="M2 2l4 4M22 2l-4 4M2 22l4-4M22 22l-4-4" />
   </symbol>
+  <!-- Switch de mode du formulaire d'ajout au suivi (KPI) : incrémental (compte librement, sans
+       limite) vs décompte (vise une quantité définie à la création) — voir
+       tracker-strip.component.html / tracker.component.html. -->
+  <symbol id="trending-up" viewBox="0 0 24 24">
+    <path d="M3 17l6-6 4 4 8-8" />
+    <path d="M15 7h6v6" />
+  </symbol>
+  <symbol id="target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="4" />
+  </symbol>
 </svg>

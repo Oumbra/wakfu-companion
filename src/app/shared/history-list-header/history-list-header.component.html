@@ -27,7 +27,7 @@
       class="icon-switch-option sort-switch-option"
       [class.selected]="sortOrder() === 'desc'"
       [appTooltip]="'purchases.sortNewestFirst' | t"
-      tooltipPosition="bottom-right"
+      tooltipPosition="top-right"
       (click)="sortOrderChange.emit('desc')"
     >
       <svg
@@ -46,7 +46,7 @@
       class="icon-switch-option sort-switch-option"
       [class.selected]="sortOrder() === 'asc'"
       [appTooltip]="'purchases.sortOldestFirst' | t"
-      tooltipPosition="bottom-right"
+      tooltipPosition="top-right"
       (click)="sortOrderChange.emit('asc')"
     >
       <svg

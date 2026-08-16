@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, effect, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import {
   RecipeTrackingIngredient,
@@ -7,16 +7,17 @@ import {
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { TranslatePipe } from '../translate.pipe';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
-import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { InputNumberComponent } from '../input-number/input-number.component';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Modale "suivre les objets de la recette" (voir RecipeTrackingService, ouverte depuis l'icône
  * recette de WakfuAutocompleteComponent) — rendue une seule fois au niveau racine (voir
  * app.html), même principe que HelpModalComponent/ClassPickerComponent. Saisie d'une quantité
- * (multiplicateur, min 1, comportement identique à l'input décompte des KPI — voir
- * resolveNumericKeyAction) puis validation (bouton ou Entrée) : crée ou met à jour un KPI en
- * mode décompte pour chaque ingrédient de la recette, valeur = quantité recette × multiplicateur.
+ * (multiplicateur, min 1, sans max) via `app-input-number` (shared/input-number/) puis validation
+ * (bouton ou Entrée) : crée ou met à jour un KPI en mode décompte pour chaque ingrédient de la
+ * recette, valeur = quantité recette × multiplicateur.
  *
  * Un ingrédient ayant lui-même une recette peut être "imbriqué" (voir toggleNested/nestedPaths) :
  * sa ligne devient un collapse listant SES propres ingrédients, en cascade sur autant de niveaux
@@ -26,7 +27,14 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-recipe-quantity-modal',
-  imports: [TranslatePipe, ItemIconComponent, NgTemplateOutlet, TooltipDirective],
+  imports: [
+    TranslatePipe,
+    ItemIconComponent,
+    NgTemplateOutlet,
+    TooltipDirective,
+    InputNumberComponent,
+    EscapeCloseDirective,
+  ],
   templateUrl: './recipe-quantity-modal.component.html',
   styleUrl: './recipe-quantity-modal.component.css',
 })
@@ -35,7 +43,7 @@ export class RecipeQuantityModalComponent {
   private readonly stats = inject(StatsStoreService);
 
   protected readonly quantity = signal(1);
-  private readonly quantityInput = viewChild<ElementRef<HTMLInputElement>>('quantityInput');
+  private readonly quantityInput = viewChild<InputNumberComponent>('quantityInput');
 
   /** Chemins (voir doc de classe) des lignes actuellement imbriquées (collapse ouvert, voir
    * toggleNested) — un ingrédient imbriqué n'est lui-même plus suivi à la validation, seuls ses
@@ -47,7 +55,7 @@ export class RecipeQuantityModalComponent {
       if (this.recipeTracking.request()) {
         this.quantity.set(1);
         this.nestedPaths.set(new Set());
-        queueMicrotask(() => this.quantityInput()?.nativeElement.focus());
+        queueMicrotask(() => this.quantityInput()?.focus());
       }
     });
   }
@@ -62,24 +70,6 @@ export class RecipeQuantityModalComponent {
       else next.add(path);
       return next;
     });
-  }
-
-  protected onKeydown(event: KeyboardEvent): void {
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.quantity.update((v) => v + 1);
-    } else if (action === 'decrement') {
-      event.preventDefault();
-      this.quantity.update((v) => Math.max(1, v - 1));
-    }
-  }
-
-  protected onInput(event: Event): void {
-    const raw = Number((event.target as HTMLInputElement).value);
-    this.quantity.set(Number.isFinite(raw) && raw >= 1 ? Math.floor(raw) : 1);
   }
 
   protected confirm(): void {
@@ -120,9 +110,19 @@ export class RecipeQuantityModalComponent {
     walk(req.ingredients, multiplier, '');
 
     for (const [id, { name, target }] of targets) {
-      this.stats.addWatchedItem(name, id);
-      this.stats.setWatchlistMode(name, 'down', id);
-      this.stats.setWatchlistCountdownTarget(name, target, id);
+      // Un objet déjà suivi en décompte (ex. confirmation d'une recette précédente qui le
+      // redemandait déjà) cumule le nouveau besoin sur l'existant au lieu de repartir d'un
+      // décompte plein — sans quoi valider une 2e recette écraserait la progression déjà faite
+      // sur la 1re (bug réel signalé). Toute autre situation (pas encore suivi, ou suivi en
+      // mode 'up') garde le comportement d'origine : (re)crée l'entrée en décompte plein.
+      const existing = this.stats.findWatchedEntry(name, id);
+      if (existing?.mode === 'down') {
+        this.stats.increaseWatchlistCountdownTarget(name, target, id);
+      } else {
+        this.stats.addWatchedItem(name, id);
+        this.stats.setWatchlistMode(name, 'down', id);
+        this.stats.setWatchlistCountdownTarget(name, target, id);
+      }
     }
     this.recipeTracking.confirm();
   }

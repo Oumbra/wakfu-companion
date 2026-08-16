@@ -1,0 +1,15 @@
+.damage-view-switch {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.damage-view-mode-switch {
+  width: 132px;
+}
+.damage-view-mode-switch .icon-switch-option {
+  font-size: 0.72rem;
+  font-weight: 700;
+}

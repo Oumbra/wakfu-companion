@@ -20,15 +20,27 @@ import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { EscapeCloseDirective } from '../../shared/escape-close.directive';
 
 /**
- * Fenêtre flottante "Session Recap" : masquée par défaut, sans overlay de
- * fond, déplaçable par son en-tête (comme `makeDraggable` sur le site de
- * référence — pas besoin d'Angular CDK pour un simple glisser).
+ * Fenêtre flottante "Session Recap" : masquée par défaut, déplaçable par son
+ * en-tête (comme `makeDraggable` sur le site de référence — pas besoin
+ * d'Angular CDK pour un simple glisser). Overlay de fond opaque (comme les
+ * autres modales, voir `.recap-backdrop`) fermable au clic extérieur ou à
+ * Échap (`appEscapeClose`) — le drag reste possible malgré ce backdrop
+ * puisqu'il se déclenche sur l'en-tête du panneau, au-dessus dans l'ordre
+ * d'empilement (voir z-index dans session-recap.component.css).
  */
 @Component({
   selector: 'app-session-recap',
-  imports: [NumberFrPipe, TranslatePipe, EntityIconComponent, LootListComponent, TooltipDirective],
+  imports: [
+    NumberFrPipe,
+    TranslatePipe,
+    EntityIconComponent,
+    LootListComponent,
+    TooltipDirective,
+    EscapeCloseDirective,
+  ],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
@@ -54,8 +66,10 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly duration = signal('00:00:00');
   protected readonly position = signal<{ left: number; top: number } | null>(null);
   protected readonly kamasExpanded = signal(false);
-  protected readonly xpExpanded = signal(false);
-  protected readonly combatsExpanded = signal(false);
+  /** Combat et expérience ouverts par défaut (le butin, imbriqué sous "Combats" ci-dessous, en
+   * bénéficie du même coup) — seul Kamas reste replié par défaut. */
+  protected readonly xpExpanded = signal(true);
+  protected readonly combatsExpanded = signal(true);
   protected readonly lootSort = signal<LootSort>('name');
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;

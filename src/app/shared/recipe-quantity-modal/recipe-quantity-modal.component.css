@@ -5,7 +5,7 @@
 .recipe-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.4);
   z-index: 600;
 }
 
@@ -117,21 +117,17 @@
   color: var(--text-muted);
 }
 
-.recipe-modal-qty-input {
-  width: 64px;
-  padding: 4px 8px;
-  border: 1px solid var(--tint-strong);
-  border-radius: 4px;
-  background: var(--tint-weak);
-  color: var(--accent);
-  font-family: monospace;
-  font-weight: 700;
-  font-size: 0.9rem;
-  text-align: center;
-}
-.recipe-modal-qty-input:focus {
-  outline: none;
-  border-color: var(--accent);
+/* `app-input-number` sans boutons (`[showButtons]="false"`, voir template) — gabarit propre à
+   cette modale (bordure/fond plus doux que `--border-strong`/`--surface-well`, voir
+   input-number.component.css pour les défauts). */
+app-input-number.recipe-modal-qty-input {
+  --input-number-border-color: var(--tint-strong);
+  --input-number-radius: 4px;
+  --input-number-field-width: 64px;
+  --input-number-field-padding: 4px 8px;
+  --input-number-field-bg: var(--tint-weak);
+  --input-number-field-focus-bg: var(--tint-weak);
+  --input-number-field-font-size: 0.9rem;
 }
 
 .recipe-modal-ingredients {

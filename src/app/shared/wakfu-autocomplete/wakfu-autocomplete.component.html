@@ -1,11 +1,13 @@
-<div class="wakfu-autocomplete">
+<div class="wakfu-autocomplete" [class.bare]="bare()">
   <input
     #inputEl
     type="text"
+    autocomplete="off"
     [placeholder]="placeholder()"
     [value]="query()"
     (input)="onInput($any($event.target).value)"
     (focus)="onFocus()"
+    (blur)="onBlur()"
     (keydown.arrowdown)="moveActive(1); $event.preventDefault()"
     (keydown.arrowup)="moveActive(-1); $event.preventDefault()"
     (keydown.enter)="selectActive(); $event.preventDefault()"
@@ -39,6 +41,7 @@
             <span
               class="wakfu-autocomplete-item-name"
               [appTooltip]="r.label"
+              [tooltipOnlyIfTruncated]="true"
               [tooltipPosition]="i === 0 ? 'bottom-left' : 'top-left'"
               >{{ r.label }}</span
             >

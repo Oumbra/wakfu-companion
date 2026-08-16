@@ -72,9 +72,13 @@ export interface FightParticipantPayload {
   xpGained: number;
 }
 
+/** `itemId`/`itemName` sont mutuellement exclusifs : `itemId` non `null` ⇒ `itemName` `null`
+ * (résolu par le catalogue, pas besoin de dupliquer le nom), et inversement (objet non résolu,
+ * seul le nom brut du log identifie la ligne) — voir `HistorySyncService`, qui construit la paire,
+ * et `server/history/parse.ts`, qui renforce l'invariant côté serveur quoi qu'il reçoive. */
 export interface FightLootPayload {
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
 }
 
@@ -91,19 +95,21 @@ export interface FightPayload {
   loot: FightLootPayload[];
 }
 
+/** `itemId`/`itemName` mutuellement exclusifs — voir `FightLootPayload`. */
 export interface PurchasePayload {
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
   totalCost: number;
   occurredAt: string;
   gameServer: string | null;
 }
 
+/** `itemId`/`itemName` mutuellement exclusifs — voir `FightLootPayload`. */
 export interface TradeItemPayload {
   direction: 'acquired' | 'given';
   itemId: number | null;
-  itemName: string;
+  itemName: string | null;
   quantity: number;
 }
 

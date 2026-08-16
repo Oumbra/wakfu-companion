@@ -1,4 +1,5 @@
 import {
+  afterNextRender,
   Component,
   computed,
   effect,
@@ -23,8 +24,7 @@ import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.compon
 import { ClassPortraitComponent } from '../../shared/class-portrait/class-portrait.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
-import { getBreedAvatarIndex } from '../../core/data/class-breeds.data';
-import { AVATAR_GRID_ENTRIES } from '../../core/data/class-portraits.data';
+import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../core/data/class-portraits.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -102,6 +102,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
   styleUrl: './profile-page.component.css',
 })
 export class ProfilePageComponent implements OnDestroy {
+  private readonly hostEl = inject(ElementRef<HTMLElement>);
   protected readonly profile = inject(ProfileService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
@@ -241,6 +242,19 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly characterAddPanelHeight = signal(0);
   private characterAddPanelResizeObserver?: ResizeObserver;
 
+  /** Plafond de hauteur du rail de nav desktop (`.profile-rail`, voir CLAUDE.md) — sans lui,
+   * `position: sticky` ne colle pas : le rail est `height: 100%` d'un ancêtre flex dont la hauteur
+   * dépend elle-même du contenu (page qui scrolle en entier), donc il "stretch" pour matcher son
+   * voisin (`.panels-row`) au lieu de rester capé à l'espace visible, ce qui ne laisse aucune marge
+   * de manœuvre au sticky. Mesuré dynamiquement (ResizeObserver sur `.app-page-body`, l'ancêtre
+   * scrollable de la page, trouvé via `closest` — hors du template de ce composant, projeté dans
+   * `AppPageComponent`) plutôt qu'une valeur en dur : `.app-page-body` défalque déjà l'en-tête
+   * applicatif ET l'en-tête de cette page (`AppPageComponent`), et sa propre hauteur varie avec la
+   * fenêtre/le mode mobile. `100vh` seul aurait été trop généreux (ne défalque rien de ce chrome)
+   * et aurait coupé le bas du rail une fois figé. */
+  protected readonly railMaxHeight = signal<number | null>(null);
+  private railResizeObserver?: ResizeObserver;
+
   /** Items de la barre d'onglets de comptes (voir TabBarComponent) — un compte retirable (croix)
    * dès qu'il n'est pas le compte par défaut, tooltip = libellé complet (toujours affiché, pas
    * seulement en cas de troncature, comme avant). */
@@ -270,6 +284,19 @@ export class ProfilePageComponent implements OnDestroy {
       });
       this.characterAddPanelResizeObserver.observe(el);
       this.characterAddPanelHeight.set(el.scrollHeight);
+    });
+
+    afterNextRender(() => {
+      // Descendant, pas ancêtre : `.app-page-body` appartient au template de `AppPageComponent`,
+      // lui-même un ENFANT de ce composant (`<app-page>` englobe tout le contenu projeté ici) —
+      // `closest()` (ancêtres) échouerait silencieusement, `querySelector()` est le bon sens.
+      const scrollport = this.hostEl.nativeElement.querySelector('.app-page-body');
+      if (!(scrollport instanceof HTMLElement)) return;
+      this.railResizeObserver = new ResizeObserver(() => {
+        this.railMaxHeight.set(scrollport.clientHeight);
+      });
+      this.railResizeObserver.observe(scrollport);
+      this.railMaxHeight.set(scrollport.clientHeight);
     });
 
     // Consomme le flag posé par la page compte (voir NavigationService) : forcer l'onglet
@@ -303,6 +330,7 @@ export class ProfilePageComponent implements OnDestroy {
     this.soundGridColumns.disconnect();
     this.charGridColumns.disconnect();
     this.characterAddPanelResizeObserver?.disconnect();
+    this.railResizeObserver?.disconnect();
     this.isMobile.disconnect();
   }
 
@@ -435,7 +463,7 @@ export class ProfilePageComponent implements OnDestroy {
 
   /** Portrait utilisé uniquement en vue grille (voir `.roster-character-avatar`) — même planche que le sélecteur d'avatar, plus flatteuse que les icônes de classe de la vue liste. */
   protected avatarIndexForChar(char: RosterCharacter): number {
-    return getBreedAvatarIndex(char.className, char.gender);
+    return getAvatarGridIndex(char.className, char.gender);
   }
 
   protected addAccount(): void {

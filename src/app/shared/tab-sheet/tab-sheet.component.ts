@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { TabSheetService } from '../../core/services/tab-sheet.service';
 import { TranslatePipe } from '../translate.pipe';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Feuille listant verticalement tous les onglets d'une barre à défilement horizontal (voir
@@ -9,7 +10,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-tab-sheet',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, EscapeCloseDirective],
   templateUrl: './tab-sheet.component.html',
   styleUrl: './tab-sheet.component.css',
 })

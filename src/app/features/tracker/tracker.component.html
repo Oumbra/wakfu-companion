@@ -6,51 +6,104 @@
   </div>
 
   <div class="tracker-controls">
-    <app-wakfu-autocomplete
-      domain="both"
-      [placeholder]="'tracker.searchPlaceholder' | t"
-      [existingNames]="existingNames()"
-      (selected)="add($event)"
-    />
-    <div class="icon-switch tracker-add-mode-switch">
-      <span class="icon-switch-highlight" [class.is-right]="watchlist.addMode() === 'down'"></span>
-      <button
-        type="button"
-        class="icon-switch-option"
-        [class.selected]="watchlist.addMode() === 'up'"
-        [appTooltip]="'tracker.countUpMode' | t"
-        (click)="watchlist.addMode.set('up')"
-      >
-        ▲
-      </button>
-      <button
-        type="button"
-        class="icon-switch-option"
-        [class.selected]="watchlist.addMode() === 'down'"
-        [appTooltip]="'tracker.countDownMode' | t"
-        (click)="watchlist.addMode.set('down')"
-      >
-        ▼
-      </button>
-    </div>
-    @if (watchlist.canBulkDelete()) {
-      <div class="kpi-remove-wrap">
+    <div class="tracker-controls-row">
+      @if (watchlist.canBulkDelete()) {
+        <div class="kpi-remove-wrap">
+          <button
+            type="button"
+            class="kpi-remove-btn"
+            [class.active]="watchlist.selectMode()"
+            [appTooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+            tooltipPosition="top-left"
+            (click)="toggleSelectMode()"
+          >
+            −
+          </button>
+          @if (watchlist.selectMode()) {
+            <button
+              type="button"
+              class="kpi-bulk-delete-btn"
+              (click)="watchlist.confirmBulkDelete()"
+            >
+              {{ watchlist.bulkDeleteLabel() }}
+            </button>
+          }
+        </div>
+      }
+      <div class="icon-switch tracker-add-mode-switch">
+        <span
+          class="icon-switch-highlight"
+          [class.is-right]="watchlist.addMode() === 'down'"
+        ></span>
         <button
           type="button"
-          class="kpi-remove-btn"
-          [class.active]="watchlist.selectMode()"
-          [appTooltip]="
-            (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
-          "
-          (click)="toggleSelectMode()"
+          class="icon-switch-option"
+          [appTooltip]="autocomplete.focused() ? ('tracker.countUpMode' | t) : null"
+          tooltipPosition="top-left"
+          [class.compact]="autocomplete.focused()"
+          [class.selected]="watchlist.addMode() === 'up'"
+          (click)="watchlist.setAddMode('up')"
         >
-          −
+          <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
+          <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countUpMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true">
+              {{ 'tracker.countUpMode' | t }}
+            </span>
         </button>
-        @if (watchlist.selectMode()) {
-          <button type="button" class="kpi-bulk-delete-btn" (click)="watchlist.confirmBulkDelete()">
-            {{ watchlist.bulkDeleteLabel() }}
-          </button>
-        }
+        <button
+          type="button"
+          class="icon-switch-option"
+          [appTooltip]="autocomplete.focused() ? ('tracker.countDownMode' | t) : null"
+          tooltipPosition="top-left"
+          [class.compact]="autocomplete.focused()"
+          [class.selected]="watchlist.addMode() === 'down'"
+          (click)="watchlist.setAddMode('down')"
+        >
+          <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
+          <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.countDownMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true">
+              {{ 'tracker.countDownMode' | t }}
+            </span>
+        </button>
+      </div>
+      <app-wakfu-autocomplete
+        #autocomplete
+        domain="both"
+        [placeholder]="'tracker.searchPlaceholder' | t"
+        [existingNames]="existingNames()"
+        (selected)="add($event)"
+      />
+    </div>
+    @if (watchlist.addMode() === 'down') {
+      <div class="tracker-target-row">
+        <div class="kpi-target-presets">
+          @for (preset of watchlist.targetPresets; track preset) {
+            <button
+              type="button"
+              class="kpi-target-chip"
+              [class.selected]="watchlist.addTarget() === preset"
+              (click)="watchlist.setAddTargetPreset($event, preset)"
+            >
+              {{ preset }}
+            </button>
+          }
+        </div>
+        <app-input-number
+          class="tracker-target-input"
+          [value]="watchlist.addTarget()"
+          [min]="1"
+          [max]="9999"
+          [prevTooltip]="'tracker.countdownTargetDecrease' | t"
+          [nextTooltip]="'tracker.countdownTargetIncrease' | t"
+          [fieldTooltip]="'tracker.countdownTargetHint' | t"
+          (valueChange)="watchlist.addTarget.set($event)"
+        />
       </div>
     }
   </div>
@@ -89,80 +142,70 @@
                 ×
               </button>
             }
+
             @if (entry.kind === 'enemy') {
               <app-entity-icon
                 [name]="entry.name"
                 [id]="entry.catalogId"
                 side="enemy"
                 class="kpi-card-icon"
-                [size]="32"
+                [size]="30"
               />
             } @else {
               <app-item-icon
                 [name]="entry.name"
                 [id]="entry.catalogId"
                 class="kpi-card-icon"
-                [size]="32"
+                [size]="30"
               />
             }
-            <div class="kpi-card-info">
-              <span
-                class="kpi-card-name"
-                [appTooltip]="watchlist.displayName(entry)"
-                [tooltipOnlyIfTruncated]="true"
-              >
-                {{ watchlist.displayName(entry) }}
-              </span>
-              <div class="kpi-card-count-row">
+
+            <div class="kpi-card-body">
+              <div class="kpi-card-header">
+                <span
+                  class="kpi-card-name"
+                  [appTooltip]="watchlist.displayName(entry)"
+                  [tooltipOnlyIfTruncated]="true"
+                >
+                  {{ watchlist.displayName(entry) }}
+                </span>
                 @if (entry.mode === 'down') {
-                  <input
-                    class="kpi-card-count kpi-card-countdown-input"
-                    type="text"
-                    inputmode="numeric"
-                    pattern="[0-9]*"
-                    [value]="entry.count"
-                    [appTooltip]="'tracker.countdownTargetHint' | t"
-                    (click)="$event.stopPropagation()"
-                    (keydown)="watchlist.onCountdownKeydown($event, entry)"
-                    (change)="watchlist.onCountdownInput($event, entry)"
-                  />
-                } @else {
-                  <span class="kpi-card-count">{{ entry.count | numberFr }}</span>
-                }
-                <div class="icon-switch kpi-card-mode-switch" (click)="$event.stopPropagation()">
-                  <span
-                    class="icon-switch-highlight"
-                    [class.is-right]="entry.mode === 'down'"
-                  ></span>
-                  <button
-                    type="button"
-                    class="icon-switch-option"
-                    [class.selected]="entry.mode === 'up'"
-                    [appTooltip]="'tracker.countUpMode' | t"
-                    (click)="watchlist.setMode($event, entry, 'up')"
-                  >
-                    ▲
-                  </button>
-                  <button
-                    type="button"
-                    class="icon-switch-option"
-                    [class.selected]="entry.mode === 'down'"
-                    [appTooltip]="'tracker.countDownMode' | t"
-                    (click)="watchlist.setMode($event, entry, 'down')"
-                  >
-                    ▼
-                  </button>
-                </div>
-                @if (entry.mode === 'up') {
-                  <button
-                    class="kpi-card-reset"
-                    [appTooltip]="'tracker.reset' | t"
-                    (click)="watchlist.resetCount($event, entry)"
-                  >
-                    <app-icon name="reset" [strokeWidth]="2.2" [size]="18" />
-                  </button>
+                  <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
                 }
               </div>
+
+              <div class="kpi-card-value-row">
+                @if (entry.mode === 'down') {
+                  <app-input-number
+                    class="kpi-card-value-input"
+                    [value]="entry.count"
+                    [min]="0"
+                    [max]="entry.countdownTarget"
+                    [showButtons]="false"
+                    (click)="$event.stopPropagation()"
+                    (valueChange)="watchlist.setCurrentCount(entry, $event)"
+                  />
+                } @else {
+                  <span class="kpi-card-value">{{ entry.count | numberFr }}</span>
+                }
+                <button
+                  class="kpi-card-reset"
+                  [appTooltip]="'tracker.reset' | t"
+                  (click)="watchlist.resetCount($event, entry)"
+                >
+                  <app-icon name="reset" [strokeWidth]="2.2" [size]="17" />
+                </button>
+              </div>
+
+              @if (entry.mode === 'down') {
+                <div class="kpi-card-target-row">
+                  <span
+                    class="kpi-card-target"
+                    [appTooltip]="'tracker.countdownTargetLocked' | t"
+                    >{{ entry.countdownTarget }}</span
+                  >
+                </div>
+              }
             </div>
           </div>
         }

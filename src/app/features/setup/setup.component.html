@@ -21,10 +21,16 @@
           <p class="unsupported-message">{{ 'setup.unsupported.message' | t }}</p>
           <div class="browser-list">
             @for (browser of compatibleBrowsers; track browser.kind) {
-              <div class="browser-item">
+              <a
+                class="browser-item"
+                [href]="browser.downloadUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                [appTooltip]="'setup.unsupported.download' | t"
+              >
                 <app-browser-icon class="browser-item-icon" [kind]="browser.kind" />
                 <span class="browser-item-name">{{ browser.name }}</span>
-              </div>
+              </a>
             }
           </div>
         </div>
@@ -51,6 +57,22 @@
           <div class="setup-message error">{{ logFileAccess.errorMessage() }}</div>
         }
       }
+    }
+
+    @if (logFileAccess.status() !== 'needs-reconnect') {
+      <div class="why-block">
+        <button
+          type="button"
+          class="why-link"
+          [attr.aria-expanded]="showWhy()"
+          (click)="toggleWhy()"
+        >
+          {{ 'setup.why.link' | t }}
+        </button>
+        @if (showWhy()) {
+          <p class="why-explanation" [innerHTML]="'setup.why.body' | tHtml"></p>
+        }
+      </div>
     }
   </div>
 </div>

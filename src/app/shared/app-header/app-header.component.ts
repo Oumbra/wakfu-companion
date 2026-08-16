@@ -14,6 +14,7 @@ import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { GameServerService } from '../../core/services/game-server.service';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
@@ -36,6 +37,7 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
     TranslatePipe,
     ProfileComponent,
     TooltipDirective,
+    EscapeCloseDirective,
   ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',
@@ -52,6 +54,18 @@ export class AppHeaderComponent {
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
   protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
+
+  /** Preview Cloudflare Pages (déploiement automatique de `claude/dev`, voir CLAUDE.md) : servie
+   * sur `*.pages.dev`, contrairement à la prod (GitHub Pages, `oumbra.github.io`) — seul signal
+   * fiable côté client, aucun flag d'environnement n'est embarqué au build. Sert à distinguer
+   * visuellement le titre de l'app pour ne jamais confondre les deux avec de vraies données. */
+  protected readonly isPreviewEnv = location.hostname.startsWith('claude-dev.');
+
+  /** Logo + titre ramènent à la page principale, quelle que soit la vue courante — même
+   * comportement que `onChangeFile` mais sans oublier le fichier connecté. */
+  protected goHome(): void {
+    this.nav.goTo('main');
+  }
 
   /** Oublie le fichier connecté ET ramène systématiquement sur la vue principale (sélection de
    * fichier), quelle que soit la page où l'utilisateur se trouvait au moment du clic (le bouton

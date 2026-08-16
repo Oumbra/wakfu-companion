@@ -20,6 +20,13 @@ const DUNGEON_ROW = {
   wakassetsAvailable: true,
   hasPreBossArchi: false,
 };
+const MONSTER_FAMILY_ROW = {
+  id: 1,
+  fr: 'Bouftous',
+  en: 'Gobballs',
+  es: 'Jalatós',
+  pt: 'Papatudos',
+};
 
 function ok<T>(data: T): ApiResult<T> {
   return { ok: true, data };
@@ -31,13 +38,16 @@ function offline<T>(): ApiResult<T> {
 function setup(options: {
   cachedIndex?: unknown;
   cachedDungeons?: unknown;
+  cachedMonsterFamilies?: unknown;
   version?: ApiResult<{ indexHash: string }>;
   index?: ApiResult<{ items: unknown[]; monsters: unknown[] }>;
   dungeons?: ApiResult<unknown[]>;
+  monsterFamilies?: ApiResult<unknown[]>;
 }) {
   const getCacheEntry = vi.fn(async (key: string) => {
     if (key === 'catalog-index') return options.cachedIndex;
     if (key === 'catalog-dungeons') return options.cachedDungeons;
+    if (key === 'catalog-monster-families') return options.cachedMonsterFamilies;
     return undefined;
   });
   const setCacheEntry = vi.fn(async () => undefined);
@@ -45,6 +55,7 @@ function setup(options: {
     if (path === '/catalog/version') return options.version ?? offline();
     if (path === '/catalog/') return options.index ?? offline();
     if (path === '/dungeons') return options.dungeons ?? offline();
+    if (path === '/monster-families') return options.monsterFamilies ?? offline();
     throw new Error(`unexpected path in test: ${path}`);
   });
 
@@ -102,7 +113,7 @@ describe('CatalogService', () => {
     await service.initialize();
     expect(service.findWakfuDungeonByBossMonsterId(42)?.type).toBe('TWO_ROOMS'); // état du cache, avant le rafraîchissement fire-and-forget
 
-    // refreshDungeonsOnly est lancé en fire-and-forget (void) : laisser les microtasks se dérouler.
+    // refreshDungeonsAndFamiliesOnly est lancé en fire-and-forget (void) : laisser les microtasks se dérouler.
     await Promise.resolve();
     await Promise.resolve();
     await Promise.resolve();
@@ -111,6 +122,30 @@ describe('CatalogService', () => {
     expect(getJson).not.toHaveBeenCalledWith('/catalog/'); // toujours pas de re-téléchargement de l'index objets/monstres
     expect(service.findWakfuDungeonByBossMonsterId(42)?.type).toBe('ULTIMATE_BOSS');
     expect(setCacheEntry).toHaveBeenCalledWith('catalog-dungeons', [freshDungeon]);
+  });
+
+  it('rafraîchit quand même les familles de monstre en arrière-plan si le hash (objets/monstres) n’a pas changé', async () => {
+    // Même bug/même correctif que pour les donjons ci-dessus : /monster-families est un payload
+    // séparé, pas couvert par indexHash.
+    const cachedIndex = { indexHash: 'abc', items: [ITEM_TUPLE], monsters: [MONSTER_TUPLE] };
+    const { service, getJson, setCacheEntry } = setup({
+      cachedIndex,
+      cachedDungeons: [DUNGEON_ROW],
+      cachedMonsterFamilies: [],
+      version: ok({ indexHash: 'abc' }),
+      monsterFamilies: ok([MONSTER_FAMILY_ROW]),
+    });
+
+    await service.initialize();
+    expect(service.findWakfuMonsterFamilyById(1)).toBeUndefined(); // état du cache, avant le rafraîchissement fire-and-forget
+
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(getJson).toHaveBeenCalledWith('/monster-families');
+    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ROW);
+    expect(setCacheEntry).toHaveBeenCalledWith('catalog-monster-families', [MONSTER_FAMILY_ROW]);
   });
 
   it('rafraîchit en arrière-plan si le hash serveur diffère du cache', async () => {
@@ -141,6 +176,7 @@ describe('CatalogService', () => {
       version: ok({ indexHash: 'v1' }),
       index: ok({ items: [ITEM_TUPLE], monsters: [MONSTER_TUPLE] }),
       dungeons: ok([DUNGEON_ROW]),
+      monsterFamilies: ok([MONSTER_FAMILY_ROW]),
     });
 
     await service.initialize();
@@ -149,6 +185,24 @@ describe('CatalogService', () => {
     expect(service.findWakfuItemEntryById(1234)?.fr).toBe('Coiffe Test');
     expect(service.findWakfuMonsterEntry('Gobball')?.id).toBe(42); // nom EN
     expect(service.findWakfuDungeonByBossMonsterId(42)?.id).toBe(7);
+    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ROW);
+  });
+
+  it('un échec réseau isolé sur /monster-families ne dégrade pas le reste du catalogue (status ready quand même)', async () => {
+    const { service } = setup({
+      cachedIndex: undefined,
+      cachedDungeons: undefined,
+      version: ok({ indexHash: 'v1' }),
+      index: ok({ items: [ITEM_TUPLE], monsters: [MONSTER_TUPLE] }),
+      dungeons: ok([DUNGEON_ROW]),
+      monsterFamilies: offline(),
+    });
+
+    await service.initialize();
+
+    expect(service.status()).toBe('ready');
+    expect(service.findWakfuItemEntryById(1234)?.fr).toBe('Coiffe Test');
+    expect(service.findWakfuMonsterFamilyById(1)).toBeUndefined();
   });
 
   it('passe "unavailable" si ni cache ni réseau ne sont exploitables', async () => {

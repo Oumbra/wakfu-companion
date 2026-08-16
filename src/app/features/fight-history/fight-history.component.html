@@ -53,7 +53,7 @@
       <div class="fight-group-row" (click)="toggleGroupCollapsed(group.key)">
         <span class="caret" [class.expanded]="!isGroupCollapsed(group.key)">▸</span>
         <span class="fight-group-label">{{ group.label }}</span>
-        <span class="fight-group-count">{{ fightCountLabel(groupFightCount(group)) }}</span>
+        <span class="fight-group-count">{{ groupCountLabel(group) }}</span>
       </div>
       @if (!isGroupCollapsed(group.key)) {
         @for (entry of group.records; track entryTrackId(entry); let first = $first) {
@@ -174,12 +174,23 @@
     </div>
     @if (isFightExpanded(record.id)) {
       <div class="fight-details">
+        <div class="history-view-switch-row">
+          <app-damage-view-switch
+            [mode]="viewModeFor(record.id)"
+            [turn]="turnFor(record)"
+            [maxTurn]="record.turns"
+            (modeChange)="setViewMode(record.id, $event)"
+            (turnChange)="setTurn(record, $event)"
+          />
+        </div>
         <app-entity-damage-list
           [title]="'damageMeter.allies' | t"
           side="ally"
           [rows]="allyRowsFor(record)"
           [fightId]="record.id"
           [collapsible]="true"
+          [viewMode]="viewModeFor(record.id)"
+          [turn]="turnFor(record)"
           [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
         />
         <app-entity-damage-list
@@ -188,6 +199,8 @@
           [rows]="enemyRowsFor(record)"
           [fightId]="record.id"
           [collapsible]="true"
+          [viewMode]="viewModeFor(record.id)"
+          [turn]="turnFor(record)"
           [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
         />
         @if (record.result === 'won') {
@@ -247,7 +260,7 @@
             </div>
             @if (isFightLootExpanded(record.id)) {
               <div class="loot-body">
-                <app-loot-list [items]="sortedLoot(record.loot)" />
+                <app-loot-list [items]="sortedLoot(record.loot)" [fight]="record" />
               </div>
             }
           </div>

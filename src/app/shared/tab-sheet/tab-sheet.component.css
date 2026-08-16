@@ -2,13 +2,11 @@
   display: contents;
 }
 
-/* Pas de fond assombri (voir maquette de référence) : le clic en dehors de la feuille suffit à la
-   fermer, un simple calque invisible plein écran fait l'affaire. */
 .tab-sheet-backdrop {
   position: fixed;
   inset: 0;
   z-index: 600;
-  background: #00000080;
+  background: rgba(0, 0, 0, 0.4);
 }
 
 /* 3 zones empilées (`overflow: hidden` sur le conteneur, chacune `flex-shrink: 0` sauf la liste) :
