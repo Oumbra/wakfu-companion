@@ -1,5 +1,5 @@
 @if (recipeTracking.request(); as req) {
-  <div class="recipe-modal-backdrop" (click)="close()"></div>
+  <div class="recipe-modal-backdrop" (click)="close()" appEscapeClose (appEscapeClose)="close()"></div>
   <div class="recipe-modal">
     <div class="recipe-modal-header">
       <span class="recipe-modal-title">{{ 'tracker.recipeModalTitle' | t }}</span>

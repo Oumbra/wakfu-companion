@@ -1,5 +1,10 @@
 @if (tabSheet.request(); as req) {
-  <div class="tab-sheet-backdrop" (click)="tabSheet.close()"></div>
+  <div
+    class="tab-sheet-backdrop"
+    (click)="tabSheet.close()"
+    appEscapeClose
+    (appEscapeClose)="tabSheet.close()"
+  ></div>
   <div class="tab-sheet">
     @if (req.title) {
       <div class="tab-sheet-header">{{ req.title | t }}</div>

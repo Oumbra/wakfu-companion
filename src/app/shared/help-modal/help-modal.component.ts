@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Modale d'aide générique (règles/contraintes/bénéfices d'une section) — rendue une seule fois au
@@ -12,7 +13,7 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-help-modal',
-  imports: [TranslatePipe, TooltipDirective],
+  imports: [TranslatePipe, TooltipDirective, EscapeCloseDirective],
   templateUrl: './help-modal.component.html',
   styleUrl: './help-modal.component.css',
 })

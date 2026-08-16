@@ -22,6 +22,7 @@ import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { ClassPortraitComponent } from '../class-portrait/class-portrait.component';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 export interface ClassPickerPosition {
   name: string | null;
@@ -62,7 +63,7 @@ function buildOptions(gender: Gender, locale: AppLocale): ClassOption[] {
  */
 @Component({
   selector: 'app-class-picker',
-  imports: [TranslatePipe, TooltipDirective, ClassPortraitComponent],
+  imports: [TranslatePipe, TooltipDirective, ClassPortraitComponent, EscapeCloseDirective],
   templateUrl: './class-picker.component.html',
   styleUrl: './class-picker.component.css',
 })
