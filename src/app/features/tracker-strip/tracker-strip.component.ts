@@ -184,7 +184,7 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected setAddMode(event: Event, mode: WatchlistCounterMode): void {
     event.stopPropagation();
-    this.watchlist.addMode.set(mode);
+    this.watchlist.setAddMode(mode);
   }
 
   protected closeAdd(): void {

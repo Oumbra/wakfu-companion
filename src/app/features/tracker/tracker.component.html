@@ -40,7 +40,7 @@
           type="button"
           class="icon-switch-option"
           [class.selected]="watchlist.addMode() === 'up'"
-          (click)="watchlist.addMode.set('up')"
+          (click)="watchlist.setAddMode('up')"
         >
           <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
           <span>{{ 'tracker.countUpMode' | t }}</span>
@@ -49,7 +49,7 @@
           type="button"
           class="icon-switch-option"
           [class.selected]="watchlist.addMode() === 'down'"
-          (click)="watchlist.addMode.set('down')"
+          (click)="watchlist.setAddMode('down')"
         >
           <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
           <span>{{ 'tracker.countDownMode' | t }}</span>
