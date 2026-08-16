@@ -4,7 +4,6 @@ import { I18nService } from '../../core/services/i18n.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
-import { IconComponent } from '../../shared/icon/icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
@@ -54,7 +53,6 @@ interface PurchaseDateGroup {
     NumberFrPipe,
     TranslatePipe,
     ItemIconComponent,
-    IconComponent,
     HistoryListHeaderComponent,
     TooltipDirective,
   ],
@@ -155,11 +153,7 @@ export class PurchasesComponent {
     return `rarity-${getWakfuItemRarity(this.catalog, row.item, row.catalogId)}`;
   }
 
-  /** Corrige TOUS les achats individuels ayant composé cette ligne agrégée (voir
-   * `PurchaseAggregateRow.records`) — un objet homonyme est un attribut de l'OBJET lui-même, pas
-   * d'un achat isolé, donc la correction se comporte comme "cet objet est en réalité celui-ci"
-   * plutôt que "cet achat précis". */
-  protected correctItem(event: MouseEvent, row: PurchaseAggregateRow): void {
+  protected openInteractMenu(event: MouseEvent, row: PurchaseAggregateRow): void {
     event.preventDefault();
     event.stopPropagation();
     this.itemPicker.open({
@@ -167,10 +161,21 @@ export class PurchasesComponent {
       x: event.clientX,
       y: event.clientY,
       currentId: row.catalogId,
-      onChosen: (id) => {
+      quantity: row.quantity,
+      isWatched: this.stats.isWatched(row.item),
+      onFollow: () => this.stats.addWatchedItem(row.item),
+      // Répartit la quantité choisie sur les achats individuels de la ligne agrégée (voir
+      // `PurchaseAggregateRow.records`), dans l'ordre : chacun est réattribué en totalité tant
+      // qu'il reste du budget, le dernier concerné peut n'être que partiellement scindé (voir
+      // StatsStoreService.applyPurchaseReassign).
+      onChosen: (id, quantity) => {
+        let remaining = quantity;
         for (const record of row.records) {
-          this.stats.reassignPurchaseItem(record, id);
-          this.archive.reassignPurchaseItem(record, id);
+          if (remaining <= 0) break;
+          const amount = Math.min(remaining, record.quantity);
+          this.stats.reassignPurchaseItem(record, amount, id);
+          this.archive.reassignPurchaseItem(record, amount, id);
+          remaining -= amount;
         }
       },
     });

@@ -119,8 +119,8 @@ export class App implements OnInit {
     this.damageReassignService.close();
   }
 
-  protected onItemChosen(id: number): void {
-    this.itemPickerService.request()?.onChosen(id);
+  protected onItemChosen(event: { id: number; quantity: number }): void {
+    this.itemPickerService.request()?.onChosen?.(event.id, event.quantity);
     this.itemPickerService.close();
   }
 }

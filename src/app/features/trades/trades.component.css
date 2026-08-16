@@ -180,20 +180,6 @@
   flex-shrink: 0;
 }
 
-/* Bouton de correction manuelle d'objet (voir ItemPickerService) — même principe que
-   `.loot-correct-btn` (loot-list)/`.purchase-correct-btn` (purchases) : discret au repos, visible
-   seulement au survol de la ligne. */
-.trade-item-correct-btn {
-  width: 18px;
-  height: 18px;
-  opacity: 0;
-  flex-shrink: 0;
-}
-.trade-item-row:hover .trade-item-correct-btn,
-.trade-item-row:focus-within .trade-item-correct-btn {
-  opacity: 1;
-}
-
 /* En dessous de 480px (panneau Historique étroit), deux colonnes serrées
    deviennent illisibles (icône+nom+quantité tronqués à l'excès) : on
    empile Acquis/Cédés verticalement. */

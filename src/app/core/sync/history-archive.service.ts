@@ -141,6 +141,12 @@ export class HistoryArchiveService {
   private readonly cursors = new Map<HistoryEventKind, string | null>();
   private readonly loaded = new Set<HistoryEventKind>();
   private readonly _exhausted = signal<readonly HistoryEventKind[]>([]);
+  /** Source d'id pour un `PurchaseRecord` créé par une scission locale (voir `reassignPurchaseItem`)
+   * — jamais renvoyé par le serveur (jusqu'au prochain fetch, qui le remplacera par le vrai
+   * `archiveId`), sert uniquement de clé `@for track` stable entre-temps. Très négatif pour ne
+   * jamais entrer en collision avec `archiveId(index)` (`-1 - index`, borné par la taille réelle de
+   * l'archive chargée). */
+  private nextSyntheticId = -1_000_000_000;
 
   /** Archive brute du compte (sans la session) — encore utile pour `mergedXxx` ci-dessous, plus
    * consommée ailleurs directement (voir `fight-history`/`purchases`/`trades.component.ts`). */
@@ -335,6 +341,8 @@ export class HistoryArchiveService {
   reassignLootItem(
     fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
     itemName: string,
+    occurrence: number,
+    quantity: number,
     catalogId: number,
   ): void {
     const fightKey = fightDedupKey(fight);
@@ -342,9 +350,10 @@ export class HistoryArchiveService {
     this._fights.update((list) =>
       list.map((f) => {
         if (fightDedupKey(f) !== fightKey) return f;
-        const loot = f.loot.map((l) =>
-          l.name.toLowerCase() === itemName.toLowerCase() ? { ...l, catalogId } : l,
-        );
+        const loot = [...f.loot];
+        const row = nthSameName(loot, itemName, occurrence);
+        if (!row) return f;
+        splitRowInPlace(loot, row, quantity, catalogId);
         corrected = { ...f, loot };
         return corrected;
       }),
@@ -352,21 +361,48 @@ export class HistoryArchiveService {
     if (corrected) this.historySync.recordFight(corrected);
   }
 
-  /** Miroir de reassignLootItem, pour un achat. */
+  /** Miroir de reassignLootItem, pour un achat. Une correction partielle crée un second achat
+   * distinct plutôt que de scinder une ligne dans un tableau — voir
+   * `StatsStoreService.applyPurchaseReassign`, même raison/même calcul de coût au prorata. */
   reassignPurchaseItem(
     purchase: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
+    quantity: number,
     catalogId: number,
   ): void {
     const purchaseKey = purchaseDedupKey(purchase);
-    let corrected: PurchaseRecord | null = null;
-    this._purchases.update((list) =>
-      list.map((p) => {
-        if (purchaseDedupKey(p) !== purchaseKey) return p;
-        corrected = { ...p, catalogId };
-        return corrected;
-      }),
-    );
-    if (corrected) this.historySync.recordPurchase(corrected);
+    const toSend: PurchaseRecord[] = [];
+    this._purchases.update((list) => {
+      const index = list.findIndex((p) => purchaseDedupKey(p) === purchaseKey);
+      if (index === -1) return list;
+      const record = list[index];
+      const amount = Math.min(Math.max(1, Math.floor(quantity)), record.quantity);
+      const next = [...list];
+      if (amount >= record.quantity) {
+        const corrected = { ...record, catalogId };
+        next[index] = corrected;
+        toSend.push(corrected);
+        return next;
+      }
+      const unitCost = record.totalCost / record.quantity;
+      const splitCost = Math.round(unitCost * amount);
+      const reduced: PurchaseRecord = {
+        ...record,
+        quantity: record.quantity - amount,
+        totalCost: record.totalCost - splitCost,
+      };
+      const split: PurchaseRecord = {
+        ...record,
+        id: this.nextSyntheticId--,
+        catalogId,
+        quantity: amount,
+        totalCost: splitCost,
+      };
+      next[index] = reduced;
+      next.push(split);
+      toSend.push(reduced, split);
+      return next;
+    });
+    for (const record of toSend) this.historySync.recordPurchase(record);
   }
 
   /** Miroir de reassignLootItem, pour une ligne d'objet échangé — voir
@@ -379,6 +415,7 @@ export class HistoryArchiveService {
     direction: 'acquired' | 'given',
     itemName: string,
     occurrence: number,
+    quantity: number,
     catalogId: number,
   ): void {
     const tradeKey = tradeDedupKey(trade);
@@ -386,18 +423,48 @@ export class HistoryArchiveService {
     this._trades.update((list) =>
       list.map((t) => {
         if (tradeDedupKey(t) !== tradeKey) return t;
-        let seen = -1;
-        const items = t[direction].map((item) => {
-          if (item.name.toLowerCase() !== itemName.toLowerCase()) return item;
-          seen += 1;
-          return seen === occurrence ? { ...item, catalogId } : item;
-        });
+        const items = [...t[direction]];
+        const row = nthSameName(items, itemName, occurrence);
+        if (!row) return t;
+        splitRowInPlace(items, row, quantity, catalogId);
         corrected = { ...t, [direction]: items };
         return corrected;
       }),
     );
     if (corrected) this.historySync.recordTrade(corrected);
   }
+}
+
+/** `n`-ième élément (0-indexé) de `list` dont le nom correspond (insensible à la casse) — voir
+ * `StatsStoreService.nthSameName`, même rôle côté archive. */
+function nthSameName<T extends { name: string }>(
+  list: readonly T[],
+  name: string,
+  occurrence: number,
+): T | undefined {
+  const key = name.toLowerCase();
+  return list.filter((item) => item.name.toLowerCase() === key)[occurrence];
+}
+
+/** Réattribue tout ou partie de la quantité de `row` (déjà présente dans `list`, à l'index
+ * `list.indexOf(row)`) : remplace `row` en place si `quantity` couvre la totalité, sinon réduit sa
+ * quantité et ajoute une nouvelle ligne en FIN de `list` — voir `StatsStoreService.splitRowQuantity`,
+ * même contrat (jamais inséré au milieu, pour ne pas décaler l'`occurrence` des lignes suivantes).
+ * Mute `list` (tableau déjà cloné par l'appelant, voir `[...f.loot]`), pas `row` lui-même. */
+function splitRowInPlace<T extends { name: string; catalogId: number | null; quantity: number }>(
+  list: T[],
+  row: T,
+  quantity: number,
+  catalogId: number,
+): void {
+  const index = list.indexOf(row);
+  const amount = Math.min(Math.max(1, Math.floor(quantity)), row.quantity);
+  if (amount >= row.quantity) {
+    list[index] = { ...row, catalogId };
+    return;
+  }
+  list[index] = { ...row, quantity: row.quantity - amount };
+  list.push({ ...row, catalogId, quantity: amount });
 }
 
 /**
@@ -471,9 +538,13 @@ function toFightRecord(
   // première fois depuis l'archive (donc jamais encore vu par `reassignLootItem` lui-même).
   const fightKey = fightDedupKey({ time, result, rows: sortedRows });
   let anyCorrected = false;
+  const lootNameSeen = new Map<string, number>();
   const loot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
-    const correction = stats.findLootCorrection(fightKey, name);
+    const key = name.toLowerCase();
+    const occurrence = lootNameSeen.get(key) ?? 0;
+    lootNameSeen.set(key, occurrence + 1);
+    const correction = stats.findLootCorrection(fightKey, name, occurrence, row.quantity);
     if (correction !== null) anyCorrected = true;
     return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
   });
@@ -529,7 +600,7 @@ function toPurchaseRecord(
     quantity: entry.quantity,
     totalCost: entry.totalCost,
   });
-  const correction = stats.findPurchaseCorrection(purchaseKey);
+  const correction = stats.findPurchaseCorrection(purchaseKey, entry.quantity);
   const record: PurchaseRecord = {
     id: archiveId(index),
     item,
@@ -584,7 +655,13 @@ function toTradeRecord(
       const key = item.name.toLowerCase();
       const occurrence = seen.get(key) ?? 0;
       seen.set(key, occurrence + 1);
-      const correction = stats.findTradeItemCorrection(tradeKey, direction, item.name, occurrence);
+      const correction = stats.findTradeItemCorrection(
+        tradeKey,
+        direction,
+        item.name,
+        occurrence,
+        item.quantity,
+      );
       if (correction !== null) {
         item.catalogId = correction;
         anyCorrected = true;
