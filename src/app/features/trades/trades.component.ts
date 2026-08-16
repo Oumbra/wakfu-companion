@@ -125,7 +125,7 @@ export class TradesComponent {
     return items.slice(0, index).filter((i) => i.name.toLowerCase() === name).length;
   }
 
-  protected correctItem(
+  protected openInteractMenu(
     event: MouseEvent,
     record: TradeRecord,
     direction: 'acquired' | 'given',
@@ -139,9 +139,12 @@ export class TradesComponent {
       x: event.clientX,
       y: event.clientY,
       currentId: item.catalogId,
-      onChosen: (id) => {
-        this.stats.reassignTradeItem(record, direction, item.name, occurrence, id);
-        this.archive.reassignTradeItem(record, direction, item.name, occurrence, id);
+      quantity: item.quantity,
+      isWatched: this.stats.isWatched(item.name),
+      onFollow: () => this.stats.addWatchedItem(item.name),
+      onChosen: (id, quantity) => {
+        this.stats.reassignTradeItem(record, direction, item.name, occurrence, quantity, id);
+        this.archive.reassignTradeItem(record, direction, item.name, occurrence, quantity, id);
       },
     });
   }

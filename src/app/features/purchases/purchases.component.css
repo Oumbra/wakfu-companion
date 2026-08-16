@@ -113,16 +113,3 @@
   min-width: 62px;
   text-align: right;
 }
-
-/* Bouton de correction manuelle d'objet (voir ItemPickerService) — même principe que
-   `.loot-correct-btn` (loot-list) : discret au repos, visible seulement au survol de la ligne. */
-.purchase-correct-btn {
-  width: 20px;
-  height: 20px;
-  opacity: 0;
-  flex-shrink: 0;
-}
-.purchase-row:hover .purchase-correct-btn,
-.purchase-row:focus-within .purchase-correct-btn {
-  opacity: 1;
-}

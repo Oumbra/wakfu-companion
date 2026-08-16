@@ -10,14 +10,59 @@
   [style.top.px]="displayPosition().top"
 >
   <div class="item-picker-title-row">
-    <span class="item-picker-title">{{ 'items.pickerTitle' | t }}</span>
+    <span class="item-picker-title">{{ 'items.interactTitle' | t }}</span>
   </div>
   <div class="item-picker-list">
-    @if (candidates().length === 0) {
-      <div class="empty-state small">{{ 'items.pickerEmpty' | t }}</div>
-    } @else {
+    <button
+      type="button"
+      class="item-picker-follow-btn"
+      [disabled]="request().isWatched"
+      [appTooltip]="request().isWatched ? ('items.alreadyWatched' | t) : null"
+      (click)="follow()"
+    >
+      + {{ 'items.follow' | t }}
+    </button>
+    @if (showModify()) {
+      <div class="item-picker-modify-row">
+        <span class="item-picker-modify-label">{{ 'items.modifyQuantity' | t }}</span>
+        <div class="item-picker-qty-stepper">
+          <button
+            type="button"
+            class="item-picker-qty-step"
+            [appTooltip]="'items.quantityDecrease' | t"
+            (click)="stepQuantity(-1)"
+          >
+            −
+          </button>
+          <input
+            type="number"
+            min="1"
+            [attr.max]="request().quantity"
+            inputmode="numeric"
+            class="item-picker-qty-input"
+            [value]="quantity()"
+            (input)="onQuantityInput($event)"
+            (keydown)="onQuantityKeydown($event)"
+            (blur)="onQuantityBlur()"
+          />
+          <button
+            type="button"
+            class="item-picker-qty-step"
+            [appTooltip]="'items.quantityIncrease' | t"
+            (click)="stepQuantity(1)"
+          >
+            +
+          </button>
+        </div>
+      </div>
       @for (entry of candidates(); track entry.id) {
-        <button class="item-picker-item" [class.current]="isCurrent(entry)" (click)="choose(entry)">
+        <button
+          type="button"
+          class="item-picker-item"
+          [class.current]="isCurrent(entry)"
+          [disabled]="isCurrent(entry)"
+          (click)="choose(entry)"
+        >
           <img class="item-picker-item-rarity" [src]="rarityIconUrl(entry)" alt="" />
           <app-item-icon [name]="label(entry)" [id]="entry.id" [size]="22" />
           <span class="item-picker-name">{{ label(entry) }}</span>

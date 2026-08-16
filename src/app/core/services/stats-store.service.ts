@@ -157,8 +157,23 @@ interface PersistedReassignment {
  * aux deux (voir CLAUDE.md, échange avec l'utilisateur).
  */
 type PersistedItemReassignment =
-  | { kind: 'loot'; fightKey: string; itemName: string; catalogId: number }
-  | { kind: 'purchase'; purchaseKey: string; catalogId: number }
+  | {
+      kind: 'loot';
+      fightKey: string;
+      itemName: string;
+      /** Rang parmi les lignes de même nom du même combat — normalement toujours 0 (une seule
+       * ligne par nom, `registerLoot` fusionne déjà les ramassages successifs), sauf si une
+       * précédente correction PARTIELLE a déjà scindé la ligne d'origine en plusieurs (voir
+       * `quantity` ci-dessous, splitRowQuantity) : la ligne restante garde alors le même rang
+       * (l'ajout se fait toujours en fin de tableau, jamais au milieu — voir sa doc). */
+      occurrence: number;
+      /** Quantité concernée par CETTE correction — peut être inférieure à la quantité totale de la
+       * ligne visée (voir ItemPickerComponent, stepper de quantité) : la ligne est alors scindée
+       * en deux plutôt que réattribuée en bloc (voir splitRowQuantity). */
+      quantity: number;
+      catalogId: number;
+    }
+  | { kind: 'purchase'; purchaseKey: string; quantity: number; catalogId: number }
   | {
       kind: 'tradeItem';
       tradeKey: string;
@@ -166,8 +181,10 @@ type PersistedItemReassignment =
       itemName: string;
       /** Rang parmi les lignes de même nom dans la même direction du même échange — `trade_items`
        * autorise plusieurs lignes homonymes non fusionnées (contrairement à `fight_loot`), il faut
-       * donc plus que `tradeKey|direction|itemName` pour cibler UNE ligne précise. */
+       * donc plus que `tradeKey|direction|itemName` pour cibler UNE ligne précise. Même remarque
+       * qu'au-dessus sur la stabilité de ce rang après une correction partielle. */
       occurrence: number;
+      quantity: number;
       catalogId: number;
     };
 
@@ -1391,10 +1408,16 @@ export class StatsStoreService {
     for (const entry of this.itemReassignmentHistory) {
       switch (entry.kind) {
         case 'loot':
-          this.applyLootReassign(entry.fightKey, entry.itemName, entry.catalogId);
+          this.applyLootReassign(
+            entry.fightKey,
+            entry.itemName,
+            entry.occurrence,
+            entry.quantity,
+            entry.catalogId,
+          );
           break;
         case 'purchase':
-          this.applyPurchaseReassign(entry.purchaseKey, entry.catalogId);
+          this.applyPurchaseReassign(entry.purchaseKey, entry.quantity, entry.catalogId);
           break;
         case 'tradeItem':
           this.applyTradeItemReassign(
@@ -1402,6 +1425,7 @@ export class StatsStoreService {
             entry.direction,
             entry.itemName,
             entry.occurrence,
+            entry.quantity,
             entry.catalogId,
           );
           break;
@@ -1414,30 +1438,47 @@ export class StatsStoreService {
    * ex. "Larme d'Ogrest" — voir ItemPickerService). `fight` n'a besoin que des champs qui composent
    * `fightDedupKey` (voir history-dedup.util.ts) : fonctionne aussi bien sur un combat de la session
    * en cours que reconstruit depuis l'archive du compte (voir HistoryArchiveService, qui appelle sa
-   * propre méthode miroir pour patcher ses lignes déjà chargées).
+   * propre méthode miroir pour patcher ses lignes déjà chargées). `occurrence` : rang parmi les
+   * lignes de même nom du combat visé (voir PersistedItemReassignment, normalement 0 — >0
+   * seulement après une précédente correction partielle sur cette même ligne). `quantity` peut
+   * être inférieure à celle de la ligne visée : elle est alors scindée plutôt que réattribuée en
+   * bloc (voir splitRowQuantity).
    */
   reassignLootItem(
     fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
     itemName: string,
+    occurrence: number,
+    quantity: number,
     catalogId: number,
   ): void {
     const fightKey = fightDedupKey(fight);
-    this.applyLootReassign(fightKey, itemName, catalogId);
+    this.applyLootReassign(fightKey, itemName, occurrence, quantity, catalogId);
 
-    this.itemReassignmentHistory.push({ kind: 'loot', fightKey, itemName, catalogId });
+    this.itemReassignmentHistory.push({
+      kind: 'loot',
+      fightKey,
+      itemName,
+      occurrence,
+      quantity,
+      catalogId,
+    });
     this.trimItemReassignmentHistory();
     this.userData.write('itemReassignments', this.itemReassignmentHistory);
   }
 
-  /** Miroir de reassignLootItem, pour un achat — voir sa doc. */
+  /** Miroir de reassignLootItem, pour un achat — voir sa doc. Un achat n'a pas d'"occurrence" (déjà
+   * identifié sans ambiguïté par sa propre clé de dédoublonnage) ; une correction partielle crée un
+   * second achat distinct plutôt que de scinder une ligne dans un tableau — voir
+   * applyPurchaseReassign. */
   reassignPurchaseItem(
     purchase: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
+    quantity: number,
     catalogId: number,
   ): void {
     const purchaseKey = purchaseDedupKey(purchase);
-    this.applyPurchaseReassign(purchaseKey, catalogId);
+    this.applyPurchaseReassign(purchaseKey, quantity, catalogId);
 
-    this.itemReassignmentHistory.push({ kind: 'purchase', purchaseKey, catalogId });
+    this.itemReassignmentHistory.push({ kind: 'purchase', purchaseKey, quantity, catalogId });
     this.trimItemReassignmentHistory();
     this.userData.write('itemReassignments', this.itemReassignmentHistory);
   }
@@ -1453,10 +1494,11 @@ export class StatsStoreService {
     direction: 'acquired' | 'given',
     itemName: string,
     occurrence: number,
+    quantity: number,
     catalogId: number,
   ): void {
     const tradeKey = tradeDedupKey(trade);
-    this.applyTradeItemReassign(tradeKey, direction, itemName, occurrence, catalogId);
+    this.applyTradeItemReassign(tradeKey, direction, itemName, occurrence, quantity, catalogId);
 
     this.itemReassignmentHistory.push({
       kind: 'tradeItem',
@@ -1464,6 +1506,7 @@ export class StatsStoreService {
       direction,
       itemName,
       occurrence,
+      quantity,
       catalogId,
     });
     this.trimItemReassignmentHistory();
@@ -1473,38 +1516,51 @@ export class StatsStoreService {
   /** Consulté par HistoryArchiveService pour appliquer une correction déjà connue à une ligne de
    * butin qui vient d'être chargée depuis l'archive (pas encore présente en mémoire au moment de la
    * correction d'origine) — lecture pure, ne mute rien ici. La DERNIÈRE entrée correspondante gagne
-   * (une correction plus récente sur la même ligne remplace la précédente). `null` si jamais
-   * corrigée : l'appelant garde alors l'`itemId` renvoyé par le serveur tel quel. */
-  findLootCorrection(fightKey: string, itemName: string): number | null {
+   * (une correction plus récente sur la même ligne remplace la précédente). `rowQuantity` est la
+   * quantité de la ligne TELLE QUE RENVOYÉE PAR LE SERVEUR à cet instant : si la correction trouvée
+   * ne couvrait qu'une PARTIE de cette quantité, elle est ignorée ici plutôt qu'appliquée à tort à
+   * la totalité — cas rare (fenêtre entre la correction locale et la fin de son renvoi serveur, voir
+   * `applyLootReassign`), qui se résorbe de lui-même au prochain chargement une fois le renvoi
+   * abouti (le serveur renverra alors directement les lignes déjà scindées). `null` si aucune
+   * correction ne s'applique intégralement : l'appelant garde alors l'`itemId` renvoyé par le
+   * serveur tel quel. */
+  findLootCorrection(
+    fightKey: string,
+    itemName: string,
+    occurrence: number,
+    rowQuantity: number,
+  ): number | null {
     const match = [...this.itemReassignmentHistory]
       .reverse()
       .find(
         (e): e is Extract<PersistedItemReassignment, { kind: 'loot' }> =>
           e.kind === 'loot' &&
           e.fightKey === fightKey &&
+          e.occurrence === occurrence &&
           e.itemName.toLowerCase() === itemName.toLowerCase(),
       );
-    return match?.catalogId ?? null;
+    return match && match.quantity >= rowQuantity ? match.catalogId : null;
   }
 
-  /** Miroir de findLootCorrection, pour un achat. */
-  findPurchaseCorrection(purchaseKey: string): number | null {
+  /** Miroir de findLootCorrection, pour un achat — voir sa doc pour `rowQuantity`. */
+  findPurchaseCorrection(purchaseKey: string, rowQuantity: number): number | null {
     const match = [...this.itemReassignmentHistory]
       .reverse()
       .find(
         (e): e is Extract<PersistedItemReassignment, { kind: 'purchase' }> =>
           e.kind === 'purchase' && e.purchaseKey === purchaseKey,
       );
-    return match?.catalogId ?? null;
+    return match && match.quantity >= rowQuantity ? match.catalogId : null;
   }
 
   /** Miroir de findLootCorrection, pour une ligne d'objet échangé (voir reassignTradeItem pour
-   * `occurrence`). */
+   * `occurrence`, et findLootCorrection pour `rowQuantity`). */
   findTradeItemCorrection(
     tradeKey: string,
     direction: 'acquired' | 'given',
     itemName: string,
     occurrence: number,
+    rowQuantity: number,
   ): number | null {
     const match = [...this.itemReassignmentHistory]
       .reverse()
@@ -1516,7 +1572,7 @@ export class StatsStoreService {
           e.itemName.toLowerCase() === itemName.toLowerCase() &&
           e.occurrence === occurrence,
       );
-    return match?.catalogId ?? null;
+    return match && match.quantity >= rowQuantity ? match.catalogId : null;
   }
 
   private trimItemReassignmentHistory(): void {
@@ -1528,30 +1584,109 @@ export class StatsStoreService {
     }
   }
 
-  private applyLootReassign(fightKey: string, itemName: string, catalogId: number): void {
+  /** `n`-ième ligne (0-indexée) de `list` dont le nom correspond (insensible à la casse) — voir
+   * PersistedItemReassignment.occurrence. */
+  private nthSameName<T extends { name: string }>(
+    list: readonly T[],
+    name: string,
+    occurrence: number,
+  ): T | undefined {
+    const key = name.toLowerCase();
+    return list.filter((item) => item.name.toLowerCase() === key)[occurrence];
+  }
+
+  /**
+   * Réattribue tout ou partie de la quantité de `row` (déjà trouvée dans `list`, voir
+   * `nthSameName`) : si `quantity` couvre la totalité, corrige `row.catalogId` en place — sinon
+   * décrémente `row` et ajoute une nouvelle ligne en FIN de `list` portant le reliquat corrigé.
+   * Toujours en fin de tableau, jamais insérée au milieu : les autres lignes (et leur `occurrence`,
+   * calculé par rang dans le tableau) gardent une position stable d'une correction à l'autre — voir
+   * PersistedItemReassignment. Retourne `true` si une scission a eu lieu (permet à l'appelant de
+   * savoir si une SECONDE ligne a été créée, ex. pour la renvoyer aussi au serveur).
+   */
+  private splitRowQuantity<T extends { name: string; catalogId: number | null; quantity: number }>(
+    list: T[],
+    row: T,
+    quantity: number,
+    catalogId: number,
+  ): boolean {
+    const amount = Math.min(Math.max(1, Math.floor(quantity)), row.quantity);
+    if (amount >= row.quantity) {
+      row.catalogId = catalogId;
+      return false;
+    }
+    row.quantity -= amount;
+    list.push({ ...row, catalogId, quantity: amount });
+    return true;
+  }
+
+  private applyLootReassign(
+    fightKey: string,
+    itemName: string,
+    occurrence: number,
+    quantity: number,
+    catalogId: number,
+  ): void {
     const record = this.fightHistoryList.find((f) => fightDedupKey(f) === fightKey);
     if (!record) return;
-    const row = record.loot.find((l) => l.name.toLowerCase() === itemName.toLowerCase());
+    const row = this.nthSameName(record.loot, itemName, occurrence);
     if (!row) return;
-    row.catalogId = catalogId;
+    const wasFull = quantity >= row.quantity;
+    this.splitRowQuantity(record.loot, row, quantity, catalogId);
 
-    const sessionRow = this.sessionLootMap.get(itemName.toLowerCase());
-    if (sessionRow) sessionRow.catalogId = catalogId;
+    // Compteur cumulé de session (toutes fusions confondues, voir sessionLootMap) : mis à jour
+    // seulement pour une correction COMPLÈTE de la ligne — un compteur cumulé unique ne peut pas
+    // représenter une scission partielle proprement, voir doc de sessionLoot.
+    if (wasFull) {
+      const sessionRow = this.sessionLootMap.get(itemName.toLowerCase());
+      if (sessionRow) sessionRow.catalogId = catalogId;
+      this.sessionLoot.set([...this.sessionLootMap.values()]);
+    }
 
     this.fightHistory.set([...this.fightHistoryList]);
-    this.sessionLoot.set([...this.sessionLootMap.values()]);
     // Combat déjà clôturé, donc déjà envoyé (ou en file) : le remettre en file avec son butin
     // corrigé — même clé déterministe (fightSignature n'inclut pas le butin), aucun doublon créé,
-    // seule la ligne `fight_loot` visée est mise à jour côté serveur (ON CONFLICT DO UPDATE).
+    // seule(s) la/les ligne(s) `fight_loot` visée(s) sont mises à jour côté serveur
+    // (ON CONFLICT DO UPDATE) — la ligne scindée éventuelle part avec le même envoi (tout le combat
+    // est renvoyé d'un bloc).
     this.historySync.recordFight(record);
   }
 
-  private applyPurchaseReassign(purchaseKey: string, catalogId: number): void {
+  private applyPurchaseReassign(purchaseKey: string, quantity: number, catalogId: number): void {
     const record = this.purchaseHistoryList.find((p) => purchaseDedupKey(p) === purchaseKey);
     if (!record) return;
-    record.catalogId = catalogId;
+    const amount = Math.min(Math.max(1, Math.floor(quantity)), record.quantity);
+
+    if (amount >= record.quantity) {
+      record.catalogId = catalogId;
+      this.purchaseHistory.set([...this.purchaseHistoryList]);
+      this.historySync.recordPurchase(record);
+      return;
+    }
+
+    // Un achat n'est pas un tableau de lignes homonymes (contrairement au butin/aux échanges) :
+    // une correction partielle crée un SECOND achat distinct plutôt que de scinder une entrée dans
+    // un tableau. Coût réparti au prorata (arrondi), le reliquat gardant l'écart pour préserver la
+    // somme totale à l'unité près — signature naturellement distincte (quantity/totalCost changent
+    // des deux côtés), donc aucun risque de collision de clientKey avec l'achat d'origine.
+    const unitCost = record.totalCost / record.quantity;
+    const splitCost = Math.round(unitCost * amount);
+    record.quantity -= amount;
+    record.totalCost -= splitCost;
+    const split: PurchaseRecord = {
+      id: this.nextPurchaseId++,
+      item: record.item,
+      catalogId,
+      quantity: amount,
+      totalCost: splitCost,
+      time: record.time,
+      fullTimestampMs: record.fullTimestampMs,
+    };
+    this.purchaseHistoryList.push(split);
+
     this.purchaseHistory.set([...this.purchaseHistoryList]);
     this.historySync.recordPurchase(record);
+    this.historySync.recordPurchase(split);
   }
 
   private applyTradeItemReassign(
@@ -1559,16 +1694,14 @@ export class StatsStoreService {
     direction: 'acquired' | 'given',
     itemName: string,
     occurrence: number,
+    quantity: number,
     catalogId: number,
   ): void {
     const record = this.tradeHistoryList.find((t) => tradeDedupKey(t) === tradeKey);
     if (!record) return;
-    const sameName = record[direction].filter(
-      (i) => i.name.toLowerCase() === itemName.toLowerCase(),
-    );
-    const row = sameName[occurrence];
+    const row = this.nthSameName(record[direction], itemName, occurrence);
     if (!row) return;
-    row.catalogId = catalogId;
+    this.splitRowQuantity(record[direction], row, quantity, catalogId);
     this.tradeHistory.set([...this.tradeHistoryList]);
     this.historySync.recordTrade(record);
   }
