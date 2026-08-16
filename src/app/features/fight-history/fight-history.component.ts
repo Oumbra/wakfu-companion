@@ -208,12 +208,46 @@ export class FightHistoryComponent {
   }
 
   /** Nombre total de combats individuels d'un groupe jour/lieu/type — un run de donjon replié
-   * compte pour tous ses combats, pas pour 1 seule "ligne" d'historique (voir `fightGroups`). */
+   * compte pour tous ses combats, pas pour 1 seule "ligne" d'historique (voir `fightGroups`). Sert
+   * de secours pour l'en-tête (voir `groupCountLabel`) hors du cas "groupe 100% donjons" ci-dessous. */
   protected groupFightCount(group: FightGroup): number {
     return group.records.reduce(
       (total, entry) => total + (entry.kind === 'single' ? 1 : entry.fights.length),
       0,
     );
+  }
+
+  /** Vrai si ce groupe (mode "type" uniquement — un groupe jour/lieu mélange librement donjons et
+   * combats isolés, voir `groupKeyFor`) désigne un donjon plutôt qu'un monstre/famille classique —
+   * déterminé sur le combat représentatif du premier run, le mode "type" garantissant que tous les
+   * combats du groupe partagent la même identité (`resolveFightImageInfo`/`findDungeonForEnemies`). */
+  private groupIsDungeonType(group: FightGroup): boolean {
+    const representative = group.records[0] ? this.representativeOf(group.records[0]) : undefined;
+    if (!representative) return false;
+    return (
+      findDungeonForEnemies(
+        this.catalog,
+        this.enemyRowsFor(representative).map((row) => row.name),
+      ) !== null
+    );
+  }
+
+  /** Texte du compteur affiché dans l'en-tête d'un groupe jour/lieu/type. Pour un groupe "type" de
+   * donjon (multi-salles), le nombre de COMBATS individuels regonfle artificiellement le total
+   * (ex. 4 runs de 4 salles = "16 combats" affichés pour seulement 4 donjons réellement joués, bug
+   * corrigé ici) : dans ce cas précis, chaque entrée du groupe (run complet OU combat de boss isolé
+   * en cas d'historique incomplet) compte pour 1 SEUL donjon plutôt que pour ses salles internes. Le
+   * détail "N combats - durée" à l'intérieur d'un run déplié (voir template) reste, lui, un vrai
+   * décompte de combats — inchangé. */
+  protected groupCountLabel(group: FightGroup): string {
+    if (this.groupMode() === 'type' && this.groupIsDungeonType(group)) {
+      const count = group.records.length;
+      return this.i18n.t(
+        count === 1 ? 'history.group.dungeonCount' : 'history.group.dungeonCountPlural',
+        { count },
+      );
+    }
+    return this.fightCountLabel(this.groupFightCount(group));
   }
 
   protected fightCountLabel(count: number): string {
