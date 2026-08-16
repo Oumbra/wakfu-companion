@@ -17,8 +17,10 @@ import {
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import {
   DEFAULT_FIGHT_IMAGE_URL,
+  FightImageLocalizedName,
   findDungeonForEnemies,
   resolveFightImageInfo,
+  resolveFightTypeClassification,
 } from '../../core/utils/fight-image.util';
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
@@ -128,6 +130,8 @@ export class FightHistoryComponent {
   protected readonly fightGroups = computed<FightGroup[]>(() => {
     const mode = this.groupMode();
     const entries = this.historyEntries();
+    if (mode === 'type') return this.buildTypeGroups(entries);
+
     const groups = new Map<string, FightGroup>();
     for (const entry of entries) {
       const { key, label } = this.groupKeyFor(this.representativeOf(entry), mode);
@@ -146,6 +150,78 @@ export class FightHistoryComponent {
     return list;
   });
 
+  /** Regroupement "Type" — voir `resolveFightTypeClassification` (fight-image.util.ts) pour la
+   * classification par combat, et CLAUDE.md pour l'ordre de tri attendu (donjons par nombre de
+   * salles/boss ultime/3 joueurs, puis brèches, puis familles de monstre, puis repli générique).
+   * Deux passes nécessaires (contrairement à jour/lieu, voir `groupKeyFor` : clé+libellé s'y
+   * calculent combat par combat) : le libellé d'un groupe "famille" ne peut être décidé qu'une fois
+   * TOUS ses combats connus — pas de nom de famille dans le catalogue (juste un id, voir
+   * `CatalogMonsterEntry.family`), le libellé retenu est donc le nom du monstre "représentatif" le
+   * PLUS FRÉQUENT au sein du groupe plutôt que celui, arbitraire, du premier combat rencontré. */
+  private buildTypeGroups(entries: DungeonHistoryEntry<HistoryFight>[]): FightGroup[] {
+    interface TypeBucket {
+      key: string;
+      categoryRank: number;
+      records: DungeonHistoryEntry<HistoryFight>[];
+      /** Nom du donjon/brèche (groupe "dungeon") — labellisation immédiate, un seul nom possible. */
+      dungeonNames: FightImageLocalizedName | null;
+      /** Occurrences par nom de monstre "représentatif" (groupe "famille") — labellisation différée
+       * au nom le plus fréquent une fois tous les combats du groupe connus (voir doc ci-dessus). */
+      nameCounts: Map<string, { names: FightImageLocalizedName; count: number }> | null;
+    }
+    const buckets = new Map<string, TypeBucket>();
+
+    for (const entry of entries) {
+      const record = this.representativeOf(entry);
+      const classification = resolveFightTypeClassification(
+        this.catalog,
+        this.enemyRowsFor(record).map((row) => row.name),
+      );
+
+      let bucket = buckets.get(classification.key);
+      if (!bucket) {
+        bucket = {
+          key: classification.key,
+          categoryRank: classification.categoryRank,
+          records: [],
+          dungeonNames: classification.kind === 'dungeon' ? classification.names : null,
+          nameCounts: classification.kind === 'family' ? new Map() : null,
+        };
+        buckets.set(classification.key, bucket);
+      }
+      bucket.records.push(entry);
+
+      if (bucket.nameCounts && classification.kind === 'family') {
+        // `fr` sert de clé stable indépendante de la langue active (le libellé affiché, lui, suit
+        // `this.i18n.locale()` — voir `typeGroupLabel`).
+        const nameKey = classification.candidateNames.fr;
+        const existing = bucket.nameCounts.get(nameKey);
+        if (existing) existing.count++;
+        else bucket.nameCounts.set(nameKey, { names: classification.candidateNames, count: 1 });
+      }
+    }
+
+    return [...buckets.values()]
+      .sort((a, b) => a.categoryRank - b.categoryRank) // tri stable : préserve l'ordre chronologique à rang égal
+      .map((bucket) => ({
+        key: bucket.key,
+        label: this.typeGroupLabel(bucket),
+        records: bucket.records,
+      }));
+  }
+
+  private typeGroupLabel(bucket: {
+    dungeonNames: FightImageLocalizedName | null;
+    nameCounts: Map<string, { names: FightImageLocalizedName; count: number }> | null;
+  }): string {
+    if (bucket.dungeonNames) return bucket.dungeonNames[this.i18n.locale()];
+    let best: { names: FightImageLocalizedName; count: number } | null = null;
+    for (const candidate of bucket.nameCounts?.values() ?? []) {
+      if (!best || candidate.count > best.count) best = candidate;
+    }
+    return best ? best.names[this.i18n.locale()] : this.i18n.t('history.group.otherType');
+  }
+
   /** Combat représentatif d'une entrée d'historique pour le regroupement jour/lieu/type (date,
    * origine, image...) — le combat de boss/le plus récent pour un donjon, l'unique combat sinon. */
   protected representativeOf(entry: DungeonHistoryEntry<HistoryFight>): HistoryFight {
@@ -156,22 +232,15 @@ export class FightHistoryComponent {
     return this.representativeOf(entry).id;
   }
 
-  private groupKeyFor(record: HistoryFight, mode: FightGroupMode): { key: string; label: string } {
+  private groupKeyFor(
+    record: HistoryFight,
+    mode: Exclude<FightGroupMode, 'type'>,
+  ): { key: string; label: string } {
     if (mode === 'location') {
       const label = this.i18n.t(
         record.origin === 'session' ? 'history.group.session' : 'history.group.account',
       );
       return { key: record.origin, label };
-    }
-    if (mode === 'type') {
-      const info = resolveFightImageInfo(
-        this.catalog,
-        this.enemyRowsFor(record).map((row) => row.name),
-      );
-      const label = info.tooltipSource
-        ? info.tooltipSource.names[this.i18n.locale()]
-        : this.i18n.t('history.group.otherType');
-      return { key: label, label };
     }
     const label = this.i18n.formatRelativeDay(record.fullTimestampMs);
     return { key: label, label };

@@ -4,6 +4,7 @@ import {
   DEFAULT_FIGHT_IMAGE_URL,
   resolveFightImageInfo,
   resolveFightImageUrl,
+  resolveFightTypeClassification,
 } from './fight-image.util';
 import { CatalogService } from '../api/catalog.service';
 import { ApiClientService, ApiResult } from '../api/api-client.service';
@@ -34,6 +35,14 @@ const HORDE = [10, 11, 12, 13, 14].map((family, i) => [
 ]);
 const NORMAL_A = [110, 'Ennemi Normal A', 'en', 'es', 'pt', '900110', 20, 0, 0, 0];
 const NORMAL_B = [111, 'Ennemi Normal B', 'en', 'es', 'pt', '900111', 21, 0, 0, 0];
+// Même famille (20) que NORMAL_A mais nom distinct — sert à vérifier que resolveFightTypeClassification
+// regroupe bien par famille plutôt que par nom (voir describe ci-dessous).
+const NORMAL_A_VARIANT = [112, 'Ennemi Normal A Variant', 'en', 'es', 'pt', '900112', 20, 0, 0, 0];
+// Deux monstres SANS famille encyclopédie (family: null, comme 28 monstres du référentiel réel) —
+// doivent former deux groupes DISTINCTS (repli par nom, un seul membre chacun).
+const NO_FAMILY_A = [113, 'Sans Famille A', 'en', 'es', 'pt', '900113', -1, 0, 0, 0];
+const NO_FAMILY_B = [114, 'Sans Famille B', 'en', 'es', 'pt', '900114', -1, 0, 0, 0];
+const BOSS_OF_BREACH = [115, 'Boss De Brèche', 'en', 'es', 'pt', '900115', 30, 1, 0, 0];
 
 const DUNGEON_FOR_BOSS = {
   id: 500,
@@ -46,6 +55,20 @@ const DUNGEON_FOR_BOSS = {
   type: 'ULTIMATE_BOSS',
   bossMonsterId: 101,
   pictureUrl: 'https://example.test/dungeon-500.png',
+  wakassetsAvailable: true,
+  hasPreBossArchi: false,
+};
+const BREACH_DUNGEON = {
+  id: 501,
+  fr: 'Brèche Test',
+  en: 'Breach Test',
+  es: 'Brecha Test',
+  pt: 'Brecha Teste',
+  level: 1,
+  bracket: 1,
+  type: 'BREACH',
+  bossMonsterId: 115,
+  pictureUrl: 'https://example.test/dungeon-501.png',
   wakassetsAvailable: true,
   hasPreBossArchi: false,
 };
@@ -73,10 +96,14 @@ function setupCatalog(): CatalogService {
           ...HORDE,
           NORMAL_A,
           NORMAL_B,
+          NORMAL_A_VARIANT,
+          NO_FAMILY_A,
+          NO_FAMILY_B,
+          BOSS_OF_BREACH,
         ],
       });
     }
-    if (path === '/dungeons') return ok([DUNGEON_FOR_BOSS]);
+    if (path === '/dungeons') return ok([DUNGEON_FOR_BOSS, BREACH_DUNGEON]);
     throw new Error(`unexpected path in test: ${path}`);
   };
 
@@ -224,5 +251,66 @@ describe('resolveFightImageInfo (tooltip)', () => {
     const info = resolveFightImageInfo(catalog, ['Un Monstre Totalement Inconnu']);
 
     expect(info.tooltipSource).toBeNull();
+  });
+});
+
+describe('resolveFightTypeClassification (regroupement "Type" de l’historique)', () => {
+  it('deux monstres de MÊME famille mais de noms différents -> même clé de groupe (bug corrigé : ne doit plus dépendre du nom)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const a = resolveFightTypeClassification(catalog, ['Ennemi Normal A']);
+    const b = resolveFightTypeClassification(catalog, ['Ennemi Normal A Variant']);
+
+    expect(a.kind).toBe('family');
+    expect(a.key).toBe(b.key);
+    expect(a.key).toBe('family:20');
+  });
+
+  it('deux monstres SANS famille encyclopédie -> groupes distincts (repli par nom, un seul membre chacun)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const a = resolveFightTypeClassification(catalog, ['Sans Famille A']);
+    const b = resolveFightTypeClassification(catalog, ['Sans Famille B']);
+
+    expect(a.kind).toBe('family');
+    expect(a.key).not.toBe(b.key);
+  });
+
+  it('donjon (boss avec donjon référencé) -> kind "dungeon", rang de tri le plus bas', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightTypeClassification(catalog, ['Ennemi Normal A', 'Boss Avec Donjon']);
+
+    expect(info).toMatchObject({ kind: 'dungeon', key: 'dungeon:500', names: DUNGEON_FOR_BOSS });
+  });
+
+  it('brèche -> kind "dungeon" avec son propre nom (pas masqué comme pour l’illustration), rang de tri entre les donjons classiques et les familles', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const dungeonInfo = resolveFightTypeClassification(catalog, ['Boss Avec Donjon']);
+    const breachInfo = resolveFightTypeClassification(catalog, ['Boss De Brèche']);
+    const familyInfo = resolveFightTypeClassification(catalog, ['Ennemi Normal A']);
+
+    expect(breachInfo).toMatchObject({ kind: 'dungeon', key: 'dungeon:501', names: BREACH_DUNGEON });
+    expect(dungeonInfo.categoryRank).toBeLessThan(breachInfo.categoryRank);
+    expect(breachInfo.categoryRank).toBeLessThan(familyInfo.categoryRank);
+  });
+
+  it('horde hétérogène (plus de 4 familles distinctes, sans boss) -> kind "other", rang de tri le plus élevé', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightTypeClassification(
+      catalog,
+      HORDE.map((m) => m[1] as string),
+    );
+    const familyInfo = resolveFightTypeClassification(catalog, ['Ennemi Normal A']);
+
+    expect(info.kind).toBe('other');
+    expect(info.categoryRank).toBeGreaterThan(familyInfo.categoryRank);
   });
 });
