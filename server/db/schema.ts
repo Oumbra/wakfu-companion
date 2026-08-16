@@ -110,15 +110,31 @@ export const itemRecipes = pgTable(
 );
 
 /**
+ * Familles encyclopédie des monstres (`repository/monster-families.json` —
+ * ~150 lignes, référentiel curé à la main comme le reste, voir
+ * server/import/import-catalog.ts). Ajoutée pour donner un vrai libellé
+ * localisé au regroupement "Type" de l'historique des combats (palier
+ * "famille de monstre", voir resolveFightTypeClassification côté client,
+ * core/utils/fight-image.util.ts) — jusqu'ici cette table n'existait pas
+ * (voir ancien commentaire sur `monsters.family` : "pas de table
+ * monster_families dans ce lot, à ajouter le jour où un endpoint a besoin
+ * du libellé") et le client se rabattait sur le nom d'un monstre membre du
+ * groupe faute de mieux.
+ */
+export const monsterFamilies = pgTable('monster_families', {
+  id: integer('id').primaryKey(),
+  fr: text('fr').notNull(),
+  en: text('en').notNull(),
+  es: text('es').notNull(),
+  pt: text('pt').notNull(),
+});
+
+/**
  * Monstres — `id` Ankama utilisable comme clé primaire directe ici
  * (contrairement aux objets) : vérifié unique sur les 851 monstres du
- * référentiel actuel. `family` référence un id de
- * repository/monster-families.json, jamais résolu vers son libellé
- * côté serveur pour l'instant (exploité côté client uniquement comme clé de
- * regroupement brute — voir resolveFightImageInfo dans
- * core/utils/fight-image.util.ts, qui compte les familles distinctes sans
- * jamais afficher leur nom) — pas de table monster_families dans ce lot, à
- * ajouter le jour où un endpoint a besoin du libellé.
+ * référentiel actuel. `family` référence `monsterFamilies.id` ci-dessus
+ * (pas de FK stricte : même raison que `dungeons.bossMonsterId`, ordre
+ * d'import non garanti entre les deux tables).
  */
 export const monsters = pgTable('monsters', {
   id: integer('id').primaryKey(),

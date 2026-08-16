@@ -33,6 +33,7 @@ import {
   dungeons,
   itemRecipes,
   items,
+  monsterFamilies,
   monsters,
   type WakfuDungeonType,
   type WakfuRarityCode,
@@ -59,6 +60,14 @@ interface RawItem {
 interface RawRecipe {
   itemId: number;
   recipe: { itemId: number; quantity: number }[];
+}
+
+interface RawMonsterFamily {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
 }
 
 interface RawMonster {
@@ -212,11 +221,19 @@ interface MonsterRow {
   isDominant: boolean;
 }
 
+interface MonsterFamilyRow {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) throw new Error('DATABASE_URL manquant.');
 
-  const [rawItems, rawRecipes, rawMonsters, rawDungeons] = await Promise.all([
+  const [rawItems, rawRecipes, rawMonsters, rawDungeons, rawMonsterFamilies] = await Promise.all([
     readFile(path.join(REFERENTIEL_DIR, 'items.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawItem[],
     ),
@@ -228,6 +245,9 @@ async function main(): Promise<void> {
     ),
     readFile(path.join(REFERENTIEL_DIR, 'dungeons.json'), 'utf-8').then(
       (text) => JSON.parse(text) as RawDungeon[],
+    ),
+    readFile(path.join(REFERENTIEL_DIR, 'monster-families.json'), 'utf-8').then(
+      (text) => JSON.parse(text) as RawMonsterFamily[],
     ),
   ]);
 
@@ -297,6 +317,14 @@ async function main(): Promise<void> {
     hasPreBossArchi: dungeon.has_pre_boss_archi ?? false,
   }));
 
+  const monsterFamilyRows: MonsterFamilyRow[] = rawMonsterFamilies.map((family) => ({
+    id: family.id,
+    fr: family.fr,
+    en: family.en,
+    es: family.es,
+    pt: family.pt,
+  }));
+
   const compactIndex = buildCompactIndex(itemRows, monsterRows);
   const compactIndexJson = JSON.stringify(compactIndex);
   const indexHash = createHash('sha256').update(compactIndexJson).digest('hex').slice(0, 16);
@@ -305,7 +333,7 @@ async function main(): Promise<void> {
   const db = createDb(databaseUrl);
 
   console.log(
-    `[import-catalog] ${rawItems.length} objets lus (${oldCount} "old" exclus, ${itemRows.length} conservés), ${recipeRows.length} lignes de recette, ${monsterRows.length} monstres, ${dungeonRows.length} donjons.`,
+    `[import-catalog] ${rawItems.length} objets lus (${oldCount} "old" exclus, ${itemRows.length} conservés), ${recipeRows.length} lignes de recette, ${monsterRows.length} monstres, ${dungeonRows.length} donjons, ${monsterFamilyRows.length} familles de monstre.`,
   );
   console.log(
     `[import-catalog] index compact : ${compactIndex.items.length} objets + ${compactIndex.monsters.length} monstres, ${rawBytes} octets bruts (${(rawBytes / 1024).toFixed(1)} Ko).`,
@@ -315,8 +343,10 @@ async function main(): Promise<void> {
   await db.delete(items);
   await db.delete(monsters);
   await db.delete(dungeons);
+  await db.delete(monsterFamilies);
 
   await insertInBatches(db, items, itemRows);
+  await insertInBatches(db, monsterFamilies, monsterFamilyRows);
   await insertInBatches(db, monsters, monsterRows);
   await insertInBatches(db, dungeons, dungeonRows);
   await insertInBatches(db, itemRecipes, recipeRows);

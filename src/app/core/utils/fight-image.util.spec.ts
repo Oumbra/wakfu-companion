@@ -104,6 +104,7 @@ function setupCatalog(): CatalogService {
       });
     }
     if (path === '/dungeons') return ok([DUNGEON_FOR_BOSS, BREACH_DUNGEON]);
+    if (path === '/monster-families') return ok([]);
     throw new Error(`unexpected path in test: ${path}`);
   };
 
@@ -265,9 +266,11 @@ describe('resolveFightTypeClassification (regroupement "Type" de l’historique)
     expect(a.kind).toBe('family');
     expect(a.key).toBe(b.key);
     expect(a.key).toBe('family:20');
+    expect(a).toMatchObject({ familyId: 20 });
+    expect(b).toMatchObject({ familyId: 20 });
   });
 
-  it('deux monstres SANS famille encyclopédie -> groupes distincts (repli par nom, un seul membre chacun)', async () => {
+  it('deux monstres SANS famille encyclopédie -> groupes distincts (repli par nom, un seul membre chacun), familyId null', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
@@ -276,6 +279,8 @@ describe('resolveFightTypeClassification (regroupement "Type" de l’historique)
 
     expect(a.kind).toBe('family');
     expect(a.key).not.toBe(b.key);
+    expect(a).toMatchObject({ familyId: null });
+    expect(b).toMatchObject({ familyId: null });
   });
 
   it('donjon (boss avec donjon référencé) -> kind "dungeon", rang de tri le plus bas', async () => {

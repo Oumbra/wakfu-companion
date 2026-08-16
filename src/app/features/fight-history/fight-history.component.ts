@@ -108,8 +108,13 @@ export class FightHistoryComponent {
    * dungeon-run-grouping.util.ts. `fightHistory()` reste trié du plus récent au plus ancien,
    * `groupDungeonRuns` préserve cet ordre global (une entrée de donjon prend la position de son
    * combat le plus récent). */
-  protected readonly historyEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() =>
-    groupDungeonRuns(
+  protected readonly historyEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() => {
+    // Dépendance réactive explicite (même idiome qu'EntityClassifierService/EntityIconComponent) :
+    // recalcule une fois le catalogue (donjons/monstres/familles) chargé ou rafraîchi en arrière-plan
+    // — sans elle, un premier rendu avant la fin du chargement resterait figé sur des noms de
+    // donjon/famille non résolus (voir CatalogService.findWakfuMonsterFamilyById, typeGroupLabel).
+    this.catalog.revision();
+    return groupDungeonRuns(
       this.fightHistory(),
       (record) =>
         findDungeonForEnemies(
@@ -117,8 +122,8 @@ export class FightHistoryComponent {
           this.enemyRowsFor(record).map((row) => row.name),
         ),
       (record) => this.hasArchiEnemy(record),
-    ),
-  );
+    );
+  });
 
   /** Regroupement (voir `FightGroupMode`) — Jour par défaut, comme toute liste de l'historique. */
   protected readonly groupMode = signal<FightGroupMode>('day');
@@ -169,9 +174,8 @@ export class FightHistoryComponent {
    * salles/boss ultime/3 joueurs, puis brèches, puis familles de monstre, puis repli générique).
    * Deux passes nécessaires (contrairement à jour/lieu, voir `groupKeyFor` : clé+libellé s'y
    * calculent combat par combat) : le libellé d'un groupe "famille" ne peut être décidé qu'une fois
-   * TOUS ses combats connus — pas de nom de famille dans le catalogue (juste un id, voir
-   * `CatalogMonsterEntry.family`), le libellé retenu est donc le nom du monstre "représentatif" le
-   * PLUS FRÉQUENT au sein du groupe plutôt que celui, arbitraire, du premier combat rencontré. */
+   * TOUS ses combats connus — voir `typeGroupLabel` (nom de famille réel si connu du catalogue,
+   * sinon nom du monstre "représentatif" le PLUS FRÉQUENT au sein du groupe, en repli). */
   private buildTypeGroups(entries: DungeonHistoryEntry<HistoryFight>[]): FightGroup[] {
     interface TypeBucket {
       key: string;
@@ -179,8 +183,13 @@ export class FightHistoryComponent {
       records: DungeonHistoryEntry<HistoryFight>[];
       /** Nom du donjon/brèche (groupe "dungeon") — labellisation immédiate, un seul nom possible. */
       dungeonNames: FightImageLocalizedName | null;
-      /** Occurrences par nom de monstre "représentatif" (groupe "famille") — labellisation différée
-       * au nom le plus fréquent une fois tous les combats du groupe connus (voir doc ci-dessus). */
+      /** Id de famille encyclopédie (groupe "famille" avec `family` connu, voir
+       * `CatalogMonsterEntry.family`) — `null` pour un repli par nom (28 monstres sans famille) OU
+       * un groupe qui n'est pas de type "famille". */
+      familyId: number | null;
+      /** Occurrences par nom de monstre "représentatif" (groupe "famille") — repli de labellisation
+       * si `familyId` est `null` ou que son nom n'est pas (encore) connu du catalogue, voir doc de
+       * `typeGroupLabel`. */
       nameCounts: Map<string, { names: FightImageLocalizedName; count: number }> | null;
     }
     const buckets = new Map<string, TypeBucket>();
@@ -199,6 +208,7 @@ export class FightHistoryComponent {
           categoryRank: classification.categoryRank,
           records: [],
           dungeonNames: classification.kind === 'dungeon' ? classification.names : null,
+          familyId: classification.kind === 'family' ? classification.familyId : null,
           nameCounts: classification.kind === 'family' ? new Map() : null,
         };
         buckets.set(classification.key, bucket);
@@ -224,11 +234,21 @@ export class FightHistoryComponent {
       }));
   }
 
+  /** Libellé d'un groupe "Type" : nom de donjon/brèche tel quel, sinon (groupe "famille") le VRAI
+   * nom de famille localisé si `CatalogService` le connaît déjà (voir
+   * `findWakfuMonsterFamilyById` — absent seulement si le cache n'a pas encore fini de charger
+   * `/monster-families`, ou pour les 28 monstres sans famille encyclopédie), sinon en dernier repli
+   * le nom de monstre "représentatif" le plus fréquent du groupe (voir `buildTypeGroups`). */
   private typeGroupLabel(bucket: {
     dungeonNames: FightImageLocalizedName | null;
+    familyId: number | null;
     nameCounts: Map<string, { names: FightImageLocalizedName; count: number }> | null;
   }): string {
     if (bucket.dungeonNames) return bucket.dungeonNames[this.i18n.locale()];
+    if (bucket.familyId !== null) {
+      const family = this.catalog.findWakfuMonsterFamilyById(bucket.familyId);
+      if (family) return family[this.i18n.locale()];
+    }
     let best: { names: FightImageLocalizedName; count: number } | null = null;
     for (const candidate of bucket.nameCounts?.values() ?? []) {
       if (!best || candidate.count > best.count) best = candidate;

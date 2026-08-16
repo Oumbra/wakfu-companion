@@ -36,17 +36,30 @@
  *
  * Usage :
  *   node tools/analyze-monster-families.mjs [baseUrl]
- * `baseUrl` (déf. la preview stable) doit exposer /api/v1/catalog/ et /api/v1/dungeons (voir
- * server/README.md) — AUCUNE donnée de catalogue n'est committée dans ce dépôt (`/repository` est
- * gitignored, régénéré très rarement à la main, voir CLAUDE.md), la seule source de vérité
- * accessible depuis un poste de dev est donc l'API déployée (ou une base Neon locale).
+ * `baseUrl` (déf. la preview de la branche claude/dev) doit exposer /api/v1/catalog/ et
+ * /api/v1/dungeons (voir server/README.md) — AUCUNE donnée de catalogue n'est committée dans ce
+ * dépôt (`/repository` est gitignored, régénéré très rarement à la main, voir CLAUDE.md), la seule
+ * source de vérité accessible depuis un poste de dev est donc l'API déployée (ou une base Neon
+ * locale, voir .dev.vars/.env).
  */
 // Bug corrigé (2026-08-16) : le préfixe `/api/v1` (voir core/api/api-client.service.ts, `baseUrl`)
 // manquait — `/catalog/` tout seul tombe sur une route Angular inexistante, servie par le
 // catch-all SPA (`public/_redirects` : `/* /index.html 200`) qui répond 200 avec le HTML de la
 // coquille de l'app plutôt qu'un 404, d'où le `Unexpected token '<'` au `JSON.parse` (réponse
 // HTML, pas JSON).
-const baseUrl = (process.argv[2] ?? 'https://wakfu-companion.pages.dev').replace(/\/$/, '');
+//
+// 2e bug corrigé (2026-08-16, même symptôme, cause différente) : `https://wakfu-companion.pages.dev`
+// (SANS préfixe de branche) n'est PAS la preview claude/dev malgré ce que documente CLAUDE.md
+// (section référencement — un domaine y sert volontairement de cible SEO stable, PAS forcément la
+// dernière preview déployée) : il répond 200 sur `/api/v1/catalog/` mais avec des données PÉRIMÉES
+// (`importedAt` figé sur un import du 2026-08-13, alors qu'un nouvel import venait d'être fait —
+// confirmé en interrogeant directement Postgres via `.dev.vars`, qui montrait, lui, les bonnes
+// valeurs). Vraie URL de preview de branche : `https://claude-dev.wakfu-companion.pages.dev` (voir
+// mémoire `cloudflare-pages-preview.md` — alias par branche sur le même projet Cloudflare Pages,
+// `<branche-slug>.wakfu-companion.pages.dev`).
+const baseUrl = (
+  process.argv[2] ?? 'https://claude-dev.wakfu-companion.pages.dev'
+).replace(/\/$/, '');
 const API_PREFIX = '/api/v1';
 
 async function getJson(path) {

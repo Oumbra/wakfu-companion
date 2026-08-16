@@ -203,12 +203,17 @@ export type FightTypeClassification =
        * en repli pour les 28 monstres sans famille (voir CLAUDE.md) — chacun forme alors sa propre
        * "famille" à un seul membre, comme avant ce correctif. */
       key: string;
+      /** Id de famille encyclopédie (`CatalogMonsterEntry.family`), `null` pour le repli par nom
+       * (28 monstres sans famille, voir `key` ci-dessus). Permet à l'appelant de résoudre le VRAI
+       * nom de famille via `CatalogService.findWakfuMonsterFamilyById` — préférable à
+       * `candidateNames` ci-dessous, qui reste nécessaire en repli (id `null`, ou nom de famille pas
+       * encore chargé côté client, voir CatalogService.initialize). */
+      familyId: number | null;
       /** Nom du monstre "représentatif" choisi pour CE combat précis (même priorité que
-       * `resolveFightImageInfo` : archimonstre > dominant > plus gros dégât) — PAS un nom de famille
-       * (le catalogue n'en a pas, voir CatalogMonsterEntry.family : un simple id numérique). Un seul
-       * combat ne suffit pas à choisir un libellé stable pour tout le groupe : l'appelant doit
-       * agréger ce champ sur l'ensemble des combats d'une même famille (nom le plus fréquent) — voir
-       * `buildTypeGroups` dans fight-history.component.ts. */
+       * `resolveFightImageInfo` : archimonstre > dominant > plus gros dégât) — PAS un nom de famille.
+       * Un seul combat ne suffit pas à choisir un libellé stable pour tout le groupe : l'appelant
+       * doit agréger ce champ sur l'ensemble des combats d'une même famille (nom le plus fréquent)
+       * — voir `buildTypeGroups` dans fight-history.component.ts. */
       candidateNames: FightImageLocalizedName;
     }
   | { kind: 'other'; categoryRank: number; key: 'other' };
@@ -267,6 +272,7 @@ function familyClassification(entry: CatalogMonsterEntry): FightTypeClassificati
     kind: 'family',
     categoryRank: FAMILY_CATEGORY_RANK,
     key: entry.family !== null ? `family:${entry.family}` : `monster:${normalizeWakfuName(entry.fr)}`,
+    familyId: entry.family,
     candidateNames: entry,
   };
 }
