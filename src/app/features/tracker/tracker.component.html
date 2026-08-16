@@ -7,36 +7,6 @@
 
   <div class="tracker-controls">
     <div class="tracker-controls-row">
-      <app-wakfu-autocomplete
-        domain="both"
-        [placeholder]="'tracker.searchPlaceholder' | t"
-        [existingNames]="existingNames()"
-        (selected)="add($event)"
-      />
-      <div class="icon-switch tracker-add-mode-switch">
-        <span
-          class="icon-switch-highlight"
-          [class.is-right]="watchlist.addMode() === 'down'"
-        ></span>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="watchlist.addMode() === 'up'"
-          (click)="watchlist.addMode.set('up')"
-        >
-          <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
-          <span>{{ 'tracker.countUpMode' | t }}</span>
-        </button>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="watchlist.addMode() === 'down'"
-          (click)="watchlist.addMode.set('down')"
-        >
-          <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
-          <span>{{ 'tracker.countDownMode' | t }}</span>
-        </button>
-      </div>
       @if (watchlist.canBulkDelete()) {
         <div class="kpi-remove-wrap">
           <button
@@ -61,6 +31,36 @@
           }
         </div>
       }
+      <div class="icon-switch tracker-add-mode-switch">
+        <span
+          class="icon-switch-highlight"
+          [class.is-right]="watchlist.addMode() === 'down'"
+        ></span>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="watchlist.addMode() === 'up'"
+          (click)="watchlist.addMode.set('up')"
+        >
+          <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
+          <span>{{ 'tracker.countUpMode' | t }}</span>
+        </button>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="watchlist.addMode() === 'down'"
+          (click)="watchlist.addMode.set('down')"
+        >
+          <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
+          <span>{{ 'tracker.countDownMode' | t }}</span>
+        </button>
+      </div>
+      <app-wakfu-autocomplete
+        domain="both"
+        [placeholder]="'tracker.searchPlaceholder' | t"
+        [existingNames]="existingNames()"
+        (selected)="add($event)"
+      />
     </div>
     @if (watchlist.addMode() === 'down') {
       <div class="tracker-target-row">
@@ -175,7 +175,7 @@
                   <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
                 }
               </div>
-              
+
               <div class="kpi-card-value-row">
                 @if (entry.mode === 'down') {
                   <input
@@ -202,9 +202,11 @@
 
               @if (entry.mode === 'down') {
                 <div class="kpi-card-target-row">
-                  <span class="kpi-card-target" [appTooltip]="'tracker.countdownTargetLocked' | t">{{
-                    entry.countdownTarget
-                  }}</span>
+                  <span
+                    class="kpi-card-target"
+                    [appTooltip]="'tracker.countdownTargetLocked' | t"
+                    >{{ entry.countdownTarget }}</span
+                  >
                 </div>
               }
             </div>

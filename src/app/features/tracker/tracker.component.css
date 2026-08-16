@@ -64,6 +64,7 @@
 .tracker-add-mode-switch {
   width: auto;
   flex-shrink: 0;
+  height: 32px;
 }
 .tracker-add-mode-switch .icon-switch-option {
   display: flex;
@@ -72,6 +73,14 @@
   padding: 0 8px;
   font-size: 0.66rem;
   font-weight: 700;
+  white-space: nowrap;
+}
+.tracker-add-mode-switch .icon-switch-option span {
+  min-width: 0;
+  max-width: 50px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -166,8 +175,8 @@
   flex-shrink: 0;
 }
 .kpi-remove-btn {
-  width: 26px;
-  height: 26px;
+  width: 32px;
+  height: 32px;
   border-radius: 5px;
   background: var(--tint-medium);
   border: 1px dashed var(--text-muted);

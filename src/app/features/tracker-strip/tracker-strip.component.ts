@@ -1,4 +1,4 @@
-import { Component, computed, effect, ElementRef, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, ElementRef, inject, signal } from '@angular/core';
 import {
   StatsStoreService,
   WatchlistCounterMode,
@@ -80,21 +80,17 @@ export class TrackerStripComponent {
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind, id: w.catalogId })),
   );
 
+  protected readonly firstEntryHasLongCount = computed(() => {
+    const entries = this.stats.watchlist();
+    return entries.length > 0 ? this.watchlist.isLongCount(entries[0]) : false;
+  });
+
   protected readonly addOpen = signal(false);
-  private readonly autocomplete = viewChild(WakfuAutocompleteComponent);
 
   /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
    * CSS) et exclusivement par clic (voir `onTileClick`) : plus de délai/verrou anti-cascade à
    * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande. */
   protected readonly activeName = signal<string | null>(null);
-
-  constructor() {
-    // Focus automatique du champ de recherche à l'ouverture (clic sur "+") —
-    // `autocomplete()` ne résout qu'une fois `@else` rendu dans le template.
-    effect(() => {
-      if (this.addOpen()) this.autocomplete()?.focus();
-    });
-  }
 
   /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
    * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du
