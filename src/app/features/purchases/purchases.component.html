@@ -20,12 +20,12 @@
           </div>
         </div>
         @if (!isCollapsed(group.dateKey)) {
-          @for (row of group.rows; track row.item; let first = $first) {
+          @for (row of group.rows; track row.item) {
             <div
               class="purchase-row"
               [class]="rarityClass(row)"
               [appTooltip]="'items.interactTooltip' | t"
-              [tooltipPosition]="first ? 'bottom-right' : 'top-right'"
+              tooltipPosition="top"
               (contextmenu)="openInteractMenu($event, row)"
             >
               <app-item-icon [name]="row.item" [id]="row.catalogId" [size]="22" />
