@@ -10,7 +10,7 @@
   @if (groups().length === 0) {
     <div class="empty-state">{{ 'trades.empty' | t }}</div>
   } @else {
-    @for (group of groups(); track group.dateKey; let firstGroup = $first) {
+    @for (group of groups(); track group.dateKey) {
       <div class="date-group">
         <div class="date-group-header" (click)="toggleGroup(group.dateKey)">
           <span class="date-group-date">{{ group.dateKey }}</span>
@@ -20,13 +20,13 @@
           </div>
         </div>
         @if (!isCollapsed(group.dateKey)) {
-          @for (record of group.records; track record.id; let firstRecord = $first) {
+          @for (record of group.records; track record.id) {
             <div class="trade-entry">
               <div class="trade-header">
                 <span
                   class="trade-clock"
                   [appTooltip]="i18n.formatDateTime(record.fullTimestampMs)"
-                  [tooltipPosition]="firstGroup && firstRecord ? 'bottom-left' : 'top-left'"
+                  tooltipPosition="top-left"
                 >
                   <app-icon name="clock-long" [strokeWidth]="1.8" [size]="15" />
                 </span>
