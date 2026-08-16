@@ -250,6 +250,12 @@ export class StatsStoreService {
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
   /** Suivi fusionné (ennemis vaincus + ressources obtenues), distingué par `kind`. */
   readonly watchlist = signal<WatchlistEntry[]>([]);
+  /** Dernier mode (incrémental/décompte) choisi par l'utilisateur dans le formulaire d'ajout d'un
+   * KPI — settings synchronisé (voir USER_DATA_KEYS.watchlistAddMode), PAS lié à une entrée
+   * particulière : sert uniquement de valeur de départ au prochain formulaire d'ajout ouvert (voir
+   * WatchlistTileController.resetAddForm/setAddMode). Persistant comme la watchlist elle-même
+   * (jamais touché par resetSessionState — ce n'est pas un état dérivé du fichier de log). */
+  readonly defaultAddMode = signal<WatchlistCounterMode>('up');
 
   private readonly xpMap = new Map<string, number>();
   /** Accumulateur du butin de session (clé = nom en minuscule) — voir sessionLoot. */
@@ -308,6 +314,7 @@ export class StatsStoreService {
     // doublon — c'est exactement ce que garantit la clé déterministe (lot 8).
     this.historySync.setReplaySource(() => this.replayHistoryToSync());
     this.watchlist.set(this.loadWatchlist());
+    this.defaultAddMode.set(this.loadDefaultAddMode());
     this.reassignmentHistory.push(
       ...(this.userData.read<PersistedReassignment[]>('damageReassignments') ?? []),
     );
@@ -323,6 +330,9 @@ export class StatsStoreService {
     // déjà affichés. La nouvelle valeur est bien écrite sur le disque par le
     // dépôt, elle prendra effet au prochain démarrage.
     this.userData.onExternalChange('watchlist', () => this.watchlist.set(this.loadWatchlist()));
+    this.userData.onExternalChange('watchlistAddMode', () =>
+      this.defaultAddMode.set(this.loadDefaultAddMode()),
+    );
     this.logFileAccess.newLines$.subscribe(({ lines, isInitialLoad }) =>
       this.ingest(lines, isInitialLoad),
     );
@@ -348,6 +358,18 @@ export class StatsStoreService {
     ];
     this.userData.write('watchlist', migrated);
     return migrated;
+  }
+
+  private loadDefaultAddMode(): WatchlistCounterMode {
+    return this.userData.read<WatchlistCounterMode>('watchlistAddMode') === 'down' ? 'down' : 'up';
+  }
+
+  /** Mémorise le mode choisi (voir `defaultAddMode`) comme valeur de départ des prochains
+   * formulaires d'ajout — appelé à chaque changement de mode dans ce formulaire (voir
+   * WatchlistTileController.setAddMode), pas seulement à la création effective d'un KPI. */
+  setDefaultAddMode(mode: WatchlistCounterMode): void {
+    this.defaultAddMode.set(mode);
+    this.userData.write('watchlistAddMode', mode);
   }
 
   /** Complète les entrées persistées avant l'introduction du mode décompte (`mode`/`countdownTarget`

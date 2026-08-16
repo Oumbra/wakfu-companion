@@ -31,16 +31,23 @@ export function watchlistEntryKey(entry: Pick<WatchlistEntry, 'name' | 'catalogI
  * fonctionnalité/design entre les deux implémentations d'origine.
  */
 export class WatchlistTileController {
+  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
+   * WatchlistCounterMode). Initialisé au dernier mode choisi par l'utilisateur (voir
+   * StatsStoreService.defaultAddMode, settings synchronisé) plutôt qu'à 'up' en dur — remis à cette
+   * même valeur (pas 'up' fixe) après chaque ajout (mobile) / fermeture (desktop), voir
+   * `resetAddForm`. Valeur de départ posée dans le constructeur (pas dans l'initialiseur du champ) :
+   * `this.stats` n'est assigné qu'APRÈS l'exécution des initialiseurs de champ (`target: ES2022`
+   * → `useDefineForClassFields`), le lire ici lèverait "used before its initialization". */
+  readonly addMode = signal<WatchlistCounterMode>('up');
+
   constructor(
     private readonly stats: StatsStoreService,
     private readonly i18n: I18nService,
     private readonly confirmDelete: ConfirmDeleteService,
     private readonly catalog: CatalogService,
-  ) {}
-
-  /** Mode choisi via le switch à côté de l'autocomplétion — appliqué au KPI créé par `add()` (voir
-   * WatchlistCounterMode). Réinitialisé à 'up' après chaque ajout (mobile) / fermeture (desktop). */
-  readonly addMode = signal<WatchlistCounterMode>('up');
+  ) {
+    this.addMode.set(this.stats.defaultAddMode());
+  }
   /** Cible du décompte choisie au moment de la création (mode 'down' uniquement, voir
    * `.kpi-add-target-input`/`.tracker-add-target-input`) — un KPI décompte n'a plus AUCUN moyen de
    * changer sa cible une fois créé (voir setWatchlistCountdownTarget) : elle doit donc être fixée
@@ -267,10 +274,21 @@ export class WatchlistTileController {
     this.resetAddForm();
   }
 
+  /** Change le mode du formulaire d'ajout ET le mémorise comme valeur de départ des prochaines
+   * ouvertures (voir StatsStoreService.setDefaultAddMode) — seul point d'entrée pour changer
+   * `addMode`, à utiliser depuis les deux vues (desktop/mobile) plutôt que `addMode.set(...)`
+   * directement, qui laisserait le choix non persisté. */
+  setAddMode(mode: WatchlistCounterMode): void {
+    this.addMode.set(mode);
+    this.stats.setDefaultAddMode(mode);
+  }
+
   /** Remet le formulaire d'ajout à son état par défaut — appelée après une création réussie
-   * (`add()`) et après un abandon (fermeture de la recherche sans avoir choisi de résultat). */
+   * (`add()`) et après un abandon (fermeture de la recherche sans avoir choisi de résultat). Le
+   * mode revient au dernier choisi par l'utilisateur (`defaultAddMode`), pas à 'up' en dur — c'est
+   * précisément le réglage qu'on vient de persister via `setAddMode`. */
   resetAddForm(): void {
-    this.addMode.set('up');
+    this.addMode.set(this.stats.defaultAddMode());
     this.addTarget.set(1);
   }
 
