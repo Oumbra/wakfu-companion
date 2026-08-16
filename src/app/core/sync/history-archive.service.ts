@@ -1,5 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
+import { CatalogService } from '../api/catalog.service';
+import { I18nService } from '../services/i18n.service';
 import {
   StatsStoreService,
   type EntityDamageRow,
@@ -10,6 +12,7 @@ import {
 } from '../services/stats-store.service';
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
 import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
+import { HistorySyncService } from './history-sync.service';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -53,7 +56,7 @@ interface FightPage {
       spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
       xpGained: number | null;
     }[];
-    loot: { itemId: number | null; itemName: string; quantity: number }[];
+    loot: { itemId: number | null; itemName: string | null; quantity: number }[];
   }[];
   nextBefore: string | null;
 }
@@ -62,7 +65,7 @@ interface PurchasePage {
   entries: {
     clientKey: string;
     itemId: number | null;
-    itemName: string;
+    itemName: string | null;
     quantity: number;
     totalCost: number;
     occurredAt: string;
@@ -80,8 +83,8 @@ interface TradePage {
     kamasAcquired: number;
     kamasGiven: number;
     gameServer: string | null;
-    acquired: { itemName: string; quantity: number }[];
-    given: { itemName: string; quantity: number }[];
+    acquired: { itemId: number | null; itemName: string | null; quantity: number }[];
+    given: { itemId: number | null; itemName: string | null; quantity: number }[];
   }[];
   nextBefore: string | null;
 }
@@ -125,6 +128,9 @@ interface TradePage {
 export class HistoryArchiveService {
   private readonly api = inject(ApiClientService);
   private readonly stats = inject(StatsStoreService);
+  private readonly catalog = inject(CatalogService);
+  private readonly i18n = inject(I18nService);
+  private readonly historySync = inject(HistorySyncService);
 
   private readonly _fights = signal<readonly FightRecord[]>([]);
   private readonly _purchases = signal<readonly PurchaseRecord[]>([]);
@@ -135,6 +141,12 @@ export class HistoryArchiveService {
   private readonly cursors = new Map<HistoryEventKind, string | null>();
   private readonly loaded = new Set<HistoryEventKind>();
   private readonly _exhausted = signal<readonly HistoryEventKind[]>([]);
+  /** Source d'id pour un `PurchaseRecord` créé par une scission locale (voir `reassignPurchaseItem`)
+   * — jamais renvoyé par le serveur (jusqu'au prochain fetch, qui le remplacera par le vrai
+   * `archiveId`), sert uniquement de clé `@for track` stable entre-temps. Très négatif pour ne
+   * jamais entrer en collision avec `archiveId(index)` (`-1 - index`, borné par la taille réelle de
+   * l'archive chargée). */
+  private nextSyntheticId = -1_000_000_000;
 
   /** Archive brute du compte (sans la session) — encore utile pour `mergedXxx` ci-dessous, plus
    * consommée ailleurs directement (voir `fight-history`/`purchases`/`trades.component.ts`). */
@@ -229,7 +241,14 @@ export class HistoryArchiveService {
         this._fights.update((current) => [
           ...current,
           ...(result.data as FightPage).entries.map((entry, index) =>
-            toFightRecord(entry, current.length + index),
+            toFightRecord(
+              entry,
+              current.length + index,
+              this.catalog,
+              this.i18n,
+              this.stats,
+              this.historySync,
+            ),
           ),
         ]);
         break;
@@ -237,7 +256,14 @@ export class HistoryArchiveService {
         this._purchases.update((current) => [
           ...current,
           ...(result.data as PurchasePage).entries.map((entry, index) =>
-            toPurchaseRecord(entry, current.length + index),
+            toPurchaseRecord(
+              entry,
+              current.length + index,
+              this.catalog,
+              this.i18n,
+              this.stats,
+              this.historySync,
+            ),
           ),
         ]);
         break;
@@ -245,7 +271,14 @@ export class HistoryArchiveService {
         this._trades.update((current) => [
           ...current,
           ...(result.data as TradePage).entries.map((entry, index) =>
-            toTradeRecord(entry, current.length + index),
+            toTradeRecord(
+              entry,
+              current.length + index,
+              this.catalog,
+              this.i18n,
+              this.stats,
+              this.historySync,
+            ),
           ),
         ]);
         break;
@@ -296,6 +329,142 @@ export class HistoryArchiveService {
     this._exhausted.set([]);
     this._failed.set(false);
   }
+
+  /**
+   * Corrige immédiatement une ligne de butin **déjà chargée** dans l'archive (voir
+   * ItemPickerService) — miroir de `StatsStoreService.reassignLootItem` côté session : celui-ci
+   * journalise et rejoue à chaque isInitialLoad (session), celui-ci met simplement à jour ce qui est
+   * déjà en mémoire ici pour un retour visuel immédiat sur la page Historique, sans dupliquer
+   * l'écriture du journal (déjà faite par l'appel jumeau à `StatsStoreService.reassignLootItem`, voir
+   * les composants appelants). No-op silencieux si aucun combat archivé ne correspond.
+   */
+  reassignLootItem(
+    fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
+    itemName: string,
+    occurrence: number,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const fightKey = fightDedupKey(fight);
+    let corrected: FightRecord | null = null;
+    this._fights.update((list) =>
+      list.map((f) => {
+        if (fightDedupKey(f) !== fightKey) return f;
+        const loot = [...f.loot];
+        const row = nthSameName(loot, itemName, occurrence);
+        if (!row) return f;
+        splitRowInPlace(loot, row, quantity, catalogId);
+        corrected = { ...f, loot };
+        return corrected;
+      }),
+    );
+    if (corrected) this.historySync.recordFight(corrected);
+  }
+
+  /** Miroir de reassignLootItem, pour un achat. Une correction partielle crée un second achat
+   * distinct plutôt que de scinder une ligne dans un tableau — voir
+   * `StatsStoreService.applyPurchaseReassign`, même raison/même calcul de coût au prorata. */
+  reassignPurchaseItem(
+    purchase: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const purchaseKey = purchaseDedupKey(purchase);
+    const toSend: PurchaseRecord[] = [];
+    this._purchases.update((list) => {
+      const index = list.findIndex((p) => purchaseDedupKey(p) === purchaseKey);
+      if (index === -1) return list;
+      const record = list[index];
+      const amount = Math.min(Math.max(1, Math.floor(quantity)), record.quantity);
+      const next = [...list];
+      if (amount >= record.quantity) {
+        const corrected = { ...record, catalogId };
+        next[index] = corrected;
+        toSend.push(corrected);
+        return next;
+      }
+      const unitCost = record.totalCost / record.quantity;
+      const splitCost = Math.round(unitCost * amount);
+      const reduced: PurchaseRecord = {
+        ...record,
+        quantity: record.quantity - amount,
+        totalCost: record.totalCost - splitCost,
+      };
+      const split: PurchaseRecord = {
+        ...record,
+        id: this.nextSyntheticId--,
+        catalogId,
+        quantity: amount,
+        totalCost: splitCost,
+      };
+      next[index] = reduced;
+      next.push(split);
+      toSend.push(reduced, split);
+      return next;
+    });
+    for (const record of toSend) this.historySync.recordPurchase(record);
+  }
+
+  /** Miroir de reassignLootItem, pour une ligne d'objet échangé — voir
+   * `StatsStoreService.reassignTradeItem` pour `occurrence`. */
+  reassignTradeItem(
+    trade: Pick<
+      TradeRecord,
+      'time' | 'characterName' | 'selfName' | 'kamasAcquired' | 'kamasGiven' | 'acquired' | 'given'
+    >,
+    direction: 'acquired' | 'given',
+    itemName: string,
+    occurrence: number,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const tradeKey = tradeDedupKey(trade);
+    let corrected: TradeRecord | null = null;
+    this._trades.update((list) =>
+      list.map((t) => {
+        if (tradeDedupKey(t) !== tradeKey) return t;
+        const items = [...t[direction]];
+        const row = nthSameName(items, itemName, occurrence);
+        if (!row) return t;
+        splitRowInPlace(items, row, quantity, catalogId);
+        corrected = { ...t, [direction]: items };
+        return corrected;
+      }),
+    );
+    if (corrected) this.historySync.recordTrade(corrected);
+  }
+}
+
+/** `n`-ième élément (0-indexé) de `list` dont le nom correspond (insensible à la casse) — voir
+ * `StatsStoreService.nthSameName`, même rôle côté archive. */
+function nthSameName<T extends { name: string }>(
+  list: readonly T[],
+  name: string,
+  occurrence: number,
+): T | undefined {
+  const key = name.toLowerCase();
+  return list.filter((item) => item.name.toLowerCase() === key)[occurrence];
+}
+
+/** Réattribue tout ou partie de la quantité de `row` (déjà présente dans `list`, à l'index
+ * `list.indexOf(row)`) : remplace `row` en place si `quantity` couvre la totalité, sinon réduit sa
+ * quantité et ajoute une nouvelle ligne en FIN de `list` — voir `StatsStoreService.splitRowQuantity`,
+ * même contrat (jamais inséré au milieu, pour ne pas décaler l'`occurrence` des lignes suivantes).
+ * Mute `list` (tableau déjà cloné par l'appelant, voir `[...f.loot]`), pas `row` lui-même. */
+function splitRowInPlace<T extends { name: string; catalogId: number | null; quantity: number }>(
+  list: T[],
+  row: T,
+  quantity: number,
+  catalogId: number,
+): void {
+  const index = list.indexOf(row);
+  const amount = Math.min(Math.max(1, Math.floor(quantity)), row.quantity);
+  if (amount >= row.quantity) {
+    list[index] = { ...row, catalogId };
+    return;
+  }
+  list[index] = { ...row, quantity: row.quantity - amount };
+  list.push({ ...row, catalogId, quantity: amount });
 }
 
 /**
@@ -318,7 +487,30 @@ function toLogTime(iso: string): string {
   )}`;
 }
 
-function toFightRecord(entry: FightPage['entries'][number], index: number): FightRecord {
+/** Nom affichable/canonique d'une ligne d'archive : `itemName` s'il est présent (objet non résolu
+ * par le catalogue, seule source de vérité restante), sinon reconstruit en FRANÇAIS depuis
+ * `itemId` (jamais la locale d'affichage — ce nom sert aussi d'identité pour le suivi/les alertes
+ * son sur les lignes de butin fusionnées dans LootListComponent, qui comparent au nom brut du log,
+ * jamais traduit). Repli sur `items.unknown` si aucun des deux n'est exploitable. */
+function resolveItemName(
+  itemId: number | null,
+  itemName: string | null,
+  catalog: CatalogService,
+  i18n: I18nService,
+): string {
+  if (itemName !== null) return itemName;
+  const entry = itemId !== null ? catalog.findWakfuItemEntryById(itemId) : undefined;
+  return entry?.fr ?? i18n.t('items.unknown');
+}
+
+function toFightRecord(
+  entry: FightPage['entries'][number],
+  index: number,
+  catalog: CatalogService,
+  i18n: I18nService,
+  stats: StatsStoreService,
+  historySync: HistorySyncService,
+): FightRecord {
   const instanceCounts = new Map<string, number>();
   for (const participant of entry.participants) {
     instanceCounts.set(participant.name, (instanceCounts.get(participant.name) ?? 0) + 1);
@@ -337,17 +529,43 @@ function toFightRecord(entry: FightPage['entries'][number], index: number): Figh
     instanceCount: instanceCounts.get(participant.name) ?? 1,
   }));
 
-  return {
+  const time = toLogTime(entry.startedAt);
+  const result = entry.won === false ? 'lost' : 'won';
+  const sortedRows = rows.sort((a, b) => b.total - a.total);
+  // Calculable dès maintenant (ne dépend que de time/result/participants, jamais du butin) — sert à
+  // consulter une éventuelle correction manuelle déjà connue (voir ItemPickerService/
+  // StatsStoreService.reassignLootItem) pour CE combat précis, qui vient d'être chargé pour la
+  // première fois depuis l'archive (donc jamais encore vu par `reassignLootItem` lui-même).
+  const fightKey = fightDedupKey({ time, result, rows: sortedRows });
+  let anyCorrected = false;
+  const lootNameSeen = new Map<string, number>();
+  const loot = (entry.loot ?? []).map((row) => {
+    const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
+    const key = name.toLowerCase();
+    const occurrence = lootNameSeen.get(key) ?? 0;
+    lootNameSeen.set(key, occurrence + 1);
+    const correction = stats.findLootCorrection(fightKey, name, occurrence, row.quantity);
+    if (correction !== null) anyCorrected = true;
+    return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
+  });
+
+  const record: FightRecord = {
     id: archiveId(index),
-    time: toLogTime(entry.startedAt),
+    time,
     fullTimestampMs: new Date(entry.startedAt).getTime(),
-    result: entry.won === false ? 'lost' : 'won',
-    rows: rows.sort((a, b) => b.total - a.total),
-    loot: (entry.loot ?? []).map((row) => ({ name: row.itemName, quantity: row.quantity })),
+    result,
+    rows: sortedRows,
+    loot,
     turns: entry.turns ?? 0,
     durationMs: entry.durationMs ?? 0,
     xp: buildXpRows(entry),
   };
+  // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
+  // n'était pas encore chargée au moment de la correction d'origine, voir StatsStoreService.
+  // applyLootReassign) — c'est cette première rencontre qui s'en charge, avec la même garantie
+  // d'idempotence (ON CONFLICT DO UPDATE) que tout autre renvoi.
+  if (anyCorrected) historySync.recordFight(record);
+  return record;
 }
 
 /**
@@ -366,27 +584,104 @@ function buildXpRows(entry: FightPage['entries'][number]): FightRecord['xp'] {
   return entry.xpGained ? [{ name: '', amount: entry.xpGained }] : [];
 }
 
-function toPurchaseRecord(entry: PurchasePage['entries'][number], index: number): PurchaseRecord {
-  return {
-    id: archiveId(index),
-    item: entry.itemName,
+function toPurchaseRecord(
+  entry: PurchasePage['entries'][number],
+  index: number,
+  catalog: CatalogService,
+  i18n: I18nService,
+  stats: StatsStoreService,
+  historySync: HistorySyncService,
+): PurchaseRecord {
+  const item = resolveItemName(entry.itemId, entry.itemName, catalog, i18n);
+  const time = toLogTime(entry.occurredAt);
+  const purchaseKey = purchaseDedupKey({
+    time,
+    item,
     quantity: entry.quantity,
     totalCost: entry.totalCost,
-    time: toLogTime(entry.occurredAt),
+  });
+  const correction = stats.findPurchaseCorrection(purchaseKey, entry.quantity);
+  const record: PurchaseRecord = {
+    id: archiveId(index),
+    item,
+    catalogId: correction ?? entry.itemId,
+    quantity: entry.quantity,
+    totalCost: entry.totalCost,
+    time,
     fullTimestampMs: new Date(entry.occurredAt).getTime(),
   };
+  if (correction !== null) historySync.recordPurchase(record);
+  return record;
 }
 
-function toTradeRecord(entry: TradePage['entries'][number], index: number): TradeRecord {
-  return {
+function toTradeRecord(
+  entry: TradePage['entries'][number],
+  index: number,
+  catalog: CatalogService,
+  i18n: I18nService,
+  stats: StatsStoreService,
+  historySync: HistorySyncService,
+): TradeRecord {
+  const resolveItems = (
+    items: { itemId: number | null; itemName: string | null; quantity: number }[],
+  ) =>
+    items.map((item) => ({
+      name: resolveItemName(item.itemId, item.itemName, catalog, i18n),
+      catalogId: item.itemId,
+      quantity: item.quantity,
+    }));
+  const time = toLogTime(entry.occurredAt);
+  const characterName = entry.peerName;
+  const selfName = entry.selfName;
+  const acquired = resolveItems(entry.acquired);
+  const given = resolveItems(entry.given);
+  const tradeKey = tradeDedupKey({
+    time,
+    characterName,
+    selfName,
+    kamasAcquired: entry.kamasAcquired,
+    kamasGiven: entry.kamasGiven,
+    acquired,
+    given,
+  });
+
+  let anyCorrected = false;
+  const applyCorrections = (
+    items: { name: string; catalogId: number | null; quantity: number }[],
+    direction: 'acquired' | 'given',
+  ): void => {
+    const seen = new Map<string, number>();
+    for (const item of items) {
+      const key = item.name.toLowerCase();
+      const occurrence = seen.get(key) ?? 0;
+      seen.set(key, occurrence + 1);
+      const correction = stats.findTradeItemCorrection(
+        tradeKey,
+        direction,
+        item.name,
+        occurrence,
+        item.quantity,
+      );
+      if (correction !== null) {
+        item.catalogId = correction;
+        anyCorrected = true;
+      }
+    }
+  };
+  applyCorrections(acquired, 'acquired');
+  applyCorrections(given, 'given');
+
+  const record: TradeRecord = {
     id: archiveId(index),
-    characterName: entry.peerName,
-    selfName: entry.selfName,
-    time: toLogTime(entry.occurredAt),
+    characterName,
+    selfName,
+    time,
     fullTimestampMs: new Date(entry.occurredAt).getTime(),
-    acquired: entry.acquired.map((item) => ({ name: item.itemName, quantity: item.quantity })),
-    given: entry.given.map((item) => ({ name: item.itemName, quantity: item.quantity })),
+    acquired,
+    given,
     kamasAcquired: entry.kamasAcquired,
     kamasGiven: entry.kamasGiven,
   };
+  if (anyCorrected) historySync.recordTrade(record);
+  return record;
 }

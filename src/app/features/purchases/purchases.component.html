@@ -20,10 +20,18 @@
           </div>
         </div>
         @if (!isCollapsed(group.dateKey)) {
-          @for (row of group.rows; track row.item) {
-            <div class="purchase-row" [class]="rarityClass(row.item)">
-              <app-item-icon [name]="row.item" [size]="22" />
-              <span class="purchase-name">{{ i18n.translateItemName(row.item) }}</span>
+          @for (row of group.rows; track row.item; let first = $first) {
+            <div
+              class="purchase-row"
+              [class]="rarityClass(row)"
+              [appTooltip]="'items.interactTooltip' | t"
+              [tooltipPosition]="first ? 'bottom-right' : 'top-right'"
+              (contextmenu)="openInteractMenu($event, row)"
+            >
+              <app-item-icon [name]="row.item" [id]="row.catalogId" [size]="22" />
+              <span class="purchase-name">{{
+                i18n.translateItemNameById(row.catalogId, i18n.translateItemName(row.item))
+              }}</span>
               <span class="purchase-qty">×{{ row.quantity | numberFr }}</span>
               <span class="purchase-cost">{{ row.totalCost | numberFr }} ₭</span>
             </div>

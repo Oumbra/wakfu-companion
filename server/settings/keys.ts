@@ -17,6 +17,7 @@ export const SYNCED_SETTING_KEYS = [
   'watchlist',
   'watchlistAddMode',
   'damageReassignments',
+  'itemReassignments',
   'roster',
   'chatActiveChannels',
   'chatFilters',
