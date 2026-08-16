@@ -9,7 +9,7 @@ import { LootAlertService } from './loot-alert.service';
 import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
-const FIXTURES_DIR = join(process.cwd(), 'assets/logs/tests/fr');
+const FIXTURES_DIR = join(process.cwd(), 'tests/logs/fr');
 
 function readFixture(name: string): string[] {
   const content = readFileSync(join(FIXTURES_DIR, name), 'utf-8');
@@ -103,10 +103,10 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].acquired).toEqual([
-        { name: 'Feuilluchon de Fortune', quantity: 1 },
-        { name: 'Havre-Gemme Marchande', quantity: 1 },
+        { name: 'Feuilluchon de Fortune', catalogId: null, quantity: 1 },
+        { name: 'Havre-Gemme Marchande', catalogId: null, quantity: 1 },
       ]);
-      expect(trades[0].given).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].given).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
     });
 
     it('gère un échange où le compte courant ne donne rien (trade_2.log)', () => {
@@ -119,7 +119,7 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].given).toEqual([]);
-      expect(trades[0].acquired).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].acquired).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
     });
 
     it('gère un échange incluant des kamas côté partenaire (trade_3.log)', () => {
@@ -132,7 +132,9 @@ describe('StatsStoreService', () => {
       expect(trades).toHaveLength(1);
       expect(trades[0].selfName).toBe('Oumbra');
       expect(trades[0].characterName).toBe('Briggitt');
-      expect(trades[0].acquired).toEqual([{ name: "Les Doigts d'Enutrof", quantity: 1 }]);
+      expect(trades[0].acquired).toEqual([
+        { name: "Les Doigts d'Enutrof", catalogId: null, quantity: 1 },
+      ]);
       expect(trades[0].kamasAcquired).toBe(10);
       expect(trades[0].kamasGiven).toBe(0);
       // Les 10 kamas gagnés sont comptés séparément (kamasEarned), en plus du détail sur le TradeRecord.
@@ -216,7 +218,7 @@ describe('StatsStoreService', () => {
       expect(trades[0].characterName).toBe('Suuke');
       expect(trades[0].kamasGiven).toBe(10);
       expect(trades[0].kamasAcquired).toBe(0);
-      expect(trades[0].given).toEqual([{ name: 'Poudre', quantity: 1 }]);
+      expect(trades[0].given).toEqual([{ name: 'Poudre', catalogId: null, quantity: 1 }]);
       expect(trades[0].acquired).toEqual([]);
 
       expect(trades[1].kamasAcquired).toBe(20);

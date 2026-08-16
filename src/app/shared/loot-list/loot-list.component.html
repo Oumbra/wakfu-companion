@@ -11,14 +11,27 @@
     @for (item of items(); track item.name; let first = $first) {
       <div
         class="loot-row"
-        [class]="rarityClass(item.name)"
+        [class]="rarityClass(item)"
         [appTooltip]="!isWatched(item.name) ? ('damageMeter.trackHint' | t) : null"
         [tooltipPosition]="first ? 'bottom' : 'top'"
         (contextmenu)="onContextMenu($event, item.name)"
       >
-        <app-item-icon [name]="item.name" />
-        <span class="loot-name">{{ i18n.translateItemName(item.name) }}</span>
+        <app-item-icon [name]="item.name" [id]="item.catalogId" />
+        <span class="loot-name">{{
+          i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
+        }}</span>
         <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+        @if (fight()) {
+          <button
+            type="button"
+            class="icon-btn plain-icon-btn loot-correct-btn"
+            [appTooltip]="'items.correctTooltip' | t"
+            [tooltipPosition]="first ? 'bottom-right' : 'top-right'"
+            (click)="openItemPicker($event, item)"
+          >
+            <app-icon name="edit" [size]="14" />
+          </button>
+        }
       </div>
     }
   </div>

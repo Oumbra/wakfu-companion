@@ -624,17 +624,26 @@ export const fightParticipants = pgTable(
 
 /**
  * Butin d'un combat, une ligne par objet — déjà agrégé par nom côté client
- * (`registerLoot` fusionne les ramassages successifs d'un même objet), d'où la
- * clé primaire `(fight_id, item_name)`.
+ * (`registerLoot` fusionne les ramassages successifs d'un même objet).
  *
  * En table relationnelle et non en `jsonb` sur `fights`, à l'inverse des sorts
  * ci-dessus : c'est précisément la donnée qu'on voudra agréger en SQL (« combien
- * de Laine de Bouftou ce mois-ci », « quels donjons rapportent tel ingrédient »),
- * et elle n'est jamais révisée après coup — le butin d'un combat terminé ne
- * bouge plus.
+ * de Laine de Bouftou ce mois-ci », « quels donjons rapportent tel ingrédient »).
  *
- * `itemId` référence `items.ankamaId` quand le catalogue a pu résoudre le nom,
- * `NULL` sinon ; pas de FK stricte, même raison que pour les prix et les achats.
+ * `itemId`/`itemName` sont **mutuellement exclusifs** : `itemId` non `NULL` (catalogue résolu, voir
+ * `items.ankamaId`, sans FK stricte — un import de catalogue ne doit jamais faire échouer l'écriture
+ * d'un historique) ⇒ `itemName` `NULL` (pas besoin de dupliquer le nom, résolu à l'affichage via le
+ * catalogue) ; inversement, objet non résolu ⇒ seul `itemName` est renseigné. Invariant renforcé
+ * côté serveur, voir `server/history/parse.ts`. `itemName` reste néanmoins révisable : une
+ * correction manuelle d'objet homonyme (voir ItemPickerService côté client) peut faire passer une
+ * ligne de "non résolue" à "résolue" après coup, d'où `ON CONFLICT DO UPDATE` sur cette table (voir
+ * `functions/api/v1/history/fights.ts`), contrairement à l'ancien `DO NOTHING` (le butin d'un combat
+ * terminé ne change plus de CONTENU, mais son identification, elle, le peut).
+ *
+ * `lineIndex` (position du butin dans le lot envoyé, attribuée côté serveur — voir `parse.ts`,
+ * même principe que `tradeItems.lineIndex`) remplace `item_name` dans la clé primaire : NULL n'est
+ * jamais valide dans une clé Postgres, or `item_name` est désormais NULL pour la plupart des lignes
+ * résolues.
  */
 export const fightLoot = pgTable(
   'fight_loot',
@@ -642,12 +651,13 @@ export const fightLoot = pgTable(
     fightId: bigint('fight_id', { mode: 'number' })
       .notNull()
       .references(() => fights.id, { onDelete: 'cascade' }),
+    lineIndex: integer('line_index').notNull(),
     itemId: integer('item_id'),
-    itemName: text('item_name').notNull(),
+    itemName: text('item_name'),
     quantity: integer('quantity').notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.fightId, table.itemName] }),
+    primaryKey({ columns: [table.fightId, table.lineIndex] }),
     // « Tous les combats où cet objet est tombé » — l'agrégation visée ci-dessus.
     index('fight_loot_item_id_idx').on(table.itemId),
   ],
@@ -655,10 +665,10 @@ export const fightLoot = pgTable(
 
 /**
  * Achats détectés dans le log (perte de kamas suivie d'un ramassage immédiat,
- * voir `registerPurchase` côté client). `itemId` référence `items.ankamaId`
- * quand l'objet a pu être résolu dans le catalogue, `NULL` sinon — sans FK
- * stricte, pour la même raison que les prix : un import de catalogue ne doit
- * jamais faire échouer l'écriture d'un historique.
+ * voir `registerPurchase` côté client).
+ *
+ * `itemId`/`itemName` mutuellement exclusifs — voir `fightLoot`, même invariant, même raison d'être
+ * corrigeable après coup (`ON CONFLICT DO UPDATE`, voir `functions/api/v1/history/purchases.ts`).
  *
  * **Aucun rapport avec le monitoring de prix (lot 4)** : celui-ci vient d'un
  * scan de l'hôtel des ventes, jamais des achats des joueurs (§8 du plan).
@@ -672,7 +682,7 @@ export const purchases = pgTable(
       .references(() => users.id, { onDelete: 'cascade' }),
     clientKey: text('client_key').notNull(),
     itemId: integer('item_id'),
-    itemName: text('item_name').notNull(),
+    itemName: text('item_name'),
     quantity: integer('quantity').notNull(),
     totalCost: bigint('total_cost', { mode: 'number' }).notNull(),
     occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
@@ -706,7 +716,10 @@ export const trades = pgTable(
   ],
 );
 
-/** Objets échangés, une ligne par entrée de chaque côté — `lineIndex` = position dans son côté (voir doc de section). */
+/** Objets échangés, une ligne par entrée de chaque côté — `lineIndex` = position dans son côté (voir
+ * doc de section). `itemId`/`itemName` mutuellement exclusifs — voir `fightLoot`, même invariant,
+ * même raison d'être corrigeable après coup (`ON CONFLICT DO UPDATE`, voir
+ * `functions/api/v1/history/trades.ts`). */
 export const tradeItems = pgTable(
   'trade_items',
   {
@@ -716,7 +729,7 @@ export const tradeItems = pgTable(
     direction: text('direction').notNull(), // 'acquired' | 'given'
     lineIndex: integer('line_index').notNull(),
     itemId: integer('item_id'),
-    itemName: text('item_name').notNull(),
+    itemName: text('item_name'),
     quantity: integer('quantity').notNull(),
   },
   (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],

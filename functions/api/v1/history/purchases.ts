@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq, lt, sql } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { purchases } from '../../../../server/db/schema';
 import {
@@ -57,7 +57,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         gameServer: purchase.gameServer,
       })),
     )
-    .onConflictDoNothing({ target: [purchases.userId, purchases.clientKey] })
+    // `DO UPDATE` plutôt que `DO NOTHING` : un achat déjà connu peut revenir avec une identification
+    // d'objet corrigée (voir ItemPickerService côté client, homonymes de rareté différente) — le
+    // reste de l'achat, lui, ne bouge jamais après coup (mêmes valeurs de toute façon en l'absence
+    // de correction). `inserted.length` compte donc désormais les lignes insérées OU mises à jour,
+    // pas seulement les nouvelles (champ purement informatif, non consommé côté client).
+    .onConflictDoUpdate({
+      target: [purchases.userId, purchases.clientKey],
+      set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
+    })
     .returning({ clientKey: purchases.clientKey });
 
   return json({

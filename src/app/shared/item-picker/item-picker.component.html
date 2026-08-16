@@ -1,0 +1,28 @@
+<div
+  class="item-picker-backdrop"
+  (click)="close()"
+  (contextmenu)="$event.preventDefault(); close()"
+></div>
+<div
+  class="item-picker"
+  #picker
+  [style.left.px]="displayPosition().left"
+  [style.top.px]="displayPosition().top"
+>
+  <div class="item-picker-title-row">
+    <span class="item-picker-title">{{ 'items.pickerTitle' | t }}</span>
+  </div>
+  <div class="item-picker-list">
+    @if (candidates().length === 0) {
+      <div class="empty-state small">{{ 'items.pickerEmpty' | t }}</div>
+    } @else {
+      @for (entry of candidates(); track entry.id) {
+        <button class="item-picker-item" [class.current]="isCurrent(entry)" (click)="choose(entry)">
+          <img class="item-picker-item-rarity" [src]="rarityIconUrl(entry)" alt="" />
+          <app-item-icon [name]="label(entry)" [id]="entry.id" [size]="22" />
+          <span class="item-picker-name">{{ label(entry) }}</span>
+        </button>
+      }
+    }
+  </div>
+</div>
