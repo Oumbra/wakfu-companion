@@ -2,12 +2,19 @@
   display: contents;
 }
 
+.recap-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .recap-panel {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  z-index: 500;
+  z-index: 501;
   width: 450px;
   max-height: 80vh;
   display: flex;
