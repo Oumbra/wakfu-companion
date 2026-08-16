@@ -53,7 +53,7 @@
       <div class="fight-group-row" (click)="toggleGroupCollapsed(group.key)">
         <span class="caret" [class.expanded]="!isGroupCollapsed(group.key)">▸</span>
         <span class="fight-group-label">{{ group.label }}</span>
-        <span class="fight-group-count">{{ fightCountLabel(groupFightCount(group)) }}</span>
+        <span class="fight-group-count">{{ groupCountLabel(group) }}</span>
       </div>
       @if (!isGroupCollapsed(group.key)) {
         @for (entry of group.records; track entryTrackId(entry); let first = $first) {
