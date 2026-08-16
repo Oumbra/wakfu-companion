@@ -18,6 +18,7 @@ import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { InputNumberComponent } from '../input-number/input-number.component';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Menu d'interaction avec un objet (suivi + correction manuelle d'homonyme, voir
@@ -27,7 +28,7 @@ import { InputNumberComponent } from '../input-number/input-number.component';
  */
 @Component({
   selector: 'app-item-picker',
-  imports: [ItemIconComponent, TranslatePipe, TooltipDirective, InputNumberComponent],
+  imports: [ItemIconComponent, TranslatePipe, TooltipDirective, InputNumberComponent, EscapeCloseDirective],
   templateUrl: './item-picker.component.html',
   styleUrl: './item-picker.component.css',
 })

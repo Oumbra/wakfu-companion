@@ -14,6 +14,7 @@ import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { GameServerService } from '../../core/services/game-server.service';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
@@ -36,6 +37,7 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
     TranslatePipe,
     ProfileComponent,
     TooltipDirective,
+    EscapeCloseDirective,
   ],
   templateUrl: './app-header.component.html',
   styleUrl: './app-header.component.css',

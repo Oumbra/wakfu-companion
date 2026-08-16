@@ -2,6 +2,8 @@
   class="item-picker-backdrop"
   (click)="close()"
   (contextmenu)="$event.preventDefault(); close()"
+  appEscapeClose
+  (appEscapeClose)="close()"
 ></div>
 <div
   class="item-picker"

@@ -9,6 +9,7 @@ import { TranslatePipe } from '../translate.pipe';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { InputNumberComponent } from '../input-number/input-number.component';
+import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
  * Modale "suivre les objets de la recette" (voir RecipeTrackingService, ouverte depuis l'icône
@@ -26,7 +27,14 @@ import { InputNumberComponent } from '../input-number/input-number.component';
  */
 @Component({
   selector: 'app-recipe-quantity-modal',
-  imports: [TranslatePipe, ItemIconComponent, NgTemplateOutlet, TooltipDirective, InputNumberComponent],
+  imports: [
+    TranslatePipe,
+    ItemIconComponent,
+    NgTemplateOutlet,
+    TooltipDirective,
+    InputNumberComponent,
+    EscapeCloseDirective,
+  ],
   templateUrl: './recipe-quantity-modal.component.html',
   styleUrl: './recipe-quantity-modal.component.css',
 })

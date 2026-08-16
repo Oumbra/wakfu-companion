@@ -12,7 +12,7 @@
     }
   </button>
   @if (open()) {
-    <div class="lang-backdrop" (click)="close()"></div>
+    <div class="lang-backdrop" (click)="close()" appEscapeClose (appEscapeClose)="close()"></div>
     <div class="lang-menu">
       @for (l of locales; track l.code) {
         @if (l.code !== i18n.locale()) {
