@@ -1,5 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { TradeRecord } from '../../core/services/stats-store.service';
+import {
+  StatsStoreService,
+  TradeItemRow,
+  TradeRecord,
+} from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -10,6 +14,7 @@ import { HistoryListHeaderComponent } from '../../shared/history-list-header/his
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
+import { ItemPickerService } from '../../core/services/item-picker.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 type TradeSortOrder = 'desc' | 'asc';
@@ -46,6 +51,8 @@ export class TradesComponent {
   private readonly archive = inject(HistoryArchiveService);
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
+  private readonly stats = inject(StatsStoreService);
+  private readonly itemPicker = inject(ItemPickerService);
 
   /** Échanges affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedTrades). */
@@ -106,7 +113,36 @@ export class TradesComponent {
     this.collapsedDates.set(updated);
   }
 
-  protected rarityClass(name: string): string {
-    return `rarity-${getWakfuItemRarity(this.catalog, name)}`;
+  protected rarityClass(item: TradeItemRow): string {
+    return `rarity-${getWakfuItemRarity(this.catalog, item.name, item.catalogId)}`;
+  }
+
+  /** Rang de `item` (par index dans `items`) parmi les lignes de même nom qui le précèdent — voir
+   * `PersistedItemReassignment.occurrence` (`trade_items` autorise plusieurs lignes homonymes non
+   * fusionnées, contrairement à `fight_loot`). */
+  protected occurrenceOf(items: readonly TradeItemRow[], index: number): number {
+    const name = items[index].name.toLowerCase();
+    return items.slice(0, index).filter((i) => i.name.toLowerCase() === name).length;
+  }
+
+  protected correctItem(
+    event: MouseEvent,
+    record: TradeRecord,
+    direction: 'acquired' | 'given',
+    item: TradeItemRow,
+    occurrence: number,
+  ): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.itemPicker.open({
+      name: item.name,
+      x: event.clientX,
+      y: event.clientY,
+      currentId: item.catalogId,
+      onChosen: (id) => {
+        this.stats.reassignTradeItem(record, direction, item.name, occurrence, id);
+        this.archive.reassignTradeItem(record, direction, item.name, occurrence, id);
+      },
+    });
   }
 }

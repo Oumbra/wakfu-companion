@@ -14,14 +14,14 @@ export function sortLootRows(
   if (sort === 'rarity') {
     return [...loot].sort((a, b) => {
       const diff =
-        RARITY_SORT_ORDER[getWakfuItemRarity(catalog, b.name)] -
-        RARITY_SORT_ORDER[getWakfuItemRarity(catalog, a.name)];
+        RARITY_SORT_ORDER[getWakfuItemRarity(catalog, b.name, b.catalogId)] -
+        RARITY_SORT_ORDER[getWakfuItemRarity(catalog, a.name, a.catalogId)];
       return diff !== 0 ? diff : a.name.localeCompare(b.name, 'fr');
     });
   }
   return [...loot].sort((a, b) => a.name.localeCompare(b.name, 'fr'));
 }
 
-export function lootRarityClass(catalog: CatalogService, name: string): string {
-  return `rarity-${getWakfuItemRarity(catalog, name)}`;
+export function lootRarityClass(catalog: CatalogService, name: string, id?: number | null): string {
+  return `rarity-${getWakfuItemRarity(catalog, name, id)}`;
 }

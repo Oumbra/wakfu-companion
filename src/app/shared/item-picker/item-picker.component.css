@@ -1,0 +1,68 @@
+/* Même z-index que .class-picker/.damage-reassign-picker (au-dessus de .recap-panel/
+   .loot-alert-overlay, 500) — voir leur commentaire respectif. */
+.item-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+}
+.item-picker {
+  position: fixed;
+  z-index: 601;
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  width: 280px;
+}
+.item-picker-title-row {
+  margin-bottom: 8px;
+}
+.item-picker-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--accent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.item-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.item-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  color: var(--text-bright);
+  font-size: 0.8rem;
+  text-align: left;
+}
+.item-picker-item:hover {
+  border-color: var(--accent);
+  background: var(--surface-active);
+}
+.item-picker-item.current {
+  border-color: var(--accent);
+  background: var(--surface-active);
+}
+.item-picker-item-rarity {
+  width: 12px;
+  height: 12px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.item-picker-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

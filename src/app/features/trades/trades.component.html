@@ -57,13 +57,37 @@
                   @if (record.acquired.length > 0) {
                     <div class="trade-section">
                       <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>
-                      @for (item of record.acquired; track item.name) {
-                        <div class="trade-item-row" [class]="rarityClass(item.name)">
-                          <app-item-icon [name]="item.name" [size]="20" />
+                      @for (
+                        item of record.acquired;
+                        track item.name + '#' + $index;
+                        let i = $index
+                      ) {
+                        <div class="trade-item-row" [class]="rarityClass(item)">
+                          <app-item-icon [name]="item.name" [id]="item.catalogId" [size]="20" />
                           <span class="trade-item-name">{{
-                            i18n.translateItemName(item.name)
+                            i18n.translateItemNameById(
+                              item.catalogId,
+                              i18n.translateItemName(item.name)
+                            )
                           }}</span>
                           <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                          <button
+                            type="button"
+                            class="icon-btn plain-icon-btn trade-item-correct-btn"
+                            [appTooltip]="'items.correctTooltip' | t"
+                            tooltipPosition="top-right"
+                            (click)="
+                              correctItem(
+                                $event,
+                                record,
+                                'acquired',
+                                item,
+                                occurrenceOf(record.acquired, i)
+                              )
+                            "
+                          >
+                            <app-icon name="edit" [size]="14" />
+                          </button>
                         </div>
                       }
                     </div>
@@ -71,13 +95,33 @@
                   @if (record.given.length > 0) {
                     <div class="trade-section">
                       <span class="trade-section-label given">{{ 'trades.given' | t }}</span>
-                      @for (item of record.given; track item.name) {
-                        <div class="trade-item-row" [class]="rarityClass(item.name)">
-                          <app-item-icon [name]="item.name" [size]="20" />
+                      @for (item of record.given; track item.name + '#' + $index; let i = $index) {
+                        <div class="trade-item-row" [class]="rarityClass(item)">
+                          <app-item-icon [name]="item.name" [id]="item.catalogId" [size]="20" />
                           <span class="trade-item-name">{{
-                            i18n.translateItemName(item.name)
+                            i18n.translateItemNameById(
+                              item.catalogId,
+                              i18n.translateItemName(item.name)
+                            )
                           }}</span>
                           <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                          <button
+                            type="button"
+                            class="icon-btn plain-icon-btn trade-item-correct-btn"
+                            [appTooltip]="'items.correctTooltip' | t"
+                            tooltipPosition="top-right"
+                            (click)="
+                              correctItem(
+                                $event,
+                                record,
+                                'given',
+                                item,
+                                occurrenceOf(record.given, i)
+                              )
+                            "
+                          >
+                            <app-icon name="edit" [size]="14" />
+                          </button>
                         </div>
                       }
                     </div>

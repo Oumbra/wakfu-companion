@@ -92,6 +92,13 @@
       "when": 1786656619695,
       "tag": "0012_adorable_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1786891237336,
+      "tag": "0013_item-name-nullable-fight-loot-line-index",
+      "breakpoints": true
     }
   ]
 }

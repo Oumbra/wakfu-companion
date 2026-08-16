@@ -155,6 +155,17 @@ export class I18nService {
     return translated ? translated : name;
   }
 
+  /** Mirroir de `translateItemName`, mais résolution non ambiguë par id Ankama (voir
+   * `CatalogService.findWakfuItemEntryById`) — à préférer dès que l'id est connu (ex. objet corrigé
+   * manuellement via ItemPickerService, ou ligne d'historique de compte, qui ne porte plus que
+   * l'id depuis le retrait de `item_name` côté serveur). `fallback` est renvoyé tel quel si l'id est
+   * `null` ou introuvable dans le catalogue. */
+  translateItemNameById(id: number | null, fallback: string): string {
+    if (id === null) return fallback;
+    const entry = this.catalog.findWakfuItemEntryById(id);
+    return entry?.[this.locale()] ?? fallback;
+  }
+
   /** Traduit un nom de monstre (dégâts, suivi) via le référentiel officiel
    * Ankama vers la locale courante de l'app — voir `translateItemName`. */
   translateMonsterName(name: string): string {
