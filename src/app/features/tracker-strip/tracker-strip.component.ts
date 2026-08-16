@@ -27,6 +27,7 @@ import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { NavigationService } from '../../core/services/navigation.service';
+import { InputNumberComponent } from '../../shared/input-number/input-number.component';
 
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
@@ -64,6 +65,7 @@ const KPI_EXPANDED_WIDTH_PX = 250;
     WakfuAutocompleteComponent,
     IconComponent,
     TooltipDirective,
+    InputNumberComponent,
   ],
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',

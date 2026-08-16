@@ -55,7 +55,7 @@
           [placeholder]="'tracker.searchPlaceholder' | t"
           [existingNames]="existingNames()"
           (selected)="add($event)"
-          (recipeConfirmed)="closeAdd()"
+          (recipeOpened)="closeAdd()"
         />
         <button
           class="icon-btn kpi-add-close"
@@ -73,42 +73,22 @@
                 type="button"
                 class="kpi-target-chip"
                 [class.selected]="watchlist.addTarget() === preset"
-                (click)="watchlist.setAddTargetPreset(preset)"
+                (click)="watchlist.setAddTargetPreset($event, preset)"
               >
                 {{ preset }}
               </button>
             }
           </div>
-          <div class="kpi-target-stepper">
-            <button
-              type="button"
-              class="kpi-target-step"
-              [appTooltip]="'tracker.countdownTargetDecrease' | t"
-              (click)="watchlist.stepAddTarget(-1)"
-            >
-              −
-            </button>
-            <input
-              class="kpi-add-target-input"
-              type="number"
-              min="1"
-              max="9999"
-              inputmode="numeric"
-              [value]="watchlist.addTarget()"
-              [appTooltip]="'tracker.countdownTargetHint' | t"
-              (input)="watchlist.onAddTargetInput($event)"
-              (keydown)="watchlist.onAddTargetKeydown($event)"
-              (wheel)="watchlist.onAddTargetWheel($event)"
-            />
-            <button
-              type="button"
-              class="kpi-target-step"
-              [appTooltip]="'tracker.countdownTargetIncrease' | t"
-              (click)="watchlist.stepAddTarget(1)"
-            >
-              +
-            </button>
-          </div>
+          <app-input-number
+            class="kpi-add-target-input"
+            [value]="watchlist.addTarget()"
+            [min]="1"
+            [max]="9999"
+            [prevTooltip]="'tracker.countdownTargetDecrease' | t"
+            [nextTooltip]="'tracker.countdownTargetIncrease' | t"
+            [fieldTooltip]="'tracker.countdownTargetHint' | t"
+            (valueChange)="watchlist.addTarget.set($event)"
+          />
         </div>
       }
     } @else {
@@ -199,15 +179,14 @@
         </span>
         @if (entry.mode === 'down') {
           <span class="kpi-count-inline is-countdown">
-            <input
+            <app-input-number
               class="kpi-countdown-current-input"
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
               [value]="entry.count"
+              [min]="0"
+              [max]="entry.countdownTarget"
+              [showButtons]="false"
               (click)="$event.stopPropagation()"
-              (keydown)="watchlist.onCountdownKeydown($event, entry)"
-              (change)="watchlist.onCountdownInput($event, entry)"
+              (valueChange)="watchlist.setCurrentCount(entry, $event)"
             />
             <span class="kpi-count-sep">/</span>
             <span class="kpi-target-static" [appTooltip]="'tracker.countdownTargetLocked' | t">{{

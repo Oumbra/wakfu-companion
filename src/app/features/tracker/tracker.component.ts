@@ -12,6 +12,7 @@ import { WatchlistTileController } from '../../core/utils/watchlist-tile-control
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { InputNumberComponent } from '../../shared/input-number/input-number.component';
 
 /**
  * Suivi (mobile) : grille de cartes en flex-wrap (voir CLAUDE.md, même
@@ -35,6 +36,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
     WakfuAutocompleteComponent,
     IconComponent,
     TooltipDirective,
+    InputNumberComponent,
   ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.css',

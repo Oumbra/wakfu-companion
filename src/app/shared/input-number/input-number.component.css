@@ -1,0 +1,82 @@
+/* Toutes les dimensions/couleurs sont pilotables via variables CSS `--input-number-*` posées par
+   l'appelant sur la balise `<app-input-number>` (héritées à travers `:host{display:contents}`) —
+   chaque appelant historique avait son propre gabarit légèrement différent (voir
+   input-number.component.ts), ces variables permettent de le reproduire à l'identique sans dupliquer
+   le composant. Les valeurs par défaut ci-dessous reprennent le gabarit `.item-picker-qty-stepper`
+   (déjà documenté ailleurs comme référence visuelle). */
+:host {
+  display: contents;
+}
+
+.input-number {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--input-number-border-color, var(--border-strong));
+  border-radius: var(--input-number-radius, 6px);
+  overflow: hidden;
+  background: var(--input-number-bg, var(--surface-active));
+  height: var(--input-number-height, 26px);
+  flex-shrink: 0;
+}
+.input-number:focus-within {
+  border-color: var(--input-number-focus-color, var(--accent));
+}
+/* Sans boutons, rien ne force plus la hauteur du groupe : la laisser suivre le padding du champ
+   (voir `.no-buttons .input-number-field`) plutôt que garder une hauteur de stepper à boutons. */
+.input-number.no-buttons {
+  height: auto;
+}
+
+.input-number-step {
+  width: var(--input-number-btn-width, 22px);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--input-number-btn-font-size, 0.85rem);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+}
+.input-number-step:hover:not(:disabled) {
+  background: var(--tint-strong);
+  color: var(--accent);
+}
+.input-number-step:disabled {
+  color: var(--text-muted);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.input-number-field {
+  width: var(--input-number-field-width, 44px);
+  flex-shrink: 0;
+  padding: var(--input-number-field-padding, 4px 2px);
+  border: none;
+  border-left: 1px solid var(--input-number-border-color, var(--border-strong));
+  border-right: 1px solid var(--input-number-border-color, var(--border-strong));
+  background: var(--input-number-field-bg, var(--surface-well));
+  font-family: monospace;
+  font-weight: 700;
+  font-size: var(--input-number-field-font-size, 0.72rem);
+  color: var(--input-number-field-color, var(--accent));
+  text-align: center;
+  -moz-appearance: textfield;
+}
+/* Sans boutons voisins, le champ n'a plus de séparateur à afficher : sa bordure vient alors
+   entièrement du conteneur `.input-number` (voir plus haut). */
+.input-number.no-buttons .input-number-field {
+  border-left: none;
+  border-right: none;
+}
+.input-number-field::-webkit-inner-spin-button,
+.input-number-field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.input-number-field:focus {
+  outline: none;
+  background: var(--input-number-field-focus-bg, var(--surface-active));
+}

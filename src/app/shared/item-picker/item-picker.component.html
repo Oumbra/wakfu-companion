@@ -25,35 +25,14 @@
     @if (showModify()) {
       <div class="item-picker-modify-row">
         <span class="item-picker-modify-label">{{ 'items.modifyQuantity' | t }}</span>
-        <div class="item-picker-qty-stepper">
-          <button
-            type="button"
-            class="item-picker-qty-step"
-            [appTooltip]="'items.quantityDecrease' | t"
-            (click)="stepQuantity(-1)"
-          >
-            −
-          </button>
-          <input
-            type="number"
-            min="1"
-            [attr.max]="request().quantity"
-            inputmode="numeric"
-            class="item-picker-qty-input"
-            [value]="quantity()"
-            (input)="onQuantityInput($event)"
-            (keydown)="onQuantityKeydown($event)"
-            (blur)="onQuantityBlur()"
-          />
-          <button
-            type="button"
-            class="item-picker-qty-step"
-            [appTooltip]="'items.quantityIncrease' | t"
-            (click)="stepQuantity(1)"
-          >
-            +
-          </button>
-        </div>
+        <app-input-number
+          [value]="quantity()"
+          [min]="1"
+          [max]="request().quantity"
+          [prevTooltip]="'items.quantityDecrease' | t"
+          [nextTooltip]="'items.quantityIncrease' | t"
+          (valueChange)="quantity.set($event)"
+        />
       </div>
       @for (entry of candidates(); track entry.id) {
         <button

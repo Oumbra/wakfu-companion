@@ -8,7 +8,6 @@ import { I18nService } from '../services/i18n.service';
 import { ConfirmDeleteService } from '../services/confirm-delete.service';
 import { CatalogService } from '../api/catalog.service';
 import { getWakfuItemRarity } from '../data/wakfu-item-rarity.data';
-import { resolveNumericKeyAction } from './numeric-keydown.util';
 import { WakfuSearchResult } from '../services/wakfu-search.service';
 
 /** Identifie une entrée de watchlist de façon unique, y compris quand deux entrées partagent le
@@ -49,19 +48,18 @@ export class WatchlistTileController {
     this.addMode.set(this.stats.defaultAddMode());
   }
   /** Cible du décompte choisie au moment de la création (mode 'down' uniquement, voir
-   * `.kpi-add-target-input`/`.tracker-add-target-input`) — un KPI décompte n'a plus AUCUN moyen de
+   * `app-input-number` dans tracker/tracker-strip) — un KPI décompte n'a plus AUCUN moyen de
    * changer sa cible une fois créé (voir setWatchlistCountdownTarget) : elle doit donc être fixée
    * ICI, avant l'ajout, au même titre que le mode. Réinitialisée avec `addMode` (voir
-   * `resetAddForm`). Pas de bornage strict pendant la saisie (voir `onAddTargetInput`) pour ne pas
-   * lutter contre l'utilisateur qui efface le champ pour retaper un nombre à deux chiffres — la
-   * valeur n'est clampée qu'à l'usage réel, dans `add()`. */
+   * `resetAddForm`). Bornée à [1, 9999] par `app-input-number` lui-même (min/max) — pas de clamp
+   * ici, seul `add()` re-sécurise la valeur réellement utilisée. */
   readonly addTarget = signal<number>(1);
 
   /** Quantités toutes faites proposées en un clic (chips) à côté du stepper manuel — la plupart
    * des décomptes visent une quantité ronde (recette, farm...), un clic va plus vite qu'une saisie
    * au clavier. Purement une aide de saisie : n'importe quelle valeur reste tapable/ajustable via
-   * `onAddTargetInput`/`stepAddTarget`, ces presets ne bornent rien. */
-  readonly targetPresets: readonly number[] = [10, 50, 100, 200];
+   * `app-input-number` (voir `addTarget`), ces presets ne bornent rien. */
+  readonly targetPresets: readonly number[] = [10, 50, 100, 500, 1000];
 
   /**
    * Mode "sélection multiple" : chaque tuile affiche une case à cocher à la place de sa croix de
@@ -147,35 +145,10 @@ export class WatchlistTileController {
   }
 
   /** Édition directe de la valeur ACTUELLE du décompte (mode 'down') — la cible, elle, ne se
-   * modifie plus après la création (voir addTarget/add()). */
-  onCountdownInput(event: Event, entry: WatchlistEntry): void {
-    event.stopPropagation();
-    const value = Number((event.target as HTMLInputElement).value);
+   * modifie plus après la création (voir addTarget/add()). Bornage [0, countdownTarget] délégué à
+   * `app-input-number` (min/max) plutôt que recalculé ici. */
+  setCurrentCount(entry: WatchlistEntry, value: number): void {
     this.stats.setWatchlistCurrentCount(entry.name, value, entry.catalogId);
-  }
-
-  /** Restreint l'input aux chiffres et pilote la valeur via les flèches haut/bas — voir
-   * resolveNumericKeyAction. Bornée à `entry.countdownTarget` (la cible ne bouge plus). */
-  onCountdownKeydown(event: KeyboardEvent, entry: WatchlistEntry): void {
-    event.stopPropagation();
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.stats.setWatchlistCurrentCount(
-        entry.name,
-        Math.min(entry.countdownTarget, entry.count + 1),
-        entry.catalogId,
-      );
-    } else if (action === 'decrement') {
-      event.preventDefault();
-      this.stats.setWatchlistCurrentCount(
-        entry.name,
-        Math.max(0, entry.count - 1),
-        entry.catalogId,
-      );
-    }
   }
 
   /** Pourcentage d'avancement d'un décompte : part de 0% (cible tout juste choisie) à 100% (0
@@ -212,47 +185,11 @@ export class WatchlistTileController {
     });
   }
 
-  /** Saisie de la cible au moment de la création (voir addTarget) — pas de clamp ici (voir doc du
-   * signal) : seul `add()` borne la valeur réellement utilisée. */
-  onAddTargetInput(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    this.addTarget.set(Number.isFinite(value) ? value : 0);
-  }
-
-  /** Même filtrage chiffres-only + flèches haut/bas que `onCountdownKeydown`, pour le champ de
-   * cible du formulaire d'ajout (pas d'entrée existante à cibler ici, juste le signal `addTarget`). */
-  onAddTargetKeydown(event: KeyboardEvent): void {
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.addTarget.update((v) => v + 1);
-    } else if (action === 'decrement') {
-      event.preventDefault();
-      this.addTarget.update((v) => Math.max(0, v - 1));
-    }
-  }
-
-  /** Ajuste la cible via les boutons +/- du stepper (contrairement à `onAddTargetKeydown`,
-   * toujours une action explicite au clic, jamais une étape intermédiaire d'une saisie au clavier
-   * en cours) — bornée à 1 minimum immédiatement, pas seulement à l'usage réel dans `add()`. */
-  stepAddTarget(delta: number): void {
-    this.addTarget.update((v) => Math.max(1, Math.floor(Number.isFinite(v) ? v : 0) + delta));
-  }
-
-  /** Même geste que les boutons +/- du stepper, au fil de la molette plutôt qu'au clic — pratique
-   * ergonomique courante sur un champ numérique déjà focus/survolé. `preventDefault` empêche le
-   * scroll de la page de "fuiter" pendant l'ajustement. */
-  onAddTargetWheel(event: WheelEvent): void {
-    event.preventDefault();
-    this.stepAddTarget(event.deltaY < 0 ? 1 : -1);
-  }
-
   /** Sélectionne une quantité toute faite (voir `targetPresets`) — remplace intégralement la
    * cible en cours de saisie, comme si l'utilisateur l'avait tapée directement. */
-  setAddTargetPreset(value: number): void {
-    this.addTarget.set(value);
+  setAddTargetPreset(event: PointerEvent, value: number): void {
+    const symbole = event.altKey ? -1 : 1
+    this.addTarget.set(this.addTarget() + (value * symbole));
   }
 
   /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte, la cible) choisis

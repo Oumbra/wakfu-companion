@@ -113,67 +113,20 @@
   line-height: 1;
 }
 .kpi-target-chip:hover {
-  border-color: var(--accent);
-}
-.kpi-target-chip.selected {
   background: var(--accent);
   border-color: var(--accent);
   color: #04222a;
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
-   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. Stepper
-   (boutons +/- autour d'un vrai `input type="number"`) plutôt qu'un champ texte nu, même logique
-   que la bande desktop (voir tracker-strip.component.css) : spinners natifs masqués au profit de
-   ces boutons, dans l'esprit de `.icon-btn` déjà utilisé partout ailleurs dans l'app. */
-.kpi-target-stepper {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--surface-active);
-  height: 28px;
-  flex-shrink: 0;
-}
-.kpi-target-step {
-  width: 24px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.kpi-target-step:hover {
-  background: var(--tint-strong);
-  color: var(--accent);
-}
-.tracker-add-target-input {
-  width: 46px;
-  flex-shrink: 0;
-  padding: 4px 2px;
-  border: none;
-  border-left: 1px solid var(--border-strong);
-  border-right: 1px solid var(--border-strong);
-  background: var(--surface-well);
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--accent);
-  text-align: center;
-  -moz-appearance: textfield;
-}
-.tracker-add-target-input::-webkit-inner-spin-button,
-.tracker-add-target-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.tracker-add-target-input:focus {
-  outline: none;
-  background: var(--surface-active);
+   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. `app-input-number`
+   (shared/input-number/) plutôt qu'un stepper local, même gabarit que la bande desktop (voir
+   tracker-strip.component.css) à quelques px près (variables `--input-number-*` ci-dessous). */
+app-input-number.tracker-target-input {
+  --input-number-height: 28px;
+  --input-number-btn-width: 24px;
+  --input-number-btn-font-size: 0.9rem;
+  --input-number-field-width: 46px;
 }
 
 /* Bouton "suppression multiple" (mobile) — même mécanisme/gabarit que .icon-btn (26x26, voir
@@ -316,22 +269,16 @@
    `.kpi-card-value` en lecture seule (mode 'up'). La cible, elle, ne se modifie plus après la
    création (voir `.kpi-card-target` plus bas et CLAUDE.md). Couleur alignée sur --kama-color
    (plutôt que --accent) : cohérent avec la bande desktop, où le même choix a été fait pour la
-   valeur courante du décompte (voir tracker-strip.component.css). */
-.kpi-card-value-input {
-  width: 50px;
-  padding: 4px 8px;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  background: transparent;
-  font-family: monospace;
-  font-weight: 600;
-  font-size: 14;
-  color: var(--kama-color);
-  text-align: center;
-}
-.kpi-card-value-input:focus {
-  outline: none;
-  border-color: var(--kama-color);
+   valeur courante du décompte (voir tracker-strip.component.css). `app-input-number` sans boutons
+   (`[showButtons]="false"`, voir template) : pas de place pour un stepper dans une carte 58px. */
+app-input-number.kpi-card-value-input {
+  --input-number-field-width: 50px;
+  --input-number-field-padding: 4px 8px;
+  --input-number-field-bg: transparent;
+  --input-number-field-focus-bg: transparent;
+  --input-number-field-color: var(--kama-color);
+  --input-number-field-font-size: 0.85rem;
+  --input-number-focus-color: var(--kama-color);
 }
 .kpi-card-reset {
   flex-shrink: 0;

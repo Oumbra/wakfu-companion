@@ -1,0 +1,34 @@
+<div
+  class="stepper"
+  tabindex="0"
+  role="spinbutton"
+  [attr.aria-valuenow]="value()"
+  [attr.aria-valuemin]="min()"
+  [attr.aria-valuemax]="max()"
+  [attr.aria-valuetext]="label()"
+  (keydown)="onKeydown($event)"
+>
+  <button
+    type="button"
+    class="stepper-btn"
+    tabindex="-1"
+    [appTooltip]="prevTooltip()"
+    tooltipPosition="top"
+    [disabled]="!canDecrement()"
+    (click)="move(-1)"
+  >
+    ‹
+  </button>
+  <span class="stepper-label">{{ label() }}</span>
+  <button
+    type="button"
+    class="stepper-btn"
+    tabindex="-1"
+    [appTooltip]="nextTooltip()"
+    tooltipPosition="top"
+    [disabled]="!canIncrement()"
+    (click)="move(1)"
+  >
+    ›
+  </button>
+</div>

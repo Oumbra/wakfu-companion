@@ -54,8 +54,10 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly duration = signal('00:00:00');
   protected readonly position = signal<{ left: number; top: number } | null>(null);
   protected readonly kamasExpanded = signal(false);
-  protected readonly xpExpanded = signal(false);
-  protected readonly combatsExpanded = signal(false);
+  /** Combat et expérience ouverts par défaut (le butin, imbriqué sous "Combats" ci-dessous, en
+   * bénéficie du même coup) — seul Kamas reste replié par défaut. */
+  protected readonly xpExpanded = signal(true);
+  protected readonly combatsExpanded = signal(true);
   protected readonly lootSort = signal<LootSort>('name');
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
