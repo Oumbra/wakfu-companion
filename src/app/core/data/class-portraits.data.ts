@@ -7,12 +7,23 @@ import { Gender } from './class-icons.data';
  * l'encyclopédie officielle — voir git log). Sources : `static.ankama.com/web-test/{id}.png`
  * (icônes de sélection d'avatar du jeu, fournies directement par identifiant numérique plutôt que
  * cadrées à la main comme la planche précédente), assemblées en une seule planche 2026-08-15.
- * Fond opaque (blanc pour la plupart des classes, parfois une couleur saturée type feca/eliotrope)
- * — une 1ère tentative de fond transparent par flood-fill (case par case) a été faite puis
- * annulée (2026-08-15) faute d'un résultat correct sur certaines cases ; à refaire proprement, ne
- * pas répéter la même approche sans corriger le défaut signalé.
+ *
+ * Fond transparent (2026-08-16) — `class-avatars-sheet-transparent-*.png`, copie retraitée de la
+ * planche opaque d'origine (`class-avatars-sheet-ade44514.png`, conservée telle quelle, non
+ * référencée ailleurs). Une 1ère tentative de fond transparent par simple flood-fill à seuil
+ * "lâche" avait été faite puis annulée (2026-08-15) : sur certaines cases, la lisière tête/cheveux
+ * est rendue en dégradé doux sans trait d'encre net, si bien qu'un flood-fill à seuil lâche
+ * traverse ce dégradé et mange une partie du visage (fuite mesurée entre 165 et 175 de luminosité
+ * minimale sur la case la plus à risque). Traitement retenu cette fois : connexité stricte depuis
+ * la bordure de chaque case (seuil élevé, marge de sécurité large sous ce point de fuite) + anneau
+ * de dilatation borné (quelques px, pas une nouvelle traversée de connexité) pour rattraper le
+ * reliquat d'anti-aliasing, puis alpha + dématriçage couleur façon "color to alpha" (fond blanc
+ * pur) sur cette seule région — un pixel hors de cette région reste intégralement opaque quelle
+ * que soit sa couleur, ce qui protège les cheveux clairs/reflets blancs internes au personnage.
+ * Vérifié sur les 36 cases (composite sur fond magenta ET sombre + détection automatique de petits
+ * artefacts) avant intégration.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-ade44514.png';
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-transparent-9eb9eceb.png';
 export const CLASS_PORTRAITS_SPRITE_COLS = 2;
 export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
 
