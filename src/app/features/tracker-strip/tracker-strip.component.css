@@ -186,8 +186,9 @@
   flex-direction: column;
 }
 /* Le mode décompte ajoute les puces de quantités courantes (`.kpi-target-presets`) ET le stepper
-   manuel (`.kpi-target-stepper`) à la suite du switch — largeur mesurée en Playwright (contenu
-   exact des contrôles + marge confortable pour le champ de recherche, qui absorbe tout le reste). */
+   manuel (`app-input-number.kpi-add-target-input`) à la suite du switch — largeur mesurée en
+   Playwright (contenu exact des contrôles + marge confortable pour le champ de recherche, qui
+   absorbe tout le reste). */
 .kpi-add.expanded.with-target {
   gap: 7px;
 }
@@ -270,68 +271,20 @@
   line-height: 1;
 }
 .kpi-target-chip:hover {
-  border-color: var(--accent);
-}
-.kpi-target-chip.selected {
   background: var(--accent);
   border-color: var(--accent);
   color: #04222a;
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
-   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. Stepper
-   (boutons +/- autour d'un vrai `input type="number"`) plutôt qu'un champ texte nu : un `type`
-   sémantiquement correct (clavier numérique mobile) mais les spinners natifs du navigateur restent
-   masqués (incohérents d'un navigateur à l'autre, voir `::-webkit-inner-spin-button` plus bas) au
-   profit de ces boutons, dans l'esprit de `.icon-btn` déjà utilisé partout ailleurs dans l'app. */
-.kpi-target-stepper {
-  display: inline-flex;
-  align-items: stretch;
-  border: 1px solid var(--border-strong);
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--surface-active);
-  height: 26px;
-  flex-shrink: 0;
-}
-.kpi-target-step {
-  width: 20px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.85rem;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-.kpi-target-step:hover {
-  background: var(--tint-strong);
-  color: var(--accent);
-}
-.kpi-add-target-input {
-  width: 40px;
-  flex-shrink: 0;
-  padding: 4px 2px;
-  border: none;
-  border-left: 1px solid var(--border-strong);
-  border-right: 1px solid var(--border-strong);
-  background: var(--surface-well);
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--accent);
-  text-align: center;
-  -moz-appearance: textfield;
-}
-.kpi-add-target-input::-webkit-inner-spin-button,
-.kpi-add-target-input::-webkit-outer-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.kpi-add-target-input:focus {
-  outline: none;
-  background: var(--surface-active);
+   sélectionné, voir template) — seul moment où elle est modifiable, voir CLAUDE.md. `app-input-number`
+   (shared/input-number/) plutôt qu'un stepper local : boutons +/- + spinners natifs masqués déjà
+   gérés par le composant, seul le gabarit (légèrement plus compact qu'en mobile, voir
+   tracker.component.css) est propre à cette bande. */
+app-input-number.kpi-add-target-input {
+  --input-number-btn-width: 20px;
+  --input-number-btn-font-size: 0.85rem;
+  --input-number-field-width: 40px;
 }
 
 /* Refoulement RÉEL : `.kpi` reste un item flex normal de `.kpi-strip` (pas de
@@ -478,23 +431,17 @@
    "width:0 → largeur réelle" de l'ancien `.kpi-countdown-input` : c'est maintenant le conteneur
    parent (`.kpi-count-inline`, voir plus haut) qui gère tout le collapse replié/déplié, ce champ
    garde une largeur fixe en toutes circonstances (masqué par l'`overflow:hidden` du parent quand
-   la tuile est repliée). */
-.kpi-countdown-current-input {
-  width: 50px;
-  padding: 1px 3px;
-  border: 1px solid var(--border-strong);
-  border-radius: 3px;
-  background: var(--tint-weak);
-  font-family: monospace;
-  font-weight: 700;
-  font-size: 0.8rem;
-  color: var(--kama-color);
-  text-align: center;
-  flex-shrink: 0;
-}
-.kpi-countdown-current-input:focus {
-  outline: none;
-  border-color: var(--kama-color);
+   la tuile est repliée). `app-input-number` sans boutons (`[showButtons]="false"`, voir template) :
+   pas de place pour un stepper dans une tuile 58px repliable. */
+app-input-number.kpi-countdown-current-input {
+  --input-number-radius: 3px;
+  --input-number-field-width: 50px;
+  --input-number-field-padding: 1px 3px;
+  --input-number-field-bg: var(--tint-weak);
+  --input-number-field-focus-bg: var(--tint-weak);
+  --input-number-field-color: var(--kama-color);
+  --input-number-field-font-size: 0.8rem;
+  --input-number-focus-color: var(--kama-color);
 }
 .kpi-count-sep {
   color: var(--text-muted);

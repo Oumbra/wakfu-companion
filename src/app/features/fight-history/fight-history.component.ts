@@ -79,9 +79,11 @@ export class FightHistoryComponent {
   private readonly catalog = inject(CatalogService);
   protected readonly auth = inject(AuthService);
 
-  private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
+  /** Combats de la section "combat" (ally/enemy) actuellement REPLIÉS — vide par défaut, tout
+   * DÉPLIÉ (même convention que `collapsedGroupKeys` ci-dessous : voir CLAUDE.md). */
+  private readonly collapsedFightIds = signal<ReadonlySet<number>>(new Set());
   /** Switch Total/Tour (voir DamageViewSwitchComponent) — indexé par `id` de combat, indépendant
-   * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `expandedFightIds`) :
+   * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `collapsedFightIds`) :
    * contrairement au combat en cours (un seul à la fois, voir DamageMeterComponent), il n'y a pas
    * ici de "combat affiché" unique auquel rattacher un état global. Absent de la map = 'total'
    * (comportement historique, aucun combat n'a de tour choisi par défaut). */
@@ -92,8 +94,10 @@ export class FightHistoryComponent {
   protected readonly lootSort = signal<LootSort>('name');
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
-  private readonly expandedFightXpIds = signal<ReadonlySet<number>>(new Set());
-  private readonly expandedFightLootIds = signal<ReadonlySet<number>>(new Set());
+  /** Sections XP/butin REPLIÉES par combat — même convention que `collapsedFightIds` ci-dessus
+   * (vide par défaut, tout DÉPLIÉ). */
+  private readonly collapsedFightXpIds = signal<ReadonlySet<number>>(new Set());
+  private readonly collapsedFightLootIds = signal<ReadonlySet<number>>(new Set());
   /** Combats de donjon actuellement DÉPLIÉS (vide par défaut, tout REPLIÉ — à l'inverse de la
    * convention "vide = tout déplié" utilisée par `collapsedGroupKeys` ci-dessous : un regroupement
    * de donjon doit toujours démarrer fermé, voir CLAUDE.md), clé = `id` du combat représentatif (le
@@ -363,14 +367,14 @@ export class FightHistoryComponent {
   }
 
   protected toggleFight(id: number): void {
-    const next = new Set(this.expandedFightIds());
+    const next = new Set(this.collapsedFightIds());
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    this.expandedFightIds.set(next);
+    this.collapsedFightIds.set(next);
   }
 
   protected isFightExpanded(id: number): boolean {
-    return this.expandedFightIds().has(id);
+    return !this.collapsedFightIds().has(id);
   }
 
   protected viewModeFor(id: number): DamageViewMode {
@@ -394,25 +398,25 @@ export class FightHistoryComponent {
   }
 
   protected toggleFightXp(id: number): void {
-    const next = new Set(this.expandedFightXpIds());
+    const next = new Set(this.collapsedFightXpIds());
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    this.expandedFightXpIds.set(next);
+    this.collapsedFightXpIds.set(next);
   }
 
   protected isFightXpExpanded(id: number): boolean {
-    return this.expandedFightXpIds().has(id);
+    return !this.collapsedFightXpIds().has(id);
   }
 
   protected toggleFightLoot(id: number): void {
-    const next = new Set(this.expandedFightLootIds());
+    const next = new Set(this.collapsedFightLootIds());
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    this.expandedFightLootIds.set(next);
+    this.collapsedFightLootIds.set(next);
   }
 
   protected isFightLootExpanded(id: number): boolean {
-    return this.expandedFightLootIds().has(id);
+    return !this.collapsedFightLootIds().has(id);
   }
 
   protected allyRowsFor(record: FightRecord): EntityDamageRow[] {

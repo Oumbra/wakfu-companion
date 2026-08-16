@@ -23,7 +23,7 @@ import { Gender } from './class-icons.data';
  * Vérifié sur les 36 cases (composite sur fond magenta ET sombre + détection automatique de petits
  * artefacts) avant intégration.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-transparent-9eb9eceb.png';
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-ade44514.png';
 export const CLASS_PORTRAITS_SPRITE_COLS = 2;
 export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
 

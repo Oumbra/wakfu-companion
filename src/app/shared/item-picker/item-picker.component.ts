@@ -14,10 +14,10 @@ import { CatalogService, CatalogItemEntry } from '../../core/api/catalog.service
 import { I18nService } from '../../core/services/i18n.service';
 import { ItemPickerRequest } from '../../core/services/item-picker.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
-import { resolveNumericKeyAction } from '../../core/utils/numeric-keydown.util';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { InputNumberComponent } from '../input-number/input-number.component';
 
 /**
  * Menu d'interaction avec un objet (suivi + correction manuelle d'homonyme, voir
@@ -27,7 +27,7 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-item-picker',
-  imports: [ItemIconComponent, TranslatePipe, TooltipDirective],
+  imports: [ItemIconComponent, TranslatePipe, TooltipDirective, InputNumberComponent],
   templateUrl: './item-picker.component.html',
   styleUrl: './item-picker.component.css',
 })
@@ -108,35 +108,6 @@ export class ItemPickerComponent implements OnDestroy {
     const max = Math.max(1, this.request().quantity);
     if (!Number.isFinite(value)) return 1;
     return Math.min(max, Math.max(1, Math.floor(value)));
-  }
-
-  protected stepQuantity(delta: number): void {
-    this.quantity.update((v) => this.clampQuantity(v + delta));
-  }
-
-  protected onQuantityInput(event: Event): void {
-    const value = Number((event.target as HTMLInputElement).value);
-    // Pas de clamp immédiat ici (même raison que WatchlistTileController.onAddTargetInput) : ne
-    // pas lutter contre l'utilisateur qui efface le champ pour retaper un nombre à deux chiffres.
-    // Le clamp réel a lieu à l'usage (choose()) et sur perte de focus (voir template, (blur)).
-    this.quantity.set(Number.isFinite(value) ? value : 0);
-  }
-
-  protected onQuantityBlur(): void {
-    this.quantity.update((v) => this.clampQuantity(v));
-  }
-
-  protected onQuantityKeydown(event: KeyboardEvent): void {
-    const action = resolveNumericKeyAction(event);
-    if (action === 'block') {
-      event.preventDefault();
-    } else if (action === 'increment') {
-      event.preventDefault();
-      this.stepQuantity(1);
-    } else if (action === 'decrement') {
-      event.preventDefault();
-      this.stepQuantity(-1);
-    }
   }
 
   protected follow(): void {

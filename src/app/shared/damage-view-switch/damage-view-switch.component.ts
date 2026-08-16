@@ -1,6 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { TranslatePipe } from '../translate.pipe';
-import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { StepperComponent } from '../stepper/stepper.component';
 
 export type DamageViewMode = 'total' | 'turn';
 
@@ -15,7 +15,7 @@ export type DamageViewMode = 'total' | 'turn';
  */
 @Component({
   selector: 'app-damage-view-switch',
-  imports: [TranslatePipe, TooltipDirective],
+  imports: [TranslatePipe, StepperComponent],
   templateUrl: './damage-view-switch.component.html',
   styleUrl: './damage-view-switch.component.css',
 })
@@ -33,10 +33,5 @@ export class DamageViewSwitchComponent {
 
   protected setMode(mode: DamageViewMode): void {
     if (mode !== this.mode()) this.modeChange.emit(mode);
-  }
-
-  protected step(delta: number): void {
-    const next = Math.min(Math.max(1, this.turn() + delta), this.maxTurn());
-    if (next !== this.turn()) this.turnChange.emit(next);
   }
 }

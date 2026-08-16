@@ -17,7 +17,7 @@ import {
 } from '../../core/data/class-icons.data';
 import { getClassName } from '../../core/data/class-names.data';
 import { CLASS_PORTRAIT_ORDER } from '../../core/data/class-portraits.data';
-import { ClassPickerMode } from '../../core/services/class-picker.service';
+import { ClassPickerMode, ClassPickerService } from '../../core/services/class-picker.service';
 import { AppLocale, I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
@@ -68,6 +68,7 @@ function buildOptions(gender: Gender, locale: AppLocale): ClassOption[] {
 })
 export class ClassPickerComponent implements OnDestroy {
   private readonly i18n = inject(I18nService);
+  private readonly classPickerService = inject(ClassPickerService);
 
   readonly position = input.required<ClassPickerPosition>();
   /** Mode d'affichage à l'ouverture — l'utilisateur peut ensuite basculer librement via le switch
@@ -135,6 +136,10 @@ export class ClassPickerComponent implements OnDestroy {
 
   protected setMode(mode: ClassPickerMode): void {
     this.mode.set(mode);
+    // Le choix de l'utilisateur (icônes/portraits) vaut préférence générale, pas seulement pour ce
+    // picker précis — voir ClassPickerService.preferredMode, repris comme `initialMode` par défaut
+    // à la prochaine ouverture (tous appelants confondus, sauf ceux forçant un mode explicite).
+    this.classPickerService.setPreferredMode(mode);
   }
 
   protected choose(className: string): void {

@@ -84,7 +84,7 @@ export class WakfuAutocompleteComponent {
    * d'ajout repliable (voir tracker-strip.component.ts) de se refermer, comme si l'utilisateur
    * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond)
    * n'émet volontairement rien. */
-  readonly recipeConfirmed = output<void>();
+  readonly recipeOpened = output<void>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
   protected readonly rarityIconUrl = wakfuRarityIconUrl;
@@ -192,7 +192,6 @@ export class WakfuAutocompleteComponent {
       lastConfirmedAt = confirmedAt;
       if (!requestClosed || !this.awaitingOwnRecipeConfirm) return;
       this.awaitingOwnRecipeConfirm = false;
-      if (didConfirm) this.recipeConfirmed.emit();
     });
   }
 
@@ -246,6 +245,7 @@ export class WakfuAutocompleteComponent {
    * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` pilote l'état de chargement
    * pendant l'appel (voir template, boutons recette désactivés). */
   protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
+    this.recipeOpened.emit();
     event.stopPropagation();
     if (entry.id === null || this.recipeLoading()) return;
     this.recipeLoading.set(true);

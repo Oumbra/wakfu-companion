@@ -20,20 +20,18 @@
           <span class="recipe-modal-item-name">{{ req.itemLabel }}</span>
         </div>
 
-        <label class="recipe-modal-qty-row">
+        <div class="recipe-modal-qty-row">
           <span class="recipe-modal-qty-label">{{ 'tracker.recipeQuantityLabel' | t }}</span>
-          <input
+          <app-input-number
             #quantityInput
-            type="text"
-            inputmode="numeric"
-            pattern="[0-9]*"
             class="recipe-modal-qty-input"
             [value]="quantity()"
-            (keydown)="onKeydown($event)"
+            [min]="1"
+            [showButtons]="false"
+            (valueChange)="quantity.set($event)"
             (keydown.enter)="confirm()"
-            (change)="onInput($event)"
           />
-        </label>
+        </div>
 
         <div class="recipe-modal-ingredients">
           @for (ing of req.ingredients; track ing.id; let i = $index; let first = $first) {

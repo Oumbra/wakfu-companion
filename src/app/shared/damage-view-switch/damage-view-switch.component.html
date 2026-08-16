@@ -19,28 +19,14 @@
     </button>
   </div>
   @if (mode() === 'turn') {
-    <div class="damage-turn-stepper">
-      <button
-        type="button"
-        class="damage-turn-step"
-        [appTooltip]="'damageMeter.prevTurn' | t"
-        tooltipPosition="top"
-        [disabled]="turn() <= 1"
-        (click)="step(-1)"
-      >
-        ‹
-      </button>
-      <span class="damage-turn-label">{{ 'damageMeter.turnLabel' | t: { n: turn() } }}</span>
-      <button
-        type="button"
-        class="damage-turn-step"
-        [appTooltip]="'damageMeter.nextTurn' | t"
-        tooltipPosition="top"
-        [disabled]="turn() >= maxTurn()"
-        (click)="step(1)"
-      >
-        ›
-      </button>
-    </div>
+    <app-stepper
+      [label]="'damageMeter.turnLabel' | t: { n: turn() }"
+      [value]="turn()"
+      [min]="1"
+      [max]="maxTurn()"
+      [prevTooltip]="'damageMeter.prevTurn' | t"
+      [nextTooltip]="'damageMeter.nextTurn' | t"
+      (valueChange)="turnChange.emit($event)"
+    />
   }
 </div>

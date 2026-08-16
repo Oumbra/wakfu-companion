@@ -214,6 +214,43 @@ de l'app (fr/en/es/pt).
 
 ## Conventions UI transverses (réutiliser, ne pas recréer)
 
+- **Toujours un composant, jamais un bloc HTML+CSS+JS local recopié.** Dès qu'un morceau d'UI a un
+  comportement propre (état interne, gestion clavier, options de configuration) — même s'il ne
+  semble utilisé qu'à un seul endroit au départ — l'extraire en composant partagé (`shared/`)
+  plutôt que de le garder inline dans le template/CSS/TS du composant parent. Un composant partagé
+  se teste, se documente et évolue (nouvelles options/flags) indépendamment de son ou ses
+  appelants ; un bloc local complexifie le parent et finit tôt ou tard copié-collé ailleurs (cas
+  réel : `.kpi-target-stepper` était dupliqué à l'identique dans `tracker.component.html` ET
+  `tracker-strip.component.html`, plus 4 variantes proches ailleurs dans l'app — voir
+  `app-input-number` ci-dessous). Concevoir le composant pour la réutilisation dès le départ
+  (inputs/options plutôt que valeurs figées) plutôt que de le généraliser seulement au 2ᵉ appelant.
+- **Pas-à-pas numérique (`app-stepper`, `shared/stepper/`)** : `‹ label ›` générique — `[label]`
+  (texte déjà traduit/interpolé par l'appelant, ce composant ne connaît pas l'i18n), `[value]`,
+  `[min]`, `[max]`, `[step]` (pas de l'incrément, défaut 1), `[prevTooltip]`/`[nextTooltip]`
+  (optionnels), `(valueChange)` (déjà borné à `[min, max]`). Un seul tabstop (`role="spinbutton"`
+  sur le conteneur, boutons en `tabindex="-1"`) : `Tab` cible le composant comme un champ de
+  saisie, flèche gauche/droite pour reculer/avancer au clavier, en plus du clic sur les boutons.
+  Utilisé par `DamageViewSwitchComponent` pour le pas-à-pas de tour (‹ Tour N ›). Non éditable au
+  clavier (`label` est un texte affiché, pas une saisie) — voir `app-input-number` ci-dessous pour
+  un vrai champ numérique éditable.
+- **Champ numérique éditable (`app-input-number`, `shared/input-number/`)** : un vrai `<input
+  type="number">` (ciblable au `Tab`, chiffres tapables directement) entouré de boutons +/-
+  optionnels — `[value]` (valeur de départ/affichée, composant contrôlé, même principe que
+  `app-stepper`), `[min]`/`[max]` (optionnels, `null` = pas de borne), `[step]` (défaut 1),
+  `[showButtons]` (défaut `true` — `false` pour un champ compact sans place pour des boutons, ex.
+  tuile KPI repliée), `[prevTooltip]`/`[nextTooltip]`/`[fieldTooltip]`, `(valueChange)`. Les 4
+  flèches clavier pilotent la valeur (← et ↓ diminuent, → et ↑ augmentent — **pas** le déplacement
+  de curseur standard ni le stepper natif du navigateur), en plus du clic sur les boutons et de la
+  molette. Habillage visuel (tailles/couleurs, qui différaient légèrement selon l'appelant d'origine)
+  personnalisable via des variables CSS `--input-number-*` posées sur la balise `<app-input-number>`
+  depuis le CSS de l'appelant (héritées à travers `:host{display:contents}`, voir
+  `input-number.component.css` pour la liste complète et les valeurs par défaut) — jamais en
+  essayant d'atteindre `.input-number-field` depuis l'extérieur (encapsulation de vue, voir
+  `IconComponent.size`). A remplacé 6 implémentations quasi identiques dispersées dans l'app
+  (`.kpi-target-stepper` ×2, `.item-picker-qty-stepper`, `.kpi-card-value-input`,
+  `.kpi-countdown-current-input`, `.recipe-modal-qty-input`) et l'utilitaire `resolveNumericKeyAction`
+  qui les pilotait (supprimé, plus aucun appelant) — à réutiliser pour tout futur champ numérique
+  plutôt qu'un nouveau bloc dédié.
 - **Tooltips** : directive générique `TooltipDirective` (`[appTooltip]`, `shared/tooltip/tooltip.directive.ts`) — ne JAMAIS écrire un bloc CSS `::after` local dans un composant, ni utiliser `[title]`/`[attr.data-tooltip]` (ancien système CSS, retiré). Mettre le texte dans `[appTooltip]="'xxx' | t"` (statique) ou `[appTooltip]="expression()"` (texte dynamique/calculé, ex. `manualCloseTooltip()`) sur l'élément — quel que soit son type (bouton, span, label...). Rendu via `TooltipService`/`<app-tooltip />` (un seul exemplaire, rendu au niveau racine dans `app.html`, comme `ClassPickerService`) : le tooltip est un `position: fixed` calculé depuis `getBoundingClientRect()` au survol/focus, **jamais un descendant DOM de l'élément survolé**. Conséquence directe : totalement insensible à tout `overflow: hidden`/`auto` ancestral (conteneur à défilement horizontal ou vertical) ET à tout contexte d'empilement local (`z-index`, `position: sticky`) — la catégorie de bug qui justifiait cette migration (tooltip invisible/rogné dans un `.tool-panel`, une bande de scroll horizontal comme `app-tab-bar`, un rail replié...) ne peut plus se produire, quel que soit l'endroit où l'élément vit dans l'arbre DOM.
   - `[tooltipPosition]` (défaut `'top'`, centré au-dessus) : `'top' | 'top-left' | 'top-right' | 'bottom' | 'bottom-left' | 'bottom-right' | 'left' | 'right'`.
     - `bottom*` : en dessous au lieu d'au-dessus — réservé (1) aux éléments situés dans un header (`.app-header` principal ou `.profile-page-header`), qui n'ont pas de place au-dessus (bord haut de l'écran/de la vue) ; (2) au **premier élément (ou 1ère ligne) d'une liste/grille à défilement** dans un `.tool-panel`, par cohérence visuelle avec le reste de la liste (plus une nécessité de clipping depuis cette migration, mais toujours la bonne position pour ne pas coller le tooltip du 1er élément au bord haut du panneau).
