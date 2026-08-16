@@ -194,13 +194,13 @@ export class WatchlistTileController {
    * garde son décalage `right:-7px` habituel (conçu pour "50/50", pas "3800/10800", voir
    * CLAUDE.md/bug réel signalé) — le template s'appuie sur ce booléen pour retirer ce décalage au-
    * delà du seuil (voir `.is-long`). */
-  isLongCount(entry: WatchlistEntry): boolean {
+  isLongCount(entry: WatchlistEntry, count: number = 6): boolean {
     const digitCount = (n: number) => Math.abs(Math.trunc(n)).toString().length;
     const total =
       entry.mode === 'down'
         ? digitCount(entry.count) + digitCount(entry.countdownTarget) + 1
         : digitCount(entry.count);
-    return total >= 6;
+    return total >= count;
   }
 
   /** Texte du tooltip affiché au survol d'une tuile décompte EN MODE COMPACT (bande desktop

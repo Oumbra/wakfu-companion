@@ -80,8 +80,11 @@
      repère que les tuiles, indépendamment de la hauteur réelle de la bande. */
   margin-top: 10px;
   height: 58px;
-  width: 126px;
+  width: 58px;
   transition: width 0.2s ease;
+}
+.kpi-add.can-bulk-delete {
+  width: 126px;
 }
 
 /* `position:relative` propre (pas `.kpi-add` directement) : une fois le bouton "-" affiché à côté
