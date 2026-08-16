@@ -79,11 +79,14 @@ export class FightHistoryComponent {
   private readonly catalog = inject(CatalogService);
   protected readonly auth = inject(AuthService);
 
-  /** Combats de la section "combat" (ally/enemy) actuellement REPLIÉS — vide par défaut, tout
-   * DÉPLIÉ (même convention que `collapsedGroupKeys` ci-dessous : voir CLAUDE.md). */
-  private readonly collapsedFightIds = signal<ReadonlySet<number>>(new Set());
+  /** Combats de la section "combat" (ally/enemy) actuellement DÉPLIÉS — vide par défaut, tout
+   * REPLIÉ (même convention que `expandedDungeonRunIds` ci-dessous : un combat doit démarrer
+   * fermé). Les collapses qu'un combat contient une fois déplié (alliés/ennemis via
+   * `EntityDamageListComponent`, butin, XP — voir `collapsedFightXpIds`/`collapsedFightLootIds`
+   * ci-dessous) gardent leur propre état par défaut (déplié), inchangé par cette convention. */
+  private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   /** Switch Total/Tour (voir DamageViewSwitchComponent) — indexé par `id` de combat, indépendant
-   * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `collapsedFightIds`) :
+   * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `expandedFightIds`) :
    * contrairement au combat en cours (un seul à la fois, voir DamageMeterComponent), il n'y a pas
    * ici de "combat affiché" unique auquel rattacher un état global. Absent de la map = 'total'
    * (comportement historique, aucun combat n'a de tour choisi par défaut). */
@@ -94,8 +97,9 @@ export class FightHistoryComponent {
   protected readonly lootSort = signal<LootSort>('name');
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
-  /** Sections XP/butin REPLIÉES par combat — même convention que `collapsedFightIds` ci-dessus
-   * (vide par défaut, tout DÉPLIÉ). */
+  /** Sections XP/butin REPLIÉES par combat — vide par défaut, tout DÉPLIÉ (même convention que
+   * `collapsedGroupKeys` plus bas) : contrairement à `expandedFightIds` ci-dessus, l'état par
+   * défaut de ces sous-collapses n'a pas changé, seul le combat qui les contient démarre fermé. */
   private readonly collapsedFightXpIds = signal<ReadonlySet<number>>(new Set());
   private readonly collapsedFightLootIds = signal<ReadonlySet<number>>(new Set());
   /** Combats de donjon actuellement DÉPLIÉS (vide par défaut, tout REPLIÉ — à l'inverse de la
@@ -367,14 +371,14 @@ export class FightHistoryComponent {
   }
 
   protected toggleFight(id: number): void {
-    const next = new Set(this.collapsedFightIds());
+    const next = new Set(this.expandedFightIds());
     if (next.has(id)) next.delete(id);
     else next.add(id);
-    this.collapsedFightIds.set(next);
+    this.expandedFightIds.set(next);
   }
 
   protected isFightExpanded(id: number): boolean {
-    return !this.collapsedFightIds().has(id);
+    return this.expandedFightIds().has(id);
   }
 
   protected viewModeFor(id: number): DamageViewMode {
