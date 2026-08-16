@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { EntityDamageRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
@@ -8,6 +8,10 @@ import { I18nService } from '../../core/services/i18n.service';
 import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import {
+  DamageViewMode,
+  DamageViewSwitchComponent,
+} from '../../shared/damage-view-switch/damage-view-switch.component';
 
 /**
  * Combat en cours uniquement — l'historique des combats a été extrait vers
@@ -19,7 +23,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-damage-meter',
-  imports: [EntityDamageListComponent, TranslatePipe, TooltipDirective],
+  imports: [EntityDamageListComponent, TranslatePipe, TooltipDirective, DamageViewSwitchComponent],
   templateUrl: './damage-meter.component.html',
   styleUrl: './damage-meter.component.css',
 })
@@ -47,6 +51,39 @@ export class DamageMeterComponent {
   /** Plusieurs combats concurrents (multi-compte) : un onglet par combat, affiché au-dessus du nombre de tours. */
   protected readonly activeFightIds = this.stats.activeFightIds;
   protected readonly displayedFightId = this.stats.displayedFightId;
+
+  /** Switch Total/Tour (voir DamageViewSwitchComponent) — un seul état pour tout le panneau,
+   * partagé entre alliés et ennemis (même combat, même tour). Repart à 'total' à chaque
+   * changement de combat affiché (onglet ou fin de combat) : un tour choisi pour un combat n'a
+   * aucun sens pour un autre. */
+  protected readonly viewMode = signal<DamageViewMode>('total');
+  /** Tour sélectionné explicitement par l'utilisateur (pas à pas) — `null` = suit automatiquement
+   * le tour courant du combat (comportement par défaut, voir `effectiveTurn`), même principe que
+   * `StatsStoreService.selectedFightId`/`displayedFightId` (suivi automatique tant qu'aucun choix
+   * explicite n'a été fait). */
+  private readonly selectedTurn = signal<number | null>(null);
+  protected readonly effectiveTurn = computed(() =>
+    Math.min(this.selectedTurn() ?? this.currentFightTurns(), this.currentFightTurns()),
+  );
+
+  constructor() {
+    // Changer de combat affiché (onglet multi-compte, ou fin du combat courant révélant le
+    // suivant) invalide toute sélection de tour précédente : revenir au suivi automatique plutôt
+    // que de garder un numéro de tour qui ne correspond plus au même combat.
+    effect(() => {
+      this.displayedFightId();
+      this.selectedTurn.set(null);
+      this.viewMode.set('total');
+    });
+  }
+
+  protected setViewMode(mode: DamageViewMode): void {
+    this.viewMode.set(mode);
+  }
+
+  protected setTurn(turn: number): void {
+    this.selectedTurn.set(turn);
+  }
 
   protected formatDuration(durationMs: number): string {
     const totalSeconds = Math.max(0, Math.round(durationMs / 1000));

@@ -102,3 +102,10 @@
 .fight-stats-sep {
   color: var(--border-strong);
 }
+
+.view-switch-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}

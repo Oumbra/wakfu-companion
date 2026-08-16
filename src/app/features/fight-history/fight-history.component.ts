@@ -28,6 +28,10 @@ import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-ar
 import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import {
+  DamageViewMode,
+  DamageViewSwitchComponent,
+} from '../../shared/damage-view-switch/damage-view-switch.component';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -59,6 +63,7 @@ interface FightGroup {
     IconComponent,
     NgTemplateOutlet,
     TooltipDirective,
+    DamageViewSwitchComponent,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
@@ -75,6 +80,15 @@ export class FightHistoryComponent {
   protected readonly auth = inject(AuthService);
 
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
+  /** Switch Total/Tour (voir DamageViewSwitchComponent) — indexé par `id` de combat, indépendant
+   * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `expandedFightIds`) :
+   * contrairement au combat en cours (un seul à la fois, voir DamageMeterComponent), il n'y a pas
+   * ici de "combat affiché" unique auquel rattacher un état global. Absent de la map = 'total'
+   * (comportement historique, aucun combat n'a de tour choisi par défaut). */
+  private readonly fightViewModes = signal<ReadonlyMap<number, DamageViewMode>>(new Map());
+  /** Tour choisi par combat — absent de la map = dernier tour du combat (le plus récent, repli
+   * naturel pour un combat déjà terminé, voir `turnFor`). */
+  private readonly fightTurns = signal<ReadonlyMap<number, number>>(new Map());
   protected readonly lootSort = signal<LootSort>('name');
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
@@ -337,6 +351,26 @@ export class FightHistoryComponent {
 
   protected isFightExpanded(id: number): boolean {
     return this.expandedFightIds().has(id);
+  }
+
+  protected viewModeFor(id: number): DamageViewMode {
+    return this.fightViewModes().get(id) ?? 'total';
+  }
+
+  protected setViewMode(id: number, mode: DamageViewMode): void {
+    const next = new Map(this.fightViewModes());
+    next.set(id, mode);
+    this.fightViewModes.set(next);
+  }
+
+  protected turnFor(record: FightRecord): number {
+    return Math.min(this.fightTurns().get(record.id) ?? record.turns, Math.max(1, record.turns));
+  }
+
+  protected setTurn(record: FightRecord, turn: number): void {
+    const next = new Map(this.fightTurns());
+    next.set(record.id, Math.min(Math.max(1, turn), Math.max(1, record.turns)));
+    this.fightTurns.set(next);
   }
 
   protected toggleFightXp(id: number): void {

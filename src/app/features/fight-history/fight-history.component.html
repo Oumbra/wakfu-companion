@@ -174,12 +174,23 @@
     </div>
     @if (isFightExpanded(record.id)) {
       <div class="fight-details">
+        <div class="history-view-switch-row">
+          <app-damage-view-switch
+            [mode]="viewModeFor(record.id)"
+            [turn]="turnFor(record)"
+            [maxTurn]="record.turns"
+            (modeChange)="setViewMode(record.id, $event)"
+            (turnChange)="setTurn(record, $event)"
+          />
+        </div>
         <app-entity-damage-list
           [title]="'damageMeter.allies' | t"
           side="ally"
           [rows]="allyRowsFor(record)"
           [fightId]="record.id"
           [collapsible]="true"
+          [viewMode]="viewModeFor(record.id)"
+          [turn]="turnFor(record)"
           [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
         />
         <app-entity-damage-list
@@ -188,6 +199,8 @@
           [rows]="enemyRowsFor(record)"
           [fightId]="record.id"
           [collapsible]="true"
+          [viewMode]="viewModeFor(record.id)"
+          [turn]="turnFor(record)"
           [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
         />
         @if (record.result === 'won') {

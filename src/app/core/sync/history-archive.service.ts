@@ -523,6 +523,10 @@ function toFightRecord(
       spell: spell.spell,
       total: spell.total,
       byElement: spell.byElement as SpellBreakdownRow['byElement'],
+      // Le serveur ne stocke pas de ventilation par tour (voir SpellBreakdownRow.byTurn) : un
+      // combat reconstruit depuis l'archive du compte n'a donc jamais de détail par tour, seule la
+      // session en cours (et l'historique local qui en dérive) le connaît.
+      byTurn: [],
     })),
     defeated: participant.defeated,
     instanceIndex: participant.instanceIndex,

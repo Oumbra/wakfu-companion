@@ -35,12 +35,29 @@ const PURCHASE_WINDOW_MS = 2000;
 interface SpellAgg {
   total: number;
   byElement: Map<DamageElement, number>;
+  /** Ventilation par tour de jeu (voir Fight.turnCount, incrémenté par registerFightTurn) — clé =
+   * numéro de tour (1-based), valeur = mêmes agrégats que `total`/`byElement` mais restreints à ce
+   * tour. Alimente le switch Total/Tour de l'affichage (voir EntityDamageListComponent) ; `total`
+   * ci-dessus reste la somme de tous les tours, jamais recalculée depuis cette ventilation. */
+  byTurn: Map<number, { total: number; byElement: Map<DamageElement, number> }>;
+}
+
+/** Ventilation d'un sort restreinte à un seul tour — voir SpellAgg.byTurn. */
+export interface SpellTurnBreakdown {
+  turn: number;
+  total: number;
+  byElement: Partial<Record<DamageElement, number>>;
 }
 
 export interface SpellBreakdownRow {
   spell: string;
   total: number;
   byElement: Partial<Record<DamageElement, number>>;
+  /** Trié par tour croissant, un élément par tour où ce sort a effectivement fait des dégâts (pas
+   * une entrée par tour du combat) — voir SpellAgg.byTurn. Toujours vide pour un combat reconstruit
+   * depuis l'archive du compte (voir HistoryArchiveService.toFightRecord) : le serveur ne stocke pas
+   * cette ventilation, seule la session en cours (et l'historique local qui en dérive) la connaît. */
+  byTurn: SpellTurnBreakdown[];
 }
 
 export interface EntityDamageRow {
@@ -706,7 +723,7 @@ export class StatsStoreService {
           // combattants homonymes — repli sur le nom brut si ce nom n'a encore jamais joué de sort
           // (ex. premier événement de dégâts du combat avant toute ligne "lance le sort").
           const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
-          this.addDamage(working.attackerMap, seatKey, entry);
+          this.addDamage(working.attackerMap, seatKey, entry, working.fight.turnCount);
         }
         this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
@@ -1056,6 +1073,7 @@ export class StatsStoreService {
     map: Map<string, Map<string, SpellAgg>>,
     key: string,
     entry: DamageEntry,
+    turn: number,
   ): void {
     let spells = map.get(key);
     if (!spells) {
@@ -1064,11 +1082,22 @@ export class StatsStoreService {
     }
     let agg = spells.get(entry.spell);
     if (!agg) {
-      agg = { total: 0, byElement: new Map() };
+      agg = { total: 0, byElement: new Map(), byTurn: new Map() };
       spells.set(entry.spell, agg);
     }
     agg.total += entry.amount;
     agg.byElement.set(entry.element, (agg.byElement.get(entry.element) ?? 0) + entry.amount);
+
+    let turnAgg = agg.byTurn.get(turn);
+    if (!turnAgg) {
+      turnAgg = { total: 0, byElement: new Map() };
+      agg.byTurn.set(turn, turnAgg);
+    }
+    turnAgg.total += entry.amount;
+    turnAgg.byElement.set(
+      entry.element,
+      (turnAgg.byElement.get(entry.element) ?? 0) + entry.amount,
+    );
   }
 
   private registerDefeat(name: string): void {
@@ -1310,6 +1339,15 @@ export class StatsStoreService {
               byElement: Object.fromEntries(agg.byElement) as Partial<
                 Record<DamageElement, number>
               >,
+              byTurn: [...agg.byTurn.entries()]
+                .map(([turn, t]) => ({
+                  turn,
+                  total: t.total,
+                  byElement: Object.fromEntries(t.byElement) as Partial<
+                    Record<DamageElement, number>
+                  >,
+                }))
+                .sort((a, b) => a.turn - b.turn),
             }))
             .sort((a, b) => b.total - a.total)
         : [];
@@ -1758,6 +1796,17 @@ export class StatsStoreService {
       for (const [element, amount] of agg.byElement) {
         existing.byElement.set(element, (existing.byElement.get(element) ?? 0) + amount);
       }
+      for (const [turn, turnAgg] of agg.byTurn) {
+        let existingTurn = existing.byTurn.get(turn);
+        if (!existingTurn) {
+          existingTurn = { total: 0, byElement: new Map() };
+          existing.byTurn.set(turn, existingTurn);
+        }
+        existingTurn.total += turnAgg.total;
+        for (const [element, amount] of turnAgg.byElement) {
+          existingTurn.byElement.set(element, (existingTurn.byElement.get(element) ?? 0) + amount);
+        }
+      }
     } else {
       toSpells.set(spellName, agg);
     }
@@ -1792,6 +1841,19 @@ export class StatsStoreService {
         existing.byElement[element as DamageElement] =
           (existing.byElement[element as DamageElement] ?? 0) + amount;
       }
+      for (const movedTurn of moved.byTurn) {
+        const existingTurn = existing.byTurn.find((t) => t.turn === movedTurn.turn);
+        if (existingTurn) {
+          existingTurn.total += movedTurn.total;
+          for (const [element, amount] of Object.entries(movedTurn.byElement)) {
+            existingTurn.byElement[element as DamageElement] =
+              (existingTurn.byElement[element as DamageElement] ?? 0) + amount;
+          }
+        } else {
+          existing.byTurn.push(movedTurn);
+        }
+      }
+      existing.byTurn.sort((a, b) => a.turn - b.turn);
     } else {
       toRow.spells.push(moved);
     }
