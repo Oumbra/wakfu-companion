@@ -20,6 +20,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.chooseOther': 'Choisir un autre fichier',
     'setup.unsupported.message':
       "Ce navigateur ne permet pas de lire wakfu.log en continu. Utilisez l'un des navigateurs compatibles ci-dessous.",
+    'setup.unsupported.download': 'Télécharger',
+    'setup.why.link': 'Pourquoi ?',
+    'setup.why.body':
+      "Wakfu Companion doit lire votre fichier wakfu.log en continu, au fur et à mesure que le jeu y ajoute de nouvelles lignes, pour afficher vos dégâts, votre butin et votre chat en temps réel. Un simple champ d'import de fichier ne capture qu'une photo figée au moment de la sélection et ne détecterait jamais les lignes ajoutées ensuite. Seule l'API File System Access du navigateur permet de garder une connexion vivante vers le fichier sur votre disque — elle n'est aujourd'hui disponible que sur les navigateurs basés sur Chromium (Chrome, Edge, Opera...), d'où la liste de navigateurs compatibles. Aucune donnée n'est envoyée où que ce soit : la lecture se fait entièrement en local, dans votre navigateur.",
 
     'app.goHome': "Retour à l'accueil",
     'app.sessionRecap': 'Session recap',
@@ -387,6 +391,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.chooseOther': 'Choose another file',
     'setup.unsupported.message':
       'This browser cannot read wakfu.log continuously. Use one of the compatible browsers below.',
+    'setup.unsupported.download': 'Download',
+    'setup.why.link': 'Why?',
+    'setup.why.body':
+      "Wakfu Companion needs to read your wakfu.log file continuously, as the game appends new lines to it, to show your damage, loot and chat in real time. A regular file picker only captures a frozen snapshot at the moment you select it and would never detect lines added afterward. Only the browser's File System Access API can keep a live connection to the file on your disk — it's currently only available in Chromium-based browsers (Chrome, Edge, Opera...), hence the list of compatible browsers. No data is ever sent anywhere: reading happens entirely locally, in your browser.",
 
     'app.goHome': 'Back to home',
     'app.sessionRecap': 'Session recap',
@@ -747,6 +755,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.chooseOther': 'Elegir otro archivo',
     'setup.unsupported.message':
       'Este navegador no puede leer wakfu.log de forma continua. Usa uno de los navegadores compatibles a continuación.',
+    'setup.unsupported.download': 'Descargar',
+    'setup.why.link': '¿Por qué?',
+    'setup.why.body':
+      'Wakfu Companion necesita leer tu archivo wakfu.log de forma continua, a medida que el juego añade nuevas líneas, para mostrar tus daños, botín y chat en tiempo real. Un selector de archivos normal solo captura una instantánea fija en el momento de la selección y nunca detectaría las líneas añadidas después. Solo la API File System Access del navegador puede mantener una conexión activa con el archivo en tu disco — actualmente solo está disponible en navegadores basados en Chromium (Chrome, Edge, Opera...), de ahí la lista de navegadores compatibles. Ningún dato se envía a ningún sitio: la lectura se realiza totalmente en local, en tu navegador.',
 
     'app.goHome': 'Volver al inicio',
     'app.sessionRecap': 'Resumen de sesión',
@@ -1111,6 +1123,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.reconnect.chooseOther': 'Escolher outro arquivo',
     'setup.unsupported.message':
       'Este navegador não consegue ler o wakfu.log continuamente. Use um dos navegadores compatíveis abaixo.',
+    'setup.unsupported.download': 'Baixar',
+    'setup.why.link': 'Por quê?',
+    'setup.why.body':
+      'O Wakfu Companion precisa ler seu arquivo wakfu.log continuamente, à medida que o jogo adiciona novas linhas, para exibir seus danos, itens e chat em tempo real. Um seletor de arquivos comum captura apenas uma foto fixa no momento da seleção e nunca detectaria linhas adicionadas depois. Somente a API File System Access do navegador consegue manter uma conexão viva com o arquivo no seu disco — hoje ela só está disponível em navegadores baseados em Chromium (Chrome, Edge, Opera...), daí a lista de navegadores compatíveis. Nenhum dado é enviado a lugar nenhum: a leitura acontece totalmente localmente, no seu navegador.',
 
     'app.goHome': 'Voltar ao início',
     'app.sessionRecap': 'Resumo da sessão',

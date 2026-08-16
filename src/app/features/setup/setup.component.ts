@@ -5,21 +5,23 @@ import {
   BrowserKind,
 } from '../../shared/browser-icon/browser-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
+import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 interface CompatibleBrowser {
   kind: BrowserKind;
   name: string;
+  downloadUrl: string;
 }
 
 const COMPATIBLE_BROWSERS: readonly CompatibleBrowser[] = [
-  { kind: 'chrome', name: 'Google Chrome' },
-  { kind: 'edge', name: 'Microsoft Edge' },
-  { kind: 'opera', name: 'Opera' },
+  { kind: 'chrome', name: 'Google Chrome', downloadUrl: 'https://www.google.com/chrome/' },
+  { kind: 'edge', name: 'Microsoft Edge', downloadUrl: 'https://www.microsoft.com/edge' },
+  { kind: 'opera', name: 'Opera', downloadUrl: 'https://www.opera.com/download' },
 ];
 
 @Component({
   selector: 'app-setup',
-  imports: [TranslatePipe, BrowserIconComponent],
+  imports: [TranslatePipe, BrowserIconComponent, TooltipDirective],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',
 })
@@ -27,6 +29,11 @@ export class SetupComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly dragOver = signal(false);
   protected readonly compatibleBrowsers = COMPATIBLE_BROWSERS;
+  protected readonly showWhy = signal(false);
+
+  protected toggleWhy(): void {
+    this.showWhy.update((value) => !value);
+  }
 
   protected onDragOver(event: DragEvent): void {
     event.preventDefault();
