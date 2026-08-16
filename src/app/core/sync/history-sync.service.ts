@@ -92,11 +92,20 @@ export class HistorySyncService {
     return this.gameServer.activeServer()?.server.code ?? null;
   }
 
-  private itemId(name: string): number | null {
-    return this.catalog.findWakfuItemEntry(name)?.id ?? null;
+  /** Construit la paire `itemId`/`itemName` mutuellement exclusive attendue par le serveur (voir
+   * `FightLootPayload`) à partir du `catalogId` déjà résolu sur l'enregistrement (voir
+   * `StatsStoreService.registerLoot`/`registerPurchase`/`registerTrade`, et `ItemPickerService`
+   * pour la correction manuelle) — jamais recalculé ici, `catalogId` est la source de vérité unique. */
+  private itemPayload(
+    name: string,
+    catalogId: number | null,
+  ): { itemId: number | null; itemName: string | null } {
+    return catalogId !== null
+      ? { itemId: catalogId, itemName: null }
+      : { itemId: null, itemName: name };
   }
 
-  /** Miroir de itemId, côté monstre — voir FightParticipantPayload.monsterId. */
+  /** Miroir de itemPayload, côté monstre — voir FightParticipantPayload.monsterId. */
   private monsterId(name: string): number | null {
     return this.catalog.findWakfuMonsterEntry(name)?.id ?? null;
   }
@@ -173,8 +182,7 @@ export class HistorySyncService {
         gameServer: this.currentServer(),
         participants,
         loot: record.loot.map((row) => ({
-          itemId: this.itemId(row.name),
-          itemName: row.name,
+          ...this.itemPayload(row.name, row.catalogId),
           quantity: row.quantity,
         })),
       },
@@ -196,8 +204,7 @@ export class HistorySyncService {
       kind: 'purchase',
       signature,
       payload: {
-        itemId: this.itemId(record.item),
-        itemName: record.item,
+        ...this.itemPayload(record.item, record.catalogId),
         quantity: record.quantity,
         totalCost: record.totalCost,
         occurredAt: new Date(record.fullTimestampMs).toISOString(),
@@ -212,29 +219,37 @@ export class HistorySyncService {
     const items: TradeItemPayload[] = [
       ...record.acquired.map((item) => ({
         direction: 'acquired' as const,
-        itemId: this.itemId(item.name),
-        itemName: item.name,
+        ...this.itemPayload(item.name, item.catalogId),
         quantity: item.quantity,
       })),
       ...record.given.map((item) => ({
         direction: 'given' as const,
-        itemId: this.itemId(item.name),
-        itemName: item.name,
+        ...this.itemPayload(item.name, item.catalogId),
         quantity: item.quantity,
       })),
     ];
 
+    // Le nom brut (jamais `null`, contrairement à `TradeItemPayload.itemName` une fois l'id résolu)
+    // vient directement des records d'origine, pas du payload déjà construit ci-dessus — voir
+    // `itemPayload`, qui vide `itemName` dès que `catalogId` est connu.
     const signature = tradeSignature({
       time: record.time,
       peerName: record.characterName,
       selfName: record.selfName,
       kamasAcquired: record.kamasAcquired,
       kamasGiven: record.kamasGiven,
-      items: items.map((item) => ({
-        direction: item.direction,
-        name: item.itemName,
-        quantity: item.quantity,
-      })),
+      items: [
+        ...record.acquired.map((item) => ({
+          direction: 'acquired' as const,
+          name: item.name,
+          quantity: item.quantity,
+        })),
+        ...record.given.map((item) => ({
+          direction: 'given' as const,
+          name: item.name,
+          quantity: item.quantity,
+        })),
+      ],
     });
 
     this.queue.enqueue({

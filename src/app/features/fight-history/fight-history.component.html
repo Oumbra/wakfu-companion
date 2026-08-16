@@ -247,7 +247,7 @@
             </div>
             @if (isFightLootExpanded(record.id)) {
               <div class="loot-body">
-                <app-loot-list [items]="sortedLoot(record.loot)" />
+                <app-loot-list [items]="sortedLoot(record.loot)" [fight]="record" />
               </div>
             }
           </div>

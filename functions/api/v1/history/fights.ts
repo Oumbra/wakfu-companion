@@ -140,6 +140,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     if (fightId === undefined) return [];
     return fight.loot.map((row) => ({
       fightId,
+      lineIndex: row.lineIndex,
       itemId: row.itemId,
       itemName: row.itemName,
       quantity: row.quantity,
@@ -147,9 +148,17 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   });
 
   if (lootRows.length > 0) {
-    // Le butin d'un combat terminé ne bouge plus : `DO NOTHING` suffit, et une
-    // relecture du même log réécrirait de toute façon les mêmes valeurs.
-    await db.insert(fightLoot).values(lootRows).onConflictDoNothing();
+    // Le CONTENU du butin d'un combat terminé ne bouge plus, mais son IDENTIFICATION, si (correction
+    // manuelle d'objet homonyme, voir ItemPickerService côté client) : `DO UPDATE` sur `item_id`/
+    // `item_name` plutôt que `DO NOTHING`, une relecture du même log réécrivant de toute façon les
+    // mêmes valeurs en l'absence de correction.
+    await db
+      .insert(fightLoot)
+      .values(lootRows)
+      .onConflictDoUpdate({
+        target: [fightLoot.fightId, fightLoot.lineIndex],
+        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
+      });
   }
 
   return json({

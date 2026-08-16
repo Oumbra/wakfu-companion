@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { tradeItems, trades } from '../../../../server/db/schema';
 import {
@@ -87,7 +87,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   });
 
   if (itemRows.length > 0) {
-    await db.insert(tradeItems).values(itemRows).onConflictDoNothing();
+    // `DO UPDATE` plutôt que `DO NOTHING` — voir functions/api/v1/history/purchases.ts (même raison :
+    // correction manuelle d'objet homonyme, voir ItemPickerService côté client).
+    await db
+      .insert(tradeItems)
+      .values(itemRows)
+      .onConflictDoUpdate({
+        target: [tradeItems.tradeId, tradeItems.direction, tradeItems.lineIndex],
+        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
+      });
   }
 
   return json({ accepted: keys, inserted: inserted.length });

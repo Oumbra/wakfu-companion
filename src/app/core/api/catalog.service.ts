@@ -225,6 +225,24 @@ export class CatalogService {
     return this.itemsById.get(id);
   }
 
+  /** Toutes les entrées catalogue partageant ce nom (n'importe quelle langue), triées par id — sert
+   * à la désambiguïsation manuelle d'objets homonymes de rareté différente (ex. "Larme d'Ogrest",
+   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). Balaie tout
+   * `itemsById` (pas indexé par nom pour le cas multiple) : jamais un chemin chaud, seulement appelé
+   * à l'ouverture du sélecteur de correction (voir ItemPickerService). */
+  findAllWakfuItemEntriesByName(name: string): CatalogItemEntry[] {
+    const key = normalizeWakfuName(name);
+    return [...this.itemsById.values()]
+      .filter(
+        (entry) =>
+          normalizeWakfuName(entry.fr) === key ||
+          normalizeWakfuName(entry.en) === key ||
+          normalizeWakfuName(entry.es) === key ||
+          normalizeWakfuName(entry.pt) === key,
+      )
+      .sort((a, b) => a.id - b.id);
+  }
+
   /** Miroir de findWakfuMonsterEntry — voir findWakfuItemEntry. */
   findWakfuMonsterEntry(name: string): CatalogMonsterEntry | undefined {
     const key = normalizeWakfuName(name);

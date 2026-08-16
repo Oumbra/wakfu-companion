@@ -10,10 +10,15 @@ export interface FightEnemy {
   id: number;
 }
 
-/** Un objet ramassé pendant le combat : `id` est le gfxId de l'objet (référentiel `wakfu-items.data`), `0` si inconnu. */
+/** Un objet ramassé pendant le combat : `id` est le gfxId de l'objet (référentiel `wakfu-items.data`), `0` si inconnu.
+ * `catalogId` est l'id Ankama (résolution non ambiguë par id, à préférer à `name` seul — voir
+ * CatalogService.findWakfuItemEntry, ambigu en cas d'homonymes de rareté différente), `null` si non
+ * résolu ou pas encore corrigé manuellement (voir ItemPickerService). Ne pas confondre les deux ids :
+ * `id` sert uniquement à l'icône, `catalogId` à l'identité/la correction/l'envoi au compte. */
 export interface FightLoot {
   name: string;
   id: number;
+  catalogId: number | null;
   quantity: number;
 }
 
