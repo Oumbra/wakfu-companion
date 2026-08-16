@@ -24,11 +24,23 @@
  * gitignored, régénéré très rarement à la main, voir CLAUDE.md), la seule source de vérité
  * accessible depuis un poste de dev est donc l'API déployée (ou une base Neon locale).
  */
-const baseUrl = process.argv[2] ?? 'https://wakfu-companion.pages.dev';
+// Bug corrigé : le préfixe `/api/v1` (voir core/api/api-client.service.ts, `baseUrl`) manquait —
+// `/catalog/` tout seul tombe sur une route Angular inexistante, servie par le catch-all SPA
+// (`public/_redirects` : `/* /index.html 200`) qui répond 200 avec le HTML de la coquille de
+// l'app plutôt qu'un 404, d'où le `Unexpected token '<'` au `JSON.parse` (réponse HTML, pas JSON).
+const baseUrl = (process.argv[2] ?? 'https://wakfu-companion.pages.dev').replace(/\/$/, '');
+const API_PREFIX = '/api/v1';
 
 async function getJson(path) {
-  const res = await fetch(`${baseUrl}${path}`);
-  if (!res.ok) throw new Error(`${path} -> HTTP ${res.status}`);
+  const url = `${baseUrl}${API_PREFIX}${path}`;
+  const res = await fetch(url);
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!res.ok || !contentType.includes('application/json')) {
+    const body = await res.text();
+    throw new Error(
+      `${url} -> HTTP ${res.status} (content-type: ${contentType || 'inconnu'})\n${body.slice(0, 300)}`,
+    );
+  }
   return res.json();
 }
 
@@ -59,79 +71,92 @@ function normalize(name) {
     .replace(/[̀-ͯ]/g, '');
 }
 
-const [{ monsters: monsterTuples }, dungeons] = await Promise.all([
-  getJson('/catalog/'),
-  getJson('/dungeons'),
-]);
+// Enveloppé dans main() + process.exit() explicite (plutôt qu'un top-level await qui laisserait
+// Node gérer lui-même la sortie sur rejet) : évite de dépendre du chemin de sortie par défaut de
+// Node en cas d'erreur réseau, qui a déclenché un crash `UV_HANDLE_CLOSING` (bug Node/libuv sous
+// Windows sans rapport avec ce script) au lieu d'un simple message d'erreur lisible.
+async function main() {
+  const [{ monsters: monsterTuples }, dungeons] = await Promise.all([
+    getJson('/catalog/'),
+    getJson('/dungeons'),
+  ]);
 
-const monsters = monsterTuples.map(monsterFromTuple);
-const dungeonBossIds = new Set(
-  dungeons.map((d) => d.bossMonsterId).filter((id) => id !== null && id !== undefined),
-);
-
-const withFamily = monsters.filter((m) => m.family !== null);
-const withoutFamily = monsters.filter((m) => m.family === null);
-const orphans = withoutFamily.filter((m) => !dungeonBossIds.has(m.id));
-const orphanBosses = withoutFamily.filter((m) => dungeonBossIds.has(m.id));
-
-// Index nom normalisé -> monstres AVEC famille (n'importe laquelle des 4 langues).
-const familyByName = new Map();
-for (const m of withFamily) {
-  for (const locale of ['fr', 'en', 'es', 'pt']) {
-    const key = normalize(m[locale]);
-    if (!familyByName.has(key)) familyByName.set(key, []);
-    familyByName.get(key).push(m);
-  }
-}
-
-console.log(`Total monstres : ${monsters.length}`);
-console.log(`Sans famille   : ${withoutFamily.length}`);
-console.log(`  dont boss de donjon (déjà groupés par donjon, sans impact) : ${orphanBosses.length}`);
-console.log(`  dont "orphelins" pertinents pour le palier "famille"       : ${orphans.length}`);
-console.log('');
-
-const candidates = [];
-const noCandidates = [];
-for (const orphan of orphans) {
-  const matches = new Set();
-  for (const locale of ['fr', 'en', 'es', 'pt']) {
-    const key = normalize(orphan[locale]);
-    for (const match of familyByName.get(key) ?? []) matches.add(match);
-  }
-  if (matches.size > 0) candidates.push({ orphan, matches: [...matches] });
-  else noCandidates.push(orphan);
-}
-
-console.log(`Orphelins avec un homonyme qui A une famille (candidats de correction) : ${candidates.length}`);
-for (const { orphan, matches } of candidates) {
-  const suggestion = [...new Set(matches.map((m) => m.family))];
-  console.log(
-    `  #${orphan.id} "${orphan.fr}" -> homonyme(s) : ${matches
-      .map((m) => `#${m.id} "${m.fr}" (famille ${m.family})`)
-      .join(', ')}` + (suggestion.length === 1 ? ` => famille suggérée : ${suggestion[0]}` : ' => familles divergentes, à trancher manuellement'),
+  const monsters = monsterTuples.map(monsterFromTuple);
+  const dungeonBossIds = new Set(
+    dungeons.map((d) => d.bossMonsterId).filter((id) => id !== null && id !== undefined),
   );
-}
 
-console.log('');
-console.log(`Orphelins SANS aucun homonyme avec famille (${noCandidates.length}) :`);
-for (const orphan of noCandidates) {
-  console.log(`  #${orphan.id} "${orphan.fr}"`);
-}
+  const withFamily = monsters.filter((m) => m.family !== null);
+  const withoutFamily = monsters.filter((m) => m.family === null);
+  const orphans = withoutFamily.filter((m) => !dungeonBossIds.has(m.id));
+  const orphanBosses = withoutFamily.filter((m) => dungeonBossIds.has(m.id));
 
-// Orphelins qui partagent leur nom avec un AUTRE orphelin — déjà bien regroupés aujourd'hui (repli
-// par nom normalisé, voir resolveFightTypeClassification), mais signalés séparément : la vraie
-// correction serait de leur assigner à tous la MÊME famille réelle plutôt que de dépendre du repli.
-const orphanByName = new Map();
-for (const orphan of orphans) {
-  const key = normalize(orphan.fr);
-  if (!orphanByName.has(key)) orphanByName.set(key, []);
-  orphanByName.get(key).push(orphan);
-}
-const orphanGroups = [...orphanByName.values()].filter((group) => group.length > 1);
-if (orphanGroups.length > 0) {
+  // Index nom normalisé -> monstres AVEC famille (n'importe laquelle des 4 langues).
+  const familyByName = new Map();
+  for (const m of withFamily) {
+    for (const locale of ['fr', 'en', 'es', 'pt']) {
+      const key = normalize(m[locale]);
+      if (!familyByName.has(key)) familyByName.set(key, []);
+      familyByName.get(key).push(m);
+    }
+  }
+
+  console.log(`Total monstres : ${monsters.length}`);
+  console.log(`Sans famille   : ${withoutFamily.length}`);
+  console.log(`  dont boss de donjon (déjà groupés par donjon, sans impact) : ${orphanBosses.length}`);
+  console.log(`  dont "orphelins" pertinents pour le palier "famille"       : ${orphans.length}`);
   console.log('');
-  console.log(`Orphelins homonymes ENTRE EUX (déjà fusionnés par repli nom, ${orphanGroups.length} groupe(s)) :`);
-  for (const group of orphanGroups) {
-    console.log(`  "${group[0].fr}" : ${group.map((m) => `#${m.id}`).join(', ')}`);
+
+  const candidates = [];
+  const noCandidates = [];
+  for (const orphan of orphans) {
+    const matches = new Set();
+    for (const locale of ['fr', 'en', 'es', 'pt']) {
+      const key = normalize(orphan[locale]);
+      for (const match of familyByName.get(key) ?? []) matches.add(match);
+    }
+    if (matches.size > 0) candidates.push({ orphan, matches: [...matches] });
+    else noCandidates.push(orphan);
+  }
+
+  console.log(`Orphelins avec un homonyme qui A une famille (candidats de correction) : ${candidates.length}`);
+  for (const { orphan, matches } of candidates) {
+    const suggestion = [...new Set(matches.map((m) => m.family))];
+    console.log(
+      `  #${orphan.id} "${orphan.fr}" -> homonyme(s) : ${matches
+        .map((m) => `#${m.id} "${m.fr}" (famille ${m.family})`)
+        .join(', ')}` + (suggestion.length === 1 ? ` => famille suggérée : ${suggestion[0]}` : ' => familles divergentes, à trancher manuellement'),
+    );
+  }
+
+  console.log('');
+  console.log(`Orphelins SANS aucun homonyme avec famille (${noCandidates.length}) :`);
+  for (const orphan of noCandidates) {
+    console.log(`  #${orphan.id} "${orphan.fr}"`);
+  }
+
+  // Orphelins qui partagent leur nom avec un AUTRE orphelin — déjà bien regroupés aujourd'hui (repli
+  // par nom normalisé, voir resolveFightTypeClassification), mais signalés séparément : la vraie
+  // correction serait de leur assigner à tous la MÊME famille réelle plutôt que de dépendre du repli.
+  const orphanByName = new Map();
+  for (const orphan of orphans) {
+    const key = normalize(orphan.fr);
+    if (!orphanByName.has(key)) orphanByName.set(key, []);
+    orphanByName.get(key).push(orphan);
+  }
+  const orphanGroups = [...orphanByName.values()].filter((group) => group.length > 1);
+  if (orphanGroups.length > 0) {
+    console.log('');
+    console.log(`Orphelins homonymes ENTRE EUX (déjà fusionnés par repli nom, ${orphanGroups.length} groupe(s)) :`);
+    for (const group of orphanGroups) {
+      console.log(`  "${group[0].fr}" : ${group.map((m) => `#${m.id}`).join(', ')}`);
+    }
   }
 }
+
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(`[analyze-monster-families] ${error.message}`);
+    process.exit(1);
+  });
