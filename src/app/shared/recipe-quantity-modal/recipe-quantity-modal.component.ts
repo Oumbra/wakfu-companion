@@ -74,7 +74,11 @@ export class RecipeQuantityModalComponent {
 
   protected confirm(): void {
     const req = this.recipeTracking.request();
-    if (!req) return;
+    // `ingredients` encore `null` : résolution réseau toujours en cours (voir
+    // RecipeTrackingService.open) — le bouton/l'Entrée ne sont de toute façon pas accessibles tant
+    // que le template affiche le spinner à la place (voir recipe-quantity-modal.component.html),
+    // garde défensive ici seulement.
+    if (!req || req.ingredients === null) return;
     const multiplier = this.quantity();
     const nested = this.nestedPaths();
 

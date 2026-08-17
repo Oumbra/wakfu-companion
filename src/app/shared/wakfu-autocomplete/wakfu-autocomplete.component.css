@@ -113,7 +113,14 @@
   background: var(--border);
   color: var(--text-muted);
 }
+/* `position: relative` : sert d'ancre à `.wakfu-autocomplete-item-rarity` (voir plus bas), qui doit
+   se positionner par rapport à SA PROPRE ligne — sans ça, son ancêtre positionné le plus proche est
+   `.wakfu-autocomplete-panel` (voir plus haut), qui ne défile PAS (seule `.wakfu-autocomplete-list`
+   à l'intérieur défile) : le badge de rareté restait alors figé en haut du panneau pendant que les
+   lignes défilaient dessous, donnant l'impression que ce sont toujours les raretés des premières
+   lignes qui s'affichent, quel que soit l'objet réellement visible à cet endroit (bug réel). */
 .wakfu-autocomplete-item-main {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -176,6 +183,8 @@
 .wakfu-autocomplete-item-rarity {
   position: absolute;
   left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 14px;
   height: 14px;
   object-fit: contain;
