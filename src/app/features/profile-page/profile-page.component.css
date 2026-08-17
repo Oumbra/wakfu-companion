@@ -6,18 +6,18 @@
 }
 
 /* Onglets Avatar/Connexion/Alertes/Personnages : voir TabBarComponent (défilement horizontal,
-   soulignement mesuré sur le DOM, feuille de repli) — `mobileOnly` le cache par défaut en desktop,
-   remplacé là par `.profile-rail` (rail vertical, voir plus bas) qui pilote le même signal
-   `activeTab()`/`selectTab()`. `.panels-row`/`.tool-panel`/`.panel-body` sont globaux (styles.css) ;
-   en desktop comme en mobile, seule la section active reste montée visible (`.tab-hidden`), la
-   différence entre les deux tient uniquement au sélecteur (rail vs barre d'onglets, voir media
-   query mobile plus bas) et à l'habillage du panneau actif. */
+soulignement mesuré sur le DOM, feuille de repli) — `mobileOnly` le cache par défaut en desktop,
+remplacé là par `.profile-rail` (rail vertical, voir plus bas) qui pilote le même signal
+`activeTab()`/`selectTab()`. `.panels-row`/`.tool-panel`/`.panel-body` sont globaux (styles.css) ;
+en desktop comme en mobile, seule la section active reste montée visible (`.tab-hidden`), la
+différence entre les deux tient uniquement au sélecteur (rail vs barre d'onglets, voir media
+query mobile plus bas) et à l'habillage du panneau actif. */
 
 /* Le scroll (desktop) appartient à .app-page-body, l'ancêtre générique (voir AppPageComponent) :
-   ce wrapper ne fait que porter le padding/la mise en page en flux normal, sans overflow propre —
-   sinon la scrollbar apparaîtrait ici plutôt que collée au bord droit de la fenêtre. En mobile
-   (media query plus bas), passe en hauteur 100% + overflow:hidden pour laisser les onglets
-   internes (.panel-body) gérer leur propre scroll dans une zone de hauteur fixe. */
+ce wrapper ne fait que porter le padding/la mise en page en flux normal, sans overflow propre —
+sinon la scrollbar apparaîtrait ici plutôt que collée au bord droit de la fenêtre. En mobile
+(media query plus bas), passe en hauteur 100% + overflow:hidden pour laisser les onglets
+internes (.panel-body) gérer leur propre scroll dans une zone de hauteur fixe. */
 .profile-page-content {
   height: 100%;
   display: flex;
@@ -30,25 +30,25 @@
   align-items: flex-start;
 }
 /* Rail de navigation desktop (proposition A, voir CLAUDE.md) — masqué sous 800px (media query
-   mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
-   sticky` plutôt que `fixed` : reste dans le flux de `.profile-layout` (pas de calcul de largeur
-   manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu.
-   `max-height: var(--rail-max-h, none)` (posée dynamiquement en JS, voir
-   `ProfilePageComponent`/`railMaxHeight`) : sans elle, `position: sticky` ne colle PAS (bug réel
-   corrigé en session — ne se voit qu'avec assez de contenu pour que la page scrolle vraiment,
-   voir CLAUDE.md pour la méthode de test via import JSON). Cause : `.profile-rail` et `.panels-row`
-   (voisin, plus bas) sont tous deux `height: 100%` dans `.profile-layout` (flex row) dont la
-   hauteur dépend ELLE-MÊME du contenu (`.app-page-content { flex: 1 0 auto }`, volontaire — page
-   entière qui scrolle). Cette `%`-height ne peut pas se résoudre contre un ancêtre défini → les
-   deux enfants sont "stretchés" à la hauteur du plus grand des deux (ex. une longue grille de
-   personnages) — le rail sticky n'a alors plus aucune marge de manœuvre dans son bloc englobant
-   pour paraître figé : il est déjà collé bord à bord avec lui, et défile avec la page comme
-   n'importe quel élément statique. `max-height` (valeur px, pas `%`) n'a pas ce problème de
-   circularité : elle plafonne le rail à l'espace réellement visible sous les 2 en-têtes
-   (app-header + en-tête de page), laissant `.profile-rail-scroll` (overflow-y:auto) absorber le
-   surplus en interne, et redonnant au sticky la marge nécessaire. `100vh` seul serait trop généreux
-   (ne défalque pas le chrome au-dessus) et couperait le bas du rail une fois figé — d'où la mesure
-   dynamique plutôt qu'une valeur en dur fragile. */
+mobile plus bas) : le mobile garde `app-tab-bar` (`mobileOnly`) comme seul sélecteur. `position:
+sticky` plutôt que `fixed` : reste dans le flux de `.profile-layout` (pas de calcul de largeur
+manuel), mais suit le scroll de la page tant qu'il reste plus court que le contenu.
+`max-height: var(--rail-max-h, none)` (posée dynamiquement en JS, voir
+`ProfilePageComponent`/`railMaxHeight`) : sans elle, `position: sticky` ne colle PAS (bug réel
+corrigé en session — ne se voit qu'avec assez de contenu pour que la page scrolle vraiment,
+voir CLAUDE.md pour la méthode de test via import JSON). Cause : `.profile-rail` et `.panels-row`
+(voisin, plus bas) sont tous deux `height: 100%` dans `.profile-layout` (flex row) dont la
+hauteur dépend ELLE-MÊME du contenu (`.app-page-content { flex: 1 0 auto }`, volontaire — page
+entière qui scrolle). Cette `%`-height ne peut pas se résoudre contre un ancêtre défini → les
+deux enfants sont "stretchés" à la hauteur du plus grand des deux (ex. une longue grille de
+personnages) — le rail sticky n'a alors plus aucune marge de manœuvre dans son bloc englobant
+pour paraître figé : il est déjà collé bord à bord avec lui, et défile avec la page comme
+n'importe quel élément statique. `max-height` (valeur px, pas `%`) n'a pas ce problème de
+circularité : elle plafonne le rail à l'espace réellement visible sous les 2 en-têtes
+(app-header + en-tête de page), laissant `.profile-rail-scroll` (overflow-y:auto) absorber le
+surplus en interne, et redonnant au sticky la marge nécessaire. `100vh` seul serait trop généreux
+(ne défalque pas le chrome au-dessus) et couperait le bas du rail une fois figé — d'où la mesure
+dynamique plutôt qu'une valeur en dur fragile. */
 .profile-rail {
   flex: none;
   height: 100%;
@@ -63,17 +63,17 @@
   position: sticky;
   top: 0;
   /* Largeur repliée (voir .profile-rail-collapse-toggle) — transition douce plutôt qu'un saut sec,
-     `width` seul suffit puisque tout le reste (padding, contenu des boutons) découle du flex. */
+  `width` seul suffit puisque tout le reste (padding, contenu des boutons) découle du flex. */
   transition: width 0.15s ease;
 }
 .profile-rail.is-collapsed {
   width: 64px;
 }
 /* Seule zone qui défile : sépare la liste des boutons de l'icône de repli (dernier enfant direct de
-   `.profile-rail`, hors de cette zone) pour qu'elle reste TOUJOURS accessible en bas du rail, même
-   si la liste venait à déborder (`flex: 1` grandit pour occuper tout l'espace restant, ce qui pousse
-   d'autant l'icône vers le bas). Ne devient réellement scrollable qu'une fois `.profile-rail`
-   lui-même plafonné par `max-height` ci-dessus — sinon rien ne borne sa hauteur non plus. */
+`.profile-rail`, hors de cette zone) pour qu'elle reste TOUJOURS accessible en bas du rail, même
+si la liste venait à déborder (`flex: 1` grandit pour occuper tout l'espace restant, ce qui pousse
+d'autant l'icône vers le bas). Ne devient réellement scrollable qu'une fois `.profile-rail`
+lui-même plafonné par `max-height` ci-dessus — sinon rien ne borne sa hauteur non plus. */
 .profile-rail-scroll {
   flex: 1;
   min-height: 0;
@@ -107,7 +107,7 @@
   color: var(--text-color);
 }
 /* État actif nettement plus marqué que `--surface-active` (gris neutre, trop discret à côté d'un
-   accent cyan) : teinte l'accent directement dans le fond du bouton plutôt qu'un simple gris. */
+accent cyan) : teinte l'accent directement dans le fond du bouton plutôt qu'un simple gris. */
 .profile-rail-btn.active {
   background: color-mix(in srgb, var(--accent) 16%, var(--panel-bg));
   color: var(--accent);
@@ -131,9 +131,9 @@
   font-weight: 500;
 }
 /* Nombre de personnages tous comptes confondus (voir CLAUDE.md) — texte simple aligné à droite du
-   bouton, pas une pastille : `margin-left: auto` suffit à le pousser en bout de ligne même sans
-   `flex: 1` sur `.profile-rail-label` (un seul enfant flex avec cette marge droite gagne face à
-   n'importe quel `justify-content`). */
+bouton, pas une pastille : `margin-left: auto` suffit à le pousser en bout de ligne même sans
+`flex: 1` sur `.profile-rail-label` (un seul enfant flex avec cette marge droite gagne face à
+n'importe quel `justify-content`). */
 .profile-rail-count {
   flex-shrink: 0;
   margin-left: auto;
@@ -153,10 +153,10 @@
 }
 
 /* Rail replié (voir ProfilePageComponent.isNavRailCollapsed/isRosterRailCollapsed) : ne plus
-   montrer que `.profile-rail-icon` (ou `.profile-rail-index-badge` pour les boutons qui n'en ont
-   pas, ex. les comptes du rail de personnages) de chaque bouton, centrée. Règle partagée entre
-   `.profile-rail` (principal) et `.roster-account-rail` — cette dernière porte aussi la classe
-   `.profile-rail`, donc `.profile-rail.is-collapsed` la cible tout autant. */
+montrer que `.profile-rail-icon` (ou `.profile-rail-index-badge` pour les boutons qui n'en ont
+pas, ex. les comptes du rail de personnages) de chaque bouton, centrée. Règle partagée entre
+`.profile-rail` (principal) et `.roster-account-rail` — cette dernière porte aussi la classe
+`.profile-rail`, donc `.profile-rail.is-collapsed` la cible tout autant. */
 .profile-rail.is-collapsed .profile-rail-btn {
   justify-content: center;
   padding: 20px 0;
@@ -168,8 +168,8 @@
   display: none;
 }
 /* Un seul badge par bouton (comptes sans `.profile-rail-icon`, voir template) — même gabarit qu'une
-   pastille de compteur générique de l'app (cf. `.notif-dot` de combat-edge-tab.component.css, taille
-   adaptée à ce contexte inline plutôt que chevauchant un bord). */
+pastille de compteur générique de l'app (cf. `.notif-dot` de combat-edge-tab.component.css, taille
+adaptée à ce contexte inline plutôt que chevauchant un bord). */
 .profile-rail-index-badge {
   display: flex;
   flex-shrink: 0;
@@ -197,7 +197,7 @@
 }
 
 /* Icône de repli/dépli, dernier enfant direct du rail (hors `.profile-rail-scroll`, voir template)
-   — `flex-shrink: 0` : ne doit jamais se comprimer si le rail lui-même venait à manquer de place. */
+— `flex-shrink: 0` : ne doit jamais se comprimer si le rail lui-même venait à manquer de place. */
 .profile-rail-collapse-toggle {
   flex-shrink: 0;
   display: flex;
@@ -215,9 +215,9 @@
   color: var(--text-color);
 }
 /* Rotation sur un `<span>` wrapper plutôt que directement sur `<app-icon>` : `IconComponent` a
-   `:host{display:contents}`, qui n'a pas de boîte propre sur laquelle `transform` puisse s'appliquer
-   (et l'encapsulation de vue empêcherait de toute façon d'atteindre le `<svg>` interne depuis ce
-   fichier, voir CLAUDE.md). Pointe vers la gauche (replier) déplié, vers la droite (déplier) replié. */
+`:host{display:contents}`, qui n'a pas de boîte propre sur laquelle `transform` puisse s'appliquer
+(et l'encapsulation de vue empêcherait de toute façon d'atteindre le `<svg>` interne depuis ce
+fichier, voir CLAUDE.md). Pointe vers la gauche (replier) déplié, vers la droite (déplier) replié. */
 .profile-rail-collapse-icon {
   display: flex;
   transition: transform 0.15s ease;
@@ -236,8 +236,8 @@
   height: 100%;
 }
 /* Une seule section à la fois à côté du rail (comme en mobile, voir plus haut) — c'est ce qui
-   rend enfin à "Personnages" toute la largeur/hauteur du panneau au lieu de l'étrangler dans la
-   même colonne étroite que les sections courtes (voir CLAUDE.md, décalage signalé). */
+rend enfin à "Personnages" toute la largeur/hauteur du panneau au lieu de l'étrangler dans la
+même colonne étroite que les sections courtes (voir CLAUDE.md, décalage signalé). */
 .panels-row .tab-hidden {
   display: none;
 }
@@ -303,13 +303,13 @@
 /* Pseudo affiché/édité : voir EditableNameComponent (app-editable-name, variant="centered"). */
 
 /* Section connexion Discord/Google (voir CLAUDE.md), onglet dédié au même titre qu'Avatar/Alertes/
-   Personnages : mêmes classes `.profile-field-wide`/`.profile-label-row`/`.profile-label` que les
-   autres onglets (voir plus bas). La description détaillée (portée facultative de la connexion,
-   confidentialité, choix de migration des données...) vit dans la modale d'aide
-   (help.profileConnection) ; les 2 premières phrases restent en plus affichées en clair sous les
-   boutons en mobile (`.login-mobile-only`), à l'identique de l'ancienne page de connexion dédiée —
-   masquées en desktop où la modale suffit et où la section reste compacte comme Alertes/
-   Personnages. */
+Personnages : mêmes classes `.profile-field-wide`/`.profile-label-row`/`.profile-label` que les
+autres onglets (voir plus bas). La description détaillée (portée facultative de la connexion,
+confidentialité, choix de migration des données...) vit dans la modale d'aide
+(help.profileConnection) ; les 2 premières phrases restent en plus affichées en clair sous les
+boutons en mobile (`.login-mobile-only`), à l'identique de l'ancienne page de connexion dédiée —
+masquées en desktop où la modale suffit et où la section reste compacte comme Alertes/
+Personnages. */
 .manage-account-btn {
   display: flex;
   align-items: center;
@@ -392,9 +392,9 @@
   color: #3c4043;
 }
 /* Desktop (> seuil des onglets mobiles de cette page, voir @media (max-width: 800px) plus bas) :
-   boutons Discord/Google côte à côte, même largeur — plus de place qu'en mobile pour un rendu plus
-   soigné qu'un simple empilement plein-largeur. La description détaillée n'y est plus répétée
-   (disponible via la modale d'aide, bouton "?" du libellé de section). */
+boutons Discord/Google côte à côte, même largeur — plus de place qu'en mobile pour un rendu plus
+soigné qu'un simple empilement plein-largeur. La description détaillée n'y est plus répétée
+(disponible via la modale d'aide, bouton "?" du libellé de section). */
 @media (min-width: 801px) {
   .provider-buttons {
     flex-direction: row;
@@ -434,12 +434,12 @@
   color: var(--text-muted);
 }
 /* Titre de section desktop (rail de navigation, voir CLAUDE.md) : `.profile-label-row` ne sert
-   plus qu'à ça dans ce composant, un par onglet, jamais dupliqué — restylé en vrai titre de page
-   (voir `.profile-label-row .profile-label` plus bas) plutôt qu'en petit libellé de champ (réservé
-   à `.profile-label` seul, ex. "AVATAR" au-dessus de la grille d'avatars). `width`/`max-width` :
-   aligné avec `.identity-row`/`.profile-field-wide` (720px) même quand le parent direct est
-   `.panel-body` (centré, ne stretch pas ses enfants comme le ferait `.profile-field`) — cas de
-   l'onglet Avatar, seul à ne pas passer par `.profile-field-wide`. */
+plus qu'à ça dans ce composant, un par onglet, jamais dupliqué — restylé en vrai titre de page
+(voir `.profile-label-row .profile-label` plus bas) plutôt qu'en petit libellé de champ (réservé
+à `.profile-label` seul, ex. "AVATAR" au-dessus de la grille d'avatars). `width`/`max-width` :
+aligné avec `.identity-row`/`.profile-field-wide` (720px) même quand le parent direct est
+`.panel-body` (centré, ne stretch pas ses enfants comme le ferait `.profile-field`) — cas de
+l'onglet Avatar, seul à ne pas passer par `.profile-field-wide`. */
 .profile-label-row {
   display: flex;
   align-items: center;
@@ -454,10 +454,10 @@
   color: var(--text-bright);
 }
 /* Ligne de description sous le titre de section (voir CLAUDE.md) — un paragraphe par onglet,
-   même mécanique que `.profile-label-row` juste au-dessus (pleine largeur du `.profile-field`
-   parent, pas de cap propre). Masquée en mobile au même titre que `.profile-label-row` (voir media
-   query plus bas) : le titre d'onglet de la barre mobile suffit, sans place à revendre pour une
-   description en plus sur ces petits écrans. */
+même mécanique que `.profile-label-row` juste au-dessus (pleine largeur du `.profile-field`
+parent, pas de cap propre). Masquée en mobile au même titre que `.profile-label-row` (voir media
+query plus bas) : le titre d'onglet de la barre mobile suffit, sans place à revendre pour une
+description en plus sur ces petits écrans. */
 .profile-section-desc {
   width: 100%;
   margin: 0 0 18px;
@@ -467,8 +467,8 @@
 }
 
 /* Picker "Thème" (sombre + 4 variantes claires, voir ThemeService) : grille de cartes avec un
-   aperçu couleur plutôt qu'un `.icon-switch` (qui ne scale pas bien au-delà de 3 options et ne
-   permet pas de prévisualiser une palette avant de l'activer). */
+aperçu couleur plutôt qu'un `.icon-switch` (qui ne scale pas bien au-delà de 3 options et ne
+permet pas de prévisualiser une palette avant de l'activer). */
 .theme-picker {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -480,8 +480,8 @@
   align-items: center;
   gap: 8px;
   /* Le `button { height: 28px }` générique de styles.css s'applique sinon toujours : la cascade
-     opère propriété par propriété, une règle plus spécifique qui ne déclare pas `height` ne
-     l'écrase pas. */
+  opère propriété par propriété, une règle plus spécifique qui ne déclare pas `height` ne
+  l'écrase pas. */
   height: auto;
   padding: 10px;
   background: var(--surface-well);
@@ -545,10 +545,10 @@
 }
 
 /* Aperçu avant/après (voir `colorblindSwatches()`) : une vignette par élément réellement affecté
-   par le profil sélectionné, pour que le choix se fasse d'un coup d'œil plutôt qu'en allant
-   chercher chaque écran concerné (victoire/défaite, canaux de chat, rareté d'objet...). Grille
-   responsive (voir CLAUDE.md, idée d'aération §2) plutôt qu'une liste empilée : profite de la
-   largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-field`). */
+par le profil sélectionné, pour que le choix se fasse d'un coup d'œil plutôt qu'en allant
+chercher chaque écran concerné (victoire/défaite, canaux de chat, rareté d'objet...). Grille
+responsive (voir CLAUDE.md, idée d'aération §2) plutôt qu'une liste empilée : profite de la
+largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-field`). */
 .colorblind-swatches {
   margin-top: 10px;
   display: grid;
@@ -595,8 +595,6 @@
   display: grid;
   grid-template-columns: repeat(9, 1fr);
   gap: 6px;
-  max-height: 260px;
-  overflow-y: auto;
   padding-right: 4px;
 }
 .avatar-cell-btn {
@@ -636,12 +634,12 @@
 }
 
 /* Bloc "quand fermer le toast d'alerte" (voir CLAUDE.md, maquette proposée) : une phrase
-   ("Fermeture de l'alerte : 3,5 sec.", la durée éditable inline plutôt que dans un champ encadré)
-   à gauche, et un switch à 2 options Auto/Manuelle (réutilise `.icon-switch` générique de
-   styles.css, comme le switch daltonien 3 positions plus haut) à droite — remplace l'ancien
-   interrupteur à bascule custom (`.switch-track`/`.switch-thumb`), qui n'exprimait pas aussi
-   clairement les deux états. Déclaré avant la media query mobile ci-dessous : à spécificité égale,
-   l'ordre du fichier tranche — après elle, ses overrides ne l'emporteraient plus. */
+("Fermeture de l'alerte : 3,5 sec.", la durée éditable inline plutôt que dans un champ encadré)
+à gauche, et un switch à 2 options Auto/Manuelle (réutilise `.icon-switch` générique de
+styles.css, comme le switch daltonien 3 positions plus haut) à droite — remplace l'ancien
+interrupteur à bascule custom (`.switch-track`/`.switch-thumb`), qui n'exprimait pas aussi
+clairement les deux états. Déclaré avant la media query mobile ci-dessous : à spécificité égale,
+l'ordre du fichier tranche — après elle, ses overrides ne l'emporteraient plus. */
 .alert-timing-control {
   display: flex;
   align-items: center;
@@ -670,8 +668,8 @@
   font-weight: 700;
   text-align: right;
   /* Pas de `color-scheme` forcé ici : hérite de `:root`/`:root[data-theme='light']`
-     (styles.css), pour que les commandes natives du spinner suivent le thème actif
-     plutôt que de rester figées en sombre. */
+  (styles.css), pour que les commandes natives du spinner suivent le thème actif
+  plutôt que de rester figées en sombre. */
   transition:
     background 0.15s ease,
     border-color 0.15s ease;
@@ -691,7 +689,6 @@
 .alert-mode-switch {
   flex-shrink: 0;
   width: 170px;
-  height: 26px;
 }
 .alert-mode-switch .icon-switch-option {
   font-size: 0.75rem;
@@ -699,8 +696,8 @@
 }
 
 /* Breakpoint mobile (ex. Galaxy S23, 360px de large) : `identity-left` (160px
-   fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
-   on passe en colonne et on réduit le nombre de colonnes de la grille. */
+fixe) + une grille d'avatars 9 colonnes ne tiennent plus côte à côte —
+on passe en colonne et on réduit le nombre de colonnes de la grille. */
 @media (max-width: 640px) {
   .identity-row {
     flex-direction: column;
@@ -718,8 +715,8 @@
   }
 
   /* Repasse sur 2 lignes plutôt que de comprimer le texte (`flex-wrap: wrap` déjà présent en
-     base) : plus simple et tout aussi lisible que l'ancienne compaction dédiée (icône seule,
-     libellé masqué visuellement...) qu'imposait l'ancien interrupteur à bascule custom. */
+  base) : plus simple et tout aussi lisible que l'ancienne compaction dédiée (icône seule,
+  libellé masqué visuellement...) qu'imposait l'ancien interrupteur à bascule custom. */
   .alert-timing-control {
     padding: 8px 10px;
     background: var(--surface-well) !important;
@@ -734,7 +731,7 @@
 }
 
 /* Sous-titre générique au-dessus d'un groupe de contrôles (voir CLAUDE.md, idée d'aération §4) —
-   ex. "Objets suivis" au-dessus de la recherche/grille d'alertes. */
+ex. "Objets suivis" au-dessus de la recherche/grille d'alertes. */
 .subheading {
   margin: 4px 0 2px;
   font-size: 0.72rem;
@@ -745,8 +742,8 @@
 }
 
 /* Cadre pointillé façon "zone de dépôt" (même pattern que `.drop-zone` en page setup, voir
-   CLAUDE.md — `--border-strong` sert explicitement aux bordures pointillées) plutôt qu'un simple
-   champ de recherche : appuie le côté "ajouter" de l'action, avec le glyphe + en accent. */
+CLAUDE.md — `--border-strong` sert explicitement aux bordures pointillées) plutôt qu'un simple
+champ de recherche : appuie le côté "ajouter" de l'action, avec le glyphe + en accent. */
 .sound-item-add {
   display: flex;
   align-items: center;
@@ -789,8 +786,8 @@
   padding: 2px;
 }
 /* Légère élévation au survol (voir CLAUDE.md, idées d'aération §4/§5) — signale que les tuiles
-   sont cliquables, plus « vivant » qu'un simple fond plat. Commun aux tuiles d'objet suivi
-   (Alertes) et de personnage (Personnages, vue grille) : même composant visuel dans les deux cas. */
+sont cliquables, plus « vivant » qu'un simple fond plat. Commun aux tuiles d'objet suivi
+(Alertes) et de personnage (Personnages, vue grille) : même composant visuel dans les deux cas. */
 .sound-item-tile,
 .roster-character-tile {
   position: relative;
@@ -824,10 +821,10 @@
 }
 
 /* Icône son (haut gauche) / bouton de suppression (haut droit) : en badges
-   superposés plutôt qu'une ligne d'actions, pour condenser la tuile. */
+superposés plutôt qu'une ligne d'actions, pour condenser la tuile. */
 /* Badge toujours sombre + icône toujours claire, quel que soit le thème : posé sur la tuile d'objet
-   (couleur de rareté), pas sur le fond de page — un badge clair y serait au mieux redondant, au
-   pire illisible sur une tuile déjà claire en rareté commune. */
+(couleur de rareté), pas sur le fond de page — un badge clair y serait au mieux redondant, au
+pire illisible sur une tuile déjà claire en rareté commune. */
 .sound-toggle-btn,
 .remove-btn {
   position: absolute;
@@ -854,8 +851,8 @@
 }
 
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
-   Le pourcentage de mélange varie volontairement par rareté (échantillonné sur les bordures
-   officielles cdn.wakfuli.com/rarity) — seule la couleur de base est donc factorisable ici. */
+Le pourcentage de mélange varie volontairement par rareté (échantillonné sur les bordures
+officielles cdn.wakfuli.com/rarity) — seule la couleur de base est donc factorisable ici. */
 .sound-item-tile[class*='rarity-'] {
   border-color: var(--rarity-color);
 }
@@ -882,12 +879,12 @@
 }
 
 /* `position: absolute` (plutôt que le `position: sticky` hérité de `.profile-rail`) : sort le rail
-   du flux pour que `.panel-body.roster-panel-body` (flex row, `justify-content: center`) ne centre
-   QUE `.profile-field-wide` sur toute la largeur du panneau, comme s'il était seul — le rail flotte
-   par-dessus, collé au bord gauche. Ça donne le rendu voulu en desktop large (grand espace entre le
-   rail et la grille, grille centrée sur la page). Sous le seuil de la `@container` plus bas, ce
-   choix se retourne contre nous (la grille centrée peut passer sous le rail) : on y repasse le rail
-   en flux normal pour que les deux se poussent au lieu de se chevaucher. */
+du flux pour que `.panel-body.roster-panel-body` (flex row, `justify-content: center`) ne centre
+QUE `.profile-field-wide` sur toute la largeur du panneau, comme s'il était seul — le rail flotte
+par-dessus, collé au bord gauche. Ça donne le rendu voulu en desktop large (grand espace entre le
+rail et la grille, grille centrée sur la page). Sous le seuil de la `@container` plus bas, ce
+choix se retourne contre nous (la grille centrée peut passer sous le rail) : on y repasse le rail
+en flux normal pour que les deux se poussent au lieu de se chevaucher. */
 .roster-account-rail {
   position: absolute;
   left: 0;
@@ -906,37 +903,37 @@
 }
 
 /* `container-type: inline-size` posé sur `.roster-tool-panel` (l'ANCÊTRE), pas sur
-   `.roster-panel-body` elle-même : un élément qui interroge son propre conteneur pour se restyler
-   lui-même se voit ignorer silencieusement les déclarations conditionnelles dans Chromium (`@container`
-   plus bas sans effet sur `justify-content` de `.roster-panel-body` quand elle est aussi l'élément
-   `container-type`, vérifié empiriquement) — vraisemblablement pour éviter tout risque de boucle de
-   layout, même quand la propriété concernée (`justify-content`) n'affecte pas la taille du
-   conteneur. Interroger un ANCÊTRE (`.roster-tool-panel`, largeur identique à 2px de bordure près)
-   fait fonctionner la même règle sans ce piège. Largeur = celle de ce panneau (déjà amputé des
-   220px du rail principal `.profile-rail`), pas celle du viewport — un `@media` sur la largeur de
-   fenêtre décalerait le seuil selon que le rail principal est présent ou non. Voir la `@container`
-   plus bas pour le seuil lui-même.
+`.roster-panel-body` elle-même : un élément qui interroge son propre conteneur pour se restyler
+lui-même se voit ignorer silencieusement les déclarations conditionnelles dans Chromium (`@container`
+plus bas sans effet sur `justify-content` de `.roster-panel-body` quand elle est aussi l'élément
+`container-type`, vérifié empiriquement) — vraisemblablement pour éviter tout risque de boucle de
+layout, même quand la propriété concernée (`justify-content`) n'affecte pas la taille du
+conteneur. Interroger un ANCÊTRE (`.roster-tool-panel`, largeur identique à 2px de bordure près)
+fait fonctionner la même règle sans ce piège. Largeur = celle de ce panneau (déjà amputé des
+220px du rail principal `.profile-rail`), pas celle du viewport — un `@media` sur la largeur de
+fenêtre décalerait le seuil selon que le rail principal est présent ou non. Voir la `@container`
+plus bas pour le seuil lui-même.
 
-   `overflow: visible` (override du `.tool-panel { overflow: hidden }` générique, voir plus haut —
-   scopé à CETTE seule instance, les autres onglets gardent le clip) : sans ça, `position: sticky`
-   sur `.roster-account-rail` ne colle PAS du tout (bug réel corrigé en session, voir CLAUDE.md pour
-   la méthode de test). Cause : n'importe quel `overflow` autre que `visible` sur un ANCÊTRE — même
-   `hidden`, même si son contenu ne dépasse jamais sa propre boîte — en fait le "conteneur de
-   défilement" de référence pour le calcul du sticky (au sens CSS, pas au sens visuel), à la place
-   du vrai conteneur qui scrolle plus haut (`.app-page-body`, voir AppPageComponent). Comme
-   `.roster-tool-panel` lui-même ne scrolle jamais (son `scrollTop` reste toujours à 0, rien ne
-   l'anime), le rail sticky calé dessus n'a jamais l'occasion de "décrocher" : il suit `.roster-tool-
-   panel` comme un bloc rigide pendant que celui-ci défile normalement avec le reste de la page. */
+`overflow: visible` (override du `.tool-panel { overflow: hidden }` générique, voir plus haut —
+scopé à CETTE seule instance, les autres onglets gardent le clip) : sans ça, `position: sticky`
+sur `.roster-account-rail` ne colle PAS du tout (bug réel corrigé en session, voir CLAUDE.md pour
+la méthode de test). Cause : n'importe quel `overflow` autre que `visible` sur un ANCÊTRE — même
+`hidden`, même si son contenu ne dépasse jamais sa propre boîte — en fait le "conteneur de
+défilement" de référence pour le calcul du sticky (au sens CSS, pas au sens visuel), à la place
+du vrai conteneur qui scrolle plus haut (`.app-page-body`, voir AppPageComponent). Comme
+`.roster-tool-panel` lui-même ne scrolle jamais (son `scrollTop` reste toujours à 0, rien ne
+l'anime), le rail sticky calé dessus n'a jamais l'occasion de "décrocher" : il suit `.roster-tool-
+panel` comme un bloc rigide pendant que celui-ci défile normalement avec le reste de la page. */
 .roster-tool-panel {
   container-type: inline-size;
   container-name: roster-panel;
   overflow: visible;
 }
 /* `align-items: flex-start` (override du `align-items: center` hérité de `.panel-body`, voir plus
-   haut) : sans ça, `.roster-account-rail` (désormais plus court que la grille de personnages grâce
-   à `max-height`, voir `.profile-rail`) se retrouve centré verticalement dans la ligne flex au lieu
-   d'aligné en haut — son sticky ne "s'active" alors qu'après avoir scrollé au-delà de ce centrage
-   initial, au lieu d'être collé dès le premier pixel de scroll (bug réel corrigé en session). */
+haut) : sans ça, `.roster-account-rail` (désormais plus court que la grille de personnages grâce
+à `max-height`, voir `.profile-rail`) se retrouve centré verticalement dans la ligne flex au lieu
+d'aligné en haut — son sticky ne "s'active" alors qu'après avoir scrollé au-delà de ce centrage
+initial, au lieu d'être collé dès le premier pixel de scroll (bug réel corrigé en session). */
 .panel-body.roster-panel-body {
   flex-direction: row;
   justify-content: center;
@@ -952,16 +949,16 @@
 }
 
 /* Sous ce seuil, `.roster-account-rail` (position: absolute) + `.profile-field-wide` (centré sur
-   toute la largeur du panneau, cf. ci-dessus) finissent par se chevaucher : le rail est large de
-   220px (`.profile-rail`) + 1px de bordure, et la grille peut s'étendre jusqu'au bord gauche du
-   panneau dès que celui-ci passe sous ~950px (sa `max-width`). 1430px = le point où l'écart restant
-   en mode centré (`(largeur-950)/2 - 221`) retombe au même ~20px que le `gap` du mode flux normal
-   ci-dessus — sous ce seuil l'écart continuerait de rétrécir jusqu'à se pincer à quelques px puis
-   chevaucher ; 1430px coupe donc avant que ce soit visuellement gênant, pas seulement avant le
-   chevauchement strict. En dessous, le rail repasse en flux normal (participe au flex row comme
-   n'importe quel enfant, `position: sticky` hérité de `.profile-rail` — reste visible pendant le
-   défilement vertical du panneau) : la grille (`flex-shrink: 1` par défaut sur `.profile-field`,
-   le rail lui `flex: none`) se réduit d'autant à sa droite au lieu de passer dessous. */
+toute la largeur du panneau, cf. ci-dessus) finissent par se chevaucher : le rail est large de
+220px (`.profile-rail`) + 1px de bordure, et la grille peut s'étendre jusqu'au bord gauche du
+panneau dès que celui-ci passe sous ~950px (sa `max-width`). 1430px = le point où l'écart restant
+en mode centré (`(largeur-950)/2 - 221`) retombe au même ~20px que le `gap` du mode flux normal
+ci-dessus — sous ce seuil l'écart continuerait de rétrécir jusqu'à se pincer à quelques px puis
+chevaucher ; 1430px coupe donc avant que ce soit visuellement gênant, pas seulement avant le
+chevauchement strict. En dessous, le rail repasse en flux normal (participe au flex row comme
+n'importe quel enfant, `position: sticky` hérité de `.profile-rail` — reste visible pendant le
+défilement vertical du panneau) : la grille (`flex-shrink: 1` par défaut sur `.profile-field`,
+le rail lui `flex: none`) se réduit d'autant à sa droite au lieu de passer dessous. */
 @container roster-panel (max-width: 1430px) {
   .roster-account-rail {
     position: sticky;
@@ -998,10 +995,10 @@
   color: var(--text-muted);
 }
 /* Bordure/radius complets par défaut (desktop) : plus rien ne le précède directement dans
-   `.roster-tabs-wrapper` (le rail de comptes vit à côté, pas au-dessus, voir `.roster-layout`
-   plus haut) — redevient une carte autonome plutôt qu'un panneau "attaché" sous une barre
-   d'onglets. La media query mobile plus bas restaure l'ancien raccord (barre d'onglets toujours
-   au-dessus là-bas, voir `.roster-tabs-wrapper .tab-bar-row`). */
+`.roster-tabs-wrapper` (le rail de comptes vit à côté, pas au-dessus, voir `.roster-layout`
+plus haut) — redevient une carte autonome plutôt qu'un panneau "attaché" sous une barre
+d'onglets. La media query mobile plus bas restaure l'ancien raccord (barre d'onglets toujours
+au-dessus là-bas, voir `.roster-tabs-wrapper .tab-bar-row`). */
 .roster-account-panel {
   display: flex;
   flex-direction: column;
@@ -1046,21 +1043,21 @@
   transition: transform 0.2s ease;
 }
 /* "+" pivote en "×" quand le formulaire inline est déplié (voir .character-add-collapse) — pas de
-   changement de libellé, la rotation suffit à signaler l'état ouvert/fermé. */
+changement de libellé, la rotation suffit à signaler l'état ouvert/fermé. */
 .roster-account-header .roster-character-add-btn.open svg {
   transform: rotate(45deg);
 }
 
 /* Formulaire d'ajout de personnage (desktop) : replié par défaut, se déplie en glissant de haut en
-   bas depuis le bouton "+ Ajouter un personnage" au clic (`addCharacterFormOpen`), comme s'il
-   sortait d'un tiroir caché derrière le bouton — remplace l'ancienne modale centrée
-   (CharacterAddModalComponent, retirée). Hauteur en px pilotée par JS (`characterAddPanelHeight`,
-   mesurée via ResizeObserver sur `.character-add-collapse-inner`, toujours rendu même replié) plutôt
-   qu'une animation CSS pure `grid-template-rows: 0fr -> 1fr` (essayée d'abord — technique connue,
-   voir https://css-tricks.com/css-grid-height-animation/ — mais qui reste bloquée à la hauteur
-   ouverte à la fermeture dans certains moteurs, vérifié en session). `.character-add-collapse-inner`
-   n'est jamais retiré du DOM : seul `overflow: hidden` sur le conteneur le clippe visuellement à 0,
-   donc sa hauteur réelle est toujours connue, y compris avant la toute première ouverture. */
+bas depuis le bouton "+ Ajouter un personnage" au clic (`addCharacterFormOpen`), comme s'il
+sortait d'un tiroir caché derrière le bouton — remplace l'ancienne modale centrée
+(CharacterAddModalComponent, retirée). Hauteur en px pilotée par JS (`characterAddPanelHeight`,
+mesurée via ResizeObserver sur `.character-add-collapse-inner`, toujours rendu même replié) plutôt
+qu'une animation CSS pure `grid-template-rows: 0fr -> 1fr` (essayée d'abord — technique connue,
+voir https://css-tricks.com/css-grid-height-animation/ — mais qui reste bloquée à la hauteur
+ouverte à la fermeture dans certains moteurs, vérifié en session). `.character-add-collapse-inner`
+n'est jamais retiré du DOM : seul `overflow: hidden` sur le conteneur le clippe visuellement à 0,
+donc sa hauteur réelle est toujours connue, y compris avant la toute première ouverture. */
 .character-add-collapse {
   overflow: hidden;
   transition: height 0.3s ease;
@@ -1118,14 +1115,14 @@
   flex-shrink: 0;
 }
 /* Classe sous le nom, vue grille uniquement (voir CLAUDE.md, idée d'aération §5) — plus lisible
-   qu'un simple nom seul, déjà connue via `char.className` (pas besoin de traduction, voir
-   class-picker : ces libellés ne sont jamais passés au pipe `t`). */
+qu'un simple nom seul, déjà connue via `char.className` (pas besoin de traduction, voir
+class-picker : ces libellés ne sont jamais passés au pipe `t`). */
 .roster-character-class {
   font-size: 0.68rem;
   color: var(--text-muted);
 }
 /* État vide (voir CLAUDE.md, idée d'aération §5) : un compte sans personnage n'affichait rien
-   sous le formulaire d'ajout — invite accueillante plutôt qu'un silence. */
+sous le formulaire d'ajout — invite accueillante plutôt qu'un silence. */
 .roster-empty-state {
   display: flex;
   flex-direction: column;
@@ -1157,15 +1154,15 @@
 }
 
 /* Onglets mobile only (seuil dashboard). Déclaré en dernier pour gagner le
-   conflit de cascade avec .identity-row/.profile-field (même spécificité,
-   voir .alert-timing-control plus haut pour le même piège). */
+conflit de cascade avec .identity-row/.profile-field (même spécificité,
+voir .alert-timing-control plus haut pour le même piège). */
 @media (max-width: 800px) {
   .profile-page-content {
     overflow: hidden;
   }
   /* Rail desktop remplacé par `app-tab-bar` (mobileOnly, voir plus haut) : `.profile-layout`
-     redevient une simple colonne pleine hauteur, comme l'était `.profile-page-content` avant
-     l'ajout du rail. */
+  redevient une simple colonne pleine hauteur, comme l'était `.profile-page-content` avant
+  l'ajout du rail. */
   .profile-rail {
     display: none;
   }
@@ -1186,8 +1183,8 @@
     display: none;
   }
   /* Se connecte sans vide sous la barre d'onglets (même principe que
-     .panels-row .tool-panel sur le dashboard) : pas de bordure/radius (annule le cadre du rail
-     desktop, voir base plus haut). */
+  .panels-row .tool-panel sur le dashboard) : pas de bordure/radius (annule le cadre du rail
+  desktop, voir base plus haut). */
   .tool-panel {
     background: var(--panel-bg);
     border: none;
@@ -1208,7 +1205,7 @@
     flex-direction: row;
   }
   /* Rail de comptes desktop remplacé par la barre d'onglets `app-tab-bar` (mobileOnly, voir plus
-     haut) : `.roster-account-panel` retrouve son raccord "attaché sous la barre" d'origine. */
+  haut) : `.roster-account-panel` retrouve son raccord "attaché sous la barre" d'origine. */
   .roster-account-rail {
     display: none;
   }
@@ -1219,9 +1216,9 @@
   }
   .panels-row .roster-panel-body {
     /* Restaure le centrage : la `@container` desktop plus haut passe en `flex-start` dès que ce
-       panneau passe sous 1400px de large (cas systématique ici, rail masqué juste au-dessus), ce
-       qui décentrerait `.profile-field-wide` en mobile sans cette réaffirmation explicite (même
-       spécificité, gagne par ordre de déclaration — ce bloc vient après). */
+    panneau passe sous 1400px de large (cas systématique ici, rail masqué juste au-dessus), ce
+    qui décentrerait `.profile-field-wide` en mobile sans cette réaffirmation explicite (même
+    spécificité, gagne par ordre de déclaration — ce bloc vient après). */
     justify-content: center;
     padding: 0;
     overflow-x: hidden;
@@ -1251,5 +1248,61 @@
   }
   .panels-row .roster-character-scroll.is-grid {
     padding: 14px 12px 0 0 !important;
+  }
+  :host-context([data-theme='light']) {
+    .panels-row .roster-account-panel {
+      padding: 0;
+      background: var(--panel-bg);
+    }
+    .roster-account-panel {
+      gap: 0;
+    }
+    .roster-view-row,
+    .roster-account-header {
+      background: var(--surface-active);
+    }
+    .game-server-select {
+      background: var(--surface-well);
+    }
+    .roster-account-header {
+      padding: 10px 12px 0;
+    }
+    .roster-view-row {
+      padding: 0 12px 8px;
+    }
+    .roster-character-scroll.is-grid {
+      padding: 14px 12px !important;
+    }
+  }
+}
+
+:host-context([data-theme='light']) {
+  .panel-body {
+    background: var(--panel-bg);
+  }
+  .profile-rail {
+    background: var(--surface-well);
+  }
+  .colorblind-swatch-row {
+    background: var(--surface-raised);
+  }
+  .badge-close-btn {
+    background: var(--surface-active);
+  }
+  .badge-close-btn:hover {
+    background: #b33939;
+  }
+  .sound-item-add {
+    border-color: var(--accent);
+    background: transparent;
+  }
+  .sound-item-add span {
+    color: var(--accent);
+  }
+  .alert-timing-control,
+  .roster-character-tile,
+  .character-add-collapse-panel {
+    background: var(--on-accent);
+    border: 1px solid var(--border);
   }
 }

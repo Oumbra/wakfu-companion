@@ -183,3 +183,9 @@
   min-width: 70px;
   text-align: right;
 }
+
+:host-context([data-theme='light']) {
+  .entity-block {
+    background-color: var(--panel-bg);
+  }
+}

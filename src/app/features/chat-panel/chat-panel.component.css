@@ -277,3 +277,17 @@
   font-size: 1.15rem;
   line-height: 1;
 }
+
+:host-context([data-theme='light']) {
+  .chat-list {
+    background-color: var(--panel-bg);
+  }
+  .search-bar,
+  .channel-filters {
+    background: var(--surface-active);
+  }
+  .filter-channel-select {
+    background: var(--surface-well);
+    border: 1px solid var(--border-strong);
+  }
+}

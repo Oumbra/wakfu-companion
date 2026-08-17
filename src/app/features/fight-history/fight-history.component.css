@@ -375,3 +375,14 @@
   text-align: right;
   flex-shrink: 0;
 }
+
+:host-context([data-theme='light']) {
+  .collapsible-body,
+  .loot-body {
+    background: var(--panel-bg);
+  }
+  .fight-group-controls,
+  .history-view-switch-row {
+    background: var(--surface-active);
+  }
+}

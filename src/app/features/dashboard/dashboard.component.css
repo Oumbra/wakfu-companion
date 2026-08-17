@@ -69,3 +69,9 @@
     display: none;
   }
 }
+
+:host-context([data-theme='light']) {
+  .dashboard {
+    background-color: var(--panel-bg);
+  }
+}

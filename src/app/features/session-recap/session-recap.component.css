@@ -380,3 +380,9 @@
 .loot-body {
   padding-top: 6px;
 }
+
+:host-context([data-theme='light']) {
+  .loot-body {
+    background: var(--panel-bg);
+  }
+}

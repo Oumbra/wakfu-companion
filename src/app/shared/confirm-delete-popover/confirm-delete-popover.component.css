@@ -1,5 +1,5 @@
 /* z-index aligné sur .class-picker (600/601) : doit passer au premier plan
-   même déclenchée depuis un panneau déjà surélevé (voir class-picker.component.css). */
+même déclenchée depuis un panneau déjà surélevé (voir class-picker.component.css). */
 .confirm-delete-backdrop {
   position: fixed;
   inset: 0;
@@ -47,4 +47,10 @@
 .confirm-delete-popover button.selected {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+:host-context([data-theme='light']) {
+  .confirm-delete-popover {
+    color: var(--bg-color);
+  }
 }

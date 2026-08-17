@@ -386,7 +386,7 @@ button.badge-close-btn {
   position: relative;
   display: flex;
   flex-shrink: 0;
-  height: 26px;
+  height: 32px;
   border-radius: 5px;
   border: 1px solid var(--tint-strong);
   background: var(--tint-medium);
