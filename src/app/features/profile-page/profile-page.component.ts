@@ -46,10 +46,16 @@ import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
+import { LightThemeVariant, ThemeService } from '../../core/services/theme.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 
 type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
+
+/** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
+ * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
+ * une seule valeur pratique à comparer/piloter depuis le template (voir `activeThemeChoice`). */
+type ThemeChoice = 'dark' | LightThemeVariant;
 
 interface ColorblindSwatch {
   labelKey: string;
@@ -67,7 +73,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
   redGreen: [
     { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
     { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
-    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
+    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#148fbb' },
     { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
     { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
     { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
@@ -109,6 +115,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly roster = inject(CharacterRosterService);
   protected readonly gameServers = inject(GameServerService);
   protected readonly colorblind = inject(ColorblindService);
+  protected readonly theme = inject(ThemeService);
   protected readonly helpModal = inject(HelpModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
@@ -125,6 +132,38 @@ export class ProfilePageComponent implements OnDestroy {
   /** Cases de la grille "Avatar" (18 classes x 2 sexes, voir class-portraits.data.ts) — l'index
    * dans ce tableau EST `profile.avatarIndex()` (schéma v5, voir ProfileService). */
   protected readonly avatarGridEntries = AVATAR_GRID_ENTRIES;
+
+  /** Cartes du picker "Thème" (section Accessibilité, avant le mode daltonien — les deux sont
+   * dépendants : les vignettes avant/après du daltonisme ci-dessous montrent les couleurs du thème
+   * actuellement actif). `swatch` = 3 pastilles (fond/panneau/accent) pour prévisualiser la
+   * palette sans avoir à l'activer d'abord — valeurs dupliquées de styles.css
+   * (`[data-theme='light'][data-light-theme='...']`), à garder synchronisées. */
+  protected readonly themeOptions: readonly {
+    value: ThemeChoice;
+    labelKey: string;
+    swatch: readonly [string, string, string];
+  }[] = [
+    { value: 'dark', labelKey: 'profile.themeDark', swatch: ['#121212', '#1e1e1e', '#00d2ff'] },
+    { value: 'a', labelKey: 'profile.themeA', swatch: ['#f7f7f8', '#ffffff', '#00748a'] },
+    { value: 'b', labelKey: 'profile.themeB', swatch: ['#faf6ee', '#fffdf9', '#2a4d8f'] },
+    { value: 'c', labelKey: 'profile.themeC', swatch: ['#eceff4', '#f9fafc', '#3763a6'] },
+    { value: 'd', labelKey: 'profile.themeD', swatch: ['#f4f4f5', '#ffffff', '#0058c7'] },
+  ];
+
+  /** Fusionne `theme.theme()`/`theme.lightVariant()` (2 signaux indépendants, voir ThemeService)
+   * en une seule valeur comparable aux `value` de `themeOptions` ci-dessus. */
+  protected readonly activeThemeChoice = computed<ThemeChoice>(() =>
+    this.theme.theme() === 'dark' ? 'dark' : this.theme.lightVariant(),
+  );
+
+  protected chooseTheme(choice: ThemeChoice): void {
+    if (choice === 'dark') {
+      this.theme.setTheme('dark');
+      return;
+    }
+    this.theme.setTheme('light');
+    this.theme.setLightVariant(choice);
+  }
 
   /** 3 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché, libellé
    * complet en tooltip. Ordre = ordre visuel du switch ; `.icon-switch-3` générique de styles.css

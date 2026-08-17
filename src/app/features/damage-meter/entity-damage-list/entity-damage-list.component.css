@@ -35,7 +35,7 @@
   background-color: var(--enemy-header-bg);
 }
 .half-header.drag-over {
-  background-color: rgba(0, 210, 255, 0.25);
+  background-color: color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .half-header.collapsible {
   cursor: pointer;
@@ -65,7 +65,7 @@
   transition: background-color 0.15s;
 }
 .half-list.drag-over {
-  background-color: rgba(0, 210, 255, 0.08);
+  background-color: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .entity-block {
@@ -111,7 +111,7 @@
   left: 0;
   bottom: 0;
   z-index: 0;
-  background-color: rgba(0, 210, 255, 0.12);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
   border-right: 2px solid var(--accent);
   transition: width 0.3s ease;
 }

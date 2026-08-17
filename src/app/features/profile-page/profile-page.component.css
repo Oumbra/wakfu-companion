@@ -465,6 +465,79 @@
   line-height: 1.5;
 }
 
+/* Picker "Thème" (sombre + 4 variantes claires, voir ThemeService) : grille de cartes avec un
+   aperçu couleur plutôt qu'un `.icon-switch` (qui ne scale pas bien au-delà de 3 options et ne
+   permet pas de prévisualiser une palette avant de l'activer). */
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  /* Le `button { height: 28px }` générique de styles.css s'applique sinon toujours : la cascade
+     opère propriété par propriété, une règle plus spécifique qui ne déclare pas `height` ne
+     l'écrase pas. */
+  height: auto;
+  padding: 10px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+.theme-option:hover {
+  border-color: var(--border-strong);
+}
+.theme-option.selected {
+  border-color: var(--accent);
+  color: var(--text-color);
+}
+.theme-option-swatch {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--tint-strong);
+}
+.theme-option-swatch-bg {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 5px;
+}
+.theme-option-swatch-panel {
+  width: 62%;
+  height: 62%;
+  border-radius: 3px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.theme-option-swatch-accent {
+  width: 34%;
+  height: 22%;
+  border-radius: 2px;
+}
+.theme-option-label {
+  text-align: center;
+  line-height: 1.2;
+}
+
 .colorblind-switch-option {
   font-size: 0.68rem;
   font-weight: 700;

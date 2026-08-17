@@ -212,6 +212,42 @@
             <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
                 <label class="profile-label">
+                  {{ 'profile.themeLabel' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [appTooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileTheme')"
+                  >
+                    ?
+                  </button>
+                </label>
+              </div>
+              <p class="profile-section-desc">{{ 'profile.themeHint' | t }}</p>
+              <div class="theme-picker">
+                @for (opt of themeOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="theme-option"
+                    [class.selected]="activeThemeChoice() === opt.value"
+                    (click)="chooseTheme(opt.value)"
+                  >
+                    <span class="theme-option-swatch">
+                      <span class="theme-option-swatch-bg" [style.background]="opt.swatch[0]">
+                        <span class="theme-option-swatch-panel" [style.background]="opt.swatch[1]">
+                          <span class="theme-option-swatch-accent" [style.background]="opt.swatch[2]"></span>
+                        </span>
+                      </span>
+                    </span>
+                    <span class="theme-option-label">{{ opt.labelKey | t }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
                   {{ 'profile.colorblindLabel' | t }}
                   <button
                     type="button"

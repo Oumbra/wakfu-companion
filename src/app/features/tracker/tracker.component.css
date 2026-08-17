@@ -115,7 +115,7 @@
 .kpi-target-chip:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
@@ -362,7 +362,7 @@ app-input-number.kpi-card-value-input {
 .kpi-card-select-checkbox.checked {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).

@@ -273,7 +273,7 @@
 .kpi-target-chip:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
@@ -534,7 +534,7 @@ app-input-number.kpi-countdown-current-input {
 .kpi-select-checkbox.checked {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Tuile cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
