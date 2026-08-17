@@ -67,4 +67,10 @@
     font-size: 15px;
     font-weight: 400px;
   }
+  :host-context([data-theme='light']) {
+    .character-add-form {
+      background: var(--surface-active);
+      padding: 8px 12px;
+    }
+  }
 }

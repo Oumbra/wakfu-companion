@@ -444,6 +444,7 @@
                     class="icon-switch-option"
                     [class.selected]="!profile.alertManualClose()"
                     [appTooltip]="autoCloseTooltip()"
+                    tooltipPosition="top-right"
                     (click)="setManualClose(false)"
                   >
                     {{ 'profile.autoCloseLabel' | t }}
@@ -453,7 +454,7 @@
                     class="icon-switch-option"
                     [class.selected]="profile.alertManualClose()"
                     [appTooltip]="'profile.manualCloseTooltip' | t"
-                    [tooltipMultiline]="true"
+                    tooltipPosition="top-right"
                     (click)="setManualClose(true)"
                   >
                     {{ 'profile.manualCloseLabel' | t }}
@@ -483,9 +484,7 @@
                     <button
                       class="sound-toggle-btn"
                       [appTooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
-                      [tooltipPosition]="
-                        i < soundGridColumns.columns() ? 'bottom-left' : 'top-left'
-                      "
+                      tooltipPosition="top"
                       (click)="toggleSound(entry.name, entry.catalogId)"
                     >
                       @if (entry.enabled) {

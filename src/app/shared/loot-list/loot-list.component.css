@@ -76,3 +76,16 @@
   font-style: italic;
   color: var(--text-muted);
 }
+
+:host-context([data-theme='light']) {
+  .loot-qty {
+    color: var(--accent);
+  }
+  .loot-row[class*='rarity-'] {
+    background: linear-gradient(
+      to right,
+      color-mix(in srgb, var(--rarity-color) 35%, var(--panel-bg)),
+      var(--panel-bg) 70%
+    );
+  }
+}

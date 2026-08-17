@@ -58,3 +58,9 @@
   width: 14px;
   height: 14px;
 }
+
+:host-context([data-theme='light']) {
+  .controls-row {
+    background: var(--surface-active);
+  }
+}

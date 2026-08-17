@@ -80,3 +80,9 @@
     padding: 8px 10px;
   }
 }
+
+:host-context([data-theme='light']) {
+  .app-page-header {
+    background: var(--panel-header-bg);
+  }
+}

@@ -197,3 +197,9 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+:host-context([data-theme='light']) {
+  .wakfu-autocomplete input {
+    background: var(--panel-bg);
+  }
+}

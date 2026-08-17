@@ -291,3 +291,16 @@ button.mobile-menu-server:hover {
     display: flex;
   }
 }
+
+:host-context([data-theme='light']) {
+  .app-header {
+    background: var(--surface-active);
+  }
+  .session-recap-btn,
+  .game-server-badge {
+    background: var(--surface-well);
+  }
+  .mobile-menu {
+    background: var(--panel-bg);
+  }
+}
