@@ -256,6 +256,7 @@
   align-items: center;
   padding: 25px;
   overflow: visible;
+  gap: 20px;
 }
 
 .identity-row {
