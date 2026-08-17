@@ -24,8 +24,9 @@ import { LoadingOverlayService } from '../../core/services/loading-overlay.servi
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import {
-  WAKFU_ENEMY_CATEGORY_ICON_URL,
+  WAKFU_ALL_CATEGORY_ICON_URL,
   WAKFU_ITEM_CATEGORIES,
+  WAKFU_MONSTER_CATEGORY_ICON_URL,
   WakfuItemCategory,
   wakfuItemCategoryIconUrl,
 } from '../../core/data/wakfu-item-category.data';
@@ -36,8 +37,13 @@ import { TooltipDirective } from '../tooltip/tooltip.directive';
 export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
 
 /** Filtre par icône de catégorie (voir `activeCategoryFilter`) : une `WakfuItemCategory` ou
- * `'enemy'` pour le bouton "Ennemis" (visible seulement en domaine `both`, voir `categoryFilters`). */
+ * `'enemy'` pour le bouton "Monstres" (visible seulement en domaine `both`, voir `categoryFilters`). */
 export type WakfuAutocompleteCategoryFilter = WakfuItemCategory | 'enemy';
+
+/** `WakfuAutocompleteCategoryFilter`, + `'all'` pour le bouton "Tout" affiché au-dessus des
+ * suggestions (voir `filterButtons`) — réinitialise `activeCategoryFilter` à `null`, ce n'est pas
+ * une valeur que `activeCategoryFilter` peut lui-même prendre. */
+export type WakfuAutocompleteFilterButton = 'all' | WakfuAutocompleteCategoryFilter;
 
 export interface WakfuAutocompleteExisting {
   name: string;
@@ -106,8 +112,19 @@ export class WakfuAutocompleteComponent {
   private readonly catalog = inject(CatalogService);
   private readonly loadingOverlay = inject(LoadingOverlayService);
 
-  readonly focused = signal(false);
+  /** Focus natif brut du champ — voir `focused` (exposé aux appelants) pour la version qui reste
+   * vraie tant que le panneau de suggestions est ouvert. */
+  private readonly rawFocused = signal(false);
   protected readonly open = signal(false);
+  /** Vrai tant que le champ a le focus natif OU que le panneau de suggestions (`open`) est ouvert —
+   * utilisé par les appelants (ex. `.icon-switch-option`/`class.compact`, voir
+   * tracker.component.html/tracker-strip.component.html) pour garder leur variante compacte
+   * pendant toute l'interaction avec la liste de suggestions. Sans le `|| open()`, cliquer sur une
+   * icône de filtre ou une suggestion fait perdre le focus natif au champ (mousedown -> blur, AVANT
+   * que le click ne s'exécute) : `rawFocused` retombait alors à `false` un instant pendant que le
+   * panneau était encore affiché, faisant réapparaître les libellés masqués puis re-disparaître à
+   * la frappe suivante (bug visuel réel). */
+  readonly focused = computed(() => this.rawFocused() || this.open());
   protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
   /** Catégorie actuellement filtrée dans la ligne d'icônes (voir `results`), `null` = toutes.
@@ -115,14 +132,32 @@ export class WakfuAutocompleteComponent {
    * frappe à l'autre pour ne pas surprendre l'utilisateur en train d'affiner sa recherche. */
   protected readonly activeCategoryFilter = signal<WakfuAutocompleteCategoryFilter | null>(null);
 
-  /** Icônes de filtre affichées au-dessus des suggestions — les 7 catégories d'objet toujours
-   * (domaines `item`/`both`), + "Ennemis" seulement en domaine `both` (seul domaine mélangeant les
+  /** Catégories de filtre possibles pour le domaine courant — les 7 catégories d'objet toujours
+   * (domaines `item`/`both`), + "Monstres" seulement en domaine `both` (seul domaine mélangeant les
    * deux `kind`, voir WakfuAutocompleteDomain). Domaine `enemy` seul : aucun filtre, un seul `kind`
-   * possible. */
-  protected readonly categoryFilters = computed<readonly WakfuAutocompleteCategoryFilter[]>(() => {
-    const domain = this.domain();
-    if (domain === 'enemy') return [];
-    return domain === 'both' ? [...WAKFU_ITEM_CATEGORIES, 'enemy'] : WAKFU_ITEM_CATEGORIES;
+   * possible. Indépendant des résultats courants — voir `filterButtons` pour la liste réellement
+   * affichée (restreinte aux catégories ayant au moins un résultat). */
+  private readonly possibleCategoryFilters = computed<readonly WakfuAutocompleteCategoryFilter[]>(
+    () => {
+      const domain = this.domain();
+      if (domain === 'enemy') return [];
+      return domain === 'both' ? [...WAKFU_ITEM_CATEGORIES, 'enemy'] : WAKFU_ITEM_CATEGORIES;
+    },
+  );
+
+  /** Icônes de filtre réellement affichées au-dessus des suggestions : uniquement les catégories
+   * de `possibleCategoryFilters` ayant au moins un résultat dans `rawResults()` (inutile d'afficher
+   * un filtre qui viderait systématiquement la liste), précédées d'une icône "Tout" qui réinitialise
+   * `activeCategoryFilter` — absente si aucune catégorie n'est disponible (domaine `enemy`, ou
+   * aucun résultat). */
+  protected readonly filterButtons = computed<readonly WakfuAutocompleteFilterButton[]>(() => {
+    const possible = this.possibleCategoryFilters();
+    if (possible.length === 0) return [];
+    const present = new Set<WakfuAutocompleteCategoryFilter>(
+      this.rawResults().map((r) => (r.kind === 'enemy' ? 'enemy' : (r.category as WakfuItemCategory))),
+    );
+    const available = possible.filter((f) => present.has(f));
+    return available.length > 0 ? ['all', ...available] : [];
   });
   /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
    * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
@@ -207,20 +242,34 @@ export class WakfuAutocompleteComponent {
     );
   });
 
-  protected toggleCategoryFilter(category: WakfuAutocompleteCategoryFilter): void {
-    this.activeCategoryFilter.update((current) => (current === category ? null : category));
+  protected toggleCategoryFilter(filter: WakfuAutocompleteFilterButton): void {
+    if (filter === 'all') {
+      this.activeCategoryFilter.set(null);
+    } else {
+      this.activeCategoryFilter.update((current) => (current === filter ? null : filter));
+    }
     this.activeIndex.set(0);
   }
 
-  /** Clé i18n du libellé/tooltip d'une icône de filtre — `damageMeter.enemies` (déjà traduit dans
-   * les 4 locales) pour "Ennemis", `itemCategory.*` (voir translations.ts) pour les 7 catégories
-   * d'objet. */
-  protected categoryFilterLabelKey(filter: WakfuAutocompleteCategoryFilter): string {
-    return filter === 'enemy' ? 'damageMeter.enemies' : `itemCategory.${filter}`;
+  /** `filter` est actif soit parce qu'il correspond exactement à `activeCategoryFilter`, soit
+   * (cas du bouton "Tout") parce qu'aucun filtre n'est actif (`activeCategoryFilter() === null`). */
+  protected isFilterButtonActive(filter: WakfuAutocompleteFilterButton): boolean {
+    return filter === 'all'
+      ? this.activeCategoryFilter() === null
+      : this.activeCategoryFilter() === filter;
   }
 
-  protected categoryFilterIconUrl(filter: WakfuAutocompleteCategoryFilter): string {
-    return filter === 'enemy' ? WAKFU_ENEMY_CATEGORY_ICON_URL : wakfuItemCategoryIconUrl(filter);
+  /** Clé i18n du libellé/tooltip d'une icône de filtre — `wakfuAutocomplete.allCategories` pour
+   * "Tout", `itemCategory.monsters` pour "Monstres", `itemCategory.*` (voir translations.ts) pour
+   * les 7 catégories d'objet. */
+  protected categoryFilterLabelKey(filter: WakfuAutocompleteFilterButton): string {
+    if (filter === 'all') return 'wakfuAutocomplete.allCategories';
+    return filter === 'enemy' ? 'itemCategory.monsters' : `itemCategory.${filter}`;
+  }
+
+  protected categoryFilterIconUrl(filter: WakfuAutocompleteFilterButton): string {
+    if (filter === 'all') return WAKFU_ALL_CATEGORY_ICON_URL;
+    return filter === 'enemy' ? WAKFU_MONSTER_CATEGORY_ICON_URL : wakfuItemCategoryIconUrl(filter);
   }
 
   /** Vrai tant qu'une recette ouverte par CETTE instance (voir `openRecipe`) est en attente —
@@ -259,11 +308,11 @@ export class WakfuAutocompleteComponent {
 
   protected onFocus(): void {
     this.open.set(true);
-    this.focused.set(true);
+    this.rawFocused.set(true);
   }
 
   protected onBlur(): void {
-    this.focused.set(false);
+    this.rawFocused.set(false);
   }
 
   protected moveActive(delta: number): void {
