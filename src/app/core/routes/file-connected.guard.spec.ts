@@ -60,7 +60,7 @@ describe('fileConnectedGuard', () => {
     expect(result).toBe(true);
   });
 
-  it("redirige vers `/:lang` si `ready` se résout sans connexion établie", async () => {
+  it('redirige vers `/:lang` si `ready` se résout sans connexion établie', async () => {
     const resolveReady = controlledReady(logFileAccess);
     logFileAccess.status.set('idle');
 

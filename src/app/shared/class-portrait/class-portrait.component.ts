@@ -55,7 +55,7 @@ const LAST_COL = CLASS_PORTRAITS_SPRITE_COLS - 1;
         inset: 0;
         background-size: ${CLASS_PORTRAITS_SPRITE_COLS * 100}% ${CLASS_PORTRAITS_SPRITE_ROWS * 100}%;
         background-repeat: no-repeat;
-        filter: grayscale(0.5) brightness(.6) saturate(.5);;
+        filter: grayscale(0.5) brightness(0.6) saturate(0.5);
         transition: filter 0.18s ease;
       }
       :host(:hover) .class-portrait-layer,

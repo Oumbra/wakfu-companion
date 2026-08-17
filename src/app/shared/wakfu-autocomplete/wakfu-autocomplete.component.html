@@ -49,7 +49,11 @@
               (click)="select(r)"
             >
               @if (r.rarity) {
-                <img class="wakfu-autocomplete-item-rarity" [src]="rarityIconUrl(r.rarity)" alt="" />
+                <img
+                  class="wakfu-autocomplete-item-rarity"
+                  [src]="rarityIconUrl(r.rarity)"
+                  alt=""
+                />
               }
               <span class="wakfu-autocomplete-item-icon">
                 @if (r.kind === 'item') {

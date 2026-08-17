@@ -1,6 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WakfuAutocompleteComponent, WakfuAutocompleteOption } from './wakfu-autocomplete.component';
+import {
+  WakfuAutocompleteComponent,
+  WakfuAutocompleteOption,
+} from './wakfu-autocomplete.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 
@@ -32,7 +35,7 @@ describe('WakfuAutocompleteComponent — ouverture de la modale recette pendant 
     catalog = TestBed.inject(CatalogService);
   });
 
-  it("ouvre la modale immédiatement (ingredients: null) puis la complète une fois la résolution réseau terminée", async () => {
+  it('ouvre la modale immédiatement (ingredients: null) puis la complète une fois la résolution réseau terminée', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let resolveFn!: (ingredients: any[]) => void;
     vi.spyOn(catalog, 'resolveRecipeIngredients').mockReturnValue(
@@ -44,7 +47,10 @@ describe('WakfuAutocompleteComponent — ouverture de la modale recette pendant 
     expect(recipeTracking.request()).toBeNull();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const openPromise = (component as any).openRecipe(new MouseEvent('click'), fakeEntry) as Promise<void>;
+    const openPromise = (component as any).openRecipe(
+      new MouseEvent('click'),
+      fakeEntry,
+    ) as Promise<void>;
 
     await Promise.resolve();
     await Promise.resolve();
@@ -52,7 +58,14 @@ describe('WakfuAutocompleteComponent — ouverture de la modale recette pendant 
     expect(recipeTracking.request()?.ingredients).toBeNull();
 
     const ingredients = [
-      { name: 'Ingr', id: 2, rarity: 'common', quantity: 1, hasRecipe: false, recipeIngredients: [] },
+      {
+        name: 'Ingr',
+        id: 2,
+        rarity: 'common',
+        quantity: 1,
+        hasRecipe: false,
+        recipeIngredients: [],
+      },
     ];
     resolveFn(ingredients);
     await openPromise;
@@ -78,7 +91,10 @@ describe('WakfuAutocompleteComponent — ouverture de la modale recette pendant 
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const openPromise = (component as any).openRecipe(new MouseEvent('click'), fakeEntry) as Promise<void>;
+    const openPromise = (component as any).openRecipe(
+      new MouseEvent('click'),
+      fakeEntry,
+    ) as Promise<void>;
     await Promise.resolve();
     await Promise.resolve();
     expect(recipeTracking.request()).not.toBeNull();

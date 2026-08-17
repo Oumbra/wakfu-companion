@@ -1,4 +1,12 @@
-import { Directive, ElementRef, HostListener, inject, input, model, OnDestroy } from '@angular/core';
+import {
+  Directive,
+  ElementRef,
+  HostListener,
+  inject,
+  input,
+  model,
+  OnDestroy,
+} from '@angular/core';
 import { TooltipPosition, TooltipService } from '../../core/services/tooltip.service';
 
 let nextId = 0;
