@@ -26,7 +26,14 @@ export type WakfuRarityCode =
  * même convention que WakfuRarityCode : stocké en `text` en base, le type TypeScript ne sert
  * qu'au typage des scripts d'import/des endpoints. */
 export type WakfuItemCategoryCode =
-  'equipment' | 'resources' | 'sublimations' | 'harvests' | 'havenBag' | 'cosmetics' | 'misc';
+  | 'equipment'
+  | 'resources'
+  | 'sublimations'
+  | 'harvests'
+  | 'havenBag'
+  | 'cosmetics'
+  | 'craft'
+  | 'misc';
 
 /** Miroir de CatalogDungeonEntry['type'] (src/app/core/api/catalog.service.ts) — même convention
  * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
@@ -64,6 +71,23 @@ export const gameServers = pgTable('game_servers', {
 });
 
 /**
+ * Sous-catégories fines d'objet (arbre de filtre "Types" de l'encyclopédie officielle — Casques,
+ * Anneaux, Récoltes du Forestier, Costumes... voir ITEM_SUBCATEGORY_CATALOG dans
+ * server/import/import-catalog.ts pour la table de référence et le regroupement vers la
+ * catégorie large `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte
+ * répété sur chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous — mais `fr`
+ * seul (pas de en/es/pt) : contrairement aux familles de monstres, ce libellé n'existe qu'en
+ * français à la source (`category` dans repository/items.json, scrapé depuis la version FR de
+ * l'encyclopédie). `id` réattribué à chaque import (voir import-catalog.ts) : la table est
+ * entièrement remplacée à chaque exécution, aucune autre table ne référence ces id d'un import à
+ * l'autre.
+ */
+export const itemCategories = pgTable('item_categories', {
+  id: integer('id').primaryKey(),
+  fr: text('fr').notNull(),
+});
+
+/**
  * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
  * server/import/import-catalog.ts pour l'import et server/README.md pour
  * l'origine des données (repository/*.json, régénérés à la main via les
@@ -93,8 +117,14 @@ export const items = pgTable(
     wakfuAvailable: boolean('wakfu_available').notNull(),
     hasRecipe: boolean('has_recipe').notNull().default(false),
     category: text('category').notNull().default('misc').$type<WakfuItemCategoryCode>(),
+    // Référence itemCategories.id, nullable et sans FK stricte — même raison que monsters.family
+    // ci-dessous (ordre d'import garanti côté script, pas imposé par une contrainte Postgres).
+    subCategoryId: integer('sub_category_id'),
   },
-  (table) => [index('items_ankama_id_idx').on(table.ankamaId)],
+  (table) => [
+    index('items_ankama_id_idx').on(table.ankamaId),
+    index('items_sub_category_id_idx').on(table.subCategoryId),
+  ],
 );
 
 /**
