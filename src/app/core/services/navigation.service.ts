@@ -2,20 +2,40 @@ import { computed, Injectable, signal } from '@angular/core';
 
 export type AppView = 'main' | 'profile' | 'legal' | 'account';
 
+/** Onglets mobile du tableau de bord (voir `DashboardComponent`, sur `main`) — définis ici (plutôt
+ * que dans le composant) pour que `NavigationService`/`RouteSyncService`/`app.routes.ts` puissent
+ * s'y référer sans dépendre d'un composant `features/`. `'tracker'` est la racine (path `''`, pas
+ * de segment dédié) — voir `pagePathFor`. */
+export type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
+
+/** Onglets du rail de la page profil (voir `ProfilePageComponent`, sur `profile`) — même raison
+ * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */
+export type ProfileTab = 'avatar' | 'colorblind' | 'connection' | 'alerts' | 'characters';
+
 type SlideDirection = 'forward' | 'backward';
 
 /** Chemin de page (sans préfixe de langue) pour une vue donnée — partagé entre `RouteSyncService`
  * (état → URL) et `SeoService` (canonical/hreflang) pour que les deux restent forcément
- * synchronisés avec `app.routes.ts` plutôt que de dupliquer ce switch à deux endroits. */
-export function pagePathFor(view: AppView, legalKind: 'notice' | 'privacy' | null): string {
+ * synchronisés avec `app.routes.ts` plutôt que de dupliquer ce switch à deux endroits.
+ *
+ * `dashboardTab`/`profileTab` (ignorés hors de leur vue respective) ajoutent le segment de la
+ * section active dans la page — omis quand elle vaut sa valeur "racine" (`tracker`/`avatar`) pour
+ * que l'URL par défaut reste la même qu'avant cette fonctionnalité (`/fr`, `/fr/profile`). */
+export function pagePathFor(
+  view: AppView,
+  legalKind: 'notice' | 'privacy' | null,
+  dashboardTab: DashboardTab | null = null,
+  profileTab: ProfileTab | null = null,
+): string {
   switch (view) {
     case 'profile':
-      return '/profile';
+      return profileTab && profileTab !== 'avatar' ? `/profile/${profileTab}` : '/profile';
     case 'account':
       return '/account';
     case 'legal':
       return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
     case 'main':
+      return dashboardTab && dashboardTab !== 'tracker' ? `/${dashboardTab}` : '';
     default:
       return '';
   }
@@ -84,6 +104,14 @@ export class NavigationService {
     const s = this.stack();
     return s[s.length - 1];
   });
+
+  /** Section active de `main`/`profile` — source unique de vérité, lue/écrite directement par
+   * `DashboardComponent`/`ProfilePageComponent` (leur `activeTab` local a été remplacé par un
+   * alias vers ces signaux) ET par `RouteBridgeComponent`/`RouteSyncService` (URL ↔ état) : mêmes
+   * signaux des deux côtés, pas de synchronisation à maintenir entre deux copies. Valeur par
+   * défaut = section "racine" de chaque page (voir `pagePathFor`). */
+  readonly dashboardTab = signal<DashboardTab>('tracker');
+  readonly profileTab = signal<ProfileTab>('avatar');
 
   hasVisited(view: AppView): boolean {
     return this.visited().has(view);
