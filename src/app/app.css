@@ -47,6 +47,13 @@
   overflow: hidden;
   transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* Coupe la transition ci-dessus le temps de la toute première résolution de vue depuis l'URL
+   (lien direct/F5, voir NavigationService.skipInitialTransition) : ce premier positionnement doit
+   apparaître directement dans sa position finale, pas glisser comme une navigation en cours
+   d'utilisation. */
+.view-panel.no-transition {
+  transition: none;
+}
 
 /* Contenu de la page principale (dashboard/setup), projeté à l'intérieur de `<app-page>` (voir
    app.html) : plus un enfant flex direct de `.view-panel` (le header du site s'est intercalé au
