@@ -11,14 +11,19 @@ import { LogFileAccessService } from '../services/log-file-access.service';
  * paramètre `:lang` (ce garde s'applique à une route enfant de `LocaleRouteComponent`, voir
  * app.routes.ts ; `localeGuard` a déjà validé ce paramètre avant d'atteindre ce garde).
  *
- * Ne couvre que la navigation via l'URL (lien direct, F5, précédent/suivant du navigateur) — les
- * entrées programmatiques (`NavigationService.openProfile()`, bouton profil de l'en-tête) sont
- * de toute façon déjà masquées dans le template tant qu'aucun fichier n'est connecté (voir
- * app-header.component.html, `@if (logFileAccess.status() === 'connected' ...)`).
+ * Attend `logFileAccess.ready` avant de trancher : `LogFileAccessService.init()` (lancé au
+ * démarrage de l'app, voir `App.ngOnInit`) est asynchrone (IndexedDB + `queryPermission`), donc
+ * `status()` vaut encore sa valeur par défaut `'idle'` au moment où ce garde s'exécute sur un lien
+ * direct/F5 vers `/profile` — sans cette attente, un utilisateur déjà connecté avant le
+ * rechargement se faisait rediriger à tort avant même que la reconnexion n'ait eu la chance de se
+ * résoudre. `ready` est déjà résolu pour toute navigation programmatique (`NavigationService.
+ * openProfile()`, bouton profil de l'en-tête, de toute façon déjà masqué dans le template tant
+ * qu'aucun fichier n'est connecté), donc aucun délai perceptible dans ce cas.
  */
-export const fileConnectedGuard: CanActivateFn = (route): boolean | UrlTree => {
+export const fileConnectedGuard: CanActivateFn = async (route): Promise<boolean | UrlTree> => {
   const logFileAccess = inject(LogFileAccessService);
   const router = inject(Router);
+  await logFileAccess.ready;
   if (logFileAccess.status() === 'connected') return true;
   const lang = route.parent?.paramMap.get('lang') ?? 'fr';
   return router.parseUrl(`/${lang}`);

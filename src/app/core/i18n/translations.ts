@@ -40,6 +40,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Serveur déduit du personnage {{name}}',
     'app.catalogUnavailable':
       'Catalogue Ankama indisponible : noms et icônes des objets/monstres non reconnus pour le moment.',
+    'app.loading': 'Chargement...',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Réduire',
@@ -446,6 +447,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Server inferred from character {{name}}',
     'app.catalogUnavailable':
       'Ankama catalog unavailable: item/monster names and icons are not recognized right now.',
+    'app.loading': 'Loading...',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Collapse',
@@ -845,6 +847,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Servidor deducido del personaje {{name}}',
     'app.catalogUnavailable':
       'Catálogo Ankama no disponible: los nombres e iconos de objetos/monstruos no se reconocen por ahora.',
+    'app.loading': 'Cargando...',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Contraer',
@@ -1248,6 +1251,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Servidor deduzido da personagem {{name}}',
     'app.catalogUnavailable':
       'Catálogo Ankama indisponível: nomes e ícones de itens/monstros não são reconhecidos no momento.',
+    'app.loading': 'Carregando...',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Recolher',
