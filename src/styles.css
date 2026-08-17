@@ -216,8 +216,8 @@
    sur l'élément concerné ; seule la couleur de base --rarity-color est centralisée ici,
    à charge de chaque composant de définir SA propre formule de bordure/dégradé à partir
    de var(--rarity-color) (les nuances varient volontairement d'un composant à l'autre).
-   Valeurs sombres (calibrées pour un fond quasi noir) ; voir le bloc `[data-theme='light']`
-   juste après pour leur recoloration partagée par les 4 variantes claires. */
+   Volontairement identiques entre thème sombre et thème clair (pas de recoloration par
+   thème) — seuls les profils daltonisme ci-dessous (voir plus bas) les décalent. */
 .rarity-common {
   --rarity-color: #c8c8c8;
 }
@@ -237,27 +237,6 @@
   --rarity-color: #d84fa0;
 }
 .rarity-relic {
-  --rarity-color: #9450d9;
-}
-:root[data-theme='light'] .rarity-common {
-  --rarity-color: #737373;
-}
-:root[data-theme='light'] .rarity-rare {
-  --rarity-color: #12853c;
-}
-:root[data-theme='light'] .rarity-mythical {
-  --rarity-color: #ab6000;
-}
-:root[data-theme='light'] .rarity-legendary {
-  --rarity-color: #717800;
-}
-:root[data-theme='light'] .rarity-memory {
-  --rarity-color: #1879b4;
-}
-:root[data-theme='light'] .rarity-epic {
-  --rarity-color: #d02e8d;
-}
-:root[data-theme='light'] .rarity-relic {
   --rarity-color: #9450d9;
 }
 
@@ -667,12 +646,6 @@ button.icon-btn.help-icon-btn {
   --highlight-green-border: #006dee;
   --dmg-earth: #0f6b8c;
   --channel-recrutement: #0067e0;
-}
-:root[data-theme='light'][data-colorblind='redGreen'] .rarity-rare {
-  --rarity-color: #108271;
-}
-:root[data-theme='light'][data-colorblind='redGreen'] .rarity-legendary {
-  --rarity-color: #847200;
 }
 :root[data-theme='light'][data-colorblind='tritanopia'] {
   --dmg-water: #187ba8;
