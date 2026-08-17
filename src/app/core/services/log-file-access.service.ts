@@ -1,6 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PersistenceService } from './persistence.service';
+import { LoadingOverlayService } from './loading-overlay.service';
 
 export type LogFileStatus =
   'idle' | 'unsupported' | 'needs-reconnect' | 'connecting' | 'connected' | 'error';
@@ -66,14 +67,23 @@ export class LogFileAccessService {
     this.resolveReady = resolve;
   });
 
+  private readonly loadingOverlay = inject(LoadingOverlayService);
+
   isSupported(): boolean {
     return typeof window !== 'undefined' && 'showOpenFilePicker' in window;
   }
 
   constructor(private readonly persistence: PersistenceService) {}
 
-  /** À appeler au démarrage de l'application. */
+  /**
+   * À appeler au démarrage de l'application (et donc à chaque rechargement complet de la page,
+   * un F5 repartant d'un état JS vierge) — couvre l'overlay de chargement plein écran (voir
+   * `LoadingOverlayService`/`LoadingOverlayComponent`) le temps de cette détermination initiale,
+   * plutôt que de laisser transparaître un état transitoire (setup/dashboard incorrect avant que
+   * la reconnexion n'ait abouti).
+   */
   async init(): Promise<void> {
+    this.loadingOverlay.show();
     try {
       if (!this.isSupported()) {
         this.status.set('unsupported');
@@ -100,6 +110,7 @@ export class LogFileAccessService {
       }
     } finally {
       this.resolveReady();
+      this.loadingOverlay.hide();
     }
   }
 

@@ -20,6 +20,7 @@ import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { CatalogService } from '../../core/api/catalog.service';
+import { LoadingOverlayService } from '../../core/services/loading-overlay.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
@@ -93,6 +94,7 @@ export class WakfuAutocompleteComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly recipeTracking = inject(RecipeTrackingService);
   private readonly catalog = inject(CatalogService);
+  private readonly loadingOverlay = inject(LoadingOverlayService);
 
   readonly focused = signal(false);
   protected readonly open = signal(false);
@@ -242,15 +244,19 @@ export class WakfuAutocompleteComponent {
   /** Ouvre la modale "suivre les objets de la recette" (voir RecipeTrackingService) — indépendant
    * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. ASYNCHRONE (lot 3.1, étape 5)
    * : la résolution récursive de la recette nécessite désormais un aller-retour réseau par niveau
-   * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` pilote l'état de chargement
-   * pendant l'appel (voir template, boutons recette désactivés). */
+   * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` (garde de ré-entrance locale
+   * à cette instance + désactivation des boutons recette, voir template) ET l'overlay plein écran
+   * partagé (`LoadingOverlayService`, voir son commentaire) pilotent tous deux l'état de
+   * chargement pendant l'appel, chacun pour son propre rôle. */
   protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
     this.recipeOpened.emit();
     event.stopPropagation();
     if (entry.id === null || this.recipeLoading()) return;
     this.recipeLoading.set(true);
     try {
-      const ingredients = await this.catalog.resolveRecipeIngredients(entry.id);
+      const ingredients = await this.loadingOverlay.track(
+        this.catalog.resolveRecipeIngredients(entry.id),
+      );
       if (ingredients.length === 0) return;
       this.awaitingOwnRecipeConfirm = true;
       this.recipeTracking.open({

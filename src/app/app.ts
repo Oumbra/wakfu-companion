@@ -35,6 +35,7 @@ import { AuthService } from './core/auth/auth.service';
 import { GameServerService } from './core/services/game-server.service';
 import { Gender } from './core/data/class-icons.data';
 import { TooltipComponent } from './shared/tooltip/tooltip.component';
+import { LoadingOverlayComponent } from './shared/loading-overlay/loading-overlay.component';
 
 @Component({
   selector: 'app-root',
@@ -58,6 +59,7 @@ import { TooltipComponent } from './shared/tooltip/tooltip.component';
     AccountPageComponent,
     TabSheetComponent,
     TooltipComponent,
+    LoadingOverlayComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
