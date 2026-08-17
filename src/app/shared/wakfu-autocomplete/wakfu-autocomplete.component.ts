@@ -22,11 +22,21 @@ import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
+import {
+  WAKFU_ENEMY_CATEGORY_ICON_URL,
+  WAKFU_ITEM_CATEGORIES,
+  WakfuItemCategory,
+  wakfuItemCategoryIconUrl,
+} from '../../core/data/wakfu-item-category.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
+
+/** Filtre par icône de catégorie (voir `activeCategoryFilter`) : une `WakfuItemCategory` ou
+ * `'enemy'` pour le bouton "Ennemis" (visible seulement en domaine `both`, voir `categoryFilters`). */
+export type WakfuAutocompleteCategoryFilter = WakfuItemCategory | 'enemy';
 
 export interface WakfuAutocompleteExisting {
   name: string;
@@ -98,6 +108,20 @@ export class WakfuAutocompleteComponent {
   protected readonly open = signal(false);
   protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
+  /** Catégorie actuellement filtrée dans la ligne d'icônes (voir `results`), `null` = toutes.
+   * Remise à `null` seulement à la sélection d'une suggestion (voir `select`) — conservée d'une
+   * frappe à l'autre pour ne pas surprendre l'utilisateur en train d'affiner sa recherche. */
+  protected readonly activeCategoryFilter = signal<WakfuAutocompleteCategoryFilter | null>(null);
+
+  /** Icônes de filtre affichées au-dessus des suggestions — les 7 catégories d'objet toujours
+   * (domaines `item`/`both`), + "Ennemis" seulement en domaine `both` (seul domaine mélangeant les
+   * deux `kind`, voir WakfuAutocompleteDomain). Domaine `enemy` seul : aucun filtre, un seul `kind`
+   * possible. */
+  protected readonly categoryFilters = computed<readonly WakfuAutocompleteCategoryFilter[]>(() => {
+    const domain = this.domain();
+    if (domain === 'enemy') return [];
+    return domain === 'both' ? [...WAKFU_ITEM_CATEGORIES, 'enemy'] : WAKFU_ITEM_CATEGORIES;
+  });
   /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
    * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
    * l'appel pour éviter une double ouverture concurrente. */
@@ -145,7 +169,10 @@ export class WakfuAutocompleteComponent {
     () => new Set(this.existingNames().map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`)),
   );
 
-  protected readonly results = computed<WakfuAutocompleteOption[]>(() => {
+  /** Résultats de recherche (WakfuSearchService), AVANT filtre par catégorie — sert à décider si
+   * la ligne d'icônes a lieu d'être affichée (voir template) même quand le filtre actif ne laisse
+   * plus rien passer (pour pouvoir le désactiver plutôt que de perdre toute la liste). */
+  protected readonly rawResults = computed<WakfuAutocompleteOption[]>(() => {
     const q = this.query();
     const domain = this.domain();
     const raw =
@@ -166,6 +193,33 @@ export class WakfuAutocompleteComponent {
       return { ...r, disabled };
     });
   });
+
+  /** `rawResults`, restreint à `activeCategoryFilter` quand un filtre est actif — c'est cette liste
+   * que le template affiche et que la navigation clavier (`moveActive`/`selectActive`) parcourt. */
+  protected readonly results = computed<WakfuAutocompleteOption[]>(() => {
+    const filter = this.activeCategoryFilter();
+    const raw = this.rawResults();
+    if (filter === null) return raw;
+    return raw.filter((r) =>
+      filter === 'enemy' ? r.kind === 'enemy' : r.kind === 'item' && r.category === filter,
+    );
+  });
+
+  protected toggleCategoryFilter(category: WakfuAutocompleteCategoryFilter): void {
+    this.activeCategoryFilter.update((current) => (current === category ? null : category));
+    this.activeIndex.set(0);
+  }
+
+  /** Clé i18n du libellé/tooltip d'une icône de filtre — `damageMeter.enemies` (déjà traduit dans
+   * les 4 locales) pour "Ennemis", `itemCategory.*` (voir translations.ts) pour les 7 catégories
+   * d'objet. */
+  protected categoryFilterLabelKey(filter: WakfuAutocompleteCategoryFilter): string {
+    return filter === 'enemy' ? 'damageMeter.enemies' : `itemCategory.${filter}`;
+  }
+
+  protected categoryFilterIconUrl(filter: WakfuAutocompleteCategoryFilter): string {
+    return filter === 'enemy' ? WAKFU_ENEMY_CATEGORY_ICON_URL : wakfuItemCategoryIconUrl(filter);
+  }
 
   /** Vrai tant qu'une recette ouverte par CETTE instance (voir `openRecipe`) est en attente —
    * distingue, dans l'effect ci-dessous, une validation qui nous concerne d'une validation
@@ -233,6 +287,7 @@ export class WakfuAutocompleteComponent {
     this.query.set('');
     this.open.set(false);
     this.activeIndex.set(0);
+    this.activeCategoryFilter.set(null);
   }
 
   protected close(): void {

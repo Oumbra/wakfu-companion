@@ -13,53 +13,74 @@
     (keydown.enter)="selectActive(); $event.preventDefault()"
     (keydown.escape)="close()"
   />
-  @if (open() && results().length > 0) {
-    <div class="wakfu-autocomplete-list">
-      @for (r of results(); track r.kind + ':' + (r.id ?? r.name); let i = $index) {
-        <div
-          class="wakfu-autocomplete-item"
-          [class.active]="i === activeIndex() && !r.disabled"
-          [class.disabled]="r.disabled"
-        >
-          <button
-            #itemButton
-            type="button"
-            class="wakfu-autocomplete-item-main"
-            [disabled]="r.disabled"
-            (click)="select(r)"
-          >
-            @if (r.rarity) {
-              <img class="wakfu-autocomplete-item-rarity" [src]="rarityIconUrl(r.rarity)" alt="" />
-            }
-            <span class="wakfu-autocomplete-item-icon">
-              @if (r.kind === 'item') {
-                <app-item-icon [name]="r.name" [id]="r.id" [size]="24" />
-              } @else {
-                <app-entity-icon [name]="r.name" [id]="r.id" side="enemy" [size]="24" />
-              }
-            </span>
-            <span
-              class="wakfu-autocomplete-item-name"
-              [appTooltip]="r.label"
-              [tooltipOnlyIfTruncated]="true"
-              [tooltipPosition]="i === 0 ? 'bottom-left' : 'top-left'"
-              >{{ r.label }}</span
-            >
-          </button>
-          @if (showRecipeButton() && r.kind === 'item' && r.hasRecipe) {
+  @if (open() && rawResults().length > 0) {
+    <div class="wakfu-autocomplete-panel">
+      @if (categoryFilters().length > 0) {
+        <div class="wakfu-autocomplete-categories">
+          @for (filter of categoryFilters(); track filter) {
             <button
               type="button"
-              class="wakfu-autocomplete-recipe-btn"
-              [appTooltip]="'tracker.recipeTooltip' | t"
-              [tooltipPosition]="i === 0 ? 'bottom-right' : 'top-right'"
-              [disabled]="recipeLoading()"
-              (click)="openRecipe($event, r)"
+              class="wakfu-autocomplete-category-btn"
+              [class.active]="activeCategoryFilter() === filter"
+              [appTooltip]="categoryFilterLabelKey(filter) | t"
+              [tooltipPosition]="'bottom'"
+              (click)="toggleCategoryFilter(filter)"
             >
-              <img [src]="recipeIcon" alt="" />
+              <img [src]="categoryFilterIconUrl(filter)" alt="" />
             </button>
           }
         </div>
       }
+      @if (results().length === 0) {
+        <p class="wakfu-autocomplete-empty">{{ 'wakfuAutocomplete.noResultInCategory' | t }}</p>
+      }
+      <div class="wakfu-autocomplete-list">
+        @for (r of results(); track r.kind + ':' + (r.id ?? r.name); let i = $index) {
+          <div
+            class="wakfu-autocomplete-item"
+            [class.active]="i === activeIndex() && !r.disabled"
+            [class.disabled]="r.disabled"
+          >
+            <button
+              #itemButton
+              type="button"
+              class="wakfu-autocomplete-item-main"
+              [disabled]="r.disabled"
+              (click)="select(r)"
+            >
+              @if (r.rarity) {
+                <img class="wakfu-autocomplete-item-rarity" [src]="rarityIconUrl(r.rarity)" alt="" />
+              }
+              <span class="wakfu-autocomplete-item-icon">
+                @if (r.kind === 'item') {
+                  <app-item-icon [name]="r.name" [id]="r.id" [size]="24" />
+                } @else {
+                  <app-entity-icon [name]="r.name" [id]="r.id" side="enemy" [size]="24" />
+                }
+              </span>
+              <span
+                class="wakfu-autocomplete-item-name"
+                [appTooltip]="r.label"
+                [tooltipOnlyIfTruncated]="true"
+                [tooltipPosition]="i === 0 ? 'bottom-left' : 'top-left'"
+                >{{ r.label }}</span
+              >
+            </button>
+            @if (showRecipeButton() && r.kind === 'item' && r.hasRecipe) {
+              <button
+                type="button"
+                class="wakfu-autocomplete-recipe-btn"
+                [appTooltip]="'tracker.recipeTooltip' | t"
+                [tooltipPosition]="i === 0 ? 'bottom-right' : 'top-right'"
+                [disabled]="recipeLoading()"
+                (click)="openRecipe($event, r)"
+              >
+                <img [src]="recipeIcon" alt="" />
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
   }
 </div>
