@@ -13,7 +13,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { CharacterViewMode, ProfileService } from '../../core/services/profile.service';
 import { PersistenceService } from '../../core/services/persistence.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
-import { NavigationService } from '../../core/services/navigation.service';
+import { NavigationService, ProfileTab } from '../../core/services/navigation.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
@@ -49,8 +49,6 @@ import { ColorblindProfile, ColorblindService } from '../../core/services/colorb
 import { LightThemeVariant, ThemeService } from '../../core/services/theme.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
-
-type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
 
 /** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
  * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
@@ -230,7 +228,10 @@ export class ProfilePageComponent implements OnDestroy {
   ];
   protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
 
-  protected readonly activeTab = signal<ProfileTab>('avatar');
+  /** Alias vers `NavigationService.profileTab` (source unique de vérité, voir son commentaire —
+   * synchronisée avec l'URL) plutôt qu'un signal local : `.set()` ici met donc directement à jour
+   * la section active ET déclenche `RouteSyncService`. */
+  protected readonly activeTab = this.nav.profileTab;
 
   /** Repli desktop des 2 rails de navigation (`.profile-rail` principal ET `.roster-account-rail`,
    * voir icône `.profile-rail-collapse-toggle` en bas de chacun) — préférence purement locale

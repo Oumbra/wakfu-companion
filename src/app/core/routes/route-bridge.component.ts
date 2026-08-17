@@ -1,6 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AppView, NavigationService } from '../services/navigation.service';
+import {
+  AppView,
+  DashboardTab,
+  NavigationService,
+  ProfileTab,
+} from '../services/navigation.service';
 import { LegalPageKind, LegalPageService } from '../services/legal-page.service';
 
 /**
@@ -11,6 +16,11 @@ import { LegalPageKind, LegalPageService } from '../services/legal-page.service'
  * l'activation d'une route : il traduit l'URL en appel à `NavigationService.goTo()` (+
  * `LegalPageService.kind` pour distinguer mentions légales/politique de confidentialité) puis ne
  * rend rien. Le sens inverse (état de nav → URL) est géré par `RouteSyncService`.
+ *
+ * `dashboardTab`/`profileTab` (voir app.routes.ts) donnent la section active de `main`/`profile` —
+ * un segment de route DISTINCT par section (pas un paramètre) : Angular détruit/recrée donc ce
+ * composant à chaque changement de section (comme entre deux vues), ce qui rejoue `ngOnInit` à
+ * chaque fois plutôt que de nécessiter une réactivité façon `LocaleRouteComponent`.
  */
 @Component({
   selector: 'app-route-bridge',
@@ -27,6 +37,12 @@ export class RouteBridgeComponent implements OnInit {
     if (legalKind) {
       this.legalPage.kind.set(legalKind);
     }
-    this.nav.goTo(data['view'] as AppView);
+    const view = data['view'] as AppView;
+    this.nav.goTo(view);
+    if (view === 'main') {
+      this.nav.dashboardTab.set((data['dashboardTab'] as DashboardTab | undefined) ?? 'tracker');
+    } else if (view === 'profile') {
+      this.nav.profileTab.set((data['profileTab'] as ProfileTab | undefined) ?? 'avatar');
+    }
   }
 }
