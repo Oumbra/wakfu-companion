@@ -160,6 +160,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Votre pseudo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': "Personnalisez votre pseudo et l'avatar affiché dans l'application.",
+    'profile.themeLabel': 'Thème',
+    'profile.themeHint': "Choisissez l'apparence de l'application, sombre ou l'une des 4 variantes claires.",
+    'profile.themeDark': 'Sombre',
+    'profile.themeA': 'Ardoise',
+    'profile.themeB': 'Parchemin',
+    'profile.themeC': 'Nordique',
+    'profile.themeD': 'Contraste élevé',
     'profile.colorblindLabel': 'Mode daltonien',
     'profile.colorblindOff': 'Désact.',
     'profile.colorblindRedGreen': 'Protanopie & Deutéranopie',
@@ -281,6 +288,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Profil > Alertes',
     'help.profileAlerts.body':
       "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
+    'help.profileTheme.title': 'Profil > Thème',
+    'help.profileTheme.body':
+      "Choisissez l'apparence de l'application : le thème sombre d'origine, ou l'une des 4 variantes claires (Ardoise, Parchemin, Nordique, Contraste élevé), chacune calibrée pour rester lisible sur fond clair.\n\nCe choix est indépendant du mode daltonien juste en dessous, mais les deux se combinent : les couleurs adaptées au daltonisme s'appliquent par-dessus le thème actif, sombre ou clair.",
     'help.profileColorblind.title': 'Profil > Daltonisme',
     'help.profileColorblind.body':
       "Adapte les couleurs les plus sensibles de l'application (victoire/défaite, dégâts élémentaires, rareté d'objet, canaux de chat) au type de daltonisme choisi, pour qu'elles restent distinguables.\n\nProtanopie et deutéranopie sont regroupées sous une seule option : les deux se traduisent par la même confusion rouge-vert, donc la même correction s'applique.\n\nL'aperçu avant/après sous le sélecteur montre exactement les couleurs qui changent avec le profil actuellement choisi.",
@@ -548,6 +558,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Your nickname...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Customize your nickname and the avatar shown in the app.',
+    'profile.themeLabel': 'Theme',
+    'profile.themeHint': 'Choose the appearance of the app: dark, or one of 4 light variants.',
+    'profile.themeDark': 'Dark',
+    'profile.themeA': 'Slate',
+    'profile.themeB': 'Parchment',
+    'profile.themeC': 'Nordic',
+    'profile.themeD': 'High Contrast',
     'profile.colorblindLabel': 'Colorblind mode',
     'profile.colorblindOff': 'Off',
     'profile.colorblindRedGreen': 'Protanopia & Deuteranopia',
@@ -668,6 +685,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
       "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
+    'help.profileTheme.title': 'Profile > Theme',
+    'help.profileTheme.body':
+      "Choose the app's appearance: the original dark theme, or one of 4 light variants (Slate, Parchment, Nordic, High Contrast), each tuned to stay readable on a light background.\n\nThis choice is independent from the colorblind mode just below, but the two combine: colorblind-adjusted colors apply on top of whichever theme is active, dark or light.",
     'help.profileColorblind.title': 'Profile > Colorblindness',
     'help.profileColorblind.body':
       "Adapts the app's most sensitive colors (win/loss, elemental damage, item rarity, chat channels) to the colorblindness type you choose, so they stay distinguishable.\n\nProtanopia and deuteranopia are grouped under a single option: both cause the same red-green confusion, so the same correction applies to both.\n\nThe before/after preview under the selector shows exactly which colors change with the currently chosen profile.",
@@ -929,6 +949,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Tu apodo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personaliza tu apodo y el avatar mostrado en la aplicación.',
+    'profile.themeLabel': 'Tema',
+    'profile.themeHint': 'Elige la apariencia de la aplicación: oscuro, o una de las 4 variantes claras.',
+    'profile.themeDark': 'Oscuro',
+    'profile.themeA': 'Pizarra',
+    'profile.themeB': 'Pergamino',
+    'profile.themeC': 'Nórdico',
+    'profile.themeD': 'Alto contraste',
     'profile.colorblindLabel': 'Modo daltónico',
     'profile.colorblindOff': 'Desact.',
     'profile.colorblindRedGreen': 'Protanopia y Deuteranopia',
@@ -1050,6 +1077,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
       'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
+    'help.profileTheme.title': 'Perfil > Tema',
+    'help.profileTheme.body':
+      'Elige la apariencia de la aplicación: el tema oscuro original, o una de las 4 variantes claras (Pizarra, Pergamino, Nórdico, Alto contraste), cada una calibrada para seguir siendo legible sobre fondo claro.\n\nEsta elección es independiente del modo daltónico justo debajo, pero ambos se combinan: los colores adaptados al daltonismo se aplican sobre el tema activo, oscuro o claro.',
     'help.profileColorblind.title': 'Perfil > Daltonismo',
     'help.profileColorblind.body':
       'Adapta los colores más sensibles de la aplicación (victoria/derrota, daño elemental, rareza de objeto, canales de chat) al tipo de daltonismo elegido, para que sigan siendo distinguibles.\n\nProtanopia y deuteranopia se agrupan en una sola opción: ambas provocan la misma confusión rojo-verde, así que se aplica la misma corrección.\n\nLa vista previa antes/después bajo el selector muestra exactamente qué colores cambian con el perfil elegido.',
@@ -1314,6 +1344,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Seu apelido...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personalize seu apelido e o avatar exibido no aplicativo.',
+    'profile.themeLabel': 'Tema',
+    'profile.themeHint': 'Escolha a aparência do aplicativo: escuro, ou uma das 4 variantes claras.',
+    'profile.themeDark': 'Escuro',
+    'profile.themeA': 'Ardósia',
+    'profile.themeB': 'Pergaminho',
+    'profile.themeC': 'Nórdico',
+    'profile.themeD': 'Alto contraste',
     'profile.colorblindLabel': 'Modo daltônico',
     'profile.colorblindOff': 'Desat.',
     'profile.colorblindRedGreen': 'Protanopia e Deuteranopia',
@@ -1435,6 +1472,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
       'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
+    'help.profileTheme.title': 'Perfil > Tema',
+    'help.profileTheme.body':
+      'Escolha a aparência do aplicativo: o tema escuro original, ou uma das 4 variantes claras (Ardósia, Pergaminho, Nórdico, Alto contraste), cada uma calibrada para continuar legível em fundo claro.\n\nEssa escolha é independente do modo daltônico logo abaixo, mas os dois se combinam: as cores adaptadas ao daltonismo se aplicam sobre o tema ativo, escuro ou claro.',
     'help.profileColorblind.title': 'Perfil > Daltonismo',
     'help.profileColorblind.body':
       'Adapta as cores mais sensíveis do aplicativo (vitória/derrota, dano elemental, raridade de item, canais de chat) ao tipo de daltonismo escolhido, para que continuem distinguíveis.\n\nProtanopia e deuteranopia são agrupadas em uma única opção: ambas causam a mesma confusão vermelho-verde, logo a mesma correção se aplica.\n\nA pré-visualização antes/depois abaixo do seletor mostra exatamente quais cores mudam com o perfil escolhido.',

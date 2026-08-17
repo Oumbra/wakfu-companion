@@ -12,6 +12,7 @@ export type HelpSection =
   | 'profileAlerts'
   | 'profileCharacters'
   | 'profileConnection'
+  | 'profileTheme'
   | 'profileColorblind';
 
 /**
