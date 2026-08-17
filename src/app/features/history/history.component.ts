@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { FightHistoryComponent } from '../fight-history/fight-history.component';
 import { PurchasesComponent } from '../purchases/purchases.component';
 import { TradesComponent } from '../trades/trades.component';
@@ -9,8 +9,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 import type { HistoryEventKind } from '../../core/sync/history-event.model';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
-
-type HistoryTab = 'combats' | 'purchases' | 'trades';
+import { HistoryTab, NavigationService } from '../../core/services/navigation.service';
 
 /** Type d'événement archivé correspondant à chaque sous-onglet. */
 const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
@@ -44,8 +43,12 @@ export class HistoryComponent {
   protected readonly helpModal = inject(HelpModalService);
   protected readonly archive = inject(HistoryArchiveService);
   protected readonly auth = inject(AuthService);
+  private readonly nav = inject(NavigationService);
 
-  protected readonly activeTab = signal<HistoryTab>('combats');
+  /** Alias vers `NavigationService.historyTab` (source unique de vérité, voir son commentaire —
+   * synchronisée avec l'URL) plutôt qu'un signal local : `.set()` ici met donc directement à jour
+   * la section active ET déclenche `RouteSyncService`. */
+  protected readonly activeTab = this.nav.historyTab;
 
   /** Vrai s'il reste des pages d'archive à charger pour le sous-onglet affiché — en mode invité,
    * rien n'a jamais été archivé (§7 du plan, aucune donnée ne quitte l'appareil), donc toujours faux. */

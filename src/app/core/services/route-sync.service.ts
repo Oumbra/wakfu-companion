@@ -53,8 +53,9 @@ export class RouteSyncService {
       const legalKind = view === 'legal' ? this.legalPage.kind() : null;
       const dashboardTab = this.nav.dashboardTab();
       const profileTab = this.nav.profileTab();
+      const historyTab = this.nav.historyTab();
       if (!this.router.navigated) return;
-      const path = `/${locale}${pagePathFor(view, legalKind, dashboardTab, profileTab)}`;
+      const path = `/${locale}${pagePathFor(view, legalKind, dashboardTab, profileTab, historyTab)}`;
       if (this.router.url !== path) {
         void this.router.navigateByUrl(path);
       }

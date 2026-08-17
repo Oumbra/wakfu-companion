@@ -12,6 +12,32 @@ export type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
  * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */
 export type ProfileTab = 'avatar' | 'colorblind' | 'connection' | 'alerts' | 'characters';
 
+/** Segment d'URL de chaque `ProfileTab` — distinct de l'id interne pour `colorblind`, dont le
+ * segment public est `accessibility` (le rail regroupe déjà plus que le seul mode daltonien sous ce
+ * libellé, voir `profile.railAccessibility`) sans qu'il vaille la peine de renommer l'id interne
+ * (encore utilisé tel quel par `ColorblindService`/le reste du composant). Les autres onglets
+ * gardent leur id comme segment (mapping identité). */
+const PROFILE_TAB_SEGMENT: Record<Exclude<ProfileTab, 'avatar'>, string> = {
+  colorblind: 'accessibility',
+  connection: 'connection',
+  alerts: 'alerts',
+  characters: 'characters',
+};
+
+/** Sous-onglets du panneau "Historique" (voir `HistoryComponent`, un cran sous `DashboardTab`
+ * `'history'`) — même raison d'être ici que `DashboardTab`/`ProfileTab`. `'combats'` est la racine
+ * de `/history` (pas de segment dédié), mais reste aussi joignable explicitement via `/history/fights`
+ * (voir `app.routes.ts`) — alias accepté en entrée, jamais généré par `pagePathFor`. */
+export type HistoryTab = 'combats' | 'purchases' | 'trades';
+
+/** Segment d'URL de chaque `HistoryTab` non-racine — `'combats'` s'appelle `fights` côté URL (mot
+ * public, cohérent avec `FightHistoryComponent`/`HistoryEventKind: 'fight'`) même si l'id interne
+ * reste `combats` (déjà utilisé tel quel dans `HistoryComponent`). */
+const HISTORY_TAB_SEGMENT: Record<Exclude<HistoryTab, 'combats'>, string> = {
+  purchases: 'purchases',
+  trades: 'trades',
+};
+
 type SlideDirection = 'forward' | 'backward';
 
 /** Chemin de page (sans préfixe de langue) pour une vue donnée — partagé entre `RouteSyncService`
@@ -20,22 +46,33 @@ type SlideDirection = 'forward' | 'backward';
  *
  * `dashboardTab`/`profileTab` (ignorés hors de leur vue respective) ajoutent le segment de la
  * section active dans la page — omis quand elle vaut sa valeur "racine" (`tracker`/`avatar`) pour
- * que l'URL par défaut reste la même qu'avant cette fonctionnalité (`/fr`, `/fr/profile`). */
+ * que l'URL par défaut reste la même qu'avant cette fonctionnalité (`/fr`, `/fr/profile`).
+ * `historyTab` n'est lu que quand `dashboardTab === 'history'` (sous-niveau propre à ce seul
+ * onglet) — même règle de racine omise pour `'combats'`. */
 export function pagePathFor(
   view: AppView,
   legalKind: 'notice' | 'privacy' | null,
   dashboardTab: DashboardTab | null = null,
   profileTab: ProfileTab | null = null,
+  historyTab: HistoryTab | null = null,
 ): string {
   switch (view) {
     case 'profile':
-      return profileTab && profileTab !== 'avatar' ? `/profile/${profileTab}` : '/profile';
+      return profileTab && profileTab !== 'avatar'
+        ? `/profile/${PROFILE_TAB_SEGMENT[profileTab]}`
+        : '/profile';
     case 'account':
       return '/account';
     case 'legal':
       return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
     case 'main':
-      return dashboardTab && dashboardTab !== 'tracker' ? `/${dashboardTab}` : '';
+      if (!dashboardTab || dashboardTab === 'tracker') return '';
+      if (dashboardTab === 'history') {
+        return historyTab && historyTab !== 'combats'
+          ? `/history/${HISTORY_TAB_SEGMENT[historyTab]}`
+          : '/history';
+      }
+      return `/${dashboardTab}`;
     default:
       return '';
   }
@@ -112,6 +149,8 @@ export class NavigationService {
    * défaut = section "racine" de chaque page (voir `pagePathFor`). */
   readonly dashboardTab = signal<DashboardTab>('tracker');
   readonly profileTab = signal<ProfileTab>('avatar');
+  /** Même principe, un cran sous `dashboardTab === 'history'` — voir `HistoryComponent`. */
+  readonly historyTab = signal<HistoryTab>('combats');
 
   hasVisited(view: AppView): boolean {
     return this.visited().has(view);

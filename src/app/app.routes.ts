@@ -17,11 +17,14 @@ import { PersistenceService } from './core/services/persistence.service';
  * inverse (vue → URL), à garder synchronisé avec ces chemins.
  *
  * Sous `main`/`profile`, un segment supplémentaire annonce en plus la SECTION active de la page
- * (`NavigationService.dashboardTab`/`profileTab`) — un chemin dédié par section (`history`, `chat`,
- * `damage`, `profile/colorblind`...) plutôt qu'un paramètre, pour qu'Angular détruise/recrée
+ * (`NavigationService.dashboardTab`/`profileTab`, et un cran plus bas `historyTab` sous
+ * `history`) — un chemin dédié par section (`history`, `chat`, `damage`, `profile/accessibility`,
+ * `history/purchases`...) plutôt qu'un paramètre, pour qu'Angular détruise/recrée
  * `RouteBridgeComponent` à chaque changement de section exactement comme entre deux vues (voir son
- * commentaire). Omis pour la section "racine" de chaque page (`tracker`/`avatar`, voir
- * `pagePathFor`) : l'URL par défaut reste donc identique à avant cette fonctionnalité.
+ * commentaire). Omis pour la section "racine" de chaque page (`tracker`/`avatar`/`combats`, voir
+ * `pagePathFor`) : l'URL par défaut reste donc identique à avant cette fonctionnalité. Le segment
+ * public d'une section peut différer de son id interne (`colorblind` → `accessibility`, `combats` →
+ * `fights`) — voir `PROFILE_TAB_SEGMENT`/`HISTORY_TAB_SEGMENT` dans `navigation.service.ts`.
  *
  * Les anciens chemins sans préfixe (`/`, `/profile`...) restent résolus — ce sont ceux que
  * n'importe quel lien externe ou favori antérieur à cette fonctionnalité continue de cibler — mais
@@ -66,6 +69,24 @@ export const routes: Routes = [
         data: { view: 'main', dashboardTab: 'history' },
       },
       {
+        // Alias explicite de la racine ci-dessus (jamais généré par `pagePathFor`, voir son
+        // commentaire) — accepte un lien qui nommerait la section par son mot public plutôt que de
+        // compter sur l'omission de racine.
+        path: 'history/fights',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'history', historyTab: 'combats' },
+      },
+      {
+        path: 'history/purchases',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'history', historyTab: 'purchases' },
+      },
+      {
+        path: 'history/trades',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'history', historyTab: 'trades' },
+      },
+      {
         path: 'chat',
         component: RouteBridgeComponent,
         data: { view: 'main', dashboardTab: 'chat' },
@@ -82,7 +103,9 @@ export const routes: Routes = [
         canActivate: [fileConnectedGuard],
       },
       {
-        path: 'profile/colorblind',
+        // Segment public `accessibility` — l'id interne du rail reste `colorblind` (voir
+        // `NavigationService.PROFILE_TAB_SEGMENT`), inchangé ailleurs dans le composant.
+        path: 'profile/accessibility',
         component: RouteBridgeComponent,
         data: { view: 'profile', profileTab: 'colorblind' },
         canActivate: [fileConnectedGuard],
