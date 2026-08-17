@@ -22,6 +22,12 @@ import {
 export type WakfuRarityCode =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
 
+/** Miroir de WakfuItemCategory (src/app/core/data/wakfu-item-category.data.ts) côté serveur —
+ * même convention que WakfuRarityCode : stocké en `text` en base, le type TypeScript ne sert
+ * qu'au typage des scripts d'import/des endpoints. */
+export type WakfuItemCategoryCode =
+  'equipment' | 'resources' | 'sublimations' | 'harvests' | 'havenBag' | 'cosmetics' | 'misc';
+
 /** Miroir de CatalogDungeonEntry['type'] (src/app/core/api/catalog.service.ts) — même convention
  * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
  * type TypeScript n'a de valeur que côté scripts d'import/endpoints. Remplace depuis ce lot les
@@ -86,6 +92,7 @@ export const items = pgTable(
     wakassetsAvailable: boolean('wakassets_available').notNull(),
     wakfuAvailable: boolean('wakfu_available').notNull(),
     hasRecipe: boolean('has_recipe').notNull().default(false),
+    category: text('category').notNull().default('misc').$type<WakfuItemCategoryCode>(),
   },
   (table) => [index('items_ankama_id_idx').on(table.ankamaId)],
 );

@@ -36,6 +36,7 @@ import {
   monsterFamilies,
   monsters,
   type WakfuDungeonType,
+  type WakfuItemCategoryCode,
   type WakfuRarityCode,
 } from '../db/schema';
 import { buildCompactIndex } from '../catalog/compact-index';
@@ -55,6 +56,7 @@ interface RawItem {
   wakassets_available: boolean;
   wakfu_available: boolean;
   hasRecipe?: boolean;
+  category?: string;
 }
 
 interface RawRecipe {
@@ -122,6 +124,30 @@ function normalizeRarity(item: RawItem): WakfuRarityCode {
     `[import-catalog] rareté "${item.rarity}" invalide pour l'objet id=${item.id ?? '?'} "${item.fr}" -> repli sur "common".`,
   );
   return 'common';
+}
+
+// Catégorie (filtre par icône de l'autocomplétion, voir shared/wakfu-autocomplete) — champ ajouté
+// a posteriori à repository/items.json (voir wakfu-item-category.data.ts pour la correspondance
+// itemTypeId -> catégorie établie à l'import de ce champ) ; `?? 'misc'` couvre un référentiel plus
+// ancien généré avant son introduction, pas seulement une valeur invalide.
+const VALID_CATEGORIES = new Set<WakfuItemCategoryCode>([
+  'equipment',
+  'resources',
+  'sublimations',
+  'harvests',
+  'havenBag',
+  'cosmetics',
+  'misc',
+]);
+function normalizeCategory(item: RawItem): WakfuItemCategoryCode {
+  if (item.category === undefined) return 'misc';
+  if (VALID_CATEGORIES.has(item.category as WakfuItemCategoryCode)) {
+    return item.category as WakfuItemCategoryCode;
+  }
+  console.warn(
+    `[import-catalog] catégorie "${item.category}" invalide pour l'objet id=${item.id ?? '?'} "${item.fr}" -> repli sur "misc".`,
+  );
+  return 'misc';
 }
 
 /** Insère `rows` par lots de `batchSize` (évite un unique payload HTTP trop volumineux côté
@@ -203,6 +229,7 @@ interface ItemRow {
   wakassetsAvailable: boolean;
   wakfuAvailable: boolean;
   hasRecipe: boolean;
+  category: WakfuItemCategoryCode;
 }
 
 interface MonsterRow {
@@ -269,6 +296,7 @@ async function main(): Promise<void> {
       wakassetsAvailable: item.wakassets_available,
       wakfuAvailable: item.wakfu_available,
       hasRecipe: item.hasRecipe === true,
+      category: normalizeCategory(item),
     }));
 
   const recipeRows = rawRecipes.flatMap((entry) =>

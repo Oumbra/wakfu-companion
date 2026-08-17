@@ -54,6 +54,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       gfxId: items.gfxId,
       rarity: items.rarity,
       hasRecipe: items.hasRecipe,
+      category: items.category,
     })
     .from(items)
     .where(ilike(nameColumn, pattern))
