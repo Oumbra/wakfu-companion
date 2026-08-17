@@ -62,6 +62,18 @@ export class NavigationService {
    * vraie seulement après la première visite plutôt que dès le démarrage). */
   private readonly visited = signal<ReadonlySet<AppView>>(new Set(['main']));
 
+  /** Vrai depuis la construction du service jusqu'à peu après la toute première résolution de vue
+   * depuis l'URL (`goTo()`, appelé par `RouteBridgeComponent` — lien direct ou F5, voir son
+   * commentaire) : couvre TOUT l'écart, potentiellement asynchrone (ex. `fileConnectedGuard` qui
+   * attend `LogFileAccessService.ready`, voir son commentaire), entre le tout premier paint de
+   * `.view-panel` (valeur par défaut du panneau ciblé, souvent hors écran) et le moment où
+   * `goTo()` fixe sa position finale. Posé en CSS via `[class.no-transition]` sur chaque
+   * `.view-panel` (voir app.html/app.css) : sans lui, ce premier positionnement se ferait glisser
+   * comme une vraie navigation en cours d'utilisation — alors qu'il n'y a rien à faire glisser
+   * "depuis" sur un chargement, la page doit apparaître directement dans sa position finale. */
+  readonly skipInitialTransition = signal(true);
+  private initialViewResolved = false;
+
   /** Consommé une seule fois par `ProfilePageComponent` : force l'onglet Connexion (section
    * Discord/Google, voir CLAUDE.md) à la prochaine ouverture de la page profil. Remplace l'ancienne
    * vue de connexion dédiée (`AppView` 'login', supprimée) — la page compte (état invité) déclenche
@@ -135,8 +147,29 @@ export class NavigationService {
    *  - `view` est plus bas dans la pile (ex. légal → profil alors que profil précède déjà légal) :
    *    dépile jusqu'à `view`, comme un retour classique (anime en arrière) ;
    *  - sinon (vue jamais visitée sur ce chemin, ex. lien direct `/profil` au tout premier chargement) :
-   *    empile normalement (anime en avant), même comportement que `openProfile()` etc. */
+   *    empile normalement (anime en avant), même comportement que `openProfile()` etc.
+   *
+   * Cas particulier du TOUT premier appel (voir `skipInitialTransition`) : c'est systématiquement
+   * `RouteBridgeComponent` qui traduit la toute première résolution d'URL (lien direct/F5) en
+   * appel à cette méthode — place directement `view` en sommet de pile, sans passer par
+   * `transitionPeer`/`push`, pour qu'aucune transition ne puisse s'y accrocher. Les appels
+   * suivants (navigation réelle en cours d'utilisation, y compris un futur changement d'URL)
+   * retrouvent le comportement normal ci-dessus. */
   goTo(view: AppView): void {
+    if (!this.initialViewResolved) {
+      this.initialViewResolved = true;
+      if (view !== 'main') {
+        this.stack.set([view]);
+        if (!this.visited().has(view)) {
+          this.visited.set(new Set([...this.visited(), view]));
+        }
+      }
+      // Laisse ce premier positionnement (sans transition) être peint avant de réactiver les
+      // transitions pour les navigations suivantes, celles-là réellement déclenchées en cours
+      // d'utilisation.
+      setTimeout(() => this.skipInitialTransition.set(false));
+      return;
+    }
     const s = this.stack();
     const top = s[s.length - 1];
     if (top === view) return;

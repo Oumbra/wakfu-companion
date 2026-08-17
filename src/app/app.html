@@ -6,7 +6,11 @@
   <app-header />
 
   <div class="view-slider">
-    <div class="view-panel" [style.transform]="nav.panelTransform('main')">
+    <div
+      class="view-panel"
+      [class.no-transition]="nav.skipInitialTransition()"
+      [style.transform]="nav.panelTransform('main')"
+    >
       <app-page>
         <main class="app-main">
           @if (logFileAccess.status() === 'connected') {
@@ -18,19 +22,31 @@
       </app-page>
     </div>
 
-    <div class="view-panel" [style.transform]="nav.panelTransform('profile')">
+    <div
+      class="view-panel"
+      [class.no-transition]="nav.skipInitialTransition()"
+      [style.transform]="nav.panelTransform('profile')"
+    >
       @defer (when nav.hasVisited('profile')) {
         <app-profile-page />
       }
     </div>
 
-    <div class="view-panel" [style.transform]="nav.panelTransform('legal')">
+    <div
+      class="view-panel"
+      [class.no-transition]="nav.skipInitialTransition()"
+      [style.transform]="nav.panelTransform('legal')"
+    >
       @defer (when nav.hasVisited('legal')) {
         <app-legal-page />
       }
     </div>
 
-    <div class="view-panel" [style.transform]="nav.panelTransform('account')">
+    <div
+      class="view-panel"
+      [class.no-transition]="nav.skipInitialTransition()"
+      [style.transform]="nav.panelTransform('account')"
+    >
       @defer (when nav.hasVisited('account')) {
         <app-account-page />
       }
@@ -80,4 +96,5 @@
   <app-tab-sheet />
   <app-recipe-quantity-modal />
   <app-tooltip />
+  <app-loading-overlay />
 </div>
