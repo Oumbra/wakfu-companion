@@ -151,15 +151,21 @@ export class NavigationService {
    *
    * Cas particulier du TOUT premier appel (voir `skipInitialTransition`) : c'est systématiquement
    * `RouteBridgeComponent` qui traduit la toute première résolution d'URL (lien direct/F5) en
-   * appel à cette méthode — place directement `view` en sommet de pile, sans passer par
-   * `transitionPeer`/`push`, pour qu'aucune transition ne puisse s'y accrocher. Les appels
-   * suivants (navigation réelle en cours d'utilisation, y compris un futur changement d'URL)
-   * retrouvent le comportement normal ci-dessus. */
+   * appel à cette méthode — place directement `view` en sommet de pile (avec `main` en dessous,
+   * PAS `[view]` seul : le bouton "Retour" de `<app-page>` doit pouvoir dépiler, voir plus bas),
+   * sans passer par `transitionPeer`/`push`, pour qu'aucune transition ne puisse s'y accrocher.
+   * Les appels suivants (navigation réelle en cours d'utilisation, y compris un futur changement
+   * d'URL) retrouvent le comportement normal ci-dessus. */
   goTo(view: AppView): void {
     if (!this.initialViewResolved) {
       this.initialViewResolved = true;
       if (view !== 'main') {
-        this.stack.set([view]);
+        // `['main', view]`, PAS `[view]` seul : sans `main` en dessous, le bouton "Retour" de
+        // `<app-page>` (qui appelle `pop()`) ne trouverait rien à dépiler sur un lien direct/F5
+        // vers une page non-main (bug réel corrigé en session — `pop()` ignore une pile à un seul
+        // élément, voir son commentaire) alors que l'utilisateur doit pouvoir revenir au tableau
+        // de bord comme s'il y était passé normalement.
+        this.stack.set(['main', view]);
         if (!this.visited().has(view)) {
           this.visited.set(new Set([...this.visited(), view]));
         }

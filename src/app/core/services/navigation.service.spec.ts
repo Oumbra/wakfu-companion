@@ -24,6 +24,17 @@ describe('NavigationService', () => {
     expect(nav.panelTransform('main')).toBe('translateX(-100%)');
   });
 
+  it("place `main` sous la vue initiale (pas [view] seul) pour que le bouton \"Retour\" (pop()) fonctionne après un F5", () => {
+    // Bug réel : un lien direct/F5 vers /profile plaçait la pile à ['profile'] seul, sans 'main'
+    // en dessous — pop() (bouton "Retour" de <app-page>) est un no-op sur une pile à un élément
+    // (voir son commentaire), le bouton restait donc bloqué sur profile après un rechargement.
+    nav.goTo('profile');
+
+    nav.pop();
+
+    expect(nav.view()).toBe('main');
+  });
+
   it('conserve `skipInitialTransition` actif jusqu’au tick suivant le premier goTo(), puis le désactive', async () => {
     expect(nav.skipInitialTransition()).toBe(true);
 
