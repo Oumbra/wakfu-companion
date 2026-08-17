@@ -15,13 +15,13 @@
   />
   @if (open() && rawResults().length > 0) {
     <div class="wakfu-autocomplete-panel">
-      @if (categoryFilters().length > 0) {
+      @if (filterButtons().length > 0) {
         <div class="wakfu-autocomplete-categories">
-          @for (filter of categoryFilters(); track filter) {
+          @for (filter of filterButtons(); track filter) {
             <button
               type="button"
               class="wakfu-autocomplete-category-btn"
-              [class.active]="activeCategoryFilter() === filter"
+              [class.active]="isFilterButtonActive(filter)"
               [appTooltip]="categoryFilterLabelKey(filter) | t"
               [tooltipPosition]="'bottom'"
               (click)="toggleCategoryFilter(filter)"

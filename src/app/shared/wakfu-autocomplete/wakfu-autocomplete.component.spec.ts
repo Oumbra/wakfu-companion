@@ -13,6 +13,7 @@ const fakeEntry: WakfuAutocompleteOption = {
   kind: 'item',
   hasRecipe: true,
   rarity: null,
+  category: null,
   disabled: false,
 };
 

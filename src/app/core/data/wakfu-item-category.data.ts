@@ -66,7 +66,12 @@ export function wakfuItemCategoryIconUrl(category: WakfuItemCategory): string {
   return `https://vertylo.github.io/wakassets/itemTypes/${ITEM_CATEGORY_ICON_NUMBER[category]}.png`;
 }
 
-/** Icône de catégorie "Ennemis" (filtre par `kind === 'enemy'`, pas une vraie WakfuItemCategory —
+/** Icône de catégorie "Monstres" (filtre par `kind === 'enemy'`, pas une vraie WakfuItemCategory —
  * voir doc de tête de fichier) — même CDN, id fourni par l'utilisateur à partir de l'arbre de
  * filtre officiel. */
-export const WAKFU_ENEMY_CATEGORY_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/282.png';
+export const WAKFU_MONSTER_CATEGORY_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/282.png';
+
+/** Icône du filtre "Tout" (réinitialise le filtre par catégorie actif, voir
+ * WakfuAutocompleteComponent.toggleCategoryFilter) — même CDN, id -1 (icône générique "tous
+ * types" de l'arbre de filtre officiel). */
+export const WAKFU_ALL_CATEGORY_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/-1.png';

@@ -127,6 +127,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'itemCategory.havenBag': 'Havre-Sac',
     'itemCategory.cosmetics': 'Cosmétiques',
     'itemCategory.misc': 'Divers',
+    'itemCategory.monsters': 'Monstres',
+    'wakfuAutocomplete.allCategories': 'Tout',
     'wakfuAutocomplete.noResultInCategory': 'Aucun résultat dans cette catégorie',
 
     'history.header': 'Historique',
@@ -534,6 +536,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'itemCategory.havenBag': 'Haven Bag',
     'itemCategory.cosmetics': 'Cosmetics',
     'itemCategory.misc': 'Miscellaneous',
+    'itemCategory.monsters': 'Monsters',
+    'wakfuAutocomplete.allCategories': 'All',
     'wakfuAutocomplete.noResultInCategory': 'No results in this category',
 
     'history.header': 'History',
@@ -934,6 +938,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'itemCategory.havenBag': 'Guarida',
     'itemCategory.cosmetics': 'Cosméticos',
     'itemCategory.misc': 'Varios',
+    'itemCategory.monsters': 'Monstruos',
+    'wakfuAutocomplete.allCategories': 'Todo',
     'wakfuAutocomplete.noResultInCategory': 'Sin resultados en esta categoría',
 
     'history.header': 'Historial',
@@ -1338,6 +1344,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'itemCategory.havenBag': 'Refúgio',
     'itemCategory.cosmetics': 'Cosméticos',
     'itemCategory.misc': 'Diversos',
+    'itemCategory.monsters': 'Monstros',
+    'wakfuAutocomplete.allCategories': 'Tudo',
     'wakfuAutocomplete.noResultInCategory': 'Nenhum resultado nesta categoria',
 
     'history.header': 'Histórico',
