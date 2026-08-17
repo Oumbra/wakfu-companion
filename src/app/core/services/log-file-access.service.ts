@@ -53,6 +53,19 @@ export class LogFileAccessService {
   private isFirstRead = true;
   private consecutiveTransientReadFailures = 0;
 
+  private resolveReady!: () => void;
+  /**
+   * Se résout une fois `init()` terminé, càd une fois le statut initial déterminé de façon fiable
+   * (`connected`/`needs-reconnect`/`idle`/`unsupported`) plutôt que la valeur par défaut `'idle'`
+   * posée avant toute vérification. `init()` étant asynchrone (lecture IndexedDB + `queryPermission`),
+   * tout code qui doit décider d'un accès selon `status()` dès le tout premier rendu (typiquement
+   * `fileConnectedGuard`, évalué sur un lien direct/F5 vers `/profile`) doit attendre `ready` avant
+   * de lire `status()`, sous peine de trancher sur `'idle'` alors qu'une reconnexion est en cours.
+   */
+  readonly ready: Promise<void> = new Promise((resolve) => {
+    this.resolveReady = resolve;
+  });
+
   isSupported(): boolean {
     return typeof window !== 'undefined' && 'showOpenFilePicker' in window;
   }
@@ -61,28 +74,32 @@ export class LogFileAccessService {
 
   /** À appeler au démarrage de l'application. */
   async init(): Promise<void> {
-    if (!this.isSupported()) {
-      this.status.set('unsupported');
-      return;
-    }
-    const stored = await this.persistence.getFileHandle(STORAGE_KEY);
-    if (!stored) {
-      this.status.set('idle');
-      return;
-    }
-    if (!this.isAcceptedFileName(stored.name)) {
-      // Ancien handle mémorisé avant la bascule vers wakfu.log (ex. wakfu_chat.log) : on l'oublie.
-      await this.persistence.clearFileHandle(STORAGE_KEY);
-      this.status.set('idle');
-      return;
-    }
-    this.handle = stored;
-    this.fileName.set(stored.name);
-    const permission = await stored.queryPermission({ mode: 'read' });
-    if (permission === 'granted') {
-      await this.connect(stored);
-    } else {
-      this.status.set('needs-reconnect');
+    try {
+      if (!this.isSupported()) {
+        this.status.set('unsupported');
+        return;
+      }
+      const stored = await this.persistence.getFileHandle(STORAGE_KEY);
+      if (!stored) {
+        this.status.set('idle');
+        return;
+      }
+      if (!this.isAcceptedFileName(stored.name)) {
+        // Ancien handle mémorisé avant la bascule vers wakfu.log (ex. wakfu_chat.log) : on l'oublie.
+        await this.persistence.clearFileHandle(STORAGE_KEY);
+        this.status.set('idle');
+        return;
+      }
+      this.handle = stored;
+      this.fileName.set(stored.name);
+      const permission = await stored.queryPermission({ mode: 'read' });
+      if (permission === 'granted') {
+        await this.connect(stored);
+      } else {
+        this.status.set('needs-reconnect');
+      }
+    } finally {
+      this.resolveReady();
     }
   }
 
