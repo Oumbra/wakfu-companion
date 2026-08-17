@@ -271,7 +271,8 @@ function familyClassification(entry: CatalogMonsterEntry): FightTypeClassificati
   return {
     kind: 'family',
     categoryRank: FAMILY_CATEGORY_RANK,
-    key: entry.family !== null ? `family:${entry.family}` : `monster:${normalizeWakfuName(entry.fr)}`,
+    key:
+      entry.family !== null ? `family:${entry.family}` : `monster:${normalizeWakfuName(entry.fr)}`,
     familyId: entry.family,
     candidateNames: entry,
   };

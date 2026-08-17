@@ -152,7 +152,9 @@ export class WakfuAutocompleteComponent {
     const possible = this.possibleCategoryFilters();
     if (possible.length === 0) return [];
     const present = new Set<WakfuAutocompleteCategoryFilter>(
-      this.rawResults().map((r) => (r.kind === 'enemy' ? 'enemy' : (r.category as WakfuItemCategory))),
+      this.rawResults().map((r) =>
+        r.kind === 'enemy' ? 'enemy' : (r.category as WakfuItemCategory),
+      ),
     );
     const available = possible.filter((f) => present.has(f));
     return available.length > 0 ? ['all', ...available] : [];

@@ -300,7 +300,11 @@ describe('resolveFightTypeClassification (regroupement "Type" de l’historique)
     const breachInfo = resolveFightTypeClassification(catalog, ['Boss De Brèche']);
     const familyInfo = resolveFightTypeClassification(catalog, ['Ennemi Normal A']);
 
-    expect(breachInfo).toMatchObject({ kind: 'dungeon', key: 'dungeon:501', names: BREACH_DUNGEON });
+    expect(breachInfo).toMatchObject({
+      kind: 'dungeon',
+      key: 'dungeon:501',
+      names: BREACH_DUNGEON,
+    });
     expect(dungeonInfo.categoryRank).toBeLessThan(breachInfo.categoryRank);
     expect(breachInfo.categoryRank).toBeLessThan(familyInfo.categoryRank);
   });

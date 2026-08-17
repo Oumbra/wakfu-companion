@@ -4,7 +4,17 @@ import { CatalogService } from './catalog.service';
 import { ApiClientService, ApiResult } from './api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 
-const ITEM_TUPLE = [1234, 'Coiffe Test', 'Test Headgear', 'Tocado Test', 'Chapéu Test', 999, 4, 1, 0];
+const ITEM_TUPLE = [
+  1234,
+  'Coiffe Test',
+  'Test Headgear',
+  'Tocado Test',
+  'Chapéu Test',
+  999,
+  4,
+  1,
+  0,
+];
 const MONSTER_TUPLE = [42, 'Bouftou', 'Gobball', 'Jalató', 'Papatudo', '100200001', -1, 0, 0, 0];
 const DUNGEON_ROW = {
   id: 7,
@@ -150,7 +160,17 @@ describe('CatalogService', () => {
 
   it('rafraîchit en arrière-plan si le hash serveur diffère du cache', async () => {
     const cachedIndex = { indexHash: 'old-hash', items: [], monsters: [] };
-    const freshItemTuple = [5678, 'Objet Neuf', 'New Item', 'Objeto Nuevo', 'Item Novo', 111, 1, 0, 1];
+    const freshItemTuple = [
+      5678,
+      'Objet Neuf',
+      'New Item',
+      'Objeto Nuevo',
+      'Item Novo',
+      111,
+      1,
+      0,
+      1,
+    ];
     const { service, setCacheEntry } = setup({
       cachedIndex,
       cachedDungeons: [],
