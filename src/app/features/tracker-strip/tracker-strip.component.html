@@ -55,7 +55,7 @@
           [placeholder]="'tracker.searchPlaceholder' | t"
           [existingNames]="existingNames()"
           (selected)="add($event)"
-          (recipeOpened)="closeAdd()"
+          (recipeConfirmed)="closeAdd()"
         />
         <button
           class="icon-btn kpi-add-close"

@@ -20,37 +20,49 @@
           <span class="recipe-modal-item-name">{{ req.itemLabel }}</span>
         </div>
 
-        <div class="recipe-modal-qty-row">
-          <span class="recipe-modal-qty-label">{{ 'tracker.recipeQuantityLabel' | t }}</span>
-          <app-input-number
-            #quantityInput
-            class="recipe-modal-qty-input"
-            [value]="quantity()"
-            [min]="1"
-            [showButtons]="false"
-            (valueChange)="quantity.set($event)"
-            (keydown.enter)="confirm()"
-          />
-        </div>
-
-        <div class="recipe-modal-ingredients">
-          @for (ing of req.ingredients; track ing.id; let i = $index; let first = $first) {
-            <ng-container
-              [ngTemplateOutlet]="ingredientRow"
-              [ngTemplateOutletContext]="{
-                $implicit: ing,
-                multiplier: quantity(),
-                path: '' + i,
-                first: first,
-              }"
+        @if (req.ingredients === null) {
+          <!-- Résolution réseau des ingrédients en cours (voir WakfuAutocompleteComponent.openRecipe)
+               : la modale et son fond sont déjà affichés, seul ce spinner central marque l'attente
+               — jamais l'overlay plein écran partagé (voir RecipeTrackingService.open), qui
+               provoquait un "blink" noir désagréable pour ce cas précis. -->
+          <div class="recipe-modal-loading" role="status" aria-live="polite">
+            <div class="recipe-modal-loading-spinner"></div>
+          </div>
+        } @else {
+          <div class="recipe-modal-qty-row">
+            <span class="recipe-modal-qty-label">{{ 'tracker.recipeQuantityLabel' | t }}</span>
+            <app-input-number
+              #quantityInput
+              class="recipe-modal-qty-input"
+              [value]="quantity()"
+              [min]="1"
+              [showButtons]="false"
+              (valueChange)="quantity.set($event)"
+              (keydown.enter)="confirm()"
             />
-          }
-        </div>
+          </div>
+
+          <div class="recipe-modal-ingredients">
+            @for (ing of req.ingredients; track ing.id; let i = $index; let first = $first) {
+              <ng-container
+                [ngTemplateOutlet]="ingredientRow"
+                [ngTemplateOutletContext]="{
+                  $implicit: ing,
+                  multiplier: quantity(),
+                  path: '' + i,
+                  first: first,
+                }"
+              />
+            }
+          </div>
+        }
       </div>
 
-      <button type="button" class="primary-btn recipe-modal-confirm" (click)="confirm()">
-        {{ 'tracker.recipeConfirm' | t }}
-      </button>
+      @if (req.ingredients !== null) {
+        <button type="button" class="primary-btn recipe-modal-confirm" (click)="confirm()">
+          {{ 'tracker.recipeConfirm' | t }}
+        </button>
+      }
     </div>
   </div>
 

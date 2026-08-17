@@ -20,7 +20,6 @@ import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { EntityIconComponent } from '../entity-icon/entity-icon.component';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { CatalogService } from '../../core/api/catalog.service';
-import { LoadingOverlayService } from '../../core/services/loading-overlay.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
 import {
@@ -99,9 +98,9 @@ export class WakfuAutocompleteComponent {
   /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
    * validée (voir RecipeTrackingService.confirm()) — permet à un parent doté d'un formulaire
    * d'ajout repliable (voir tracker-strip.component.ts) de se refermer, comme si l'utilisateur
-   * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond)
-   * n'émet volontairement rien. */
-  readonly recipeOpened = output<void>();
+   * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond,
+   * ou simplement le clic sur l'icône recette qui l'ouvre) n'émet volontairement rien. */
+  readonly recipeConfirmed = output<void>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
   protected readonly rarityIconUrl = wakfuRarityIconUrl;
@@ -110,7 +109,6 @@ export class WakfuAutocompleteComponent {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   private readonly recipeTracking = inject(RecipeTrackingService);
   private readonly catalog = inject(CatalogService);
-  private readonly loadingOverlay = inject(LoadingOverlayService);
 
   /** Focus natif brut du champ — voir `focused` (exposé aux appelants) pour la version qui reste
    * vraie tant que le panneau de suggestions est ouvert. */
@@ -297,6 +295,7 @@ export class WakfuAutocompleteComponent {
       lastConfirmedAt = confirmedAt;
       if (!requestClosed || !this.awaitingOwnRecipeConfirm) return;
       this.awaitingOwnRecipeConfirm = false;
+      if (didConfirm) this.recipeConfirmed.emit();
     });
   }
 
@@ -347,28 +346,41 @@ export class WakfuAutocompleteComponent {
 
   /** Ouvre la modale "suivre les objets de la recette" (voir RecipeTrackingService) — indépendant
    * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. ASYNCHRONE (lot 3.1, étape 5)
-   * : la résolution récursive de la recette nécessite désormais un aller-retour réseau par niveau
-   * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` (garde de ré-entrance locale
-   * à cette instance + désactivation des boutons recette, voir template) ET l'overlay plein écran
-   * partagé (`LoadingOverlayService`, voir son commentaire) pilotent tous deux l'état de
-   * chargement pendant l'appel, chacun pour son propre rôle. */
+   * : la résolution récursive de la recette nécessite un aller-retour réseau par niveau (voir
+   * CatalogService.resolveRecipeIngredients). La modale s'ouvre IMMÉDIATEMENT, avant même cet
+   * appel réseau (`ingredients: null`) — elle affiche elle-même un spinner en attendant (voir
+   * RecipeQuantityModalComponent), plutôt que de bloquer l'app entière derrière l'overlay plein
+   * écran partagé (LoadingOverlayService) le temps du chargement : cet overlay produisait un
+   * "blink" noir désagréable (fond opaque plein écran qui s'affiche puis disparaît) pour ce cas
+   * précis, réservé aux chargements qui bloquent réellement toute l'UI (ex. connexion au fichier
+   * log). `recipeLoading` reste une garde de ré-entrance locale à cette instance + désactive les
+   * boutons recette du template pendant l'appel. */
   protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
-    this.recipeOpened.emit();
     event.stopPropagation();
     if (entry.id === null || this.recipeLoading()) return;
     this.recipeLoading.set(true);
+    this.awaitingOwnRecipeConfirm = true;
+    this.recipeTracking.open({
+      itemName: entry.name,
+      itemLabel: entry.label,
+      itemRarity: entry.rarity ?? 'common',
+      ingredients: null,
+    });
     try {
-      const ingredients = await this.loadingOverlay.track(
-        this.catalog.resolveRecipeIngredients(entry.id),
-      );
-      if (ingredients.length === 0) return;
-      this.awaitingOwnRecipeConfirm = true;
-      this.recipeTracking.open({
-        itemName: entry.name,
-        itemLabel: entry.label,
-        itemRarity: entry.rarity ?? 'common',
-        ingredients,
-      });
+      const ingredients = await this.catalog.resolveRecipeIngredients(entry.id);
+      if (ingredients.length === 0) {
+        // Rien à suivre (recette vide/introuvable) : referme la modale ouverte en amont plutôt
+        // que de la laisser bloquée sur son spinner (voir `close()` — n'émet volontairement rien).
+        this.recipeTracking.close();
+        return;
+      }
+      this.recipeTracking.setIngredients(ingredients);
+    } catch (err) {
+      // Résolution réseau échouée : referme la modale plutôt que de la laisser indéfiniment sur
+      // son spinner (voir CatalogService.getItemDetail — ne rejette normalement jamais en
+      // pratique, les erreurs réseau y sont déjà absorbées, mais on reste défensif ici).
+      this.recipeTracking.close();
+      throw err;
     } finally {
       this.recipeLoading.set(false);
     }

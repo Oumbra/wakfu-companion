@@ -28,7 +28,10 @@ export interface RecipeTrackingRequest {
   itemLabel: string;
   /** Rareté de l'objet source — pilote le dégradé de fond du bandeau (voir RecipeQuantityModalComponent). */
   itemRarity: WakfuRarity;
-  ingredients: readonly RecipeTrackingIngredient[];
+  /** `null` tant que la résolution réseau des ingrédients (voir CatalogService.resolveRecipeIngredients)
+   * est en cours — la modale affiche alors un spinner à la place (voir RecipeQuantityModalComponent)
+   * plutôt que de bloquer l'app entière derrière l'overlay plein écran (voir `open()`/`setIngredients()`). */
+  ingredients: readonly RecipeTrackingIngredient[] | null;
 }
 
 /**
@@ -46,8 +49,17 @@ export class RecipeTrackingService {
    * simple fermeture (bouton ×, clic sur le fond, voir `close()`) qui ne doit rien réinitialiser. */
   readonly confirmedAt = signal(0);
 
+  /** Ouvre la modale — appelé dès le clic sur l'icône recette, AVANT la résolution réseau des
+   * ingrédients (voir WakfuAutocompleteComponent.openRecipe) : `request.ingredients` vaut `null`
+   * le temps de cet appel, `setIngredients()` le complète ensuite sans refermer/rouvrir la modale. */
   open(request: RecipeTrackingRequest): void {
     this.request.set(request);
+  }
+
+  /** Complète la requête en cours avec les ingrédients résolus (voir `open()`) — no-op si la
+   * modale a été refermée entre-temps (ex. × cliqué pendant la résolution réseau). */
+  setIngredients(ingredients: readonly RecipeTrackingIngredient[]): void {
+    this.request.update((req) => (req ? { ...req, ingredients } : req));
   }
 
   /** Ferme la modale sans validation (bouton ×, clic sur le fond) — voir `confirm()` pour la
