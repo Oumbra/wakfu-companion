@@ -20,7 +20,8 @@ export const CATEGORY_SORT_ORDER: Record<WakfuItemCategoryCode, number> = {
   harvests: 3,
   havenBag: 4,
   cosmetics: 5,
-  misc: 6,
+  craft: 6,
+  misc: 7,
 };
 
 export interface CompactIndexItemInput {
