@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import {
   AppView,
   DashboardTab,
+  HistoryTab,
   NavigationService,
   ProfileTab,
 } from '../services/navigation.service';
@@ -17,8 +18,9 @@ import { LegalPageKind, LegalPageService } from '../services/legal-page.service'
  * `LegalPageService.kind` pour distinguer mentions légales/politique de confidentialité) puis ne
  * rend rien. Le sens inverse (état de nav → URL) est géré par `RouteSyncService`.
  *
- * `dashboardTab`/`profileTab` (voir app.routes.ts) donnent la section active de `main`/`profile` —
- * un segment de route DISTINCT par section (pas un paramètre) : Angular détruit/recrée donc ce
+ * `dashboardTab`/`profileTab` (voir app.routes.ts) donnent la section active de `main`/`profile`,
+ * `historyTab` un cran plus bas quand `dashboardTab === 'history'` (voir `HistoryComponent`) — un
+ * segment de route DISTINCT par section (pas un paramètre) : Angular détruit/recrée donc ce
  * composant à chaque changement de section (comme entre deux vues), ce qui rejoue `ngOnInit` à
  * chaque fois plutôt que de nécessiter une réactivité façon `LocaleRouteComponent`.
  */
@@ -40,7 +42,11 @@ export class RouteBridgeComponent implements OnInit {
     const view = data['view'] as AppView;
     this.nav.goTo(view);
     if (view === 'main') {
-      this.nav.dashboardTab.set((data['dashboardTab'] as DashboardTab | undefined) ?? 'tracker');
+      const dashboardTab = (data['dashboardTab'] as DashboardTab | undefined) ?? 'tracker';
+      this.nav.dashboardTab.set(dashboardTab);
+      if (dashboardTab === 'history') {
+        this.nav.historyTab.set((data['historyTab'] as HistoryTab | undefined) ?? 'combats');
+      }
     } else if (view === 'profile') {
       this.nav.profileTab.set((data['profileTab'] as ProfileTab | undefined) ?? 'avatar');
     }
