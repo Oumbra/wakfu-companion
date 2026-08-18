@@ -11,8 +11,9 @@
  * charges utiles sont produites par un seul émetteur (la file de
  * synchronisation du client), une entrée mal formée y signale un bug, pas une
  * saisie utilisateur à rattraper. C'est l'inverse du choix fait pour
- * `/prices/ingest`, où un id inconnu isolé ne doit pas faire perdre tout le
- * scan du jour d'un skill externe.
+ * `/prices/ingest` (projet wakfu-companion-price, voir son README.md — ces
+ * tables/endpoints ont été déplacés hors de ce dépôt), où un id inconnu isolé
+ * ne doit pas faire perdre tout le scan du jour d'un skill externe.
  */
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
