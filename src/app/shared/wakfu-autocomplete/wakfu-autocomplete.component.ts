@@ -22,11 +22,27 @@ import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { RECIPE_ICON_DATA_URI } from '../../core/data/recipe-icon.data';
+import {
+  WAKFU_ALL_CATEGORY_ICON_URL,
+  WAKFU_ITEM_CATEGORIES,
+  WAKFU_MONSTER_CATEGORY_ICON_URL,
+  WakfuItemCategory,
+  wakfuItemCategoryIconUrl,
+} from '../../core/data/wakfu-item-category.data';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export type WakfuAutocompleteDomain = 'item' | 'enemy' | 'both';
+
+/** Filtre par icône de catégorie (voir `activeCategoryFilter`) : une `WakfuItemCategory` ou
+ * `'enemy'` pour le bouton "Monstres" (visible seulement en domaine `both`, voir `categoryFilters`). */
+export type WakfuAutocompleteCategoryFilter = WakfuItemCategory | 'enemy';
+
+/** `WakfuAutocompleteCategoryFilter`, + `'all'` pour le bouton "Tout" affiché au-dessus des
+ * suggestions (voir `filterButtons`) — réinitialise `activeCategoryFilter` à `null`, ce n'est pas
+ * une valeur que `activeCategoryFilter` peut lui-même prendre. */
+export type WakfuAutocompleteFilterButton = 'all' | WakfuAutocompleteCategoryFilter;
 
 export interface WakfuAutocompleteExisting {
   name: string;
@@ -82,9 +98,9 @@ export class WakfuAutocompleteComponent {
   /** Émis quand une modale recette ouverte depuis CETTE instance (voir `openRecipe`) vient d'être
    * validée (voir RecipeTrackingService.confirm()) — permet à un parent doté d'un formulaire
    * d'ajout repliable (voir tracker-strip.component.ts) de se refermer, comme si l'utilisateur
-   * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond)
-   * n'émet volontairement rien. */
-  readonly recipeOpened = output<void>();
+   * avait cliqué sur "Fermer" ; une fermeture sans validation (× de la modale, clic sur le fond,
+   * ou simplement le clic sur l'icône recette qui l'ouvre) n'émet volontairement rien. */
+  readonly recipeConfirmed = output<void>();
 
   protected readonly recipeIcon = RECIPE_ICON_DATA_URI;
   protected readonly rarityIconUrl = wakfuRarityIconUrl;
@@ -94,10 +110,55 @@ export class WakfuAutocompleteComponent {
   private readonly recipeTracking = inject(RecipeTrackingService);
   private readonly catalog = inject(CatalogService);
 
-  readonly focused = signal(false);
+  /** Focus natif brut du champ — voir `focused` (exposé aux appelants) pour la version qui reste
+   * vraie tant que le panneau de suggestions est ouvert. */
+  private readonly rawFocused = signal(false);
   protected readonly open = signal(false);
+  /** Vrai tant que le champ a le focus natif OU que le panneau de suggestions (`open`) est ouvert —
+   * utilisé par les appelants (ex. `.icon-switch-option`/`class.compact`, voir
+   * tracker.component.html/tracker-strip.component.html) pour garder leur variante compacte
+   * pendant toute l'interaction avec la liste de suggestions. Sans le `|| open()`, cliquer sur une
+   * icône de filtre ou une suggestion fait perdre le focus natif au champ (mousedown -> blur, AVANT
+   * que le click ne s'exécute) : `rawFocused` retombait alors à `false` un instant pendant que le
+   * panneau était encore affiché, faisant réapparaître les libellés masqués puis re-disparaître à
+   * la frappe suivante (bug visuel réel). */
+  readonly focused = computed(() => this.rawFocused() || this.open());
   protected readonly query = signal('');
   protected readonly activeIndex = signal(0);
+  /** Catégorie actuellement filtrée dans la ligne d'icônes (voir `results`), `null` = toutes.
+   * Remise à `null` seulement à la sélection d'une suggestion (voir `select`) — conservée d'une
+   * frappe à l'autre pour ne pas surprendre l'utilisateur en train d'affiner sa recherche. */
+  protected readonly activeCategoryFilter = signal<WakfuAutocompleteCategoryFilter | null>(null);
+
+  /** Catégories de filtre possibles pour le domaine courant — les 7 catégories d'objet toujours
+   * (domaines `item`/`both`), + "Monstres" seulement en domaine `both` (seul domaine mélangeant les
+   * deux `kind`, voir WakfuAutocompleteDomain). Domaine `enemy` seul : aucun filtre, un seul `kind`
+   * possible. Indépendant des résultats courants — voir `filterButtons` pour la liste réellement
+   * affichée (restreinte aux catégories ayant au moins un résultat). */
+  private readonly possibleCategoryFilters = computed<readonly WakfuAutocompleteCategoryFilter[]>(
+    () => {
+      const domain = this.domain();
+      if (domain === 'enemy') return [];
+      return domain === 'both' ? [...WAKFU_ITEM_CATEGORIES, 'enemy'] : WAKFU_ITEM_CATEGORIES;
+    },
+  );
+
+  /** Icônes de filtre réellement affichées au-dessus des suggestions : uniquement les catégories
+   * de `possibleCategoryFilters` ayant au moins un résultat dans `rawResults()` (inutile d'afficher
+   * un filtre qui viderait systématiquement la liste), précédées d'une icône "Tout" qui réinitialise
+   * `activeCategoryFilter` — absente si aucune catégorie n'est disponible (domaine `enemy`, ou
+   * aucun résultat). */
+  protected readonly filterButtons = computed<readonly WakfuAutocompleteFilterButton[]>(() => {
+    const possible = this.possibleCategoryFilters();
+    if (possible.length === 0) return [];
+    const present = new Set<WakfuAutocompleteCategoryFilter>(
+      this.rawResults().map((r) =>
+        r.kind === 'enemy' ? 'enemy' : (r.category as WakfuItemCategory),
+      ),
+    );
+    const available = possible.filter((f) => present.has(f));
+    return available.length > 0 ? ['all', ...available] : [];
+  });
   /** Vrai pendant la résolution récursive (réseau, voir CatalogService.resolveRecipeIngredients)
    * d'une recette ouverte depuis CETTE instance — désactive les boutons recette le temps de
    * l'appel pour éviter une double ouverture concurrente. */
@@ -145,7 +206,10 @@ export class WakfuAutocompleteComponent {
     () => new Set(this.existingNames().map((e) => `${e.kind}:${normalizeWakfuName(e.name)}`)),
   );
 
-  protected readonly results = computed<WakfuAutocompleteOption[]>(() => {
+  /** Résultats de recherche (WakfuSearchService), AVANT filtre par catégorie — sert à décider si
+   * la ligne d'icônes a lieu d'être affichée (voir template) même quand le filtre actif ne laisse
+   * plus rien passer (pour pouvoir le désactiver plutôt que de perdre toute la liste). */
+  protected readonly rawResults = computed<WakfuAutocompleteOption[]>(() => {
     const q = this.query();
     const domain = this.domain();
     const raw =
@@ -166,6 +230,47 @@ export class WakfuAutocompleteComponent {
       return { ...r, disabled };
     });
   });
+
+  /** `rawResults`, restreint à `activeCategoryFilter` quand un filtre est actif — c'est cette liste
+   * que le template affiche et que la navigation clavier (`moveActive`/`selectActive`) parcourt. */
+  protected readonly results = computed<WakfuAutocompleteOption[]>(() => {
+    const filter = this.activeCategoryFilter();
+    const raw = this.rawResults();
+    if (filter === null) return raw;
+    return raw.filter((r) =>
+      filter === 'enemy' ? r.kind === 'enemy' : r.kind === 'item' && r.category === filter,
+    );
+  });
+
+  protected toggleCategoryFilter(filter: WakfuAutocompleteFilterButton): void {
+    if (filter === 'all') {
+      this.activeCategoryFilter.set(null);
+    } else {
+      this.activeCategoryFilter.update((current) => (current === filter ? null : filter));
+    }
+    this.activeIndex.set(0);
+  }
+
+  /** `filter` est actif soit parce qu'il correspond exactement à `activeCategoryFilter`, soit
+   * (cas du bouton "Tout") parce qu'aucun filtre n'est actif (`activeCategoryFilter() === null`). */
+  protected isFilterButtonActive(filter: WakfuAutocompleteFilterButton): boolean {
+    return filter === 'all'
+      ? this.activeCategoryFilter() === null
+      : this.activeCategoryFilter() === filter;
+  }
+
+  /** Clé i18n du libellé/tooltip d'une icône de filtre — `wakfuAutocomplete.allCategories` pour
+   * "Tout", `itemCategory.monsters` pour "Monstres", `itemCategory.*` (voir translations.ts) pour
+   * les 7 catégories d'objet. */
+  protected categoryFilterLabelKey(filter: WakfuAutocompleteFilterButton): string {
+    if (filter === 'all') return 'wakfuAutocomplete.allCategories';
+    return filter === 'enemy' ? 'itemCategory.monsters' : `itemCategory.${filter}`;
+  }
+
+  protected categoryFilterIconUrl(filter: WakfuAutocompleteFilterButton): string {
+    if (filter === 'all') return WAKFU_ALL_CATEGORY_ICON_URL;
+    return filter === 'enemy' ? WAKFU_MONSTER_CATEGORY_ICON_URL : wakfuItemCategoryIconUrl(filter);
+  }
 
   /** Vrai tant qu'une recette ouverte par CETTE instance (voir `openRecipe`) est en attente —
    * distingue, dans l'effect ci-dessous, une validation qui nous concerne d'une validation
@@ -192,6 +297,7 @@ export class WakfuAutocompleteComponent {
       lastConfirmedAt = confirmedAt;
       if (!requestClosed || !this.awaitingOwnRecipeConfirm) return;
       this.awaitingOwnRecipeConfirm = false;
+      if (didConfirm) this.recipeConfirmed.emit();
     });
   }
 
@@ -203,11 +309,11 @@ export class WakfuAutocompleteComponent {
 
   protected onFocus(): void {
     this.open.set(true);
-    this.focused.set(true);
+    this.rawFocused.set(true);
   }
 
   protected onBlur(): void {
-    this.focused.set(false);
+    this.rawFocused.set(false);
   }
 
   protected moveActive(delta: number): void {
@@ -233,6 +339,7 @@ export class WakfuAutocompleteComponent {
     this.query.set('');
     this.open.set(false);
     this.activeIndex.set(0);
+    this.activeCategoryFilter.set(null);
   }
 
   protected close(): void {
@@ -241,24 +348,41 @@ export class WakfuAutocompleteComponent {
 
   /** Ouvre la modale "suivre les objets de la recette" (voir RecipeTrackingService) — indépendant
    * de `select()` : ne doit jamais ajouter `entry` lui-même au suivi. ASYNCHRONE (lot 3.1, étape 5)
-   * : la résolution récursive de la recette nécessite désormais un aller-retour réseau par niveau
-   * (voir CatalogService.resolveRecipeIngredients) — `recipeLoading` pilote l'état de chargement
-   * pendant l'appel (voir template, boutons recette désactivés). */
+   * : la résolution récursive de la recette nécessite un aller-retour réseau par niveau (voir
+   * CatalogService.resolveRecipeIngredients). La modale s'ouvre IMMÉDIATEMENT, avant même cet
+   * appel réseau (`ingredients: null`) — elle affiche elle-même un spinner en attendant (voir
+   * RecipeQuantityModalComponent), plutôt que de bloquer l'app entière derrière l'overlay plein
+   * écran partagé (LoadingOverlayService) le temps du chargement : cet overlay produisait un
+   * "blink" noir désagréable (fond opaque plein écran qui s'affiche puis disparaît) pour ce cas
+   * précis, réservé aux chargements qui bloquent réellement toute l'UI (ex. connexion au fichier
+   * log). `recipeLoading` reste une garde de ré-entrance locale à cette instance + désactive les
+   * boutons recette du template pendant l'appel. */
   protected async openRecipe(event: Event, entry: WakfuAutocompleteOption): Promise<void> {
-    this.recipeOpened.emit();
     event.stopPropagation();
     if (entry.id === null || this.recipeLoading()) return;
     this.recipeLoading.set(true);
+    this.awaitingOwnRecipeConfirm = true;
+    this.recipeTracking.open({
+      itemName: entry.name,
+      itemLabel: entry.label,
+      itemRarity: entry.rarity ?? 'common',
+      ingredients: null,
+    });
     try {
       const ingredients = await this.catalog.resolveRecipeIngredients(entry.id);
-      if (ingredients.length === 0) return;
-      this.awaitingOwnRecipeConfirm = true;
-      this.recipeTracking.open({
-        itemName: entry.name,
-        itemLabel: entry.label,
-        itemRarity: entry.rarity ?? 'common',
-        ingredients,
-      });
+      if (ingredients.length === 0) {
+        // Rien à suivre (recette vide/introuvable) : referme la modale ouverte en amont plutôt
+        // que de la laisser bloquée sur son spinner (voir `close()` — n'émet volontairement rien).
+        this.recipeTracking.close();
+        return;
+      }
+      this.recipeTracking.setIngredients(ingredients);
+    } catch (err) {
+      // Résolution réseau échouée : referme la modale plutôt que de la laisser indéfiniment sur
+      // son spinner (voir CatalogService.getItemDetail — ne rejette normalement jamais en
+      // pratique, les erreurs réseau y sont déjà absorbées, mais on reste défensif ici).
+      this.recipeTracking.close();
+      throw err;
     } finally {
       this.recipeLoading.set(false);
     }

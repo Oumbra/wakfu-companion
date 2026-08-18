@@ -1,5 +1,10 @@
 @if (request(); as req) {
-  <div class="confirm-delete-backdrop" (click)="cancel()" appEscapeClose (appEscapeClose)="cancel()"></div>
+  <div
+    class="confirm-delete-backdrop"
+    (click)="cancel()"
+    appEscapeClose
+    (appEscapeClose)="cancel()"
+  ></div>
   <div
     #popover
     class="confirm-delete-popover"

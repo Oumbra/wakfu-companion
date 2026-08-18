@@ -63,6 +63,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       wakassetsAvailable: item.wakassetsAvailable,
       wakfuAvailable: item.wakfuAvailable,
       hasRecipe: item.hasRecipe,
+      category: item.category,
       recipe: recipeRows.map((row) => ({
         itemId: row.ingredientAnkamaId,
         name: nameByIngredientId.get(row.ingredientAnkamaId) ?? null,

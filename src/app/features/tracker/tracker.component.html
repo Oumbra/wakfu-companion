@@ -13,7 +13,9 @@
             type="button"
             class="kpi-remove-btn"
             [class.active]="watchlist.selectMode()"
-            [appTooltip]="(watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t"
+            [appTooltip]="
+              (watchlist.selectMode() ? 'tracker.bulkDeleteExit' : 'tracker.bulkDeleteStart') | t
+            "
             tooltipPosition="top-left"
             (click)="toggleSelectMode()"
           >
@@ -46,12 +48,13 @@
         >
           <app-icon name="trending-up" [size]="13" [strokeWidth]="2.2" />
           <span
-              class="icon-switch-option-label"
-              [appTooltip]="'tracker.countUpMode' | t"
-              tooltipPosition="top-left"
-              [tooltipOnlyIfTruncated]="true">
-              {{ 'tracker.countUpMode' | t }}
-            </span>
+            class="icon-switch-option-label"
+            [appTooltip]="'tracker.countUpMode' | t"
+            tooltipPosition="top-left"
+            [tooltipOnlyIfTruncated]="true"
+          >
+            {{ 'tracker.countUpMode' | t }}
+          </span>
         </button>
         <button
           type="button"
@@ -64,12 +67,13 @@
         >
           <app-icon name="target" [size]="13" [strokeWidth]="2.2" />
           <span
-              class="icon-switch-option-label"
-              [appTooltip]="'tracker.countDownMode' | t"
-              tooltipPosition="top-left"
-              [tooltipOnlyIfTruncated]="true">
-              {{ 'tracker.countDownMode' | t }}
-            </span>
+            class="icon-switch-option-label"
+            [appTooltip]="'tracker.countDownMode' | t"
+            tooltipPosition="top-left"
+            [tooltipOnlyIfTruncated]="true"
+          >
+            {{ 'tracker.countDownMode' | t }}
+          </span>
         </button>
       </div>
       <app-wakfu-autocomplete

@@ -188,8 +188,8 @@ export class WatchlistTileController {
   /** Sélectionne une quantité toute faite (voir `targetPresets`) — remplace intégralement la
    * cible en cours de saisie, comme si l'utilisateur l'avait tapée directement. */
   setAddTargetPreset(event: PointerEvent, value: number): void {
-    const symbole = event.altKey ? -1 : 1
-    this.addTarget.set(this.addTarget() + (value * symbole));
+    const symbole = event.altKey ? -1 : 1;
+    this.addTarget.set(this.addTarget() + value * symbole);
   }
 
   /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte, la cible) choisis

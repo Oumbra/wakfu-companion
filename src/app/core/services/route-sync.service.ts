@@ -32,6 +32,12 @@ import { I18nService } from './i18n.service';
  *
  * Injecté une seule fois au démarrage (voir app.ts, même principe que StatsStoreService) pour
  * garantir que l'`effect()` tourne dès le premier changement de vue/locale.
+ *
+ * Lit aussi `nav.dashboardTab()`/`nav.profileTab()` (section active de `main`/`profile`, voir
+ * NavigationService) pour que la section courante ait elle aussi son propre chemin — un changement
+ * d'onglet (clic dans `<app-tab-bar>`, qui écrit directement dans ces signaux, voir
+ * DashboardComponent/ProfilePageComponent) redéclenche donc cet effect exactement comme un
+ * changement de vue.
  */
 @Injectable({ providedIn: 'root' })
 export class RouteSyncService {
@@ -45,8 +51,11 @@ export class RouteSyncService {
       const locale = this.i18n.locale();
       const view = this.nav.view();
       const legalKind = view === 'legal' ? this.legalPage.kind() : null;
+      const dashboardTab = this.nav.dashboardTab();
+      const profileTab = this.nav.profileTab();
+      const historyTab = this.nav.historyTab();
       if (!this.router.navigated) return;
-      const path = `/${locale}${pagePathFor(view, legalKind)}`;
+      const path = `/${locale}${pagePathFor(view, legalKind, dashboardTab, profileTab, historyTab)}`;
       if (this.router.url !== path) {
         void this.router.navigateByUrl(path);
       }

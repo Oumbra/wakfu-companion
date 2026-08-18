@@ -158,7 +158,9 @@
               <div class="identity-row">
                 <div class="identity-left">
                   <div class="avatar-preview">
-                    @if (profile.avatarIndex() !== null) {
+                    @if (profile.avatarExternalUrl(); as externalUrl) {
+                      <img [src]="externalUrl" referrerpolicy="no-referrer" alt="" />
+                    } @else if (profile.avatarIndex() !== null) {
                       <app-class-portrait
                         [className]="avatarGridEntries[profile.avatarIndex()!].className"
                         [gender]="avatarGridEntries[profile.avatarIndex()!].gender"
@@ -180,27 +182,80 @@
                 </div>
 
                 <div class="profile-field identity-right">
-                  <label class="profile-label">{{ 'profile.avatarLabel' | t }}</label>
-                  <div class="avatar-grid">
-                    @for (
-                      entry of avatarGridEntries;
-                      track entry.className + entry.gender;
-                      let i = $index
-                    ) {
-                      <button
-                        class="avatar-cell-btn"
-                        [class.selected]="profile.avatarIndex() === i"
-                        [appTooltip]="avatarEntryLabel(entry)"
-                        (click)="chooseAvatar(i)"
-                      >
-                        <app-class-portrait
-                          [className]="entry.className"
-                          [gender]="entry.gender"
-                          [alwaysColored]="profile.avatarIndex() === i"
-                        />
-                      </button>
-                    }
+                  <div class="avatar-gallery-switch-row">
+                    <label class="profile-label" for="avatar-gallery-select">{{
+                      'profile.avatarLabel' | t
+                    }}</label>
+                    <!-- Choix de la galerie EN PLUS de la sélection sur les `<option>` (voir
+                    CLAUDE.md, piège `[value]` sur `<select>` avec des `<option>` posées par un
+                    `@for` : Angular applique `[value]` avant de rendre le contenu embarqué). -->
+                    <select
+                      id="avatar-gallery-select"
+                      class="avatar-gallery-select"
+                      (change)="onAvatarGallerySelect($any($event.target).value)"
+                    >
+                      @for (g of avatarGalleryOptions; track g.id) {
+                        <option [value]="g.id" [selected]="g.id === avatarGallery()">
+                          {{ g.labelKey | t }}
+                        </option>
+                      }
+                    </select>
                   </div>
+                  @if (avatarGallery() === 'mmo') {
+                    <div class="avatar-grid">
+                      @for (
+                        entry of avatarGridEntries;
+                        track entry.className + entry.gender;
+                        let i = $index
+                      ) {
+                        <button
+                          class="avatar-cell-btn"
+                          [class.selected]="
+                            profile.avatarIndex() === i && !profile.avatarExternalUrl()
+                          "
+                          [appTooltip]="avatarEntryLabel(entry)"
+                          (click)="chooseAvatar(i)"
+                        >
+                          <app-class-portrait
+                            [className]="entry.className"
+                            [gender]="entry.gender"
+                            [alwaysColored]="
+                              profile.avatarIndex() === i && !profile.avatarExternalUrl()
+                            "
+                          />
+                        </button>
+                      }
+                    </div>
+                  } @else {
+                    <div class="avatar-grid">
+                      @for (url of currentFanartUrls(); track url) {
+                        <button
+                          class="avatar-cell-btn"
+                          [class.selected]="profile.avatarExternalUrl() === url"
+                          [class.avatar-cell-hidden]="brokenAvatarUrls().has(url)"
+                          (click)="chooseExternalAvatar(url)"
+                        >
+                          <img
+                            [src]="url"
+                            referrerpolicy="no-referrer"
+                            alt=""
+                            (error)="onAvatarImgError(url)"
+                          />
+                        </button>
+                      }
+                    </div>
+                  }
+                  <p class="avatar-fanart-credit">
+                    {{ 'profile.avatarFanartCredit' | t }}
+                    <a
+                      class="avatar-fanart-link"
+                      href="https://account.ankama.com/fr/compte/profil/avatar"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ 'profile.avatarFanartLinkLabel' | t }}
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
@@ -209,6 +264,45 @@
 
         <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'colorblind'">
           <div class="panel-body">
+            <div class="profile-field profile-field-wide">
+              <div class="profile-label-row">
+                <label class="profile-label">
+                  {{ 'profile.themeLabel' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [appTooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileTheme')"
+                  >
+                    ?
+                  </button>
+                </label>
+              </div>
+              <p class="profile-section-desc">{{ 'profile.themeHint' | t }}</p>
+              <div class="theme-picker">
+                @for (opt of themeOptions; track opt.value) {
+                  <button
+                    type="button"
+                    class="theme-option"
+                    [class.selected]="activeThemeChoice() === opt.value"
+                    (click)="chooseTheme(opt.value)"
+                  >
+                    <span class="theme-option-swatch">
+                      <span class="theme-option-swatch-bg" [style.background]="opt.swatch[0]">
+                        <span class="theme-option-swatch-panel" [style.background]="opt.swatch[1]">
+                          <span
+                            class="theme-option-swatch-accent"
+                            [style.background]="opt.swatch[2]"
+                          ></span>
+                        </span>
+                      </span>
+                    </span>
+                    <span class="theme-option-label">{{ opt.labelKey | t }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+
             <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
                 <label class="profile-label">
@@ -405,6 +499,7 @@
                     class="icon-switch-option"
                     [class.selected]="!profile.alertManualClose()"
                     [appTooltip]="autoCloseTooltip()"
+                    tooltipPosition="top-right"
                     (click)="setManualClose(false)"
                   >
                     {{ 'profile.autoCloseLabel' | t }}
@@ -414,7 +509,7 @@
                     class="icon-switch-option"
                     [class.selected]="profile.alertManualClose()"
                     [appTooltip]="'profile.manualCloseTooltip' | t"
-                    [tooltipMultiline]="true"
+                    tooltipPosition="top-right"
                     (click)="setManualClose(true)"
                   >
                     {{ 'profile.manualCloseLabel' | t }}
@@ -444,9 +539,7 @@
                     <button
                       class="sound-toggle-btn"
                       [appTooltip]="(entry.enabled ? 'profile.soundOn' : 'profile.soundOff') | t"
-                      [tooltipPosition]="
-                        i < soundGridColumns.columns() ? 'bottom-left' : 'top-left'
-                      "
+                      tooltipPosition="top"
                       (click)="toggleSound(entry.name, entry.catalogId)"
                     >
                       @if (entry.enabled) {

@@ -28,6 +28,7 @@ import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { NavigationService } from '../../core/services/navigation.service';
 import { InputNumberComponent } from '../../shared/input-number/input-number.component';
+import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
 
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
@@ -78,6 +79,7 @@ export class TrackerStripComponent implements OnDestroy {
   private readonly elementRef = inject(ElementRef<HTMLElement>);
   protected readonly helpModal = inject(HelpModalService);
   private readonly nav = inject(NavigationService);
+  private readonly recipeTracking = inject(RecipeTrackingService);
 
   protected readonly watchlist = new WatchlistTileController(
     this.stats,
@@ -104,8 +106,20 @@ export class TrackerStripComponent implements OnDestroy {
    * — écouteur posé/retiré au fil de `addOpen()` plutôt que branché en permanence (voir l'`effect`
    * du constructeur). Posé en phase `capture` : il s'exécute avant la phase bulle où un bouton
    * interne pourrait appeler `stopPropagation()` (ex. `setAddMode`), ce qui n'a donc aucune
-   * incidence sur sa détection. */
+   * incidence sur sa détection.
+   *
+   * Exception : la modale recette (`app-recipe-quantity-modal`) est rendue au niveau racine (voir
+   * app.html), donc hors du DOM de ce composant — un clic dessus (×, bouton valider, fond) est vu
+   * comme "en dehors" par le test `contains()` ci-dessous, et un `stopPropagation()` posé côté
+   * modale ne peut rien y changer : la phase capture de CET écouteur, posé sur `document`,
+   * s'exécute avant même que le clic n'atteigne le bouton de la modale et son propre handler. On
+   * ignore donc explicitement tout clic tombant pendant que la modale est ouverte
+   * (`recipeTracking.request()` non nul à cet instant précis, puisque le handler de la modale qui
+   * le videra — `close()`/`confirm()` — n'a pas encore tourné) ; seul `recipeConfirmed`, émis
+   * uniquement sur validation réelle (voir WakfuAutocompleteComponent), doit refermer ce
+   * formulaire. */
   private readonly onDocumentClick = (event: MouseEvent): void => {
+    if (this.recipeTracking.request() !== null) return;
     const target = event.target as Node | null;
     if (target && !this.elementRef.nativeElement.contains(target)) {
       this.closeAdd();

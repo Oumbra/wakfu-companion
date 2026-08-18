@@ -90,7 +90,7 @@
 }
 .item-picker-follow-btn:hover:not(:disabled) {
   background: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
   border-color: var(--accent);
 }
 .item-picker-follow-btn:disabled {

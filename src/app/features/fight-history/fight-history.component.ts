@@ -6,6 +6,7 @@ import { ClassPickerService } from '../../core/services/class-picker.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { EntityDamageListComponent } from '../damage-meter/entity-damage-list/entity-damage-list.component';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
+import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
 import { IconComponent } from '../../shared/icon/icon.component';
@@ -25,7 +26,11 @@ import {
 import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
 import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
-import { DungeonHistoryEntry, groupDungeonRuns } from '../../core/utils/dungeon-run-grouping.util';
+import {
+  dungeonStoneItemId,
+  DungeonHistoryEntry,
+  groupDungeonRuns,
+} from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import {
@@ -58,6 +63,7 @@ interface FightGroup {
     NumberFrPipe,
     EntityDamageListComponent,
     EntityIconComponent,
+    ItemIconComponent,
     TranslatePipe,
     LootListComponent,
     IconComponent,
@@ -460,6 +466,35 @@ export class FightHistoryComponent {
       isDungeonBossRow,
     ).tooltipSource;
     return source ? source.names[this.i18n.locale()] : null;
+  }
+
+  /** Id Ankama de la pierre de donjon à afficher en badge sur l'illustration d'un combat isolé
+   * (`.fight-image-wrap`, voir template), ou `null` si aucune ne s'applique. `isBossRow` : le combat
+   * de boss À L'INTÉRIEUR d'un run de donjon déjà déplié (voir `fightImageUrl`) ne porte pas son
+   * propre badge — il est déjà porté par l'en-tête du regroupement (`dungeonRunStoneItemId`
+   * ci-dessous), qui pointe vers le même combat via `entry.representative`. */
+  protected fightStoneItemId(record: FightRecord, isBossRow = false): number | null {
+    if (isBossRow) return null;
+    const dungeon = findDungeonForEnemies(
+      this.catalog,
+      this.enemyRowsFor(record).map((row) => row.name),
+    );
+    if (!dungeon) return null;
+    const stoneId = dungeonStoneItemId(dungeon);
+    if (stoneId === null) return null;
+    return record.loot.some((item) => item.catalogId === stoneId) ? stoneId : null;
+  }
+
+  /** Même badge que `fightStoneItemId` ci-dessus, pour l'en-tête d'un regroupement de donjon
+   * (`.dungeon-run-summary`, 2/3/4 salles) — la pierre est celle du run entier, sa présence
+   * s'apprécie sur le butin du combat de boss (`entry.representative`, voir
+   * `DungeonHistoryEntry.representative`). */
+  protected dungeonRunStoneItemId(
+    entry: Extract<DungeonHistoryEntry<HistoryFight>, { kind: 'dungeonRun' }>,
+  ): number | null {
+    const stoneId = dungeonStoneItemId(entry.dungeon);
+    if (stoneId === null) return null;
+    return entry.representative.loot.some((item) => item.catalogId === stoneId) ? stoneId : null;
   }
 
   protected onFightImageError(event: Event): void {

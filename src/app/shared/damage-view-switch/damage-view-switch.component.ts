@@ -26,6 +26,11 @@ export class DamageViewSwitchComponent {
   /** Dernier tour disponible pour ce combat (voir Fight.turnCount/FightRecord.turns) — borne haute
    * du pas à pas, toujours >= 1. */
   readonly maxTurn = input.required<number>();
+  /** Clé i18n du libellé du bouton "Total" — surchargeable par l'appelant (ex.
+   * FightHistoryComponent utilise "Cumulé" plutôt que "Total", un combat de l'historique
+   * étant déjà terminé). Par défaut 'damageMeter.viewTotal' (utilisé par DamageMeterComponent,
+   * combat en cours). */
+  readonly totalLabelKey = input<string>('damageMeter.viewTotal');
 
   readonly modeChange = output<DamageViewMode>();
   /** Émis déjà borné à [1, maxTurn()] — l'appelant n'a pas besoin de re-clamper. */

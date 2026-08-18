@@ -40,6 +40,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Serveur déduit du personnage {{name}}',
     'app.catalogUnavailable':
       'Catalogue Ankama indisponible : noms et icônes des objets/monstres non reconnus pour le moment.',
+    'app.loading': 'Chargement...',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Réduire',
@@ -70,6 +71,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.reassignTitle': 'Réattribuer {{spell}}',
     'damageMeter.reassignEmpty': 'Aucune autre entité disponible.',
     'damageMeter.viewTotal': 'Total',
+    'damageMeter.viewCumulative': 'Cumulé',
     'damageMeter.viewTurn': 'Tour',
     'damageMeter.turnLabel': 'Tour {{n}}',
     'damageMeter.prevTurn': 'Tour précédent',
@@ -119,6 +121,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeQuantityLabel': 'Quantité',
     'tracker.recipeConfirm': 'Valider',
     'tracker.recipeNestTooltip': "Suivre les ingrédients de cet objet plutôt que l'objet lui-même",
+    'itemCategory.equipment': 'Equipements',
+    'itemCategory.resources': 'Ressources',
+    'itemCategory.sublimations': 'Sublimations',
+    'itemCategory.harvests': 'Récoltes',
+    'itemCategory.havenBag': 'Havre-Sac',
+    'itemCategory.cosmetics': 'Cosmétiques',
+    'itemCategory.craft': 'Craft',
+    'itemCategory.misc': 'Divers',
+    'itemCategory.monsters': 'Monstres',
+    'wakfuAutocomplete.allCategories': 'Tout',
+    'wakfuAutocomplete.noResultInCategory': 'Aucun résultat dans cette catégorie',
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
@@ -160,6 +173,21 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Votre pseudo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': "Personnalisez votre pseudo et l'avatar affiché dans l'application.",
+    'profile.avatarGalleryMmo': 'Galerie MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'Tous les avatars sont disponibles à la sélection pour personnaliser les comptes Ankama, merci à eux !',
+    'profile.avatarFanartLinkLabel': 'Voir tous les avatars sur mon compte Ankama',
+    'profile.themeLabel': 'Thème',
+    'profile.themeHint':
+      "Choisissez l'apparence de l'application, sombre ou l'une des 4 variantes claires.",
+    'profile.themeDark': 'Sombre',
+    'profile.themeA': 'Ardoise',
+    'profile.themeB': 'Parchemin',
+    'profile.themeC': 'Nordique',
+    'profile.themeD': 'Contraste élevé',
     'profile.colorblindLabel': 'Mode daltonien',
     'profile.colorblindOff': 'Désact.',
     'profile.colorblindRedGreen': 'Protanopie & Deutéranopie',
@@ -262,31 +290,34 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'Comment ça marche ?',
     'help.combat.title': 'Combat en cours',
     'help.combat.body':
-      "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat. Plusieurs combattants portant le même nom (ex. plusieurs ennemis identiques) sont numérotés #1, #2… pour rester distincts.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).\nClic droit sur une ligne de sort (détail déplié) : réattribuer cette attaque et ses dégâts à un autre combattant, en cas d'erreur d'attribution automatique.",
+      "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat. Une barre colorée sous chaque nom représente sa part des dégâts, et plusieurs combattants portant le même nom (ex. plusieurs ennemis identiques) sont numérotés #1, #2… pour rester distincts.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nLe switch Total/Tour bascule entre les dégâts cumulés sur tout le combat et le détail d'un tour précis, navigable au pas-à-pas.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).\nClic droit sur une ligne de sort (détail déplié) : réattribuer cette attaque et ses dégâts à un autre combattant, en cas d'erreur d'attribution automatique.\n\nLe bouton de réduction (coin supérieur droit) replie ce panneau en un petit onglet flottant sur le bord de l'écran — toujours accessible en un clic pendant que vous jouez, avec un badge indiquant le nombre de combats en cours.",
     'help.tracker.title': 'Suivi',
     'help.tracker.body':
-      "Suit un compteur pour chaque objet ou ennemi ajouté : nombre ramassé/vaincu depuis la connexion, incrémenté automatiquement à chaque ramassage/victoire.\n\nLe switch ▲/▼ bascule entre comptage incrémental (part de 0, monte) et décompte (part d'une cible que vous saisissez, descend jusqu'à 0 puis déclenche une alerte).\n\nL'icône recette (objets ayant une recette de métier connue) crée en un clic un décompte pour chaque ingrédient, multiplié par la quantité souhaitée — y compris pour les ingrédients ayant eux-mêmes une recette, imbricable en cascade.",
+      "Suit un compteur pour chaque objet ou ennemi ajouté : nombre ramassé/vaincu depuis la connexion, incrémenté automatiquement à chaque ramassage/victoire.\n\nLe bouton + ouvre une recherche (objets ET ennemis) pour ajouter une nouvelle entrée à suivre.\n\nLe switch ▲/▼ bascule entre comptage incrémental (part de 0, monte) et décompte (part d'une cible que vous saisissez, descend jusqu'à 0 puis déclenche une alerte).\n\nL'icône recette (objets ayant une recette de métier connue) crée en un clic un décompte pour chaque ingrédient, multiplié par la quantité souhaitée — y compris pour les ingrédients ayant eux-mêmes une recette, imbricable en cascade.\n\nCliquer sur une tuile la déplie pour voir son nom complet et un bouton de réinitialisation ; glisser-déposer une tuile permet de réordonner le suivi. Le bouton − active un mode de sélection multiple pour supprimer plusieurs entrées en une fois.",
     'help.fightHistory.title': 'Historique > Combats',
     'help.fightHistory.body':
-      "Conserve les 30 derniers combats de la session en mémoire : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP. Connecté à un compte, l'historique complet est en plus sauvegardé sans limite et rechargeable au-delà via le bouton « Charger plus » ; en invité, seuls ces 30 derniers combats restent consultables.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur une ligne de sort du détail d'un combattant : réattribuer cette attaque à un autre combattant.",
+      "Conserve les 30 derniers combats de la session en mémoire : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP. Connecté à un compte, l'historique complet est en plus sauvegardé sans limite et rechargeable au-delà via le bouton « Charger plus » ; en invité, seuls ces 30 derniers combats restent consultables.\n\nLes combats se regroupent selon trois modes, au choix (boutons au-dessus de la liste) : Jour, Origine (session en cours séparée de l'historique du compte, connecté uniquement) et Type (par donjon/brèche, ou par famille de monstre).\n\nLes combats d'un même donjon (salles successives et tentative(s) de boss) sont automatiquement rassemblés sous une seule entrée repliée, pour ne pas noyer le boss au milieu des salles — nombre de combats et durée totale du run remplacent le détail individuel tant qu'elle reste repliée. Quand la pierre de ce donjon figure dans le butin du combat de boss, un badge s'affiche sur son illustration.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nUn combat déplié propose le même switch Total/Tour que le combat en cours pour revoir les dégâts tour par tour, et le butin se trie par nom, quantité ou rareté.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur une ligne de sort du détail d'un combattant : réattribuer cette attaque à un autre combattant.",
     'help.purchases.title': 'Historique > Achats',
     'help.purchases.body':
-      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » ; en invité, seuls les achats de la session en cours sont visibles.",
+      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » ; en invité, seuls les achats de la session en cours sont visibles.\n\nClic droit sur un objet : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
     'help.trades.title': 'Historique > Échanges',
     'help.trades.body':
-      "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seuls les échanges de la session en cours sont visibles.",
+      "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (personnage, objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seuls les échanges de la session en cours sont visibles.\n\nClic droit sur un objet donné ou reçu : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
     'help.chat.title': 'Chat',
     'help.chat.body':
       "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes recherches textuelles personnalisées (mot-clé + canal, ou tous canaux) peuvent être ajoutées : un message qui correspond est mis en surbrillance et déclenche une alerte sonore — les recherches ne masquent plus aucun message, elles se contentent de le signaler.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique.",
     'help.profileAlerts.title': 'Profil > Alertes',
     'help.profileAlerts.body':
-      "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
+      "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage. La recherche « + » permet d'en ajouter d'autres que les objets par défaut, ensuite retirables individuellement (croix sur la vignette) — contrairement aux objets par défaut, jamais supprimables.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette ; le bouton test rejoue l'alerte sonore pour vérifier le réglage sans attendre un vrai ramassage.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
+    'help.profileTheme.title': 'Profil > Thème',
+    'help.profileTheme.body':
+      "Choisissez l'apparence de l'application : le thème sombre d'origine, ou l'une des 4 variantes claires (Ardoise, Parchemin, Nordique, Contraste élevé), chacune calibrée pour rester lisible sur fond clair.\n\nCe choix est indépendant du mode daltonien juste en dessous, mais les deux se combinent : les couleurs adaptées au daltonisme s'appliquent par-dessus le thème actif, sombre ou clair.",
     'help.profileColorblind.title': 'Profil > Daltonisme',
     'help.profileColorblind.body':
       "Adapte les couleurs les plus sensibles de l'application (victoire/défaite, dégâts élémentaires, rareté d'objet, canaux de chat) au type de daltonisme choisi, pour qu'elles restent distinguables.\n\nProtanopie et deutéranopie sont regroupées sous une seule option : les deux se traduisent par la même confusion rouge-vert, donc la même correction s'applique.\n\nL'aperçu avant/après sous le sélecteur montre exactement les couleurs qui changent avec le profil actuellement choisi.",
     'help.profileCharacters.title': 'Profil > Personnages',
     'help.profileCharacters.body':
-      "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte) ; glisser-déposer permet de réordonner les personnages d'un compte.\n\nChaque compte peut recevoir un serveur de jeu : utilisé pour associer l'historique et le badge serveur de l'en-tête au bon monde si vous jouez sur plusieurs serveurs.",
+      "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte), chacun renommable ; le bouton « Ajouter un personnage » ouvre un formulaire (nom, classe, sexe) pour déclarer chaque personnage, et le glisser-déposer permet ensuite de réordonner les personnages d'un compte.\n\nChaque compte peut recevoir un serveur de jeu : utilisé pour associer l'historique et le badge serveur de l'en-tête au bon monde si vous jouez sur plusieurs serveurs.",
     'help.profileConnection.title': 'Profil > Connexion',
     'help.profileConnection.body':
       "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
@@ -428,6 +459,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Server inferred from character {{name}}',
     'app.catalogUnavailable':
       'Ankama catalog unavailable: item/monster names and icons are not recognized right now.',
+    'app.loading': 'Loading...',
 
     'damageMeter.header': 'Combat',
     'damageMeter.collapseHint': 'Collapse',
@@ -458,6 +490,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.reassignTitle': 'Reassign {{spell}}',
     'damageMeter.reassignEmpty': 'No other entity available.',
     'damageMeter.viewTotal': 'Total',
+    'damageMeter.viewCumulative': 'Cumulative',
     'damageMeter.viewTurn': 'Turn',
     'damageMeter.turnLabel': 'Turn {{n}}',
     'damageMeter.prevTurn': 'Previous turn',
@@ -507,6 +540,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeQuantityLabel': 'Quantity',
     'tracker.recipeConfirm': 'Confirm',
     'tracker.recipeNestTooltip': "Track this item's own ingredients instead of the item itself",
+    'itemCategory.equipment': 'Equipment',
+    'itemCategory.resources': 'Resources',
+    'itemCategory.sublimations': 'Sublimations',
+    'itemCategory.harvests': 'Harvests',
+    'itemCategory.havenBag': 'Haven Bag',
+    'itemCategory.cosmetics': 'Cosmetics',
+    'itemCategory.craft': 'Craft',
+    'itemCategory.misc': 'Miscellaneous',
+    'itemCategory.monsters': 'Monsters',
+    'wakfuAutocomplete.allCategories': 'All',
+    'wakfuAutocomplete.noResultInCategory': 'No results in this category',
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
@@ -548,6 +592,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Your nickname...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Customize your nickname and the avatar shown in the app.',
+    'profile.avatarGalleryMmo': 'MMO Gallery',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'All avatars are available for selection to customize Ankama accounts, thanks to them!',
+    'profile.avatarFanartLinkLabel': 'See all avatars on my Ankama account',
+    'profile.themeLabel': 'Theme',
+    'profile.themeHint': 'Choose the appearance of the app: dark, or one of 4 light variants.',
+    'profile.themeDark': 'Dark',
+    'profile.themeA': 'Slate',
+    'profile.themeB': 'Parchment',
+    'profile.themeC': 'Nordic',
+    'profile.themeD': 'High Contrast',
     'profile.colorblindLabel': 'Colorblind mode',
     'profile.colorblindOff': 'Off',
     'profile.colorblindRedGreen': 'Protanopia & Deuteranopia',
@@ -649,25 +707,28 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'How does this work?',
     'help.combat.title': 'Current Fight',
     'help.combat.body':
-      'This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds. Several combatants sharing the same name (e.g. identical enemies) are numbered #1, #2… to stay distinct.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).\nRight-click a spell line (expanded detail): reassign that attack and its damage to another combatant, in case of a wrong automatic attribution.',
+      'This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds. A colored bar under each name shows its share of the damage, and several combatants sharing the same name (e.g. identical enemies) are numbered #1, #2… to stay distinct.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nThe Total/Turn switch toggles between damage summed over the whole fight and the detail of a specific turn, navigable step by step.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).\nRight-click a spell line (expanded detail): reassign that attack and its damage to another combatant, in case of a wrong automatic attribution.\n\nThe collapse button (top-right corner) folds this panel into a small floating tab on the edge of the screen — always one click away while you play, with a badge showing the number of ongoing fights.',
     'help.tracker.title': 'Tracker',
     'help.tracker.body':
-      'Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe ▲/▼ switch toggles between count-up mode (starts at 0, goes up) and countdown mode (starts from a target you enter, goes down to 0 then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.',
+      'Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe + button opens a search (items AND enemies) to add a new entry to track.\n\nThe ▲/▼ switch toggles between count-up mode (starts at 0, goes up) and countdown mode (starts from a target you enter, goes down to 0 then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.\n\nClick a tile to expand it and see its full name plus a reset button; drag a tile to reorder the tracker. The − button turns on a multi-select mode to delete several entries at once.',
     'help.fightHistory.title': 'History > Fights',
     'help.fightHistory.body':
-      'Keeps the last 30 fights of the session in memory: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP. Signed in, the full history is also saved with no limit and can be loaded further back with the "Load more" button; as a guest, only these last 30 fights stay available.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.\nRight-click a spell line in a combatant\'s detail: reassign that attack to another combatant.',
+      "Keeps the last 30 fights of the session in memory: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP. Signed in, the full history is also saved with no limit and can be loaded further back with the \"Load more\" button; as a guest, only these last 30 fights stay available.\n\nFights can be grouped three ways (buttons above the list): Day, Origin (current session kept apart from the account's history, signed-in only) and Type (by dungeon/breach, or by monster family).\n\nFights from the same dungeon (successive rooms and boss attempt(s)) are automatically gathered under a single collapsed entry, so the boss doesn't get lost among the rooms — the number of fights and the run's total duration replace the individual detail while it stays collapsed. When that dungeon's stone is part of the boss fight's loot, a badge appears on its illustration.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nAn expanded fight offers the same Total/Turn switch as the current fight, to review damage turn by turn, and loot can be sorted by name, quantity or rarity.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.\nRight-click a spell line in a combatant's detail: reassign that attack to another combatant.",
     'help.purchases.title': 'History > Purchases',
     'help.purchases.body':
-      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item.\n\nGrouped by day, sortable from newest to oldest (or the reverse). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button; as a guest, only purchases from the current session are visible.',
+      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button; as a guest, only purchases from the current session are visible.\n\nRight-click an item: fix its identity if it was misidentified, and add it to tracking in one click.',
     'help.trades.title': 'History > Trades',
     'help.trades.body':
-      'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only trades from the current session are visible.',
+      'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (character, item or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only trades from the current session are visible.\n\nRight-click a given or received item: fix its identity if it was misidentified, and add it to tracking in one click.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Shows chat messages read from wakfu.log, sorted by channel (Nearby, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you display only certain channels.\n\nCustom text filters (keyword + channel, or all channels) can be added: a matching message is highlighted and triggers a sound alert — filters no longer hide any message, they only flag it.\n\nAuto-scroll stops as soon as you manually scroll back up through the history.',
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
-      "Choose which items trigger an alert (sound + toast + confetti) when picked up.\n\nToggle the sound per item using each tile's speaker icon.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.",
+      'Choose which items trigger an alert (sound + toast + confetti) when picked up. The "+" search lets you add more beyond the default items, which can then be removed individually (the tile\'s × button) — unlike the default items, which can never be removed.\n\nToggle the sound per item using each tile\'s speaker icon; the test button replays the alert sound to check the setting without waiting for a real pickup.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.',
+    'help.profileTheme.title': 'Profile > Theme',
+    'help.profileTheme.body':
+      "Choose the app's appearance: the original dark theme, or one of 4 light variants (Slate, Parchment, Nordic, High Contrast), each tuned to stay readable on a light background.\n\nThis choice is independent from the colorblind mode just below, but the two combine: colorblind-adjusted colors apply on top of whichever theme is active, dark or light.",
     'help.profileColorblind.title': 'Profile > Colorblindness',
     'help.profileColorblind.body':
       "Adapts the app's most sensitive colors (win/loss, elemental damage, item rarity, chat channels) to the colorblindness type you choose, so they stay distinguishable.\n\nProtanopia and deuteranopia are grouped under a single option: both cause the same red-green confusion, so the same correction applies to both.\n\nThe before/after preview under the selector shows exactly which colors change with the currently chosen profile.",
@@ -676,7 +737,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.\n\nOnce signed in, the Account page (reachable from this panel) lets you manage your connected devices (revoke access), force an immediate sync, export your data, or delete your account.',
     'help.profileCharacters.title': 'Profile > Characters',
     'help.profileCharacters.body':
-      "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account); drag and drop reorders a account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
+      "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. All rights reserved. WAKFU and ANKAMA are trademarks or registered trademarks of Ankama in France and/or other countries.\nWAKFU-COMPANION is an unofficial site with no affiliation to Ankama.',
@@ -809,6 +870,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Servidor deducido del personaje {{name}}',
     'app.catalogUnavailable':
       'Catálogo Ankama no disponible: los nombres e iconos de objetos/monstruos no se reconocen por ahora.',
+    'app.loading': 'Cargando...',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Contraer',
@@ -839,6 +901,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.reassignTitle': 'Reasignar {{spell}}',
     'damageMeter.reassignEmpty': 'No hay otra entidad disponible.',
     'damageMeter.viewTotal': 'Total',
+    'damageMeter.viewCumulative': 'Acumulado',
     'damageMeter.viewTurn': 'Turno',
     'damageMeter.turnLabel': 'Turno {{n}}',
     'damageMeter.prevTurn': 'Turno anterior',
@@ -888,6 +951,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeQuantityLabel': 'Cantidad',
     'tracker.recipeConfirm': 'Confirmar',
     'tracker.recipeNestTooltip': 'Seguir los ingredientes de este objeto en lugar del objeto en sí',
+    'itemCategory.equipment': 'Equipamiento',
+    'itemCategory.resources': 'Recursos',
+    'itemCategory.sublimations': 'Sublimaciones',
+    'itemCategory.harvests': 'Cosechas',
+    'itemCategory.havenBag': 'Guarida',
+    'itemCategory.cosmetics': 'Cosméticos',
+    'itemCategory.craft': 'Craft',
+    'itemCategory.misc': 'Varios',
+    'itemCategory.monsters': 'Monstruos',
+    'wakfuAutocomplete.allCategories': 'Todo',
+    'wakfuAutocomplete.noResultInCategory': 'Sin resultados en esta categoría',
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
@@ -929,6 +1003,21 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Tu apodo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personaliza tu apodo y el avatar mostrado en la aplicación.',
+    'profile.avatarGalleryMmo': 'Galería MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      '¡Todos los avatares están disponibles para personalizar las cuentas Ankama, gracias a ellos!',
+    'profile.avatarFanartLinkLabel': 'Ver todos los avatares en mi cuenta Ankama',
+    'profile.themeLabel': 'Tema',
+    'profile.themeHint':
+      'Elige la apariencia de la aplicación: oscuro, o una de las 4 variantes claras.',
+    'profile.themeDark': 'Oscuro',
+    'profile.themeA': 'Pizarra',
+    'profile.themeB': 'Pergamino',
+    'profile.themeC': 'Nórdico',
+    'profile.themeD': 'Alto contraste',
     'profile.colorblindLabel': 'Modo daltónico',
     'profile.colorblindOff': 'Desact.',
     'profile.colorblindRedGreen': 'Protanopia y Deuteranopia',
@@ -1031,31 +1120,34 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': '¿Cómo funciona?',
     'help.combat.title': 'Combate en curso',
     'help.combat.body':
-      'Este panel muestra en tiempo real el daño infligido por cada aliado y enemigo, leído directamente de wakfu.log durante el combate. Varios combatientes con el mismo nombre (ej. varios enemigos idénticos) se numeran #1, #2… para seguir siendo distinguibles.\n\nCuando hay varios combates simultáneos (multicuenta), unas pestañas permiten elegir cuál mostrar.\n\nHaz clic en un nombre para desplegar el detalle de daño por hechizo y elemento.\n\nArrastra un nombre de un lado a otro para corregir un aliado/enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento (Seguimiento).\nClic derecho en una línea de hechizo (detalle desplegado): reasignar ese ataque y su daño a otro combatiente, en caso de un error de atribución automática.',
+      'Este panel muestra en tiempo real el daño infligido por cada aliado y enemigo, leído directamente de wakfu.log durante el combate. Una barra de color bajo cada nombre representa su parte del daño, y varios combatientes con el mismo nombre (ej. varios enemigos idénticos) se numeran #1, #2… para seguir siendo distinguibles.\n\nCuando hay varios combates simultáneos (multicuenta), unas pestañas permiten elegir cuál mostrar.\n\nEl interruptor Total/Turno alterna entre el daño acumulado de todo el combate y el detalle de un turno concreto, navegable paso a paso.\n\nHaz clic en un nombre para desplegar el detalle de daño por hechizo y elemento.\n\nArrastra un nombre de un lado a otro para corregir un aliado/enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento (Seguimiento).\nClic derecho en una línea de hechizo (detalle desplegado): reasignar ese ataque y su daño a otro combatiente, en caso de un error de atribución automática.\n\nEl botón de repliegue (esquina superior derecha) reduce este panel a una pequeña pestaña flotante en el borde de la pantalla — siempre accesible con un clic mientras juegas, con una insignia que indica el número de combates en curso.',
     'help.tracker.title': 'Seguimiento',
     'help.tracker.body':
-      'Sigue un contador para cada objeto o enemigo añadido: cantidad recogida/derrotada desde la conexión, incrementada automáticamente en cada recogida/victoria.\n\nEl interruptor ▲/▼ alterna entre conteo incremental (empieza en 0, sube) y cuenta atrás (empieza desde un objetivo que introduces, baja hasta 0 y entonces dispara una alerta).\n\nEl icono de receta (objetos con una receta de oficio conocida) crea con un clic una cuenta atrás para cada ingrediente, multiplicada por la cantidad deseada — incluidos los ingredientes que tienen su propia receta, anidable en cascada.',
+      'Sigue un contador para cada objeto o enemigo añadido: cantidad recogida/derrotada desde la conexión, incrementada automáticamente en cada recogida/victoria.\n\nEl botón + abre una búsqueda (objetos Y enemigos) para añadir una nueva entrada al seguimiento.\n\nEl interruptor ▲/▼ alterna entre conteo incremental (empieza en 0, sube) y cuenta atrás (empieza desde un objetivo que introduces, baja hasta 0 y entonces dispara una alerta).\n\nEl icono de receta (objetos con una receta de oficio conocida) crea con un clic una cuenta atrás para cada ingrediente, multiplicada por la cantidad deseada — incluidos los ingredientes que tienen su propia receta, anidable en cascada.\n\nHaz clic en una casilla para desplegarla y ver su nombre completo y un botón de reinicio; arrástrala para reordenar el seguimiento. El botón − activa un modo de selección múltiple para eliminar varias entradas a la vez.',
     'help.fightHistory.title': 'Historial > Combates',
     'help.fightHistory.body':
-      'Conserva los últimos 30 combates de la sesión en memoria: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP. Conectado a una cuenta, el historial completo se guarda además sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo quedan disponibles estos últimos 30 combates.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en una línea de hechizo del detalle de un combatiente: reasignar ese ataque a otro combatiente.',
+      'Conserva los últimos 30 combates de la sesión en memoria: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP. Conectado a una cuenta, el historial completo se guarda además sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo quedan disponibles estos últimos 30 combates.\n\nLos combates se pueden agrupar de tres formas (botones encima de la lista): Día, Origen (sesión actual separada del historial de la cuenta, solo conectado) y Tipo (por mazmorra/brecha, o por familia de monstruo).\n\nLos combates de una misma mazmorra (salas sucesivas e intento(s) de jefe) se agrupan automáticamente en una sola entrada plegada, para que el jefe no se pierda entre las salas — el número de combates y la duración total de la carrera sustituyen el detalle individual mientras permanece plegada. Cuando la piedra de esa mazmorra figura en el botín del combate del jefe, aparece una insignia sobre su ilustración.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nUn combate desplegado ofrece el mismo interruptor Total/Turno que el combate en curso para repasar el daño turno a turno, y el botín se puede ordenar por nombre, cantidad o rareza.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en una línea de hechizo del detalle de un combatiente: reasignar ese ataque a otro combatiente.',
     'help.purchases.title': 'Historial > Compras',
     'help.purchases.body':
-      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más»; como invitado, solo son visibles las compras de la sesión actual.',
+      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más»; como invitado, solo son visibles las compras de la sesión actual.\n\nClic derecho en un objeto: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
     'help.trades.title': 'Historial > Intercambios',
     'help.trades.body':
-      'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles los intercambios de la sesión actual.',
+      'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (personaje, objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles los intercambios de la sesión actual.\n\nClic derecho en un objeto dado o recibido: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Muestra los mensajes de chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo ciertos canales.\n\nSe pueden añadir filtros de texto personalizados (palabra clave + canal, o todos los canales): un mensaje que coincide se resalta y dispara una alerta sonora — los filtros ya no ocultan ningún mensaje, solo lo señalan.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente por el historial.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
+      'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos. La búsqueda «+» permite añadir otros además de los objetos por defecto, que luego se pueden quitar individualmente (la × de la casilla) — a diferencia de los objetos por defecto, que nunca se pueden eliminar.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla; el botón de prueba reproduce la alerta sonora para comprobar el ajuste sin esperar a una recogida real.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
+    'help.profileTheme.title': 'Perfil > Tema',
+    'help.profileTheme.body':
+      'Elige la apariencia de la aplicación: el tema oscuro original, o una de las 4 variantes claras (Pizarra, Pergamino, Nórdico, Alto contraste), cada una calibrada para seguir siendo legible sobre fondo claro.\n\nEsta elección es independiente del modo daltónico justo debajo, pero ambos se combinan: los colores adaptados al daltonismo se aplican sobre el tema activo, oscuro o claro.',
     'help.profileColorblind.title': 'Perfil > Daltonismo',
     'help.profileColorblind.body':
       'Adapta los colores más sensibles de la aplicación (victoria/derrota, daño elemental, rareza de objeto, canales de chat) al tipo de daltonismo elegido, para que sigan siendo distinguibles.\n\nProtanopia y deuteranopia se agrupan en una sola opción: ambas provocan la misma confusión rojo-verde, así que se aplica la misma corrección.\n\nLa vista previa antes/después bajo el selector muestra exactamente qué colores cambian con el perfil elegido.',
     'help.profileCharacters.title': 'Perfil > Personajes',
     'help.profileCharacters.body':
-      'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta); arrastra y suelta para reordenar los personajes de una cuenta.\n\nCada cuenta puede recibir un servidor de juego: se usa para asociar el historial y la insignia de servidor de la cabecera con el mundo correcto si juegas en varios servidores.',
+      'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta), cada una renombrable; el botón «Añadir personaje» abre un formulario (nombre, clase, sexo) para declarar cada personaje, y luego arrastra y suelta para reordenar los personajes de una cuenta.\n\nCada cuenta puede recibir un servidor de juego: se usa para asociar el historial y la insignia de servidor de la cabecera con el mundo correcto si juegas en varios servidores.',
     'help.profileConnection.title': 'Perfil > Inicio de sesión',
     'help.profileConnection.body':
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
@@ -1194,6 +1286,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.gameServerFromCharacter': 'Servidor deduzido da personagem {{name}}',
     'app.catalogUnavailable':
       'Catálogo Ankama indisponível: nomes e ícones de itens/monstros não são reconhecidos no momento.',
+    'app.loading': 'Carregando...',
 
     'damageMeter.header': 'Combate',
     'damageMeter.collapseHint': 'Recolher',
@@ -1224,6 +1317,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.reassignTitle': 'Reatribuir {{spell}}',
     'damageMeter.reassignEmpty': 'Nenhuma outra entidade disponível.',
     'damageMeter.viewTotal': 'Total',
+    'damageMeter.viewCumulative': 'Acumulado',
     'damageMeter.viewTurn': 'Turno',
     'damageMeter.turnLabel': 'Turno {{n}}',
     'damageMeter.prevTurn': 'Turno anterior',
@@ -1273,6 +1367,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'tracker.recipeQuantityLabel': 'Quantidade',
     'tracker.recipeConfirm': 'Confirmar',
     'tracker.recipeNestTooltip': 'Acompanhar os ingredientes deste item em vez do item em si',
+    'itemCategory.equipment': 'Equipamento',
+    'itemCategory.resources': 'Recursos',
+    'itemCategory.sublimations': 'Sublimações',
+    'itemCategory.harvests': 'Colheitas',
+    'itemCategory.havenBag': 'Refúgio',
+    'itemCategory.cosmetics': 'Cosméticos',
+    'itemCategory.craft': 'Craft',
+    'itemCategory.misc': 'Diversos',
+    'itemCategory.monsters': 'Monstros',
+    'wakfuAutocomplete.allCategories': 'Tudo',
+    'wakfuAutocomplete.noResultInCategory': 'Nenhum resultado nesta categoria',
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
@@ -1314,6 +1419,21 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Seu apelido...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personalize seu apelido e o avatar exibido no aplicativo.',
+    'profile.avatarGalleryMmo': 'Galeria MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'Todos os avatares estão disponíveis para personalizar as contas Ankama, obrigado a eles!',
+    'profile.avatarFanartLinkLabel': 'Ver todos os avatares na minha conta Ankama',
+    'profile.themeLabel': 'Tema',
+    'profile.themeHint':
+      'Escolha a aparência do aplicativo: escuro, ou uma das 4 variantes claras.',
+    'profile.themeDark': 'Escuro',
+    'profile.themeA': 'Ardósia',
+    'profile.themeB': 'Pergaminho',
+    'profile.themeC': 'Nórdico',
+    'profile.themeD': 'Alto contraste',
     'profile.colorblindLabel': 'Modo daltônico',
     'profile.colorblindOff': 'Desat.',
     'profile.colorblindRedGreen': 'Protanopia e Deuteranopia',
@@ -1416,31 +1536,34 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'Como funciona?',
     'help.combat.title': 'Combate em curso',
     'help.combat.body':
-      'Este painel mostra em tempo real o dano causado por cada aliado e inimigo, lido diretamente do wakfu.log durante o combate. Vários combatentes com o mesmo nome (ex. vários inimigos idênticos) são numerados #1, #2… para continuarem distinguíveis.\n\nQuando há vários combates simultâneos (multiconta), abas permitem escolher qual exibir.\n\nClique em um nome para expandir o detalhe de dano por feitiço e elemento.\n\nArraste um nome de um lado para o outro para corrigir um aliado/inimigo mal classificado.\n\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em um inimigo: adicioná-lo ao acompanhamento (Acompanhamento).\nClique com o botão direito em uma linha de feitiço (detalhe expandido): reatribuir esse ataque e seu dano a outro combatente, em caso de erro de atribuição automática.',
+      'Este painel mostra em tempo real o dano causado por cada aliado e inimigo, lido diretamente do wakfu.log durante o combate. Uma barra colorida sob cada nome representa sua parte do dano, e vários combatentes com o mesmo nome (ex. vários inimigos idênticos) são numerados #1, #2… para continuarem distinguíveis.\n\nQuando há vários combates simultâneos (multiconta), abas permitem escolher qual exibir.\n\nO interruptor Total/Turno alterna entre o dano acumulado de todo o combate e o detalhe de um turno específico, navegável passo a passo.\n\nClique em um nome para expandir o detalhe de dano por feitiço e elemento.\n\nArraste um nome de um lado para o outro para corrigir um aliado/inimigo mal classificado.\n\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em um inimigo: adicioná-lo ao acompanhamento (Acompanhamento).\nClique com o botão direito em uma linha de feitiço (detalhe expandido): reatribuir esse ataque e seu dano a outro combatente, em caso de erro de atribuição automática.\n\nO botão de recolher (canto superior direito) reduz este painel a uma pequena aba flutuante na borda da tela — sempre acessível com um clique enquanto você joga, com um selo indicando o número de combates em andamento.',
     'help.tracker.title': 'Acompanhamento',
     'help.tracker.body':
-      'Acompanha um contador para cada item ou inimigo adicionado: quantidade coletada/derrotada desde a conexão, incrementada automaticamente a cada coleta/vitória.\n\nO interruptor ▲/▼ alterna entre contagem crescente (começa em 0, sobe) e contagem regressiva (começa de um alvo que você define, desce até 0 e então dispara um alerta).\n\nO ícone de receita (itens com uma receita de profissão conhecida) cria com um clique uma contagem regressiva para cada ingrediente, multiplicada pela quantidade desejada — incluindo ingredientes que têm sua própria receita, aninhável em cascata.',
+      'Acompanha um contador para cada item ou inimigo adicionado: quantidade coletada/derrotada desde a conexão, incrementada automaticamente a cada coleta/vitória.\n\nO botão + abre uma busca (itens E inimigos) para adicionar uma nova entrada ao acompanhamento.\n\nO interruptor ▲/▼ alterna entre contagem crescente (começa em 0, sobe) e contagem regressiva (começa de um alvo que você define, desce até 0 e então dispara um alerta).\n\nO ícone de receita (itens com uma receita de profissão conhecida) cria com um clique uma contagem regressiva para cada ingrediente, multiplicada pela quantidade desejada — incluindo ingredientes que têm sua própria receita, aninhável em cascata.\n\nClique em um bloco para expandi-lo e ver seu nome completo e um botão de redefinição; arraste um bloco para reordenar o acompanhamento. O botão − ativa um modo de seleção múltipla para excluir várias entradas de uma vez.',
     'help.fightHistory.title': 'Histórico > Combates',
     'help.fightHistory.body':
-      'Guarda os últimos 30 combates da sessão em memória: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP. Conectado a uma conta, o histórico completo também é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas esses últimos 30 combates ficam disponíveis.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em uma linha de feitiço no detalhe de um combatente: reatribuir esse ataque a outro combatente.',
+      'Guarda os últimos 30 combates da sessão em memória: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP. Conectado a uma conta, o histórico completo também é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas esses últimos 30 combates ficam disponíveis.\n\nOs combates podem ser agrupados de três formas (botões acima da lista): Dia, Origem (sessão atual separada do histórico da conta, apenas conectado) e Tipo (por masmorra/brecha, ou por família de monstro).\n\nOs combates de uma mesma masmorra (salas sucessivas e tentativa(s) de chefe) são automaticamente reunidos em uma única entrada recolhida, para o chefe não se perder no meio das salas — o número de combates e a duração total da corrida substituem o detalhe individual enquanto ela permanece recolhida. Quando a pedra dessa masmorra está no butim do combate do chefe, um selo aparece sobre sua ilustração.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nUm combate expandido oferece o mesmo interruptor Total/Turno do combate em curso para rever o dano turno a turno, e o butim pode ser ordenado por nome, quantidade ou raridade.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em uma linha de feitiço no detalhe de um combatente: reatribuir esse ataque a outro combatente.',
     'help.purchases.title': 'Histórico > Compras',
     'help.purchases.body':
-      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais"; como convidado, apenas as compras da sessão atual ficam visíveis.',
+      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais"; como convidado, apenas as compras da sessão atual ficam visíveis.\n\nClique com o botão direito em um item: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
     'help.trades.title': 'Histórico > Trocas',
     'help.trades.body':
-      'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as trocas da sessão atual ficam visíveis.',
+      'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (personagem, item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as trocas da sessão atual ficam visíveis.\n\nClique com o botão direito em um item dado ou recebido: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Mostra as mensagens de chat lidas no wakfu.log, organizadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir apenas alguns canais.\n\nFiltros de texto personalizados (palavra-chave + canal, ou todos os canais) podem ser adicionados: uma mensagem correspondente é destacada e dispara um alerta sonoro — os filtros não ocultam mais nenhuma mensagem, apenas a sinalizam.\n\nA rolagem automática para assim que você rola manualmente para cima no histórico.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
+      'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados. A busca "+" permite adicionar outros além dos itens padrão, que depois podem ser removidos individualmente (o × do bloco) — diferente dos itens padrão, que nunca podem ser removidos.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco; o botão de teste reproduz o alerta sonoro para verificar o ajuste sem esperar uma coleta real.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
+    'help.profileTheme.title': 'Perfil > Tema',
+    'help.profileTheme.body':
+      'Escolha a aparência do aplicativo: o tema escuro original, ou uma das 4 variantes claras (Ardósia, Pergaminho, Nórdico, Alto contraste), cada uma calibrada para continuar legível em fundo claro.\n\nEssa escolha é independente do modo daltônico logo abaixo, mas os dois se combinam: as cores adaptadas ao daltonismo se aplicam sobre o tema ativo, escuro ou claro.',
     'help.profileColorblind.title': 'Perfil > Daltonismo',
     'help.profileColorblind.body':
       'Adapta as cores mais sensíveis do aplicativo (vitória/derrota, dano elemental, raridade de item, canais de chat) ao tipo de daltonismo escolhido, para que continuem distinguíveis.\n\nProtanopia e deuteranopia são agrupadas em uma única opção: ambas causam a mesma confusão vermelho-verde, logo a mesma correção se aplica.\n\nA pré-visualização antes/depois abaixo do seletor mostra exatamente quais cores mudam com o perfil escolhido.',
     'help.profileCharacters.title': 'Perfil > Personagens',
     'help.profileCharacters.body':
-      'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta); arraste e solte para reordenar os personagens de uma conta.\n\nCada conta pode receber um servidor de jogo: usado para associar o histórico e o selo de servidor do cabeçalho ao mundo correto quando você joga em vários servidores.',
+      'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta), cada uma renomeável; o botão "Adicionar personagem" abre um formulário (nome, classe, sexo) para declarar cada personagem, e depois arraste e solte para reordenar os personagens de uma conta.\n\nCada conta pode receber um servidor de jogo: usado para associar o histórico e o selo de servidor do cabeçalho ao mundo correto quando você joga em vários servidores.',
     'help.profileConnection.title': 'Perfil > Iniciar sessão',
     'help.profileConnection.body':
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',

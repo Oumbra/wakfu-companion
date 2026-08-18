@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject } from '@angular/core';
 import { DamageMeterComponent } from '../damage-meter/damage-meter.component';
 import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { TrackerComponent } from '../tracker/tracker.component';
@@ -7,8 +7,7 @@ import { HistoryComponent } from '../history/history.component';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { HelpSection } from '../../core/services/help-modal.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
-
-type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
+import { DashboardTab, NavigationService } from '../../core/services/navigation.service';
 
 /** En dessous du breakpoint mobile (voir dashboard.component.css), les
  * panneaux ne sont plus affichés en même temps mais sélectionnés via onglets
@@ -31,8 +30,12 @@ type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
 })
 export class DashboardComponent {
   protected readonly combatPanel = inject(CombatPanelService);
+  private readonly nav = inject(NavigationService);
 
-  protected readonly activeTab = signal<DashboardTab>('tracker');
+  /** Alias vers `NavigationService.dashboardTab` (source unique de vérité, voir son commentaire —
+   * synchronisée avec l'URL) plutôt qu'un signal local : `.set()` ici met donc directement à jour
+   * la section active ET déclenche `RouteSyncService`. */
+  protected readonly activeTab = this.nav.dashboardTab;
 
   private static readonly TAB_LABELS: Record<DashboardTab, string> = {
     damage: 'damageMeter.header',

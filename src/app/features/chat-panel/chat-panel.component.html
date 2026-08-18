@@ -26,7 +26,11 @@
     }
   </div>
 
-  <div class="filters-toggle" [class.has-filters]="filters().length > 0" (click)="toggleFiltersExpanded()">
+  <div
+    class="filters-toggle"
+    [class.has-filters]="filters().length > 0"
+    (click)="toggleFiltersExpanded()"
+  >
     <span class="filters-toggle-label">{{ 'chat.filtersToggle' | t }}</span>
     @if (filters().length > 0) {
       <span class="filters-toggle-count">{{ filters().length }}</span>

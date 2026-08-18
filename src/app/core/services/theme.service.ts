@@ -3,7 +3,16 @@ import { PersistenceService } from './persistence.service';
 
 export type AppTheme = 'dark' | 'light';
 
+/** Une variante par palette claire proposée (voir styles.css, blocs `[data-theme='light']
+ * [data-light-theme='...']`) — sans effet tant que `theme() === 'dark'`, mais mémorisée quand
+ * même dans ce cas (l'utilisateur choisit sa variante indépendamment du thème sombre/clair actif,
+ * comme pour `ColorblindService.profile`). `'a'` (Ardoise Douce) est la variante par défaut. */
+export type LightThemeVariant = 'a' | 'b' | 'c' | 'd';
+
 const THEME_KEY = 'wakfu-theme';
+const LIGHT_VARIANT_KEY = 'wakfu-light-theme-variant';
+
+const LIGHT_VARIANTS: readonly LightThemeVariant[] = ['a', 'b', 'c', 'd'];
 
 /**
  * Thème clair/sombre — préférence d'affichage locale (comme `I18nService`
@@ -20,6 +29,7 @@ const THEME_KEY = 'wakfu-theme';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   readonly theme = signal<AppTheme>('dark');
+  readonly lightVariant = signal<LightThemeVariant>('a');
 
   constructor(private readonly persistence: PersistenceService) {
     const stored = this.persistence.getJson<AppTheme>(THEME_KEY);
@@ -32,6 +42,11 @@ export class ThemeService {
       this.theme.set('light');
     }
 
+    const storedVariant = this.persistence.getJson<LightThemeVariant>(LIGHT_VARIANT_KEY);
+    if (storedVariant && LIGHT_VARIANTS.includes(storedVariant)) {
+      this.lightVariant.set(storedVariant);
+    }
+
     // Reflète le thème courant sur <html> à chaque changement — y compris la valeur initiale
     // ci-dessus, `effect()` s'exécute une première fois de façon synchrone au bootstrap.
     effect(() => {
@@ -40,11 +55,26 @@ export class ThemeService {
         document.documentElement.dataset['theme'] = theme;
       }
     });
+
+    // Toujours posé (même en thème sombre, sans effet dans ce cas) — évite un flash de la variante
+    // par défaut ('a') au moment où l'utilisateur bascule ensuite en clair.
+    effect(() => {
+      const variant = this.lightVariant();
+      if (typeof document !== 'undefined') {
+        document.documentElement.dataset['lightTheme'] = variant;
+      }
+    });
   }
 
   setTheme(theme: AppTheme): void {
     if (theme === this.theme()) return;
     this.theme.set(theme);
     this.persistence.setJson(THEME_KEY, theme);
+  }
+
+  setLightVariant(variant: LightThemeVariant): void {
+    if (variant === this.lightVariant()) return;
+    this.lightVariant.set(variant);
+    this.persistence.setJson(LIGHT_VARIANT_KEY, variant);
   }
 }

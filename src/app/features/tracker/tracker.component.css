@@ -115,7 +115,7 @@
 .kpi-target-chip:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
@@ -362,7 +362,7 @@ app-input-number.kpi-card-value-input {
 .kpi-card-select-checkbox.checked {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
@@ -372,8 +372,9 @@ app-input-number.kpi-card-value-input {
   border-color: var(--rarity-color);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--rarity-color) 25%, var(--surface-raised)),
-    var(--surface-raised) 85%
+    color-mix(in srgb, var(--rarity-color) 50%, var(--panel-bg)),
+    var(--panel-bg) 75%,
+    var(--panel-bg)
   );
 }
 /* Monstres : bordure grise, fond transparent (pas de dégradé). */
@@ -391,4 +392,16 @@ app-input-number.kpi-card-value-input {
 .kpi-card.is-selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+:host-context([data-theme='light']) {
+  .kpi-card-del:hover,
+  .kpi-bulk-delete-btn {
+    color: var(--bg-color);
+  }
+  app-input-number.kpi-card-value-input {
+    --input-number-field-color: var(--accent);
+    --input-number-focus-color: var(--accent);
+    --input-number-field-bg: var(--bg-color);
+  }
 }

@@ -1,4 +1,4 @@
-import type { WakfuRarityCode } from '../db/schema';
+import type { WakfuItemCategoryCode, WakfuRarityCode } from '../db/schema';
 
 /** Doit rester identique à src/app/core/data/wakfu-item-rarity.data.ts (RARITY_SORT_ORDER). */
 export const RARITY_SORT_ORDER: Record<WakfuRarityCode, number> = {
@@ -12,6 +12,18 @@ export const RARITY_SORT_ORDER: Record<WakfuRarityCode, number> = {
   relic: 7,
 };
 
+/** Doit rester identique à src/app/core/data/wakfu-item-category.data.ts (ITEM_CATEGORY_SORT_ORDER). */
+export const CATEGORY_SORT_ORDER: Record<WakfuItemCategoryCode, number> = {
+  equipment: 0,
+  resources: 1,
+  sublimations: 2,
+  harvests: 3,
+  havenBag: 4,
+  cosmetics: 5,
+  craft: 6,
+  misc: 7,
+};
+
 export interface CompactIndexItemInput {
   ankamaId: number | null;
   fr: string;
@@ -21,6 +33,7 @@ export interface CompactIndexItemInput {
   gfxId: number;
   rarity: WakfuRarityCode;
   hasRecipe: boolean;
+  category: WakfuItemCategoryCode;
 }
 
 export interface CompactIndexMonsterInput {
@@ -78,6 +91,11 @@ export interface CompactIndexMonsterInput {
  * vérifié strictement 851/851 sur le référentiel actuel — voir
  * fight-image.util.ts).
  *
+ * v4 — ajoute `category` (WakfuItemCategoryCode, voir server/db/schema.ts) aux objets, encodé en
+ * entier via CATEGORY_SORT_ORDER (même principe que `raritySortOrder`) : filtre par icône de
+ * catégorie dans l'autocomplétion (voir shared/wakfu-autocomplete). Ordre des champs mis à jour :
+ *   items : [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipe(0|1), categorySortOrder]
+ *
  * Module PARTAGÉ entre server/import/import-catalog.ts (calcul de
  * l'empreinte au moment de l'import) et functions/api/v1/catalog/index.ts
  * (réponse servie) : les deux DOIVENT produire des octets strictement
@@ -101,6 +119,7 @@ export function buildCompactIndex(
       item.gfxId,
       RARITY_SORT_ORDER[item.rarity],
       item.hasRecipe ? 1 : 0,
+      CATEGORY_SORT_ORDER[item.category],
     ]);
   const compactMonsters = monsterRows
     .slice()

@@ -2,8 +2,6 @@ import {
   bigint,
   bigserial,
   boolean,
-  date,
-  doublePrecision,
   index,
   integer,
   jsonb,
@@ -21,6 +19,19 @@ import {
  * uniquement au typage TypeScript des scripts d'import/des endpoints. */
 export type WakfuRarityCode =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
+
+/** Miroir de WakfuItemCategory (src/app/core/data/wakfu-item-category.data.ts) côté serveur —
+ * même convention que WakfuRarityCode : stocké en `text` en base, le type TypeScript ne sert
+ * qu'au typage des scripts d'import/des endpoints. */
+export type WakfuItemCategoryCode =
+  | 'equipment'
+  | 'resources'
+  | 'sublimations'
+  | 'harvests'
+  | 'havenBag'
+  | 'cosmetics'
+  | 'craft'
+  | 'misc';
 
 /** Miroir de CatalogDungeonEntry['type'] (src/app/core/api/catalog.service.ts) — même convention
  * que WakfuRarityCode : stocké en `text` en base (pas d'enum Postgres, plus simple à migrer), le
@@ -58,6 +69,26 @@ export const gameServers = pgTable('game_servers', {
 });
 
 /**
+ * Sous-catégories fines d'objet (arbre de filtre "Types" de l'encyclopédie officielle — Casques,
+ * Anneaux, Récoltes du Forestier, Costumes... voir ITEM_SUBCATEGORY_CATALOG dans
+ * server/import/import-catalog.ts pour le regroupement vers la catégorie large
+ * `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte répété sur
+ * chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous, y compris pour
+ * `en`/`es`/`pt` depuis que `repository/categories.json` fournit les 4 locales (avant : `fr`
+ * seul, ce libellé n'existant qu'en français à la source scrapée). `id` vient directement de
+ * `repository/categories.json` (id stable côté référentiel, plus réattribué arbitrairement à
+ * chaque import comme avant) : la table est entièrement remplacée à chaque exécution, mais avec
+ * les mêmes id d'un import à l'autre.
+ */
+export const itemCategories = pgTable('item_categories', {
+  id: integer('id').primaryKey(),
+  fr: text('fr').notNull(),
+  en: text('en').notNull(),
+  es: text('es').notNull(),
+  pt: text('pt').notNull(),
+});
+
+/**
  * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
  * server/import/import-catalog.ts pour l'import et server/README.md pour
  * l'origine des données (repository/*.json, régénérés à la main via les
@@ -86,8 +117,15 @@ export const items = pgTable(
     wakassetsAvailable: boolean('wakassets_available').notNull(),
     wakfuAvailable: boolean('wakfu_available').notNull(),
     hasRecipe: boolean('has_recipe').notNull().default(false),
+    category: text('category').notNull().default('misc').$type<WakfuItemCategoryCode>(),
+    // Référence itemCategories.id, nullable et sans FK stricte — même raison que monsters.family
+    // ci-dessous (ordre d'import garanti côté script, pas imposé par une contrainte Postgres).
+    subCategoryId: integer('sub_category_id'),
   },
-  (table) => [index('items_ankama_id_idx').on(table.ankamaId)],
+  (table) => [
+    index('items_ankama_id_idx').on(table.ankamaId),
+    index('items_sub_category_id_idx').on(table.subCategoryId),
+  ],
 );
 
 /**
@@ -200,133 +238,16 @@ export const catalogMeta = pgTable('catalog_meta', {
   indexHash: text('index_hash').notNull(),
 });
 
-/**
- * Prix (lot 4, prompt 4.2) — voir docs/plan-migration-serveur.md §8. Source :
- * un skill de scan vidéo de l'hôtel de ventes (prompt 4.1), exécuté en
- * local, totalement indépendant des comptes utilisateurs et des historiques
- * (fights/purchases/trades, lot 8) — AUCUNE des tables ci-dessous ne
- * référence `users`.
- *
- * Architecture de calcul (décision actée avec l'utilisateur, différente du
- * plan initial) : `item_prices_monthly` et `price_trends` ne sont PAS
- * calculées côté serveur (ni par une requête SQL au moment de la lecture, ni
- * par un Cloudflare Cron Trigger — indisponible sur Cloudflare **Pages**,
- * seulement sur les Workers autonomes, voir server/README.md). Un second
- * skill dédié (calcul, pas de vidéo/OCR) lit `GET /api/v1/prices/export`,
- * calcule les agrégats en local, puis les pousse via
- * `POST /api/v1/prices/rollups` — même philosophie que le catalogue
- * (référentiel calculé par un skill externe, le serveur ne fait qu'ingérer).
- * `price_trends` est donc une vraie TABLE ici (écrite par upsert), pas la
- * vue matérialisée SQL envisagée initialement.
- */
-
-/** Une ligne par objet × serveur × jour scanné : le prix affiché le plus bas
- * observé ce jour-là (`price`) et, si connu, le plus haut (`priceMax`).
- * Écrite uniquement par POST /api/v1/prices/ingest (jeton de service).
- * `itemId` référence `items.ankamaId` (pas `items.pk`, voir plus haut) —
- * pas de FK stricte : un id catalogue peut en théorie disparaître d'un
- * import à l'autre, on ne veut pas qu'un import catalogue fasse échouer une
- * écriture de prix historique.
- *
- * `priceMax` est NOT NULL mais **pas garanti fiable pour toute source** :
- * le skill de scan vidéo (prompt 4.1) ne voit qu'un seul prix par jour (le
- * moins cher affiché) et ne peut pas fournir de vrai maximum — l'API
- * (`ingest.ts`) retombe alors sur `priceMax = price` pour ces lignes-là
- * (on ne veut pas de colonne nullable ni de logique conditionnelle dans les
- * consommateurs en aval). Seul un scan capable d'énumérer plusieurs offres
- * du même jour (scan mémoire HDV plutôt que vidéo) peut fournir un
- * `priceMax` réellement différent de `price` — jusqu'à preuve du contraire,
- * une ligne où `priceMax == price` peut donc signifier soit "un seul prix vu
- * ce jour-là", soit "le max n'a jamais été distinct du min ce jour-là", pas
- * moyen de distinguer les deux sans regarder la source du scan. */
-export const itemPricesDaily = pgTable(
-  'item_prices_daily',
-  {
-    itemId: integer('item_id').notNull(),
-    gameServer: text('game_server')
-      .notNull()
-      .references(() => gameServers.code),
-    capturedOn: date('captured_on').notNull(),
-    price: bigint('price', { mode: 'number' }).notNull(),
-    priceMax: bigint('price_max', { mode: 'number' }).notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.itemId, table.gameServer, table.capturedOn] }),
-    // Sert à la fois GET /prices/{itemId} (borné par itemId+server) et le skill de trends
-    // (GET /prices/export, borné par server+date — voir index séparé ci-dessous).
-    index('item_prices_daily_item_server_idx').on(table.itemId, table.gameServer),
-    index('item_prices_daily_server_date_idx').on(table.gameServer, table.capturedOn),
-  ],
-);
-
-/** Agrégat mensuel : jusqu'à ~31 lignes de `item_prices_daily` résumées en
- * une seule. Calculée et poussée par le skill de trends (voir doc de
- * section) — PAS par une consolidation SQL serveur. `samplesCount` = nombre
- * de jours réellement scannés ce mois-ci (peut être < jours du mois, voir
- * §8 du plan — à afficher tel quel côté UI, jamais masqué). */
-export const itemPricesMonthly = pgTable(
-  'item_prices_monthly',
-  {
-    itemId: integer('item_id').notNull(),
-    gameServer: text('game_server')
-      .notNull()
-      .references(() => gameServers.code),
-    month: date('month').notNull(), // 1er jour du mois
-    priceMin: bigint('price_min', { mode: 'number' }).notNull(),
-    priceMax: bigint('price_max', { mode: 'number' }).notNull(),
-    priceAvg: bigint('price_avg', { mode: 'number' }).notNull(),
-    samplesCount: integer('samples_count').notNull(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.itemId, table.gameServer, table.month] }),
-    index('item_prices_monthly_item_server_idx').on(table.itemId, table.gameServer),
-  ],
-);
-
-/** Tendance de prix (hausse/baisse) par objet × serveur, sur les 30 derniers
- * jours vs les 30 jours précédents — alimente GET /api/v1/prices/trends
- * (classements « plus fortes hausses/baisses », prompt 4.3). Calculée et
- * poussée par le skill de trends, comme `item_prices_monthly` ci-dessus.
- * `changePct` stocké directement (pas recalculé à la lecture) : signé,
- * positif = hausse. */
-export const priceTrends = pgTable(
-  'price_trends',
-  {
-    itemId: integer('item_id').notNull(),
-    gameServer: text('game_server')
-      .notNull()
-      .references(() => gameServers.code),
-    avgLast30d: bigint('avg_last_30d', { mode: 'number' }).notNull(),
-    avgPrev30d: bigint('avg_prev_30d', { mode: 'number' }).notNull(),
-    changePct: doublePrecision('change_pct').notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [
-    primaryKey({ columns: [table.itemId, table.gameServer] }),
-    // GET /prices/trends trie par changePct (hausses/baisses) filtré par serveur.
-    index('price_trends_server_change_pct_idx').on(table.gameServer, table.changePct),
-  ],
-);
-
-/** Traçabilité de chaque scan quotidien (un run = un appel à
- * POST /api/v1/prices/ingest) — permet de diagnostiquer un jour sans
- * données ou incomplet plutôt que de deviner (voir §8 du plan).
- * `itemsUnresolved` = noms non résolus par le skill vidéo lui-même (OCR
- * n'ayant matché aucun objet du catalogue, jamais tentés à l'ingestion) ;
- * les items resolus par le skill mais dont l'`itemId` ne correspond plus à
- * aucun objet du catalogue AU MOMENT de l'ingestion (cas plus rare) sont
- * listés dans `notes`, jamais silencieusement ignorés (voir
- * functions/api/v1/prices/ingest.ts). */
-export const priceScanRuns = pgTable('price_scan_runs', {
-  id: bigserial('id', { mode: 'number' }).primaryKey(),
-  gameServer: text('game_server')
-    .notNull()
-    .references(() => gameServers.code),
-  capturedOn: date('captured_on').notNull(),
-  itemsCaptured: integer('items_captured').notNull(),
-  itemsUnresolved: integer('items_unresolved').notNull().default(0),
-  notes: text('notes'),
-});
+// Prix (item_prices_daily, item_prices_monthly, price_scan_runs, price_trends) — déplacées le
+// 2026-08-18 vers le projet wakfu-companion-price (voir son README.md), pour permettre un
+// Cloudflare Worker autonome avec Cron Trigger (indisponible sur Cloudflare Pages, voir
+// server/README.md). Les 4 tables restent physiquement dans CETTE base Neon (partagée entre les
+// deux projets — items/game_servers ci-dessus/ci-dessous restent la propriété exclusive de ce
+// dépôt) : ce commit retire uniquement leurs déclarations Drizzle et les endpoints
+// functions/api/v1/prices/* d'ici, SANS migration de suppression (aucun `DROP TABLE` n'a été
+// exécuté — les données et les tables existent toujours, gérées désormais par
+// wakfu-companion-price/server/db/schema.ts et external-tables.ts pour la lecture croisée
+// items/game_servers).
 
 /**
  * Authentification (lot 5, prompt 5.1) — voir docs/plan-migration-serveur.md §7.

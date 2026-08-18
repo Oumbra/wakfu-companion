@@ -28,7 +28,13 @@ import { EscapeCloseDirective } from '../escape-close.directive';
  */
 @Component({
   selector: 'app-item-picker',
-  imports: [ItemIconComponent, TranslatePipe, TooltipDirective, InputNumberComponent, EscapeCloseDirective],
+  imports: [
+    ItemIconComponent,
+    TranslatePipe,
+    TooltipDirective,
+    InputNumberComponent,
+    EscapeCloseDirective,
+  ],
   templateUrl: './item-picker.component.html',
   styleUrl: './item-picker.component.css',
 })

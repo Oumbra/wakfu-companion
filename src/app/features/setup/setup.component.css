@@ -37,7 +37,7 @@
   border-color: var(--accent);
   background-color: var(--border);
   color: var(--accent);
-  box-shadow: 0 0 15px rgba(0, 210, 255, 0.2);
+  box-shadow: 0 0 15px color-mix(in srgb, var(--accent) 20%, transparent);
 }
 .drop-title {
   font-size: 1.1rem;

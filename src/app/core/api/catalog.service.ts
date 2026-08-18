@@ -3,6 +3,7 @@ import { ApiClientService } from './api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
+import { ITEM_CATEGORY_SORT_ORDER, WakfuItemCategory } from '../data/wakfu-item-category.data';
 
 const INDEX_CACHE_KEY = 'catalog-index';
 const DUNGEONS_CACHE_KEY = 'catalog-dungeons';
@@ -15,6 +16,14 @@ const RARITY_BY_SORT_ORDER: Readonly<Record<number, WakfuRarity>> = Object.fromE
   Object.entries(RARITY_SORT_ORDER).map(([rarity, order]) => [order, rarity as WakfuRarity]),
 );
 
+/** Même principe que RARITY_BY_SORT_ORDER, pour ITEM_CATEGORY_SORT_ORDER (server/catalog/compact-index.ts). */
+const ITEM_CATEGORY_BY_SORT_ORDER: Readonly<Record<number, WakfuItemCategory>> = Object.fromEntries(
+  Object.entries(ITEM_CATEGORY_SORT_ORDER).map(([category, order]) => [
+    order,
+    category as WakfuItemCategory,
+  ]),
+);
+
 export interface CatalogItemEntry {
   id: number;
   fr: string;
@@ -24,6 +33,7 @@ export interface CatalogItemEntry {
   gfxId: number;
   rarity: WakfuRarity;
   hasRecipe: boolean;
+  category: WakfuItemCategory;
 }
 
 export interface CatalogMonsterEntry {
@@ -145,7 +155,7 @@ interface CachedIndexPayload {
   monsters: (number | string)[][];
 }
 
-type ItemTuple = [number, string, string, string, string, number, number, number];
+type ItemTuple = [number, string, string, string, string, number, number, number, number];
 type MonsterTuple = [
   number,
   string,
@@ -459,7 +469,8 @@ export class CatalogService {
     const itemsByFrName = new Map<string, CatalogItemEntry>();
     const itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
     for (const tuple of payload.items) {
-      const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag] = tuple as ItemTuple;
+      const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag, categorySortOrder] =
+        tuple as ItemTuple;
       const entry: CatalogItemEntry = {
         id,
         fr,
@@ -469,6 +480,7 @@ export class CatalogService {
         gfxId,
         rarity: RARITY_BY_SORT_ORDER[raritySortOrder] ?? 'common',
         hasRecipe: hasRecipeFlag === 1,
+        category: ITEM_CATEGORY_BY_SORT_ORDER[categorySortOrder] ?? 'misc',
       };
       itemsById.set(id, entry);
       const frKey = normalizeWakfuName(fr);

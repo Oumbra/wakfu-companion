@@ -23,7 +23,7 @@
 }
 
 /* Variante "row" : ligne pleine largeur du menu burger (icône + libellé),
-   plutôt que le bouton rond isolé de l'en-tête desktop. */
+plutôt que le bouton rond isolé de l'en-tête desktop. */
 .lang-switcher-row {
   width: 100%;
 }
@@ -96,4 +96,10 @@
 .lang-flag {
   width: 22px;
   height: 16px;
+}
+
+:host-context([data-theme='light']) {
+  .lang-menu {
+    background: var(--panel-bg);
+  }
 }
