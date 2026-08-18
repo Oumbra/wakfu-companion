@@ -179,6 +179,7 @@
             [mode]="viewModeFor(record.id)"
             [turn]="turnFor(record)"
             [maxTurn]="record.turns"
+            totalLabelKey="damageMeter.viewCumulative"
             (modeChange)="setViewMode(record.id, $event)"
             (turnChange)="setTurn(record, $event)"
           />

@@ -7,7 +7,7 @@
       [class.selected]="mode() === 'total'"
       (click)="setMode('total')"
     >
-      {{ 'damageMeter.viewTotal' | t }}
+      {{ totalLabelKey() | t }}
     </button>
     <button
       type="button"
