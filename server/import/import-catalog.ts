@@ -57,7 +57,17 @@ interface RawItem {
   wakassets_available: boolean;
   wakfu_available: boolean;
   hasRecipe?: boolean;
-  category?: string;
+  // Référence l'`id` d'une entrée de repository/categories.json — un entier, PAS le libellé fr
+  // (c'était le cas avant la refonte du référentiel, voir ITEM_SUBCATEGORY_CATALOG plus bas).
+  category?: number;
+}
+
+interface RawCategory {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
 }
 
 interface RawRecipe {
@@ -128,80 +138,90 @@ function normalizeRarity(item: RawItem): WakfuRarityCode {
 }
 
 // Sous-catégorie fine (`category` dans repository/items.json depuis la refonte du référentiel —
-// texte français issu de l'arbre de filtre "Types" de l'encyclopédie officielle, ex. "Casques",
-// "Récoltes du Forestier"). Table de référence établie à la main à partir des captures fournies
-// par l'utilisateur (equipement_1/2.png, ressources.png, recoltes.png, havre-sac.png,
-// cosmetiques.png) : chaque libellé connu y est regroupé sous la catégorie large (filtre par
-// icône de l'autocomplétion, voir shared/wakfu-autocomplete) à laquelle il appartient dans cet
-// arbre. Les 4 sous-catégories "Créatures" (Reliquâmes, Compagnons, Montures, Familiers), section
+// un id référençant repository/categories.json, ex. 6 = "Casques", 26 = "Récoltes du Forestier" —
+// AVANT cette refonte c'était directement le libellé français, voir git blame). Table de
+// référence établie à la main à partir des captures fournies par l'utilisateur
+// (equipement_1/2.png, ressources.png, recoltes.png, havre-sac.png, cosmetiques.png) : chaque
+// sous-catégorie connue y est regroupée sous la catégorie large (filtre par icône de
+// l'autocomplétion, voir shared/wakfu-autocomplete) à laquelle elle appartient dans cet arbre.
+// Les 4 sous-catégories "Créatures" (Reliquâmes, Compagnons, Montures, Familiers), section
 // distincte mais capturée à la suite de l'arbre "Equipements" dans equipement_2.png, sont
 // rattachées à "equipment" (pas de catégorie large dédiée pour l'instant).
 //
-// PAS de "Divers" ici (sous-catégorie fourre-tout déjà appliquée par le référentiel à tout objet
-// non spécifié dans cet arbre) : un objet dont la sous-catégorie n'a pas de correspondance
-// connue dans cette table — que ce soit "Divers" lui-même ou une sous-catégorie future encore
-// absente d'ici — retombe sur "craft" s'il a une recette (`hasRecipe`), sinon sur "misc" (voir
-// resolveBroadCategory ci-dessous).
-const ITEM_SUBCATEGORY_CATALOG: ReadonlyArray<{ fr: string; category: WakfuItemCategoryCode }> = [
+// Indexée par `subCategoryId` (id de repository/categories.json, commenté avec le libellé `fr`
+// pour rester lisible) plutôt que par libellé : les deux tables ont été construites dans le même
+// ordre (vérifié id par id) et l'id est la clé stable et non ambiguë que categories.json expose
+// réellement — un libellé fr aurait pu diverger d'un référentiel à l'autre (casse, accents,
+// reformulation) sans que rien ne le détecte.
+//
+// PAS de "Divers" ici (id 46, sous-catégorie fourre-tout déjà appliquée par le référentiel à tout
+// objet non spécifié dans cet arbre) : un id absent de cette table — que ce soit "Divers"
+// lui-même ou une sous-catégorie future encore absente d'ici — retombe sur "craft" s'il a une
+// recette (`hasRecipe`), sinon sur "misc" (voir resolveBroadCategory ci-dessous).
+const ITEM_SUBCATEGORY_CATALOG: ReadonlyArray<{
+  subCategoryId: number;
+  category: WakfuItemCategoryCode;
+}> = [
   // Equipements (equipement_1.png)
-  { fr: 'Porte-bonheurs', category: 'equipment' },
-  { fr: 'Amulettes', category: 'equipment' },
-  { fr: 'Anneaux', category: 'equipment' },
-  { fr: 'Bottes', category: 'equipment' },
-  { fr: 'Capes', category: 'equipment' },
-  { fr: 'Casques', category: 'equipment' },
-  { fr: 'Ceintures', category: 'equipment' },
-  { fr: 'Epaulettes', category: 'equipment' },
-  { fr: 'Plastrons', category: 'equipment' },
-  { fr: 'Armes 1 Main', category: 'equipment' },
-  { fr: 'Armes 2 Mains', category: 'equipment' },
-  { fr: 'Seconde Main', category: 'equipment' },
-  { fr: 'Emblèmes', category: 'equipment' },
-  { fr: 'Sacs', category: 'equipment' },
-  { fr: 'Panoplies', category: 'equipment' },
+  { subCategoryId: 1, category: 'equipment' }, // Porte-bonheurs
+  { subCategoryId: 2, category: 'equipment' }, // Amulettes
+  { subCategoryId: 3, category: 'equipment' }, // Anneaux
+  { subCategoryId: 4, category: 'equipment' }, // Bottes
+  { subCategoryId: 5, category: 'equipment' }, // Capes
+  { subCategoryId: 6, category: 'equipment' }, // Casques
+  { subCategoryId: 7, category: 'equipment' }, // Ceintures
+  { subCategoryId: 8, category: 'equipment' }, // Epaulettes
+  { subCategoryId: 9, category: 'equipment' }, // Plastrons
+  { subCategoryId: 10, category: 'equipment' }, // Armes 1 Main
+  { subCategoryId: 11, category: 'equipment' }, // Armes 2 Mains
+  { subCategoryId: 12, category: 'equipment' }, // Seconde Main
+  { subCategoryId: 13, category: 'equipment' }, // Emblèmes
+  { subCategoryId: 14, category: 'equipment' }, // Sacs
+  { subCategoryId: 15, category: 'equipment' }, // Panoplies
   // Créatures (equipement_2.png) — rattachées à "equipment", voir doc ci-dessus.
-  { fr: 'Reliquâmes', category: 'equipment' },
-  { fr: 'Compagnons', category: 'equipment' },
-  { fr: 'Montures', category: 'equipment' },
-  { fr: 'Familiers', category: 'equipment' },
+  { subCategoryId: 16, category: 'equipment' }, // Reliquâmes
+  { subCategoryId: 17, category: 'equipment' }, // Compagnons
+  { subCategoryId: 18, category: 'equipment' }, // Montures
+  { subCategoryId: 19, category: 'equipment' }, // Familiers
   // Havre-Sac (havre-sac.png)
-  { fr: 'Décorations de Havre-Enclos', category: 'havenBag' },
-  { fr: 'Havres-Gemmes', category: 'havenBag' },
-  { fr: 'Havre Monde', category: 'havenBag' },
-  { fr: 'Décorations de Havre-Sac', category: 'havenBag' },
-  { fr: 'Vitrines & Ateliers', category: 'havenBag' },
+  { subCategoryId: 20, category: 'havenBag' }, // Décorations de Havre-Enclos
+  { subCategoryId: 21, category: 'havenBag' }, // Havres-Gemmes
+  { subCategoryId: 22, category: 'havenBag' }, // Havre Monde
+  { subCategoryId: 23, category: 'havenBag' }, // Décorations de Havre-Sac
+  { subCategoryId: 24, category: 'havenBag' }, // Vitrines & Ateliers
   // Récoltes (recoltes.png)
-  { fr: 'Récoltes du Paysan', category: 'harvests' },
-  { fr: 'Récoltes du Forestier', category: 'harvests' },
-  { fr: "Récoltes de l'Herboriste", category: 'harvests' },
-  { fr: 'Récoltes du Trappeur', category: 'harvests' },
-  { fr: 'Récoltes du Mineur', category: 'harvests' },
-  { fr: 'Récoltes du Pêcheur', category: 'harvests' },
-  { fr: 'Récoltes diverses', category: 'harvests' },
+  { subCategoryId: 25, category: 'harvests' }, // Récoltes du Paysan
+  { subCategoryId: 26, category: 'harvests' }, // Récoltes du Forestier
+  { subCategoryId: 27, category: 'harvests' }, // Récoltes de l'Herboriste
+  { subCategoryId: 28, category: 'harvests' }, // Récoltes du Trappeur
+  { subCategoryId: 29, category: 'harvests' }, // Récoltes du Mineur
+  { subCategoryId: 30, category: 'harvests' }, // Récoltes du Pêcheur
+  { subCategoryId: 31, category: 'harvests' }, // Récoltes diverses
   // Ressources (ressources.png)
-  { fr: "Ressources d'Élevage", category: 'resources' },
-  { fr: 'Ressources de monstres', category: 'resources' },
-  { fr: 'Sioupêre-Glous', category: 'resources' },
-  { fr: 'Fragments de Reliques', category: 'resources' },
-  { fr: 'Recettes', category: 'resources' },
-  { fr: 'Améliorations', category: 'resources' },
-  { fr: 'Ressources diverses', category: 'resources' },
+  { subCategoryId: 32, category: 'resources' }, // Ressources d'Élevage
+  { subCategoryId: 33, category: 'resources' }, // Ressources de monstres
+  { subCategoryId: 34, category: 'resources' }, // Sioupêre-Glous
+  { subCategoryId: 35, category: 'resources' }, // Fragments de Reliques
+  { subCategoryId: 36, category: 'resources' }, // Recettes
+  { subCategoryId: 37, category: 'resources' }, // Améliorations
+  { subCategoryId: 38, category: 'resources' }, // Ressources diverses
   // Cosmétiques (cosmetiques.png)
-  { fr: "Apparences d'équipement", category: 'cosmetics' },
-  { fr: 'Costumes', category: 'cosmetics' },
-  { fr: 'Artifices', category: 'cosmetics' },
-  { fr: 'Transformations', category: 'cosmetics' },
-  { fr: 'Attitudes', category: 'cosmetics' },
-  { fr: 'Auras & Lumières', category: 'cosmetics' },
-  { fr: 'Apparences de Montures', category: 'cosmetics' },
+  { subCategoryId: 39, category: 'cosmetics' }, // Apparences d'équipement
+  { subCategoryId: 40, category: 'cosmetics' }, // Costumes
+  { subCategoryId: 41, category: 'cosmetics' }, // Artifices
+  { subCategoryId: 42, category: 'cosmetics' }, // Transformations
+  { subCategoryId: 43, category: 'cosmetics' }, // Attitudes
+  { subCategoryId: 44, category: 'cosmetics' }, // Auras & Lumières
+  { subCategoryId: 45, category: 'cosmetics' }, // Apparences de Montures
 ];
-const ITEM_SUBCATEGORY_BROAD_CATEGORY: ReadonlyMap<string, WakfuItemCategoryCode> = new Map(
-  ITEM_SUBCATEGORY_CATALOG.map((entry) => [entry.fr, entry.category]),
+const ITEM_SUBCATEGORY_BROAD_CATEGORY: ReadonlyMap<number, WakfuItemCategoryCode> = new Map(
+  ITEM_SUBCATEGORY_CATALOG.map((entry) => [entry.subCategoryId, entry.category]),
 );
 
-/** Catégorie large (`items.category`) déduite de la sous-catégorie fine — voir
- * ITEM_SUBCATEGORY_CATALOG. Toute sous-catégorie absente de cette table (dont "Divers", jamais
- * listée là intentionnellement) retombe sur "craft" (a une recette) ou "misc", comme demandé. */
+/** Catégorie large (`items.category`) déduite de la sous-catégorie fine de l'objet — `item.category`
+ * référence directement un id de repository/categories.json, voir ITEM_SUBCATEGORY_CATALOG. Tout
+ * id absent de cette table (dont "Divers", jamais listé là intentionnellement) retombe sur
+ * "craft" (a une recette) ou "misc", comme demandé. */
 function resolveBroadCategory(item: RawItem): WakfuItemCategoryCode {
   if (item.category !== undefined) {
     const known = ITEM_SUBCATEGORY_BROAD_CATEGORY.get(item.category);
@@ -210,36 +230,17 @@ function resolveBroadCategory(item: RawItem): WakfuItemCategoryCode {
   return item.hasRecipe === true ? 'craft' : 'misc';
 }
 
-/** Assigne un id stable (ordre d'ITEM_SUBCATEGORY_CATALOG, puis toute sous-catégorie
- * supplémentaire réellement rencontrée dans le référentiel — "Divers" aujourd'hui, une nouvelle
- * sous-catégorie de jeu pas encore ajoutée à la table demain) à chaque libellé fin distinct
- * trouvé dans `rawItems`, pour peupler `item_categories` et `items.sub_category_id`. */
-function buildSubCategoryIndex(rawItems: readonly RawItem[]): {
-  idByLabel: ReadonlyMap<string, number>;
-  rows: { id: number; fr: string }[];
-} {
-  const idByLabel = new Map<string, number>();
-  const rows: { id: number; fr: string }[] = [];
-  let nextId = 1;
-  const assign = (label: string) => {
-    if (idByLabel.has(label)) return;
-    // "Divers" est un repli attendu (voir doc d'ITEM_SUBCATEGORY_CATALOG), pas une anomalie —
-    // seule une sous-catégorie VRAIMENT nouvelle (jeu mis à jour, table pas encore complétée)
-    // mérite un avertissement, une seule fois par libellé distinct.
-    if (label !== 'Divers' && !ITEM_SUBCATEGORY_BROAD_CATEGORY.has(label)) {
-      console.warn(
-        `[import-catalog] sous-catégorie "${label}" absente d'ITEM_SUBCATEGORY_CATALOG -> catégorie large repliée sur craft/misc par objet.`,
-      );
-    }
-    idByLabel.set(label, nextId);
-    rows.push({ id: nextId, fr: label });
-    nextId += 1;
-  };
-  for (const entry of ITEM_SUBCATEGORY_CATALOG) assign(entry.fr);
-  for (const item of rawItems) {
-    if (item.category !== undefined) assign(item.category);
+/** Avertit (une fois par id, au démarrage de l'import) si repository/categories.json contient une
+ * sous-catégorie inconnue d'ITEM_SUBCATEGORY_CATALOG — hors "Divers" (id 46), repli attendu, voir
+ * doc de la table. Signale un référentiel mis à jour (nouvelle sous-catégorie de jeu) avant que
+ * resolveBroadCategory ne retombe silencieusement sur craft/misc pour chaque objet concerné. */
+function warnUnknownSubCategories(rawCategories: readonly RawCategory[]): void {
+  for (const category of rawCategories) {
+    if (category.fr === 'Divers' || ITEM_SUBCATEGORY_BROAD_CATEGORY.has(category.id)) continue;
+    console.warn(
+      `[import-catalog] sous-catégorie "${category.fr}" (id=${category.id}) absente d'ITEM_SUBCATEGORY_CATALOG -> catégorie large repliée sur craft/misc par objet.`,
+    );
   }
-  return { idByLabel, rows };
 }
 
 /** Insère `rows` par lots de `batchSize` (évite un unique payload HTTP trop volumineux côté
@@ -349,34 +350,52 @@ interface MonsterFamilyRow {
   pt: string;
 }
 
+interface ItemCategoryRow {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) throw new Error('DATABASE_URL manquant.');
 
-  const [rawItems, rawRecipes, rawMonsters, rawDungeons, rawMonsterFamilies] = await Promise.all([
-    readFile(path.join(REFERENTIEL_DIR, 'items.json'), 'utf-8').then(
-      (text) => JSON.parse(text) as RawItem[],
-    ),
-    readFile(path.join(REFERENTIEL_DIR, 'recipes.json'), 'utf-8').then(
-      (text) => JSON.parse(text) as RawRecipe[],
-    ),
-    readFile(path.join(REFERENTIEL_DIR, 'monsters.json'), 'utf-8').then(
-      (text) => JSON.parse(text) as RawMonster[],
-    ),
-    readFile(path.join(REFERENTIEL_DIR, 'dungeons.json'), 'utf-8').then(
-      (text) => JSON.parse(text) as RawDungeon[],
-    ),
-    readFile(path.join(REFERENTIEL_DIR, 'monster-families.json'), 'utf-8').then(
-      (text) => JSON.parse(text) as RawMonsterFamily[],
-    ),
-  ]);
+  const [rawItems, rawRecipes, rawMonsters, rawDungeons, rawMonsterFamilies, rawCategories] =
+    await Promise.all([
+      readFile(path.join(REFERENTIEL_DIR, 'items.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawItem[],
+      ),
+      readFile(path.join(REFERENTIEL_DIR, 'recipes.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawRecipe[],
+      ),
+      readFile(path.join(REFERENTIEL_DIR, 'monsters.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawMonster[],
+      ),
+      readFile(path.join(REFERENTIEL_DIR, 'dungeons.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawDungeon[],
+      ),
+      readFile(path.join(REFERENTIEL_DIR, 'monster-families.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawMonsterFamily[],
+      ),
+      readFile(path.join(REFERENTIEL_DIR, 'categories.json'), 'utf-8').then(
+        (text) => JSON.parse(text) as RawCategory[],
+      ),
+    ]);
 
   // Objets : exclusion "old", puis dédoublonnage par (fr, rareté, gfxId) — voir dedupeItemRows.
   // Pas de déduplication par ankamaId seul (voir server/db/schema.ts pour la clé primaire
   // synthétique `items.pk` : ~142 objets sans ankamaId, 2 ids en collision).
   const oldCount = rawItems.filter((item) => normalizeRarity(item) === 'old').length;
-  const subCategoryIndex = buildSubCategoryIndex(rawItems);
-  const itemCategoryRows = subCategoryIndex.rows;
+  const itemCategoryRows: ItemCategoryRow[] = rawCategories.map((category) => ({
+    id: category.id,
+    fr: category.fr,
+    en: category.en,
+    es: category.es,
+    pt: category.pt,
+  }));
+  warnUnknownSubCategories(rawCategories);
   const itemRowsWithDuplicates: ItemRow[] = rawItems
     .filter((item) => normalizeRarity(item) !== 'old')
     .map((item) => ({
@@ -392,10 +411,10 @@ async function main(): Promise<void> {
       wakfuAvailable: item.wakfu_available,
       hasRecipe: item.hasRecipe === true,
       category: resolveBroadCategory(item),
-      subCategoryId:
-        item.category !== undefined
-          ? (subCategoryIndex.idByLabel.get(item.category) ?? null)
-          : null,
+      // `item.category` référence déjà directement un id de repository/categories.json (voir
+      // RawItem.category plus haut) : plus besoin de résolution par libellé, contrairement à
+      // avant la refonte du référentiel.
+      subCategoryId: item.category ?? null,
     }));
 
   const recipeRows = rawRecipes.flatMap((entry) =>

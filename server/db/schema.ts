@@ -73,18 +73,21 @@ export const gameServers = pgTable('game_servers', {
 /**
  * Sous-catégories fines d'objet (arbre de filtre "Types" de l'encyclopédie officielle — Casques,
  * Anneaux, Récoltes du Forestier, Costumes... voir ITEM_SUBCATEGORY_CATALOG dans
- * server/import/import-catalog.ts pour la table de référence et le regroupement vers la
- * catégorie large `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte
- * répété sur chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous — mais `fr`
- * seul (pas de en/es/pt) : contrairement aux familles de monstres, ce libellé n'existe qu'en
- * français à la source (`category` dans repository/items.json, scrapé depuis la version FR de
- * l'encyclopédie). `id` réattribué à chaque import (voir import-catalog.ts) : la table est
- * entièrement remplacée à chaque exécution, aucune autre table ne référence ces id d'un import à
- * l'autre.
+ * server/import/import-catalog.ts pour le regroupement vers la catégorie large
+ * `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte répété sur
+ * chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous, y compris pour
+ * `en`/`es`/`pt` depuis que `repository/categories.json` fournit les 4 locales (avant : `fr`
+ * seul, ce libellé n'existant qu'en français à la source scrapée). `id` vient directement de
+ * `repository/categories.json` (id stable côté référentiel, plus réattribué arbitrairement à
+ * chaque import comme avant) : la table est entièrement remplacée à chaque exécution, mais avec
+ * les mêmes id d'un import à l'autre.
  */
 export const itemCategories = pgTable('item_categories', {
   id: integer('id').primaryKey(),
   fr: text('fr').notNull(),
+  en: text('en').notNull(),
+  es: text('es').notNull(),
+  pt: text('pt').notNull(),
 });
 
 /**
