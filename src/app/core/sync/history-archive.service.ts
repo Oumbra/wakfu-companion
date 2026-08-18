@@ -341,7 +341,7 @@ export class HistoryArchiveService {
   reassignLootItem(
     fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
@@ -351,7 +351,7 @@ export class HistoryArchiveService {
       list.map((f) => {
         if (fightDedupKey(f) !== fightKey) return f;
         const loot = [...f.loot];
-        const row = nthSameName(loot, itemName, occurrence);
+        const row = findRowByCatalogId(loot, itemName, sourceCatalogId);
         if (!row) return f;
         splitRowInPlace(loot, row, quantity, catalogId);
         corrected = { ...f, loot };
@@ -411,7 +411,7 @@ export class HistoryArchiveService {
   }
 
   /** Miroir de reassignLootItem, pour une ligne d'objet échangé — voir
-   * `StatsStoreService.reassignTradeItem` pour `occurrence`. */
+   * `StatsStoreService.reassignTradeItem` pour `sourceCatalogId`. */
   reassignTradeItem(
     trade: Pick<
       TradeRecord,
@@ -419,7 +419,7 @@ export class HistoryArchiveService {
     >,
     direction: 'acquired' | 'given',
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
@@ -429,7 +429,7 @@ export class HistoryArchiveService {
       list.map((t) => {
         if (tradeDedupKey(t) !== tradeKey) return t;
         const items = [...t[direction]];
-        const row = nthSameName(items, itemName, occurrence);
+        const row = findRowByCatalogId(items, itemName, sourceCatalogId);
         if (!row) return t;
         splitRowInPlace(items, row, quantity, catalogId);
         corrected = { ...t, [direction]: items };
@@ -440,15 +440,15 @@ export class HistoryArchiveService {
   }
 }
 
-/** `n`-ième élément (0-indexé) de `list` dont le nom correspond (insensible à la casse) — voir
- * `StatsStoreService.nthSameName`, même rôle côté archive. */
-function nthSameName<T extends { name: string }>(
+/** Élément de `list` dont le nom correspond (insensible à la casse) ET dont le `catalogId` actuel
+ * est `sourceCatalogId` — voir `StatsStoreService.findRowByCatalogId`, même rôle côté archive. */
+function findRowByCatalogId<T extends { name: string; catalogId: number | null }>(
   list: readonly T[],
   name: string,
-  occurrence: number,
+  sourceCatalogId: number | null,
 ): T | undefined {
   const key = name.toLowerCase();
-  return list.filter((item) => item.name.toLowerCase() === key)[occurrence];
+  return list.find((item) => item.name.toLowerCase() === key && item.catalogId === sourceCatalogId);
 }
 
 /** Réattribue tout ou partie de la quantité de `row` (déjà présente dans `list`, à l'index
@@ -555,13 +555,12 @@ function toFightRecord(
   // première fois depuis l'archive (donc jamais encore vu par `reassignLootItem` lui-même).
   const fightKey = fightDedupKey({ time, result, rows: sortedRows });
   let anyCorrected = false;
-  const lootNameSeen = new Map<string, number>();
+  // sourceCatalogId = itemId TEL QUE RENVOYÉ PAR LE SERVEUR pour cette ligne — plus besoin de
+  // compteur d'occurrence par nom (voir StatsStoreService.findLootCorrection) : le `catalogId`
+  // identifie déjà la ligne sans ambiguïté.
   const loot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
-    const key = name.toLowerCase();
-    const occurrence = lootNameSeen.get(key) ?? 0;
-    lootNameSeen.set(key, occurrence + 1);
-    const correction = stats.findLootCorrection(fightKey, name, occurrence, row.quantity);
+    const correction = stats.findLootCorrection(fightKey, name, row.itemId, row.quantity);
     if (correction !== null) anyCorrected = true;
     return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
   });
@@ -663,20 +662,18 @@ function toTradeRecord(
   });
 
   let anyCorrected = false;
+  // sourceCatalogId = catalogId TEL QU'ENVOYÉ PAR LE SERVEUR pour cette ligne — plus besoin de
+  // compteur d'occurrence par nom (voir StatsStoreService.findTradeItemCorrection).
   const applyCorrections = (
     items: { name: string; catalogId: number | null; quantity: number }[],
     direction: 'acquired' | 'given',
   ): void => {
-    const seen = new Map<string, number>();
     for (const item of items) {
-      const key = item.name.toLowerCase();
-      const occurrence = seen.get(key) ?? 0;
-      seen.set(key, occurrence + 1);
       const correction = stats.findTradeItemCorrection(
         tradeKey,
         direction,
         item.name,
-        occurrence,
+        item.catalogId,
         item.quantity,
       );
       if (correction !== null) {

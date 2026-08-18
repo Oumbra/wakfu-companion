@@ -117,23 +117,16 @@ export class TradesComponent {
     return `rarity-${getWakfuItemRarity(this.catalog, item.name, item.catalogId)}`;
   }
 
-  /** Rang de `item` (par index dans `items`) parmi les lignes de même nom qui le précèdent — voir
-   * `PersistedItemReassignment.occurrence` (`trade_items` autorise plusieurs lignes homonymes non
-   * fusionnées, contrairement à `fight_loot`). */
-  protected occurrenceOf(items: readonly TradeItemRow[], index: number): number {
-    const name = items[index].name.toLowerCase();
-    return items.slice(0, index).filter((i) => i.name.toLowerCase() === name).length;
-  }
-
   protected openInteractMenu(
     event: MouseEvent,
     record: TradeRecord,
     direction: 'acquired' | 'given',
     item: TradeItemRow,
-    occurrence: number,
   ): void {
     event.preventDefault();
     event.stopPropagation();
+    // Cible la ligne par son `catalogId` ACTUEL (voir StatsStoreService.reassignTradeItem,
+    // `sourceCatalogId`) plutôt que par un rang positionnel — insensible à l'ordre d'affichage.
     this.itemPicker.open({
       name: item.name,
       x: event.clientX,
@@ -143,8 +136,8 @@ export class TradesComponent {
       isWatched: this.stats.isWatched(item.name),
       onFollow: () => this.stats.addWatchedItem(item.name),
       onChosen: (id, quantity) => {
-        this.stats.reassignTradeItem(record, direction, item.name, occurrence, quantity, id);
-        this.archive.reassignTradeItem(record, direction, item.name, occurrence, quantity, id);
+        this.stats.reassignTradeItem(record, direction, item.name, item.catalogId, quantity, id);
+        this.archive.reassignTradeItem(record, direction, item.name, item.catalogId, quantity, id);
       },
     });
   }
