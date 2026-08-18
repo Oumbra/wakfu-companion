@@ -57,25 +57,13 @@
                   @if (record.acquired.length > 0) {
                     <div class="trade-section">
                       <span class="trade-section-label acquired">{{ 'trades.acquired' | t }}</span>
-                      @for (
-                        item of record.acquired;
-                        track item.name + '#' + $index;
-                        let i = $index
-                      ) {
+                      @for (item of record.acquired; track item.name + '#' + $index) {
                         <div
                           class="trade-item-row"
                           [class]="rarityClass(item)"
                           [appTooltip]="'items.interactTooltip' | t"
                           tooltipPosition="top"
-                          (contextmenu)="
-                            openInteractMenu(
-                              $event,
-                              record,
-                              'acquired',
-                              item,
-                              occurrenceOf(record.acquired, i)
-                            )
-                          "
+                          (contextmenu)="openInteractMenu($event, record, 'acquired', item)"
                         >
                           <app-item-icon [name]="item.name" [id]="item.catalogId" [size]="20" />
                           <span class="trade-item-name">{{
@@ -92,21 +80,13 @@
                   @if (record.given.length > 0) {
                     <div class="trade-section">
                       <span class="trade-section-label given">{{ 'trades.given' | t }}</span>
-                      @for (item of record.given; track item.name + '#' + $index; let i = $index) {
+                      @for (item of record.given; track item.name + '#' + $index) {
                         <div
                           class="trade-item-row"
                           [class]="rarityClass(item)"
                           [appTooltip]="'items.interactTooltip' | t"
                           tooltipPosition="top"
-                          (contextmenu)="
-                            openInteractMenu(
-                              $event,
-                              record,
-                              'given',
-                              item,
-                              occurrenceOf(record.given, i)
-                            )
-                          "
+                          (contextmenu)="openInteractMenu($event, record, 'given', item)"
                         >
                           <app-item-icon [name]="item.name" [id]="item.catalogId" [size]="20" />
                           <span class="trade-item-name">{{

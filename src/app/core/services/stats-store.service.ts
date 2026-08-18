@@ -178,15 +178,13 @@ type PersistedItemReassignment =
       kind: 'loot';
       fightKey: string;
       itemName: string;
-      /** Rang parmi les lignes de même nom du même combat — normalement toujours 0 (une seule
-       * ligne par nom, `registerLoot` fusionne déjà les ramassages successifs), sauf si une
-       * précédente correction a déjà scindé la ligne d'origine en plusieurs (voir `quantity`
-       * ci-dessous, reassignRowQuantity). Une ligne peut aussi disparaître (fusionnée dans une
-       * autre ou vidée à 0, voir reassignRowQuantity) : le rang des lignes suivantes peut alors
-       * se décaler d'une correction à l'autre — sans risque pour le rejeu (voir
-       * replayPersistedReassignments), chaque `occurrence` est capturée au clic contre l'état
-       * courant à cet instant précis, jamais recalculée après coup. */
-      occurrence: number;
+      /** Id (résolu, ou `null` si non résolu) de la ligne visée AU MOMENT de cette correction —
+       * cible une ligne précise sans dépendre d'un rang positionnel dans le tableau (ancien
+       * `occurrence`, abandonné : il dépendait implicitement de l'ordre du tableau de stockage ET
+       * pouvait se désynchroniser de l'ordre affiché sous certains tris, voir CLAUDE.md, bug réel
+       * corrigé). Unique par nom au sein d'un même combat grâce à l'invariant maintenu par
+       * `reassignRowQuantity` : jamais deux lignes de même nom ET même `catalogId`. */
+      sourceCatalogId: number | null;
       /** Quantité concernée par CETTE correction — peut être inférieure à la quantité totale de la
        * ligne visée (voir ItemPickerComponent, stepper de quantité) : la ligne est alors scindée
        * en deux (ou fusionnée dans une ligne existante de même rareté, voir reassignRowQuantity)
@@ -213,11 +211,10 @@ type PersistedItemReassignment =
       tradeKey: string;
       direction: 'acquired' | 'given';
       itemName: string;
-      /** Rang parmi les lignes de même nom dans la même direction du même échange — `trade_items`
-       * autorise plusieurs lignes homonymes non fusionnées (contrairement à `fight_loot`), il faut
-       * donc plus que `tradeKey|direction|itemName` pour cibler UNE ligne précise. Même remarque
-       * qu'au-dessus sur la stabilité de ce rang après une correction. */
-      occurrence: number;
+      /** Voir `loot.sourceCatalogId` — même principe, `trade_items` autorise plusieurs lignes
+       * homonymes non fusionnées (contrairement à `fight_loot`), il faut donc plus que
+       * `tradeKey|direction|itemName` pour cibler UNE ligne précise. */
+      sourceCatalogId: number | null;
       quantity: number;
       catalogId: number;
     };
@@ -1488,7 +1485,7 @@ export class StatsStoreService {
           this.applyLootReassign(
             entry.fightKey,
             entry.itemName,
-            entry.occurrence,
+            entry.sourceCatalogId,
             entry.quantity,
             entry.catalogId,
           );
@@ -1506,7 +1503,7 @@ export class StatsStoreService {
             entry.tradeKey,
             entry.direction,
             entry.itemName,
-            entry.occurrence,
+            entry.sourceCatalogId,
             entry.quantity,
             entry.catalogId,
           );
@@ -1520,27 +1517,27 @@ export class StatsStoreService {
    * ex. "Larme d'Ogrest" — voir ItemPickerService). `fight` n'a besoin que des champs qui composent
    * `fightDedupKey` (voir history-dedup.util.ts) : fonctionne aussi bien sur un combat de la session
    * en cours que reconstruit depuis l'archive du compte (voir HistoryArchiveService, qui appelle sa
-   * propre méthode miroir pour patcher ses lignes déjà chargées). `occurrence` : rang parmi les
-   * lignes de même nom du combat visé (voir PersistedItemReassignment, normalement 0 — >0
-   * seulement après une précédente correction partielle sur cette même ligne). `quantity` peut
-   * être inférieure à celle de la ligne visée : elle est alors scindée (ou fusionnée dans une ligne
+   * propre méthode miroir pour patcher ses lignes déjà chargées). `sourceCatalogId` : `catalogId`
+   * ACTUEL de la ligne visée (voir PersistedItemReassignment, `LootRow.catalogId` — cible la ligne
+   * directement par son id plutôt que par un rang positionnel, voir sa doc). `quantity` peut être
+   * inférieure à celle de la ligne visée : elle est alors scindée (ou fusionnée dans une ligne
    * existante de même rareté) plutôt que réattribuée en bloc — voir reassignRowQuantity.
    */
   reassignLootItem(
     fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
     const fightKey = fightDedupKey(fight);
-    this.applyLootReassign(fightKey, itemName, occurrence, quantity, catalogId);
+    this.applyLootReassign(fightKey, itemName, sourceCatalogId, quantity, catalogId);
 
     this.itemReassignmentHistory.push({
       kind: 'loot',
       fightKey,
       itemName,
-      occurrence,
+      sourceCatalogId,
       quantity,
       catalogId,
     });
@@ -1574,9 +1571,9 @@ export class StatsStoreService {
     this.userData.write('itemReassignments', this.itemReassignmentHistory);
   }
 
-  /** Miroir de reassignLootItem, pour une ligne d'objet échangé — voir sa doc. `occurrence` : rang
-   * parmi les lignes de même nom dans la même direction du même échange (voir
-   * PersistedItemReassignment, `trade_items` autorise plusieurs lignes homonymes non fusionnées). */
+  /** Miroir de reassignLootItem, pour une ligne d'objet échangé — voir sa doc. `sourceCatalogId` :
+   * `catalogId` actuel de la ligne visée (voir PersistedItemReassignment, `trade_items` autorise
+   * plusieurs lignes homonymes non fusionnées). */
   reassignTradeItem(
     trade: Pick<
       TradeRecord,
@@ -1584,19 +1581,26 @@ export class StatsStoreService {
     >,
     direction: 'acquired' | 'given',
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
     const tradeKey = tradeDedupKey(trade);
-    this.applyTradeItemReassign(tradeKey, direction, itemName, occurrence, quantity, catalogId);
+    this.applyTradeItemReassign(
+      tradeKey,
+      direction,
+      itemName,
+      sourceCatalogId,
+      quantity,
+      catalogId,
+    );
 
     this.itemReassignmentHistory.push({
       kind: 'tradeItem',
       tradeKey,
       direction,
       itemName,
-      occurrence,
+      sourceCatalogId,
       quantity,
       catalogId,
     });
@@ -1618,7 +1622,7 @@ export class StatsStoreService {
   findLootCorrection(
     fightKey: string,
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     rowQuantity: number,
   ): number | null {
     const match = [...this.itemReassignmentHistory]
@@ -1627,7 +1631,7 @@ export class StatsStoreService {
         (e): e is Extract<PersistedItemReassignment, { kind: 'loot' }> =>
           e.kind === 'loot' &&
           e.fightKey === fightKey &&
-          e.occurrence === occurrence &&
+          e.sourceCatalogId === sourceCatalogId &&
           e.itemName.toLowerCase() === itemName.toLowerCase(),
       );
     return match && match.quantity >= rowQuantity ? match.catalogId : null;
@@ -1645,12 +1649,12 @@ export class StatsStoreService {
   }
 
   /** Miroir de findLootCorrection, pour une ligne d'objet échangé (voir reassignTradeItem pour
-   * `occurrence`, et findLootCorrection pour `rowQuantity`). */
+   * `sourceCatalogId`, et findLootCorrection pour `rowQuantity`). */
   findTradeItemCorrection(
     tradeKey: string,
     direction: 'acquired' | 'given',
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     rowQuantity: number,
   ): number | null {
     const match = [...this.itemReassignmentHistory]
@@ -1661,7 +1665,7 @@ export class StatsStoreService {
           e.tradeKey === tradeKey &&
           e.direction === direction &&
           e.itemName.toLowerCase() === itemName.toLowerCase() &&
-          e.occurrence === occurrence,
+          e.sourceCatalogId === sourceCatalogId,
       );
     return match && match.quantity >= rowQuantity ? match.catalogId : null;
   }
@@ -1675,30 +1679,30 @@ export class StatsStoreService {
     }
   }
 
-  /** `n`-ième ligne (0-indexée) de `list` dont le nom correspond (insensible à la casse) — voir
-   * PersistedItemReassignment.occurrence. */
-  private nthSameName<T extends { name: string }>(
+  /** Ligne de `list` dont le nom correspond (insensible à la casse) ET dont le `catalogId` actuel
+   * est `sourceCatalogId` — voir PersistedItemReassignment.sourceCatalogId. Unique par construction
+   * (voir reassignRowQuantity : jamais deux lignes de même nom ET même `catalogId` dans une même
+   * liste), contrairement à un rang positionnel qui dépendait implicitement de l'ordre du tableau. */
+  private findRowByCatalogId<T extends { name: string; catalogId: number | null }>(
     list: readonly T[],
     name: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
   ): T | undefined {
     const key = name.toLowerCase();
-    return list.filter((item) => item.name.toLowerCase() === key)[occurrence];
+    return list.find(
+      (item) => item.name.toLowerCase() === key && item.catalogId === sourceCatalogId,
+    );
   }
 
   /**
    * Réattribue tout ou partie de la quantité de `row` (déjà trouvée dans `list`, voir
-   * `nthSameName`) vers `catalogId`. Fusionne dans une ligne EXISTANTE du même nom qui porte déjà
-   * ce `catalogId` quand il y en a une (`target.quantity += amount`) — jamais deux lignes de même
-   * rareté après une correction, bug réel corrigé : re-corriger une ligne déjà scindée vers une
+   * `findRowByCatalogId`) vers `catalogId`. Fusionne dans une ligne EXISTANTE du même nom qui porte
+   * déjà ce `catalogId` quand il y en a une (`target.quantity += amount`) — jamais deux lignes de
+   * même rareté après une correction, bug réel corrigé : re-corriger une ligne déjà scindée vers une
    * rareté qui existait déjà ailleurs dans `list` créait une 3ᵉ ligne au lieu de se cumuler dans la
-   * ligne cible. Sans ligne existante pour ce `catalogId`, en ajoute une nouvelle en FIN de `list`
-   * (jamais insérée au milieu, pour ne pas décaler l'`occurrence` des lignes homonymes non
-   * concernées par CETTE correction précise). `row` elle-même est retirée de `list` si sa quantité
-   * restante tombe à 0 (jamais de ligne à quantité nulle affichée) — ce retrait peut décaler
-   * l'`occurrence` des lignes homonymes suivantes, sans risque pour le rejeu (voir
-   * PersistedItemReassignment.occurrence). No-op si `catalogId` est déjà celui de `row` (rien à
-   * corriger).
+   * ligne cible. Sans ligne existante pour ce `catalogId`, en ajoute une nouvelle en FIN de `list`.
+   * `row` elle-même est retirée de `list` si sa quantité restante tombe à 0 (jamais de ligne à
+   * quantité nulle affichée). No-op si `catalogId` est déjà celui de `row` (rien à corriger).
    */
   private reassignRowQuantity<
     T extends { name: string; catalogId: number | null; quantity: number },
@@ -1721,13 +1725,13 @@ export class StatsStoreService {
   private applyLootReassign(
     fightKey: string,
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
     const record = this.fightHistoryList.find((f) => fightDedupKey(f) === fightKey);
     if (!record) return;
-    const row = this.nthSameName(record.loot, itemName, occurrence);
+    const row = this.findRowByCatalogId(record.loot, itemName, sourceCatalogId);
     if (!row) return;
     const wasFull = quantity >= row.quantity;
     this.reassignRowQuantity(record.loot, row, quantity, catalogId);
@@ -1802,13 +1806,13 @@ export class StatsStoreService {
     tradeKey: string,
     direction: 'acquired' | 'given',
     itemName: string,
-    occurrence: number,
+    sourceCatalogId: number | null,
     quantity: number,
     catalogId: number,
   ): void {
     const record = this.tradeHistoryList.find((t) => tradeDedupKey(t) === tradeKey);
     if (!record) return;
-    const row = this.nthSameName(record[direction], itemName, occurrence);
+    const row = this.findRowByCatalogId(record[direction], itemName, sourceCatalogId);
     if (!row) return;
     this.reassignRowQuantity(record[direction], row, quantity, catalogId);
     this.tradeHistory.set([...this.tradeHistoryList]);
