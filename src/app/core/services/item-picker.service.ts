@@ -19,11 +19,20 @@ export interface ItemPickerRequest {
    * que le menu reste ouvert. */
   isWatched: boolean;
   onFollow: () => void;
+  /** Uniquement pour les achats (voir PurchasesComponent) : coût total en kamas de la ligne
+   * d'origine. Présent → un second champ "Kamas concernés" est proposé, mais affiché seulement si
+   * la quantité choisie dans le stepper n'est pas le maximum (voir ItemPickerComponent.showKamas) —
+   * un achat partiel n'est pas forcément linéaire en kamas (remise de gros, prix ayant varié entre
+   * deux achats agrégés le même jour), donc pas question de le déduire automatiquement du prorata
+   * sans que l'utilisateur puisse l'ajuster. Absent pour le butin/les échanges (pas de coût). */
+  totalKamas?: number;
   /** Absent : aucune section de correction n'est proposée (ex. butin cumulé de session, qui
    * n'a pas de combat unique à cibler — voir LootListComponent.fight), seul "+ Suivre" reste
-   * offert. Présent : `(id, quantity)` — `quantity` est la valeur choisie dans le stepper, jamais
-   * plus que `ItemPickerRequest.quantity` ni moins que 1. */
-  onChosen?: (id: number, quantity: number) => void;
+   * offert. Présent : `(id, quantity, kamas)` — `quantity` est la valeur choisie dans le stepper,
+   * jamais plus que `ItemPickerRequest.quantity` ni moins que 1. `kamas` : `null` sauf si
+   * `totalKamas` est fourni ET que la quantité choisie est partielle (voir `totalKamas`) — dans ce
+   * cas la part de kamas choisie par l'utilisateur, bornée à `[0, totalKamas]`. */
+  onChosen?: (id: number, quantity: number, kamas: number | null) => void;
 }
 
 /**
