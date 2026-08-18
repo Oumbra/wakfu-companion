@@ -173,6 +173,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Votre pseudo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': "Personnalisez votre pseudo et l'avatar affiché dans l'application.",
+    'profile.avatarGalleryMmo': 'Galerie MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'Tous les avatars sont disponibles à la sélection pour personnaliser les comptes Ankama, merci à eux !',
+    'profile.avatarFanartLinkLabel': 'Voir tous les avatars sur mon compte Ankama',
     'profile.themeLabel': 'Thème',
     'profile.themeHint':
       "Choisissez l'apparence de l'application, sombre ou l'une des 4 variantes claires.",
@@ -585,6 +592,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Your nickname...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Customize your nickname and the avatar shown in the app.',
+    'profile.avatarGalleryMmo': 'MMO Gallery',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'All avatars are available for selection to customize Ankama accounts, thanks to them!',
+    'profile.avatarFanartLinkLabel': 'See all avatars on my Ankama account',
     'profile.themeLabel': 'Theme',
     'profile.themeHint': 'Choose the appearance of the app: dark, or one of 4 light variants.',
     'profile.themeDark': 'Dark',
@@ -989,6 +1003,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Tu apodo...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personaliza tu apodo y el avatar mostrado en la aplicación.',
+    'profile.avatarGalleryMmo': 'Galería MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      '¡Todos los avatares están disponibles para personalizar las cuentas Ankama, gracias a ellos!',
+    'profile.avatarFanartLinkLabel': 'Ver todos los avatares en mi cuenta Ankama',
     'profile.themeLabel': 'Tema',
     'profile.themeHint':
       'Elige la apariencia de la aplicación: oscuro, o una de las 4 variantes claras.',
@@ -1398,6 +1419,13 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.pseudoPlaceholder': 'Seu apelido...',
     'profile.avatarLabel': 'Avatar',
     'profile.avatarDesc': 'Personalize seu apelido e o avatar exibido no aplicativo.',
+    'profile.avatarGalleryMmo': 'Galeria MMO',
+    'profile.avatarGalleryBarbottine': 'Fan-Art - Barbottine',
+    'profile.avatarGalleryHoopyon': 'Fan-Art - Hoopyon',
+    'profile.avatarGalleryPapetona': 'Fan-Art - Papetona',
+    'profile.avatarFanartCredit':
+      'Todos os avatares estão disponíveis para personalizar as contas Ankama, obrigado a eles!',
+    'profile.avatarFanartLinkLabel': 'Ver todos os avatares na minha conta Ankama',
     'profile.themeLabel': 'Tema',
     'profile.themeHint':
       'Escolha a aparência do aplicativo: escuro, ou uma das 4 variantes claras.',

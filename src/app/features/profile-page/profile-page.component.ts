@@ -25,6 +25,12 @@ import { ClassPortraitComponent } from '../../shared/class-portrait/class-portra
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../core/data/class-portraits.data';
+import {
+  AVATAR_FANART_GALLERIES,
+  AvatarFanartGalleryId,
+  avatarFanartUrls,
+  findAvatarFanartGallery,
+} from '../../core/data/avatar-fanart-galleries.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -130,6 +136,36 @@ export class ProfilePageComponent implements OnDestroy {
   /** Cases de la grille "Avatar" (18 classes x 2 sexes, voir class-portraits.data.ts) — l'index
    * dans ce tableau EST `profile.avatarIndex()` (schéma v5, voir ProfileService). */
   protected readonly avatarGridEntries = AVATAR_GRID_ENTRIES;
+
+  /** Options du switch de galerie d'avatar (voir CLAUDE.md) : la "Galerie MMO" (grille de classes
+   * ci-dessus) puis les 3 galeries "Fan-Art" du compte Ankama (avatar-fanart-galleries.data.ts). */
+  protected readonly avatarGalleryOptions: readonly {
+    id: 'mmo' | AvatarFanartGalleryId;
+    labelKey: string;
+  }[] = [{ id: 'mmo', labelKey: 'profile.avatarGalleryMmo' }, ...AVATAR_FANART_GALLERIES];
+
+  /** Galerie actuellement affichée dans le switch — présélectionnée sur la galerie de l'avatar
+   * externe déjà enregistré (s'il y en a un), sinon "Galerie MMO". Purement une préférence
+   * d'affichage de CETTE page (pas persistée) : le choix réel de l'avatar reste `profile.avatarIndex`/
+   * `profile.avatarExternalUrl`. */
+  protected readonly avatarGallery = signal<'mmo' | AvatarFanartGalleryId>(
+    findAvatarFanartGallery(this.profile.avatarExternalUrl())?.id ?? 'mmo',
+  );
+
+  /** Urls de la galerie "Fan-Art" actuellement affichée (vide pour "Galerie MMO", qui utilise
+   * `avatarGridEntries` à la place). Contient volontairement toute la plage d'ids (voir
+   * avatar-fanart-galleries.data.ts) — les urls sans image valide sont masquées au chargement via
+   * `brokenAvatarUrls`, pas filtrées ici. */
+  protected readonly currentFanartUrls = computed<readonly string[]>(() => {
+    const id = this.avatarGallery();
+    if (id === 'mmo') return [];
+    const gallery = AVATAR_FANART_GALLERIES.find((g) => g.id === id);
+    return gallery ? avatarFanartUrls(gallery) : [];
+  });
+
+  /** Urls "Fan-Art" dont l'`<img>` a échoué au chargement (id sans image valide dans la plage,
+   * voir avatar-fanart-galleries.data.ts) — masquées de la grille plutôt que montrées cassées. */
+  protected readonly brokenAvatarUrls = signal<ReadonlySet<string>>(new Set());
 
   /** Cartes du picker "Thème" (section Accessibilité, avant le mode daltonien — les deux sont
    * dépendants : les vignettes avant/après du daltonisme ci-dessous montrent les couleurs du thème
@@ -432,6 +468,23 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected chooseAvatar(index: number): void {
     this.profile.setAvatar(index);
+  }
+
+  /** Changement de galerie via le switch (voir CLAUDE.md) — n'affecte que l'affichage courant de
+   * cette page, pas l'avatar réellement choisi (voir avatarGallery). */
+  protected onAvatarGallerySelect(id: string): void {
+    this.avatarGallery.set(id as 'mmo' | AvatarFanartGalleryId);
+  }
+
+  protected chooseExternalAvatar(url: string): void {
+    this.profile.setAvatarExternal(url);
+  }
+
+  /** Une url "Fan-Art" de la plage n'a pas forcément d'image valide (voir
+   * avatar-fanart-galleries.data.ts) — masque sa case au lieu d'afficher une icône cassée. */
+  protected onAvatarImgError(url: string): void {
+    if (this.brokenAvatarUrls().has(url)) return;
+    this.brokenAvatarUrls.update((s) => new Set(s).add(url));
   }
 
   /** Repris de l'ancienne page de connexion dédiée (voir CLAUDE.md) : nettoie une éventuelle
