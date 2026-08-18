@@ -8,7 +8,11 @@
     @if (avatarIndex() !== null) {
       <app-avatar-icon [index]="avatarIndex()!" />
     } @else {
-      <span class="character-add-class-trigger-empty">?</span>
+      <div class="class-trigger-filmstrip" aria-hidden="true">
+        @for (i of filmstripIndices; track $index) {
+          <app-avatar-icon [index]="i" />
+        }
+      </div>
     }
   </button>
   <div class="character-add-fields">
