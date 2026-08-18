@@ -291,9 +291,11 @@ même colonne étroite que les sections courtes (voir CLAUDE.md, décalage signa
   justify-content: center;
   background: linear-gradient(145deg, var(--surface-raised), var(--surface-well));
 }
-.avatar-preview app-class-portrait {
+.avatar-preview app-class-portrait,
+.avatar-preview img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 .avatar-preview-question {
   font-weight: 800;
@@ -591,6 +593,28 @@ largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-
   font-size: 0.75rem;
 }
 
+.avatar-gallery-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.avatar-gallery-switch-row .profile-label {
+  margin: 0;
+}
+.avatar-gallery-select {
+  min-width: 190px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-color);
+  border-radius: 4px;
+  padding: 5.5px 8px;
+  font-family: inherit;
+  font-size: 0.8125rem;
+}
+
 .avatar-grid {
   display: grid;
   grid-template-columns: repeat(9, 1fr);
@@ -606,10 +630,23 @@ largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-
   overflow: hidden;
   background: var(--surface-well);
 }
-.avatar-cell-btn app-class-portrait {
+.avatar-cell-btn app-class-portrait,
+.avatar-cell-btn img {
   width: 100%;
   height: 100%;
   display: block;
+  object-fit: cover;
+}
+/* Effet mat/coloré des vignettes "Fan-Art" (`<img>` brute, pas de 2e image comme
+`app-class-portrait` — voir CLAUDE.md) : assombri/désaturé par défaut, couleur complète au survol
+ou une fois sélectionné (même logique que `[alwaysColored]` sur la grille "Galerie MMO"). */
+.avatar-cell-btn img {
+  filter: grayscale(0.5) brightness(0.6) saturate(0.5);
+  transition: filter 0.18s ease;
+}
+.avatar-cell-btn:hover img,
+.avatar-cell-btn.selected img {
+  filter: none;
 }
 .avatar-cell-btn:hover {
   border-color: var(--border-strong);
@@ -617,6 +654,27 @@ largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-
 .avatar-cell-btn.selected {
   border-color: var(--accent);
   box-shadow: 0 0 8px var(--accent);
+}
+/* Id "Fan-Art" de la plage sans image valide (voir avatar-fanart-galleries.data.ts, événement
+`error` de l'`<img>`) : masquée plutôt que montrée cassée — `display:none` (pas juste `visibility`)
+pour ne pas laisser un trou vide dans la grille. */
+.avatar-cell-btn.avatar-cell-hidden {
+  display: none;
+}
+
+.avatar-fanart-credit {
+  margin: 10px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+.avatar-fanart-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+.avatar-fanart-link:hover {
+  text-decoration: underline;
 }
 
 .alert-timing-test {

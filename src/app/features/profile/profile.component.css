@@ -39,6 +39,7 @@
   border-radius: 50%;
   overflow: hidden;
   display: block;
+  object-fit: cover;
 }
 .profile-avatar-wrapper {
   display: flex;
