@@ -94,6 +94,14 @@
                     (error)="onFightImageError($event)"
                     alt=""
                   />
+                  @if (dungeonRunStoneItemId(entry); as stoneId) {
+                    <app-item-icon
+                      class="dungeon-stone-badge"
+                      name="pierre de donjon"
+                      [id]="stoneId"
+                      [size]="16"
+                    />
+                  }
                 </span>
                 <span class="dungeon-run-name">{{ entry.dungeon[i18n.locale()] }}</span>
                 <span class="dungeon-run-meta">
@@ -158,6 +166,14 @@
             (error)="onFightImageError($event)"
             alt=""
           />
+          @if (fightStoneItemId(record, isBossRow); as stoneId) {
+            <app-item-icon
+              class="dungeon-stone-badge"
+              name="pierre de donjon"
+              [id]="stoneId"
+              [size]="16"
+            />
+          }
         </span>
       }
       <span
