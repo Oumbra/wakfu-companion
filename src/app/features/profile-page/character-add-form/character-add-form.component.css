@@ -10,6 +10,7 @@
    traitement visuel que .avatar-preview (profile-page.component.css) pour rester cohérent avec
    l'avatar de profil, en bouton interactif. */
 .character-add-class-trigger {
+  position: relative;
   flex-shrink: 0;
   width: 56px;
   height: 56px;
@@ -36,10 +37,51 @@
   width: 100%;
   height: 100%;
 }
-.character-add-class-trigger-empty {
-  font-weight: 800;
-  font-size: 1.3rem;
-  color: var(--accent);
+/* Défilement automatique des portraits tant qu'aucune classe n'est choisie (voir
+character-add-form.component.ts, `filmstripIndices` — ordre mélangé une fois, dupliqué pour boucler
+sans à-coup). Positionné en absolu (plutôt qu'en flex-item classique) pour ignorer le
+`justify-content: center`/`align-items: center` du bouton : la bande est bien plus large que le
+bouton lui-même, elle doit pouvoir défiler sous son `overflow: hidden` sans être recentrée à chaque
+frame. */
+.class-trigger-filmstrip {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  animation: class-trigger-scroll 26s linear infinite;
+}
+/* Filtre mat/noir et blanc identique aux vignettes non sélectionnées de la section Avatar (voir
+profile-page.component.css `.avatar-cell-btn img`, class-portrait.component.ts) — appliqué sur le
+host `app-avatar-icon` plutôt que sur son `.avatar-cell` interne (encapsulation de composant, pas
+d'accès direct sans `::ng-deep`) : `filter` s'applique de toute façon à l'élément ET à tout son
+contenu rendu en un seul calque. */
+.class-trigger-filmstrip app-avatar-icon {
+  height: 100%;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
+  filter: grayscale(0.5) brightness(0.6) saturate(0.5);
+}
+/* Survol du bouton = pause (et tooltip "Choisir la classe" via [appTooltip] sur le bouton, voir
+character-add-form.component.html) ; la reprise au retrait de la souris est automatique via
+`:hover` — si une classe a entretemps été choisie, ce bloc `@else` (donc `.class-trigger-filmstrip`
+lui-même) disparaît du DOM, pas besoin d'état JS supplémentaire pour gérer ce cas. */
+.character-add-class-trigger:hover .class-trigger-filmstrip {
+  animation-play-state: paused;
+}
+@keyframes class-trigger-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* La bande contient la liste mélangée deux fois à la suite (voir `filmstripIndices`) : -50%
+    correspond exactement à la largeur d'une seule copie, donc la 2e copie prend visuellement la
+    place de la 1ère sans saut au moment où l'animation reboucle. */
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .class-trigger-filmstrip {
+    animation: none;
+  }
 }
 
 .character-add-fields {
@@ -62,10 +104,6 @@
     width: 32px;
     height: 32px;
     border-width: 1px;
-  }
-  .character-add-class-trigger-empty {
-    font-size: 15px;
-    font-weight: 400px;
   }
   :host-context([data-theme='light']) {
     .character-add-form {
