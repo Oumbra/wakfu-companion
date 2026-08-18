@@ -363,11 +363,13 @@ export class HistoryArchiveService {
 
   /** Miroir de reassignLootItem, pour un achat. Une correction partielle crée un second achat
    * distinct plutôt que de scinder une ligne dans un tableau — voir
-   * `StatsStoreService.applyPurchaseReassign`, même raison/même calcul de coût au prorata. */
+   * `StatsStoreService.applyPurchaseReassign`, même raison/même calcul de coût au prorata (ou
+   * `kamasOverride` explicite, voir sa doc). */
   reassignPurchaseItem(
     purchase: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
     quantity: number,
     catalogId: number,
+    kamasOverride?: number,
   ): void {
     const purchaseKey = purchaseDedupKey(purchase);
     const toSend: PurchaseRecord[] = [];
@@ -384,7 +386,10 @@ export class HistoryArchiveService {
         return next;
       }
       const unitCost = record.totalCost / record.quantity;
-      const splitCost = Math.round(unitCost * amount);
+      const splitCost =
+        kamasOverride !== undefined
+          ? Math.min(Math.max(0, Math.round(kamasOverride)), record.totalCost)
+          : Math.round(unitCost * amount);
       const reduced: PurchaseRecord = {
         ...record,
         quantity: record.quantity - amount,
@@ -447,24 +452,32 @@ function nthSameName<T extends { name: string }>(
 }
 
 /** Réattribue tout ou partie de la quantité de `row` (déjà présente dans `list`, à l'index
- * `list.indexOf(row)`) : remplace `row` en place si `quantity` couvre la totalité, sinon réduit sa
- * quantité et ajoute une nouvelle ligne en FIN de `list` — voir `StatsStoreService.splitRowQuantity`,
- * même contrat (jamais inséré au milieu, pour ne pas décaler l'`occurrence` des lignes suivantes).
- * Mute `list` (tableau déjà cloné par l'appelant, voir `[...f.loot]`), pas `row` lui-même. */
+ * `list.indexOf(row)`) vers `catalogId` — voir `StatsStoreService.reassignRowQuantity`, même
+ * contrat (fusionne dans une ligne existante du même nom qui porte déjà ce `catalogId` plutôt que
+ * d'en dupliquer une ; nouvelle ligne toujours ajoutée en FIN de `list` sinon ; `row` retirée de
+ * `list` si sa quantité restante tombe à 0). Mute `list` (tableau déjà cloné par l'appelant, voir
+ * `[...f.loot]`), pas `row` lui-même. */
 function splitRowInPlace<T extends { name: string; catalogId: number | null; quantity: number }>(
   list: T[],
   row: T,
   quantity: number,
   catalogId: number,
 ): void {
+  if (catalogId === row.catalogId) return;
   const index = list.indexOf(row);
   const amount = Math.min(Math.max(1, Math.floor(quantity)), row.quantity);
-  if (amount >= row.quantity) {
-    list[index] = { ...row, catalogId };
-    return;
+  const key = row.name.toLowerCase();
+  const targetIndex = list.findIndex(
+    (r, i) => i !== index && r.catalogId === catalogId && r.name.toLowerCase() === key,
+  );
+  if (targetIndex !== -1) {
+    list[targetIndex] = { ...list[targetIndex], quantity: list[targetIndex].quantity + amount };
+  } else {
+    list.push({ ...row, catalogId, quantity: amount });
   }
-  list[index] = { ...row, quantity: row.quantity - amount };
-  list.push({ ...row, catalogId, quantity: amount });
+  const remaining = row.quantity - amount;
+  if (remaining <= 0) list.splice(index, 1);
+  else list[index] = { ...row, quantity: remaining };
 }
 
 /**
