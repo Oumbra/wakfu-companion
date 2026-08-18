@@ -19,6 +19,21 @@ export function dungeonRoomCount(dungeon: CatalogDungeonEntry): number {
   return ROOM_COUNT_BY_TYPE[dungeon.type];
 }
 
+/** Id Ankama de la pierre de donjon associée à un type (récompense de fin de run, un seul objet par
+ * type — voir CLAUDE.md) — `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`/`THREE_PLAYERS`/`ULTIMATE_BOSS`
+ * uniquement, `null` pour les types sans pierre associée (brèche, arcade). */
+const STONE_ITEM_ID_BY_TYPE: Readonly<Partial<Record<WakfuDungeonType, number>>> = {
+  TWO_ROOMS: 29849, // pierre de vitesse
+  THREE_ROOMS: 29848, // pierre d'équilibre
+  FOUR_ROOMS: 29847, // pierre d'aventure
+  THREE_PLAYERS: 29850, // pierre d'entourage
+  ULTIMATE_BOSS: 29851, // pierre ultime
+};
+
+export function dungeonStoneItemId(dungeon: CatalogDungeonEntry): number | null {
+  return STONE_ITEM_ID_BY_TYPE[dungeon.type] ?? null;
+}
+
 /** Combat minimal requis pour le regroupement — `FightRecord` (stats-store.service.ts) satisfait
  * largement cette contrainte, une contrainte structurelle plutôt qu'un import direct évite une
  * dépendance circulaire entre ce fichier et le store. */
