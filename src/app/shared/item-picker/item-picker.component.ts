@@ -40,7 +40,7 @@ import { EscapeCloseDirective } from '../escape-close.directive';
 })
 export class ItemPickerComponent implements OnDestroy {
   readonly request = input.required<ItemPickerRequest>();
-  readonly itemChosen = output<{ id: number; quantity: number }>();
+  readonly itemChosen = output<{ id: number; quantity: number; kamas: number | null }>();
   readonly closed = output<void>();
 
   private readonly catalog = inject(CatalogService);
@@ -62,6 +62,28 @@ export class ItemPickerComponent implements OnDestroy {
    * maximale (tout le lot) à chaque nouvelle ouverture, voir l'effect ci-dessous. */
   protected readonly quantity = signal(1);
 
+  /** Part de kamas concernée par la correction (achats uniquement, voir
+   * `ItemPickerRequest.totalKamas`) — `null` tant que l'utilisateur n'a pas touché le champ : dans
+   * cet état, `kamasDisplay()` propose une estimation au prorata de `quantity()`, recalculée en
+   * direct à chaque mouvement du stepper de quantité. Dès que l'utilisateur modifie explicitement
+   * ce champ, sa valeur est figée (ne suit plus la quantité) jusqu'à la prochaine ouverture. */
+  protected readonly kamas = signal<number | null>(null);
+
+  protected readonly kamasDisplay = computed(() => {
+    const manual = this.kamas();
+    if (manual !== null) return manual;
+    const req = this.request();
+    if (req.totalKamas === undefined) return 0;
+    return Math.round((req.totalKamas * this.quantity()) / Math.max(1, req.quantity));
+  });
+
+  /** Section kamas affichée seulement si l'appelant fournit un coût total (achats, voir
+   * `ItemPickerRequest.totalKamas`) ET que la quantité choisie n'est pas le maximum — un achat
+   * intégralement réattribué transfère tout son coût avec lui, rien à répartir. */
+  protected readonly showKamas = computed(
+    () => this.request().totalKamas !== undefined && this.quantity() < this.request().quantity,
+  );
+
   private readonly pickerEl = viewChild<ElementRef<HTMLDivElement>>('picker');
   /** Même repositionnement anti-débordement que ClassPickerComponent/DamageReassignPickerComponent. */
   protected readonly displayPosition = signal({ left: 0, top: 0 });
@@ -72,6 +94,7 @@ export class ItemPickerComponent implements OnDestroy {
       // Dépendance explicite : une nouvelle requête (nouvelle ligne visée) doit repartir sur la
       // quantité totale de CETTE ligne, pas garder la valeur ajustée pour la précédente.
       this.quantity.set(this.request().quantity);
+      this.kamas.set(null);
     });
     effect(() => {
       this.request();
@@ -117,6 +140,12 @@ export class ItemPickerComponent implements OnDestroy {
     return Math.min(max, Math.max(1, Math.floor(value)));
   }
 
+  private clampKamas(value: number): number {
+    const max = Math.max(0, this.request().totalKamas ?? 0);
+    if (!Number.isFinite(value)) return 0;
+    return Math.min(max, Math.max(0, Math.round(value)));
+  }
+
   protected follow(): void {
     if (this.request().isWatched) return;
     this.request().onFollow();
@@ -124,7 +153,9 @@ export class ItemPickerComponent implements OnDestroy {
 
   protected choose(entry: CatalogItemEntry): void {
     if (this.isCurrent(entry)) return;
-    this.itemChosen.emit({ id: entry.id, quantity: this.clampQuantity(this.quantity()) });
+    const quantity = this.clampQuantity(this.quantity());
+    const kamas = this.showKamas() ? this.clampKamas(this.kamasDisplay()) : null;
+    this.itemChosen.emit({ id: entry.id, quantity, kamas });
   }
 
   protected close(): void {

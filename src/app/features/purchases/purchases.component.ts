@@ -97,18 +97,22 @@ export class PurchasesComponent {
     }
 
     const groups: PurchaseDateGroup[] = [...byDate.entries()].map(([dateKey, records]) => {
+      // Clé composite (nom + catalogId), PAS le nom seul : après une correction manuelle partielle
+      // (voir ItemPickerService), deux achats du même nom mais de rareté différente doivent rester
+      // deux lignes distinctes — les fusionner de nouveau ici masquerait silencieusement la
+      // correction (bug réel corrigé : la ligne agrégée entière basculait visuellement sur la
+      // nouvelle rareté, y compris la part non concernée par la correction).
       const byItem = new Map<string, PurchaseAggregateRow>();
       for (const record of records) {
-        const existing = byItem.get(record.item);
+        const key = `${record.item}|${record.catalogId ?? ''}`;
+        const existing = byItem.get(key);
         if (existing) {
           existing.quantity += record.quantity;
           existing.totalCost += record.totalCost;
-          if (record.fullTimestampMs >= existing.lastTimestampMs)
-            existing.catalogId = record.catalogId;
           existing.lastTimestampMs = Math.max(existing.lastTimestampMs, record.fullTimestampMs);
           existing.records.push(record);
         } else {
-          byItem.set(record.item, {
+          byItem.set(key, {
             item: record.item,
             catalogId: record.catalogId,
             quantity: record.quantity,
@@ -162,20 +166,31 @@ export class PurchasesComponent {
       y: event.clientY,
       currentId: row.catalogId,
       quantity: row.quantity,
+      totalKamas: row.totalCost,
       isWatched: this.stats.isWatched(row.item),
       onFollow: () => this.stats.addWatchedItem(row.item),
-      // Répartit la quantité choisie sur les achats individuels de la ligne agrégée (voir
+      // Répartit la quantité (et, si fournie, la part de kamas choisie manuellement — voir
+      // ItemPickerRequest.totalKamas) sur les achats individuels de la ligne agrégée (voir
       // `PurchaseAggregateRow.records`), dans l'ordre : chacun est réattribué en totalité tant
       // qu'il reste du budget, le dernier concerné peut n'être que partiellement scindé (voir
-      // StatsStoreService.applyPurchaseReassign).
-      onChosen: (id, quantity) => {
-        let remaining = quantity;
+      // StatsStoreService.applyPurchaseReassign). Le dernier récupère le reliquat de kamas plutôt
+      // qu'une part au prorata, pour ne perdre aucun kamas à l'arrondi.
+      onChosen: (id, quantity, kamas) => {
+        let remainingQty = quantity;
+        let remainingKamas = kamas ?? undefined;
         for (const record of row.records) {
-          if (remaining <= 0) break;
-          const amount = Math.min(remaining, record.quantity);
-          this.stats.reassignPurchaseItem(record, amount, id);
-          this.archive.reassignPurchaseItem(record, amount, id);
-          remaining -= amount;
+          if (remainingQty <= 0) break;
+          const amount = Math.min(remainingQty, record.quantity);
+          remainingQty -= amount;
+          const kamasForRecord =
+            remainingKamas === undefined
+              ? undefined
+              : remainingQty <= 0
+                ? remainingKamas
+                : Math.round((amount / quantity) * kamas!);
+          if (kamasForRecord !== undefined) remainingKamas! -= kamasForRecord;
+          this.stats.reassignPurchaseItem(record, amount, id, kamasForRecord);
+          this.archive.reassignPurchaseItem(record, amount, id, kamasForRecord);
         }
       },
     });

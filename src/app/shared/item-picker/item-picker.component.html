@@ -36,6 +36,19 @@
           (valueChange)="quantity.set($event)"
         />
       </div>
+      @if (showKamas()) {
+        <div class="item-picker-modify-row">
+          <span class="item-picker-modify-label">{{ 'items.modifyKamas' | t }}</span>
+          <app-input-number
+            [value]="kamasDisplay()"
+            [min]="0"
+            [max]="request().totalKamas ?? 0"
+            [prevTooltip]="'items.kamasDecrease' | t"
+            [nextTooltip]="'items.kamasIncrease' | t"
+            (valueChange)="kamas.set($event)"
+          />
+        </div>
+      }
       @for (entry of candidates(); track entry.id) {
         <button
           type="button"

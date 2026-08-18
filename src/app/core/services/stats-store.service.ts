@@ -180,17 +180,34 @@ type PersistedItemReassignment =
       itemName: string;
       /** Rang parmi les lignes de même nom du même combat — normalement toujours 0 (une seule
        * ligne par nom, `registerLoot` fusionne déjà les ramassages successifs), sauf si une
-       * précédente correction PARTIELLE a déjà scindé la ligne d'origine en plusieurs (voir
-       * `quantity` ci-dessous, splitRowQuantity) : la ligne restante garde alors le même rang
-       * (l'ajout se fait toujours en fin de tableau, jamais au milieu — voir sa doc). */
+       * précédente correction a déjà scindé la ligne d'origine en plusieurs (voir `quantity`
+       * ci-dessous, reassignRowQuantity). Une ligne peut aussi disparaître (fusionnée dans une
+       * autre ou vidée à 0, voir reassignRowQuantity) : le rang des lignes suivantes peut alors
+       * se décaler d'une correction à l'autre — sans risque pour le rejeu (voir
+       * replayPersistedReassignments), chaque `occurrence` est capturée au clic contre l'état
+       * courant à cet instant précis, jamais recalculée après coup. */
       occurrence: number;
       /** Quantité concernée par CETTE correction — peut être inférieure à la quantité totale de la
        * ligne visée (voir ItemPickerComponent, stepper de quantité) : la ligne est alors scindée
-       * en deux plutôt que réattribuée en bloc (voir splitRowQuantity). */
+       * en deux (ou fusionnée dans une ligne existante de même rareté, voir reassignRowQuantity)
+       * plutôt que réattribuée en bloc. */
       quantity: number;
       catalogId: number;
     }
-  | { kind: 'purchase'; purchaseKey: string; quantity: number; catalogId: number }
+  | {
+      kind: 'purchase';
+      purchaseKey: string;
+      quantity: number;
+      catalogId: number;
+      /** Part du coût total (en kamas) concernée par CETTE correction, choisie manuellement par
+       * l'utilisateur (voir ItemPickerRequest.totalKamas) — seulement quand `quantity` est
+       * partielle, `undefined` sinon (achat réattribué en bloc, tout son coût le suit) ou si
+       * l'utilisateur n'a pas touché le champ (repli sur le prorata automatique, voir
+       * applyPurchaseReassign). Un achat n'est pas forcément linéaire en coût (remise de gros,
+       * prix ayant varié entre deux achats agrégés le même jour), d'où la possibilité de l'ajuster
+       * à la main plutôt que de toujours déduire ce montant de la quantité seule. */
+      kamas?: number;
+    }
   | {
       kind: 'tradeItem';
       tradeKey: string;
@@ -199,7 +216,7 @@ type PersistedItemReassignment =
       /** Rang parmi les lignes de même nom dans la même direction du même échange — `trade_items`
        * autorise plusieurs lignes homonymes non fusionnées (contrairement à `fight_loot`), il faut
        * donc plus que `tradeKey|direction|itemName` pour cibler UNE ligne précise. Même remarque
-       * qu'au-dessus sur la stabilité de ce rang après une correction partielle. */
+       * qu'au-dessus sur la stabilité de ce rang après une correction. */
       occurrence: number;
       quantity: number;
       catalogId: number;
@@ -1477,7 +1494,12 @@ export class StatsStoreService {
           );
           break;
         case 'purchase':
-          this.applyPurchaseReassign(entry.purchaseKey, entry.quantity, entry.catalogId);
+          this.applyPurchaseReassign(
+            entry.purchaseKey,
+            entry.quantity,
+            entry.catalogId,
+            entry.kamas,
+          );
           break;
         case 'tradeItem':
           this.applyTradeItemReassign(
@@ -1501,8 +1523,8 @@ export class StatsStoreService {
    * propre méthode miroir pour patcher ses lignes déjà chargées). `occurrence` : rang parmi les
    * lignes de même nom du combat visé (voir PersistedItemReassignment, normalement 0 — >0
    * seulement après une précédente correction partielle sur cette même ligne). `quantity` peut
-   * être inférieure à celle de la ligne visée : elle est alors scindée plutôt que réattribuée en
-   * bloc (voir splitRowQuantity).
+   * être inférieure à celle de la ligne visée : elle est alors scindée (ou fusionnée dans une ligne
+   * existante de même rareté) plutôt que réattribuée en bloc — voir reassignRowQuantity.
    */
   reassignLootItem(
     fight: Pick<FightRecord, 'time' | 'result' | 'rows'>,
@@ -1529,16 +1551,25 @@ export class StatsStoreService {
   /** Miroir de reassignLootItem, pour un achat — voir sa doc. Un achat n'a pas d'"occurrence" (déjà
    * identifié sans ambiguïté par sa propre clé de dédoublonnage) ; une correction partielle crée un
    * second achat distinct plutôt que de scinder une ligne dans un tableau — voir
-   * applyPurchaseReassign. */
+   * applyPurchaseReassign. `kamasOverride` : part du coût total choisie manuellement par
+   * l'utilisateur (voir PersistedItemReassignment.kamas), `undefined` pour laisser
+   * applyPurchaseReassign prorater automatiquement. */
   reassignPurchaseItem(
     purchase: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
     quantity: number,
     catalogId: number,
+    kamasOverride?: number,
   ): void {
     const purchaseKey = purchaseDedupKey(purchase);
-    this.applyPurchaseReassign(purchaseKey, quantity, catalogId);
+    this.applyPurchaseReassign(purchaseKey, quantity, catalogId, kamasOverride);
 
-    this.itemReassignmentHistory.push({ kind: 'purchase', purchaseKey, quantity, catalogId });
+    this.itemReassignmentHistory.push({
+      kind: 'purchase',
+      purchaseKey,
+      quantity,
+      catalogId,
+      kamas: kamasOverride,
+    });
     this.trimItemReassignmentHistory();
     this.userData.write('itemReassignments', this.itemReassignmentHistory);
   }
@@ -1657,27 +1688,34 @@ export class StatsStoreService {
 
   /**
    * Réattribue tout ou partie de la quantité de `row` (déjà trouvée dans `list`, voir
-   * `nthSameName`) : si `quantity` couvre la totalité, corrige `row.catalogId` en place — sinon
-   * décrémente `row` et ajoute une nouvelle ligne en FIN de `list` portant le reliquat corrigé.
-   * Toujours en fin de tableau, jamais insérée au milieu : les autres lignes (et leur `occurrence`,
-   * calculé par rang dans le tableau) gardent une position stable d'une correction à l'autre — voir
-   * PersistedItemReassignment. Retourne `true` si une scission a eu lieu (permet à l'appelant de
-   * savoir si une SECONDE ligne a été créée, ex. pour la renvoyer aussi au serveur).
+   * `nthSameName`) vers `catalogId`. Fusionne dans une ligne EXISTANTE du même nom qui porte déjà
+   * ce `catalogId` quand il y en a une (`target.quantity += amount`) — jamais deux lignes de même
+   * rareté après une correction, bug réel corrigé : re-corriger une ligne déjà scindée vers une
+   * rareté qui existait déjà ailleurs dans `list` créait une 3ᵉ ligne au lieu de se cumuler dans la
+   * ligne cible. Sans ligne existante pour ce `catalogId`, en ajoute une nouvelle en FIN de `list`
+   * (jamais insérée au milieu, pour ne pas décaler l'`occurrence` des lignes homonymes non
+   * concernées par CETTE correction précise). `row` elle-même est retirée de `list` si sa quantité
+   * restante tombe à 0 (jamais de ligne à quantité nulle affichée) — ce retrait peut décaler
+   * l'`occurrence` des lignes homonymes suivantes, sans risque pour le rejeu (voir
+   * PersistedItemReassignment.occurrence). No-op si `catalogId` est déjà celui de `row` (rien à
+   * corriger).
    */
-  private splitRowQuantity<T extends { name: string; catalogId: number | null; quantity: number }>(
-    list: T[],
-    row: T,
-    quantity: number,
-    catalogId: number,
-  ): boolean {
+  private reassignRowQuantity<
+    T extends { name: string; catalogId: number | null; quantity: number },
+  >(list: T[], row: T, quantity: number, catalogId: number): void {
+    if (catalogId === row.catalogId) return;
     const amount = Math.min(Math.max(1, Math.floor(quantity)), row.quantity);
-    if (amount >= row.quantity) {
-      row.catalogId = catalogId;
-      return false;
-    }
+    const key = row.name.toLowerCase();
+    const target = list.find(
+      (r) => r !== row && r.catalogId === catalogId && r.name.toLowerCase() === key,
+    );
     row.quantity -= amount;
-    list.push({ ...row, catalogId, quantity: amount });
-    return true;
+    if (target) target.quantity += amount;
+    else list.push({ ...row, catalogId, quantity: amount });
+    if (row.quantity <= 0) {
+      const index = list.indexOf(row);
+      if (index !== -1) list.splice(index, 1);
+    }
   }
 
   private applyLootReassign(
@@ -1692,7 +1730,7 @@ export class StatsStoreService {
     const row = this.nthSameName(record.loot, itemName, occurrence);
     if (!row) return;
     const wasFull = quantity >= row.quantity;
-    this.splitRowQuantity(record.loot, row, quantity, catalogId);
+    this.reassignRowQuantity(record.loot, row, quantity, catalogId);
 
     // Compteur cumulé de session (toutes fusions confondues, voir sessionLootMap) : mis à jour
     // seulement pour une correction COMPLÈTE de la ligne — un compteur cumulé unique ne peut pas
@@ -1712,7 +1750,12 @@ export class StatsStoreService {
     this.historySync.recordFight(record);
   }
 
-  private applyPurchaseReassign(purchaseKey: string, quantity: number, catalogId: number): void {
+  private applyPurchaseReassign(
+    purchaseKey: string,
+    quantity: number,
+    catalogId: number,
+    kamasOverride?: number,
+  ): void {
     const record = this.purchaseHistoryList.find((p) => purchaseDedupKey(p) === purchaseKey);
     if (!record) return;
     const amount = Math.min(Math.max(1, Math.floor(quantity)), record.quantity);
@@ -1726,11 +1769,17 @@ export class StatsStoreService {
 
     // Un achat n'est pas un tableau de lignes homonymes (contrairement au butin/aux échanges) :
     // une correction partielle crée un SECOND achat distinct plutôt que de scinder une entrée dans
-    // un tableau. Coût réparti au prorata (arrondi), le reliquat gardant l'écart pour préserver la
-    // somme totale à l'unité près — signature naturellement distincte (quantity/totalCost changent
-    // des deux côtés), donc aucun risque de collision de clientKey avec l'achat d'origine.
+    // un tableau. Coût réparti au prorata (arrondi) par défaut — sauf `kamasOverride` explicite
+    // (voir ItemPickerRequest.totalKamas) : un achat n'est pas forcément linéaire en coût (remise
+    // de gros, prix ayant varié entre deux achats agrégés le même jour), l'utilisateur peut donc
+    // ajuster ce montant à la main plutôt que de subir le prorata automatique. Signature
+    // naturellement distincte de toute façon (quantity/totalCost changent des deux côtés), donc
+    // aucun risque de collision de clientKey avec l'achat d'origine.
     const unitCost = record.totalCost / record.quantity;
-    const splitCost = Math.round(unitCost * amount);
+    const splitCost =
+      kamasOverride !== undefined
+        ? Math.min(Math.max(0, Math.round(kamasOverride)), record.totalCost)
+        : Math.round(unitCost * amount);
     record.quantity -= amount;
     record.totalCost -= splitCost;
     const split: PurchaseRecord = {
@@ -1761,7 +1810,7 @@ export class StatsStoreService {
     if (!record) return;
     const row = this.nthSameName(record[direction], itemName, occurrence);
     if (!row) return;
-    this.splitRowQuantity(record[direction], row, quantity, catalogId);
+    this.reassignRowQuantity(record[direction], row, quantity, catalogId);
     this.tradeHistory.set([...this.tradeHistoryList]);
     this.historySync.recordTrade(record);
   }
