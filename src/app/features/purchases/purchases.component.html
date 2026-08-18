@@ -20,7 +20,7 @@
           </div>
         </div>
         @if (!isCollapsed(group.dateKey)) {
-          @for (row of group.rows; track row.item) {
+          @for (row of group.rows; track row.item + '|' + row.catalogId) {
             <div
               class="purchase-row"
               [class]="rarityClass(row)"
