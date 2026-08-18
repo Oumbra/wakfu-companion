@@ -8,13 +8,13 @@
     [class.scrollable]="items().length > 5"
     [class.recap-variant]="emptyVariant() === 'recap'"
   >
-    @for (item of items(); track item.name + '#' + $index; let first = $first; let i = $index) {
+    @for (item of items(); track item.name + '#' + $index; let first = $first) {
       <div
         class="loot-row"
         [class]="rarityClass(item)"
         [appTooltip]="'items.interactTooltip' | t"
         [tooltipPosition]="first ? 'bottom' : 'top'"
-        (contextmenu)="openInteractMenu($event, item, i)"
+        (contextmenu)="openInteractMenu($event, item)"
       >
         <app-item-icon [name]="item.name" [id]="item.catalogId" />
         <span class="loot-name">{{
