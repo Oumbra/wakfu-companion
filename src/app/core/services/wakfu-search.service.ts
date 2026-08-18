@@ -1,5 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { WakfuRarity } from '../data/wakfu-item-rarity.data';
+import { WakfuItemCategory } from '../data/wakfu-item-category.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { AppLocale, I18nService } from './i18n.service';
 import { CatalogService } from '../api/catalog.service';
@@ -22,6 +23,10 @@ export interface WakfuSearchResult {
   /** Rareté de l'objet (voir wakfu-item-rarity.data.ts), `null` pour un monstre — pilote l'icône
    * de rareté affichée devant le nom dans l'autocomplétion. */
   rarity: WakfuRarity | null;
+  /** Catégorie de l'objet (voir wakfu-item-category.data.ts), `null` pour un monstre — pilote le
+   * filtre par icône de catégorie de l'autocomplétion (voir WakfuAutocompleteComponent). Un
+   * monstre n'a pas de `WakfuItemCategory` propre : son "filtre" est `kind === 'enemy'`. */
+  category: WakfuItemCategory | null;
 }
 
 interface LocalizedEntry {
@@ -34,6 +39,8 @@ interface LocalizedEntry {
   hasRecipe?: boolean;
   /** Absent des entrées monstre — voir WakfuSearchResult.rarity. */
   rarity?: WakfuRarity;
+  /** Absent des entrées monstre — voir WakfuSearchResult.category. */
+  category?: WakfuItemCategory;
 }
 
 const MIN_QUERY_LENGTH = 3;
@@ -45,6 +52,7 @@ interface SearchEntry {
   hasRecipe: boolean;
   id: number | null;
   rarity: WakfuRarity | null;
+  category: WakfuItemCategory | null;
 }
 
 function localizedName(entry: LocalizedEntry, locale: AppLocale): string {
@@ -69,6 +77,7 @@ function searchEntries(
       hasRecipe: entry.hasRecipe ?? false,
       id: entry.id,
       rarity: entry.rarity ?? null,
+      category: entry.category ?? null,
     });
   }
   return results;
@@ -129,6 +138,7 @@ export class WakfuSearchService {
         hasRecipe: r.hasRecipe,
         id: r.id,
         rarity: r.rarity,
+        category: r.category,
       }));
   }
 }

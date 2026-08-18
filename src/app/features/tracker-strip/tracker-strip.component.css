@@ -273,7 +273,7 @@
 .kpi-target-chip:hover {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Cible du décompte, choisie à la création (visible uniquement quand le mode 'down' est
@@ -534,7 +534,7 @@ app-input-number.kpi-countdown-current-input {
 .kpi-select-checkbox.checked {
   background: var(--accent);
   border-color: var(--accent);
-  color: #04222a;
+  color: var(--on-accent);
 }
 
 /* Tuile cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
@@ -556,6 +556,11 @@ app-input-number.kpi-countdown-current-input {
    colorée, fond en dégradé seulement quand le KPI se déploie). */
 .kpi[class*='rarity-'] {
   border-color: var(--rarity-color);
+  background-image: linear-gradient(
+    to bottom right,
+    color-mix(in srgb, var(--rarity-color) 35%, var(--panel-bg)),
+    var(--panel-bg) 70%
+  );
 }
 /* `background-size`/`background-position` FIXES (pas de `%` dans le
    dégradé) : un dégradé positionné en pourcentage se redessine à chaque
@@ -566,10 +571,10 @@ app-input-number.kpi-countdown-current-input {
 .kpi.expanded[class*='rarity-'] {
   background-image: linear-gradient(
     to right,
-    color-mix(in srgb, var(--rarity-color) 30%, var(--panel-header-bg)),
-    var(--panel-header-bg)
+    color-mix(in srgb, var(--rarity-color) 50%, var(--panel-bg)),
+    var(--panel-bg) 65%,
+    var(--panel-bg)
   );
-  background-size: var(--kpi-expanded-width, 210px) 100%;
   background-position: left center;
   background-repeat: no-repeat;
 }
@@ -590,4 +595,19 @@ app-input-number.kpi-countdown-current-input {
 .kpi.is-selected {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+
+:host-context([data-theme='light']) {
+  .kpi-count-badge.is-fraction {
+    color: var(--accent);
+  }
+  .kpi-del:hover,
+  .kpi-bulk-delete-btn {
+    color: var(--bg-color);
+  }
+  app-input-number.kpi-countdown-current-input {
+    --input-number-field-color: var(--accent);
+    --input-number-focus-color: var(--accent);
+    --input-number-field-bg: var(--bg-color);
+  }
 }

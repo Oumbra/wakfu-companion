@@ -56,7 +56,7 @@
   transition: color 0.25s ease;
 }
 .icon-switch-option.gender-switch-option.selected {
-  color: #04222a;
+  color: var(--on-accent);
 }
 .class-picker-grid {
   display: grid;

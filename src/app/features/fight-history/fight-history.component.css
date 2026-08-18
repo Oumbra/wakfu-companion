@@ -154,6 +154,7 @@
    wrapper reste plus simple (une seule zone de survol/focus pour toute la
    vignette). */
 .fight-image-wrap {
+  position: relative;
   display: inline-flex;
   flex-shrink: 0;
 }
@@ -163,6 +164,16 @@
   object-fit: contain;
   border-radius: 3px;
   flex-shrink: 0;
+}
+/* Pierre de donjon (voir dungeonStoneItemId, dungeon-run-grouping.util.ts) — badge en haut à droite
+   de l'illustration quand elle a été dropée durant le combat de boss correspondant. */
+.dungeon-stone-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
 }
 .fight-clock {
   display: flex;
@@ -177,8 +188,9 @@
 .fight-meta {
   color: var(--text-muted);
   font-family: monospace;
-  font-size: 0.85rem;
+  font-size: 11px;
   flex-grow: 1;
+  text-align: end;
 }
 
 .caret {
@@ -374,4 +386,15 @@
   color: var(--accent);
   text-align: right;
   flex-shrink: 0;
+}
+
+:host-context([data-theme='light']) {
+  .collapsible-body,
+  .loot-body {
+    background: var(--panel-bg);
+  }
+  .fight-group-controls,
+  .history-view-switch-row {
+    background: var(--surface-active);
+  }
 }

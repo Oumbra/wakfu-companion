@@ -33,6 +33,10 @@ interface StoredProfile {
    * (`AVATAR_INDEX_SCHEMA_VERSION`, planche `class-portraits.data.ts`, 1 seul portrait par classe)
    * à la prochaine lecture, voir loadFromStorage. */
   avatarSchemaVersion?: number;
+  /** Avatar "Fan-Art" choisi (voir avatar-fanart-galleries.data.ts), prioritaire sur `avatarIndex`
+   * pour l'affichage quand non nul (voir setAvatarExternal). `avatarIndex` reste inchangé dans ce
+   * cas — repris tel quel si l'utilisateur revient à la "Galerie MMO". */
+  avatarExternalUrl?: string | null;
   soundItems: SoundItemEntry[];
   /** Durée d'affichage du toast d'alerte sonore, en secondes (utilisée seulement si !alertManualClose). */
   alertDurationSeconds: number;
@@ -66,6 +70,8 @@ export class ProfileService {
 
   readonly pseudo = signal('');
   readonly avatarIndex = signal<number | null>(null);
+  /** Avatar "Fan-Art" choisi (url complète), prioritaire sur `avatarIndex` quand non nul. */
+  readonly avatarExternalUrl = signal<string | null>(null);
   readonly soundItems = signal<SoundItemEntry[]>([]);
   readonly alertDurationSeconds = signal(DEFAULT_ALERT_DURATION_SECONDS);
   readonly alertManualClose = signal(false);
@@ -95,6 +101,7 @@ export class ProfileService {
         ? migrateLegacyAvatarIndex(rawAvatarIndex, stored?.avatarSchemaVersion)
         : rawAvatarIndex,
     );
+    this.avatarExternalUrl.set(stored?.avatarExternalUrl ?? null);
     const mergedSoundItems = this.mergeWithDefaultSoundItems(stored?.soundItems);
     this.soundItems.set(mergedSoundItems);
     // Migration : une ancienne version stockait 0 = "fermeture manuelle" dans alertDurationSeconds.
@@ -159,6 +166,14 @@ export class ProfileService {
 
   setAvatar(index: number): void {
     this.avatarIndex.set(index);
+    this.avatarExternalUrl.set(null);
+    this.persist();
+  }
+
+  /** Choix d'un avatar "Fan-Art" (voir avatar-fanart-galleries.data.ts) — ne touche pas
+   * `avatarIndex`, repris tel quel si l'utilisateur revient à la "Galerie MMO". */
+  setAvatarExternal(url: string): void {
+    this.avatarExternalUrl.set(url);
     this.persist();
   }
 
@@ -233,6 +248,7 @@ export class ProfileService {
       pseudo: this.pseudo(),
       avatarIndex: this.avatarIndex(),
       avatarSchemaVersion: AVATAR_INDEX_SCHEMA_VERSION,
+      avatarExternalUrl: this.avatarExternalUrl(),
       soundItems: this.soundItems(),
       alertDurationSeconds: this.alertDurationSeconds(),
       alertManualClose: this.alertManualClose(),

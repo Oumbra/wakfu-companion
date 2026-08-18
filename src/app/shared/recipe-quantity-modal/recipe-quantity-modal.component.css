@@ -105,6 +105,36 @@
   color: var(--text-bright);
 }
 
+/* Remplace qty-row + liste pendant la résolution réseau (voir template) — occupe tout l'espace
+   restant sous le bandeau objet source (`flex: 1` dans .recipe-modal-body-header, colonne flex)
+   pour centrer le spinner horizontalement ET verticalement dans cette zone plutôt qu'en haut. Un
+   `min-height` évite une modale trop basse le temps du chargement (avant que la liste réelle,
+   potentiellement plus haute, ne prenne le relais). */
+.recipe-modal-loading {
+  flex: 1;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Même anneau que l'overlay plein écran (loading-overlay.component.css), décliné localement à la
+   taille de la modale plutôt que réutilisé tel quel : ce spinner vit dans la mise en page normale
+   du document (pas `position: fixed`), contrairement à celui de l'overlay. */
+.recipe-modal-loading-spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 4px solid color-mix(in srgb, var(--accent) 25%, transparent);
+  border-top-color: var(--accent);
+  animation: recipe-modal-loading-spin 0.8s linear infinite;
+}
+@keyframes recipe-modal-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .recipe-modal-qty-row {
   display: flex;
   align-items: center;

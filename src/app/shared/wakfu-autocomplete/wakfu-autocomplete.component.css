@@ -22,7 +22,10 @@
   outline: none;
 }
 
-.wakfu-autocomplete-list {
+/* Conteneur du menu déroulant (ligne de filtre par catégorie + liste de résultats) — porte
+   désormais le positionnement absolu/l'habillage autrefois sur `.wakfu-autocomplete-list` elle-même
+   (voir plus bas), qui ne fait plus que défiler ses propres lignes. */
+.wakfu-autocomplete-panel {
   position: absolute;
   top: 100%;
   left: 0;
@@ -32,10 +35,57 @@
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  z-index: 20;
+}
+/* Ligne d'icônes de catégorie (voir CLAUDE.md "Tooltips", tooltipPosition="bottom" cohérent avec
+   une 1ère ligne de panneau — pas de contrainte de clipping, TooltipDirective rend au niveau
+   racine, voir CLAUDE.md). */
+.wakfu-autocomplete-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.wakfu-autocomplete-category-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.wakfu-autocomplete-category-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.wakfu-autocomplete-category-btn.active {
+  opacity: 1;
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.wakfu-autocomplete-category-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.wakfu-autocomplete-empty {
+  margin: 0;
+  padding: 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.wakfu-autocomplete-list {
   /* Au-delà de 5 éléments (5 * 35px), la liste défile au lieu de s'étirer. */
   max-height: 175px;
   overflow-y: auto;
-  z-index: 20;
 }
 /* `.wakfu-autocomplete-item` est un conteneur flex (pas un `<button>`, voir
    CLAUDE.md — un bouton ne peut pas imbriquer un autre bouton) : le résultat
@@ -63,7 +113,14 @@
   background: var(--border);
   color: var(--text-muted);
 }
+/* `position: relative` : sert d'ancre à `.wakfu-autocomplete-item-rarity` (voir plus bas), qui doit
+   se positionner par rapport à SA PROPRE ligne — sans ça, son ancêtre positionné le plus proche est
+   `.wakfu-autocomplete-panel` (voir plus haut), qui ne défile PAS (seule `.wakfu-autocomplete-list`
+   à l'intérieur défile) : le badge de rareté restait alors figé en haut du panneau pendant que les
+   lignes défilaient dessous, donnant l'impression que ce sont toujours les raretés des premières
+   lignes qui s'affichent, quel que soit l'objet réellement visible à cet endroit (bug réel). */
 .wakfu-autocomplete-item-main {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -126,6 +183,8 @@
 .wakfu-autocomplete-item-rarity {
   position: absolute;
   left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 14px;
   height: 14px;
   object-fit: contain;
@@ -137,4 +196,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+:host-context([data-theme='light']) {
+  .wakfu-autocomplete input {
+    background: var(--panel-bg);
+  }
 }

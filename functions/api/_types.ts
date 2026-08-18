@@ -4,10 +4,6 @@
 
 export interface Env {
   DATABASE_URL: string;
-  /** Jeton de service statique protégeant les endpoints prix d'écriture/export (lot 4, prompt
-   * 4.2) — voir functions/api/_price-auth.ts. Distinct par environnement (preview/production),
-   * comme DATABASE_URL/DATABASE_URL_PREVIEW — voir server/README.md. */
-  PRICE_SERVICE_TOKEN: string;
   /** Identifiants OAuth (lot 5, prompt 5.1) — voir server/README.md. Absents tant que les
    * secrets ne sont pas posés : les routes /auth/{provider}/* répondent alors 503
    * « fournisseur non configuré », le reste de l'application (mode invité) est intact. */

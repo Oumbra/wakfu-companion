@@ -83,3 +83,9 @@
     background-color: unset;
   }
 }
+
+:host-context([data-theme='light']) {
+  :host {
+    background: var(--surface-active);
+  }
+}

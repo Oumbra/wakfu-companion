@@ -109,3 +109,13 @@
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
 }
+
+:host-context([data-theme='light']) {
+  .fight-stats-row {
+    background: var(--surface-well);
+  }
+  .fight-tabs-row,
+  .view-switch-row {
+    background: var(--surface-active);
+  }
+}

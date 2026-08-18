@@ -13,7 +13,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { CharacterViewMode, ProfileService } from '../../core/services/profile.service';
 import { PersistenceService } from '../../core/services/persistence.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
-import { NavigationService } from '../../core/services/navigation.service';
+import { NavigationService, ProfileTab } from '../../core/services/navigation.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
@@ -25,6 +25,12 @@ import { ClassPortraitComponent } from '../../shared/class-portrait/class-portra
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../core/data/class-portraits.data';
+import {
+  AVATAR_FANART_GALLERIES,
+  AvatarFanartGalleryId,
+  avatarFanartUrls,
+  findAvatarFanartGallery,
+} from '../../core/data/avatar-fanart-galleries.data';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
 import { CatalogService } from '../../core/api/catalog.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -46,10 +52,14 @@ import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
+import { LightThemeVariant, ThemeService } from '../../core/services/theme.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 
-type ProfileTab = 'avatar' | 'colorblind' | 'alerts' | 'characters' | 'connection';
+/** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
+ * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
+ * une seule valeur pratique à comparer/piloter depuis le template (voir `activeThemeChoice`). */
+type ThemeChoice = 'dark' | LightThemeVariant;
 
 interface ColorblindSwatch {
   labelKey: string;
@@ -67,7 +77,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
   redGreen: [
     { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
     { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
-    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
+    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#148fbb' },
     { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
     { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
     { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
@@ -109,6 +119,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly roster = inject(CharacterRosterService);
   protected readonly gameServers = inject(GameServerService);
   protected readonly colorblind = inject(ColorblindService);
+  protected readonly theme = inject(ThemeService);
   protected readonly helpModal = inject(HelpModalService);
   protected readonly auth = inject(AuthService);
   private readonly dataExport = inject(AppDataExportService);
@@ -125,6 +136,68 @@ export class ProfilePageComponent implements OnDestroy {
   /** Cases de la grille "Avatar" (18 classes x 2 sexes, voir class-portraits.data.ts) — l'index
    * dans ce tableau EST `profile.avatarIndex()` (schéma v5, voir ProfileService). */
   protected readonly avatarGridEntries = AVATAR_GRID_ENTRIES;
+
+  /** Options du switch de galerie d'avatar (voir CLAUDE.md) : la "Galerie MMO" (grille de classes
+   * ci-dessus) puis les 3 galeries "Fan-Art" du compte Ankama (avatar-fanart-galleries.data.ts). */
+  protected readonly avatarGalleryOptions: readonly {
+    id: 'mmo' | AvatarFanartGalleryId;
+    labelKey: string;
+  }[] = [{ id: 'mmo', labelKey: 'profile.avatarGalleryMmo' }, ...AVATAR_FANART_GALLERIES];
+
+  /** Galerie actuellement affichée dans le switch — présélectionnée sur la galerie de l'avatar
+   * externe déjà enregistré (s'il y en a un), sinon "Galerie MMO". Purement une préférence
+   * d'affichage de CETTE page (pas persistée) : le choix réel de l'avatar reste `profile.avatarIndex`/
+   * `profile.avatarExternalUrl`. */
+  protected readonly avatarGallery = signal<'mmo' | AvatarFanartGalleryId>(
+    findAvatarFanartGallery(this.profile.avatarExternalUrl())?.id ?? 'mmo',
+  );
+
+  /** Urls de la galerie "Fan-Art" actuellement affichée (vide pour "Galerie MMO", qui utilise
+   * `avatarGridEntries` à la place). Contient volontairement toute la plage d'ids (voir
+   * avatar-fanart-galleries.data.ts) — les urls sans image valide sont masquées au chargement via
+   * `brokenAvatarUrls`, pas filtrées ici. */
+  protected readonly currentFanartUrls = computed<readonly string[]>(() => {
+    const id = this.avatarGallery();
+    if (id === 'mmo') return [];
+    const gallery = AVATAR_FANART_GALLERIES.find((g) => g.id === id);
+    return gallery ? avatarFanartUrls(gallery) : [];
+  });
+
+  /** Urls "Fan-Art" dont l'`<img>` a échoué au chargement (id sans image valide dans la plage,
+   * voir avatar-fanart-galleries.data.ts) — masquées de la grille plutôt que montrées cassées. */
+  protected readonly brokenAvatarUrls = signal<ReadonlySet<string>>(new Set());
+
+  /** Cartes du picker "Thème" (section Accessibilité, avant le mode daltonien — les deux sont
+   * dépendants : les vignettes avant/après du daltonisme ci-dessous montrent les couleurs du thème
+   * actuellement actif). `swatch` = 3 pastilles (fond/panneau/accent) pour prévisualiser la
+   * palette sans avoir à l'activer d'abord — valeurs dupliquées de styles.css
+   * (`[data-theme='light'][data-light-theme='...']`), à garder synchronisées. */
+  protected readonly themeOptions: readonly {
+    value: ThemeChoice;
+    labelKey: string;
+    swatch: readonly [string, string, string];
+  }[] = [
+    { value: 'dark', labelKey: 'profile.themeDark', swatch: ['#121212', '#1e1e1e', '#00d2ff'] },
+    { value: 'a', labelKey: 'profile.themeA', swatch: ['#f7f7f8', '#ffffff', '#00748a'] },
+    { value: 'b', labelKey: 'profile.themeB', swatch: ['#faf6ee', '#fffdf9', '#2a4d8f'] },
+    { value: 'c', labelKey: 'profile.themeC', swatch: ['#eceff4', '#f9fafc', '#3763a6'] },
+    { value: 'd', labelKey: 'profile.themeD', swatch: ['#f4f4f5', '#ffffff', '#0058c7'] },
+  ];
+
+  /** Fusionne `theme.theme()`/`theme.lightVariant()` (2 signaux indépendants, voir ThemeService)
+   * en une seule valeur comparable aux `value` de `themeOptions` ci-dessus. */
+  protected readonly activeThemeChoice = computed<ThemeChoice>(() =>
+    this.theme.theme() === 'dark' ? 'dark' : this.theme.lightVariant(),
+  );
+
+  protected chooseTheme(choice: ThemeChoice): void {
+    if (choice === 'dark') {
+      this.theme.setTheme('dark');
+      return;
+    }
+    this.theme.setTheme('light');
+    this.theme.setLightVariant(choice);
+  }
 
   /** 3 positions du switch daltonien (voir `ColorblindService`) — libellé court affiché, libellé
    * complet en tooltip. Ordre = ordre visuel du switch ; `.icon-switch-3` générique de styles.css
@@ -191,7 +264,10 @@ export class ProfilePageComponent implements OnDestroy {
   ];
   protected readonly tabDefs = ProfilePageComponent.TAB_DEFS;
 
-  protected readonly activeTab = signal<ProfileTab>('avatar');
+  /** Alias vers `NavigationService.profileTab` (source unique de vérité, voir son commentaire —
+   * synchronisée avec l'URL) plutôt qu'un signal local : `.set()` ici met donc directement à jour
+   * la section active ET déclenche `RouteSyncService`. */
+  protected readonly activeTab = this.nav.profileTab;
 
   /** Repli desktop des 2 rails de navigation (`.profile-rail` principal ET `.roster-account-rail`,
    * voir icône `.profile-rail-collapse-toggle` en bas de chacun) — préférence purement locale
@@ -392,6 +468,23 @@ export class ProfilePageComponent implements OnDestroy {
 
   protected chooseAvatar(index: number): void {
     this.profile.setAvatar(index);
+  }
+
+  /** Changement de galerie via le switch (voir CLAUDE.md) — n'affecte que l'affichage courant de
+   * cette page, pas l'avatar réellement choisi (voir avatarGallery). */
+  protected onAvatarGallerySelect(id: string): void {
+    this.avatarGallery.set(id as 'mmo' | AvatarFanartGalleryId);
+  }
+
+  protected chooseExternalAvatar(url: string): void {
+    this.profile.setAvatarExternal(url);
+  }
+
+  /** Une url "Fan-Art" de la plage n'a pas forcément d'image valide (voir
+   * avatar-fanart-galleries.data.ts) — masque sa case au lieu d'afficher une icône cassée. */
+  protected onAvatarImgError(url: string): void {
+    if (this.brokenAvatarUrls().has(url)) return;
+    this.brokenAvatarUrls.update((s) => new Set(s).add(url));
   }
 
   /** Repris de l'ancienne page de connexion dédiée (voir CLAUDE.md) : nettoie une éventuelle

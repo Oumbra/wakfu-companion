@@ -5,7 +5,11 @@
   [appTooltip]="variant() === 'header' ? ('profile.button' | t) : null"
   tooltipPosition="bottom-right"
 >
-  @if (profile.avatarIndex() !== null) {
+  @if (profile.avatarExternalUrl(); as externalUrl) {
+    <div class="profile-avatar-wrapper">
+      <img class="profile-avatar" [src]="externalUrl" referrerpolicy="no-referrer" alt="" />
+    </div>
+  } @else if (profile.avatarIndex() !== null) {
     <div class="profile-avatar-wrapper">
       <app-class-portrait
         class="profile-avatar"

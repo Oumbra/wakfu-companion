@@ -2,20 +2,77 @@ import { computed, Injectable, signal } from '@angular/core';
 
 export type AppView = 'main' | 'profile' | 'legal' | 'account';
 
+/** Onglets mobile du tableau de bord (voir `DashboardComponent`, sur `main`) — définis ici (plutôt
+ * que dans le composant) pour que `NavigationService`/`RouteSyncService`/`app.routes.ts` puissent
+ * s'y référer sans dépendre d'un composant `features/`. `'tracker'` est la racine (path `''`, pas
+ * de segment dédié) — voir `pagePathFor`. */
+export type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
+
+/** Onglets du rail de la page profil (voir `ProfilePageComponent`, sur `profile`) — même raison
+ * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */
+export type ProfileTab = 'avatar' | 'colorblind' | 'connection' | 'alerts' | 'characters';
+
+/** Segment d'URL de chaque `ProfileTab` — distinct de l'id interne pour `colorblind`, dont le
+ * segment public est `accessibility` (le rail regroupe déjà plus que le seul mode daltonien sous ce
+ * libellé, voir `profile.railAccessibility`) sans qu'il vaille la peine de renommer l'id interne
+ * (encore utilisé tel quel par `ColorblindService`/le reste du composant). Les autres onglets
+ * gardent leur id comme segment (mapping identité). */
+const PROFILE_TAB_SEGMENT: Record<Exclude<ProfileTab, 'avatar'>, string> = {
+  colorblind: 'accessibility',
+  connection: 'connection',
+  alerts: 'alerts',
+  characters: 'characters',
+};
+
+/** Sous-onglets du panneau "Historique" (voir `HistoryComponent`, un cran sous `DashboardTab`
+ * `'history'`) — même raison d'être ici que `DashboardTab`/`ProfileTab`. `'combats'` est la racine
+ * de `/history` (pas de segment dédié), mais reste aussi joignable explicitement via `/history/fights`
+ * (voir `app.routes.ts`) — alias accepté en entrée, jamais généré par `pagePathFor`. */
+export type HistoryTab = 'combats' | 'purchases' | 'trades';
+
+/** Segment d'URL de chaque `HistoryTab` non-racine — `'combats'` s'appelle `fights` côté URL (mot
+ * public, cohérent avec `FightHistoryComponent`/`HistoryEventKind: 'fight'`) même si l'id interne
+ * reste `combats` (déjà utilisé tel quel dans `HistoryComponent`). */
+const HISTORY_TAB_SEGMENT: Record<Exclude<HistoryTab, 'combats'>, string> = {
+  purchases: 'purchases',
+  trades: 'trades',
+};
+
 type SlideDirection = 'forward' | 'backward';
 
 /** Chemin de page (sans préfixe de langue) pour une vue donnée — partagé entre `RouteSyncService`
  * (état → URL) et `SeoService` (canonical/hreflang) pour que les deux restent forcément
- * synchronisés avec `app.routes.ts` plutôt que de dupliquer ce switch à deux endroits. */
-export function pagePathFor(view: AppView, legalKind: 'notice' | 'privacy' | null): string {
+ * synchronisés avec `app.routes.ts` plutôt que de dupliquer ce switch à deux endroits.
+ *
+ * `dashboardTab`/`profileTab` (ignorés hors de leur vue respective) ajoutent le segment de la
+ * section active dans la page — omis quand elle vaut sa valeur "racine" (`tracker`/`avatar`) pour
+ * que l'URL par défaut reste la même qu'avant cette fonctionnalité (`/fr`, `/fr/profile`).
+ * `historyTab` n'est lu que quand `dashboardTab === 'history'` (sous-niveau propre à ce seul
+ * onglet) — même règle de racine omise pour `'combats'`. */
+export function pagePathFor(
+  view: AppView,
+  legalKind: 'notice' | 'privacy' | null,
+  dashboardTab: DashboardTab | null = null,
+  profileTab: ProfileTab | null = null,
+  historyTab: HistoryTab | null = null,
+): string {
   switch (view) {
     case 'profile':
-      return '/profile';
+      return profileTab && profileTab !== 'avatar'
+        ? `/profile/${PROFILE_TAB_SEGMENT[profileTab]}`
+        : '/profile';
     case 'account':
       return '/account';
     case 'legal':
       return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
     case 'main':
+      if (!dashboardTab || dashboardTab === 'tracker') return '';
+      if (dashboardTab === 'history') {
+        return historyTab && historyTab !== 'combats'
+          ? `/history/${HISTORY_TAB_SEGMENT[historyTab]}`
+          : '/history';
+      }
+      return `/${dashboardTab}`;
     default:
       return '';
   }
@@ -62,6 +119,18 @@ export class NavigationService {
    * vraie seulement après la première visite plutôt que dès le démarrage). */
   private readonly visited = signal<ReadonlySet<AppView>>(new Set(['main']));
 
+  /** Vrai depuis la construction du service jusqu'à peu après la toute première résolution de vue
+   * depuis l'URL (`goTo()`, appelé par `RouteBridgeComponent` — lien direct ou F5, voir son
+   * commentaire) : couvre TOUT l'écart, potentiellement asynchrone (ex. `fileConnectedGuard` qui
+   * attend `LogFileAccessService.ready`, voir son commentaire), entre le tout premier paint de
+   * `.view-panel` (valeur par défaut du panneau ciblé, souvent hors écran) et le moment où
+   * `goTo()` fixe sa position finale. Posé en CSS via `[class.no-transition]` sur chaque
+   * `.view-panel` (voir app.html/app.css) : sans lui, ce premier positionnement se ferait glisser
+   * comme une vraie navigation en cours d'utilisation — alors qu'il n'y a rien à faire glisser
+   * "depuis" sur un chargement, la page doit apparaître directement dans sa position finale. */
+  readonly skipInitialTransition = signal(true);
+  private initialViewResolved = false;
+
   /** Consommé une seule fois par `ProfilePageComponent` : force l'onglet Connexion (section
    * Discord/Google, voir CLAUDE.md) à la prochaine ouverture de la page profil. Remplace l'ancienne
    * vue de connexion dédiée (`AppView` 'login', supprimée) — la page compte (état invité) déclenche
@@ -72,6 +141,16 @@ export class NavigationService {
     const s = this.stack();
     return s[s.length - 1];
   });
+
+  /** Section active de `main`/`profile` — source unique de vérité, lue/écrite directement par
+   * `DashboardComponent`/`ProfilePageComponent` (leur `activeTab` local a été remplacé par un
+   * alias vers ces signaux) ET par `RouteBridgeComponent`/`RouteSyncService` (URL ↔ état) : mêmes
+   * signaux des deux côtés, pas de synchronisation à maintenir entre deux copies. Valeur par
+   * défaut = section "racine" de chaque page (voir `pagePathFor`). */
+  readonly dashboardTab = signal<DashboardTab>('tracker');
+  readonly profileTab = signal<ProfileTab>('avatar');
+  /** Même principe, un cran sous `dashboardTab === 'history'` — voir `HistoryComponent`. */
+  readonly historyTab = signal<HistoryTab>('combats');
 
   hasVisited(view: AppView): boolean {
     return this.visited().has(view);
@@ -135,8 +214,35 @@ export class NavigationService {
    *  - `view` est plus bas dans la pile (ex. légal → profil alors que profil précède déjà légal) :
    *    dépile jusqu'à `view`, comme un retour classique (anime en arrière) ;
    *  - sinon (vue jamais visitée sur ce chemin, ex. lien direct `/profil` au tout premier chargement) :
-   *    empile normalement (anime en avant), même comportement que `openProfile()` etc. */
+   *    empile normalement (anime en avant), même comportement que `openProfile()` etc.
+   *
+   * Cas particulier du TOUT premier appel (voir `skipInitialTransition`) : c'est systématiquement
+   * `RouteBridgeComponent` qui traduit la toute première résolution d'URL (lien direct/F5) en
+   * appel à cette méthode — place directement `view` en sommet de pile (avec `main` en dessous,
+   * PAS `[view]` seul : le bouton "Retour" de `<app-page>` doit pouvoir dépiler, voir plus bas),
+   * sans passer par `transitionPeer`/`push`, pour qu'aucune transition ne puisse s'y accrocher.
+   * Les appels suivants (navigation réelle en cours d'utilisation, y compris un futur changement
+   * d'URL) retrouvent le comportement normal ci-dessus. */
   goTo(view: AppView): void {
+    if (!this.initialViewResolved) {
+      this.initialViewResolved = true;
+      if (view !== 'main') {
+        // `['main', view]`, PAS `[view]` seul : sans `main` en dessous, le bouton "Retour" de
+        // `<app-page>` (qui appelle `pop()`) ne trouverait rien à dépiler sur un lien direct/F5
+        // vers une page non-main (bug réel corrigé en session — `pop()` ignore une pile à un seul
+        // élément, voir son commentaire) alors que l'utilisateur doit pouvoir revenir au tableau
+        // de bord comme s'il y était passé normalement.
+        this.stack.set(['main', view]);
+        if (!this.visited().has(view)) {
+          this.visited.set(new Set([...this.visited(), view]));
+        }
+      }
+      // Laisse ce premier positionnement (sans transition) être peint avant de réactiver les
+      // transitions pour les navigations suivantes, celles-là réellement déclenchées en cours
+      // d'utilisation.
+      setTimeout(() => this.skipInitialTransition.set(false));
+      return;
+    }
     const s = this.stack();
     const top = s[s.length - 1];
     if (top === view) return;
