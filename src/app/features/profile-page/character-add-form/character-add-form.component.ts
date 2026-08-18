@@ -1,7 +1,7 @@
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { ClassPickerService } from '../../../core/services/class-picker.service';
 import { Gender } from '../../../core/data/class-icons.data';
-import { getAvatarGridIndex } from '../../../core/data/class-portraits.data';
+import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../../core/data/class-portraits.data';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import { AvatarIconComponent } from '../../../shared/avatar-icon/avatar-icon.component';
@@ -44,6 +44,19 @@ export class CharacterAddFormComponent {
   protected readonly canAdd = computed(
     () => this.pendingClass() !== null && this.name().trim().length > 0,
   );
+
+  /** Ordre aléatoire (mélangé une seule fois à la création du formulaire, pas recalculé à chaque
+   * rendu) des 36 portraits (18 classes x 2 sexes, voir AVATAR_GRID_ENTRIES) pour le défilement du
+   * bouton ClassPicker tant qu'aucune classe n'est choisie — dupliqué en fin de tableau pour que
+   * l'animation CSS (translateX -50%, voir character-add-form.component.css) boucle sans à-coup. */
+  protected readonly filmstripIndices: readonly number[] = ((): readonly number[] => {
+    const shuffled = AVATAR_GRID_ENTRIES.map((_, i) => i);
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return [...shuffled, ...shuffled];
+  })();
 
   protected setName(value: string): void {
     this.name.set(value);
