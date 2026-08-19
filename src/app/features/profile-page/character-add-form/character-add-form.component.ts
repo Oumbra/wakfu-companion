@@ -5,6 +5,7 @@ import { AVATAR_GRID_ENTRIES, getAvatarGridIndex } from '../../../core/data/clas
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import { AvatarIconComponent } from '../../../shared/avatar-icon/avatar-icon.component';
+import { DirectionalSlideshowComponent } from '../../../shared/directional-slideshow/directional-slideshow.component';
 import { MediaQuerySignal } from '../../../core/utils/media-query-signal';
 
 export interface NewRosterCharacter {
@@ -21,7 +22,7 @@ export interface NewRosterCharacter {
  */
 @Component({
   selector: 'app-character-add-form',
-  imports: [TranslatePipe, TooltipDirective, AvatarIconComponent],
+  imports: [TranslatePipe, TooltipDirective, AvatarIconComponent, DirectionalSlideshowComponent],
   templateUrl: './character-add-form.component.html',
   styleUrl: './character-add-form.component.css',
 })
@@ -45,18 +46,11 @@ export class CharacterAddFormComponent {
     () => this.pendingClass() !== null && this.name().trim().length > 0,
   );
 
-  /** Ordre aléatoire (mélangé une seule fois à la création du formulaire, pas recalculé à chaque
-   * rendu) des 36 portraits (18 classes x 2 sexes, voir AVATAR_GRID_ENTRIES) pour le défilement du
-   * bouton ClassPicker tant qu'aucune classe n'est choisie — dupliqué en fin de tableau pour que
-   * l'animation CSS (translateX -50%, voir character-add-form.component.css) boucle sans à-coup. */
-  protected readonly filmstripIndices: readonly number[] = ((): readonly number[] => {
-    const shuffled = AVATAR_GRID_ENTRIES.map((_, i) => i);
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return [...shuffled, ...shuffled];
-  })();
+  /** Les 36 portraits (18 classes x 2 sexes, voir AVATAR_GRID_ENTRIES) proposés en boucle par
+   * `app-directional-slideshow` (voir character-add-form.component.html) tant qu'aucune classe
+   * n'est choisie — le tirage aléatoire (sans répétition consécutive) est géré par ce composant,
+   * pas besoin de mélanger la liste ici. */
+  protected readonly avatarIndices: readonly number[] = AVATAR_GRID_ENTRIES.map((_, i) => i);
 
   protected setName(value: string): void {
     this.name.set(value);
