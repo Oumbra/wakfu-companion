@@ -1,10 +1,5 @@
 @if (tour.isOpen()) {
-  <div
-    class="onboarding-backdrop"
-    (click)="tour.close()"
-    appEscapeClose
-    (appEscapeClose)="tour.close()"
-  ></div>
+  <div class="onboarding-backdrop"></div>
   <div
     #modal
     class="onboarding-modal"
@@ -15,31 +10,42 @@
     (keydown)="onKeydown($event)"
   >
     <div class="onboarding-top">
-      <button type="button" class="onboarding-skip" (click)="tour.close()">
-        {{ 'onboarding.skip' | t }}
-      </button>
       <button
         type="button"
         class="icon-btn onboarding-close"
-        [appTooltip]="'profile.closeToast' | t"
+        [disabled]="isLast()"
+        [appTooltip]="'onboarding.jumpToEnd' | t"
         tooltipPosition="top"
-        (click)="tour.close()"
+        (click)="jumpToEnd()"
       >
         ×
       </button>
     </div>
 
-    <div class="onboarding-body">
+    <div class="onboarding-body" [class.onboarding-body-top]="slide().mediaPosition === 'top'">
       @if (slide().media; as media) {
         <div class="onboarding-media">
-          <video
-            [src]="media.video"
-            [poster]="media.poster"
-            autoplay
-            muted
-            loop
-            playsinline
-          ></video>
+          <img class="onboarding-media-poster" [src]="media.poster" alt="" />
+          @if (media.kind === 'gif') {
+            <img
+              class="onboarding-media-real"
+              [class.loaded]="mediaLoaded()"
+              [src]="media.src"
+              alt=""
+              (load)="mediaLoaded.set(true)"
+            />
+          } @else {
+            <video
+              class="onboarding-media-real"
+              [class.loaded]="mediaLoaded()"
+              [src]="media.src"
+              autoplay
+              muted
+              loop
+              playsinline
+              (loadeddata)="mediaLoaded.set(true)"
+            ></video>
+          }
         </div>
       } @else {
         <div class="onboarding-media onboarding-media-icon">
