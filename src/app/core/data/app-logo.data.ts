@@ -4,3 +4,4 @@
  * immuable — régénérer le hash si le fichier change).
  */
 export const APP_LOGO_PURPLE_DATA_URI = 'assets/ui/logo-purple-9dfa03c6.png';
+export const LARGE_APP_LOGO_PURPLE_DATA_URI = 'icons/icon-152x152.png';
