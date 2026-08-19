@@ -2,7 +2,8 @@
   display: contents;
 }
 
-/* z-index aligné sur .help-modal (600/601), voir CLAUDE.md. */
+/* z-index aligné sur .help-modal (600/601), voir CLAUDE.md. Pas de gestionnaire de clic : le fond
+   ne ferme plus la modale (voir la doc de classe du composant). */
 .onboarding-backdrop {
   position: fixed;
   inset: 0;
@@ -10,15 +11,16 @@
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* Proportionnelle au viewport de l'utilisateur (min(%, plafond px)) plutôt qu'une largeur fixe :
+   grandit avec la fenêtre jusqu'aux plafonds ci-dessous, se réduit sur un petit écran. */
 .onboarding-modal {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 601;
-  width: 760px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 24px);
+  width: min(92vw, 1200px);
+  height: min(88vh, 820px);
   display: flex;
   flex-direction: column;
   background: var(--panel-bg);
@@ -45,50 +47,56 @@
   position: absolute;
   top: 12px;
   right: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
   z-index: 1;
 }
 
-.onboarding-skip {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  cursor: pointer;
-  padding: 4px 6px;
-}
-
-.onboarding-skip:hover {
-  color: var(--text-color);
-}
-
 .onboarding-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: stretch;
-  gap: 24px;
-  padding: 52px 28px 24px 28px;
+  /* Centré (pas stretch) : la boîte média garde un format portrait raisonnable (aspect-ratio
+     ci-dessous) même quand la modale grandit avec le viewport, plutôt que de s'étirer sur toute la
+     hauteur disponible et laisser un vide en haut/bas des GIF au format plus carré. */
+  align-items: center;
+  gap: clamp(20px, 3vw, 32px);
+  padding: clamp(48px, 7vh, 60px) clamp(24px, 3.5vw, 36px) clamp(20px, 3vh, 28px);
   overflow-y: auto;
 }
 
 .onboarding-media {
-  width: 280px;
-  height: 320px;
+  position: relative;
+  width: 40%;
+  min-width: 240px;
+  max-width: 480px;
+  aspect-ratio: 3 / 4;
+  max-height: min(58vh, 560px);
   flex-shrink: 0;
   border-radius: 6px;
   background: var(--surface-well);
   border: 1px solid var(--border);
   overflow: hidden;
-  position: relative;
 }
 
-.onboarding-media video {
+.onboarding-media-poster,
+.onboarding-media-real {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: contain;
   display: block;
   background: var(--surface-well);
+}
+
+/* Fondu enchaîné : l'aperçu statique (léger) reste visible tant que le média réel (potentiellement
+   un GIF non recompressé, lourd) n'a pas fini de charger. */
+.onboarding-media-real {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.onboarding-media-real.loaded {
+  opacity: 1;
 }
 
 .onboarding-media-icon {
@@ -103,7 +111,33 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+/* Diapositive avec illustration au-dessus du texte (voir OnboardingSlide.mediaPosition) : format
+   large et plat plutôt que la colonne latérale standard. */
+.onboarding-body-top {
+  flex-direction: column;
+  align-items: stretch;
+  /* La boîte média garde une hauteur fixe (clamp) même quand la modale grandit avec le viewport — sans
+     ça, le bloc média+texte resterait collé en haut avec un grand vide en dessous. */
   justify-content: center;
+}
+
+.onboarding-body-top .onboarding-media {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  aspect-ratio: auto;
+  height: clamp(140px, 26vh, 260px);
+  max-height: none;
+}
+
+.onboarding-body-top .onboarding-text {
+  /* `flex: 0 0 auto` (pas le `flex: 1` de base) : sans ça le texte s'étire pour occuper tout
+     l'espace vertical restant de la colonne et neutralise le `justify-content: center` du parent
+     (plus aucun espace disponible à répartir). */
+  flex: 0 0 auto;
+  margin-top: clamp(16px, 2.5vh, 24px);
 }
 
 .onboarding-heading {
@@ -218,6 +252,11 @@
 }
 
 @media (max-width: 640px) {
+  .onboarding-modal {
+    width: min(96vw, 1200px);
+    height: min(94vh, 820px);
+  }
+
   .onboarding-body {
     flex-direction: column;
     align-items: center;
@@ -227,11 +266,17 @@
   .onboarding-media {
     width: 100%;
     max-width: 320px;
-    height: 220px;
+    aspect-ratio: auto;
+    height: clamp(160px, 30vh, 260px);
+    max-height: none;
   }
 
   .onboarding-text {
     width: 100%;
+  }
+
+  .onboarding-body-top .onboarding-text {
+    margin-top: 16px;
   }
 
   .onboarding-footer {
