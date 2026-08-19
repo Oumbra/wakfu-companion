@@ -307,6 +307,13 @@ export class ProfilePageComponent implements OnDestroy {
    * `character-add-collapse` dans le template/CSS. Un seul compte est affiché à la fois donc un
    * simple booléen suffit (pas besoin de le clé sur l'id du compte). */
   protected readonly addCharacterFormOpen = signal(false);
+  /** Les deux gabarits (mobile toujours visible / desktop repliable, voir plus haut) sont mutuellement
+   * exclusifs (`@if (isMobile.matches())`) : un seul des deux est jamais présent dans le DOM à la fois,
+   * `resetCharacterAddForm` ci-dessous appelle donc systématiquement les deux sans distinction. */
+  private readonly characterAddFormMobile =
+    viewChild<CharacterAddFormComponent>('characterAddFormMobile');
+  private readonly characterAddFormDesktop =
+    viewChild<CharacterAddFormComponent>('characterAddFormDesktop');
   /** Hauteur réelle du contenu du formulaire, mesurée via ResizeObserver plutôt qu'une animation
    * CSS `grid-template-rows: 0fr -> 1fr` (technique essayée d'abord, mais empiriquement peu fiable
    * pour la fermeture : reste bloquée à la hauteur ouverte dans certains moteurs — vérifié en
@@ -589,6 +596,15 @@ export class ProfilePageComponent implements OnDestroy {
   protected selectAccount(id: string): void {
     this.selectedAccountId.set(id);
     this.addCharacterFormOpen.set(false);
+    this.resetCharacterAddForm();
+  }
+
+  /** Vide le formulaire "Ajouter un personnage" (nom + classe choisie) — sans ça, l'instance de
+   * `CharacterAddFormComponent` persiste au changement de compte (seule la donnée `account`
+   * projetée change, pas le `@if` qui l'englobe) et garderait la saisie du compte précédent. */
+  private resetCharacterAddForm(): void {
+    this.characterAddFormMobile()?.reset();
+    this.characterAddFormDesktop()?.reset();
   }
 
   /** Libellé affiché sur l'onglet : "Principal" pour le compte par défaut
@@ -624,9 +640,15 @@ export class ProfilePageComponent implements OnDestroy {
   }
 
   /** Bouton "Ajouter un personnage" desktop : déplie/replie le formulaire inline juste en dessous
-   * (voir `character-add-collapse` dans le template/CSS) — remplace l'ancienne modale centrée. */
+   * (voir `character-add-collapse` dans le template/CSS) — remplace l'ancienne modale centrée. À la
+   * fermeture (reclic), le formulaire est aussi vidé pour ne pas laisser réapparaître une saisie
+   * abandonnée à la prochaine ouverture. */
   protected toggleAddCharacterForm(): void {
-    this.addCharacterFormOpen.update((open) => !open);
+    const next = !this.addCharacterFormOpen();
+    this.addCharacterFormOpen.set(next);
+    if (!next) {
+      this.resetCharacterAddForm();
+    }
   }
 
   /** Voir EditableNameComponent (`(renamed)`) — `CharacterRosterService.renameCharacter` gère

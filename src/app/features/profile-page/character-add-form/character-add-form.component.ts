@@ -74,6 +74,14 @@ export class CharacterAddFormComponent {
     const name = this.name().trim();
     if (!pending || !name) return;
     this.added.emit({ name, className: pending.className, gender: pending.gender });
+    this.reset();
+  }
+
+  /** Vide le formulaire (nom + classe choisie) sans émettre `added` — appelé par le parent
+   * (`ProfilePageComponent`, via `viewChild`) au changement de compte ou à la fermeture du
+   * panneau desktop (bouton "Ajouter un personnage" recliqué), pour ne pas laisser une saisie
+   * d'un compte/ouverture précédente réapparaître à la prochaine ouverture. */
+  public reset(): void {
     this.name.set('');
     this.pendingClass.set(null);
   }
