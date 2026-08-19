@@ -1,0 +1,8 @@
+:host {
+  display: contents;
+}
+
+.onboarding-icon-logo {
+  object-fit: contain;
+  display: block;
+}

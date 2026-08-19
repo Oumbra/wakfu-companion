@@ -325,6 +325,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.body':
       "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
 
+    'onboarding.helpButton': 'Revoir le pas-à-pas',
+    'onboarding.skip': 'Passer',
+    'onboarding.prev': 'Précédent',
+    'onboarding.next': 'Suivant',
+    'onboarding.finish': 'Commencer à jouer',
+    'onboarding.help.replay': 'Revoir tout le pas-à-pas',
+    'onboarding.help.replayDesc': 'Revivez les 9 diapositives depuis le début.',
+    'onboarding.help.jumpTo': 'Aller directement à…',
+    'onboarding.welcome.title': 'Bienvenue sur Wakfu Companion',
+    'onboarding.welcome.desc':
+      "Ce pas-à-pas vous présente, en quelques diapositives, les grandes fonctionnalités de l'application. Vous pourrez le relire à tout moment depuis le bouton d'aide de l'en-tête.",
+    'onboarding.tracker.title': 'Suivez vos progrès en un coup d’œil',
+    'onboarding.tracker.desc':
+      'Kamas, XP/h, ravitaillement, objectifs personnalisés : les tuiles du Tracker se mettent à jour en direct à chaque ligne du journal, sans rien à saisir à la main.',
+    'onboarding.tracker.label': 'Tracker',
+    'onboarding.damage.title': 'Qui tape le plus fort ?',
+    'onboarding.damage.desc':
+      'Le compteur de dégâts détaille chaque combattant, allié comme ennemi, tour par tour — avec réattribution manuelle si la détection se trompe.',
+    'onboarding.damage.label': 'Dégâts',
+    'onboarding.history.title': 'Tout votre historique, filtrable',
+    'onboarding.history.desc':
+      'Combats, achats et échanges sont archivés automatiquement et consultables à tout moment, avec tri et filtres par jour, origine ou type.',
+    'onboarding.history.label': 'Historique',
+    'onboarding.chat.title': 'Tous les canaux réunis',
+    'onboarding.chat.desc':
+      "Le chat du jeu s'affiche en direct, filtrable par canal, avec des alertes sur des mots-clés personnalisés — sans jamais quitter l'application.",
+    'onboarding.chat.label': 'Chat',
+    'onboarding.watchlist.title': 'Ne ratez plus jamais un objet',
+    'onboarding.watchlist.desc':
+      "Ajoutez un objet à votre liste de suivi : dès qu'il tombe en butin, une alerte sonore et visuelle vous prévient.",
+    'onboarding.watchlist.label': 'Alertes & suivi',
+    'onboarding.sessionRecap.title': 'Le résumé de votre session',
+    'onboarding.sessionRecap.desc':
+      "Kamas gagnés, combats gagnés ou perdus, butin récolté : le récap de session compile tout, accessible en un clic depuis l'en-tête.",
+    'onboarding.sessionRecap.label': 'Récap de session',
+    'onboarding.profile.title': 'Personnalisez votre expérience',
+    'onboarding.profile.desc':
+      "Thème, accessibilité, sons d'alerte, comptes et personnages : tout se configure depuis votre profil.",
+    'onboarding.profile.label': 'Profil & personnages',
+    'onboarding.done.title': 'Vous êtes prêt !',
+    'onboarding.done.desc':
+      "Retrouvez ce pas-à-pas à tout moment via le bouton d'aide dans l'en-tête. Bon jeu !",
+
     'footer.copyright':
       "WAKFU MMORPG : © 2012-2025 Ankama Studio. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays.\nLe site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama.",
     'footer.notice': 'Mentions légales',
@@ -745,6 +788,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
 
+    'onboarding.helpButton': 'Replay the walkthrough',
+    'onboarding.skip': 'Skip',
+    'onboarding.prev': 'Previous',
+    'onboarding.next': 'Next',
+    'onboarding.finish': 'Start playing',
+    'onboarding.help.replay': 'Replay the whole walkthrough',
+    'onboarding.help.replayDesc': 'Revisit all 9 slides from the start.',
+    'onboarding.help.jumpTo': 'Jump straight to…',
+    'onboarding.welcome.title': 'Welcome to Wakfu Companion',
+    'onboarding.welcome.desc':
+      "This short walkthrough introduces the app's main features in a few slides. You can replay it anytime from the help button in the header.",
+    'onboarding.tracker.title': 'Track your progress at a glance',
+    'onboarding.tracker.desc':
+      'Kamas, XP/h, supplies, custom goals: the Tracker tiles update live with every line of the log, with nothing to enter by hand.',
+    'onboarding.tracker.label': 'Tracker',
+    'onboarding.damage.title': "Who's hitting hardest?",
+    'onboarding.damage.desc':
+      'The damage meter breaks down every combatant, ally or enemy, turn by turn — with manual reassignment if detection gets it wrong.',
+    'onboarding.damage.label': 'Damage',
+    'onboarding.history.title': 'Your whole history, filterable',
+    'onboarding.history.desc':
+      'Fights, purchases and trades are archived automatically and available anytime, sortable and filterable by day, origin or type.',
+    'onboarding.history.label': 'History',
+    'onboarding.chat.title': 'Every channel in one place',
+    'onboarding.chat.desc':
+      'The game chat streams live, filterable by channel, with alerts on custom keywords — without ever leaving the app.',
+    'onboarding.chat.label': 'Chat',
+    'onboarding.watchlist.title': 'Never miss an item again',
+    'onboarding.watchlist.desc':
+      'Add an item to your watchlist: the moment it drops as loot, a sound and visual alert lets you know.',
+    'onboarding.watchlist.label': 'Alerts & tracking',
+    'onboarding.sessionRecap.title': 'Your session, summed up',
+    'onboarding.sessionRecap.desc':
+      'Kamas earned, fights won or lost, loot collected: the session recap gathers it all, one click away from the header.',
+    'onboarding.sessionRecap.label': 'Session recap',
+    'onboarding.profile.title': 'Make it yours',
+    'onboarding.profile.desc':
+      'Theme, accessibility, alert sounds, accounts and characters: everything is configured from your profile.',
+    'onboarding.profile.label': 'Profile & characters',
+    'onboarding.done.title': "You're all set!",
+    'onboarding.done.desc':
+      'Find this walkthrough again anytime from the help button in the header. Have fun!',
+
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. All rights reserved. WAKFU and ANKAMA are trademarks or registered trademarks of Ankama in France and/or other countries.\nWAKFU-COMPANION is an unofficial site with no affiliation to Ankama.',
     'footer.notice': 'Legal notice',
@@ -1160,6 +1246,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.title': 'Perfil > Inicio de sesión',
     'help.profileConnection.body':
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
+
+    'onboarding.helpButton': 'Repetir el tutorial',
+    'onboarding.skip': 'Omitir',
+    'onboarding.prev': 'Anterior',
+    'onboarding.next': 'Siguiente',
+    'onboarding.finish': 'Empezar a jugar',
+    'onboarding.help.replay': 'Repetir todo el tutorial',
+    'onboarding.help.replayDesc': 'Vuelve a ver las 9 diapositivas desde el principio.',
+    'onboarding.help.jumpTo': 'Ir directamente a…',
+    'onboarding.welcome.title': 'Bienvenido a Wakfu Companion',
+    'onboarding.welcome.desc':
+      'Este breve tutorial presenta, en unas pocas diapositivas, las principales funciones de la aplicación. Puedes volver a verlo en cualquier momento desde el botón de ayuda de la cabecera.',
+    'onboarding.tracker.title': 'Sigue tu progreso de un vistazo',
+    'onboarding.tracker.desc':
+      'Kamas, XP/h, suministros, objetivos personalizados: las tarjetas del Seguimiento se actualizan en directo con cada línea del registro, sin nada que escribir a mano.',
+    'onboarding.tracker.label': 'Seguimiento',
+    'onboarding.damage.title': '¿Quién pega más fuerte?',
+    'onboarding.damage.desc':
+      'El contador de daño detalla cada combatiente, aliado o enemigo, turno a turno — con reasignación manual si la detección se equivoca.',
+    'onboarding.damage.label': 'Daño',
+    'onboarding.history.title': 'Todo tu historial, filtrable',
+    'onboarding.history.desc':
+      'Combates, compras e intercambios se archivan automáticamente y quedan disponibles en cualquier momento, ordenables y filtrables por día, origen o tipo.',
+    'onboarding.history.label': 'Historial',
+    'onboarding.chat.title': 'Todos los canales reunidos',
+    'onboarding.chat.desc':
+      'El chat del juego se muestra en directo, filtrable por canal, con alertas sobre palabras clave personalizadas — sin salir nunca de la aplicación.',
+    'onboarding.chat.label': 'Chat',
+    'onboarding.watchlist.title': 'No te pierdas ningún objeto',
+    'onboarding.watchlist.desc':
+      'Añade un objeto a tu lista de seguimiento: en cuanto caiga como botín, una alerta sonora y visual te avisará.',
+    'onboarding.watchlist.label': 'Alertas y seguimiento',
+    'onboarding.sessionRecap.title': 'El resumen de tu sesión',
+    'onboarding.sessionRecap.desc':
+      'Kamas ganados, combates ganados o perdidos, botín recogido: el resumen de sesión lo reúne todo, a un clic desde la cabecera.',
+    'onboarding.sessionRecap.label': 'Resumen de sesión',
+    'onboarding.profile.title': 'Personalízalo a tu gusto',
+    'onboarding.profile.desc':
+      'Tema, accesibilidad, sonidos de alerta, cuentas y personajes: todo se configura desde tu perfil.',
+    'onboarding.profile.label': 'Perfil y personajes',
+    'onboarding.done.title': '¡Ya estás listo!',
+    'onboarding.done.desc':
+      'Vuelve a encontrar este tutorial en cualquier momento desde el botón de ayuda de la cabecera. ¡Que te diviertas!',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. Todos los derechos reservados. WAKFU y ANKAMA son marcas o marcas registradas de Ankama en Francia y/o en otros países.\nEl sitio WAKFU-COMPANION es un sitio no oficial sin ningún vínculo con Ankama.',
@@ -1579,6 +1708,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.title': 'Perfil > Iniciar sessão',
     'help.profileConnection.body':
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
+
+    'onboarding.helpButton': 'Rever o tutorial',
+    'onboarding.skip': 'Pular',
+    'onboarding.prev': 'Anterior',
+    'onboarding.next': 'Seguinte',
+    'onboarding.finish': 'Começar a jogar',
+    'onboarding.help.replay': 'Rever todo o tutorial',
+    'onboarding.help.replayDesc': 'Reveja as 9 diapositivas desde o início.',
+    'onboarding.help.jumpTo': 'Ir diretamente para…',
+    'onboarding.welcome.title': 'Bem-vindo ao Wakfu Companion',
+    'onboarding.welcome.desc':
+      'Este pequeno tutorial apresenta, em algumas diapositivas, as principais funcionalidades da aplicação. Pode revê-lo a qualquer momento a partir do botão de ajuda no cabeçalho.',
+    'onboarding.tracker.title': 'Acompanhe o seu progresso de relance',
+    'onboarding.tracker.desc':
+      'Kamas, XP/h, suprimentos, objetivos personalizados: os blocos do Acompanhamento atualizam-se em direto a cada linha do registo, sem nada para escrever à mão.',
+    'onboarding.tracker.label': 'Acompanhamento',
+    'onboarding.damage.title': 'Quem bate mais forte?',
+    'onboarding.damage.desc':
+      'O contador de dano detalha cada combatente, aliado ou inimigo, turno a turno — com reatribuição manual caso a deteção se engane.',
+    'onboarding.damage.label': 'Dano',
+    'onboarding.history.title': 'Todo o seu histórico, filtrável',
+    'onboarding.history.desc':
+      'Combates, compras e trocas são arquivados automaticamente e ficam disponíveis a qualquer momento, ordenáveis e filtráveis por dia, origem ou tipo.',
+    'onboarding.history.label': 'Histórico',
+    'onboarding.chat.title': 'Todos os canais reunidos',
+    'onboarding.chat.desc':
+      'O chat do jogo é exibido em direto, filtrável por canal, com alertas sobre palavras-chave personalizadas — sem nunca sair da aplicação.',
+    'onboarding.chat.label': 'Chat',
+    'onboarding.watchlist.title': 'Nunca mais perca um item',
+    'onboarding.watchlist.desc':
+      'Adicione um item à sua lista de acompanhamento: assim que ele cair como saque, um alerta sonoro e visual avisa-o.',
+    'onboarding.watchlist.label': 'Alertas e acompanhamento',
+    'onboarding.sessionRecap.title': 'O resumo da sua sessão',
+    'onboarding.sessionRecap.desc':
+      'Kamas ganhos, combates vencidos ou perdidos, saque recolhido: o resumo de sessão reúne tudo, a um clique do cabeçalho.',
+    'onboarding.sessionRecap.label': 'Resumo da sessão',
+    'onboarding.profile.title': 'Personalize a sua experiência',
+    'onboarding.profile.desc':
+      'Tema, acessibilidade, sons de alerta, contas e personagens: tudo se configura a partir do seu perfil.',
+    'onboarding.profile.label': 'Perfil e personagens',
+    'onboarding.done.title': 'Está tudo pronto!',
+    'onboarding.done.desc':
+      'Reencontre este tutorial a qualquer momento através do botão de ajuda no cabeçalho. Bom jogo!',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-2025 Ankama Studio. Todos os direitos reservados. WAKFU e ANKAMA são marcas ou marcas registradas da Ankama na França e/ou em outros países.\nO site WAKFU-COMPANION é um site não oficial sem qualquer vínculo com a Ankama.',

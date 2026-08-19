@@ -1,0 +1,246 @@
+:host {
+  display: contents;
+}
+
+/* z-index aligné sur .help-modal (600/601), voir CLAUDE.md. */
+.onboarding-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.onboarding-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 601;
+  width: 760px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  outline: none;
+  animation: onboardingFadeIn 0.15s;
+}
+
+@keyframes onboardingFadeIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+.onboarding-top {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1;
+}
+
+.onboarding-skip {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.onboarding-skip:hover {
+  color: var(--text-color);
+}
+
+.onboarding-body {
+  display: flex;
+  align-items: stretch;
+  gap: 24px;
+  padding: 52px 28px 24px 28px;
+  overflow-y: auto;
+}
+
+.onboarding-media {
+  width: 280px;
+  height: 320px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+.onboarding-media video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: var(--surface-well);
+}
+
+.onboarding-media-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+
+.onboarding-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.onboarding-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.onboarding-heading-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.onboarding-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.onboarding-desc {
+  margin: 14px 0 0 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-color);
+}
+
+.onboarding-footer {
+  margin-top: auto;
+  padding: 14px 28px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.onboarding-nav-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.onboarding-nav-btn:hover:not(:disabled) {
+  color: var(--text-color);
+  border-color: var(--text-muted);
+}
+
+.onboarding-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.onboarding-nav-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.onboarding-nav-primary:hover {
+  color: var(--on-accent);
+  filter: brightness(1.08);
+}
+
+.onboarding-dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.onboarding-dot {
+  width: 6px;
+  height: 6px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+}
+
+.onboarding-dot.active {
+  width: 20px;
+  background: var(--accent);
+}
+
+.onboarding-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.onboarding-progress {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+@media (max-width: 640px) {
+  .onboarding-body {
+    flex-direction: column;
+    align-items: center;
+    padding-top: 46px;
+  }
+
+  .onboarding-media {
+    width: 100%;
+    max-width: 320px;
+    height: 220px;
+  }
+
+  .onboarding-text {
+    width: 100%;
+  }
+
+  .onboarding-footer {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .onboarding-dots {
+    order: 3;
+    width: 100%;
+  }
+}
