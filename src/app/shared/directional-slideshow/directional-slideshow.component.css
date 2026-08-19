@@ -1,0 +1,98 @@
+/* Pas de taille par défaut en dur (contrairement à un composant image classique) : ce composant
+   remplit toujours 100% de son hôte, à charge de l'appelant de dimensionner celui-ci (`width`,
+   `height`, `border-radius`...) — même convention que `app-avatar-icon`/`app-icon`. */
+:host {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.slideshow-stage {
+  position: absolute;
+  inset: 0;
+}
+
+.slideshow-frame {
+  position: absolute;
+  /* Tous les cadres atterrissent exactement au même endroit : ils remplissent intégralement le
+     bloc hôte (0 partout). */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+
+  animation-duration: var(--transition-duration, 650ms);
+  animation-timing-function: cubic-bezier(0.22, 0.8, 0.24, 1);
+  animation-fill-mode: forwards;
+  /* Variable CSS plutôt qu'un @Input dédié : hérite naturellement à travers la frontière
+     d'encapsulation du composant (comme les --input-number-* de app-input-number, voir
+     CLAUDE.md) — l'appelant peut mettre en pause le diaporama (ex. au survol) sans passer par un
+     état JS ni un accès `::ng-deep` interdit dans ce projet. */
+  animation-play-state: var(--directional-slideshow-play-state, running);
+}
+
+.dir-top {
+  animation-name: enter-from-top;
+}
+.dir-right {
+  animation-name: enter-from-right;
+}
+.dir-bottom {
+  animation-name: enter-from-bottom;
+}
+.dir-left {
+  animation-name: enter-from-left;
+}
+
+@keyframes enter-from-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes enter-from-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes enter-from-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes enter-from-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slideshow-frame {
+    animation: none !important;
+  }
+}
