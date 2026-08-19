@@ -331,14 +331,14 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.next': 'Suivant',
     'onboarding.finish': 'Commencer à jouer',
     'onboarding.help.replay': 'Revoir tout le pas-à-pas',
-    'onboarding.help.replayDesc': 'Revivez les 9 diapositives depuis le début.',
+    'onboarding.help.replayDesc': 'Depuis le début, 9 étapes',
     'onboarding.help.jumpTo': 'Aller directement à…',
     'onboarding.welcome.title': 'Bienvenue sur Wakfu Companion',
     'onboarding.welcome.desc':
       "Ce pas-à-pas vous présente, en quelques diapositives, les grandes fonctionnalités de l'application. Vous pourrez le relire à tout moment depuis le bouton d'aide de l'en-tête.",
     'onboarding.tracker.title': 'Suivez vos progrès en un coup d’œil',
     'onboarding.tracker.desc':
-      'Kamas, XP/h, ravitaillement, objectifs personnalisés : les tuiles du Tracker se mettent à jour en direct à chaque ligne du journal, sans rien à saisir à la main.',
+      "Kamas, XP/h, ravitaillement, objectifs personnalisés : les tuiles du Tracker se mettent à jour en direct à chaque ligne du journal, sans rien à saisir à la main.\n\nVous pouvez aussi y suivre un objet ou un monstre précis : le compteur s'incrémente automatiquement à chaque ramassage ou victoire.\n\nDeux modes au choix : incrémental (part de 0 et monte) ou décompte (part d'une cible que vous fixez et redescend jusqu'à 0).\n\nLe champ de recherche filtre aussitôt les résultats par type pour trouver la bonne entrée en un instant.\n\nPour un objet de recette, un clic crée le décompte de tous ses ingrédients — même ceux qui ont eux-mêmes une recette, imbriqués en cascade.",
     'onboarding.tracker.label': 'Tracker',
     'onboarding.damage.title': 'Qui tape le plus fort ?',
     'onboarding.damage.desc':
@@ -794,14 +794,14 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.next': 'Next',
     'onboarding.finish': 'Start playing',
     'onboarding.help.replay': 'Replay the whole walkthrough',
-    'onboarding.help.replayDesc': 'Revisit all 9 slides from the start.',
+    'onboarding.help.replayDesc': 'From the start, 9 steps',
     'onboarding.help.jumpTo': 'Jump straight to…',
     'onboarding.welcome.title': 'Welcome to Wakfu Companion',
     'onboarding.welcome.desc':
       "This short walkthrough introduces the app's main features in a few slides. You can replay it anytime from the help button in the header.",
     'onboarding.tracker.title': 'Track your progress at a glance',
     'onboarding.tracker.desc':
-      'Kamas, XP/h, supplies, custom goals: the Tracker tiles update live with every line of the log, with nothing to enter by hand.',
+      'Kamas, XP/h, supplies, custom goals: the Tracker tiles update live with every line of the log, with nothing to enter by hand.\n\nYou can also track a specific item or monster there: the counter updates automatically with every pickup or win.\n\nTwo modes to choose from: count-up (starts at 0, goes up) or countdown (starts from a target you set, counts down to 0).\n\nThe search field instantly filters results by type, so you find the right entry in a second.\n\nFor a recipe item, one click creates a countdown for every ingredient — including ingredients that have their own recipe, nestable in cascade.',
     'onboarding.tracker.label': 'Tracker',
     'onboarding.damage.title': "Who's hitting hardest?",
     'onboarding.damage.desc':
@@ -1253,14 +1253,14 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.next': 'Siguiente',
     'onboarding.finish': 'Empezar a jugar',
     'onboarding.help.replay': 'Repetir todo el tutorial',
-    'onboarding.help.replayDesc': 'Vuelve a ver las 9 diapositivas desde el principio.',
+    'onboarding.help.replayDesc': 'Desde el principio, 9 pasos',
     'onboarding.help.jumpTo': 'Ir directamente a…',
     'onboarding.welcome.title': 'Bienvenido a Wakfu Companion',
     'onboarding.welcome.desc':
       'Este breve tutorial presenta, en unas pocas diapositivas, las principales funciones de la aplicación. Puedes volver a verlo en cualquier momento desde el botón de ayuda de la cabecera.',
     'onboarding.tracker.title': 'Sigue tu progreso de un vistazo',
     'onboarding.tracker.desc':
-      'Kamas, XP/h, suministros, objetivos personalizados: las tarjetas del Seguimiento se actualizan en directo con cada línea del registro, sin nada que escribir a mano.',
+      'Kamas, XP/h, suministros, objetivos personalizados: las tarjetas del Seguimiento se actualizan en directo con cada línea del registro, sin nada que escribir a mano.\n\nTambién puedes seguir allí un objeto o un monstruo concreto: el contador se actualiza automáticamente con cada recogida o victoria.\n\nDos modos a elegir: incremental (empieza en 0 y sube) o cuenta atrás (empieza desde un objetivo que defines y baja hasta 0).\n\nEl campo de búsqueda filtra al instante los resultados por tipo, para encontrar la entrada correcta en un segundo.\n\nPara un objeto de receta, un clic crea la cuenta atrás de todos sus ingredientes — incluidos los que tienen su propia receta, anidables en cascada.',
     'onboarding.tracker.label': 'Seguimiento',
     'onboarding.damage.title': '¿Quién pega más fuerte?',
     'onboarding.damage.desc':
@@ -1715,14 +1715,14 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.next': 'Seguinte',
     'onboarding.finish': 'Começar a jogar',
     'onboarding.help.replay': 'Rever todo o tutorial',
-    'onboarding.help.replayDesc': 'Reveja as 9 diapositivas desde o início.',
+    'onboarding.help.replayDesc': 'Desde o início, 9 etapas',
     'onboarding.help.jumpTo': 'Ir diretamente para…',
     'onboarding.welcome.title': 'Bem-vindo ao Wakfu Companion',
     'onboarding.welcome.desc':
       'Este pequeno tutorial apresenta, em algumas diapositivas, as principais funcionalidades da aplicação. Pode revê-lo a qualquer momento a partir do botão de ajuda no cabeçalho.',
     'onboarding.tracker.title': 'Acompanhe o seu progresso de relance',
     'onboarding.tracker.desc':
-      'Kamas, XP/h, suprimentos, objetivos personalizados: os blocos do Acompanhamento atualizam-se em direto a cada linha do registo, sem nada para escrever à mão.',
+      'Kamas, XP/h, suprimentos, objetivos personalizados: os blocos do Acompanhamento atualizam-se em direto a cada linha do registo, sem nada para escrever à mão.\n\nTambém pode acompanhar ali um item ou monstro específico: o contador atualiza-se automaticamente a cada coleta ou vitória.\n\nDois modos à escolha: crescente (começa em 0 e sobe) ou regressivo (começa de um alvo que você define e desce até 0).\n\nO campo de busca filtra na hora os resultados por tipo, para encontrar a entrada certa em segundos.\n\nPara um item de receita, um clique cria a contagem regressiva de todos os ingredientes — incluindo os que têm sua própria receita, aninháveis em cascata.',
     'onboarding.tracker.label': 'Acompanhamento',
     'onboarding.damage.title': 'Quem bate mais forte?',
     'onboarding.damage.desc':
