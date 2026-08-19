@@ -59,17 +59,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px;
+  padding: 4px 8px;
   border-radius: 6px;
   border: none;
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  background: none;
   color: var(--accent);
   cursor: pointer;
   text-align: left;
+  height: auto;
 }
 
 .onboarding-help-replay:hover {
   background: color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+app-onboarding-icon {
+  color: var(--accent);
 }
 
 .onboarding-help-replay-text {
@@ -103,7 +108,7 @@
 .onboarding-help-jump-list {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 5px;
   max-height: 260px;
   overflow-y: auto;
 }
@@ -111,15 +116,16 @@
 .onboarding-help-jump-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 7px 8px;
+  justify-content: flex-start;
+  width: 100%;
+  gap: 15px;
+  padding: 15px;
   border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--text-color);
   font-size: 0.8rem;
   cursor: pointer;
-  text-align: left;
 }
 
 .onboarding-help-jump-item:hover {
