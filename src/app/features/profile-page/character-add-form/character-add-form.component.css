@@ -37,75 +37,29 @@
   width: 100%;
   height: 100%;
 }
-/* Défilement automatique des portraits tant qu'aucune classe n'est choisie (voir
-character-add-form.component.ts, `filmstripIndices` — ordre mélangé une fois, dupliqué pour boucler
-sans à-coup). Positionné en absolu (plutôt qu'en flex-item classique) pour ignorer le
-`justify-content: center`/`align-items: center` du bouton : la bande est bien plus large que le
-bouton lui-même, elle doit pouvoir défiler sous son `overflow: hidden` sans être recentrée à chaque
-frame. */
-.class-trigger-filmstrip {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  /* Le "pas" total d'une icône (largeur + gap) doit égaler EXACTEMENT la largeur du bouton — voir
-  le commentaire détaillé sur `app-avatar-icon` ci-dessous pour pourquoi. */
-  gap: 22%;
-  animation: class-trigger-scroll 22s linear infinite;
-}
-/* Filtre mat/noir et blanc identique aux vignettes non sélectionnées de la section Avatar (voir
+/* Défilement automatique des portraits tant qu'aucune classe n'est choisie : chaque case entre à
+tour de rôle depuis un bord différent (voir app-directional-slideshow, shared/), le tirage aléatoire
+et la boucle sont entièrement gérés par ce composant — rien à calculer ici en termes de géométrie de
+défilement, contrairement à l'ancienne bande translateX.
+Filtre mat/noir et blanc identique aux vignettes non sélectionnées de la section Avatar (voir
 profile-page.component.css `.avatar-cell-btn img`, class-portrait.component.ts) — appliqué sur le
 host `app-avatar-icon` plutôt que sur son `.avatar-cell` interne (encapsulation de composant, pas
 d'accès direct sans `::ng-deep`) : `filter` s'applique de toute façon à l'élément ET à tout son
-contenu rendu en un seul calque.
-Géométrie du pas (taille d'icône + gap = largeur du bouton, en %) choisie pour qu'à TOUT instant la
-fenêtre circulaire du bouton n'affiche jamais qu'UNE seule icône (avec un peu de fond de part et
-d'autre) — jamais deux collées. Preuve : en défilement continu, la fenêtre visible (largeur V)
-capture toujours exactement un intervalle de largeur V du contenu ; si le "pas" (icône+gap, P) répété
-à l'infini vaut exactement V, cette fenêtre contient par construction exactement UN cycle complet
-(une icône + un gap), quel que soit le décalage de scroll — ni plus (P<V afficherait des bouts de
-DEUX icônes en permanence, bug réel corrigé ici, constaté par l'utilisateur sur une vidéo avec
-icônes à 100% de la largeur du bouton et gap nul, pire cas) ni moins (P>V laisserait des instants
-sans aucune icône visible, cercle vide). Exprimé en % (78% + 22% = 100%) plutôt qu'en px : le bouton
-étant carré (width=height, même en 32px mobile via la media query plus bas), un % de la hauteur de
-l'icône égale le même % en px que le gap en % de la largeur du conteneur — la propriété reste donc
-correcte aux deux tailles de bouton sans dupliquer ces règles dans la media query.
-`width: auto` est nécessaire pour neutraliser `.character-add-class-trigger app-avatar-icon {
-width: 100%; ... }` ci-dessus (même spécificité, sélecteur qui matche aussi CES icônes puisque
-`.class-trigger-filmstrip` est un descendant de `.character-add-class-trigger` — sans ce `width:
-auto` explicite, ce `width: 100%` gagnerait le cascade sur la propriété `width` faute de concurrent
-plus tardif, et `aspect-ratio` n'aurait plus qu'une seule dimension "libre" à calculer). */
-.class-trigger-filmstrip app-avatar-icon {
-  flex-shrink: 0;
-  width: auto;
-  height: 78%;
-  aspect-ratio: 1 / 1;
-  border-radius: 4px;
-  overflow: hidden;
+contenu rendu en un seul calque. Ce sélecteur ne cible QUE les cases projetées dans le diaporama
+(descendantes de `.class-trigger-slideshow`, déclarées via `#avatarFrame` dans le template de CE
+composant) — celle affichée une fois la classe choisie (`@if (avatarIndex() !== null)` plus haut)
+reste en couleurs, seule cible du sélecteur générique ci-dessus. */
+.class-trigger-slideshow app-avatar-icon {
   filter: grayscale(0.5) brightness(0.6) saturate(0.5);
 }
 /* Survol du bouton = pause (et tooltip "Choisir la classe" via [appTooltip] sur le bouton, voir
 character-add-form.component.html) ; la reprise au retrait de la souris est automatique via
-`:hover` — si une classe a entretemps été choisie, ce bloc `@else` (donc `.class-trigger-filmstrip`
-lui-même) disparaît du DOM, pas besoin d'état JS supplémentaire pour gérer ce cas. */
-.character-add-class-trigger:hover .class-trigger-filmstrip {
-  animation-play-state: paused;
-}
-@keyframes class-trigger-scroll {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    /* La bande contient la liste mélangée deux fois à la suite (voir `filmstripIndices`) : -50%
-    correspond exactement à la largeur d'une seule copie, donc la 2e copie prend visuellement la
-    place de la 1ère sans saut au moment où l'animation reboucle. */
-    transform: translateX(-50%);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .class-trigger-filmstrip {
-    animation: none;
-  }
+`:hover` — si une classe a entretemps été choisie, ce bloc `@else` (donc `.class-trigger-slideshow`
+lui-même) disparaît du DOM, pas besoin d'état JS supplémentaire pour gérer ce cas. Passe par la
+variable CSS `--directional-slideshow-play-state` (voir directional-slideshow.component.css) plutôt
+que par un `::ng-deep` : hérite naturellement jusqu'à `.slideshow-frame`, interne au composant. */
+.character-add-class-trigger:hover .class-trigger-slideshow {
+  --directional-slideshow-play-state: paused;
 }
 
 .character-add-fields {

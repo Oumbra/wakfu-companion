@@ -1,0 +1,13 @@
+<div class="slideshow-stage" [style.--transition-duration.ms]="transitionMs()">
+  @for (frame of frames(); track frame.id) {
+    <div
+      class="slideshow-frame"
+      [class.dir-top]="frame.direction === 'top'"
+      [class.dir-right]="frame.direction === 'right'"
+      [class.dir-bottom]="frame.direction === 'bottom'"
+      [class.dir-left]="frame.direction === 'left'"
+    >
+      <ng-container *ngTemplateOutlet="itemTemplate(); context: { $implicit: frame.item }" />
+    </div>
+  }
+</div>
