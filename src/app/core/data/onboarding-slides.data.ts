@@ -1,11 +1,13 @@
 import { OnboardingIconName } from '../../shared/onboarding-icon/onboarding-icon.component';
 
-/** Illustration animée d'une diapositive — vidéo courte (mp4, sans son, en boucle) recadrée à
- * partir d'un extrait réel de la fonctionnalité, avec une image `poster` (1ʳᵉ frame) affichée avant
- * que la vidéo ne soit chargée. `null` pour les 2 diapositives de bord (bienvenue/fin), qui n'ont
+/** Illustration animée d'une diapositive — GIF ou vidéo (mp4, sans son, en boucle), avec une image
+ * `poster` (aperçu statique) affichée en attendant que le fichier réel (potentiellement volumineux
+ * pour un GIF non recompressé) finisse de charger — voir OnboardingTourComponent, qui fait un
+ * fondu enchaîné entre les deux. `null` pour les 2 diapositives de bord (bienvenue/fin), qui n'ont
  * qu'une grande icône plutôt qu'une démonstration. */
 export interface OnboardingSlideMedia {
-  readonly video: string;
+  readonly kind: 'gif' | 'video';
+  readonly src: string;
   readonly poster: string;
 }
 
@@ -13,6 +15,10 @@ export interface OnboardingSlide {
   readonly id: string;
   readonly icon: OnboardingIconName;
   readonly media: OnboardingSlideMedia | null;
+  /** Position de l'illustration par rapport au texte — `'side'` (défaut) pour le gabarit standard,
+   * `'top'` pour les rares illustrations trop larges/plates pour la colonne latérale (ex.
+   * `watchlist`, dont le GIF d'origine est un bandeau ~4,7:1 — voir OnboardingTourComponent). */
+  readonly mediaPosition?: 'side' | 'top';
   readonly titleKey: string;
   readonly descKey: string;
   /** Libellé court pour le menu « Aller directement à… » du bouton d'aide (voir
@@ -38,7 +44,8 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     id: 'tracker',
     icon: 'trending-up',
     media: {
-      video: 'assets/onboarding/tracker.mp4',
+      kind: 'gif',
+      src: 'assets/onboarding/tracker.gif',
       poster: 'assets/onboarding/tracker-poster.jpg',
     },
     titleKey: 'onboarding.tracker.title',
@@ -48,7 +55,11 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
   {
     id: 'damage',
     icon: 'swords',
-    media: { video: 'assets/onboarding/fight.mp4', poster: 'assets/onboarding/fight-poster.jpg' },
+    media: {
+      kind: 'gif',
+      src: 'assets/onboarding/fight.gif',
+      poster: 'assets/onboarding/fight-poster.jpg',
+    },
     titleKey: 'onboarding.damage.title',
     descKey: 'onboarding.damage.desc',
     labelKey: 'onboarding.damage.label',
@@ -57,7 +68,8 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     id: 'history',
     icon: 'clock-long',
     media: {
-      video: 'assets/onboarding/historics.mp4',
+      kind: 'gif',
+      src: 'assets/onboarding/historics.gif',
       poster: 'assets/onboarding/historics-poster.jpg',
     },
     titleKey: 'onboarding.history.title',
@@ -67,7 +79,11 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
   {
     id: 'chat',
     icon: 'chat-bubble',
-    media: { video: 'assets/onboarding/chat.mp4', poster: 'assets/onboarding/chat-poster.jpg' },
+    media: {
+      kind: 'gif',
+      src: 'assets/onboarding/chat.gif',
+      poster: 'assets/onboarding/chat-poster.jpg',
+    },
     titleKey: 'onboarding.chat.title',
     descKey: 'onboarding.chat.desc',
     labelKey: 'onboarding.chat.label',
@@ -75,8 +91,13 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
   {
     id: 'watchlist',
     icon: 'volume-on',
+    // Illustration au-dessus du texte plutôt qu'à côté (mediaPosition 'top') : le GIF d'origine est
+    // un bandeau très large et plat (~4,7:1), qui se retrouverait noyé dans le padding de la colonne
+    // latérale standard (trop haute et étroite pour ce format) — voir CLAUDE.md/retour utilisateur.
+    mediaPosition: 'top',
     media: {
-      video: 'assets/onboarding/tracker-alert.mp4',
+      kind: 'gif',
+      src: 'assets/onboarding/tracker-alert.gif',
       poster: 'assets/onboarding/tracker-alert-poster.jpg',
     },
     titleKey: 'onboarding.watchlist.title',
@@ -87,7 +108,8 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     id: 'sessionRecap',
     icon: 'calendar',
     media: {
-      video: 'assets/onboarding/session-recap.mp4',
+      kind: 'gif',
+      src: 'assets/onboarding/session-recap.gif',
       poster: 'assets/onboarding/session-recap-poster.jpg',
     },
     titleKey: 'onboarding.sessionRecap.title',
@@ -98,7 +120,8 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     id: 'profile',
     icon: 'person',
     media: {
-      video: 'assets/onboarding/profile.mp4',
+      kind: 'gif',
+      src: 'assets/onboarding/profile.gif',
       poster: 'assets/onboarding/profile-poster.jpg',
     },
     titleKey: 'onboarding.profile.title',

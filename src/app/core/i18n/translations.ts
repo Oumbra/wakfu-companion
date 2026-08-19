@@ -326,7 +326,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
 
     'onboarding.helpButton': 'Revoir le pas-à-pas',
-    'onboarding.skip': 'Passer',
+    'onboarding.jumpToEnd': 'Aller à la fin',
     'onboarding.prev': 'Précédent',
     'onboarding.next': 'Suivant',
     'onboarding.finish': 'Commencer à jouer',
@@ -789,7 +789,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
 
     'onboarding.helpButton': 'Replay the walkthrough',
-    'onboarding.skip': 'Skip',
+    'onboarding.jumpToEnd': 'Jump to the end',
     'onboarding.prev': 'Previous',
     'onboarding.next': 'Next',
     'onboarding.finish': 'Start playing',
@@ -1248,7 +1248,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
 
     'onboarding.helpButton': 'Repetir el tutorial',
-    'onboarding.skip': 'Omitir',
+    'onboarding.jumpToEnd': 'Ir al final',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Siguiente',
     'onboarding.finish': 'Empezar a jugar',
@@ -1710,7 +1710,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
 
     'onboarding.helpButton': 'Rever o tutorial',
-    'onboarding.skip': 'Pular',
+    'onboarding.jumpToEnd': 'Ir para o fim',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Seguinte',
     'onboarding.finish': 'Começar a jogar',
