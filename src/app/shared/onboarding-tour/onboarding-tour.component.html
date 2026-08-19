@@ -1,0 +1,102 @@
+@if (tour.isOpen()) {
+  <div
+    class="onboarding-backdrop"
+    (click)="tour.close()"
+    appEscapeClose
+    (appEscapeClose)="tour.close()"
+  ></div>
+  <div
+    #modal
+    class="onboarding-modal"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="slide().titleKey | t"
+    tabindex="-1"
+    (keydown)="onKeydown($event)"
+  >
+    <div class="onboarding-top">
+      <button type="button" class="onboarding-skip" (click)="tour.close()">
+        {{ 'onboarding.skip' | t }}
+      </button>
+      <button
+        type="button"
+        class="icon-btn onboarding-close"
+        [appTooltip]="'profile.closeToast' | t"
+        tooltipPosition="top"
+        (click)="tour.close()"
+      >
+        ×
+      </button>
+    </div>
+
+    <div class="onboarding-body">
+      @if (slide().media; as media) {
+        <div class="onboarding-media">
+          <video
+            [src]="media.video"
+            [poster]="media.poster"
+            autoplay
+            muted
+            loop
+            playsinline
+          ></video>
+        </div>
+      } @else {
+        <div class="onboarding-media onboarding-media-icon">
+          <app-onboarding-icon [name]="slide().icon" [size]="72" [strokeWidth]="1.3" />
+        </div>
+      }
+
+      <div class="onboarding-text">
+        <div class="onboarding-heading">
+          @if (slide().media) {
+            <span class="onboarding-heading-icon">
+              <app-onboarding-icon [name]="slide().icon" [size]="18" />
+            </span>
+          }
+          <span class="onboarding-title">{{ slide().titleKey | t }}</span>
+        </div>
+        <p class="onboarding-desc">{{ slide().descKey | t }}</p>
+      </div>
+    </div>
+
+    <div class="onboarding-footer">
+      <button type="button" class="onboarding-nav-btn" [disabled]="isFirst()" (click)="tour.prev()">
+        ‹ {{ 'onboarding.prev' | t }}
+      </button>
+
+      <div class="onboarding-dots">
+        @for (i of dotIndexes; track i) {
+          <button
+            type="button"
+            class="onboarding-dot"
+            [class.active]="i === tour.currentIndex()"
+            [attr.aria-current]="i === tour.currentIndex() ? 'step' : null"
+            (click)="tour.goTo(i)"
+          ></button>
+        }
+      </div>
+
+      <div class="onboarding-nav-right">
+        <span class="onboarding-progress">{{ tour.currentIndex() + 1 }} / {{ total }}</span>
+        @if (isLast()) {
+          <button
+            type="button"
+            class="onboarding-nav-btn onboarding-nav-primary"
+            (click)="tour.close()"
+          >
+            {{ 'onboarding.finish' | t }}
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="onboarding-nav-btn onboarding-nav-primary"
+            (click)="tour.next()"
+          >
+            {{ 'onboarding.next' | t }} ›
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

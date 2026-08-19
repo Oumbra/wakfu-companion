@@ -1,0 +1,39 @@
+@if (name() === 'logo') {
+  <img
+    [src]="appLogo"
+    class="onboarding-icon-logo"
+    [style.width.px]="size()"
+    [style.height.px]="size()"
+    alt=""
+  />
+} @else if (isAppIcon(name())) {
+  <app-icon [name]="$any(name())" [size]="size()" [strokeWidth]="strokeWidth()" />
+} @else if (name() === 'chat-bubble') {
+  <svg
+    [attr.width]="size()"
+    [attr.height]="size()"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    [attr.stroke-width]="strokeWidth()"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <rect x="3" y="5" width="18" height="12" rx="3" />
+    <path d="M8 17l-2 3v-3" />
+  </svg>
+} @else {
+  <svg
+    [attr.width]="size()"
+    [attr.height]="size()"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    [attr.stroke-width]="strokeWidth()"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <circle cx="12" cy="8" r="3.5" />
+    <path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" />
+  </svg>
+}
