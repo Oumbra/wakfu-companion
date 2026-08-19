@@ -173,8 +173,15 @@ export class PurchasesComponent {
       // ItemPickerRequest.totalKamas) sur les achats individuels de la ligne agrégée (voir
       // `PurchaseAggregateRow.records`), dans l'ordre : chacun est réattribué en totalité tant
       // qu'il reste du budget, le dernier concerné peut n'être que partiellement scindé (voir
-      // StatsStoreService.applyPurchaseReassign). Le dernier récupère le reliquat de kamas plutôt
-      // qu'une part au prorata, pour ne perdre aucun kamas à l'arrondi.
+      // StatsStoreService.applyPurchaseReassign). Au plus UNE ligne est réellement scindée par
+      // correction (forcément la dernière traitée, `amount` sature `record.quantity` pour toutes
+      // les précédentes) — c'est la SEULE à qui la part de kamas choisie peut s'appliquer :
+      // `applyPurchaseReassign` ignore totalement `kamasOverride` pour une ligne réattribuée EN
+      // BLOC (rien à répartir dessus, son coût réel la suit tel quel). Bug réel corrigé : calculer
+      // la part de chaque ligne au prorata de `amount/quantity` sans tenir compte de ce qui précède
+      // ignorait silencieusement le kamas voulu sur toute ligne agrégée à partir de plusieurs
+      // achats distincts — chaque ligne complète décompte donc ici son propre coût réel du budget
+      // restant, pour que le reliquat versé à la ligne scindée reste exact.
       onChosen: (id, quantity, kamas) => {
         let remainingQty = quantity;
         let remainingKamas = kamas ?? undefined;
@@ -182,13 +189,16 @@ export class PurchasesComponent {
           if (remainingQty <= 0) break;
           const amount = Math.min(remainingQty, record.quantity);
           remainingQty -= amount;
+          const isFullRecord = amount >= record.quantity;
           const kamasForRecord =
             remainingKamas === undefined
               ? undefined
-              : remainingQty <= 0
-                ? remainingKamas
-                : Math.round((amount / quantity) * kamas!);
-          if (kamasForRecord !== undefined) remainingKamas! -= kamasForRecord;
+              : isFullRecord
+                ? undefined
+                : Math.max(0, remainingKamas);
+          if (remainingKamas !== undefined) {
+            remainingKamas -= isFullRecord ? record.totalCost : (kamasForRecord ?? 0);
+          }
           this.stats.reassignPurchaseItem(record, amount, id, kamasForRecord);
           this.archive.reassignPurchaseItem(record, amount, id, kamasForRecord);
         }
