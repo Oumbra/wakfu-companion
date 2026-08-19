@@ -1,0 +1,33 @@
+name: Deploy landing page (GitHub Pages)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'github-pages/**'
+      - '.github/workflows/deploy-master.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to GitHub Pages (root)
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./github-pages
+          destination_dir: .
+          # true : ne pas supprimer preview/claude-dev/ (déployé séparément par deploy-preview.yml)
+          keep_files: true

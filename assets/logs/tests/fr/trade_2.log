@@ -1,9 +1,0 @@
- INFO 11:25:09,916 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Suuke (id=5749879) and Oumbra (id=11039330)
- INFO 11:25:12,956 [AWT-EventQueue-0] (buO:228) - Le joueur d?marre un ?change
- INFO 11:25:31,525 [AWT-EventQueue-0] (buN:172) - [Trade] Le joueur Suuke ajoute 1xPoudre (refId=27093)
- INFO 11:25:31,667 [AWT-EventQueue-0] (frH:215) - [NATION] Trying to remove 11545199 from {Nation id=0} after a disconnection but he's not in it
- INFO 11:25:38,434 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange
- INFO 11:25:38,435 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 0K ; 
-le joueur Suuke donne : 0K ; 1xPoudre (refId=27093) 
- INFO 11:25:38,435 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.
- INFO 11:25:38,435 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Suuke (id=5749879) and Oumbra (id=11039330)
