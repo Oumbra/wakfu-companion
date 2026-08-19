@@ -1,6 +1,9 @@
 import { Component, input } from '@angular/core';
 import { AppIconName, IconComponent } from '../icon/icon.component';
-import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
+import {
+  APP_LOGO_PURPLE_DATA_URI,
+  LARGE_APP_LOGO_PURPLE_DATA_URI,
+} from '../../core/data/app-logo.data';
 
 /** Icônes utilisables par une diapositive d'onboarding : soit un nom du sprite partagé
  * (`AppIconName`), soit le logo de l'app, soit l'un des 2 pictogrammes propres à l'onboarding
@@ -42,7 +45,7 @@ export class OnboardingIconComponent {
   readonly size = input(20);
   readonly strokeWidth = input(1.8);
 
-  protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
+  protected readonly appLogo = LARGE_APP_LOGO_PURPLE_DATA_URI;
 
   protected isAppIcon(name: OnboardingIconName): boolean {
     return APP_ICON_NAMES.has(name);

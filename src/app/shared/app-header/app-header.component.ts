@@ -16,6 +16,7 @@ import { GameServerService } from '../../core/services/game-server.service';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { EscapeCloseDirective } from '../escape-close.directive';
 import { OnboardingHelpMenuService } from '../../core/services/onboarding-help-menu.service';
+import { OnboardingTourService } from '../../core/services/onboarding-tour.service';
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
@@ -50,6 +51,7 @@ export class AppHeaderComponent {
   protected readonly gameServers = inject(GameServerService);
   protected readonly sessionRecapService = inject(SessionRecapService);
   protected readonly onboardingHelpMenu = inject(OnboardingHelpMenuService);
+  private readonly onboardingTour = inject(OnboardingTourService);
   private readonly stats = inject(StatsStoreService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly i18n = inject(I18nService);
@@ -106,9 +108,19 @@ export class AppHeaderComponent {
     this.closeMobileMenu();
   }
 
-  /** Ouvre/ferme le menu du bouton d'aide (revoir le pas-à-pas / sauter à une fonctionnalité). */
+  /** Ouvre/ferme le menu du bouton d'aide (revoir le pas-à-pas / sauter à une fonctionnalité) —
+   * bouton desktop uniquement, voir `startOnboardingTour` pour l'équivalent mobile. */
   protected toggleOnboardingHelp(event: Event): void {
     this.onboardingHelpMenu.toggle(event.currentTarget as HTMLElement);
+  }
+
+  /** Entrée du menu burger mobile : lance directement le pas-à-pas depuis le début plutôt que
+   * d'ouvrir le popover desktop (revoir tout / sauter à une fonctionnalité) — ce dernier se
+   * positionne par rapport à un bouton qui disparaît aussitôt le menu burger refermé, ce qui n'a
+   * pas de sens en mobile. */
+  protected startOnboardingTour(): void {
+    this.onboardingTour.open();
+    this.closeMobileMenu();
   }
 
   protected toggleMobileMenu(): void {

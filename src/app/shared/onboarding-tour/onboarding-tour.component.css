@@ -65,11 +65,9 @@
 
 .onboarding-media {
   position: relative;
-  width: 40%;
-  min-width: 240px;
-  max-width: 480px;
+  width: 60%;
+  height: 100%;
   aspect-ratio: 3 / 4;
-  max-height: min(58vh, 560px);
   flex-shrink: 0;
   border-radius: 6px;
   background: var(--surface-well);
@@ -169,6 +167,9 @@
   font-size: 0.85rem;
   line-height: 1.6;
   color: var(--text-color);
+  /* Certaines diapositives (ex. Tracker) ont une description à plusieurs paragraphes, séparés par
+     des \n\n littéraux dans la clé i18n — même convention que help-modal (voir CLAUDE.md). */
+  white-space: pre-line;
 }
 
 .onboarding-footer {
