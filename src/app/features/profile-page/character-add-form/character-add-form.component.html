@@ -12,6 +12,7 @@
         class="class-trigger-slideshow"
         [items]="avatarIndices"
         [itemTemplate]="avatarFrame"
+        [transitionMs]="300"
       />
       <ng-template #avatarFrame let-index>
         <app-avatar-icon [index]="index" />
