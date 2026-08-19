@@ -36,6 +36,9 @@ import { GameServerService } from './core/services/game-server.service';
 import { Gender } from './core/data/class-icons.data';
 import { TooltipComponent } from './shared/tooltip/tooltip.component';
 import { LoadingOverlayComponent } from './shared/loading-overlay/loading-overlay.component';
+import { OnboardingTourComponent } from './shared/onboarding-tour/onboarding-tour.component';
+import { OnboardingHelpMenuComponent } from './shared/onboarding-help-menu/onboarding-help-menu.component';
+import { OnboardingTourService } from './core/services/onboarding-tour.service';
 
 @Component({
   selector: 'app-root',
@@ -60,6 +63,8 @@ import { LoadingOverlayComponent } from './shared/loading-overlay/loading-overla
     TabSheetComponent,
     TooltipComponent,
     LoadingOverlayComponent,
+    OnboardingTourComponent,
+    OnboardingHelpMenuComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -83,6 +88,9 @@ export class App implements OnInit {
   private readonly catalog = inject(CatalogService);
   private readonly auth = inject(AuthService);
   private readonly gameServers = inject(GameServerService);
+  // Idem : démarre l'effet de déclenchement automatique du pas-à-pas d'onboarding dès le démarrage
+  // (voir OnboardingTourService), indépendamment de tout composant qui l'affiche effectivement.
+  private readonly onboardingTour = inject(OnboardingTourService);
 
   ngOnInit(): void {
     void this.logFileAccess.init();

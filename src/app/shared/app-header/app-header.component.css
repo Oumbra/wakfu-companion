@@ -228,6 +228,16 @@ button.mobile-menu-server:hover {
   object-fit: contain;
 }
 
+.onboarding-help-mobile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 22px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
 .session-recap-btn {
   height: 28px;
   width: 28px;

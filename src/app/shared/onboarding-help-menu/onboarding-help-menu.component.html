@@ -1,0 +1,28 @@
+@if (helpMenu.request(); as req) {
+  <div
+    class="onboarding-help-backdrop"
+    (click)="helpMenu.close()"
+    appEscapeClose
+    (appEscapeClose)="helpMenu.close()"
+  ></div>
+  <div class="onboarding-help-menu" [style.right.px]="req.right" [style.top.px]="req.top">
+    <button type="button" class="onboarding-help-replay" (click)="replayAll()">
+      <app-onboarding-icon name="reset" [size]="18" />
+      <span class="onboarding-help-replay-text">
+        <span class="onboarding-help-replay-title">{{ 'onboarding.help.replay' | t }}</span>
+        <span class="onboarding-help-replay-desc">{{ 'onboarding.help.replayDesc' | t }}</span>
+      </span>
+    </button>
+
+    <div class="onboarding-help-divider">{{ 'onboarding.help.jumpTo' | t }}</div>
+
+    <div class="onboarding-help-jump-list">
+      @for (slide of jumpSlides; track slide.id) {
+        <button type="button" class="onboarding-help-jump-item" (click)="jumpTo(slide)">
+          <app-onboarding-icon [name]="slide.icon" [size]="16" />
+          <span>{{ slide.labelKey! | t }}</span>
+        </button>
+      }
+    </div>
+  </div>
+}
