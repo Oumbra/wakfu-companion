@@ -8,11 +8,14 @@
     @if (avatarIndex() !== null) {
       <app-avatar-icon [index]="avatarIndex()!" />
     } @else {
-      <div class="class-trigger-filmstrip" aria-hidden="true">
-        @for (i of filmstripIndices; track $index) {
-          <app-avatar-icon [index]="i" />
-        }
-      </div>
+      <app-directional-slideshow
+        class="class-trigger-slideshow"
+        [items]="avatarIndices"
+        [itemTemplate]="avatarFrame"
+      />
+      <ng-template #avatarFrame let-index>
+        <app-avatar-icon [index]="index" />
+      </ng-template>
     }
   </button>
   <div class="character-add-fields">
