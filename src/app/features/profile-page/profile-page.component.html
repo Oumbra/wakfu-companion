@@ -756,6 +756,7 @@
                         </div>
                       }
                       <app-character-add-form
+                        #characterAddFormMobile
                         [switchModeBlocked]="true"
                         (added)="addCharacterFromForm(account.id, $event)"
                       />
@@ -835,6 +836,7 @@
                           <div class="character-add-collapse-inner" #characterAddPanelInner>
                             <div class="character-add-collapse-panel">
                               <app-character-add-form
+                                #characterAddFormDesktop
                                 [switchModeBlocked]="true"
                                 (added)="addCharacterFromForm(account.id, $event)"
                               />
