@@ -16,7 +16,11 @@ import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.mo
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { ChatFilter, ChatFilterChannel, ChatPanelService } from '../../core/services/chat-panel.service';
+import {
+  ChatFilter,
+  ChatFilterChannel,
+  ChatPanelService,
+} from '../../core/services/chat-panel.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
