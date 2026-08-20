@@ -37,6 +37,8 @@ import { LoadingOverlayComponent } from './shared/loading-overlay/loading-overla
 import { OnboardingTourComponent } from './shared/onboarding-tour/onboarding-tour.component';
 import { OnboardingHelpMenuComponent } from './shared/onboarding-help-menu/onboarding-help-menu.component';
 import { OnboardingTourService } from './core/services/onboarding-tour.service';
+import { AppUpdateService } from './core/services/app-update.service';
+import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-notice.component';
 
 @Component({
   selector: 'app-root',
@@ -62,6 +64,7 @@ import { OnboardingTourService } from './core/services/onboarding-tour.service';
     LoadingOverlayComponent,
     OnboardingTourComponent,
     OnboardingHelpMenuComponent,
+    AppUpdateNoticeComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -87,6 +90,9 @@ export class App implements OnInit {
   // Idem : démarre l'effet de déclenchement automatique du pas-à-pas d'onboarding dès le démarrage
   // (voir OnboardingTourService), indépendamment de tout composant qui l'affiche effectivement.
   private readonly onboardingTour = inject(OnboardingTourService);
+  // Idem : démarre l'écoute des mises à jour du service worker dès le démarrage (voir
+  // AppUpdateService), indépendamment du rendu de <app-update-notice>.
+  private readonly appUpdate = inject(AppUpdateService);
 
   ngOnInit(): void {
     void this.logFileAccess.init();

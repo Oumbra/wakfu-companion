@@ -1,0 +1,65 @@
+/* Composant rendu au niveau racine (voir app.html, même principe que <app-tooltip>/
+   <app-loot-alert> — jamais nichée dans un ancêtre à transform, voir CLAUDE.md). z-index 550 :
+   au-dessus du contenu normal, sous la feuille d'onglets (600) et les popovers/modales.
+   Ancrée sous le header (top, pas bottom) : contrairement au header (hauteur stable, une seule
+   ligne), le pied de page (app-footer, rendu par page dans AppPageComponent — pas au niveau
+   racine) a une hauteur variable selon la page/locale (texte légal qui peut passer sur plusieurs
+   lignes) et colle au bas du viewport sur toute page dont le contenu ne remplit pas l'écran — un
+   ancrage bottom fixe en dur se serait retrouvé à chevaucher le footer sur ces pages. */
+.update-notice {
+  position: fixed;
+  left: 50%;
+  top: 65px;
+  transform: translateX(-50%);
+  z-index: 550;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  max-width: calc(100vw - 32px);
+}
+
+.update-notice-text {
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.update-notice-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.update-notice-reload {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.update-notice-reload:hover {
+  filter: brightness(1.1);
+}
+
+.update-notice-dismiss {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.update-notice-dismiss:hover {
+  color: var(--text-color);
+}
