@@ -17,7 +17,12 @@ import {
 } from '../../core/data/header-icons.data';
 import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
-import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import {
+  LootSort,
+  lootSortTooltip as computeLootSortTooltip,
+  nextLootSortState,
+  sortLootRows,
+} from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EscapeCloseDirective } from '../../shared/escape-close.directive';
@@ -71,6 +76,9 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly xpExpanded = signal(true);
   protected readonly combatsExpanded = signal(true);
   protected readonly lootSort = signal<LootSort>('name');
+  /** Sens du tri courant (`false` = sens par défaut de `lootSort`) — inversé au reclic sur le
+   * switch déjà actif, voir `nextLootSortState`. */
+  protected readonly lootSortReverse = signal(false);
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
   private dragStartMouse = { x: 0, y: 0 };
@@ -120,11 +128,22 @@ export class SessionRecapComponent implements OnDestroy {
   }
 
   protected setLootSort(mode: LootSort): void {
-    this.lootSort.set(mode);
+    const next = nextLootSortState(this.lootSort(), this.lootSortReverse(), mode);
+    this.lootSort.set(next.sort);
+    this.lootSortReverse.set(next.reverse);
   }
 
   protected sortedLoot(): LootRow[] {
-    return sortLootRows(this.catalog, this.stats.sessionLoot(), this.lootSort());
+    return sortLootRows(
+      this.catalog,
+      this.stats.sessionLoot(),
+      this.lootSort(),
+      this.lootSortReverse(),
+    );
+  }
+
+  protected lootSortTooltip(mode: LootSort): string {
+    return computeLootSortTooltip(this.i18n, this.lootSort(), this.lootSortReverse(), mode);
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {

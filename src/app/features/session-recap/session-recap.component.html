@@ -140,7 +140,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'name'"
-                        [appTooltip]="'damageMeter.sortName' | t"
+                        [appTooltip]="lootSortTooltip('name')"
                         (click)="setLootSort('name')"
                       >
                         Az
@@ -149,7 +149,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'quantity'"
-                        [appTooltip]="'damageMeter.sortQuantity' | t"
+                        [appTooltip]="lootSortTooltip('quantity')"
                         (click)="setLootSort('quantity')"
                       >
                         Nb
@@ -158,7 +158,7 @@
                         type="button"
                         class="icon-switch-option loot-sort-switch-option"
                         [class.selected]="lootSort() === 'rarity'"
-                        [appTooltip]="'damageMeter.sortRarity' | t"
+                        [appTooltip]="lootSortTooltip('rarity')"
                         (click)="setLootSort('rarity')"
                       >
                         <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />

@@ -23,7 +23,12 @@ import {
   resolveFightImageInfo,
   resolveFightTypeClassification,
 } from '../../core/utils/fight-image.util';
-import { LootSort, sortLootRows } from '../../core/utils/loot-sort.util';
+import {
+  LootSort,
+  lootSortTooltip as computeLootSortTooltip,
+  nextLootSortState,
+  sortLootRows,
+} from '../../core/utils/loot-sort.util';
 import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import {
@@ -101,6 +106,9 @@ export class FightHistoryComponent {
    * naturel pour un combat déjà terminé, voir `turnFor`). */
   private readonly fightTurns = signal<ReadonlyMap<number, number>>(new Map());
   protected readonly lootSort = signal<LootSort>('name');
+  /** Sens du tri courant (`false` = sens par défaut de `lootSort`) — inversé au reclic sur le
+   * switch déjà actif, voir `nextLootSortState`. */
+  protected readonly lootSortReverse = signal(false);
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   /** Sections XP/butin REPLIÉES par combat — vide par défaut, tout DÉPLIÉ (même convention que
@@ -527,11 +535,17 @@ export class FightHistoryComponent {
   }
 
   protected setLootSort(mode: LootSort): void {
-    this.lootSort.set(mode);
+    const next = nextLootSortState(this.lootSort(), this.lootSortReverse(), mode);
+    this.lootSort.set(next.sort);
+    this.lootSortReverse.set(next.reverse);
   }
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
-    return sortLootRows(this.catalog, loot, this.lootSort());
+    return sortLootRows(this.catalog, loot, this.lootSort(), this.lootSortReverse());
+  }
+
+  protected lootSortTooltip(mode: LootSort): string {
+    return computeLootSortTooltip(this.i18n, this.lootSort(), this.lootSortReverse(), mode);
   }
 
   protected onXpContextMenu(event: MouseEvent, name: string): void {
