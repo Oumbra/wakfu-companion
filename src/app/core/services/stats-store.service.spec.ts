@@ -302,6 +302,24 @@ describe('StatsStoreService', () => {
       expect(stats.combatsLost()).toBe(0);
     });
 
+    it('rattache les kamas gagnés pendant le combat au FightRecord (fight_multi-account_end_after-all-monsters-play.log)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('fight_multi-account_end_after-all-monsters-play.log'));
+
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].kamas).toBe(4);
+    });
+
+    it("n'attribue aucun kama à un combat quand rien n'a été gagné (fight_single-account_end_after-all-monsters-play.log)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('fight_single-account_end_after-all-monsters-play.log'));
+
+      expect(stats.fightHistory()[0].kamas).toBe(0);
+    });
+
     it('défaite compte solo (fight_single-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
@@ -984,6 +1002,23 @@ describe('StatsStoreService', () => {
       // Le butin du combat part avec lui (fixture : combat gagné avec ramassage).
       expect(fight.loot.length).toBeGreaterThan(0);
       expect(fight.loot[0].quantity).toBeGreaterThan(0);
+    });
+
+    it('envoie les kamas gagnés pendant le combat (kamasGained), pas null (fight_multi-account_end_after-all-monsters-play.log)', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+
+      const sync = TestBed.inject(HistorySyncService);
+      TestBed.inject(StatsStoreService);
+      await sync.enable('utilisateur-de-test');
+      feed(
+        TestBed.inject(LogFileAccessService),
+        readFixture('fight_multi-account_end_after-all-monsters-play.log'),
+      );
+      await sync.flush();
+
+      const fight = server.row('/history/fights') as { kamasGained: number };
+      expect(fight.kamasGained).toBe(4);
     });
 
     it("envoie l'XP rattachée à chaque personnage, et non un simple total", async () => {

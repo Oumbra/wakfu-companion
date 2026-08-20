@@ -234,6 +234,9 @@ export interface FightRecord {
   result: 'won' | 'lost';
   rows: EntityDamageRow[];
   loot: LootRow[];
+  /** Kamas gagnés pendant le combat (voir registerFightKama) — affiché dans la ligne de butin
+   * (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
+  kamas: number;
   turns: number;
   durationMs: number;
   xp: XpRow[];
@@ -741,6 +744,7 @@ export class StatsStoreService {
     switch (entry.kind) {
       case 'kama-gain':
         this.kamasEarned.update((v) => v + entry.amount);
+        this.registerFightKama(entry.fightId, entry.amount);
         this.considerHdvKamaGain(entry);
         break;
       case 'kama-loss':
@@ -951,6 +955,14 @@ export class StatsStoreService {
     else working.fight.exp.push({ name: character, quantity: amount });
   }
 
+  /** Miroir de registerFightXp, pour les kamas gagnés pendant le combat (voir Fight.kamas) — un
+   * gain hors combat (`fightId === null`) n'est jamais crédité ici, voir considerHdvKamaGain. */
+  private registerFightKama(fightId: number | null, amount: number): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    working.fight.kamas += amount;
+  }
+
   /** Nombre d'instances (voir Fight.enemies/allies) portant ce nom (minuscule) parmi les deux camps. */
   private countNameInstances(working: FightWorking, key: string): number {
     let count = 0;
@@ -1064,6 +1076,7 @@ export class StatsStoreService {
         catalogId: l.catalogId,
         quantity: l.quantity,
       })),
+      kamas: working.fight.kamas,
       turns: working.fight.turnCount,
       durationMs: Math.max(0, working.fight.endDate.getTime() - working.fight.startDate.getTime()),
       xp: working.fight.exp

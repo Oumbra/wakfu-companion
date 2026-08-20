@@ -45,6 +45,7 @@ interface FightPage {
     turns: number | null;
     totalDamage: number | null;
     xpGained: number | null;
+    kamasGained: number | null;
     gameServer: string | null;
     participants: {
       side: 'ally' | 'enemy';
@@ -572,6 +573,7 @@ function toFightRecord(
     result,
     rows: sortedRows,
     loot,
+    kamas: entry.kamasGained ?? 0,
     turns: entry.turns ?? 0,
     durationMs: entry.durationMs ?? 0,
     xp: buildXpRows(entry),
