@@ -138,6 +138,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
+    'history.splitCombatsHeader': 'Historique de combats',
     'history.group.day': 'Jour',
     'history.group.origin': 'Origine',
     'history.group.type': 'Type',
@@ -608,6 +609,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
+    'history.splitCombatsHeader': 'Fight history',
     'history.group.day': 'Day',
     'history.group.origin': 'Origin',
     'history.group.type': 'Type',
@@ -1070,6 +1072,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
+    'history.splitCombatsHeader': 'Historial de combates',
     'history.group.day': 'Día',
     'history.group.origin': 'Origen',
     'history.group.type': 'Tipo',
@@ -1537,6 +1540,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
+    'history.splitCombatsHeader': 'Histórico de combates',
     'history.group.day': 'Dia',
     'history.group.origin': 'Origem',
     'history.group.type': 'Tipo',

@@ -18,7 +18,12 @@
           </span>
           <span class="dashboard-rail-label">{{ entry.label }}</span>
           @if (entry.count !== null) {
-            <span class="dashboard-rail-count">{{ entry.count }}</span>
+            <!-- Combat : simple compteur informatif (combats en cours). Chat : vrai badge de
+                 notification (fond accent) — signale des messages correspondant aux filtres
+                 configurés, voir ChatPanelService.matchedMessageCount. -->
+            <span class="dashboard-rail-count" [class.dashboard-rail-count-notif]="entry.id === 'chat'">
+              {{ entry.count }}
+            </span>
           }
         </button>
       }
