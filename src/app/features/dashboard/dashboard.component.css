@@ -5,12 +5,21 @@
   min-height: 0;
 }
 
+/* `<app-dashboard-rail>` (voir DashboardRailComponent) est un sibling flex de `.dashboard` au
+   niveau `:host` — PAS un enfant imbriqué dans `.dashboard` — pour qu'il touche le bord gauche de
+   l'écran comme `.profile-rail` (page profil) : `.dashboard` porte son propre `padding: 15px`
+   (voir plus bas), qui décalerait le rail de 15px du bord s'il était placé dedans. Pas de `gap`
+   au niveau `:host` non plus, même raison que profile (`.profile-layout`, sans `gap`) : la
+   séparation visuelle vient du `padding` gauche de `.dashboard` lui-même, pas d'un espace
+   flex — exactement comme `.profile-rail`/`.panels-row` (profil) se séparent via le padding du
+   second, jamais un `gap` du conteneur commun. */
 .dashboard {
   display: flex;
   flex-direction: column;
   gap: 15px;
   padding: 15px;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   box-sizing: border-box;
   min-height: 0;
@@ -22,6 +31,7 @@
    gagne de la hauteur et lit comme un seul bloc. */
 
 .panels-row {
+  min-width: 0;
   display: grid;
   /* `minmax(0, 1fr)` plutôt que `1fr` seul : une simple `1fr` a un minimum
      implicite `auto` (basé sur le contenu), qui laisse une colonne grandir
@@ -51,6 +61,26 @@
    quand un combat est en cours et que le panneau n'est pas replié. */
 .panels-row.has-combat {
   grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
+}
+/* Chat replié (voir ChatPanelService/DashboardRailComponent) : sa colonne disparaît de la grille
+   (voir la règle `app-chat-panel.panel-collapsed { display: none }` juste en dessous) SANS que le
+   nombre de colonnes n'ait besoin de changer ici — HistoryComponent compense en scindant son
+   panneau Combats à part dès que Chat se replie (voir HistoryComponent.splitCombats), ce qui
+   restitue exactement le même nombre d'éléments réels (2 sans combat, 3 avec) que Chat
+   visible/non scindé. Une éventuelle 3ᵉ règle `.chat-collapsed` réduisant le nombre de colonnes
+   serait donc fausse ici : elle forcerait les deux panneaux d'HistoryComponent à se partager UNE
+   seule colonne au lieu de profiter chacun de la sienne. */
+
+/* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, une fois retiré de la grille
+   `.panels-row` (colonnes recalculées ci-dessus) — CSS pur (`[class.panel-collapsed]`, jamais un
+   `@if` structurel comme pour `app-damage-meter`) : le composant reste monté en permanence pour
+   que l'onglet Chat mobile continue de fonctionner même si l'état replié (togglable uniquement
+   depuis un bouton desktop, voir `.collapse-btn`/styles.css) persistait d'une session desktop à
+   une session mobile — voir la doc de tête de DashboardComponent. */
+@media (min-width: 801px) {
+  .panels-row > app-chat-panel.panel-collapsed {
+    display: none;
+  }
 }
 
 /* En dessous de 800px, les panneaux empilés en 1 colonne n'ont plus assez

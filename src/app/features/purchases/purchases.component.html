@@ -21,20 +21,35 @@
         </div>
         @if (!isCollapsed(group.dateKey)) {
           @for (row of group.rows; track row.item + '|' + row.catalogId) {
-            <div
-              class="purchase-row"
-              [class]="rarityClass(row)"
-              [appTooltip]="'items.interactTooltip' | t"
-              tooltipPosition="top"
-              (contextmenu)="openInteractMenu($event, row)"
-            >
-              <app-item-icon [name]="row.item" [id]="row.catalogId" [size]="22" />
-              <span class="purchase-name">{{
-                i18n.translateItemNameById(row.catalogId, i18n.translateItemName(row.item))
-              }}</span>
-              <span class="purchase-qty">×{{ row.quantity | numberFr }}</span>
-              <span class="purchase-cost">{{ row.totalCost | numberFr }} ₭</span>
-            </div>
+            @if (isHdvRow(row)) {
+              <div class="purchase-row">
+                <img
+                  class="purchase-hdv-icon"
+                  [src]="hdvIconUrl"
+                  referrerpolicy="no-referrer"
+                  alt=""
+                />
+                <span class="purchase-name">{{ 'purchases.hdvSource' | t }}</span>
+                <!-- Préfixe "+" : signale un encaissement (voir isHdvRow), contrairement au coût
+                     "-" implicite des vrais achats juste en dessous, jamais préfixés. -->
+                <span class="purchase-cost">+{{ row.totalCost | numberFr }} ₭</span>
+              </div>
+            } @else {
+              <div
+                class="purchase-row"
+                [class]="rarityClass(row)"
+                [appTooltip]="'items.interactTooltip' | t"
+                tooltipPosition="top"
+                (contextmenu)="openInteractMenu($event, row)"
+              >
+                <app-item-icon [name]="row.item" [id]="row.catalogId" [size]="22" />
+                <span class="purchase-name">{{
+                  i18n.translateItemNameById(row.catalogId, i18n.translateItemName(row.item))
+                }}</span>
+                <span class="purchase-qty">×{{ row.quantity | numberFr }}</span>
+                <span class="purchase-cost">{{ row.totalCost | numberFr }} ₭</span>
+              </div>
+            }
           }
         }
       </div>

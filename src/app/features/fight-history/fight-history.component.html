@@ -232,6 +232,9 @@
                       >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
                     >
                   }
+                  @if (record.kamas > 0) {
+                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                  }
                 </div>
                 @if (record.loot.length > 1) {
                   <div

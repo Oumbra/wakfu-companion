@@ -514,6 +514,33 @@ button.reset-btn:hover {
   min-width: 0;
 }
 
+/* Repli d'un panneau du dashboard vers le menu latéral des sections repliées (voir
+   CombatPanelService/ChatPanelService/DashboardRailComponent) — desktop uniquement : en mode
+   onglet mobile, chaque panneau n'est qu'un onglet parmi d'autres, la notion de repli ne s'y
+   applique pas. Global (pas dans damage-meter.component.css comme à l'origine) : réutilisé tel
+   quel par ChatPanelComponent, même bouton/mêmes raisons. */
+.collapse-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+.collapse-btn:hover {
+  color: var(--text-bright);
+}
+@media (max-width: 800px) {
+  .collapse-btn {
+    display: none;
+  }
+}
+
 /* Icône d'aide "?" (voir HelpModalService/HelpModalComponent) : petit bouton
    rond réutilisé sur toute section/feature dotée d'une modale explicative —
    variante de `.icon-btn`, cercle complet plutôt que carré arrondi, glyphe

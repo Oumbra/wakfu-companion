@@ -21,6 +21,9 @@ export const USER_DATA_KEYS = {
   roster: 'wakfu-character-roster',
   chatActiveChannels: 'wakfu-active-chat-channels',
   chatFilters: 'wakfu-chat-filters',
+  combatPanelCollapsed: 'wakfu-combat-panel-collapsed',
+  chatPanelCollapsed: 'wakfu-chat-panel-collapsed',
+  dashboardRailCollapsed: 'wakfu-dashboard-rail-collapsed',
 } as const;
 
 export type UserDataKey = keyof typeof USER_DATA_KEYS;

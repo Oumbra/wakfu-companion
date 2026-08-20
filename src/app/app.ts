@@ -22,8 +22,6 @@ import {
 import { ItemPickerComponent } from './shared/item-picker/item-picker.component';
 import { ItemPickerService } from './core/services/item-picker.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
-import { CombatEdgeTabComponent } from './shared/combat-edge-tab/combat-edge-tab.component';
-import { CombatPanelService } from './core/services/combat-panel.service';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
 import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
@@ -53,7 +51,6 @@ import { OnboardingTourService } from './core/services/onboarding-tour.service';
     DamageReassignPickerComponent,
     ItemPickerComponent,
     ConfirmDeletePopoverComponent,
-    CombatEdgeTabComponent,
     HelpModalComponent,
     RecipeQuantityModalComponent,
     LegalPageComponent,
@@ -76,7 +73,6 @@ export class App implements OnInit {
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly damageReassignService = inject(DamageReassignService);
   protected readonly itemPickerService = inject(ItemPickerService);
-  protected readonly combatPanel = inject(CombatPanelService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
   // Idem : démarre la synchronisation état de navigation → URL dès le premier changement de vue

@@ -80,3 +80,9 @@ export const WAKFU_MONSTER_CATEGORY_ICON_URL =
  * WakfuAutocompleteComponent.toggleCategoryFilter) — même CDN, id -1 (icône générique "tous
  * types" de l'arbre de filtre officiel). */
 export const WAKFU_ALL_CATEGORY_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/-1.png';
+
+/** Icône d'une récupération de kamas à l'Hôtel de vente dans l'historique des achats (voir
+ * StatsStoreService.HDV_KAMAS_SALE_ITEM/PurchasesComponent) — même CDN, id fourni par
+ * l'utilisateur. Pas une vraie WakfuItemCategory (aucun objet réel n'y correspond), même principe
+ * que WAKFU_MONSTER_CATEGORY_ICON_URL ci-dessus. */
+export const WAKFU_HDV_KAMAS_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/614.png';

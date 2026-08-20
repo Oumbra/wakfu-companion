@@ -1,0 +1,68 @@
+@if (entries().length > 0) {
+  <nav class="dashboard-rail" [class.is-collapsed]="isRailCollapsed()">
+    <div class="dashboard-rail-scroll">
+      @for (entry of entries(); track entry.id) {
+        <button
+          type="button"
+          class="dashboard-rail-btn"
+          (click)="expand(entry.id)"
+          [appTooltip]="entry.expandHint"
+          tooltipPosition="right"
+        >
+          <span class="dashboard-rail-icon">
+            @if (entry.id === 'combat') {
+              <app-icon name="crossed-swords" [size]="17" [strokeWidth]="1.8" />
+            } @else {
+              <app-icon name="messages-square" [size]="17" [strokeWidth]="1.8" />
+            }
+          </span>
+          <span class="dashboard-rail-label">{{ entry.label }}</span>
+          @if (entry.count !== null) {
+            <!-- Combat : simple compteur informatif (combats en cours). Chat : vrai badge de
+                 notification (fond accent) — signale des messages correspondant aux filtres
+                 configurés, voir ChatPanelService.matchedMessageCount. -->
+            <span
+              class="dashboard-rail-count"
+              [class.dashboard-rail-count-notif]="entry.id === 'chat'"
+            >
+              {{ entry.count }}
+            </span>
+          }
+        </button>
+      }
+    </div>
+    <button
+      type="button"
+      class="dashboard-rail-collapse-toggle"
+      (click)="toggleRailCollapsed()"
+      [appTooltip]="i18n.t(isRailCollapsed() ? 'dashboard.rail.expand' : 'dashboard.rail.collapse')"
+      tooltipPosition="right"
+      [tooltipDisabled]="!isRailCollapsed()"
+    >
+      <span class="dashboard-rail-collapse-icon" [class.is-collapsed]="isRailCollapsed()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16px"
+          height="16px"
+          fill="none"
+          viewBox="0 0 16 17"
+          role="img"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+      </span>
+      <span
+        class="desktop-only"
+        [style.display]="isRailCollapsed() ? 'none !important' : 'flex !important'"
+      >
+        {{ i18n.t('dashboard.rail.collapse') }}
+      </span>
+    </button>
+  </nav>
+}

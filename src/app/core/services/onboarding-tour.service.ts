@@ -4,17 +4,22 @@ import { LogFileAccessService } from './log-file-access.service';
 import { ONBOARDING_SLIDES, OnboardingSlide } from '../data/onboarding-slides.data';
 
 /** Local uniquement (pas une des 6 données synchronisables, voir CLAUDE.md/`user-data.keys.ts`) :
- * un simple « déjà vu » côté navigateur, même famille que `wakfu-combat-panel-collapsed`. */
-const SEEN_KEY = 'wakfu-onboarding-seen';
+ * un simple « déjà vu » côté navigateur, même famille que `wakfu-combat-panel-collapsed`. Suffixe
+ * `-v2` : bascule du déclenchement automatique (voir plus bas, autrefois à la première connexion
+ * réussie, désormais dès la page de setup) — un ancien flag posé sous l'ancien comportement ne
+ * doit pas empêcher tout le monde de voir le nouveau déclenchement, plus précoce. */
+const SEEN_KEY = 'wakfu-onboarding-seen-v2';
 
 /**
  * État et déclenchement du pas-à-pas d'onboarding (diaporama de présentation des fonctionnalités).
  *
  * Deux façons de l'ouvrir :
- *  - automatiquement, une seule fois, à la première connexion RÉUSSIE au fichier de log jamais vue
- *    par ce navigateur (flag persistant `SEEN_KEY`, posé dès l'ouverture — pas seulement au bout du
- *    diaporama, pour ne jamais le rouvrir tout seul même si l'utilisateur ferme avant la fin) ;
- *  - manuellement, à tout moment, via le bouton d'aide de l'en-tête (voir
+ *  - automatiquement, une seule fois par navigateur, dès que la page de setup (sélection du
+ *    fichier de log, voir `SetupComponent`) est atteinte — PAS besoin d'une connexion réussie
+ *    (flag persistant `SEEN_KEY`, posé dès l'ouverture — pas seulement au bout du diaporama, pour
+ *    ne jamais le rouvrir tout seul même si l'utilisateur ferme avant la fin) ;
+ *  - manuellement, à tout moment (y compris depuis la page de setup elle-même, avant toute
+ *    connexion — voir `AppHeaderComponent`), via le bouton d'aide de l'en-tête (voir
  *    `OnboardingHelpMenuComponent`), qui rejoue tout depuis le début ou saute à une diapositive.
  *
  * Injecté une fois au niveau racine (`app.ts`, même principe que `StatsStoreService`/`RouteSyncService`)
@@ -33,7 +38,11 @@ export class OnboardingTourService {
 
   constructor() {
     effect(() => {
-      if (this.logFileAccess.status() !== 'connected') return;
+      // Même condition que app.html pour afficher <app-setup /> : dès que le fichier n'est pas
+      // (encore) connecté, la page de setup est ce que l'utilisateur voit — inutile d'attendre une
+      // connexion réussie, qui pouvait jusqu'ici retarder indéfiniment le pas-à-pas pour un
+      // utilisateur qui hésite avant de connecter son fichier.
+      if (this.logFileAccess.status() === 'connected') return;
       if (this.persistence.getJson<boolean>(SEEN_KEY)) return;
       this.persistence.setJson(SEEN_KEY, true);
       this.openAt(0);

@@ -1,10 +1,15 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { PurchaseRecord, StatsStoreService } from '../../core/services/stats-store.service';
+import {
+  HDV_KAMAS_SALE_ITEM,
+  PurchaseRecord,
+  StatsStoreService,
+} from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
+import { WAKFU_HDV_KAMAS_ICON_URL } from '../../core/data/wakfu-item-category.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 import { CatalogService } from '../../core/api/catalog.service';
@@ -31,9 +36,10 @@ interface PurchaseAggregateRow {
   records: PurchaseRecord[];
 }
 
-/** Un jour d'achats : total tous objets confondus + achats agrégés par objet
- * (voir StatsStoreService.purchaseHistory), triés selon le même ordre que
- * les groupes (`PurchasesComponent.sortOrder`). */
+/** Un jour d'achats : total tous objets confondus (hors récupérations de kamas à l'Hôtel de vente,
+ * voir HDV_KAMAS_SALE_ITEM et le calcul de `totalCost` — pas de vrais achats) + achats agrégés par
+ * objet (voir StatsStoreService.purchaseHistory), triés selon le même ordre que les groupes
+ * (`PurchasesComponent.sortOrder`). */
 interface PurchaseDateGroup {
   dateKey: string;
   totalCost: number;
@@ -65,6 +71,7 @@ export class PurchasesComponent {
   private readonly catalog = inject(CatalogService);
   private readonly stats = inject(StatsStoreService);
   private readonly itemPicker = inject(ItemPickerService);
+  protected readonly hdvIconUrl = WAKFU_HDV_KAMAS_ICON_URL;
 
   /** Achats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedPurchases). */
@@ -83,7 +90,13 @@ export class PurchasesComponent {
 
     const filtered = this.records().filter((record) => {
       if (!query) return true;
-      const name = normalizeWakfuName(this.i18n.translateItemName(record.item));
+      // Sentinelle (voir HDV_KAMAS_SALE_ITEM) : pas un vrai nom d'objet, translateItemName ne le
+      // trouverait pas dans le catalogue et le renverrait tel quel — filtrer sur le libellé
+      // traduit réellement affiché plutôt que sur la clé interne.
+      const name =
+        record.item === HDV_KAMAS_SALE_ITEM
+          ? normalizeWakfuName(this.i18n.t('purchases.hdvSource'))
+          : normalizeWakfuName(this.i18n.translateItemName(record.item));
       const dateLabel = normalizeWakfuName(this.i18n.formatDate(record.fullTimestampMs));
       return name.includes(query) || dateLabel.includes(query);
     });
@@ -129,7 +142,13 @@ export class PurchasesComponent {
       );
       return {
         dateKey,
-        totalCost: records.reduce((sum, r) => sum + r.totalCost, 0),
+        // Une récupération de kamas à l'Hôtel de vente (voir HDV_KAMAS_SALE_ITEM) n'est pas un
+        // achat au sens propre — juste un encaissement affiché dans cette même liste pour sa
+        // valeur informative — donc exclue du total du jour, qui ne doit refléter que les kamas
+        // réellement dépensés.
+        totalCost: records
+          .filter((r) => r.item !== HDV_KAMAS_SALE_ITEM)
+          .reduce((sum, r) => sum + r.totalCost, 0),
         rows,
       };
     });
@@ -153,11 +172,20 @@ export class PurchasesComponent {
     this.collapsedDates.set(updated);
   }
 
+  /** Récupération de kamas à l'Hôtel de vente (voir HDV_KAMAS_SALE_ITEM) : pas un vrai objet du
+   * catalogue, affichée distinctement (libellé traduit, icône fixe, sans quantité ni menu de
+   * réattribution — voir template/openInteractMenu). */
+  protected isHdvRow(row: PurchaseAggregateRow): boolean {
+    return row.item === HDV_KAMAS_SALE_ITEM && row.catalogId === null;
+  }
+
   protected rarityClass(row: PurchaseAggregateRow): string {
+    if (this.isHdvRow(row)) return '';
     return `rarity-${getWakfuItemRarity(this.catalog, row.item, row.catalogId)}`;
   }
 
   protected openInteractMenu(event: MouseEvent, row: PurchaseAggregateRow): void {
+    if (this.isHdvRow(row)) return; // rien à réattribuer : ce n'est pas un objet
     event.preventDefault();
     event.stopPropagation();
     this.itemPicker.open({

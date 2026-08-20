@@ -364,6 +364,14 @@
   font-size: 0.68rem;
   color: var(--text-muted);
 }
+/* Kamas gagnés pendant le combat (voir FightRecord.kamas) — même gabarit que `.loot-count`, coloré
+   comme les autres montants de kamas de l'app (`.purchase-cost`, `.date-group-total`...). */
+.loot-kamas {
+  font-family: monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--kama-color);
+}
 
 .fight-xp-row {
   display: flex;

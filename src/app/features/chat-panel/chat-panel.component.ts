@@ -16,39 +16,13 @@ import { ChatChannelKey, ChatMessageEntry } from '../../core/models/log-entry.mo
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { ChatFilter, ChatFilterChannel, ChatPanelService } from '../../core/services/chat-panel.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /** Tolérance (px) pour considérer le scroll comme "tout en bas" malgré les arrondis de mise en page. */
 const BOTTOM_THRESHOLD_PX = 24;
 
-/** 'global' : le filtre s'applique à tous les canaux (comportement par défaut,
- * historique). Un canal précis restreint le filtre à ce seul canal. */
-export type ChatFilterChannel = ChatChannelKey | 'global';
-
-export interface ChatFilter {
-  text: string;
-  channel: ChatFilterChannel;
-}
-
-/** Filtres qui s'appliquent au canal d'un message donné : les filtres
- * "global" (tous canaux) et ceux propres à ce canal. */
-function applicableFilters(channel: ChatChannelKey, filters: readonly ChatFilter[]): ChatFilter[] {
-  return filters.filter((f) => f.channel === 'global' || f.channel === channel);
-}
-
-function matchesFilterText(msg: ChatMessageEntry, filter: ChatFilter): boolean {
-  const message = msg.message.toLowerCase();
-  const author = msg.author.toLowerCase();
-  return message.includes(filter.text) || author.includes(filter.text);
-}
-
-/** Un message "correspond" à un filtre s'il en existe au moins un, parmi ceux qui le ciblent
- * (global ou propre à son canal), dont le texte matche — utilisé à la fois pour la mise en
- * évidence visuelle (voir `isHighlighted`) et pour l'alerte sonore : les filtres ne masquent plus
- * aucun message (voir `filteredMessages`), ils ne font plus que signaler une correspondance. */
-function messageMatchesAnyFilter(msg: ChatMessageEntry, filters: readonly ChatFilter[]): boolean {
-  return applicableFilters(msg.channel, filters).some((f) => matchesFilterText(msg, f));
-}
+export type { ChatFilter, ChatFilterChannel };
 
 @Component({
   selector: 'app-chat-panel',
@@ -60,6 +34,7 @@ export class ChatPanelComponent {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
   protected readonly helpModal = inject(HelpModalService);
+  protected readonly chatPanel = inject(ChatPanelService);
   private readonly userData = inject(UserDataService);
   private readonly alertSound = inject(AlertSoundService);
   protected readonly channels = CHAT_CHANNELS;
@@ -67,7 +42,12 @@ export class ChatPanelComponent {
   protected readonly activeChannels = signal<ReadonlySet<ChatChannelKey>>(
     this.loadActiveChannels(),
   );
-  protected readonly filters = signal<ChatFilter[]>(this.loadFilters());
+  /** Filtres de mise en évidence/alerte : centralisés dans ChatPanelService (voir sa doc), pas
+   * dupliqués ici — nécessaire pour que le badge du menu latéral (voir DashboardRailComponent)
+   * reste à jour même panneau replié, où ce composant n'est plus démonté (voir
+   * dashboard.component.css, repli purement CSS) mais où on ne veut pas non plus deux copies de
+   * cet état qui pourraient diverger. */
+  protected readonly filters = this.chatPanel.filters;
   protected readonly newFilterText = signal('');
   protected readonly newFilterChannel = signal<ChatFilterChannel>('global');
   /** Replié par défaut : l'entrée de filtre + le sélecteur de canal + les chips ne sont pas
@@ -82,13 +62,6 @@ export class ChatPanelComponent {
     return new Set(stored ?? CHAT_CHANNELS.map((c) => c.key));
   }
 
-  /** Migration douce : les filtres étaient stockés en simples chaînes avant
-   * l'ajout du choix de canal — reprises telles quelles en filtres "global". */
-  private loadFilters(): ChatFilter[] {
-    const stored = this.userData.read<Array<string | ChatFilter>>('chatFilters') ?? [];
-    return stored.map((f) => (typeof f === 'string' ? { text: f, channel: 'global' } : f));
-  }
-
   /** Le nom garde "filtered" (canaux actifs, voir `toggleChannel`) même si les filtres de texte,
    * eux, ne masquent plus rien — ils ne font que mettre en évidence (voir `isHighlighted`). */
   protected readonly filteredMessages = computed(() => {
@@ -98,9 +71,9 @@ export class ChatPanelComponent {
 
   /** Un message est mis en évidence (dégradé + bordure, voir template/CSS) s'il correspond à l'un
    * des filtres de texte configurés — l'alerte sonore utilise le même critère (voir `effect` ci-
-   * dessous), les deux doivent toujours s'accorder. */
+   * dessous), les deux doivent toujours s'accorder (voir ChatPanelService.isHighlighted). */
   protected isHighlighted(msg: ChatMessageEntry): boolean {
-    return messageMatchesAnyFilter(msg, this.filters());
+    return this.chatPanel.isHighlighted(msg);
   }
 
   private readonly chatList = viewChild<ElementRef<HTMLDivElement>>('chatList');
@@ -110,20 +83,15 @@ export class ChatPanelComponent {
   private lastAlertedMessageCount = 0;
 
   constructor() {
-    // Canaux et filtres ont pu changer depuis un autre appareil (lot 6). Ce
-    // composant est monté/démonté avec sa vue, contrairement aux services
-    // `providedIn: 'root'` : le désabonnement n'est pas optionnel ici.
+    // Canaux (visibilité) ont pu changer depuis un autre appareil (lot 6) — les filtres, eux,
+    // sont déjà tenus à jour par ChatPanelService (`providedIn: 'root'`, jamais détruit). Ce
+    // composant est monté/démonté avec sa vue, contrairement aux services `providedIn: 'root'` :
+    // le désabonnement n'est pas optionnel ici.
     const destroyRef = inject(DestroyRef);
     const unsubscribeChannels = this.userData.onExternalChange('chatActiveChannels', () =>
       this.activeChannels.set(this.loadActiveChannels()),
     );
-    const unsubscribeFilters = this.userData.onExternalChange('chatFilters', () =>
-      this.filters.set(this.loadFilters()),
-    );
-    destroyRef.onDestroy(() => {
-      unsubscribeChannels();
-      unsubscribeFilters();
-    });
+    destroyRef.onDestroy(unsubscribeChannels);
 
     effect(() => {
       const count = this.filteredMessages().length;
@@ -144,7 +112,7 @@ export class ChatPanelComponent {
       if (filters.length === 0 || messages.length <= previousCount) return;
       if (this.stats.wasLastBatchInitialLoad()) return;
       const newMessages = messages.slice(previousCount);
-      if (newMessages.some((m) => messageMatchesAnyFilter(m, filters))) {
+      if (newMessages.some((m) => this.chatPanel.isHighlighted(m))) {
         this.alertSound.playChatFilter();
       }
     });
@@ -191,20 +159,12 @@ export class ChatPanelComponent {
   protected addFilter(): void {
     const text = this.newFilterText().trim().toLowerCase();
     if (!text) return;
-    const channel = this.newFilterChannel();
-    const current = this.filters();
-    if (!current.some((f) => f.text === text && f.channel === channel)) {
-      const updated = [...current, { text, channel }];
-      this.filters.set(updated);
-      this.userData.write('chatFilters', updated);
-    }
+    this.chatPanel.addFilter({ text, channel: this.newFilterChannel() });
     this.newFilterText.set('');
   }
 
   protected removeFilter(filter: ChatFilter): void {
-    const updated = this.filters().filter((f) => f !== filter);
-    this.filters.set(updated);
-    this.userData.write('chatFilters', updated);
+    this.chatPanel.removeFilter(filter);
   }
 
   protected filterChannelLabelKey(channel: ChatFilterChannel): string {

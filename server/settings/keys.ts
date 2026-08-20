@@ -21,6 +21,9 @@ export const SYNCED_SETTING_KEYS = [
   'roster',
   'chatActiveChannels',
   'chatFilters',
+  'combatPanelCollapsed',
+  'chatPanelCollapsed',
+  'dashboardRailCollapsed',
 ] as const;
 
 export type SyncedSettingKey = (typeof SYNCED_SETTING_KEYS)[number];

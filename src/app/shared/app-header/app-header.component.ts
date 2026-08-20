@@ -29,7 +29,9 @@ import { OnboardingTourService } from '../../core/services/onboarding-tour.servi
  * Recap, profil et serveur de jeu ne s'affichent que si un fichier wakfu.log valide est connecté —
  * pour le serveur, parce qu'il se déduit du log lui-même (personnage du roster reconnu, voir
  * GameServerService) : l'afficher avant n'aurait rien à dire. Le bouton profil s'efface en plus sur
- * la page profil elle-même (pas de bouton pour aller vers la page où l'on se trouve déjà).
+ * la page profil elle-même (pas de bouton pour aller vers la page où l'on se trouve déjà). Seule
+ * exception : le bouton d'aide du pas-à-pas (voir `OnboardingTourService`), disponible dès la page
+ * de setup — le diaporama qu'il ouvre est entièrement autonome, sans dépendance à un fichier connecté.
  */
 @Component({
   selector: 'app-header',
