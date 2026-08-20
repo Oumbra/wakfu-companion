@@ -55,6 +55,7 @@ import { ColorblindProfile, ColorblindService } from '../../core/services/colorb
 import { LightThemeVariant, ThemeService } from '../../core/services/theme.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
+import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
 
 /** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
  * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
@@ -107,6 +108,7 @@ const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindS
     NgTemplateOutlet,
     TooltipDirective,
     EditableNameComponent,
+    AuthProviderButtonsComponent,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',

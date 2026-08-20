@@ -108,10 +108,26 @@ export class App implements OnInit {
     // /auth/me. Volontairement non bloquant — un invité (cas courant) ne subit
     // qu'un 401, et l'application s'affiche normalement pendant ce temps.
     void this.auth.handleStartup().then((outcome) => {
+      // Consommé dès qu'un retour OAuth existe (succès OU échec) — pas seulement en cas de
+      // succès : sinon un login annulé/en erreur laisserait le flag traîner en sessionStorage et
+      // fausserait la toute PROCHAINE connexion réussie dans ce même onglet (ex. depuis la page
+      // profil), qui n'a plus rien à voir avec le bouton mobile "passer cette étape".
+      const mobileSkipPending = outcome ? this.auth.consumeMobileSkipLoginPending() : false;
+      if (outcome?.status !== 'ok') return;
+      // Retour du bouton mobile "passer cette étape" (voir SetupComponent/
+      // LogFileAccessService.simulateConnected) : la connexion vient d'aboutir pour cette seule
+      // raison, direction le tableau de bord plutôt que la page compte — SAUF si une décision sur
+      // les données locales est en attente (voir AuthService.evaluateDataMigration, appelé juste
+      // avant ce `.then`) : cette décision ne doit jamais être prise en silence, elle reste
+      // affichée sur la page compte comme pour toute autre connexion.
+      if (mobileSkipPending && !this.auth.migrationPrompt()) {
+        this.logFileAccess.simulateConnected(this.i18n.t('setup.mobileSkip.simulatedFileName'));
+        return;
+      }
       // Au retour d'une connexion réussie, on atterrit sur la page compte :
       // c'est là que se prend, le cas échéant, la décision sur les données
       // locales (voir AuthService.evaluateDataMigration).
-      if (outcome?.status === 'ok') this.nav.openAccount();
+      this.nav.openAccount();
     });
   }
 
