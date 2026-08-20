@@ -74,5 +74,26 @@
         }
       </div>
     }
+
+    <!-- Fichier wakfu.log injoignable depuis un navigateur mobile (aucun n'implémente l'API File
+         System Access, voir isSupported()) : propose de rejoindre directement le tableau de bord
+         avec les seules données de compte déjà synchronisées, plutôt qu'une impasse. -->
+    <div class="mobile-only mobile-skip-block">
+      <button type="button" class="link-btn" (click)="skipLogFile()">
+        {{ 'setup.mobileSkip.button' | t }}
+      </button>
+      @if (showSkipLoginPrompt() && !auth.isAuthenticated()) {
+        <div class="mobile-skip-login">
+          <p class="mobile-skip-login-desc">{{ 'setup.mobileSkip.loginPrompt' | t }}</p>
+          @if (auth.error(); as errorKey) {
+            <p class="setup-message error" role="alert">{{ errorKey | t }}</p>
+          }
+          <app-auth-provider-buttons
+            [disabled]="auth.busy()"
+            (providerChosen)="loginForSkip($event)"
+          />
+        </div>
+      }
+    </div>
   </div>
 </div>
