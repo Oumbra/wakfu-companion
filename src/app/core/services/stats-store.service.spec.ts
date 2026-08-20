@@ -2,7 +2,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { StatsStoreService } from './stats-store.service';
+import { HDV_KAMAS_SALE_ITEM, StatsStoreService } from './stats-store.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { CharacterRosterService } from './character-roster.service';
 import { LootAlertService } from './loot-alert.service';
@@ -79,10 +79,55 @@ describe('StatsStoreService', () => {
       const access = TestBed.inject(LogFileAccessService);
       feed(access, [
         ' INFO 11:02:26,931 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 500 kamas.',
-        ' INFO 11:02:30,000 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 1 kamas.',
+        ' INFO 11:02:30,000 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Poudre .',
       ]);
       expect(stats.purchaseHistory()).toHaveLength(0);
       expect(stats.kamasLost()).toBe(500);
+    });
+  });
+
+  describe("Historique Achats — récupération de kamas à l'Hôtel de vente (HDV_KAMAS_SALE_ITEM)", () => {
+    it('enregistre un gain de kamas isolé (hors combat, hors échange) comme un achat "Hôtel de vente"', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 11:02:26,931 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 1500 kamas.',
+      ]);
+      const purchases = stats.purchaseHistory();
+      expect(purchases).toHaveLength(1);
+      expect(purchases[0]).toMatchObject({
+        item: HDV_KAMAS_SALE_ITEM,
+        catalogId: null,
+        quantity: 0,
+        totalCost: 1500,
+      });
+      expect(stats.kamasEarned()).toBe(1500);
+    });
+
+    it('committe plusieurs récupérations HDV consécutives sans les mélanger', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 11:02:26,931 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 1500 kamas.',
+        ' INFO 11:02:27,000 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 320 kamas.',
+      ]);
+      expect(stats.purchaseHistory().map((p) => p.totalCost)).toEqual([320, 1500]);
+    });
+
+    it("n'enregistre jamais un gain de kamas issu du butin de combat comme un achat (fight_multi-account_end_after-all-monsters-play.log)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('fight_multi-account_end_after-all-monsters-play.log'));
+
+      expect(stats.purchaseHistory().filter((p) => p.item === HDV_KAMAS_SALE_ITEM)).toHaveLength(0);
+    });
+
+    it("n'enregistre jamais un gain de kamas issu d'un échange comme un achat, quel que soit l'ordre des lignes (trade_3.log, trade_multi-account.log)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [...readFixture('trade_3.log'), ...readFixture('trade_multi-account.log')]);
+
+      expect(stats.purchaseHistory().filter((p) => p.item === HDV_KAMAS_SALE_ITEM)).toHaveLength(0);
     });
   });
 

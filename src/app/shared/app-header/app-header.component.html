@@ -94,15 +94,18 @@
       >
         <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
       </button>
-      <button
-        class="icon-btn"
-        [appTooltip]="'onboarding.helpButton' | t"
-        tooltipPosition="bottom"
-        (click)="toggleOnboardingHelp($event)"
-      >
-        <span class="icon-btn-text">?</span>
-      </button>
     }
+    <!-- Diaporama de présentation (voir OnboardingTourService) : entièrement autonome, ne dépend
+         d'aucune donnée du fichier connecté — disponible dès la page de setup, pas seulement une
+         fois un wakfu.log connecté (contrairement au recap/profil ci-dessus/dessous). -->
+    <button
+      class="icon-btn"
+      [appTooltip]="'onboarding.helpButton' | t"
+      tooltipPosition="bottom"
+      (click)="toggleOnboardingHelp($event)"
+    >
+      <span class="icon-btn-text">?</span>
+    </button>
     <app-theme-switch />
     <app-language-switcher />
     @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
@@ -163,11 +166,12 @@
             <img [src]="sessionRecapIcon" class="mobile-menu-icon" alt="" />
             <span>{{ 'app.sessionRecap' | t }}</span>
           </button>
-          <button class="mobile-menu-item" (click)="startOnboardingTour()">
-            <span class="mobile-menu-icon onboarding-help-mobile-icon">?</span>
-            <span>{{ 'onboarding.helpButton' | t }}</span>
-          </button>
         }
+        <!-- Voir le commentaire équivalent côté desktop : disponible dès la page de setup. -->
+        <button class="mobile-menu-item" (click)="startOnboardingTour()">
+          <span class="mobile-menu-icon onboarding-help-mobile-icon">?</span>
+          <span>{{ 'onboarding.helpButton' | t }}</span>
+        </button>
         @if (logFileAccess.status() === 'connected' && nav.view() !== 'profile') {
           <div (click)="closeMobileMenu()">
             <app-profile variant="row" />
