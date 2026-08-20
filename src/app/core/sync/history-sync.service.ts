@@ -175,10 +175,7 @@ export class HistorySyncService {
           .filter((participant) => participant.side === 'ally')
           .reduce((sum, participant) => sum + participant.damage, 0),
         xpGained: record.xp.reduce((sum, row) => sum + row.amount, 0),
-        // Le log ne rattache jamais un gain de kamas à un combat (voir
-        // `KamaGainEntry`, sans `fightId`) : la colonne reste vide plutôt que de
-        // recevoir une valeur devinée.
-        kamasGained: null,
+        kamasGained: record.kamas,
         gameServer: this.currentServer(),
         participants,
         loot: record.loot.map((row) => ({

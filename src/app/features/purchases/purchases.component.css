@@ -88,6 +88,16 @@
   pointer-events: none;
 }
 
+/* Icône fixe d'une récupération de kamas à l'Hôtel de vente (voir isHdvRow) — même gabarit que
+   `app-item-icon [size]="22"` pour s'aligner avec les autres lignes de la même liste. */
+.purchase-hdv-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
 .purchase-name {
   flex-grow: 1;
   min-width: 0;

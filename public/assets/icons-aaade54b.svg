@@ -59,4 +59,25 @@
     <circle cx="12" cy="12" r="8" />
     <circle cx="12" cy="12" r="4" />
   </symbol>
+  <!-- Section Chat repliée dans le menu latéral (voir DashboardRailComponent) : deux bulles de
+       dialogue superposées (rectangles arrondis décalés en diagonale + une pointe sur celle du
+       premier plan), pour se distinguer de l'icône Combat (symbole `crossed-swords` ci-dessous)
+       tout en restant lisible à petite taille. -->
+  <symbol id="messages-square" viewBox="0 0 24 24">
+    <rect x="2" y="3" width="14" height="9" rx="2" />
+    <rect x="8" y="10" width="14" height="9" rx="2" />
+    <path d="M11 19l-1 3 4-3" />
+  </symbol>
+  <!-- Icône Combat (rail replié, en-tête du damage-meter) : deux épées croisées, remplace le
+       bitmap `header-combat-*.png` à ces deux endroits — un SVG se colore via `currentColor`
+       (thème, hover...), contrairement à un PNG figé. Distinct du symbole `swords` ci-dessus
+       (croix abstraite, réservé au switch de regroupement de l'historique) : ici lame + garde +
+       poignée par épée pour rester identifiable comme des épées, pas juste une croix. Le PNG
+       reste utilisé dans la section "Combats" du session-recap (voir header-icons.data.ts) :
+       entouré des autres médaillons illustrés (XP, Kamas, Défis, Butin), un trait SVG fin y
+       détonnerait — vérifié à l'écran. -->
+  <symbol id="crossed-swords" viewBox="0 0 24 24">
+    <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" />
+    <path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" />
+  </symbol>
 </svg>

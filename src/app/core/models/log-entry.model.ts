@@ -24,6 +24,11 @@ export interface KamaGainEntry {
   kind: 'kama-gain';
   time: string;
   amount: number;
+  /** Combat en cours au moment du gain, `null` si hors combat (ex. récupération de kamas à
+   * l'Hôtel de vente) — voir LootEntry.fightId, même principe. Sert à StatsStoreService à
+   * distinguer un gain de butin de combat d'une récupération de kamas à l'HDV, qui produisent
+   * toutes deux la même ligne de log. */
+  fightId: number | null;
 }
 
 export interface KamaLossEntry {

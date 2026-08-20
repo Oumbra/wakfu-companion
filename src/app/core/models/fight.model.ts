@@ -46,6 +46,9 @@ export class Fight {
   readonly enemies: FightEnemy[] = [];
   readonly loots: FightLoot[] = [];
   readonly exp: FightExpGain[] = [];
+  /** Kamas gagnés pendant le combat (voir StatsStoreService.registerFightKama) — affichés dans la
+   * ligne de butin (FightRecord.kamas), en plus de `loots` ci-dessus. */
+  kamas = 0;
 
   constructor(id: number, startDate: Date) {
     this.id = id;

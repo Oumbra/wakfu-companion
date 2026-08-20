@@ -138,6 +138,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
+    'history.splitCombatsHeader': 'Historique de combats',
     'history.group.day': 'Jour',
     'history.group.origin': 'Origine',
     'history.group.type': 'Type',
@@ -157,6 +158,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'Aucun achat enregistré.',
     'purchases.sortNewestFirst': 'Plus récent en premier',
     'purchases.sortOldestFirst': 'Plus ancien en premier',
+    'purchases.hdvSource': 'Hôtel de vente',
 
     'trades.header': 'Échanges',
     'trades.searchPlaceholder': 'Rechercher un objet, une date ou un personnage...',
@@ -262,6 +264,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personnages',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Réduire',
+    'chat.expandHint': 'Agrandir',
+    'dashboard.rail.collapse': 'Réduire',
+    'dashboard.rail.expand': 'Agrandir',
     'chat.filtersToggle': 'Recherche',
     'chat.filterPlaceholder': 'Rechercher les messages...',
     'chat.filterChannelGlobal': 'Global',
@@ -302,7 +308,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Conserve les 30 derniers combats de la session en mémoire : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP. Connecté à un compte, l'historique complet est en plus sauvegardé sans limite et rechargeable au-delà via le bouton « Charger plus » ; en invité, seuls ces 30 derniers combats restent consultables.\n\nLes combats se regroupent selon trois modes, au choix (boutons au-dessus de la liste) : Jour, Origine (session en cours séparée de l'historique du compte, connecté uniquement) et Type (par donjon/brèche, ou par famille de monstre).\n\nLes combats d'un même donjon (salles successives et tentative(s) de boss) sont automatiquement rassemblés sous une seule entrée repliée, pour ne pas noyer le boss au milieu des salles — nombre de combats et durée totale du run remplacent le détail individuel tant qu'elle reste repliée. Quand la pierre de ce donjon figure dans le butin du combat de boss, un badge s'affiche sur son illustration.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nUn combat déplié propose le même switch Total/Tour que le combat en cours pour revoir les dégâts tour par tour, et le butin se trie par nom, quantité ou rareté.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur une ligne de sort du détail d'un combattant : réattribuer cette attaque à un autre combattant.",
     'help.purchases.title': 'Historique > Achats',
     'help.purchases.body':
-      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » ; en invité, seuls les achats de la session en cours sont visibles.\n\nClic droit sur un objet : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
+      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet. Une récupération de kamas à l'Hôtel de Vente (gain de kamas hors combat et hors échange) est elle aussi enregistrée ici, sous la source « Hôtel de vente », sans objet ni quantité.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » ; en invité, seuls les achats de la session en cours sont visibles.\n\nClic droit sur un objet : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
     'help.trades.title': 'Historique > Échanges',
     'help.trades.body':
       "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (personnage, objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seuls les échanges de la session en cours sont visibles.\n\nClic droit sur un objet donné ou reçu : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
@@ -325,7 +331,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.body':
       "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
 
-    'onboarding.helpButton': 'Revoir le pas-à-pas',
+    'onboarding.helpButton': 'Pas-à-pas',
     'onboarding.jumpToEnd': 'Aller à la fin',
     'onboarding.prev': 'Précédent',
     'onboarding.next': 'Suivant',
@@ -603,6 +609,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'History',
     'history.tabCombats': 'Fights',
+    'history.splitCombatsHeader': 'Fight history',
     'history.group.day': 'Day',
     'history.group.origin': 'Origin',
     'history.group.type': 'Type',
@@ -622,6 +629,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'No purchase recorded.',
     'purchases.sortNewestFirst': 'Newest first',
     'purchases.sortOldestFirst': 'Oldest first',
+    'purchases.hdvSource': 'Auction house',
 
     'trades.header': 'Trades',
     'trades.searchPlaceholder': 'Search an item, a date or a character...',
@@ -725,6 +733,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Characters',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Collapse',
+    'chat.expandHint': 'Expand',
+    'dashboard.rail.collapse': 'Collapse',
+    'dashboard.rail.expand': 'Expand',
     'chat.filtersToggle': 'Filters',
     'chat.filterPlaceholder': 'Filter messages...',
     'chat.filterChannelGlobal': 'Global',
@@ -765,7 +777,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Keeps the last 30 fights of the session in memory: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP. Signed in, the full history is also saved with no limit and can be loaded further back with the \"Load more\" button; as a guest, only these last 30 fights stay available.\n\nFights can be grouped three ways (buttons above the list): Day, Origin (current session kept apart from the account's history, signed-in only) and Type (by dungeon/breach, or by monster family).\n\nFights from the same dungeon (successive rooms and boss attempt(s)) are automatically gathered under a single collapsed entry, so the boss doesn't get lost among the rooms — the number of fights and the run's total duration replace the individual detail while it stays collapsed. When that dungeon's stone is part of the boss fight's loot, a badge appears on its illustration.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nAn expanded fight offers the same Total/Turn switch as the current fight, to review damage turn by turn, and loot can be sorted by name, quantity or rarity.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.\nRight-click a spell line in a combatant's detail: reassign that attack to another combatant.",
     'help.purchases.title': 'History > Purchases',
     'help.purchases.body':
-      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button; as a guest, only purchases from the current session are visible.\n\nRight-click an item: fix its identity if it was misidentified, and add it to tracking in one click.',
+      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item. A kamas payout collected from the Auction House (a kamas gain outside combat and outside a trade) is also recorded here, under the source “Auction House”, with no item or quantity.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button; as a guest, only purchases from the current session are visible.\n\nRight-click an item: fix its identity if it was misidentified, and add it to tracking in one click.',
     'help.trades.title': 'History > Trades',
     'help.trades.body':
       'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (character, item or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only trades from the current session are visible.\n\nRight-click a given or received item: fix its identity if it was misidentified, and add it to tracking in one click.',
@@ -788,7 +800,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
 
-    'onboarding.helpButton': 'Replay the walkthrough',
+    'onboarding.helpButton': 'Walkthrough',
     'onboarding.jumpToEnd': 'Jump to the end',
     'onboarding.prev': 'Previous',
     'onboarding.next': 'Next',
@@ -1060,6 +1072,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
+    'history.splitCombatsHeader': 'Historial de combates',
     'history.group.day': 'Día',
     'history.group.origin': 'Origen',
     'history.group.type': 'Tipo',
@@ -1079,6 +1092,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'Ninguna compra registrada.',
     'purchases.sortNewestFirst': 'Más reciente primero',
     'purchases.sortOldestFirst': 'Más antiguo primero',
+    'purchases.hdvSource': 'Casa de subastas',
 
     'trades.header': 'Intercambios',
     'trades.searchPlaceholder': 'Buscar un objeto, una fecha o un personaje...',
@@ -1184,6 +1198,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personajes',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Contraer',
+    'chat.expandHint': 'Expandir',
+    'dashboard.rail.collapse': 'Contraer',
+    'dashboard.rail.expand': 'Expandir',
     'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
     'chat.filterChannelGlobal': 'Global',
@@ -1224,7 +1242,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Conserva los últimos 30 combates de la sesión en memoria: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP. Conectado a una cuenta, el historial completo se guarda además sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo quedan disponibles estos últimos 30 combates.\n\nLos combates se pueden agrupar de tres formas (botones encima de la lista): Día, Origen (sesión actual separada del historial de la cuenta, solo conectado) y Tipo (por mazmorra/brecha, o por familia de monstruo).\n\nLos combates de una misma mazmorra (salas sucesivas e intento(s) de jefe) se agrupan automáticamente en una sola entrada plegada, para que el jefe no se pierda entre las salas — el número de combates y la duración total de la carrera sustituyen el detalle individual mientras permanece plegada. Cuando la piedra de esa mazmorra figura en el botín del combate del jefe, aparece una insignia sobre su ilustración.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nUn combate desplegado ofrece el mismo interruptor Total/Turno que el combate en curso para repasar el daño turno a turno, y el botín se puede ordenar por nombre, cantidad o rareza.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en una línea de hechizo del detalle de un combatiente: reasignar ese ataque a otro combatiente.',
     'help.purchases.title': 'Historial > Compras',
     'help.purchases.body':
-      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más»; como invitado, solo son visibles las compras de la sesión actual.\n\nClic derecho en un objeto: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
+      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto. Una recuperación de kamas de la Casa de Subastas (una ganancia de kamas fuera de combate y fuera de un intercambio) también se registra aquí, bajo la fuente «Casa de Subastas», sin objeto ni cantidad.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más»; como invitado, solo son visibles las compras de la sesión actual.\n\nClic derecho en un objeto: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
     'help.trades.title': 'Historial > Intercambios',
     'help.trades.body':
       'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (personaje, objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles los intercambios de la sesión actual.\n\nClic derecho en un objeto dado o recibido: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
@@ -1247,7 +1265,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.body':
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
 
-    'onboarding.helpButton': 'Repetir el tutorial',
+    'onboarding.helpButton': 'Tutorial',
     'onboarding.jumpToEnd': 'Ir al final',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Siguiente',
@@ -1522,6 +1540,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
+    'history.splitCombatsHeader': 'Histórico de combates',
     'history.group.day': 'Dia',
     'history.group.origin': 'Origem',
     'history.group.type': 'Tipo',
@@ -1541,6 +1560,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'purchases.empty': 'Nenhuma compra registrada.',
     'purchases.sortNewestFirst': 'Mais recente primeiro',
     'purchases.sortOldestFirst': 'Mais antigo primeiro',
+    'purchases.hdvSource': 'Leilão',
 
     'trades.header': 'Trocas',
     'trades.searchPlaceholder': 'Pesquisar um item, uma data ou um personagem...',
@@ -1646,6 +1666,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personagens',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Recolher',
+    'chat.expandHint': 'Expandir',
+    'dashboard.rail.collapse': 'Recolher',
+    'dashboard.rail.expand': 'Expandir',
     'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensagens...',
     'chat.filterChannelGlobal': 'Global',
@@ -1686,7 +1710,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Guarda os últimos 30 combates da sessão em memória: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP. Conectado a uma conta, o histórico completo também é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas esses últimos 30 combates ficam disponíveis.\n\nOs combates podem ser agrupados de três formas (botões acima da lista): Dia, Origem (sessão atual separada do histórico da conta, apenas conectado) e Tipo (por masmorra/brecha, ou por família de monstro).\n\nOs combates de uma mesma masmorra (salas sucessivas e tentativa(s) de chefe) são automaticamente reunidos em uma única entrada recolhida, para o chefe não se perder no meio das salas — o número de combates e a duração total da corrida substituem o detalhe individual enquanto ela permanece recolhida. Quando a pedra dessa masmorra está no butim do combate do chefe, um selo aparece sobre sua ilustração.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nUm combate expandido oferece o mesmo interruptor Total/Turno do combate em curso para rever o dano turno a turno, e o butim pode ser ordenado por nome, quantidade ou raridade.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em uma linha de feitiço no detalhe de um combatente: reatribuir esse ataque a outro combatente.',
     'help.purchases.title': 'Histórico > Compras',
     'help.purchases.body':
-      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais"; como convidado, apenas as compras da sessão atual ficam visíveis.\n\nClique com o botão direito em um item: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
+      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item. Um recebimento de kamas do Leilão (um ganho de kamas fora de combate e fora de uma troca) também é registrado aqui, na fonte «Leilão», sem item nem quantidade.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais"; como convidado, apenas as compras da sessão atual ficam visíveis.\n\nClique com o botão direito em um item: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
     'help.trades.title': 'Histórico > Trocas',
     'help.trades.body':
       'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (personagem, item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as trocas da sessão atual ficam visíveis.\n\nClique com o botão direito em um item dado ou recebido: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
@@ -1709,7 +1733,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.profileConnection.body':
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
 
-    'onboarding.helpButton': 'Rever o tutorial',
+    'onboarding.helpButton': 'Tutorial',
     'onboarding.jumpToEnd': 'Ir para o fim',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Seguinte',

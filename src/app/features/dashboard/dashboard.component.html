@@ -1,3 +1,4 @@
+<app-dashboard-rail />
 <div class="dashboard">
   <app-tracker-strip />
 
@@ -16,6 +17,9 @@
     }
     <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
     <app-history [class.tab-hidden]="activeTab() !== 'history'" />
-    <app-chat-panel [class.tab-hidden]="activeTab() !== 'chat'" />
+    <app-chat-panel
+      [class.tab-hidden]="activeTab() !== 'chat'"
+      [class.panel-collapsed]="chatPanel.collapsed()"
+    />
   </div>
 </div>
