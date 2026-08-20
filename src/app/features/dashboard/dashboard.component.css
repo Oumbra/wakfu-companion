@@ -5,12 +5,21 @@
   min-height: 0;
 }
 
+/* `<app-dashboard-rail>` (voir DashboardRailComponent) est un sibling flex de `.dashboard` au
+   niveau `:host` — PAS un enfant imbriqué dans `.dashboard` — pour qu'il touche le bord gauche de
+   l'écran comme `.profile-rail` (page profil) : `.dashboard` porte son propre `padding: 15px`
+   (voir plus bas), qui décalerait le rail de 15px du bord s'il était placé dedans. Pas de `gap`
+   au niveau `:host` non plus, même raison que profile (`.profile-layout`, sans `gap`) : la
+   séparation visuelle vient du `padding` gauche de `.dashboard` lui-même, pas d'un espace
+   flex — exactement comme `.profile-rail`/`.panels-row` (profil) se séparent via le padding du
+   second, jamais un `gap` du conteneur commun. */
 .dashboard {
   display: flex;
   flex-direction: column;
   gap: 15px;
   padding: 15px;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
   height: 100%;
   box-sizing: border-box;
   min-height: 0;
@@ -20,20 +29,6 @@
    l'en-tête du panneau actif (voir styles.css pour le masquage du .panel-header propre à chaque
    panneau et l'alignement du haut de .tool-panel) plutôt que d'être une rangée séparée au-dessus —
    gagne de la hauteur et lit comme un seul bloc. */
-
-/* Accueille le menu latéral des sections repliées (voir DashboardRailComponent) devant
-   `.panels-row` — reprend le rôle `flex: 1 1 0` tenu directement par `.panels-row` avant son
-   introduction (voir son commentaire ci-dessous, toujours valable, juste un cran plus haut dans
-   l'arbre désormais). `<app-dashboard-rail>` a `:host{display:contents}` : ne compte comme un
-   VRAI enfant flex (et ne consomme le `gap` ci-dessous) que lorsqu'il rend effectivement son
-   `<nav>` (au moins une section repliée) — jamais un rail vide qui grignoterait de la largeur. */
-.dashboard-content {
-  display: flex;
-  gap: 15px;
-  flex: 1 1 0;
-  min-height: 0;
-  min-width: 0;
-}
 
 .panels-row {
   min-width: 0;
@@ -96,9 +91,6 @@
   .dashboard {
     gap: 0;
     padding: 0;
-  }
-  .dashboard-content {
-    gap: 0;
   }
   .panels-row,
   .panels-row.has-combat,

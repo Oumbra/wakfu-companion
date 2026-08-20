@@ -1,15 +1,19 @@
 /* `:host { display: contents }` : le composant lui-même ne doit jamais occuper de boîte propre
-   dans le flex `.dashboard-content` (voir dashboard.component.css) — seul `.dashboard-rail`
-   (rendu conditionnellement, voir template) doit compter comme un vrai enfant flex, sans quoi un
-   hôte vide continuerait à réserver le `gap` du conteneur même quand rien n'est replié. */
+   dans le flex `:host` de DashboardComponent (voir dashboard.component.css) — seul
+   `.dashboard-rail` (rendu conditionnellement, voir template) doit compter comme un vrai enfant
+   flex, sans quoi un hôte vide continuerait à réserver de la place même quand rien n'est replié. */
 :host {
   display: contents;
 }
 
-/* Même principe que `.profile-rail` (page profil) : rail vertical réductible en icônes seules,
-   `position` normale (pas `fixed`/`sticky`) puisque `.dashboard-content` a déjà une hauteur bornée
-   (contrairement à `.profile-layout`, voir son commentaire CSS) — pas besoin de la même mécanique
-   `max-height`/`ResizeObserver`. */
+/* Même design/comportement que `.profile-rail` (page profil, profile-page.component.css) : rail
+   vertical collé au bord gauche de l'écran (sibling flex de `.dashboard`, PAS niché dedans — voir
+   son commentaire CSS), réductible en icônes seules, séparé du contenu par une simple bordure
+   droite plutôt qu'une carte flottante (pas de `border-radius`/bordure complète). `position`
+   normale (pas `sticky` comme `.profile-rail`) : DashboardComponent n'a pas de zone scrollable
+   verticalement (contrairement à `.profile-layout`, voir son commentaire CSS) — `sticky` n'y
+   aurait aucun effet différent de `static`, pas besoin de la même mécanique `max-height`/
+   `ResizeObserver` non plus. */
 .dashboard-rail {
   flex: none;
   height: 100%;
@@ -19,8 +23,7 @@
   gap: 8px;
   padding: 15px;
   background: var(--panel-bg);
-  border-radius: 8px;
-  border: 1px solid var(--border);
+  border-right: 1px solid var(--border);
   transition: width 0.15s ease;
 }
 .dashboard-rail.is-collapsed {
