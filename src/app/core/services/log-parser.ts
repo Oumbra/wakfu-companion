@@ -381,7 +381,12 @@ export class LogParser {
   private parseGameLine(time: string, content: string): LogEntry | null {
     const gain = KAMA_GAIN_RE.exec(content);
     if (gain) {
-      return { kind: 'kama-gain', time, amount: parseFrenchNumber(gain[1]) };
+      return {
+        kind: 'kama-gain',
+        time,
+        amount: parseFrenchNumber(gain[1]),
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     const loss = KAMA_LOSS_RE.exec(content);
     if (loss) {

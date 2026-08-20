@@ -29,8 +29,15 @@ const MAX_FIGHT_HISTORY = 30;
 const MAX_REASSIGNMENT_HISTORY = 500;
 /** Miroir de MAX_REASSIGNMENT_HISTORY pour le journal de correction d'objet — voir reassignLootItem/reassignPurchaseItem/reassignTradeItem. */
 const MAX_ITEM_REASSIGNMENT_HISTORY = 500;
-/** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. */
+/** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. Réutilisée telle quelle pour rapprocher un gain de kamas hors combat d'un échange conclu au même moment (voir considerHdvKamaGain) — même principe, même ordre de grandeur. */
 const PURCHASE_WINDOW_MS = 2000;
+
+/** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
+ * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
+ * achats — voir considerHdvKamaGain/resolvePendingHdvKamaGain. Affiché spécifiquement par
+ * PurchasesComponent (libellé traduit `purchases.hdvSource`, icône itemTypes/614.png fixe, sans
+ * quantité) plutôt que résolu via le catalogue comme un objet normal. */
+export const HDV_KAMAS_SALE_ITEM = '__hdv_kamas_sale__';
 
 interface SpellAgg {
   total: number;
@@ -370,6 +377,16 @@ export class StatsStoreService {
   private nextTradeId = 1;
   /** Perte de kamas en attente d'un ramassage d'objet immédiat (signature d'un achat) — voir registerLoot. */
   private pendingPurchase: { amount: number; timeMs: number } | null = null;
+  /** Gain de kamas hors combat en attente de confirmation : commité comme récupération de kamas à
+   * l'Hôtel de vente dès que la ligne suivante ne s'avère PAS être l'échange dont il fait partie
+   * (voir considerHdvKamaGain/resolvePendingHdvKamaGain) — la ligne "Vous avez gagné" d'un échange
+   * peut précéder OU suivre de très peu son propre 'trade-completed' selon les jeux de logs
+   * observés, d'où cette confirmation à un pas plutôt qu'un simple regard en arrière. */
+  private pendingHdvKamaGain: { amount: number; time: string; timeMs: number } | null = null;
+  /** Horodatage (ms) du dernier 'trade-completed' traité — permet à considerHdvKamaGain de
+   * reconnaître un gain de kamas qui vient d'être expliqué par un échange tout juste conclu (cas
+   * où le 'trade-completed' précède la ligne "Vous avez gagné", voir pendingHdvKamaGain). */
+  private lastTradeCompletedAtMs: number | null = null;
 
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
@@ -650,6 +667,11 @@ export class StatsStoreService {
     // suite plutôt que d'attendre un futur lot qui peut tarder à arriver.
     const flushed = this.parser.flush();
     if (flushed) this.apply(flushed);
+    // Un gain de kamas encore en attente de confirmation en fin de lot n'a plus de ligne suivante
+    // à attendre dans l'immédiat (la prochaine pourrait tarder, voire ne jamais arriver avant une
+    // reconnexion qui réinitialiserait silencieusement l'état) : on le committe maintenant plutôt
+    // que de risquer de le perdre — voir pendingHdvKamaGain.
+    this.flushPendingHdvKamaGain();
     this.classifier.commit();
     // Rejoue les corrections déjà faites par l'utilisateur AVANT une (re)connexion : resetSessionState()
     // ci-dessus vient de reconstruire l'historique depuis zéro (voir gating isInitialLoad, CLAUDE.md),
@@ -689,6 +711,8 @@ export class StatsStoreService {
     this.nextPurchaseId = 1;
     this.nextTradeId = 1;
     this.pendingPurchase = null;
+    this.pendingHdvKamaGain = null;
+    this.lastTradeCompletedAtMs = null;
 
     this.chatBuffer.length = 0;
     this.parser.reset();
@@ -709,9 +733,15 @@ export class StatsStoreService {
     }
     if (entry.kind !== 'kama-loss') this.pendingPurchase = null;
 
+    // Un gain de kamas hors combat en attente de confirmation (voir pendingHdvKamaGain) est
+    // committé comme récupération de kamas à l'Hôtel de vente dès que CETTE ligne n'est pas
+    // l'échange qui l'expliquerait — avant de traiter la ligne courante elle-même.
+    this.resolvePendingHdvKamaGain(entry);
+
     switch (entry.kind) {
       case 'kama-gain':
         this.kamasEarned.update((v) => v + entry.amount);
+        this.considerHdvKamaGain(entry);
         break;
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
@@ -769,6 +799,7 @@ export class StatsStoreService {
         );
         break;
       case 'trade-completed':
+        this.lastTradeCompletedAtMs = this.timeToMs(entry.time);
         this.registerTrade(entry.time, entry.sides);
         break;
       case 'combat-defeat-marker':
@@ -1162,6 +1193,57 @@ export class StatsStoreService {
     };
     this.purchaseHistoryList.unshift(record);
     this.historySync.recordPurchase(record);
+  }
+
+  /**
+   * Un gain de kamas hors combat (`entry.fightId === null`, voir KamaGainEntry) n'est mis en
+   * attente que s'il n'est pas déjà expliqué par un échange tout juste conclu (voir
+   * lastTradeCompletedAtMs, cas où 'trade-completed' précède la ligne "Vous avez gagné" — ex.
+   * trade_multi-account.log) : la confirmation inverse, où l'échange suit CETTE ligne (ex.
+   * trade_3.log), est gérée par resolvePendingHdvKamaGain à la ligne suivante.
+   */
+  private considerHdvKamaGain(entry: {
+    time: string;
+    amount: number;
+    fightId: number | null;
+  }): void {
+    if (entry.fightId !== null) return; // gain issu du butin de combat, jamais un achat
+    const timeMs = this.timeToMs(entry.time);
+    if (
+      this.lastTradeCompletedAtMs !== null &&
+      Math.abs(timeMs - this.lastTradeCompletedAtMs) <= PURCHASE_WINDOW_MS
+    ) {
+      return; // déjà expliqué par l'échange qui vient d'être traité
+    }
+    this.pendingHdvKamaGain = { amount: entry.amount, time: entry.time, timeMs };
+  }
+
+  /**
+   * Résout le gain de kamas hors combat mis en attente par considerHdvKamaGain, AVANT de traiter
+   * `entry` elle-même : annulé (rien enregistré) si `entry` est le 'trade-completed' qui explique
+   * ce gain, sinon committé comme récupération de kamas à l'Hôtel de vente — voir
+   * HDV_KAMAS_SALE_ITEM.
+   */
+  private resolvePendingHdvKamaGain(entry: LogEntry): void {
+    const pending = this.pendingHdvKamaGain;
+    if (!pending) return;
+    if (
+      entry.kind === 'trade-completed' &&
+      Math.abs(this.timeToMs(entry.time) - pending.timeMs) <= PURCHASE_WINDOW_MS
+    ) {
+      this.pendingHdvKamaGain = null;
+      return;
+    }
+    this.flushPendingHdvKamaGain();
+  }
+
+  /** Committe sans condition le gain en attente (voir pendingHdvKamaGain) — à appeler en fin de
+   * lot (voir ingest()) pour ne jamais le perdre si aucune ligne suivante n'arrive avant longtemps. */
+  private flushPendingHdvKamaGain(): void {
+    const pending = this.pendingHdvKamaGain;
+    if (!pending) return;
+    this.pendingHdvKamaGain = null;
+    this.registerPurchase(pending.amount, HDV_KAMAS_SALE_ITEM, 0, pending.time);
   }
 
   private registerTrade(

@@ -22,7 +22,9 @@ describe('LogParser — filtrage WARN/ERROR', () => {
       ' INFO 11:02:26,933 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 10 kamas.',
     ];
     const entries = parseAll(parser, lines);
-    expect(entries).toEqual([{ kind: 'kama-gain', time: '11:02:26,933', amount: 10 }]);
+    expect(entries).toEqual([
+      { kind: 'kama-gain', time: '11:02:26,933', amount: 10, fightId: null },
+    ]);
   });
 
   it("n'interrompt pas une ligne multi-lignes en cours si une ligne WARN/ERROR s'intercale", () => {
