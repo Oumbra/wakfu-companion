@@ -384,6 +384,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Politique de confidentialité',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'update.available': 'Une nouvelle version est disponible.',
+    'update.reload': 'Recharger',
+    'update.dismiss': 'Plus tard',
     'auth.login.panelTitle': 'Connectez-vous',
     'auth.login.intro':
       'Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.',
@@ -857,6 +860,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Privacy policy',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'update.available': 'A new version is available.',
+    'update.reload': 'Reload',
+    'update.dismiss': 'Later',
     'auth.login.panelTitle': 'Sign in',
     'auth.login.intro':
       'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.',
@@ -1326,6 +1332,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidad',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'update.available': 'Hay una nueva versión disponible.',
+    'update.reload': 'Recargar',
+    'update.dismiss': 'Más tarde',
     'auth.login.panelTitle': 'Iniciar sesión',
     'auth.login.intro':
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.',
@@ -1798,6 +1807,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.privacy': 'Política de privacidade',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'update.available': 'Uma nova versão está disponível.',
+    'update.reload': 'Recarregar',
+    'update.dismiss': 'Mais tarde',
     'auth.login.panelTitle': 'Iniciar sessão',
     'auth.login.intro':
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.',

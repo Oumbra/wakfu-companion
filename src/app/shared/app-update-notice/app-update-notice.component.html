@@ -1,0 +1,13 @@
+@if (updateService.updateReady()) {
+  <div class="update-notice" role="status">
+    <span class="update-notice-text">{{ 'update.available' | t }}</span>
+    <div class="update-notice-actions">
+      <button type="button" class="update-notice-reload" (click)="reload()">
+        {{ 'update.reload' | t }}
+      </button>
+      <button type="button" class="update-notice-dismiss" (click)="dismiss()">
+        {{ 'update.dismiss' | t }}
+      </button>
+    </div>
+  </div>
+}
