@@ -1,11 +1,11 @@
+/* `display: contents` (au lieu de `flex`/`height:100%` comme avant) : ce composant peut désormais
+   rendre UN OU DEUX `.tool-panel` (voir HistoryComponent.splitCombats/template) — chacun doit
+   devenir un enfant flex à part entière du `:host` de DashboardComponent (voir
+   dashboard.component.css), pas un unique enfant qui les contiendrait tous les deux. Même principe
+   que DashboardRailComponent. `.tool-panel` (styles.css, global) fournit déjà `height:100%` à
+   chacun indépendamment, plus besoin de le reposer ici. */
 :host {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-}
-.tool-panel {
-  height: 100%;
+  display: contents;
 }
 
 .header-label {

@@ -36,9 +36,10 @@ interface PurchaseAggregateRow {
   records: PurchaseRecord[];
 }
 
-/** Un jour d'achats : total tous objets confondus + achats agrégés par objet
- * (voir StatsStoreService.purchaseHistory), triés selon le même ordre que
- * les groupes (`PurchasesComponent.sortOrder`). */
+/** Un jour d'achats : total tous objets confondus (hors récupérations de kamas à l'Hôtel de vente,
+ * voir HDV_KAMAS_SALE_ITEM et le calcul de `totalCost` — pas de vrais achats) + achats agrégés par
+ * objet (voir StatsStoreService.purchaseHistory), triés selon le même ordre que les groupes
+ * (`PurchasesComponent.sortOrder`). */
 interface PurchaseDateGroup {
   dateKey: string;
   totalCost: number;
@@ -141,7 +142,13 @@ export class PurchasesComponent {
       );
       return {
         dateKey,
-        totalCost: records.reduce((sum, r) => sum + r.totalCost, 0),
+        // Une récupération de kamas à l'Hôtel de vente (voir HDV_KAMAS_SALE_ITEM) n'est pas un
+        // achat au sens propre — juste un encaissement affiché dans cette même liste pour sa
+        // valeur informative — donc exclue du total du jour, qui ne doit refléter que les kamas
+        // réellement dépensés.
+        totalCost: records
+          .filter((r) => r.item !== HDV_KAMAS_SALE_ITEM)
+          .reduce((sum, r) => sum + r.totalCost, 0),
         rows,
       };
     });

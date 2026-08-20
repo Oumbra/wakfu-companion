@@ -85,7 +85,8 @@
 }
 
 /* Nombre de combats en cours (multi-compte, voir CombatPanelService.activeFightCount) — même
-   gabarit que `.profile-rail-index-badge`, jamais affiché pour l'entrée Chat (`count === null`). */
+   gabarit que `.profile-rail-index-badge`. Masqué pour Chat tant qu'aucun message ne correspond
+   aux filtres configurés (voir RailEntry.count/ChatPanelService.matchedMessageCount). */
 .dashboard-rail-count {
   flex-shrink: 0;
   margin-left: auto;
@@ -109,6 +110,18 @@
   background: transparent;
   color: var(--text-color);
 }
+/* Chat : vrai badge DE NOTIFICATION (fond accent) plutôt que le simple compteur informatif neutre
+   de Combat ci-dessus — signale des messages correspondant aux filtres configurés, pas juste une
+   information passive. Conserve son fond même au survol (contrairement à `.dashboard-rail-count`
+   ci-dessus) : la notification reste visible tant qu'elle n'a pas été traitée (dépliage du panneau). */
+.dashboard-rail-count-notif {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.dashboard-rail-btn:hover .dashboard-rail-count-notif {
+  background: var(--accent);
+  color: var(--on-accent);
+}
 
 /* Rail replié : ne plus montrer que l'icône de chaque bouton, centrée — même règle que
    `.profile-rail.is-collapsed`. */
@@ -120,6 +133,24 @@
 .dashboard-rail.is-collapsed .dashboard-rail-label,
 .dashboard-rail.is-collapsed .dashboard-rail-count {
   display: none;
+}
+/* Contrairement au simple compteur de Combat ci-dessus, le badge DE NOTIFICATION de Chat reste
+   visible rail replié — sans quoi une notification resterait invisible dans l'état le plus
+   compact, justement celui où l'utilisateur risque le plus de ne pas remarquer un nouveau
+   message correspondant à un filtre. Repositionné en pastille flottante sur le coin de l'icône
+   (comme un badge d'appli classique) plutôt que la pilule alignée à droite du libellé — ce
+   dernier est masqué, plus de place pour l'aligner ainsi. `.dashboard-rail-btn` porte déjà
+   `position: relative`, sert ici d'ancre pour ce `position: absolute`. */
+.dashboard-rail.is-collapsed .dashboard-rail-count-notif {
+  display: flex;
+  position: absolute;
+  top: 18px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  font-size: 0.62rem;
+  border: 2px solid var(--panel-bg);
 }
 
 .dashboard-rail-collapse-toggle {

@@ -11,7 +11,6 @@
   <div
     class="panels-row"
     [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"
-    [class.chat-collapsed]="chatPanel.collapsed()"
   >
     @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
       <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />

@@ -17,7 +17,11 @@ interface RailEntry {
    * cliquer une entrée ici agrandit le panneau correspondant, une action qui vaut la peine d'être
    * rappelée même quand le libellé est déjà visible (rail déplié). */
   expandHint: string;
-  /** Nombre de combats en cours (multi-compte) — `null` pour Chat, qui n'a pas cette notion. */
+  /** Badge affiché sur l'entrée, `null` pour le masquer entièrement — nombre de combats en cours
+   * (multi-compte, jamais `null` : l'entrée Combat n'existe elle-même que pendant un combat en
+   * cours, toujours ≥ 1) pour Combat ; nombre de messages correspondant aux filtres configurés
+   * pour Chat (voir ChatPanelService.matchedMessageCount), `null` tant qu'il vaut 0 — un vrai
+   * badge DE NOTIFICATION n'a rien à signaler dans ce cas, contrairement à Combat. */
   count: number | null;
 }
 
@@ -84,7 +88,11 @@ export class DashboardRailComponent {
         id: 'chat',
         label: this.i18n.t('chat.header'),
         expandHint: this.i18n.t('chat.expandHint'),
-        count: null,
+        // `null` (badge masqué, voir template) plutôt que `0` : un vrai badge DE NOTIFICATION
+        // n'a rien à signaler tant qu'aucun message ne correspond à un filtre — contrairement au
+        // compteur de combats de Combat ci-dessus, jamais 0 en pratique (l'entrée n'existe que
+        // pendant un combat en cours, toujours au moins 1).
+        count: this.chatPanel.matchedMessageCount() || null,
       });
     }
     return list;

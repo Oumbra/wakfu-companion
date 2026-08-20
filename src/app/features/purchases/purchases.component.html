@@ -30,7 +30,9 @@
                   alt=""
                 />
                 <span class="purchase-name">{{ 'purchases.hdvSource' | t }}</span>
-                <span class="purchase-cost">{{ row.totalCost | numberFr }} ₭</span>
+                <!-- Préfixe "+" : signale un encaissement (voir isHdvRow), contrairement au coût
+                     "-" implicite des vrais achats juste en dessous, jamais préfixés. -->
+                <span class="purchase-cost">+{{ row.totalCost | numberFr }} ₭</span>
               </div>
             } @else {
               <div

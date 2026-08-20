@@ -63,14 +63,13 @@
   grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
 }
 /* Chat replié (voir ChatPanelService/DashboardRailComponent) : sa colonne disparaît de la grille
-   (voir la règle desktop `display: none` plus bas, hors media query) — Historique récupère seul
-   toute la largeur, ou partage avec Combat s'il est affiché. */
-.panels-row.chat-collapsed {
-  grid-template-columns: minmax(0, 1fr);
-}
-.panels-row.has-combat.chat-collapsed {
-  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1fr);
-}
+   (voir la règle `app-chat-panel.panel-collapsed { display: none }` juste en dessous) SANS que le
+   nombre de colonnes n'ait besoin de changer ici — HistoryComponent compense en scindant son
+   panneau Combats à part dès que Chat se replie (voir HistoryComponent.splitCombats), ce qui
+   restitue exactement le même nombre d'éléments réels (2 sans combat, 3 avec) que Chat
+   visible/non scindé. Une éventuelle 3ᵉ règle `.chat-collapsed` réduisant le nombre de colonnes
+   serait donc fausse ici : elle forcerait les deux panneaux d'HistoryComponent à se partager UNE
+   seule colonne au lieu de profiter chacun de la sienne. */
 
 /* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, une fois retiré de la grille
    `.panels-row` (colonnes recalculées ci-dessus) — CSS pur (`[class.panel-collapsed]`, jamais un
@@ -93,9 +92,7 @@
     padding: 0;
   }
   .panels-row,
-  .panels-row.has-combat,
-  .panels-row.chat-collapsed,
-  .panels-row.has-combat.chat-collapsed {
+  .panels-row.has-combat {
     grid-template-columns: minmax(0, 1fr);
   }
   .panels-row > .tab-hidden {
