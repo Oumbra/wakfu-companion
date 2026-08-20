@@ -211,6 +211,28 @@ a.browser-item:hover .browser-item-name {
   filter: brightness(1.15);
 }
 
+.mobile-skip-block {
+  margin-top: 18px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.mobile-skip-login {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeSlideDown 0.3s ease;
+}
+.mobile-skip-login-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
 @keyframes fadeSlideDown {
   from {
     opacity: 0;
