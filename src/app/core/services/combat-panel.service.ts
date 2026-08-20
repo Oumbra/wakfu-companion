@@ -19,7 +19,9 @@ export class CombatPanelService {
   private readonly userData = inject(UserDataService);
   private readonly stats = inject(StatsStoreService);
 
-  readonly collapsed = signal<boolean>(this.userData.read<boolean>('combatPanelCollapsed') ?? false);
+  readonly collapsed = signal<boolean>(
+    this.userData.read<boolean>('combatPanelCollapsed') ?? false,
+  );
   readonly hasActiveFight = computed(() => this.stats.damageByAttacker().length > 0);
   /** Nombre de combats en cours (multi-compte) — affiché dans le rond de notification de l'onglet replié. */
   readonly activeFightCount = computed(() => this.stats.activeFightIds().length);

@@ -109,9 +109,7 @@ export class HistoryComponent implements OnDestroy {
   /** Miroir de `hasMore`, pour le second panneau (Achats/Échanges) une fois Combats scindé à
    * part — voir `secondaryTab`. */
   protected readonly secondaryHasMore = computed(() =>
-    this.auth.isAuthenticated()
-      ? this.archive.hasMore(TAB_EVENT_KIND[this.secondaryTab()])
-      : false,
+    this.auth.isAuthenticated() ? this.archive.hasMore(TAB_EVENT_KIND[this.secondaryTab()]) : false,
   );
 
   protected loadMoreSecondary(): void {

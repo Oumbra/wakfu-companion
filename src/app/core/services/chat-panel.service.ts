@@ -65,7 +65,8 @@ export class ChatPanelService {
    * latéral une fois le panneau replié (voir DashboardRailComponent), même critère que la mise en
    * évidence/l'alerte sonore (voir ChatPanelComponent). */
   readonly matchedMessageCount = computed(
-    () => this.stats.chatMessages().filter((m) => messageMatchesAnyFilter(m, this._filters())).length,
+    () =>
+      this.stats.chatMessages().filter((m) => messageMatchesAnyFilter(m, this._filters())).length,
   );
 
   constructor() {
