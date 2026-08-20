@@ -94,14 +94,6 @@
       >
         <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
       </button>
-      <button
-        class="icon-btn"
-        [appTooltip]="'onboarding.helpButton' | t"
-        tooltipPosition="bottom"
-        (click)="toggleOnboardingHelp($event)"
-      >
-        <span class="icon-btn-text">?</span>
-      </button>
     }
     <!-- Diaporama de présentation (voir OnboardingTourService) : entièrement autonome, ne dépend
          d'aucune donnée du fichier connecté — disponible dès la page de setup, pas seulement une
