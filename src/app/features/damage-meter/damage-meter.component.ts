@@ -5,9 +5,9 @@ import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { EntityDamageListComponent } from './entity-damage-list/entity-damage-list.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
-import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import { HelpModalService } from '../../core/services/help-modal.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { IconComponent } from '../../shared/icon/icon.component';
 import {
   DamageViewMode,
   DamageViewSwitchComponent,
@@ -24,13 +24,17 @@ import {
  */
 @Component({
   selector: 'app-damage-meter',
-  imports: [EntityDamageListComponent, TranslatePipe, TooltipDirective, DamageViewSwitchComponent],
+  imports: [
+    EntityDamageListComponent,
+    TranslatePipe,
+    TooltipDirective,
+    DamageViewSwitchComponent,
+    IconComponent,
+  ],
   templateUrl: './damage-meter.component.html',
   styleUrl: './damage-meter.component.css',
 })
 export class DamageMeterComponent {
-  protected readonly headerIcon = HEADER_ICON_COMBAT_DATA_URI;
-
   private readonly stats = inject(StatsStoreService);
   private readonly classifier = inject(EntityClassifierService);
   protected readonly combatPanel = inject(CombatPanelService);
