@@ -3,7 +3,6 @@ import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { UserDataService } from '../../core/data-access/user-data.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { IconComponent } from '../../shared/icon/icon.component';
 
@@ -52,8 +51,6 @@ export class DashboardRailComponent {
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly i18n = inject(I18nService);
   private readonly userData = inject(UserDataService);
-
-  protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
 
   protected readonly isRailCollapsed = signal<boolean>(
     this.userData.read<boolean>('dashboardRailCollapsed') ?? false,

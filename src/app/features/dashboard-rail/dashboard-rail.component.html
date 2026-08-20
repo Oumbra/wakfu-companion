@@ -11,7 +11,7 @@
         >
           <span class="dashboard-rail-icon">
             @if (entry.id === 'combat') {
-              <img [src]="combatIcon" alt="" />
+              <app-icon name="crossed-swords" [size]="17" [strokeWidth]="1.8" />
             } @else {
               <app-icon name="messages-square" [size]="17" [strokeWidth]="1.8" />
             }
@@ -21,7 +21,10 @@
             <!-- Combat : simple compteur informatif (combats en cours). Chat : vrai badge de
                  notification (fond accent) — signale des messages correspondant aux filtres
                  configurés, voir ChatPanelService.matchedMessageCount. -->
-            <span class="dashboard-rail-count" [class.dashboard-rail-count-notif]="entry.id === 'chat'">
+            <span
+              class="dashboard-rail-count"
+              [class.dashboard-rail-count-notif]="entry.id === 'chat'"
+            >
               {{ entry.count }}
             </span>
           }
