@@ -5,13 +5,13 @@ import { StatsStoreService } from './stats-store.service';
 const COMBAT_PANEL_COLLAPSED_KEY = 'wakfu-combat-panel-collapsed';
 
 /**
- * État du panneau Combat flottant : replié/déplié (persisté, voir
+ * État du panneau Combat (desktop uniquement) : replié/déplié (persisté, voir
  * CLAUDE.md — choix conservé indépendamment des reconnexions) et présence
  * d'un combat en cours (`hasActiveFight`, dérivé de `damageByAttacker`, donc
  * jamais incrémenté/persisté lui-même). Centralisé ici plutôt que recalculé
- * séparément dans DashboardComponent et dans le petit onglet replié monté à
- * la racine (`app.html`, voir CombatEdgeTabComponent) pour n'avoir qu'une
- * seule source de vérité.
+ * séparément dans DashboardComponent et dans le menu latéral des sections
+ * repliées (`DashboardRailComponent`, voir aussi son miroir ChatPanelService)
+ * pour n'avoir qu'une seule source de vérité.
  */
 @Injectable({ providedIn: 'root' })
 export class CombatPanelService {

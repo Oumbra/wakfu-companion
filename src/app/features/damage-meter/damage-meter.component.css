@@ -19,31 +19,6 @@
   object-fit: contain;
 }
 
-/* Repli du panneau flottant (voir CombatPanelService/CombatEdgeTabComponent)
-   — desktop uniquement : en mode onglet mobile, Combat n'est qu'un onglet
-   parmi d'autres, la notion de repli ne s'y applique pas. */
-.collapse-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  transition: all 0.2s ease;
-}
-.collapse-btn:hover {
-  color: var(--text-bright);
-}
-@media (max-width: 800px) {
-  .collapse-btn {
-    display: none;
-  }
-}
-
 .meter-body {
   display: flex;
   flex-direction: column;

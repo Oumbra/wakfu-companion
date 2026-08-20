@@ -18,8 +18,9 @@ import {
  * FightHistoryComponent (sous-onglet "Combats" de la nouvelle section
  * Historique, voir HistoryComponent). Ce panneau n'est monté par
  * DashboardComponent que lorsqu'un combat est en cours (voir
- * CombatPanelService.hasActiveFight) et peut être replié en un petit onglet
- * flottant (bouton ci-dessous, voir CombatEdgeTabComponent).
+ * CombatPanelService.hasActiveFight) et peut être replié (bouton ci-dessous,
+ * desktop uniquement) vers le menu latéral des sections repliées, voir
+ * DashboardRailComponent.
  */
 @Component({
   selector: 'app-damage-meter',

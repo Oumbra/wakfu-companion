@@ -82,15 +82,6 @@
     />
   }
 
-  @if (
-    nav.view() === 'main' &&
-    logFileAccess.status() === 'connected' &&
-    combatPanel.hasActiveFight() &&
-    combatPanel.collapsed()
-  ) {
-    <app-combat-edge-tab />
-  }
-
   <app-confirm-delete-popover />
   <app-help-modal />
   <app-onboarding-tour />
