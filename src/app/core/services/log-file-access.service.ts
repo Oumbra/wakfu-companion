@@ -192,6 +192,27 @@ export class LogFileAccessService {
     }
   }
 
+  /**
+   * Simule une connexion réussie sans ouvrir de vrai handle — bouton "passer cette étape" de la
+   * version mobile (voir SetupComponent) : l'API File System Access n'existe pas sur mobile
+   * (`isSupported()` y vaut toujours `false`), donc aucun fichier réel ne peut jamais y être
+   * connecté. Permet malgré tout d'atteindre le tableau de bord avec les seules données de compte
+   * déjà synchronisées (roster, watchlist...), sans suivi de combat en direct : aucun sondage
+   * n'est démarré, faute de fichier réel à relire (`handle` reste `null`).
+   */
+  simulateConnected(displayName: string): void {
+    this.stopPolling();
+    this.handle = null;
+    this.lastOffset = 0;
+    this.carry = '';
+    this.isFirstRead = true;
+    this.consecutiveTransientReadFailures = 0;
+    this.errorMessage.set(null);
+    this.fileName.set(displayName);
+    this.fileSize.set(0);
+    this.status.set('connected');
+  }
+
   /** Oublie le fichier mémorisé et revient à l'écran de sélection. */
   async forgetFile(): Promise<void> {
     this.stopPolling();

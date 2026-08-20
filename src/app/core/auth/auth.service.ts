@@ -74,6 +74,9 @@ export interface MigrationPrompt {
   remote: RemoteSettings;
 }
 
+/** Voir `AuthService.markMobileSkipLoginPending`/`consumeMobileSkipLoginPending`. */
+const MOBILE_SKIP_LOGIN_STORAGE_KEY = 'wakfu-mobile-skip-login-pending';
+
 /** Codes d'erreur renvoyés par le callback serveur (`?reason=`) traduits en clés i18n. */
 function loginErrorKey(reason: string | null): string {
   switch (reason) {
@@ -389,6 +392,36 @@ export class AuthService {
 
   clearError(): void {
     this._error.set(null);
+  }
+
+  /**
+   * Marque l'intention de "passer" la connexion d'un fichier de log (bouton mobile de la page
+   * setup, voir SetupComponent) juste avant de lancer le flux OAuth (`login()`, une navigation
+   * complète du navigateur). Persisté en `sessionStorage` — seul moyen de survivre à cet
+   * aller-retour : `login()` navigue hors de l'application, tout état en mémoire (y compris
+   * `SetupComponent` lui-même) est perdu, le retour recharge l'app de zéro (voir `App.ngOnInit`,
+   * qui consomme ce flag une fois `handleStartup()` résolu). Jamais en `localStorage` : cette
+   * intention est ponctuelle, elle n'a aucune raison de survivre au-delà de cet onglet.
+   */
+  markMobileSkipLoginPending(): void {
+    try {
+      sessionStorage.setItem(MOBILE_SKIP_LOGIN_STORAGE_KEY, '1');
+    } catch {
+      // Stockage indisponible (navigation privée stricte...) : dégradation mineure, l'utilisateur
+      // atterrit simplement sur la page compte au lieu du tableau de bord après connexion.
+    }
+  }
+
+  /** Lu une seule fois au retour du flux OAuth (voir `App.ngOnInit`) — nettoie le flag dans tous
+   * les cas, y compris quand le stockage est indisponible. */
+  consumeMobileSkipLoginPending(): boolean {
+    try {
+      const pending = sessionStorage.getItem(MOBILE_SKIP_LOGIN_STORAGE_KEY) === '1';
+      sessionStorage.removeItem(MOBILE_SKIP_LOGIN_STORAGE_KEY);
+      return pending;
+    } catch {
+      return false;
+    }
   }
 
   /**
