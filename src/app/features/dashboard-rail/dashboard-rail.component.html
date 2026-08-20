@@ -49,6 +49,12 @@
           ></path>
         </svg>
       </span>
+      <span
+        class="desktop-only"
+        [style.display]="isRailCollapsed() ? 'none !important' : 'flex !important'"
+      >
+        {{ i18n.t('dashboard.rail.collapse') }}
+      </span>
     </button>
   </nav>
 }

@@ -1,3 +1,4 @@
+<app-dashboard-rail />
 <div class="dashboard">
   <app-tracker-strip />
 
@@ -7,22 +8,19 @@
     (activeIdChange)="selectTab($event)"
     [mobileOnly]="true"
   />
-  <div class="dashboard-content">
-    <app-dashboard-rail />
-    <div
-      class="panels-row"
-      [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"
-      [class.chat-collapsed]="chatPanel.collapsed()"
-    >
-      @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
-        <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
-      }
-      <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
-      <app-history [class.tab-hidden]="activeTab() !== 'history'" />
-      <app-chat-panel
-        [class.tab-hidden]="activeTab() !== 'chat'"
-        [class.panel-collapsed]="chatPanel.collapsed()"
-      />
-    </div>
+  <div
+    class="panels-row"
+    [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"
+    [class.chat-collapsed]="chatPanel.collapsed()"
+  >
+    @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
+      <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
+    }
+    <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
+    <app-history [class.tab-hidden]="activeTab() !== 'history'" />
+    <app-chat-panel
+      [class.tab-hidden]="activeTab() !== 'chat'"
+      [class.panel-collapsed]="chatPanel.collapsed()"
+    />
   </div>
 </div>
