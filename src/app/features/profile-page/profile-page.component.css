@@ -168,8 +168,8 @@ pas, ex. les comptes du rail de personnages) de chaque bouton, centrée. Règle 
   display: none;
 }
 /* Un seul badge par bouton (comptes sans `.profile-rail-icon`, voir template) — même gabarit qu'une
-pastille de compteur générique de l'app (cf. `.notif-dot` de combat-edge-tab.component.css, taille
-adaptée à ce contexte inline plutôt que chevauchant un bord). */
+pastille de compteur générique de l'app (cf. `.dashboard-rail-count` de dashboard-rail.component.css,
+taille adaptée à ce contexte inline plutôt que chevauchant un bord). */
 .profile-rail-index-badge {
   display: flex;
   flex-shrink: 0;

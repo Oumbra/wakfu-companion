@@ -21,7 +21,22 @@
    panneau et l'alignement du haut de .tool-panel) plutôt que d'être une rangée séparée au-dessus —
    gagne de la hauteur et lit comme un seul bloc. */
 
+/* Accueille le menu latéral des sections repliées (voir DashboardRailComponent) devant
+   `.panels-row` — reprend le rôle `flex: 1 1 0` tenu directement par `.panels-row` avant son
+   introduction (voir son commentaire ci-dessous, toujours valable, juste un cran plus haut dans
+   l'arbre désormais). `<app-dashboard-rail>` a `:host{display:contents}` : ne compte comme un
+   VRAI enfant flex (et ne consomme le `gap` ci-dessous) que lorsqu'il rend effectivement son
+   `<nav>` (au moins une section repliée) — jamais un rail vide qui grignoterait de la largeur. */
+.dashboard-content {
+  display: flex;
+  gap: 15px;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
 .panels-row {
+  min-width: 0;
   display: grid;
   /* `minmax(0, 1fr)` plutôt que `1fr` seul : une simple `1fr` a un minimum
      implicite `auto` (basé sur le contenu), qui laisse une colonne grandir
@@ -52,6 +67,27 @@
 .panels-row.has-combat {
   grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
 }
+/* Chat replié (voir ChatPanelService/DashboardRailComponent) : sa colonne disparaît de la grille
+   (voir la règle desktop `display: none` plus bas, hors media query) — Historique récupère seul
+   toute la largeur, ou partage avec Combat s'il est affiché. */
+.panels-row.chat-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+.panels-row.has-combat.chat-collapsed {
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1fr);
+}
+
+/* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, une fois retiré de la grille
+   `.panels-row` (colonnes recalculées ci-dessus) — CSS pur (`[class.panel-collapsed]`, jamais un
+   `@if` structurel comme pour `app-damage-meter`) : le composant reste monté en permanence pour
+   que l'onglet Chat mobile continue de fonctionner même si l'état replié (togglable uniquement
+   depuis un bouton desktop, voir `.collapse-btn`/styles.css) persistait d'une session desktop à
+   une session mobile — voir la doc de tête de DashboardComponent. */
+@media (min-width: 801px) {
+  .panels-row > app-chat-panel.panel-collapsed {
+    display: none;
+  }
+}
 
 /* En dessous de 800px, les panneaux empilés en 1 colonne n'ont plus assez
    de hauteur chacun pour être utilisables en combat (voir CLAUDE.md) : on
@@ -61,8 +97,13 @@
     gap: 0;
     padding: 0;
   }
+  .dashboard-content {
+    gap: 0;
+  }
   .panels-row,
-  .panels-row.has-combat {
+  .panels-row.has-combat,
+  .panels-row.chat-collapsed,
+  .panels-row.has-combat.chat-collapsed {
     grid-template-columns: minmax(0, 1fr);
   }
   .panels-row > .tab-hidden {

@@ -21,10 +21,11 @@ export type AppIconName =
   | 'map-pin'
   | 'swords'
   | 'trending-up'
-  | 'target';
+  | 'target'
+  | 'messages-square';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-67a62de8.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-f58537e5.svg';
 
 @Component({
   selector: 'app-icon',

@@ -4,7 +4,9 @@ import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { TrackerComponent } from '../tracker/tracker.component';
 import { TrackerStripComponent } from '../tracker-strip/tracker-strip.component';
 import { HistoryComponent } from '../history/history.component';
+import { DashboardRailComponent } from '../dashboard-rail/dashboard-rail.component';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
+import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { HelpSection } from '../../core/services/help-modal.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { DashboardTab, NavigationService } from '../../core/services/navigation.service';
@@ -14,7 +16,18 @@ import { DashboardTab, NavigationService } from '../../core/services/navigation.
  * — chacun reste monté en permanence (juste masqué en CSS) pour conserver
  * son état (scroll, filtres...) d'un onglet à l'autre. L'onglet Combat
  * n'apparaît (mobile) / la colonne Combat n'est ajoutée à la grille
- * (desktop) que lorsqu'un combat est en cours (voir CombatPanelService). */
+ * (desktop) que lorsqu'un combat est en cours (voir CombatPanelService).
+ *
+ * Desktop uniquement, Combat ET Chat sont aussi repliables individuellement
+ * (voir CombatPanelService/ChatPanelService) — une section repliée rejoint le
+ * menu latéral `<app-dashboard-rail>` (voir DashboardRailComponent) plutôt que
+ * de disparaître purement et simplement. Chat reste monté en permanence même
+ * replié (repli géré en CSS via `.panel-collapsed`, voir dashboard.component.css)
+ * — CONTRAIREMENT à Combat (`@if` structurel dans le template, historique) :
+ * sans quoi son onglet mobile resterait sélectionnable mais vide si l'état
+ * replié persistait d'une session desktop à une session mobile (repli
+ * uniquement togglable depuis un bouton desktop, voir `.collapse-btn`,
+ * styles.css). */
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -23,6 +36,7 @@ import { DashboardTab, NavigationService } from '../../core/services/navigation.
     TrackerStripComponent,
     HistoryComponent,
     ChatPanelComponent,
+    DashboardRailComponent,
     TabBarComponent,
   ],
   templateUrl: './dashboard.component.html',
@@ -30,6 +44,7 @@ import { DashboardTab, NavigationService } from '../../core/services/navigation.
 })
 export class DashboardComponent {
   protected readonly combatPanel = inject(CombatPanelService);
+  protected readonly chatPanel = inject(ChatPanelService);
   private readonly nav = inject(NavigationService);
 
   /** Alias vers `NavigationService.dashboardTab` (source unique de vérité, voir son commentaire —

@@ -263,6 +263,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personnages',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Réduire',
+    'chat.expandHint': 'Agrandir',
+    'dashboard.rail.collapse': 'Réduire',
+    'dashboard.rail.expand': 'Agrandir',
     'chat.filtersToggle': 'Recherche',
     'chat.filterPlaceholder': 'Rechercher les messages...',
     'chat.filterChannelGlobal': 'Global',
@@ -727,6 +731,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Characters',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Collapse',
+    'chat.expandHint': 'Expand',
+    'dashboard.rail.collapse': 'Collapse',
+    'dashboard.rail.expand': 'Expand',
     'chat.filtersToggle': 'Filters',
     'chat.filterPlaceholder': 'Filter messages...',
     'chat.filterChannelGlobal': 'Global',
@@ -1187,6 +1195,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personajes',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Contraer',
+    'chat.expandHint': 'Expandir',
+    'dashboard.rail.collapse': 'Contraer',
+    'dashboard.rail.expand': 'Expandir',
     'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensajes...',
     'chat.filterChannelGlobal': 'Global',
@@ -1650,6 +1662,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.rosterCharacterCountMany': '{{n}} Personagens',
 
     'chat.header': 'Chat',
+    'chat.collapseHint': 'Recolher',
+    'chat.expandHint': 'Expandir',
+    'dashboard.rail.collapse': 'Recolher',
+    'dashboard.rail.expand': 'Expandir',
     'chat.filtersToggle': 'Filtros',
     'chat.filterPlaceholder': 'Filtrar mensagens...',
     'chat.filterChannelGlobal': 'Global',
