@@ -358,6 +358,29 @@ describe('StatsStoreService', () => {
       expect(stats.combatsWon()).toBe(2);
     });
 
+    it("n'attribue jamais un achat (perte de kamas + ramassage immédiat) au butin de combat, même si un combat est actif au même moment (cas réel multi-compte : achat sur un compte pendant qu'un autre combat)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Achat détecté (perte de kamas suivie de très près d'un ramassage) alors qu'un combat
+        // est en cours : ne doit apparaître ni dans le butin du combat ni dans le butin de
+        // session, seulement dans l'historique des achats.
+        ' INFO 10:00:05,000 [T] (a:1) - [Information (jeu)] Vous avez perdu 500 kamas.',
+        ' INFO 10:00:05,100 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Pain Complet .',
+        // Vrai butin de combat (pas précédé d'une perte de kamas) : doit rester compté.
+        ' INFO 10:00:10,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou .',
+        ' INFO 10:00:20,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].loot).toEqual([{ name: 'Laine de Bouftou', catalogId: null, quantity: 2 }]);
+      expect(stats.sessionLoot().map((l) => l.name)).toEqual(['Laine de Bouftou']);
+      expect(stats.purchaseHistory()).toHaveLength(1);
+      expect(stats.purchaseHistory()[0].item).toBe('Pain Complet');
+    });
+
     it('expose les combats actifs pour les onglets et permet de choisir lequel afficher', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
