@@ -32,9 +32,11 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
 }
 
 /**
- * Réplique la logique `isPlayerAlly` du site de référence : cascade
- * override manuel → base de monstres officielle → classe détectée via les
- * sorts lancés → invocations connues → ennemi par défaut.
+ * Cascade de classification allié/ennemi : override manuel → marqueur
+ * déterministe "[_FL_] ... isControlledByAI=..." du combat (voir
+ * `fighterAiSide`) → base de monstres officielle → roster de personnages
+ * déclarés → classe détectée via les sorts lancés → invocations connues →
+ * dégâts encaissés d'un ennemi confirmé → ennemi par défaut.
  */
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
@@ -53,12 +55,18 @@ export class EntityClassifierService {
   /**
    * Camp déduit du marqueur "[_FL_] ... isControlledByAI=true/false" émis à
    * chaque combat pour chaque combattant : signal fiable et systématique (pas
-   * en mémoire persistante, redérivé à chaque combat), utilisé seulement en
-   * dernier recours avant le repli par défaut — un monstre absent de la base
-   * statique ET n'ayant pas encore de dégât attribué serait sinon classé
-   * "ennemi" par défaut, tout comme le joueur lui-même si celui-ci n'a ni
-   * lancé de sort connu ni pris de dégât ce combat-ci (bug réel observé : le
-   * personnage se retrouvait compté comme l'ennemi mis KO).
+   * en mémoire persistante, redérivé à chaque combat), fourni directement par
+   * le jeu — donc prioritaire sur toutes les heuristiques ci-dessous
+   * (catalogue de monstres statique, sorts lancés, dégâts encaissés...), qui
+   * peuvent se tromper (monstre absent du catalogue, sort homonyme d'un sort
+   * de classe joueur, etc.) là où ce marqueur ne le peut pas pour un
+   * combattant déjà vu dans cette session. Remonté ici en 2ᵉ position (juste
+   * après l'override manuel) plutôt qu'en dernier recours comme auparavant :
+   * `breed` seul (id de classe joueur 1-19 vs id de monstre) n'est PAS
+   * déterministe (des monstres bas niveau comme "Bouftou"/"Boufton Noir"/
+   * "Chef de Guerre Bouftou" ont des breed 1/2/3, qui collisionnent avec les
+   * id de classe Féca/Sadida/Sacrier — vérifié sur `tests/logs/fr/*.log`),
+   * seul `isControlledByAI` l'est.
    */
   private readonly fighterAiSide = new Map<string, EntitySide>();
   private readonly overrides: Map<string, EntitySide>;
@@ -121,13 +129,14 @@ export class EntityClassifierService {
     const override = this.overrides.get(name);
     if (override) return override;
 
+    const aiSide = this.fighterAiSide.get(name);
+    if (aiSide) return aiSide;
+
     if (this.isConfirmedEnemy(name)) return 'enemy';
     if (this.roster.hasCharacter(name)) return 'ally';
     if (this.detectedClasses.has(name)) return 'ally';
     if (this.allySummonNames.has(normalizeName(name))) return 'ally';
     if (this.confirmedAlliesByDamage.has(normalizeName(name))) return 'ally';
-    const aiSide = this.fighterAiSide.get(name);
-    if (aiSide) return aiSide;
     return 'enemy';
   }
 
