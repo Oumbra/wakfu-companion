@@ -407,6 +407,13 @@ export class StatsStoreService {
    * reconnaître un gain de kamas qui vient d'être expliqué par un échange tout juste conclu (cas
    * où le 'trade-completed' précède la ligne "Vous avez gagné", voir pendingHdvKamaGain). */
   private lastTradeCompletedAtMs: number | null = null;
+  /** Vrai entre une ligne 'market-occupation' active=true et son pendant active=false (session
+   * marchand/HDV ouverte) — voir isPurchaseLoot dans apply(). Un achat groupé (plusieurs objets
+   * achetés à la suite pendant la même session) ne déduit pas systématiquement les kamas juste
+   * avant CHAQUE ramassage individuel : la fenêtre pendingPurchase seule laissait passer ces
+   * ramassages orphelins dans le butin de combat (cas réel : achat multiple à l'Hôtel des ventes
+   * pendant un combat en cours ailleurs sur le compte). */
+  private inMarketOccupation = false;
 
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
@@ -733,6 +740,7 @@ export class StatsStoreService {
     this.pendingPurchase = null;
     this.pendingHdvKamaGain = null;
     this.lastTradeCompletedAtMs = null;
+    this.inMarketOccupation = false;
 
     this.chatBuffer.length = 0;
     this.parser.reset();
@@ -750,12 +758,18 @@ export class StatsStoreService {
     // autre est en plein combat).
     let isPurchaseLoot = false;
     if (entry.kind === 'loot') {
-      isPurchaseLoot =
+      const priceKnown =
         this.pendingPurchase !== null &&
         this.timeToMs(entry.time) - this.pendingPurchase.timeMs <= PURCHASE_WINDOW_MS;
-      if (isPurchaseLoot) {
+      if (priceKnown) {
         this.registerPurchase(this.pendingPurchase!.amount, entry.item, entry.quantity, entry.time);
       }
+      // Un ramassage pendant une session marchand/HDV ouverte (voir inMarketOccupation) est
+      // TOUJOURS exclu du butin de combat, même sans perte de kamas adjacente : un achat groupé
+      // (plusieurs objets achetés à la suite) ne déduit pas systématiquement les kamas juste avant
+      // chaque ramassage individuel — la seule fenêtre `priceKnown` ci-dessus laisserait passer ces
+      // ramassages orphelins dans le butin de combat (cas réel, voir tests).
+      isPurchaseLoot = priceKnown || this.inMarketOccupation;
     }
     if (entry.kind !== 'kama-loss') this.pendingPurchase = null;
 
@@ -860,6 +874,9 @@ export class StatsStoreService {
         this.registerTrade(entry.time, entry.sides);
         break;
       case 'combat-defeat-marker':
+        break;
+      case 'market-occupation':
+        this.inMarketOccupation = entry.active;
         break;
     }
   }

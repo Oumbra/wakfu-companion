@@ -84,6 +84,21 @@ describe('LogParser — parsing de base (non-régression)', () => {
   });
 });
 
+describe('LogParser — session marchand/HDV (market-occupation)', () => {
+  it("parse l'ouverture et la fermeture d'une session marchand, hors de toute enveloppe [Catégorie]", () => {
+    const parser = new LogParser();
+    const lines = [
+      " INFO 00:29:26,867 [AWT-EventQueue-0] (bmI:41) - Lancement de l'occupation MARKET sur la board [bDk id=31547]{Point3 : (-1, -12, -47)}",
+      " INFO 00:29:37,899 [AWT-EventQueue-0] (bmI:77) - On arrête l'occupation MARKET sur la board [bDk id=31547]{Point3 : (-1, -12, -47)}",
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries).toEqual([
+      { kind: 'market-occupation', time: '00:29:26,867', active: true },
+      { kind: 'market-occupation', time: '00:29:37,899', active: false },
+    ]);
+  });
+});
+
 describe('LogParser — multi-combat (fightId)', () => {
   it('rattache jointure et fin de combat au bon fightId', () => {
     const parser = new LogParser();

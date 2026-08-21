@@ -381,6 +381,36 @@ describe('StatsStoreService', () => {
       expect(stats.purchaseHistory()[0].item).toBe('Pain Complet');
     });
 
+    it("exclut du butin de combat TOUT ramassage survenant pendant une session marchand/HDV ouverte, même sans perte de kamas juste avant (achat groupé — cas réel : plusieurs unités achetées à la suite à l'Hôtel des ventes pendant qu'un combat est actif)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        " INFO 10:00:05,000 [T] (a:1) - Lancement de l'occupation MARKET sur la board [bDk id=1]{P}",
+        // Premier achat : perte de kamas immédiatement suivie du ramassage (prix connu).
+        ' INFO 10:00:06,000 [T] (a:1) - [Information (jeu)] Vous avez perdu 1 000 kamas.',
+        ' INFO 10:00:06,001 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Baguette du Mage Rouge .',
+        // Ramassages suivants du même achat groupé, SANS perte de kamas adjacente (plus de 2s
+        // d'écart avec la dernière perte, ou aucune perte du tout) : doivent quand même être
+        // exclus du butin de combat car la session marchand est toujours ouverte.
+        ' INFO 10:00:15,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Baguette du Mage Rouge .',
+        ' INFO 10:00:16,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Baguette du Mage Rouge .',
+        " INFO 10:00:17,000 [T] (a:1) - On arrête l'occupation MARKET sur la board [bDk id=1]{P}",
+        // Vrai butin de combat, ramassé après la fermeture de la session marchand : doit rester compté.
+        ' INFO 10:00:20,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou .',
+        ' INFO 10:00:30,000 [T] (a:1) - [FIGHT] End fight with id 1',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].loot).toEqual([{ name: 'Laine de Bouftou', catalogId: null, quantity: 2 }]);
+      expect(stats.sessionLoot().map((l) => l.name)).toEqual(['Laine de Bouftou']);
+      // Seul le ramassage au prix connu (perte de kamas adjacente) devient un achat identifiable.
+      expect(stats.purchaseHistory()).toHaveLength(1);
+      expect(stats.purchaseHistory()[0].item).toBe('Baguette du Mage Rouge');
+      expect(stats.purchaseHistory()[0].quantity).toBe(1);
+    });
+
     it('expose les combats actifs pour les onglets et permet de choisir lequel afficher', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
