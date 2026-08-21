@@ -205,12 +205,12 @@ type PersistedItemReassignment =
       quantity: number;
       catalogId: number;
       /** Part du coût total (en kamas) concernée par CETTE correction, choisie manuellement par
-       * l'utilisateur (voir ItemPickerRequest.totalKamas) — seulement quand `quantity` est
-       * partielle, `undefined` sinon (achat réattribué en bloc, tout son coût le suit) ou si
-       * l'utilisateur n'a pas touché le champ (repli sur le prorata automatique, voir
-       * applyPurchaseReassign). Un achat n'est pas forcément linéaire en coût (remise de gros,
-       * prix ayant varié entre deux achats agrégés le même jour), d'où la possibilité de l'ajuster
-       * à la main plutôt que de toujours déduire ce montant de la quantité seule. */
+       * l'utilisateur — seulement quand `quantity` est partielle, `undefined` sinon (achat
+       * réattribué en bloc, tout son coût le suit). Plus jamais renseigné depuis la modale de
+       * réattribution des achats (voir PurchaseReassignService : sélectionne désormais directement
+       * les achats individuels du cumul, chacun déjà exact en quantité/coût — plus de prorata à
+       * ajuster manuellement) ; le champ reste lu par `applyPurchaseReassign` pour rejouer
+       * correctement une correction persistée AVANT ce changement. */
       kamas?: number;
     }
   | {
@@ -1958,12 +1958,12 @@ export class StatsStoreService {
 
     // Un achat n'est pas un tableau de lignes homonymes (contrairement au butin/aux échanges) :
     // une correction partielle crée un SECOND achat distinct plutôt que de scinder une entrée dans
-    // un tableau. Coût réparti au prorata (arrondi) par défaut — sauf `kamasOverride` explicite
-    // (voir ItemPickerRequest.totalKamas) : un achat n'est pas forcément linéaire en coût (remise
-    // de gros, prix ayant varié entre deux achats agrégés le même jour), l'utilisateur peut donc
-    // ajuster ce montant à la main plutôt que de subir le prorata automatique. Signature
-    // naturellement distincte de toute façon (quantity/totalCost changent des deux côtés), donc
-    // aucun risque de collision de clientKey avec l'achat d'origine.
+    // un tableau. Coût réparti au prorata (arrondi) par défaut — sauf `kamasOverride` explicite,
+    // plus jamais fourni depuis la modale de réattribution des achats (voir PurchaseReassignService,
+    // qui réattribue toujours des achats individuels EN BLOC, `amount >= record.quantity` ci-dessus)
+    // mais toujours géré ici pour rejouer correctement une correction persistée AVANT ce changement.
+    // Signature naturellement distincte de toute façon (quantity/totalCost changent des deux côtés),
+    // donc aucun risque de collision de clientKey avec l'achat d'origine.
     const unitCost = record.totalCost / record.quantity;
     const splitCost =
       kamasOverride !== undefined

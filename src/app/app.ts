@@ -3,7 +3,7 @@ import { RouterOutlet } from '@angular/router';
 import { LogFileAccessService } from './core/services/log-file-access.service';
 import { RouteSyncService } from './core/services/route-sync.service';
 import { SeoService } from './core/services/seo.service';
-import { StatsStoreService } from './core/services/stats-store.service';
+import { PurchaseRecord, StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
 import { CatalogService } from './core/api/catalog.service';
 import { NavigationService } from './core/services/navigation.service';
@@ -21,6 +21,8 @@ import {
 } from './core/services/damage-reassign.service';
 import { ItemPickerComponent } from './shared/item-picker/item-picker.component';
 import { ItemPickerService } from './core/services/item-picker.service';
+import { PurchaseReassignPickerComponent } from './shared/purchase-reassign-picker/purchase-reassign-picker.component';
+import { PurchaseReassignService } from './core/services/purchase-reassign.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
 import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
@@ -52,6 +54,7 @@ import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-
     ClassPickerComponent,
     DamageReassignPickerComponent,
     ItemPickerComponent,
+    PurchaseReassignPickerComponent,
     ConfirmDeletePopoverComponent,
     HelpModalComponent,
     RecipeQuantityModalComponent,
@@ -76,6 +79,7 @@ export class App implements OnInit {
   protected readonly classPickerService = inject(ClassPickerService);
   protected readonly damageReassignService = inject(DamageReassignService);
   protected readonly itemPickerService = inject(ItemPickerService);
+  protected readonly purchaseReassignService = inject(PurchaseReassignService);
   // Injecté ici pour garantir que le store écoute newLines$ dès le démarrage.
   private readonly stats = inject(StatsStoreService);
   // Idem : démarre la synchronisation état de navigation → URL dès le premier changement de vue
@@ -147,8 +151,16 @@ export class App implements OnInit {
     this.damageReassignService.close();
   }
 
-  protected onItemChosen(event: { id: number; quantity: number; kamas: number | null }): void {
-    this.itemPickerService.request()?.onChosen?.(event.id, event.quantity, event.kamas);
+  protected onItemChosen(event: { id: number; quantity: number }): void {
+    this.itemPickerService.request()?.onChosen?.(event.id, event.quantity);
     this.itemPickerService.close();
+  }
+
+  protected onPurchaseRecordsChosen(event: {
+    records: readonly PurchaseRecord[];
+    catalogId: number;
+  }): void {
+    this.purchaseReassignService.request()?.onChosen(event.records, event.catalogId);
+    this.purchaseReassignService.close();
   }
 }
