@@ -1,0 +1,6 @@
+@for (k of kinds; track k) {
+  <button type="button" class="entity-stat-tab" [class.selected]="kind() === k" (click)="select(k)">
+    <img [src]="icons[k]" referrerpolicy="no-referrer" draggable="false" alt="" />
+    <span>{{ labelKeys[k] | t }}</span>
+  </button>
+}

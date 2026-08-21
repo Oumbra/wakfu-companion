@@ -200,25 +200,31 @@
             (turnChange)="setTurn(record, $event)"
           />
         </div>
+        <app-entity-stat-tabs
+          [kind]="statKindFor(record.id)"
+          (kindChange)="setStatKind(record.id, $event)"
+        />
         <app-entity-damage-list
           [title]="'damageMeter.allies' | t"
           side="ally"
-          [rows]="allyRowsFor(record)"
-          [fightId]="record.id"
+          [rows]="allyStatRowsFor(record)"
+          [fightId]="statKindFor(record.id) === 'damage' ? record.id : null"
           [collapsible]="true"
           [viewMode]="viewModeFor(record.id)"
           [turn]="turnFor(record)"
-          [emptyMessage]="'damageMeter.emptyCharactersHistory' | t"
+          [showElements]="statKindFor(record.id) !== 'armor'"
+          [emptyMessage]="emptyMessageKey(record.id, 'ally') | t"
         />
         <app-entity-damage-list
           [title]="'damageMeter.enemies' | t"
           side="enemy"
-          [rows]="enemyRowsFor(record)"
-          [fightId]="record.id"
+          [rows]="enemyStatRowsFor(record)"
+          [fightId]="statKindFor(record.id) === 'damage' ? record.id : null"
           [collapsible]="true"
           [viewMode]="viewModeFor(record.id)"
           [turn]="turnFor(record)"
-          [emptyMessage]="'damageMeter.emptyEnemiesHistory' | t"
+          [showElements]="statKindFor(record.id) !== 'armor'"
+          [emptyMessage]="emptyMessageKey(record.id, 'enemy') | t"
         />
         @if (record.result === 'won') {
           <div class="loot-section">

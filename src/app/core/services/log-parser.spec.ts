@@ -298,3 +298,133 @@ describe('LogParser — échanges multi-lignes', () => {
     expect(entries.filter((e) => e.kind === 'trade-completed')).toHaveLength(1);
   });
 });
+
+describe('LogParser — soin donné (onglet Soin)', () => {
+  it("rattache un soin résultant directement d'un sort au lanceur, pas à la cible soignée", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 12:34:24,027 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Cura Pictor lance le sort Revitalisation (Critiques)',
+      ' INFO 12:34:24,735 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Scutum Tutelare: +169 PV (Eau)',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries[1]).toEqual({
+      kind: 'heal',
+      time: '12:34:24,735',
+      target: 'Scutum Tutelare',
+      attacker: 'Cura Pictor',
+      spell: 'Revitalisation',
+      element: 'Eau',
+      amount: 169,
+      fightId: null,
+    });
+  });
+
+  it("rattache un soin \"Délai\" (effet posé par un sort déjà lancé) à l'auteur du sort d'origine, pas au porteur de l'effet", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 12:34:24,027 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Cura Pictor lance le sort Revitalisation (Critiques)',
+      ' INFO 12:34:24,735 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Scutum Tutelare: +169 PV (Eau)',
+      ' INFO 12:34:24,740 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Scutum Tutelare: Délai (+169 Niv.)',
+      ' INFO 12:34:48,657 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Scutum Tutelare: +338 PV (Neutre) (Délai)',
+    ];
+    const entries = parseAll(parser, lines);
+    const delayedHeal = entries.find((e) => e.kind === 'heal' && e.amount === 338);
+    expect(delayedHeal).toEqual({
+      kind: 'heal',
+      time: '12:34:48,657',
+      target: 'Scutum Tutelare',
+      attacker: 'Cura Pictor',
+      spell: 'Délai',
+      element: 'Neutre',
+      amount: 338,
+      fightId: null,
+    });
+  });
+
+  it('rattache un soin passif non suivi (ex. "Digestion") à l\'entité qui le porte, jamais au dernier lanceur de sort connu', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 10:58:09,286 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Merkator: -188 PV (Air) (Parade !)',
+      ' INFO 10:58:19,151 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Zoroark Shiny: +234 PV (Neutre) (Digestion)',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries[1]).toEqual({
+      kind: 'heal',
+      time: '10:58:19,151',
+      target: 'Zoroark Shiny',
+      attacker: 'Zoroark Shiny',
+      spell: 'Digestion',
+      element: 'Neutre',
+      amount: 234,
+      fightId: null,
+    });
+  });
+});
+
+describe('LogParser — armure donnée (onglet Armure)', () => {
+  it("ignore une perte d'armure (signe négatif) : seule l'armure donnée est suivie", () => {
+    const parser = new LogParser();
+    const entries = parseAll(parser, [
+      ' INFO 15:38:47,729 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Oumbra Canin: -276 Armure',
+    ]);
+    expect(entries).toEqual([]);
+  });
+
+  it("rattache un bouclier de feca (nom d'effet ne reprenant que partiellement le nom du sort) au lanceur du sort", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 12:35:09,848 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Scutum Tutelare lance le sort Orbe défensif',
+      ' INFO 12:35:10,856 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Cartarum Lusor: Bouclier Orbe défensif (+1 892 Niv.)',
+      ' INFO 12:35:10,867 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Cartarum Lusor: 956 Armure (Bouclier Orbe défensif)',
+    ];
+    const entries = parseAll(parser, lines);
+    const armor = entries.find((e) => e.kind === 'armor');
+    expect(armor).toEqual({
+      kind: 'armor',
+      time: '12:35:10,867',
+      target: 'Cartarum Lusor',
+      attacker: 'Scutum Tutelare',
+      spell: 'Bouclier Orbe défensif',
+      amount: 956,
+      fightId: null,
+    });
+  });
+
+  it('rattache une armure passive non suivie (ex. "Art Canin") à l\'entité elle-même, même si un autre combattant vient de lancer un sort juste avant', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 10:59:20,101 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Piou Rouge lance le sort Picorage Ardent',
+      ' INFO 10:59:20,105 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Kralaman: -1 556 PV (Lumière) (Air) (Contre-attaque)',
+      ' INFO 10:59:20,106 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Zoroark Shiny: 605 Armure (Art Canin)',
+    ];
+    const entries = parseAll(parser, lines);
+    const armor = entries.find((e) => e.kind === 'armor');
+    expect(armor).toEqual({
+      kind: 'armor',
+      time: '10:59:20,106',
+      target: 'Zoroark Shiny',
+      attacker: 'Zoroark Shiny',
+      spell: 'Art Canin',
+      amount: 605,
+      fightId: null,
+    });
+  });
+
+  it('rattache une armure sans tag au dernier lanceur de sort (auto-buff)', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 10:59:03,137 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Zoroark Shiny lance le sort Molosse',
+      ' INFO 10:59:04,447 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Zoroark Shiny: 312 Armure',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries[1]).toEqual({
+      kind: 'armor',
+      time: '10:59:04,447',
+      target: 'Zoroark Shiny',
+      attacker: 'Zoroark Shiny',
+      spell: 'Molosse',
+      amount: 312,
+      fightId: null,
+    });
+  });
+});
