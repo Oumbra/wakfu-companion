@@ -77,9 +77,17 @@ const COMBAT_START_MARKER = 'CREATION DU COMBAT';
 const FIGHTER_JOIN_RE =
   /^fightId=(-?\d+) (.+?) breed : (\d+) \[(-?\d+)\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
 const DAMAGE_RE = new RegExp(`^(.+?): ([+-])(${NUM}) PV\\b(.*)$`);
+/** Armure DONNÉE ("Personnage: 45 Armure" ou "... (Source)") — signe optionnel : jamais préfixé de
+ * "+" en pratique (contrairement à PV), une perte d'armure ("-N Armure") est en revanche fréquente
+ * et volontairement ignorée (voir parseCombatLine, hors périmètre : seule l'armure DONNÉE compte). */
+const ARMOR_RE = new RegExp(`^(.+?): ([+-]?)(${NUM}) Armure\\b(.*)$`);
 const TAG_RE = /\(([^)]+)\)/g;
-/** Application/rafraîchissement d'un effet à stacks : "Personnage: NomEffet (Niv. N)" ou "(+N Niv.)". */
-const STATUS_EFFECT_RE = /^(.+?): (.+?) \((?:Niv\. \d+|\+\d+ Niv\.)\)$/;
+/** Application/rafraîchissement d'un effet à stacks : "Personnage: NomEffet (Niv. N)" ou "(+N Niv.)".
+ * `N` via NUM (pas un simple `\d+`) : les valeurs élevées (ex. un bouclier de feca "+1 892 Niv.")
+ * s'affichent avec séparateur de milliers — un `\d+` nu ne matchait pas ces lignes, laissant
+ * `effectOwners` sans entrée pour l'effet (bug réel corrigé : l'armure donnée par ces boucliers
+ * n'était alors jamais rattachée au feca qui les lance, voir tests). */
+const STATUS_EFFECT_RE = new RegExp(`^(.+?): (.+?) \\((?:Niv\\. ${NUM}|\\+${NUM} Niv\\.)\\)$`);
 const STATUS_REMOVE_RE = /^(.+?): n'est plus sous l'emprise de '(.+?)'\.?$/;
 /** Purement informatif (le coup a été paré) : jamais une source de dégâts. */
 const IGNORED_TAG = 'Parade !';
@@ -480,51 +488,38 @@ export class LogParser {
     const damage = DAMAGE_RE.exec(content);
     if (damage) {
       const sign = damage[2];
-      if (sign !== '-') return null; // on ne suit pas les soins
       const target = damage[1].trim();
       const amount = parseFrenchNumber(damage[3]);
       const tail = damage[4] ?? '';
 
-      let element: DamageElement = 'Inconnu';
-      let effectTag: string | null = null;
-      for (const tagMatch of tail.matchAll(TAG_RE)) {
-        const tag = tagMatch[1];
-        if (DAMAGE_ELEMENTS.has(tag)) {
-          if (element === 'Inconnu') element = tag as DamageElement;
-        } else if (tag !== IGNORED_TAG) {
-          // Le tag "mécanique" (statut, glyphe, riposte...) fait foi ; s'il
-          // y en a plusieurs, le dernier (le plus proche de la fin de ligne)
-          // est la vraie cause, les autres ne sont que des qualificatifs.
-          effectTag = tag;
-        }
+      if (sign === '-') {
+        const { attacker, spell, element } = this.resolveEffectTail(target, tail, {
+          selfFallback: false,
+          riposteFallback: true,
+        });
+        this.lastDamage = { attacker, target };
+        return {
+          kind: 'damage',
+          time,
+          target,
+          attacker,
+          spell,
+          element,
+          amount,
+          fightId: this.resolveFightIdForName(attacker),
+        };
       }
 
-      let attacker = this.lastCast?.caster ?? 'Inconnu';
-      let spell = this.lastCast?.spell ?? 'Autre';
-      if (effectTag) {
-        const owner = this.effectOwners.get(effectTag.toLowerCase());
-        const caster = this.spellCasters.get(effectTag.toLowerCase());
-        if (owner) {
-          // Un effet porté par la cible elle-même (ex. Hachure) crédite celui
-          // qui l'a appliqué ; un effet porté par un tiers (ex. Enflammé) se
-          // crédite lui-même, puisqu'il inflige les dégâts à quelqu'un d'autre.
-          attacker = owner.carrier === target ? owner.applier : owner.carrier;
-        } else if (caster) {
-          // Glyphe/zone posé une fois (ex. "Canine") qui tape bien plus tard :
-          // on crédite qui l'a posé, peu importe qui a lancé un sort depuis.
-          attacker = caster;
-        } else if (this.lastDamage && this.lastDamage.attacker === target) {
-          // Riposte pure sans statut ni sort connu (ex. "Contre-attaque") :
-          // la victime du coup précédent devient l'attaquant de ce coup-ci.
-          attacker = this.lastDamage.target;
-        }
-        spell = effectTag;
-      }
-
-      this.lastDamage = { attacker, target };
-
+      // Soin ("+N PV") : même mécanique de résolution que les dégâts, à deux exceptions près (voir
+      // resolveEffectTail) — un passif non rattaché à un sort récent (`riposteFallback: false`) se
+      // crédite à la cible elle-même plutôt qu'au dernier lanceur de sort connu, qui pourrait être
+      // n'importe qui d'autre (ex. l'ennemi qui vient de frapper cette même cible).
+      const { attacker, spell, element } = this.resolveEffectTail(target, tail, {
+        selfFallback: true,
+        riposteFallback: false,
+      });
       return {
-        kind: 'damage',
+        kind: 'heal',
         time,
         target,
         attacker,
@@ -535,7 +530,92 @@ export class LogParser {
       };
     }
 
+    const armor = ARMOR_RE.exec(content);
+    if (armor) {
+      const sign = armor[2];
+      if (sign === '-') return null; // perte d'armure : hors périmètre, seule l'armure DONNÉE compte.
+      const target = armor[1].trim();
+      const amount = parseFrenchNumber(armor[3]);
+      const tail = armor[4] ?? '';
+      const { attacker, spell } = this.resolveEffectTail(target, tail, {
+        selfFallback: true,
+        riposteFallback: false,
+      });
+      return {
+        kind: 'armor',
+        time,
+        target,
+        attacker,
+        spell,
+        amount,
+        fightId: this.resolveFightIdForName(attacker),
+      };
+    }
+
     return null;
+  }
+
+  /**
+   * Résout qui créditer (`attacker`) et le nom de la source (`spell`) d'une ligne PV/Armure à
+   * partir de son tag de fin de ligne (parenthèses) — mécanique commune aux dégâts, soins et
+   * armure donnée (voir CLAUDE.md). Un tag reconnu comme élément (voir DAMAGE_ELEMENTS) alimente
+   * `element` ; le dernier tag NON élémentaire (hors "Parade !", jamais une cause) est le tag
+   * "mécanique" (statut, glyphe, riposte...) qui détermine `attacker`/`spell`.
+   *
+   * - `riposteFallback: true` (dégâts uniquement, comportement historique inchangé) : à défaut de
+   *   statut suivi (`effectOwners`) ou de sort connu (`spellCasters`, ex. glyphe "Canine" posé une
+   *   fois qui tape bien plus tard), une riposte pure (ex. "Contre-attaque") crédite la victime du
+   *   coup précédent.
+   * - `riposteFallback: false` (soins/armure) : un tag non suivi par `effectOwners` est un passif
+   *   propre à la cible (ex. "Art Canin", "Digestion") — crédité à la cible elle-même plutôt qu'au
+   *   dernier sort connu, qui pourrait être sans rapport (lancé par un tiers). `spellCasters` n'est
+   *   volontairement PAS consulté ici (contrairement aux dégâts) : il est global et persiste au-delà
+   *   du tour pour N'IMPORTE QUEL sort déjà lancé par N'IMPORTE QUI, ce qui créditerait à tort un
+   *   adversaire pour le passif défensif propre de sa cible (ex. armure gagnée par la cible d'une
+   *   attaque, taguée du nom du sort qui vient de la toucher — cas réel constaté, voir tests).
+   */
+  private resolveEffectTail(
+    target: string,
+    tail: string,
+    options: { selfFallback: boolean; riposteFallback: boolean },
+  ): { attacker: string; spell: string; element: DamageElement } {
+    let element: DamageElement = 'Inconnu';
+    let effectTag: string | null = null;
+    for (const tagMatch of tail.matchAll(TAG_RE)) {
+      const tag = tagMatch[1];
+      if (DAMAGE_ELEMENTS.has(tag)) {
+        if (element === 'Inconnu') element = tag as DamageElement;
+      } else if (tag !== IGNORED_TAG) {
+        effectTag = tag;
+      }
+    }
+
+    let attacker = this.lastCast?.caster ?? (options.selfFallback ? target : 'Inconnu');
+    let spell = this.lastCast?.spell ?? 'Autre';
+    if (effectTag) {
+      const owner = this.effectOwners.get(effectTag.toLowerCase());
+      if (owner) {
+        // Un effet porté par la cible elle-même (ex. Hachure) crédite celui
+        // qui l'a appliqué ; un effet porté par un tiers (ex. Enflammé) se
+        // crédite lui-même, puisqu'il inflige les dégâts à quelqu'un d'autre.
+        attacker = owner.carrier === target ? owner.applier : owner.carrier;
+      } else if (options.riposteFallback) {
+        const caster = this.spellCasters.get(effectTag.toLowerCase());
+        if (caster) {
+          // Glyphe/zone posé une fois (ex. "Canine") qui tape bien plus tard :
+          // on crédite qui l'a posé, peu importe qui a lancé un sort depuis.
+          attacker = caster;
+        } else if (this.lastDamage && this.lastDamage.attacker === target) {
+          // Riposte pure sans statut ni sort connu (ex. "Contre-attaque") :
+          // la victime du coup précédent devient l'attaquant de ce coup-ci.
+          attacker = this.lastDamage.target;
+        }
+      } else {
+        attacker = target;
+      }
+      spell = effectTag;
+    }
+    return { attacker, spell, element };
   }
 
   /** Ignore les doublons stricts (même type d'événement, mêmes champs hors horodatage) survenant dans un intervalle très court — signature d'une observation multi-compte d'un même combat/échange, où chaque compte connecté loggue sa propre copie du flux serveur. */
