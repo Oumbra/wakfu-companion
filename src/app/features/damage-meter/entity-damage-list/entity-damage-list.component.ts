@@ -59,6 +59,10 @@ export class EntityDamageListComponent {
   readonly rows = input<EntityDamageRow[]>([]);
   readonly interactive = input(false);
   readonly emptyMessage = input('Aucun dégât enregistré.');
+  /** `false` pour l'onglet Armure (voir EntityStatTabsComponent) : l'armure n'a pas de notion
+   * d'élément (voir ArmorEntry), afficher un unique badge "Inconnu" égal au total du sort
+   * n'apporterait rien. Toujours `true` par défaut (Dommage/Soin, comportement historique). */
+  readonly showElements = input(true);
   /** Voir DamageViewSwitchComponent — 'total' (défaut) préserve le comportement historique (somme
    * de tout le combat). 'turn' recalcule chaque ligne/sort pour ne montrer que le tour visé
    * (`turn()`) ; la réattribution (voir onSpellContextMenu) reste inchangée dans les deux modes,

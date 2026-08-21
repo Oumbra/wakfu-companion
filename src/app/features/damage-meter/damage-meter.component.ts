@@ -12,6 +12,10 @@ import {
   DamageViewMode,
   DamageViewSwitchComponent,
 } from '../../shared/damage-view-switch/damage-view-switch.component';
+import {
+  EntityStatKind,
+  EntityStatTabsComponent,
+} from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 
 /**
  * Combat en cours uniquement — l'historique des combats a été extrait vers
@@ -29,6 +33,7 @@ import {
     TranslatePipe,
     TooltipDirective,
     DamageViewSwitchComponent,
+    EntityStatTabsComponent,
     IconComponent,
   ],
   templateUrl: './damage-meter.component.html',
@@ -41,15 +46,29 @@ export class DamageMeterComponent {
   protected readonly i18n = inject(I18nService);
   protected readonly helpModal = inject(HelpModalService);
 
+  /** Statistique affichée par les listes alliés/ennemis (voir EntityStatTabsComponent) — repart à
+   * 'damage' à chaque changement de combat affiché, comme `viewMode` ci-dessous. */
+  protected readonly statKind = signal<EntityStatKind>('damage');
+
+  private readonly statRowsByKind: Record<EntityStatKind, () => EntityDamageRow[]> = {
+    damage: () => this.stats.damageByAttacker(),
+    armor: () => this.stats.armorByAttacker(),
+    heal: () => this.stats.healByAttacker(),
+  };
+
+  /** Lignes de la statistique actuellement sélectionnée — `hasCurrentFight` reste volontairement
+   * basé sur les dégâts (ci-dessous), pas sur cette statistique : un combat démarré sans encore
+   * aucun soin/armure donné ne doit pas masquer l'en-tête tours/durée ni les onglets eux-mêmes. */
+  private readonly currentStatRows = computed<EntityDamageRow[]>(() =>
+    this.statRowsByKind[this.statKind()](),
+  );
   protected readonly allyRows = computed<EntityDamageRow[]>(() =>
-    this.stats.damageByAttacker().filter((r) => this.classifier.classify(r.name) === 'ally'),
+    this.currentStatRows().filter((r) => this.classifier.classify(r.name) === 'ally'),
   );
   protected readonly enemyRows = computed<EntityDamageRow[]>(() =>
-    this.stats.damageByAttacker().filter((r) => this.classifier.classify(r.name) === 'enemy'),
+    this.currentStatRows().filter((r) => this.classifier.classify(r.name) === 'enemy'),
   );
-  protected readonly hasCurrentFight = computed(
-    () => this.allyRows().length > 0 || this.enemyRows().length > 0,
-  );
+  protected readonly hasCurrentFight = computed(() => this.stats.damageByAttacker().length > 0);
 
   protected readonly currentFightTurns = this.stats.currentFightTurns;
   protected readonly currentFightDurationMs = this.stats.currentFightDurationMs;
@@ -79,11 +98,26 @@ export class DamageMeterComponent {
       this.displayedFightId();
       this.selectedTurn.set(null);
       this.viewMode.set('total');
+      this.statKind.set('damage');
     });
   }
 
   protected setViewMode(mode: DamageViewMode): void {
     this.viewMode.set(mode);
+  }
+
+  protected setStatKind(kind: EntityStatKind): void {
+    this.statKind.set(kind);
+  }
+
+  /** Clé i18n du message vide, déclinée par statistique affichée (voir EntityStatTabsComponent) —
+   * `side` distingue alliés/ennemis, comme les clés historiques `emptyAllies`/`emptyEnemies`. */
+  protected emptyMessageKey(side: 'ally' | 'enemy'): string {
+    const suffix =
+      this.statKind() === 'damage' ? '' : this.statKind() === 'armor' ? 'Armor' : 'Heal';
+    return side === 'ally'
+      ? `damageMeter.emptyAllies${suffix}`
+      : `damageMeter.emptyEnemies${suffix}`;
   }
 
   protected setTurn(turn: number): void {

@@ -69,6 +69,32 @@ export interface DamageEntry {
   fightId: number | null;
 }
 
+/** Soin donné ("<cible>: +<valeur> PV (<élément>)") — même ligne que DamageEntry (signe `+` plutôt
+ * que `-`), mais `attacker` (celui à créditer du soin) est résolu différemment pour le cas passif
+ * non rattaché à un sort récent : voir LogParser.resolveEffectTail. */
+export interface HealEntry {
+  kind: 'heal';
+  time: string;
+  target: string;
+  attacker: string;
+  spell: string;
+  element: DamageElement;
+  amount: number;
+  fightId: number | null;
+}
+
+/** Armure donnée ("<cible>: <valeur> Armure (<source>)?") — une perte d'armure (signe `-`) n'est
+ * jamais émise en ArmorEntry (voir LogParser, hors périmètre : seule l'armure DONNÉE est suivie). */
+export interface ArmorEntry {
+  kind: 'armor';
+  time: string;
+  target: string;
+  attacker: string;
+  spell: string;
+  amount: number;
+  fightId: number | null;
+}
+
 /** KO d'un combattant, allié ("... est KO !") ou n'importe qui ("... est hors-combat !", diffusé à tous les participants). */
 export interface EnemyDefeatedEntry {
   kind: 'enemy-defeated';
@@ -151,6 +177,8 @@ export type LogEntry =
   | XpGainEntry
   | SpellCastEntry
   | DamageEntry
+  | HealEntry
+  | ArmorEntry
   | EnemyDefeatedEntry
   | CombatDefeatMarkerEntry
   | CombatStartEntry

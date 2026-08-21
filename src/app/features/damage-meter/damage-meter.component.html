@@ -70,26 +70,29 @@
           (turnChange)="setTurn($event)"
         />
       </div>
+      <app-entity-stat-tabs [kind]="statKind()" (kindChange)="setStatKind($event)" />
     }
     <app-entity-damage-list
       [title]="'damageMeter.allies' | t"
       side="ally"
       [rows]="allyRows()"
-      [fightId]="displayedFightId()"
+      [fightId]="statKind() === 'damage' ? displayedFightId() : null"
       [interactive]="true"
       [viewMode]="viewMode()"
       [turn]="effectiveTurn()"
-      [emptyMessage]="'damageMeter.emptyAllies' | t"
+      [showElements]="statKind() !== 'armor'"
+      [emptyMessage]="emptyMessageKey('ally') | t"
     />
     <app-entity-damage-list
       [title]="'damageMeter.enemies' | t"
       side="enemy"
       [rows]="enemyRows()"
-      [fightId]="displayedFightId()"
+      [fightId]="statKind() === 'damage' ? displayedFightId() : null"
       [interactive]="true"
       [viewMode]="viewMode()"
       [turn]="effectiveTurn()"
-      [emptyMessage]="'damageMeter.emptyEnemies' | t"
+      [showElements]="statKind() !== 'armor'"
+      [emptyMessage]="emptyMessageKey('enemy') | t"
     />
   </div>
 </div>

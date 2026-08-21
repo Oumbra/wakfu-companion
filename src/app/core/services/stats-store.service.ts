@@ -233,6 +233,12 @@ export interface FightRecord {
   fullTimestampMs: number;
   result: 'won' | 'lost';
   rows: EntityDamageRow[];
+  /** Miroir de `rows` pour le soin/l'armure donnés (voir onglets Dommage/Armure/Soin, CLAUDE.md) —
+   * toujours vide pour un combat reconstruit depuis l'archive du compte (voir
+   * HistoryArchiveService.toFightRecord, même limite que `SpellBreakdownRow.byTurn` : le serveur ne
+   * stocke pas cette ventilation, seule la session en cours la connaît). */
+  healRows: EntityDamageRow[];
+  armorRows: EntityDamageRow[];
   loot: LootRow[];
   /** Kamas gagnés pendant le combat (voir registerFightKama) — affiché dans la ligne de butin
    * (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
@@ -246,6 +252,13 @@ export interface FightRecord {
 interface FightWorking {
   fight: Fight;
   attackerMap: Map<string, Map<string, SpellAgg>>;
+  /** Miroir d'attackerMap pour le soin donné (voir StatsStoreService.healByAttacker) — même
+   * agrégation (SpellAgg, par sort/élément/tour), clé = siège résolu (voir InitiativeSeat) de
+   * l'entité créditée du soin, pas forcément la cible soignée (voir LogParser.resolveEffectTail). */
+  healSourceMap: Map<string, Map<string, SpellAgg>>;
+  /** Miroir d'attackerMap pour l'armure donnée (voir StatsStoreService.armorByAttacker) — même
+   * principe que healSourceMap ; `element` n'a pas de sens pour l'armure (toujours 'Inconnu'). */
+  armorSourceMap: Map<string, Map<string, SpellAgg>>;
   /** Au moins une instance de ce nom (minuscule) a été vue vaincue — utilisé pour le flag "defeated"
    * par ligne agrégée (UI) et pour le repli "tous les alliés KO" de resolveFightResult(). */
   defeatedNames: Set<string>;
@@ -335,6 +348,10 @@ export class StatsStoreService {
 
   readonly xpByCharacter = signal<XpRow[]>([]);
   readonly damageByAttacker = signal<EntityDamageRow[]>([]);
+  /** Miroir de damageByAttacker pour le soin/l'armure donnés (voir onglets Dommage/Armure/Soin,
+   * CLAUDE.md) — même forme (EntityDamageRow[]), même combat affiché (displayedFightId). */
+  readonly healByAttacker = signal<EntityDamageRow[]>([]);
+  readonly armorByAttacker = signal<EntityDamageRow[]>([]);
   readonly fightHistory = signal<FightRecord[]>([]);
   /** Butin cumulé de tous les combats gagnés de la session (contrairement à `fightHistory`, pas
    * plafonné à MAX_FIGHT_HISTORY) — alimente la section butin de la modale recap de session. */
@@ -782,6 +799,36 @@ export class StatsStoreService {
         this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
       }
+      case 'heal': {
+        const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
+        if (working) {
+          const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
+          this.addStatAmount(
+            working.healSourceMap,
+            seatKey,
+            entry.spell,
+            entry.element,
+            entry.amount,
+            working.fight.turnCount,
+          );
+        }
+        break;
+      }
+      case 'armor': {
+        const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
+        if (working) {
+          const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
+          this.addStatAmount(
+            working.armorSourceMap,
+            seatKey,
+            entry.spell,
+            'Inconnu',
+            entry.amount,
+            working.fight.turnCount,
+          );
+        }
+        break;
+      }
       case 'loot':
         this.registerLoot(entry.item, entry.quantity, entry.fightId, isPurchaseLoot);
         break;
@@ -823,6 +870,8 @@ export class StatsStoreService {
       working = {
         fight: new Fight(fightId, new Date(this.buildFullTimestampMs(time))),
         attackerMap: new Map(),
+        healSourceMap: new Map(),
+        armorSourceMap: new Map(),
         defeatedNames: new Set(),
         defeatedInstanceCounts: new Map(),
         fighterIdsSeen: new Set(),
@@ -1077,6 +1126,8 @@ export class StatsStoreService {
       fullTimestampMs: working.fight.startDate.getTime(),
       result,
       rows: this.buildEntityDamageRows(working),
+      healRows: this.buildEntityDamageRows(working, working.healSourceMap),
+      armorRows: this.buildEntityDamageRows(working, working.armorSourceMap),
       loot: working.fight.loots.map((l) => ({
         name: l.name,
         catalogId: l.catalogId,
@@ -1139,29 +1190,40 @@ export class StatsStoreService {
     entry: DamageEntry,
     turn: number,
   ): void {
+    this.addStatAmount(map, key, entry.spell, entry.element, entry.amount, turn);
+  }
+
+  /** Agrégation générique par sort/élément/tour (voir SpellAgg) — commune aux dégâts, au soin
+   * donné et à l'armure donnée (voir healSourceMap/armorSourceMap). `element` vaut toujours
+   * 'Inconnu' pour l'armure (voir ArmorEntry, aucune notion d'élément pour cette statistique). */
+  private addStatAmount(
+    map: Map<string, Map<string, SpellAgg>>,
+    key: string,
+    spellName: string,
+    element: DamageElement,
+    amount: number,
+    turn: number,
+  ): void {
     let spells = map.get(key);
     if (!spells) {
       spells = new Map();
       map.set(key, spells);
     }
-    let agg = spells.get(entry.spell);
+    let agg = spells.get(spellName);
     if (!agg) {
       agg = { total: 0, byElement: new Map(), byTurn: new Map() };
-      spells.set(entry.spell, agg);
+      spells.set(spellName, agg);
     }
-    agg.total += entry.amount;
-    agg.byElement.set(entry.element, (agg.byElement.get(entry.element) ?? 0) + entry.amount);
+    agg.total += amount;
+    agg.byElement.set(element, (agg.byElement.get(element) ?? 0) + amount);
 
     let turnAgg = agg.byTurn.get(turn);
     if (!turnAgg) {
       turnAgg = { total: 0, byElement: new Map() };
       agg.byTurn.set(turn, turnAgg);
     }
-    turnAgg.total += entry.amount;
-    turnAgg.byElement.set(
-      entry.element,
-      (turnAgg.byElement.get(entry.element) ?? 0) + entry.amount,
-    );
+    turnAgg.total += amount;
+    turnAgg.byElement.set(element, (turnAgg.byElement.get(element) ?? 0) + amount);
   }
 
   private registerDefeat(name: string): void {
@@ -1424,6 +1486,16 @@ export class StatsStoreService {
         .sort((a, b) => b.amount - a.amount),
     );
     this.damageByAttacker.set(displayWorking ? this.buildEntityDamageRows(displayWorking) : []);
+    this.healByAttacker.set(
+      displayWorking
+        ? this.buildEntityDamageRows(displayWorking, displayWorking.healSourceMap)
+        : [],
+    );
+    this.armorByAttacker.set(
+      displayWorking
+        ? this.buildEntityDamageRows(displayWorking, displayWorking.armorSourceMap)
+        : [],
+    );
     this.fightHistory.set([...this.fightHistoryList]);
     this.sessionLoot.set([...this.sessionLootMap.values()]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
@@ -1440,7 +1512,10 @@ export class StatsStoreService {
    * statut KO (`defeatedInstanceCounts`) reste indépendant de la file d'initiative (signal explicite
    * du parser, plus fiable).
    */
-  private buildEntityDamageRows(working: FightWorking): EntityDamageRow[] {
+  private buildEntityDamageRows(
+    working: FightWorking,
+    sourceMap: Map<string, Map<string, SpellAgg>> = working.attackerMap,
+  ): EntityDamageRow[] {
     const instanceCountByName = new Map<string, number>();
     for (const e of working.fight.enemies) {
       instanceCountByName.set(e.name, (instanceCountByName.get(e.name) ?? 0) + 1);
@@ -1448,11 +1523,11 @@ export class StatsStoreService {
     for (const a of working.fight.allies) {
       instanceCountByName.set(a.name, (instanceCountByName.get(a.name) ?? 0) + 1);
     }
-    // Noms présents dans attackerMap mais absents de Fight.enemies/allies (ex. invocation d'allié,
+    // Noms présents dans sourceMap mais absents de Fight.enemies/allies (ex. invocation d'allié,
     // jamais rejointe via [_FL_]) : à ajouter aussi, traités comme instance unique (clé = nom brut,
     // jamais suffixée "#i" — voir resolveNextActor, qui ne suffixe que si countNameInstances > 1).
     const names = new Set(instanceCountByName.keys());
-    for (const key of working.attackerMap.keys()) names.add(this.seatKeyToName(key));
+    for (const key of sourceMap.keys()) names.add(this.seatKeyToName(key));
 
     const buildSpellRows = (spells: Map<string, SpellAgg> | undefined): SpellBreakdownRow[] =>
       spells
@@ -1483,7 +1558,7 @@ export class StatsStoreService {
 
       for (let instanceIndex = 1; instanceIndex <= instanceCount; instanceIndex++) {
         const key = instanceCount <= 1 ? name : `${name}#${instanceIndex}`;
-        const spellRows = buildSpellRows(working.attackerMap.get(key));
+        const spellRows = buildSpellRows(sourceMap.get(key));
         const total = spellRows.reduce((sum, row) => sum + row.total, 0);
         rows.push({
           name,
