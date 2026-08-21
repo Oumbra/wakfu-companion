@@ -67,6 +67,9 @@ const OCCUPATION_RE = /^Lancement de l'occupation pour le joueur (.+)$/;
 /** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). Capture l'id pour distinguer plusieurs combats concurrents (multi-compte). */
 const FIGHT_END_RE = /^\[FIGHT\] End fight with id (-?\d+)$/;
 const COMBAT_START_MARKER = 'CREATION DU COMBAT';
+/** Ouverture/fermeture d'une session marchand/HDV, hors de toute enveloppe `[Catégorie]` — voir MarketOccupationEntry. */
+const MARKET_OCCUPATION_START_RE = /^Lancement de l'occupation MARKET sur la board\b/;
+const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b/;
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
  * — présent pour chaque combattant de chaque combat. `obstacleId` différent de
@@ -228,6 +231,13 @@ export class LogParser {
 
     if (content === COMBAT_START_MARKER) {
       return { kind: 'combat-start', time };
+    }
+
+    if (MARKET_OCCUPATION_START_RE.test(content)) {
+      return { kind: 'market-occupation', time, active: true };
+    }
+    if (MARKET_OCCUPATION_END_RE.test(content)) {
+      return { kind: 'market-occupation', time, active: false };
     }
 
     const bracketMatch = BRACKET_RE.exec(content);
