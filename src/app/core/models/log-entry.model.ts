@@ -130,6 +130,19 @@ export interface LootEntry {
   fightId: number | null;
 }
 
+/**
+ * Ouverture/fermeture d'une session de marchand/HDV ("Lancement de l'occupation MARKET sur la
+ * board .../On arrête l'occupation MARKET sur la board..."), hors de toute enveloppe `[Catégorie]`.
+ * Sert à StatsStoreService à exclure tout ramassage survenant pendant cette session du butin de
+ * combat, même sans perte de kamas adjacente (achat groupé, plusieurs objets ramassés à la suite
+ * sans que chacun ne déduise ses propres kamas juste avant — voir stats-store.service.ts).
+ */
+export interface MarketOccupationEntry {
+  kind: 'market-occupation';
+  time: string;
+  active: boolean;
+}
+
 export interface ChallengeResultEntry {
   kind: 'challenge-result';
   time: string;
@@ -186,4 +199,5 @@ export type LogEntry =
   | LootEntry
   | ChallengeResultEntry
   | FighterJoinedEntry
-  | TradeCompletedEntry;
+  | TradeCompletedEntry
+  | MarketOccupationEntry;
