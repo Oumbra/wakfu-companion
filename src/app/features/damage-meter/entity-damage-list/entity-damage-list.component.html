@@ -79,13 +79,15 @@
                   (contextmenu)="onSpellContextMenu($event, row, spell)"
                 >
                   <span class="spell-name">{{ spell.spell }}</span>
-                  <span class="spell-elements">
-                    @for (el of spell.byElement | keyvalue; track el.key) {
-                      <span class="spell-element" [class]="elementClass($any(el.key))">{{
-                        el.value | numberFr
-                      }}</span>
-                    }
-                  </span>
+                  @if (showElements()) {
+                    <span class="spell-elements">
+                      @for (el of spell.byElement | keyvalue; track el.key) {
+                        <span class="spell-element" [class]="elementClass($any(el.key))">{{
+                          el.value | numberFr
+                        }}</span>
+                      }
+                    </span>
+                  }
                   <span class="spell-total">{{ spell.total | numberFr }}</span>
                 </div>
               }

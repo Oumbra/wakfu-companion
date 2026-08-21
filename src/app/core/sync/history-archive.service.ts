@@ -572,6 +572,11 @@ function toFightRecord(
     fullTimestampMs: new Date(entry.startedAt).getTime(),
     result,
     rows: sortedRows,
+    // Le serveur ne stocke pas le détail du soin/de l'armure donnés (voir CLAUDE.md, onglets
+    // Dommage/Armure/Soin) : un combat reconstruit depuis l'archive du compte n'a donc jamais ces
+    // lignes, seule la session en cours (et l'historique local qui en dérive) les connaît.
+    healRows: [],
+    armorRows: [],
     loot,
     kamas: entry.kamasGained ?? 0,
     turns: entry.turns ?? 0,

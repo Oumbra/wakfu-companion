@@ -42,6 +42,10 @@ import {
   DamageViewMode,
   DamageViewSwitchComponent,
 } from '../../shared/damage-view-switch/damage-view-switch.component';
+import {
+  EntityStatKind,
+  EntityStatTabsComponent,
+} from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -75,6 +79,7 @@ interface FightGroup {
     NgTemplateOutlet,
     TooltipDirective,
     DamageViewSwitchComponent,
+    EntityStatTabsComponent,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
@@ -105,6 +110,9 @@ export class FightHistoryComponent {
   /** Tour choisi par combat — absent de la map = dernier tour du combat (le plus récent, repli
    * naturel pour un combat déjà terminé, voir `turnFor`). */
   private readonly fightTurns = signal<ReadonlyMap<number, number>>(new Map());
+  /** Statistique affichée par combat (voir EntityStatTabsComponent) — même principe que
+   * `fightViewModes` : absent de la map = 'damage' (comportement historique). */
+  private readonly fightStatKinds = signal<ReadonlyMap<number, EntityStatKind>>(new Map());
   protected readonly lootSort = signal<LootSort>('name');
   /** Sens du tri courant (`false` = sens par défaut de `lootSort`) — inversé au reclic sur le
    * switch déjà actif, voir `nextLootSortState`. */
@@ -415,6 +423,38 @@ export class FightHistoryComponent {
     this.fightTurns.set(next);
   }
 
+  protected statKindFor(id: number): EntityStatKind {
+    return this.fightStatKinds().get(id) ?? 'damage';
+  }
+
+  protected setStatKind(id: number, kind: EntityStatKind): void {
+    const next = new Map(this.fightStatKinds());
+    next.set(id, kind);
+    this.fightStatKinds.set(next);
+  }
+
+  /** Lignes de la statistique actuellement sélectionnée pour ce combat — voir `statKindFor`. */
+  private statRowsFor(record: FightRecord): EntityDamageRow[] {
+    switch (this.statKindFor(record.id)) {
+      case 'armor':
+        return record.armorRows;
+      case 'heal':
+        return record.healRows;
+      default:
+        return record.rows;
+    }
+  }
+
+  /** Clé i18n du message vide, déclinée par statistique affichée — voir DamageMeterComponent,
+   * même convention. */
+  protected emptyMessageKey(id: number, side: 'ally' | 'enemy'): string {
+    const kind = this.statKindFor(id);
+    const suffix = kind === 'damage' ? '' : kind === 'armor' ? 'Armor' : 'Heal';
+    return side === 'ally'
+      ? `damageMeter.emptyCharactersHistory${suffix}`
+      : `damageMeter.emptyEnemiesHistory${suffix}`;
+  }
+
   protected toggleFightXp(id: number): void {
     const next = new Set(this.collapsedFightXpIds());
     if (next.has(id)) next.delete(id);
@@ -443,6 +483,17 @@ export class FightHistoryComponent {
 
   protected enemyRowsFor(record: FightRecord): EntityDamageRow[] {
     return record.rows.filter((r) => this.classifier.classify(r.name) === 'enemy');
+  }
+
+  /** Miroir de allyRowsFor/enemyRowsFor pour la statistique actuellement sélectionnée (voir
+   * `statKindFor`/EntityStatTabsComponent) — `allyRowsFor`/`enemyRowsFor` ci-dessus restent basées
+   * sur les dégâts uniquement (image/donjon/archi... n'ont rien à voir avec l'onglet affiché). */
+  protected allyStatRowsFor(record: FightRecord): EntityDamageRow[] {
+    return this.statRowsFor(record).filter((r) => this.classifier.classify(r.name) === 'ally');
+  }
+
+  protected enemyStatRowsFor(record: FightRecord): EntityDamageRow[] {
+    return this.statRowsFor(record).filter((r) => this.classifier.classify(r.name) === 'enemy');
   }
 
   /** Vrai si un archimonstre (`CatalogMonsterEntry.isArchi`) figure parmi les ennemis du combat —
