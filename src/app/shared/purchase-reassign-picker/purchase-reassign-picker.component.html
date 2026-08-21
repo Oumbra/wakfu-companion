@@ -25,23 +25,31 @@
       + {{ 'items.follow' | t }}
     </button>
     @if (showModify()) {
-      <div class="item-picker-modify-row">
-        <span class="item-picker-modify-label">{{ 'items.modifyQuantity' | t }}</span>
-        <app-input-number
-          [value]="quantity()"
-          [min]="1"
-          [max]="request().quantity"
-          [prevTooltip]="'items.quantityDecrease' | t"
-          [nextTooltip]="'items.quantityIncrease' | t"
-          (valueChange)="quantity.set($event)"
-        />
+      <span class="purchase-reassign-records-label">{{ 'purchases.reassignLines' | t }}</span>
+      <div class="purchase-reassign-records">
+        @for (record of request().records; track record.id) {
+          <label class="purchase-reassign-record">
+            <input
+              type="checkbox"
+              class="purchase-reassign-record-checkbox"
+              [checked]="isSelected(record)"
+              (change)="toggleRecord(record)"
+            />
+            <span class="purchase-reassign-record-time">{{ timeLabel(record) }}</span>
+            <span class="purchase-reassign-record-qty">×{{ record.quantity | numberFr }}</span>
+            <span class="purchase-reassign-record-cost">{{ record.totalCost | numberFr }} ₭</span>
+          </label>
+        }
       </div>
       @for (entry of candidates(); track entry.id) {
         <button
           type="button"
           class="item-picker-item"
           [class.current]="isCurrent(entry)"
-          [disabled]="isCurrent(entry)"
+          [disabled]="isCurrent(entry) || !hasSelection()"
+          [appTooltip]="
+            !isCurrent(entry) && !hasSelection() ? ('purchases.reassignNoSelection' | t) : null
+          "
           (click)="choose(entry)"
         >
           <img class="item-picker-item-rarity" [src]="rarityIconUrl(entry)" alt="" />
