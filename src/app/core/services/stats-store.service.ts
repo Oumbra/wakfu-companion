@@ -726,13 +726,19 @@ export class StatsStoreService {
 
     // Une perte de kamas immédiatement suivie d'un ramassage d'objet est la
     // signature d'un achat (marchand/HDV) : on l'enregistre en plus du
-    // traitement habituel de la perte/du ramassage, sans le modifier.
-    if (
-      entry.kind === 'loot' &&
-      this.pendingPurchase &&
-      this.timeToMs(entry.time) - this.pendingPurchase.timeMs <= PURCHASE_WINDOW_MS
-    ) {
-      this.registerPurchase(this.pendingPurchase.amount, entry.item, entry.quantity, entry.time);
+    // traitement habituel de la perte/du ramassage, sans le modifier — sauf pour le
+    // butin de combat (voir isPurchaseLoot ci-dessous, lu par le `case 'loot'`), qui ne
+    // doit jamais inclure un objet acheté (même si un combat est actif au même
+    // moment — cas réel en multi-compte : achat sur un compte pendant qu'un
+    // autre est en plein combat).
+    let isPurchaseLoot = false;
+    if (entry.kind === 'loot') {
+      isPurchaseLoot =
+        this.pendingPurchase !== null &&
+        this.timeToMs(entry.time) - this.pendingPurchase.timeMs <= PURCHASE_WINDOW_MS;
+      if (isPurchaseLoot) {
+        this.registerPurchase(this.pendingPurchase!.amount, entry.item, entry.quantity, entry.time);
+      }
     }
     if (entry.kind !== 'kama-loss') this.pendingPurchase = null;
 
@@ -777,7 +783,7 @@ export class StatsStoreService {
         break;
       }
       case 'loot':
-        this.registerLoot(entry.item, entry.quantity, entry.fightId);
+        this.registerLoot(entry.item, entry.quantity, entry.fightId, isPurchaseLoot);
         break;
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
@@ -1165,12 +1171,21 @@ export class StatsStoreService {
     this.incrementWatched(name);
   }
 
-  private registerLoot(item: string, quantity: number, fightId: number | null): void {
+  private registerLoot(
+    item: string,
+    quantity: number,
+    fightId: number | null,
+    isPurchase: boolean,
+  ): void {
     if (!this.currentBatchIsInitialLoad) {
       this.incrementWatched(item, quantity);
       const soundEntry = this.profile.findEnabledSoundItem(item);
       if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
     }
+
+    // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un
+    // combat est actif au même moment (fightId résolu par erreur) — voir `apply()`.
+    if (isPurchase) return;
 
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
     if (!working) return;
