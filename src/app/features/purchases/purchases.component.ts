@@ -14,7 +14,7 @@ import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { HistoryListHeaderComponent } from '../../shared/history-list-header/history-list-header.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
-import { ItemPickerService } from '../../core/services/item-picker.service';
+import { PurchaseReassignService } from '../../core/services/purchase-reassign.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 type PurchaseSortOrder = 'desc' | 'asc';
@@ -23,8 +23,8 @@ type PurchaseSortOrder = 'desc' | 'asc';
  * coût cumulés plutôt qu'une ligne par achat individuel — `lastTimestampMs` (le plus récent des
  * achats agrégés) sert uniquement de clé de tri au sein du jour, pas affiché tel quel (un objet
  * racheté plusieurs fois dans la journée n'a plus une heure unique à montrer). `records` garde les
- * achats individuels ayant composé cette ligne — nécessaire pour cibler une correction manuelle
- * d'objet (voir ItemPickerService) : chacun a sa propre clé de dédoublonnage
+ * achats individuels ayant composé cette ligne — affichés en détail sélectionnable dans la modale
+ * de réattribution (voir PurchaseReassignService) : chacun a sa propre clé de dédoublonnage
  * (`time`/`quantity`/`totalCost` propres), la ligne agrégée elle-même n'en a pas. `catalogId` :
  * celui du dernier achat agrégé (représentatif pour l'icône/la rareté affichées). */
 interface PurchaseAggregateRow {
@@ -70,7 +70,7 @@ export class PurchasesComponent {
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
   private readonly stats = inject(StatsStoreService);
-  private readonly itemPicker = inject(ItemPickerService);
+  private readonly purchaseReassign = inject(PurchaseReassignService);
   protected readonly hdvIconUrl = WAKFU_HDV_KAMAS_ICON_URL;
 
   /** Achats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
@@ -111,7 +111,7 @@ export class PurchasesComponent {
 
     const groups: PurchaseDateGroup[] = [...byDate.entries()].map(([dateKey, records]) => {
       // Clé composite (nom + catalogId), PAS le nom seul : après une correction manuelle partielle
-      // (voir ItemPickerService), deux achats du même nom mais de rareté différente doivent rester
+      // (voir PurchaseReassignService), deux achats du même nom mais de rareté différente doivent rester
       // deux lignes distinctes — les fusionner de nouveau ici masquerait silencieusement la
       // correction (bug réel corrigé : la ligne agrégée entière basculait visuellement sur la
       // nouvelle rareté, y compris la part non concernée par la correction).
@@ -188,47 +188,22 @@ export class PurchasesComponent {
     if (this.isHdvRow(row)) return; // rien à réattribuer : ce n'est pas un objet
     event.preventDefault();
     event.stopPropagation();
-    this.itemPicker.open({
+    this.purchaseReassign.open({
       name: row.item,
       x: event.clientX,
       y: event.clientY,
       currentId: row.catalogId,
-      quantity: row.quantity,
-      totalKamas: row.totalCost,
+      records: row.records,
       isWatched: this.stats.isWatched(row.item),
       onFollow: () => this.stats.addWatchedItem(row.item),
-      // Répartit la quantité (et, si fournie, la part de kamas choisie manuellement — voir
-      // ItemPickerRequest.totalKamas) sur les achats individuels de la ligne agrégée (voir
-      // `PurchaseAggregateRow.records`), dans l'ordre : chacun est réattribué en totalité tant
-      // qu'il reste du budget, le dernier concerné peut n'être que partiellement scindé (voir
-      // StatsStoreService.applyPurchaseReassign). Au plus UNE ligne est réellement scindée par
-      // correction (forcément la dernière traitée, `amount` sature `record.quantity` pour toutes
-      // les précédentes) — c'est la SEULE à qui la part de kamas choisie peut s'appliquer :
-      // `applyPurchaseReassign` ignore totalement `kamasOverride` pour une ligne réattribuée EN
-      // BLOC (rien à répartir dessus, son coût réel la suit tel quel). Bug réel corrigé : calculer
-      // la part de chaque ligne au prorata de `amount/quantity` sans tenir compte de ce qui précède
-      // ignorait silencieusement le kamas voulu sur toute ligne agrégée à partir de plusieurs
-      // achats distincts — chaque ligne complète décompte donc ici son propre coût réel du budget
-      // restant, pour que le reliquat versé à la ligne scindée reste exact.
-      onChosen: (id, quantity, kamas) => {
-        let remainingQty = quantity;
-        let remainingKamas = kamas ?? undefined;
-        for (const record of row.records) {
-          if (remainingQty <= 0) break;
-          const amount = Math.min(remainingQty, record.quantity);
-          remainingQty -= amount;
-          const isFullRecord = amount >= record.quantity;
-          const kamasForRecord =
-            remainingKamas === undefined
-              ? undefined
-              : isFullRecord
-                ? undefined
-                : Math.max(0, remainingKamas);
-          if (remainingKamas !== undefined) {
-            remainingKamas -= isFullRecord ? record.totalCost : (kamasForRecord ?? 0);
-          }
-          this.stats.reassignPurchaseItem(record, amount, id, kamasForRecord);
-          this.archive.reassignPurchaseItem(record, amount, id, kamasForRecord);
+      // Chaque achat individuel sélectionné par l'utilisateur (voir PurchaseReassignPickerComponent)
+      // est réattribué EN BLOC, avec sa propre quantité/son propre coût déjà exacts — plus de
+      // prorata à calculer ni de scission partielle : la sélection ligne par ligne remplace ce que
+      // faisait l'ancien stepper quantité/kamas.
+      onChosen: (records, id) => {
+        for (const record of records) {
+          this.stats.reassignPurchaseItem(record, record.quantity, id);
+          this.archive.reassignPurchaseItem(record, record.quantity, id);
         }
       },
     });

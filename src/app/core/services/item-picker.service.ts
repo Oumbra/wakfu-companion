@@ -19,29 +19,22 @@ export interface ItemPickerRequest {
    * que le menu reste ouvert. */
   isWatched: boolean;
   onFollow: () => void;
-  /** Uniquement pour les achats (voir PurchasesComponent) : coût total en kamas de la ligne
-   * d'origine. Présent → un second champ "Kamas concernés" est proposé, mais affiché seulement si
-   * la quantité choisie dans le stepper n'est pas le maximum (voir ItemPickerComponent.showKamas) —
-   * un achat partiel n'est pas forcément linéaire en kamas (remise de gros, prix ayant varié entre
-   * deux achats agrégés le même jour), donc pas question de le déduire automatiquement du prorata
-   * sans que l'utilisateur puisse l'ajuster. Absent pour le butin/les échanges (pas de coût). */
-  totalKamas?: number;
   /** Absent : aucune section de correction n'est proposée (ex. butin cumulé de session, qui
    * n'a pas de combat unique à cibler — voir LootListComponent.fight), seul "+ Suivre" reste
-   * offert. Présent : `(id, quantity, kamas)` — `quantity` est la valeur choisie dans le stepper,
-   * jamais plus que `ItemPickerRequest.quantity` ni moins que 1. `kamas` : `null` sauf si
-   * `totalKamas` est fourni ET que la quantité choisie est partielle (voir `totalKamas`) — dans ce
-   * cas la part de kamas choisie par l'utilisateur, bornée à `[0, totalKamas]`. */
-  onChosen?: (id: number, quantity: number, kamas: number | null) => void;
+   * offert. Présent : `(id, quantity)` — `quantity` est la valeur choisie dans le stepper, jamais
+   * plus que `ItemPickerRequest.quantity` ni moins que 1. Achats (voir PurchasesComponent) : ne
+   * passe plus par ce menu générique, voir PurchaseReassignService (modale dédiée, sélection des
+   * lignes de détail plutôt qu'un stepper quantité/kamas). */
+  onChosen?: (id: number, quantity: number) => void;
 }
 
 /**
  * Point d'entrée unique pour ouvrir le menu d'interaction avec un objet (clic droit sur une ligne
- * de butin/achat/échange — voir LootListComponent/PurchasesComponent/TradesComponent) : suivi
- * (ajout à la watchlist) et, si le référentiel Ankama contient plusieurs objets de ce nom
- * (homonymes de rareté différente, ex. "Larme d'Ogrest", ids 24029/21602 — la résolution
- * automatique par nom seul via `CatalogService.findWakfuItemEntry` ne peut pas les départager),
- * correction manuelle de l'id retenu.
+ * de butin/échange — voir LootListComponent/TradesComponent ; l'historique des achats a sa propre
+ * modale dédiée, voir PurchaseReassignService) : suivi (ajout à la watchlist) et, si le référentiel
+ * Ankama contient plusieurs objets de ce nom (homonymes de rareté différente, ex. "Larme d'Ogrest",
+ * ids 24029/21602 — la résolution automatique par nom seul via `CatalogService.findWakfuItemEntry`
+ * ne peut pas les départager), correction manuelle de l'id retenu.
  *
  * Rendu une seule fois au niveau racine (`app.html`), même principe que ClassPickerService/
  * DamageReassignService : un composant niché dans un ancêtre `transform` verrait son

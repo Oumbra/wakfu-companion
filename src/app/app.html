@@ -82,6 +82,14 @@
     />
   }
 
+  @if (purchaseReassignService.request(); as req) {
+    <app-purchase-reassign-picker
+      [request]="req"
+      (recordsChosen)="onPurchaseRecordsChosen($event)"
+      (closed)="purchaseReassignService.close()"
+    />
+  }
+
   <app-confirm-delete-popover />
   <app-help-modal />
   <app-onboarding-tour />
