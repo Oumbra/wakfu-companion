@@ -86,7 +86,7 @@
                     seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
                 @switch (tab.id) {
                   @case ('avatar') {
-                    {{ 'profile.railIdentity' | t }}
+                    {{ 'profile.railCustomization' | t }}
                   }
                   @case ('colorblind') {
                     {{ 'profile.railAccessibility' | t }}
@@ -259,6 +259,8 @@
                 </div>
               </div>
             </div>
+
+            <app-dashboard-layout-picker />
           </div>
         </div>
 

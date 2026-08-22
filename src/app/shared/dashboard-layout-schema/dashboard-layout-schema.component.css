@@ -1,0 +1,172 @@
+/* Palette des vignettes — n'existe nulle part ailleurs dans l'app (aucune section du tableau de
+   bord n'est aujourd'hui identifiée par une couleur, voir CLAUDE.md) : introduite ici, scopée au
+   composant, avec sa propre bascule thème clair/sombre (même mécanisme que `styles.css`, `<html
+   data-theme>`) plutôt que de piocher dans les jetons globaux qui n'ont pas ce rôle. */
+:host {
+  --lp-sw-menu: #838a99;
+  --lp-sw-kpi: #e0b23d;
+  --lp-sw-combat: #e2586c;
+  --lp-sw-history: #a385f0;
+  --lp-sw-chat: #46d67f;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+:host-context([data-theme='light']) {
+  --lp-sw-menu: #6b7280;
+  --lp-sw-kpi: #b8860f;
+  --lp-sw-combat: #c0364a;
+  --lp-sw-history: #7c4fd9;
+  --lp-sw-chat: #1f9d55;
+}
+
+.dls-top {
+  height: 12%;
+  flex-shrink: 0;
+  background: var(--border-strong);
+  display: flex;
+  align-items: center;
+  padding: 0 6%;
+  gap: 4%;
+}
+.dls-top span {
+  width: 5%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.6;
+}
+
+.dls-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 6%;
+  gap: 6%;
+}
+
+.dls-menu {
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--lp-sw-menu);
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+}
+.dls-menu.reduced {
+  background: transparent;
+  border: 1.5px dashed var(--text-muted);
+  opacity: 0.6;
+}
+.dls-menu-dot {
+  width: 10%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  margin: 0 4%;
+}
+.dls-menu.reduced .dls-menu-dot {
+  display: none;
+}
+
+.dls-after {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  gap: 6%;
+}
+.dls-kpi {
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--lp-sw-kpi);
+  opacity: 0.85;
+}
+.dls-kpi.reduced {
+  background: transparent;
+  border: 1.5px dashed var(--text-muted);
+  opacity: 0.6;
+}
+
+.dls-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.dls-equal {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 6%;
+}
+.dls-cell {
+  border-radius: 3px;
+  opacity: 0.85;
+  min-width: 0;
+  min-height: 0;
+}
+.dls-cell.span2 {
+  grid-column: 1 / -1;
+}
+
+.dls-focus {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 6%;
+  min-width: 0;
+  min-height: 0;
+}
+.dls-main {
+  flex: 0 0 64%;
+  border-radius: 4px;
+  opacity: 0.92;
+  min-height: 0;
+  min-width: 0;
+}
+.dls-secondary {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6%;
+  min-width: 0;
+  min-height: 0;
+}
+.dls-sec {
+  flex: 1 1 0;
+  border-radius: 3px;
+  opacity: 0.8;
+  min-height: 0;
+}
+
+.dls-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--text-muted);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  text-align: center;
+  padding: 8%;
+}
+
+.sw-combat {
+  background: var(--lp-sw-combat);
+}
+.sw-history {
+  background: var(--lp-sw-history);
+}
+.sw-chat {
+  background: var(--lp-sw-chat);
+}
