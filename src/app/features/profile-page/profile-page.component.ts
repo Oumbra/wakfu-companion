@@ -83,22 +83,35 @@ const COLORBLIND_SWATCHES: Record<
 > = {
   // Protanopie et deutéranopie sont mutualisées sous une seule option ('redGreen') : même axe de
   // confusion rouge-vert, donc même correction pour les deux — voir ColorblindService.
+  // Raretés (7 dernières entrées de chaque liste) : mapping fourni tel quel par l'utilisateur,
+  // volontairement identique dark/light (voir styles.css) — dupliqué ici uniquement parce que
+  // cette table reste indexée par thème pour les autres couleurs de ce même profil.
   redGreen: {
     dark: [
       { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
       { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
       { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#148fbb' },
       { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
-      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
-      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
+      { labelKey: 'profile.colorblindSwatchCommon', before: '#c8c8c8', after: '#ffffff' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#12ff89' },
+      { labelKey: 'profile.colorblindSwatchMythical', before: '#d97a00', after: '#e27a00' },
+      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#d8ea00' },
+      { labelKey: 'profile.colorblindSwatchRelic', before: '#9450d9', after: '#a35eff' },
+      { labelKey: 'profile.colorblindSwatchMemory', before: '#1f97e0', after: '#16aaff' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#ff5ebc' },
     ],
     light: [
       { labelKey: 'damageMeter.won', before: '#1e8449', after: '#006dee' },
       { labelKey: 'damageMeter.lost', before: '#dc2d1b', after: '#b45b17' },
       { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
       { labelKey: 'chat.channel.recrutement', before: '#1c7d45', after: '#0067e0' },
-      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#108170' },
-      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#c5ab00' },
+      { labelKey: 'profile.colorblindSwatchCommon', before: '#c8c8c8', after: '#ffffff' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#12ff89' },
+      { labelKey: 'profile.colorblindSwatchMythical', before: '#d97a00', after: '#e27a00' },
+      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#d8ea00' },
+      { labelKey: 'profile.colorblindSwatchRelic', before: '#9450d9', after: '#a35eff' },
+      { labelKey: 'profile.colorblindSwatchMemory', before: '#1f97e0', after: '#16aaff' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#ff5ebc' },
     ],
   },
   tritanopia: {

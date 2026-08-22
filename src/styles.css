@@ -646,14 +646,32 @@ button.icon-btn.help-icon-btn {
 /* Rareté d'objet (voir .rarity-xxx, styles.css plus haut) : sélecteur combiné (ancêtre [data-
    colorblind] + classe de rareté sur l'élément visé) plutôt qu'un jeton :root, ces couleurs sont
    posées directement sur l'élément concerné (loot, tuile de suivi...), pas sur --rarity-color au
-   niveau racine. Seules "rare" (vert) et "légendaire" (jaune-vert) sont concernées : trop proches
-   l'une de l'autre ET de "mythique" (orange) sur l'axe rouge-vert — les autres raretés restent déjà
-   suffisamment distinctes (bleu, violet, rose, gris). */
+   niveau racine. Mapping complet fourni par l'utilisateur (toutes les raretés, pas seulement les
+   deux jugées ambiguës dans une première passe) — appliqué SANS distinction de thème, contrairement
+   aux autres teintes de substitution ci-dessus (--btn-active-vert/rouge, --dmg-earth, --channel-
+   recrutement, dédoublées clair/sombre juste en dessous) : une seule valeur par rareté pour les 2 thèmes, cohérent
+   avec .rarity-xxx lui-même (déjà identique clair/sombre hors mode daltonien, voir plus haut) — pas
+   de bloc `[data-theme='light']` séparé à tenir à jour pour ces 7 couleurs. */
+:root[data-colorblind='redGreen'] .rarity-common {
+  --rarity-color: #ffffff;
+}
 :root[data-colorblind='redGreen'] .rarity-rare {
-  --rarity-color: #17b8a0;
+  --rarity-color: #12ff89;
+}
+:root[data-colorblind='redGreen'] .rarity-mythical {
+  --rarity-color: #e27a00;
 }
 :root[data-colorblind='redGreen'] .rarity-legendary {
-  --rarity-color: #e0c200;
+  --rarity-color: #d8ea00;
+}
+:root[data-colorblind='redGreen'] .rarity-relic {
+  --rarity-color: #a35eff;
+}
+:root[data-colorblind='redGreen'] .rarity-memory {
+  --rarity-color: #16aaff;
+}
+:root[data-colorblind='redGreen'] .rarity-epic {
+  --rarity-color: #ff5ebc;
 }
 :root[data-colorblind='tritanopia'] {
   /* Dégâts Eau : cyan décalé vers un bleu plus franc, moins susceptible d'être lu comme un vert
@@ -687,27 +705,19 @@ button.icon-btn.help-icon-btn {
   --dmg-earth: #0f6b8c;
   --channel-recrutement: #0067e0;
 }
-/* Rareté (redGreen) : équivalents assombris des teintes sombres ci-dessus, pas les mêmes valeurs
-   telles quelles — #17b8a0/#e0c200 tombent respectivement à 2,5:1 et 1,77:1 sur le panneau blanc
-   de ce thème (variante par défaut, --panel-bg: #ffffff), trop pâles pour rester lisibles en
-   accent de bordure/dégradé sur fond clair. "legendary" n'est pas assombri au-delà de #c5ab00 :
-   plus sombre, son rendu simulé (rouge-vert) se rapproche trop de "mythical" (les deux virent au
-   brun-olive une fois la luminosité réduite) — un contraste plus élevé n'a pas ici priorité sur
-   la distinction entre raretés, seul objectif réel de cette palette (voir --rarity-color, pas une
-   couleur de texte : jamais soumise à la barre AA 4.5:1, contrairement à --dmg-xxx). */
-:root[data-theme='light'][data-colorblind='redGreen'] .rarity-rare {
-  --rarity-color: #108170;
-}
-:root[data-theme='light'][data-colorblind='redGreen'] .rarity-legendary {
-  --rarity-color: #c5ab00;
-}
+/* Pas de bloc rareté ici : le mapping redGreen (.rarity-xxx ci-dessus) est volontairement le même
+   sur les 2 thèmes, voir le commentaire au niveau du bloc sombre. */
 :root[data-theme='light'][data-colorblind='tritanopia'] {
   --dmg-water: #187ba8;
   --dmg-light: #976c00;
   --channel-commerce: #926800;
 }
 /* Rareté (tritanopie) : mêmes teintes que le bloc sombre ci-dessus, assombries pour rester
-   lisibles sur le panneau blanc (même rationale que redGreen ci-dessus). */
+   lisibles sur le panneau blanc (--rarity-color n'est pas une couleur de texte, jamais soumise à
+   la barre AA 4.5:1, mais reste trop pâle telle quelle sur un panneau proche du blanc). Contrairement
+   au mapping redGreen ci-dessus (fourni tel quel par l'utilisateur, volontairement identique aux 2
+   thèmes), ces 2 teintes tritanopie restent calculées par Claude — donc toujours dédoublées par
+   thème comme le reste de ce fichier. */
 :root[data-theme='light'][data-colorblind='tritanopia'] .rarity-rare {
   --rarity-color: #2c8111;
 }
