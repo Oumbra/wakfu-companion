@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { CatalogService } from '../api/catalog.service';
 import { WAKFU_CLASS_SPELLS_FR } from '../data/wakfu-class-spells.data';
 import { WAKFU_ALLY_SUMMONS } from '../data/wakfu-ally-summons.data';
+import { WAKFU_CLASS_BREED_IDS } from '../data/wakfu-class-breed-ids.data';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { PersistenceService } from './persistence.service';
 import { Gender } from '../data/class-icons.data';
@@ -37,6 +38,15 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
  * `fighterAiSide`) → base de monstres officielle → roster de personnages
  * déclarés → classe détectée via les sorts lancés → invocations connues →
  * dégâts encaissés d'un ennemi confirmé → ennemi par défaut.
+ *
+ * Cascade de DÉTECTION DE CLASSE d'un allié (voir `getDetectedClass`) :
+ * classe manuelle (clic droit) → classe déclarée dans le roster de
+ * personnages (préférences utilisateur, page profil) → `breed` de la ligne
+ * "[_FL_] ... isControlledByAI=false" du combat (voir `WAKFU_CLASS_BREED_IDS`,
+ * déterministe pour un allié confirmé — contrairement au camp, voir
+ * `fighterAiSide`, `breed` seul ne sert JAMAIS à distinguer un allié d'un
+ * ennemi) → classe détectée via les sorts lancés (repli, pour les alliés
+ * apparus avant l'ajout de cette détection ou sans ligne `_FL_` exploitable).
  */
 @Injectable({ providedIn: 'root' })
 export class EntityClassifierService {
@@ -50,6 +60,12 @@ export class EntityClassifierService {
   // commit(), pas à chaque détection, pour éviter une écriture par ligne.
   private readonly detectedClasses: Map<string, string>;
   private detectedClassesDirty = false;
+  /** Noms dont la classe dans `detectedClasses` vient du `breed` déterministe
+   * de la ligne "[_FL_] ... isControlledByAI=false" (pas de la détection par
+   * sorts) — jamais persistée (redérivée à chaque combat), sert uniquement à
+   * empêcher `registerSpellCast` d'écraser cette valeur fiable par une
+   * détection par sort potentiellement erronée (sort homonyme, etc.). */
+  private readonly breedDetectedNames = new Set<string>();
   /** Cibles ayant pris des dégâts d'un ennemi confirmé (base de monstres officielle) sans être elles-mêmes un ennemi confirmé : ce sont forcément des alliés (deux monstres ne se tapent pas dessus). */
   private readonly confirmedAlliesByDamage = new Set<string>();
   /**
@@ -95,6 +111,7 @@ export class EntityClassifierService {
   /** À appeler pour chaque ligne "X lance le sort Y" rencontrée. */
   registerSpellCast(caster: string, spell: string): void {
     if (this.catalog.isKnownWakfuMonsterName(caster)) return;
+    if (this.breedDetectedNames.has(caster)) return; // breed déjà déterministe, ne pas écraser (voir breedDetectedNames)
     const className = this.spellToClass.get(normalizeSpellKey(spell));
     if (className && this.detectedClasses.get(caster) !== className) {
       this.detectedClasses.set(caster, className);
@@ -103,8 +120,15 @@ export class EntityClassifierService {
   }
 
   /** À appeler pour chaque ligne "[_FL_] ... isControlledByAI=..." rencontrée. */
-  registerFighterJoin(name: string, isControlledByAI: boolean): void {
+  registerFighterJoin(name: string, isControlledByAI: boolean, breed: number): void {
     this.fighterAiSide.set(name, isControlledByAI ? 'enemy' : 'ally');
+    if (isControlledByAI) return;
+    const className = WAKFU_CLASS_BREED_IDS[breed];
+    if (className && this.detectedClasses.get(name) !== className) {
+      this.detectedClasses.set(name, className);
+      this.detectedClassesDirty = true;
+    }
+    this.breedDetectedNames.add(name);
   }
 
   /** À appeler pour chaque ligne de dégâts rencontrée. */
@@ -151,8 +175,9 @@ export class EntityClassifierService {
   }
 
   /** Classe détectée pour ce nom : override manuel en priorité (clic droit),
-   * sinon le roster de personnages déclarés (page profil), sinon la
-   * détection automatique via les sorts lancés. */
+   * sinon le roster de personnages déclarés (page profil, préférences
+   * utilisateur), sinon le `breed` déterministe du combat pour cet allié,
+   * sinon la détection automatique via les sorts lancés (repli). */
   getDetectedClass(name: string): string | undefined {
     this.version(); // dépendance réactive
     return (
