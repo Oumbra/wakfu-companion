@@ -288,6 +288,18 @@ interface FightWorking {
    * combattants homonymes) ayant déjà joué au cours du tour courant — voir registerFightTurn : un
    * siège qui rejoue alors qu'il a déjà joué ce tour-ci signale que le tour a bouclé. */
   turnSeatsSeen: Set<string>;
+  /**
+   * Noms (voir Fight.enemies/allies) ayant réellement rejoint CE combat via sa propre ligne
+   * "[_FL_] ... join the fight" — la seule source de vérité pour la composition d'un combat, figée
+   * dès son démarrage (voir CLAUDE.md). Sert de garde-fou pour tout événement dégâts/soin/armure
+   * (voir case 'damage'/'heal'/'armor' dans apply()) : même si `fightId` a été mal résolu par le
+   * parser (nom ambigu, repli sur le dernier combat courant...), un attaquant OU une cible qui n'a
+   * jamais rejoint CE combat précis ne doit jamais polluer ses statistiques — quel que soit le
+   * nombre de combats concurrents en cours au même moment (règle demandée explicitement : un combat
+   * dont la composition est inconnue à un instant T ne doit prendre en compte AUCUNE entité hors de
+   * son roster de départ, jamais une invocation/un décor qui n'a pas sa propre ligne de jointure).
+   */
+  memberNames: Set<string>;
 }
 
 /**
@@ -819,20 +831,28 @@ export class StatsStoreService {
         break;
       case 'damage': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        const isFightEvent =
+          !!working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target);
+        if (isFightEvent) {
           // Le log ne référence l'attaquant que par nom : on l'attribue au dernier siège de la
           // file d'initiative résolu pour ce nom (voir resolveNextActor), qui distingue plusieurs
           // combattants homonymes — repli sur le nom brut si ce nom n'a encore jamais joué de sort
           // (ex. premier événement de dégâts du combat avant toute ligne "lance le sort").
-          const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
-          this.addDamage(working.attackerMap, seatKey, entry, working.fight.turnCount);
+          const seatKey = working!.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
+          this.addDamage(working!.attackerMap, seatKey, entry, working!.fight.turnCount);
+          this.classifier.registerDamageTarget(entry.target, entry.attacker);
         }
-        this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
       }
       case 'heal': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        if (
+          working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target)
+        ) {
           const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
           this.addStatAmount(
             working.healSourceMap,
@@ -847,7 +867,11 @@ export class StatsStoreService {
       }
       case 'armor': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        if (
+          working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target)
+        ) {
           const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
           this.addStatAmount(
             working.armorSourceMap,
@@ -919,11 +943,19 @@ export class StatsStoreService {
         lastTurnActor: null,
         lastResolvedSeatByName: new Map(),
         turnSeatsSeen: new Set(),
+        memberNames: new Set(),
       };
       this.activeFights.set(fightId, working);
     }
     this.currentDisplayFightId = fightId;
     return working;
+  }
+
+  /** Vrai si `name` a réellement rejoint CE combat via sa propre ligne "[_FL_] ... join the fight"
+   * (voir FightWorking.memberNames) — garde-fou anti-contamination entre combats concurrents, voir
+   * ce champ pour le détail. */
+  private isRosterMember(working: FightWorking, name: string): boolean {
+    return working.memberNames.has(name);
   }
 
   private registerFighterJoin(
@@ -934,6 +966,7 @@ export class StatsStoreService {
     isControlledByAI: boolean,
   ): void {
     const working = this.getOrCreateFight(fightId, this.lastLineTime ?? '00:00:00,000');
+    working.memberNames.add(name);
     if (!working.fighterIdsSeen.has(fighterId)) {
       working.fighterIdsSeen.add(fighterId);
       if (isControlledByAI) working.fight.enemies.push({ name, id: fighterId });

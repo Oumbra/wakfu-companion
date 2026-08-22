@@ -349,6 +349,37 @@ describe('StatsStoreService', () => {
       },
     );
 
+    it(
+      "n'inclut jamais une entité qui n'a pas rejoint CE combat via sa propre ligne " +
+        '"[_FL_] ... join the fight" (règle demandée explicitement : la composition d\'un combat est ' +
+        'figée à son démarrage) — même une invocation qui a bien sa propre ligne technique mais avec ' +
+        'un obstacleId différent de -1 (traitée comme un décor, jamais ajoutée au roster) ne doit ' +
+        'jamais apparaître ni compter dans les dégâts du combat',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Invocation avec obstacleId != -1 : filtrée comme un décor (voir LogParser), jamais
+            // ajoutée au roster du combat — ses dégâts ne doivent donc jamais être comptés.
+            ' INFO 10:00:01,000 [T] (a:1) - [_FL_] fightId=1 Invocation breed : 99 [2] isControlledByAI=false obstacleId : 7 join the fight at {P}',
+            ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Invocation lance le sort Glyphe',
+            ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Bouftou: -40 PV (Terre)',
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        expect(fights).toHaveLength(1);
+        const names = fights[0].rows.map((r) => r.name);
+        expect(names).not.toContain('Invocation');
+        expect(names.sort()).toEqual(['Bouftou', 'Oumbra']);
+      },
+    );
+
     it('défaite compte solo (fight_single-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
