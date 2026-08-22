@@ -56,6 +56,7 @@ import { AppTheme, LightThemeVariant, ThemeService } from '../../core/services/t
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
+import { DashboardLayoutPickerComponent } from './dashboard-layout-picker/dashboard-layout-picker.component';
 
 /** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
  * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
@@ -151,6 +152,7 @@ const COLORBLIND_SWATCHES: Record<
     TooltipDirective,
     EditableNameComponent,
     AuthProviderButtonsComponent,
+    DashboardLayoutPickerComponent,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -300,7 +302,7 @@ export class ProfilePageComponent implements OnDestroy {
    * état, à l'ordre `TAB_DEFS` près (source unique de vérité pour la barre d'onglets ET l'ordre
    * d'empilement desktop, voir le template). */
   private static readonly TAB_DEFS: readonly TabBarItem[] = [
-    { id: 'avatar', label: 'profile.railIdentity' },
+    { id: 'avatar', label: 'profile.railCustomization' },
     { id: 'colorblind', label: 'profile.railAccessibility' },
     { id: 'connection', label: 'profile.tabConnection' },
     { id: 'alerts', label: 'profile.railSoundAlerts' },
@@ -490,7 +492,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected railButtonLabel(tabId: string): string {
     switch (tabId) {
       case 'avatar':
-        return this.i18n.t('profile.railIdentity');
+        return this.i18n.t('profile.railCustomization');
       case 'colorblind':
         return this.i18n.t('profile.railAccessibility');
       case 'alerts':

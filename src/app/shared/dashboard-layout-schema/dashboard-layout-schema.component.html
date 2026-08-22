@@ -1,0 +1,45 @@
+<div class="dls-top"><span></span><span></span></div>
+<div class="dls-frame" [style.flex-direction]="frameDirection()">
+  <div
+    class="dls-menu"
+    [class.reduced]="menuReduced()"
+    [style.flex-basis.%]="menuBasis()"
+    [style.justify-content]="menuVertical() ? null : menuAlign()"
+  >
+    @if (!menuVertical()) {
+      <span class="dls-menu-dot"></span>
+      <span class="dls-menu-dot"></span>
+    }
+  </div>
+  <div class="dls-after" [style.flex-direction]="afterDirection()">
+    <div class="dls-kpi" [class.reduced]="kpiReduced()" [style.flex-basis.%]="kpiBasis()"></div>
+    <div class="dls-body">
+      @if (focus(); as f) {
+        <div class="dls-focus">
+          <div class="dls-main" [class]="'sw-' + f.main.sw"></div>
+          @if (f.secondaries.length) {
+            <div class="dls-secondary">
+              @for (s of f.secondaries; track $index) {
+                <div class="dls-sec" [class]="'sw-' + s.sw"></div>
+              }
+            </div>
+          }
+        </div>
+      } @else if (cells(); as c) {
+        @if (c.length === 0) {
+          <div class="dls-empty">{{ emptyLabel() }}</div>
+        } @else {
+          <div
+            class="dls-equal"
+            [style.grid-template-columns]="gridColumns()"
+            [style.grid-template-rows]="'repeat(' + rows() + ',1fr)'"
+          >
+            @for (cell of c; track $index) {
+              <div class="dls-cell" [class]="'sw-' + cell.sw" [class.span2]="cell.span2"></div>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</div>
