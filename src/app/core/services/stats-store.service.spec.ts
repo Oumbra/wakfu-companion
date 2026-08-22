@@ -380,6 +380,99 @@ describe('StatsStoreService', () => {
       },
     );
 
+    it(
+      "n'accorde jamais l'XP d'un combat concurrent à un personnage qui n'a pas rejoint CE combat " +
+        '(même garde-fou que pour les dégâts/allié-ennemi)',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Bwork breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // "Caliburnus" n'a jamais rejoint le combat 1 : son XP ne doit jamais y apparaître,
+            // même si le fightId résolu par erreur pointait dessus (repli sur le dernier combat
+            // courant, nom ambigu...).
+            " INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Caliburnus : +100 points d'XP. ",
+            " INFO 10:00:07,000 [T] (a:1) - [Information (combat)] Oumbra : +50 points d'XP. ",
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+            ' INFO 10:00:11,000 [T] (a:1) - [FIGHT] End fight with id 2',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        const fight1 = fights.find((f) => f.id === 1);
+        expect(fight1).toBeTruthy();
+        expect(fight1!.xp.map((x) => x.name)).toEqual(['Oumbra']);
+      },
+    );
+
+    it(
+      "n'attribue jamais au combat suivant le butin resté en attente d'un combat-end reçu SANS " +
+        "combat connu (ex. combat déjà en cours à l'ouverture du fichier, dont les lignes de " +
+        "jointure sont antérieures au début du log lu) — bug réel : butin d'un combat totalement " +
+        'sans rapport, jamais suivi par cette session, affiché sous le combat réel suivant',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Butin ramassé pendant que le combat 1 (le seul combat SUIVI) est actif — le parser
+            // l'y rattache par défaut, mais il appartient en réalité à un combat 999 jamais vu
+            // rejoindre (jointure antérieure au début de ce log).
+            ' INFO 10:00:05,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Objet Fantome .',
+            ' INFO 10:00:05,500 [T] (a:1) - [FIGHT] End fight with id 999',
+            // Butin du VRAI combat 1, ramassé juste avant sa propre fin.
+            ' INFO 10:00:09,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Peau de Bouftou .',
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        expect(fights).toHaveLength(1);
+        const lootNames = fights[0].loot.map((l) => l.name);
+        expect(lootNames).toEqual(['Peau de Bouftou']);
+        expect(lootNames).not.toContain('Objet Fantome');
+      },
+    );
+
+    it(
+      "sépare correctement le butin de deux combats concurrents dont l'activité s'entrelace " +
+        "(bug réel signalé : butin d'un donjon affiché sous le combat d'un AUTRE donjon tournant " +
+        'en parallèle) — chaque butin reste collé à la fin du combat qui le précède immédiatement',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Bwork breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Butin du combat 2, ramassé (et le combat clos) alors que le combat 1 tourne toujours.
+            ' INFO 10:00:06,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Dent de Bwork .',
+            ' INFO 10:00:06,500 [T] (a:1) - [FIGHT] End fight with id 2',
+            // Butin du combat 1, ramassé juste avant sa propre fin — bien après celle du combat 2.
+            ' INFO 10:00:20,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Peau de Bouftou .',
+            ' INFO 10:00:21,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        const fight1 = fights.find((f) => f.id === 1);
+        const fight2 = fights.find((f) => f.id === 2);
+        expect(fight1!.loot.map((l) => l.name)).toEqual(['Peau de Bouftou']);
+        expect(fight2!.loot.map((l) => l.name)).toEqual(['Dent de Bwork']);
+      },
+    );
+
     it('défaite compte solo (fight_single-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
