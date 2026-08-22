@@ -65,7 +65,8 @@ export interface DamageEntry {
   spell: string;
   element: DamageElement;
   amount: number;
-  /** Combat auquel rattacher ce dégât, résolu via l'appartenance de `attacker` à un combat en cours (voir LogParser). */
+  /** Combat auquel rattacher ce dégât, résolu via l'appartenance de `target` (jamais `attacker`, en
+   * cours de résolution au même moment — voir LogParser.FightParseState) à un combat en cours. */
   fightId: number | null;
 }
 
@@ -151,6 +152,23 @@ export interface ChallengeResultEntry {
 }
 
 /**
+ * Date calendaire réelle du fichier (ligne technique émise une seule fois, au tout début de chaque
+ * session client — "1.92 (build -1 [2026-08-20 @ 14H18min45])"), indépendante de la date système de
+ * la machine qui lit le fichier. `time` (HH:MM:SS,mmm) reste la seule horloge utilisée pour l'ordre
+ * relatif des lignes ; cette entrée sert uniquement d'ancrage pour reconstruire un horodatage complet
+ * (voir StatsStoreService.buildFullTimestampMs) sans dépendre de `new Date()` (bug réel : un combat
+ * relu plus tard, ou dont le fichier date d'un autre jour, affichait la date du jour de LECTURE au
+ * lieu de la date réelle du combat).
+ */
+export interface LogDateAnchorEntry {
+  kind: 'log-date-anchor';
+  time: string;
+  year: number;
+  month: number;
+  day: number;
+}
+
+/**
  * Rejointe d'un combattant au combat ("[_FL_] fightId=... Nom breed : B [id]
  * isControlledByAI=true/false obstacleId : O join the fight..."). Signal fiable
  * et systématique (émis pour CHAQUE combattant de CHAQUE combat) pour distinguer
@@ -200,4 +218,5 @@ export type LogEntry =
   | ChallengeResultEntry
   | FighterJoinedEntry
   | TradeCompletedEntry
-  | MarketOccupationEntry;
+  | MarketOccupationEntry
+  | LogDateAnchorEntry;
