@@ -997,7 +997,7 @@ export class StatsStoreService {
       if (isControlledByAI) working.fight.enemies.push({ name, id: fighterId });
       else working.fight.allies.push({ name, breed });
     }
-    this.classifier.registerFighterJoin(name, isControlledByAI);
+    this.classifier.registerFighterJoin(name, isControlledByAI, breed);
     // Un combattant non-IA qui appartient au roster déclaré identifie le compte
     // joué, donc le serveur (lot 7) — les autres joueurs présents dans le
     // combat sont ignorés par `noticeCharacter`.
