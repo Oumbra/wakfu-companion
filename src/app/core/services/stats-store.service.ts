@@ -244,8 +244,8 @@ export interface FightRecord {
   healRows: EntityDamageRow[];
   armorRows: EntityDamageRow[];
   loot: LootRow[];
-  /** Kamas gagnés pendant le combat (voir registerFightKama) — affiché dans la ligne de butin
-   * (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
+  /** Kamas gagnés pendant le combat (voir pendingFightKamas, vidé dans finalizeFight) — affiché
+   * dans la ligne de butin (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
   kamas: number;
   turns: number;
   durationMs: number;
@@ -423,6 +423,21 @@ export class StatsStoreService {
    * reconnaître un gain de kamas qui vient d'être expliqué par un échange tout juste conclu (cas
    * où le 'trade-completed' précède la ligne "Vous avez gagné", voir pendingHdvKamaGain). */
   private lastTradeCompletedAtMs: number | null = null;
+  /**
+   * Butin/kamas ramassés PENDANT un combat, en attente d'attribution au bon fightId — voir
+   * finalizeFight (qui les vide) et apply() (qui les alimente, cases 'loot'/'kama-gain'). Aucune
+   * ligne de butin/gain de kamas ne référence de fightId ni de personnage dans le log : la seule
+   * façon fiable de savoir à quel combat un ramassage appartient est sa position TEMPORELLE,
+   * toujours immédiatement AVANT la fin propre du combat concerné (jamais entrelacée avec
+   * l'activité d'un autre combat concurrent — vérifié sur un vrai fichier multi-compte). Router ce
+   * ramassage par nom (`resolveCurrentFightId()`, "dernier combat touché par une action nommée")
+   * comme avant ce fix se faisait piéger par l'activité d'un second combat concurrent survenant
+   * entre le ramassage et la fin du BON combat (bug réel : butin d'un donjon affiché sous un combat
+   * d'un AUTRE donjon, tournant en parallèle). Vidé sur le TOUT PROCHAIN `combat-end`, quel que soit
+   * son fightId — volontairement PAS forcément celui résolu par le parser pour la ligne d'origine.
+   */
+  private readonly pendingFightLoot: { item: string; quantity: number }[] = [];
+  private pendingFightKamas = 0;
   /** Vrai entre une ligne 'market-occupation' active=true et son pendant active=false (session
    * marchand/HDV ouverte) — voir isPurchaseLoot dans apply(). Un achat groupé (plusieurs objets
    * achetés à la suite pendant la même session) ne déduit pas systématiquement les kamas juste
@@ -765,6 +780,8 @@ export class StatsStoreService {
     this.nextTradeId = 1;
     this.pendingPurchase = null;
     this.pendingHdvKamaGain = null;
+    this.pendingFightLoot.length = 0;
+    this.pendingFightKamas = 0;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
     this.logDateAnchor = null;
@@ -810,7 +827,9 @@ export class StatsStoreService {
     switch (entry.kind) {
       case 'kama-gain':
         this.kamasEarned.update((v) => v + entry.amount);
-        this.registerFightKama(entry.fightId, entry.amount);
+        // Voir pendingFightKamas : jamais attribué directement à entry.fightId, mais mis en
+        // attente jusqu'au tout prochain combat-end (quel qu'il soit).
+        if (entry.fightId !== null) this.pendingFightKamas += entry.amount;
         this.considerHdvKamaGain(entry);
         break;
       case 'kama-loss':
@@ -885,7 +904,13 @@ export class StatsStoreService {
         break;
       }
       case 'loot':
-        this.registerLoot(entry.item, entry.quantity, entry.fightId, isPurchaseLoot);
+        this.registerLoot(entry.item, entry.quantity);
+        // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un combat est
+        // actif au même moment (fightId résolu par erreur). Voir pendingFightLoot : jamais attribué
+        // directement à entry.fightId, mais mis en attente jusqu'au tout prochain combat-end.
+        if (!isPurchaseLoot && entry.fightId !== null) {
+          this.pendingFightLoot.push({ item: entry.item, quantity: entry.quantity });
+        }
         break;
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
@@ -1076,18 +1101,13 @@ export class StatsStoreService {
 
   private registerFightXp(fightId: number | null, character: string, amount: number): void {
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
+    // Même garde-fou que pour les dégâts/soin/armure (voir isRosterMember) : un fightId mal résolu
+    // (repli sur le dernier combat courant, nom ambigu) ne doit jamais créditer un personnage qui
+    // n'a jamais rejoint CE combat précis (bug réel : XP d'un combat concurrent affichée ici).
+    if (!working || !this.isRosterMember(working, character)) return;
     const existing = working.fight.exp.find((e) => e.name === character);
     if (existing) existing.quantity += amount;
     else working.fight.exp.push({ name: character, quantity: amount });
-  }
-
-  /** Miroir de registerFightXp, pour les kamas gagnés pendant le combat (voir Fight.kamas) — un
-   * gain hors combat (`fightId === null`) n'est jamais crédité ici, voir considerHdvKamaGain. */
-  private registerFightKama(fightId: number | null, amount: number): void {
-    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
-    working.fight.kamas += amount;
   }
 
   /** Nombre d'instances (voir Fight.enemies/allies) portant ce nom (minuscule) parmi les deux camps. */
@@ -1163,7 +1183,24 @@ export class StatsStoreService {
 
   private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
     const working = this.activeFights.get(fightId);
-    if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien à clôturer.
+
+    // Voir pendingFightLoot/pendingFightKamas : LE combat qui se termine ici est, par construction,
+    // toujours celui auquel tout butin/kamas mis en attente depuis le dernier combat-end appartient
+    // réellement (position temporelle, jamais un nom résolu à tort — voir le commentaire de ces
+    // deux champs pour le détail du bug que ça corrige). La file est vidée MÊME quand ce combat
+    // n'est pas suivi (`working` absent — ex. combat déjà en cours à l'ouverture du fichier, dont
+    // les lignes de jointure sont antérieures au début du log lu) : sans quoi ce butin resterait en
+    // attente et se retrouverait attribué au combat suivant, sans rapport (bug réel corrigé).
+    if (working) {
+      for (const pending of this.pendingFightLoot) {
+        this.addLootToFight(working, pending.item, pending.quantity);
+      }
+      working.fight.kamas += this.pendingFightKamas;
+    }
+    this.pendingFightLoot.length = 0;
+    this.pendingFightKamas = 0;
+
+    if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien d'autre à clôturer.
 
     const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
@@ -1332,24 +1369,21 @@ export class StatsStoreService {
     this.incrementWatched(name);
   }
 
-  private registerLoot(
-    item: string,
-    quantity: number,
-    fightId: number | null,
-    isPurchase: boolean,
-  ): void {
-    if (!this.currentBatchIsInitialLoad) {
-      this.incrementWatched(item, quantity);
-      const soundEntry = this.profile.findEnabledSoundItem(item);
-      if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
-    }
+  /** Effets de bord d'un ramassage indépendants de tout combat (suivi/watchlist, alerte sonore) —
+   * déclenchés pour CHAQUE ramassage, achat compris, qu'un combat soit en cours ou non (voir
+   * apply()). Le rattachement au butin d'un combat précis est un sujet à part entière, traité en
+   * différé — voir pendingFightLoot/addLootToFight. */
+  private registerLoot(item: string, quantity: number): void {
+    if (this.currentBatchIsInitialLoad) return;
+    this.incrementWatched(item, quantity);
+    const soundEntry = this.profile.findEnabledSoundItem(item);
+    if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
+  }
 
-    // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un
-    // combat est actif au même moment (fightId résolu par erreur) — voir `apply()`.
-    if (isPurchase) return;
-
-    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
+  /** Ajoute un objet au butin d'UN combat précis déjà résolu avec certitude (voir
+   * pendingFightLoot, vidé dans finalizeFight) — jamais appelé directement pour une ligne de log,
+   * dont le fightId ne peut pas être connu avec certitude au moment où elle est lue. */
+  private addLootToFight(working: FightWorking, item: string, quantity: number): void {
     const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
     if (existing) existing.quantity += quantity;
     else
