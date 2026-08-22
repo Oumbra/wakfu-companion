@@ -52,7 +52,7 @@ import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { GameServerService } from '../../core/services/game-server.service';
 import { ColorblindProfile, ColorblindService } from '../../core/services/colorblind.service';
-import { LightThemeVariant, ThemeService } from '../../core/services/theme.service';
+import { AppTheme, LightThemeVariant, ThemeService } from '../../core/services/theme.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
@@ -71,23 +71,65 @@ interface ColorblindSwatch {
 /** Une entrée par couleur RÉELLEMENT redéfinie pour ce profil (voir les blocs
  * `[data-colorblind='...']` de styles.css, à garder synchronisé avec cette liste) — ce qui permet
  * à l'utilisateur de voir en un coup d'œil, avant/après, tout ce que le profil choisi va changer
- * dans l'app, sans avoir à chercher ces éléments un par un dans l'interface. */
-const COLORBLIND_SWATCHES: Record<Exclude<ColorblindProfile, 'off'>, ColorblindSwatch[]> = {
+ * dans l'app, sans avoir à chercher ces éléments un par un dans l'interface.
+ *
+ * Dédoublé par thème (`dark`/`light`) car styles.css redéfinit ces mêmes teintes par thème (aucune
+ * couleur ne satisfait l'AA à la fois sur un panneau quasi noir et un panneau quasi blanc, voir
+ * styles.css) — `colorblindSwatches` ci-dessous sélectionne la bonne moitié selon `theme.theme()`,
+ * pour que l'aperçu corresponde toujours à ce que l'utilisateur voit réellement dans l'app. */
+const COLORBLIND_SWATCHES: Record<
+  Exclude<ColorblindProfile, 'off'>,
+  Record<AppTheme, ColorblindSwatch[]>
+> = {
   // Protanopie et deutéranopie sont mutualisées sous une seule option ('redGreen') : même axe de
   // confusion rouge-vert, donc même correction pour les deux — voir ColorblindService.
-  redGreen: [
-    { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
-    { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
-    { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#148fbb' },
-    { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
-    { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#17b8a0' },
-    { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#e0c200' },
-  ],
-  tritanopia: [
-    { labelKey: 'profile.colorblindSwatchWater', before: '#00e1ff', after: '#1f9fd9' },
-    { labelKey: 'profile.colorblindSwatchLight', before: '#ffd700', after: '#ffb703' },
-    { labelKey: 'chat.channel.commerce', before: '#ffd700', after: '#ffb703' },
-  ],
+  // Raretés (7 dernières entrées de chaque liste) : mapping fourni tel quel par l'utilisateur,
+  // volontairement identique dark/light (voir styles.css) — dupliqué ici uniquement parce que
+  // cette table reste indexée par thème pour les autres couleurs de ce même profil.
+  redGreen: {
+    dark: [
+      { labelKey: 'damageMeter.won', before: '#2ecc71', after: '#3391ff' },
+      { labelKey: 'damageMeter.lost', before: '#e74c3c', after: '#e6863c' },
+      { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#148fbb' },
+      { labelKey: 'chat.channel.recrutement', before: '#2ecc71', after: '#3391ff' },
+      { labelKey: 'profile.colorblindSwatchCommon', before: '#c8c8c8', after: '#ffffff' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#12ff89' },
+      { labelKey: 'profile.colorblindSwatchMythical', before: '#d97a00', after: '#e27a00' },
+      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#d8ea00' },
+      { labelKey: 'profile.colorblindSwatchRelic', before: '#9450d9', after: '#a35eff' },
+      { labelKey: 'profile.colorblindSwatchMemory', before: '#1f97e0', after: '#16aaff' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#ff5ebc' },
+    ],
+    light: [
+      { labelKey: 'damageMeter.won', before: '#1e8449', after: '#006dee' },
+      { labelKey: 'damageMeter.lost', before: '#dc2d1b', after: '#b45b17' },
+      { labelKey: 'profile.colorblindSwatchEarth', before: '#1b8045', after: '#0f6b8c' },
+      { labelKey: 'chat.channel.recrutement', before: '#1c7d45', after: '#0067e0' },
+      { labelKey: 'profile.colorblindSwatchCommon', before: '#c8c8c8', after: '#ffffff' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#12ff89' },
+      { labelKey: 'profile.colorblindSwatchMythical', before: '#d97a00', after: '#e27a00' },
+      { labelKey: 'profile.colorblindSwatchLegendary', before: '#c7d400', after: '#d8ea00' },
+      { labelKey: 'profile.colorblindSwatchRelic', before: '#9450d9', after: '#a35eff' },
+      { labelKey: 'profile.colorblindSwatchMemory', before: '#1f97e0', after: '#16aaff' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#ff5ebc' },
+    ],
+  },
+  tritanopia: {
+    dark: [
+      { labelKey: 'profile.colorblindSwatchWater', before: '#00e1ff', after: '#1f9fd9' },
+      { labelKey: 'profile.colorblindSwatchLight', before: '#ffd700', after: '#ffb703' },
+      { labelKey: 'chat.channel.commerce', before: '#ffd700', after: '#ffb703' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#3fb818' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#c026d3' },
+    ],
+    light: [
+      { labelKey: 'profile.colorblindSwatchWater', before: '#007f91', after: '#187ba8' },
+      { labelKey: 'profile.colorblindSwatchLight', before: '#877200', after: '#976c00' },
+      { labelKey: 'chat.channel.commerce', before: '#806c00', after: '#926800' },
+      { labelKey: 'profile.colorblindSwatchRare', before: '#1dd15f', after: '#2c8111' },
+      { labelKey: 'profile.colorblindSwatchEpic', before: '#d84fa0', after: '#7d1989' },
+    ],
+  },
 };
 
 /** Page dédiée au profil (pseudo, avatar, alertes sonores de butin, connexion Discord/Google) —
@@ -227,7 +269,7 @@ export class ProfilePageComponent implements OnDestroy {
    * vide pour 'off' (rien n'est masqué, `[class.hidden]`/`@if` côté template). */
   protected readonly colorblindSwatches = computed<ColorblindSwatch[]>(() => {
     const profile = this.colorblind.profile();
-    return profile === 'off' ? [] : COLORBLIND_SWATCHES[profile];
+    return profile === 'off' ? [] : COLORBLIND_SWATCHES[profile][this.theme.theme()];
   });
 
   protected readonly existingSoundItemNames = computed(() =>
