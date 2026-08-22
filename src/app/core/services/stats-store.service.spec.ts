@@ -320,6 +320,35 @@ describe('StatsStoreService', () => {
       expect(stats.fightHistory()[0].kamas).toBe(0);
     });
 
+    it(
+      'utilise la date CALENDAIRE réelle du fichier (ligne d\'ancrage "build -1 [...]", voir ' +
+        'LogDateAnchorEntry) plutôt que la date système du jour de lecture (bug réel : un combat ' +
+        'consulté un autre jour que celui où il a eu lieu affichait systématiquement la date du ' +
+        'jour de LECTURE au lieu de la date réelle du combat)',
+      () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        // Date système très différente de la date réelle du fichier (voir ligne d'ancrage
+        // ci-dessous) : si le combat récupère malgré tout cette date système, le test échoue.
+        vi.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+        try {
+          const stats = TestBed.inject(StatsStoreService);
+          const access = TestBed.inject(LogFileAccessService);
+          feed(access, [
+            ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45])',
+            ' INFO 15:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ]);
+
+          const fights = stats.fightHistory();
+          expect(fights).toHaveLength(1);
+          expect(fights[0].fullTimestampMs).toBe(new Date(2026, 7, 20, 15, 0, 0, 0).getTime());
+        } finally {
+          vi.useRealTimers();
+        }
+      },
+    );
+
     it('défaite compte solo (fight_single-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
@@ -995,10 +1024,11 @@ describe('StatsStoreService', () => {
     });
 
     it('relire le même fichier un autre jour ne recrée aucun doublon (la clé ignore la date système)', async () => {
-      // Le log Wakfu n'écrit que l'heure : StatsStoreService lui recolle la date
-      // du jour de LECTURE. Si cette date entrait dans la clé déterministe, un
-      // fichier encore ouvert le lendemain réenverrait tout en double — d'où une
-      // signature bâtie sur la seule heure du log (voir history-event.model.ts).
+      // Le jeu de lignes ci-dessus ne contient pas la ligne d'ancrage de date réelle du fichier
+      // (voir LogDateAnchorEntry) : StatsStoreService retombe donc sur son ancien repli, la date du
+      // jour de LECTURE. Si cette date entrait dans la clé déterministe, un fichier encore ouvert le
+      // lendemain réenverrait tout en double — d'où une signature bâtie sur la seule heure du log
+      // (voir history-event.model.ts), qu'une date d'ancrage soit disponible ou non.
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-08-11T22:00:00Z'));
 

@@ -84,6 +84,20 @@ describe('LogParser — parsing de base (non-régression)', () => {
   });
 });
 
+describe('LogParser — date calendaire réelle du fichier (log-date-anchor)', () => {
+  it("parse la ligne d'ancrage émise une fois au tout début de chaque session client", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 14:18:45,510 [main] (com.ankamagames.wakfu.client.WakfuClient:284) - Configuration loaded for region WESTERN (by country detection for null): config.properties',
+      ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45])',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries).toEqual([
+      { kind: 'log-date-anchor', time: '14:18:46,005', year: 2026, month: 8, day: 20 },
+    ]);
+  });
+});
+
 describe('LogParser — session marchand/HDV (market-occupation)', () => {
   it("parse l'ouverture et la fermeture d'une session marchand, hors de toute enveloppe [Catégorie]", () => {
     const parser = new LogParser();
@@ -149,6 +163,58 @@ describe('LogParser — multi-combat (fightId)', () => {
     const ends = entries.filter((e) => e.kind === 'combat-end');
     expect(ends.map((e: any) => e.fightId)).toEqual([2, 1]);
   });
+
+  it(
+    'ne mélange jamais les alliés/ennemis de deux combats concurrents entiers, avec des participants ' +
+      "totalement distincts (bug réel : un sort lancé dans un second combat était crédité à tort d'un " +
+      'dégât « propre » — sans tag exploitable, ex. « Cible: -N PV (Élément) » seul — survenant juste ' +
+      'après dans un premier combat sans rapport, faisant apparaître ce participant, avec de vrais ' +
+      'dégâts, dans le récapitulatif du mauvais combat)',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Kralaman breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Kralaman (combat 2) lance un sort juste avant un dégât "propre" du combat 1 :
+        // avant le fix, ce dégât retombait sur ce dernier lanceur GLOBAL et se retrouvait
+        // rattaché au combat 2 (celui de Kralaman), pas au combat 1 (celui d'Oumbra, la cible réelle).
+        ' INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Kralaman lance le sort Griffe',
+        ' INFO 10:00:06,500 [T] (a:1) - [Information (combat)] Oumbra: -50 PV (Terre)',
+      ];
+      const entries = parseAll(parser, lines);
+      const damage = entries.find((e) => e.kind === 'damage');
+      // Rattaché au combat 1 (celui de la cible réelle) — jamais au combat 2 de Kralaman.
+      expect(damage).toMatchObject({ target: 'Oumbra', attacker: 'Inconnu', fightId: 1 });
+    },
+  );
+
+  it(
+    "isole aussi l'attribution d'un statut à stacks (effectOwners) entre deux combats concurrents : " +
+      'un dégât de riposte propre à un combat ne doit jamais être crédité au porteur du même statut ' +
+      'dans un AUTRE combat concurrent',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Kralaman breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Même nom de statut ("Vigilance") appliqué par Caliburnus, dans le combat 2, à Kralaman.
+        ' INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Caliburnus lance le sort Vigilance',
+        ' INFO 10:00:06,100 [T] (a:1) - [Information (combat)] Kralaman: Vigilance (Niv. 1)',
+        // Bouftou (combat 1) inflige un dégât taggé "Vigilance" à Oumbra : sans isolation par
+        // combat, ce tag aurait résolu Caliburnus (combat 2) comme responsable.
+        ' INFO 10:00:07,000 [T] (a:1) - [Information (combat)] Oumbra: -30 PV (Terre) (Vigilance)',
+      ];
+      const entries = parseAll(parser, lines);
+      const damage = entries.find((e) => e.kind === 'damage');
+      // Aucun propriétaire "Vigilance" connu dans le combat 1 : repli riposte (aucun connu ici non
+      // plus) => 'Inconnu', jamais 'Caliburnus' (combat 2).
+      expect(damage).toMatchObject({ target: 'Oumbra', attacker: 'Inconnu', fightId: 1 });
+    },
+  );
 
   it("rattache le butin au combat restant quand un combat concurrent vient de se terminer sans qu'aucun sort/dégât n'ait ré-ancré le combat courant (bug réel : butin de fin de combat manquant)", () => {
     const parser = new LogParser();

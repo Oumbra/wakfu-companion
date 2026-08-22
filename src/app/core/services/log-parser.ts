@@ -70,6 +70,10 @@ const COMBAT_START_MARKER = 'CREATION DU COMBAT';
 /** Ouverture/fermeture d'une session marchand/HDV, hors de toute enveloppe `[Catégorie]` — voir MarketOccupationEntry. */
 const MARKET_OCCUPATION_START_RE = /^Lancement de l'occupation MARKET sur la board\b/;
 const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b/;
+/** Ligne technique émise une seule fois, tout au début de chaque session client ("1.92 (build -1
+ * [2026-08-20 @ 14H18min45])") — seule source fiable de la date CALENDAIRE réelle du fichier (le
+ * reste du log n'expose que l'heure HH:MM:SS,mmm, voir HEADER_RE). Voir LogDateAnchorEntry. */
+const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]/;
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
  * — présent pour chaque combattant de chaque combat. `obstacleId` différent de
@@ -131,6 +135,31 @@ interface EffectOwnership {
 }
 
 /**
+ * État d'attribution des dégâts/soins/armure PROPRE à un seul combat (`lastCast`, `lastDamage`,
+ * `effectOwners`, `spellCasters` — voir resolveEffectTail) — un par fightId actif, plus un « seau »
+ * partagé (clé `null`) pour les lignes hors combat/combat non résolu. Isoler cet état par combat
+ * (plutôt qu'un unique état global, comme c'était le cas avant ce fix) est indispensable dès que
+ * deux combats tournent en parallèle (multi-compte) : sans ça, une ligne de dégât "propre" (aucun
+ * tag exploitable, ex. "Cible: -N PV (Élément)" seul) retombe par défaut sur `lastCast.caster`, qui
+ * pouvait être le DERNIER sort lancé dans N'IMPORTE QUEL combat concurrent — pas forcément celui de
+ * la cible — mélangeant alliés/ennemis d'un combat à l'autre (bug réel constaté : ennemis d'un
+ * second combat en cours apparaissant, avec de vrais dégâts, dans le récapitulatif d'un premier
+ * combat déjà terminé). Le combat à consulter est toujours celui de la CIBLE (`target`, connue avec
+ * certitude dès la regex, contrairement à l'attaquant qu'on est justement en train de résoudre) —
+ * jamais celui de l'attaquant.
+ */
+interface FightParseState {
+  lastCast: { caster: string; spell: string } | null;
+  lastDamage: { attacker: string; target: string } | null;
+  effectOwners: Map<string, EffectOwnership>;
+  spellCasters: Map<string, string>;
+}
+
+function createFightParseState(): FightParseState {
+  return { lastCast: null, lastDamage: null, effectOwners: new Map(), spellCasters: new Map() };
+}
+
+/**
  * Parseur à état du log Wakfu (wakfu.log). Doit recevoir les lignes dans
  * l'ordre chronologique : l'attribution des dégâts au bon sort/attaquant et
  * la détection victoire/défaite dépendent du contexte des lignes précédentes.
@@ -146,11 +175,8 @@ interface EffectOwnership {
  * doublon — sauf le butin, où une répétition légitime est plausible (farm).
  */
 export class LogParser {
-  private lastCast: { caster: string; spell: string } | null = null;
-  private lastDamage: { attacker: string; target: string } | null = null;
-  private readonly effectOwners = new Map<string, EffectOwnership>();
-  /** Dernier lanceur connu de chaque sort (persiste au-delà du tour, pour les glyphes/zones posés une fois et qui tapent bien plus tard, ex. "Canine"). */
-  private readonly spellCasters = new Map<string, string>();
+  /** Un état d'attribution par combat actif (voir FightParseState), clé `null` = hors combat/non résolu. */
+  private readonly fightStates = new Map<number | null, FightParseState>();
 
   /** Combats connus pour un nom de combattant donné — un nom peut appartenir à plusieurs combats concurrents si le même monstre apparaît dans deux combats simultanés (multi-compte). */
   private readonly nameToFightIds = new Map<string, Set<number>>();
@@ -197,10 +223,7 @@ export class LogParser {
 
   /** Réinitialise tout l'état interne (à appeler à chaque reconnexion/relecture complète du fichier). */
   reset(): void {
-    this.lastCast = null;
-    this.lastDamage = null;
-    this.effectOwners.clear();
-    this.spellCasters.clear();
+    this.fightStates.clear();
     this.nameToFightIds.clear();
     this.fightMemberNames.clear();
     this.fightLostFlags.clear();
@@ -238,6 +261,18 @@ export class LogParser {
     }
     if (MARKET_OCCUPATION_END_RE.test(content)) {
       return { kind: 'market-occupation', time, active: false };
+    }
+
+    const buildDate = CLIENT_BUILD_DATE_RE.exec(content);
+    if (buildDate) {
+      const [, year, month, day] = buildDate;
+      return {
+        kind: 'log-date-anchor',
+        time,
+        year: Number(year),
+        month: Number(month),
+        day: Number(day),
+      };
     }
 
     const bracketMatch = BRACKET_RE.exec(content);
@@ -344,7 +379,18 @@ export class LogParser {
     }
     this.fightMemberNames.delete(fightId);
     this.fightLostFlags.delete(fightId);
+    this.fightStates.delete(fightId);
     if (this.currentFightId === fightId) this.currentFightId = null;
+  }
+
+  /** État d'attribution (voir FightParseState) du combat `fightId`, créé au premier accès. */
+  private getFightState(fightId: number | null): FightParseState {
+    let state = this.fightStates.get(fightId);
+    if (!state) {
+      state = createFightParseState();
+      this.fightStates.set(fightId, state);
+    }
+    return state;
   }
 
   /** Résout le combat d'un combattant nommé : sans ambiguïté si ce nom n'appartient qu'à un seul combat actif, sinon repli sur le dernier combat résolu (voir resolveCurrentFightId). */
@@ -460,15 +506,18 @@ export class LogParser {
         spell = critMatch[1].trim();
         critical = true;
       }
-      this.lastCast = { caster, spell };
-      this.spellCasters.set(spell.toLowerCase(), caster);
       const fightId = this.resolveFightIdForName(caster);
+      const state = this.getFightState(fightId);
+      state.lastCast = { caster, spell };
+      state.spellCasters.set(spell.toLowerCase(), caster);
       return { kind: 'spell-cast', time, caster, spell, critical, fightId };
     }
 
     const statusRemoval = STATUS_REMOVE_RE.exec(content);
     if (statusRemoval) {
-      this.effectOwners.delete(statusRemoval[2].trim().toLowerCase());
+      const carrier = statusRemoval[1].trim();
+      const fightId = this.resolveFightIdForName(carrier);
+      this.getFightState(fightId).effectOwners.delete(statusRemoval[2].trim().toLowerCase());
       return null;
     }
 
@@ -476,9 +525,10 @@ export class LogParser {
     if (statusEffect) {
       const carrier = statusEffect[1].trim();
       const effectName = statusEffect[2].trim();
-      this.effectOwners.set(effectName.toLowerCase(), {
+      const state = this.getFightState(this.resolveFightIdForName(carrier));
+      state.effectOwners.set(effectName.toLowerCase(), {
         carrier,
-        applier: this.lastCast?.caster ?? carrier,
+        applier: state.lastCast?.caster ?? carrier,
       });
       return null;
     }
@@ -502,42 +552,31 @@ export class LogParser {
       const amount = parseFrenchNumber(damage[3]);
       const tail = damage[4] ?? '';
 
+      // Le combat à consulter pour résoudre l'attaquant (voir FightParseState) est toujours celui de
+      // la CIBLE, connue avec certitude dès la regex — jamais celui de l'attaquant, qu'on est
+      // justement en train de résoudre et qui pourrait sinon retomber sur l'état d'un autre combat
+      // concurrent (voir FightParseState). C'est aussi le fightId attribué à l'entrée émise.
+      const fightId = this.resolveFightIdForName(target);
+      const state = this.getFightState(fightId);
+
       if (sign === '-') {
-        const { attacker, spell, element } = this.resolveEffectTail(target, tail, {
+        const { attacker, spell, element } = this.resolveEffectTail(target, tail, state, {
           selfFallback: false,
           riposteFallback: true,
         });
-        this.lastDamage = { attacker, target };
-        return {
-          kind: 'damage',
-          time,
-          target,
-          attacker,
-          spell,
-          element,
-          amount,
-          fightId: this.resolveFightIdForName(attacker),
-        };
+        state.lastDamage = { attacker, target };
+        return { kind: 'damage', time, target, attacker, spell, element, amount, fightId };
       }
 
       // Soin ("+N PV") : même mécanique de résolution que les dégâts, à deux exceptions près (voir
       // resolveEffectTail) — un passif non rattaché à un sort récent (`riposteFallback: false`) se
       // crédite à la cible elle-même plutôt qu'au dernier lanceur de sort connu, qui pourrait être
       // n'importe qui d'autre (ex. l'ennemi qui vient de frapper cette même cible).
-      const { attacker, spell, element } = this.resolveEffectTail(target, tail, {
+      const { attacker, spell, element } = this.resolveEffectTail(target, tail, state, {
         selfFallback: true,
         riposteFallback: false,
       });
-      return {
-        kind: 'heal',
-        time,
-        target,
-        attacker,
-        spell,
-        element,
-        amount,
-        fightId: this.resolveFightIdForName(attacker),
-      };
+      return { kind: 'heal', time, target, attacker, spell, element, amount, fightId };
     }
 
     const armor = ARMOR_RE.exec(content);
@@ -547,19 +586,17 @@ export class LogParser {
       const target = armor[1].trim();
       const amount = parseFrenchNumber(armor[3]);
       const tail = armor[4] ?? '';
-      const { attacker, spell } = this.resolveEffectTail(target, tail, {
-        selfFallback: true,
-        riposteFallback: false,
-      });
-      return {
-        kind: 'armor',
-        time,
+      const fightId = this.resolveFightIdForName(target);
+      const { attacker, spell } = this.resolveEffectTail(
         target,
-        attacker,
-        spell,
-        amount,
-        fightId: this.resolveFightIdForName(attacker),
-      };
+        tail,
+        this.getFightState(fightId),
+        {
+          selfFallback: true,
+          riposteFallback: false,
+        },
+      );
+      return { kind: 'armor', time, target, attacker, spell, amount, fightId };
     }
 
     return null;
@@ -587,6 +624,7 @@ export class LogParser {
   private resolveEffectTail(
     target: string,
     tail: string,
+    state: FightParseState,
     options: { selfFallback: boolean; riposteFallback: boolean },
   ): { attacker: string; spell: string; element: DamageElement } {
     let element: DamageElement = 'Inconnu';
@@ -600,25 +638,25 @@ export class LogParser {
       }
     }
 
-    let attacker = this.lastCast?.caster ?? (options.selfFallback ? target : 'Inconnu');
-    let spell = this.lastCast?.spell ?? 'Autre';
+    let attacker = state.lastCast?.caster ?? (options.selfFallback ? target : 'Inconnu');
+    let spell = state.lastCast?.spell ?? 'Autre';
     if (effectTag) {
-      const owner = this.effectOwners.get(effectTag.toLowerCase());
+      const owner = state.effectOwners.get(effectTag.toLowerCase());
       if (owner) {
         // Un effet porté par la cible elle-même (ex. Hachure) crédite celui
         // qui l'a appliqué ; un effet porté par un tiers (ex. Enflammé) se
         // crédite lui-même, puisqu'il inflige les dégâts à quelqu'un d'autre.
         attacker = owner.carrier === target ? owner.applier : owner.carrier;
       } else if (options.riposteFallback) {
-        const caster = this.spellCasters.get(effectTag.toLowerCase());
+        const caster = state.spellCasters.get(effectTag.toLowerCase());
         if (caster) {
           // Glyphe/zone posé une fois (ex. "Canine") qui tape bien plus tard :
           // on crédite qui l'a posé, peu importe qui a lancé un sort depuis.
           attacker = caster;
-        } else if (this.lastDamage && this.lastDamage.attacker === target) {
+        } else if (state.lastDamage && state.lastDamage.attacker === target) {
           // Riposte pure sans statut ni sort connu (ex. "Contre-attaque") :
           // la victime du coup précédent devient l'attaquant de ce coup-ci.
-          attacker = this.lastDamage.target;
+          attacker = state.lastDamage.target;
         }
       } else {
         attacker = target;

@@ -31,6 +31,10 @@ const MAX_REASSIGNMENT_HISTORY = 500;
 const MAX_ITEM_REASSIGNMENT_HISTORY = 500;
 /** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. Réutilisée telle quelle pour rapprocher un gain de kamas hors combat d'un échange conclu au même moment (voir considerHdvKamaGain) — même principe, même ordre de grandeur. */
 const PURCHASE_WINDOW_MS = 2000;
+/** Écart (heure du jour) au-delà duquel deux horodatages consécutifs sont interprétés comme un
+ * passage de minuit plutôt qu'un simple réordonnancement multi-compte (jamais plus de quelques
+ * secondes en pratique) — voir buildFullTimestampMs. */
+const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -414,6 +418,16 @@ export class StatsStoreService {
    * ramassages orphelins dans le butin de combat (cas réel : achat multiple à l'Hôtel des ventes
    * pendant un combat en cours ailleurs sur le compte). */
   private inMarketOccupation = false;
+  /** Date calendaire réelle du fichier (voir LogDateAnchorEntry), `null` tant que la ligne d'ancrage
+   * n'a pas encore été rencontrée (repli sur la date système, voir buildFullTimestampMs) — reconstitue
+   * un horodatage complet à partir de `time` (HH:MM:SS,mmm) sans dépendre de la date de LECTURE. */
+  private logDateAnchor: { year: number; month: number; day: number } | null = null;
+  /** Heure de la ligne d'ancrage (ms depuis minuit), et heure de la dernière ligne déjà convertie en
+   * horodatage complet — sert uniquement à détecter un passage de minuit (voir buildFullTimestampMs) :
+   * un fichier peut couvrir une session à cheval sur deux jours calendaires. */
+  private lastTimestampTimeOfDayMs: number | null = null;
+  /** Nombre de passages de minuit détectés depuis `logDateAnchor` — ajouté à sa date pour tout horodatage ultérieur. */
+  private logDateDayOffset = 0;
 
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
@@ -741,6 +755,9 @@ export class StatsStoreService {
     this.pendingHdvKamaGain = null;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
+    this.logDateAnchor = null;
+    this.lastTimestampTimeOfDayMs = null;
+    this.logDateDayOffset = 0;
 
     this.chatBuffer.length = 0;
     this.parser.reset();
@@ -877,6 +894,11 @@ export class StatsStoreService {
         break;
       case 'market-occupation':
         this.inMarketOccupation = entry.active;
+        break;
+      case 'log-date-anchor':
+        this.logDateAnchor = { year: entry.year, month: entry.month, day: entry.day };
+        this.lastTimestampTimeOfDayMs = this.timeToMs(entry.time);
+        this.logDateDayOffset = 0;
         break;
     }
   }
@@ -1171,13 +1193,40 @@ export class StatsStoreService {
     }
   }
 
-  /** Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) : on la combine à la date système, le fichier étant lu en direct au fil de l'eau. */
+  /**
+   * Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) sur chaque ligne : la date calendaire réelle
+   * vient de `logDateAnchor` (voir LogDateAnchorEntry, ligne technique émise une fois au tout début
+   * du fichier) — jamais de la date système de la machine qui LIT le fichier (bug réel : un combat
+   * consulté un autre jour que celui où il a eu lieu, ou un fichier plus ancien rouvert plus tard,
+   * affichait systématiquement la date du jour de lecture au lieu de la date réelle du combat).
+   * Repli sur l'ancien comportement (date système) tant que cette ligne d'ancrage n'a pas encore été
+   * rencontrée — ne devrait arriver qu'en tout début de lecture, avant la toute première ligne utile.
+   */
   private buildFullTimestampMs(time: string): number {
     const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
-    const now = new Date();
-    if (!match) return now.getTime();
-    const [, h, m, s, ms] = match;
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), +h, +m, +s, +ms).getTime();
+    if (!this.logDateAnchor || !match) {
+      const now = new Date();
+      if (!match) return now.getTime();
+      const [, h, m, s, ms] = match;
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), +h, +m, +s, +ms).getTime();
+    }
+
+    const timeOfDayMs = this.timeToMs(time);
+    // Un fichier peut couvrir une session à cheval sur deux jours calendaires : un grand bond en
+    // arrière de l'heure du jour (jamais observé autrement, les lignes arrivent en ordre
+    // chronologique) signale un passage de minuit plutôt qu'un réordonnancement multi-compte.
+    if (
+      this.lastTimestampTimeOfDayMs !== null &&
+      timeOfDayMs < this.lastTimestampTimeOfDayMs - DAY_ROLLOVER_THRESHOLD_MS
+    ) {
+      this.logDateDayOffset++;
+    }
+    this.lastTimestampTimeOfDayMs = timeOfDayMs;
+
+    const { year, month, day } = this.logDateAnchor;
+    // `Date` normalise nativement un `day` débordant (ex. 32 août => 1er septembre).
+    const baseDateMs = new Date(year, month - 1, day + this.logDateDayOffset).getTime();
+    return baseDateMs + timeOfDayMs;
   }
 
   private timeToMs(time: string): number {
