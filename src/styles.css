@@ -664,6 +664,19 @@ button.icon-btn.help-icon-btn {
   --dmg-light: #ffb703;
   --channel-commerce: #ffb703;
 }
+/* Rareté d'objet, profil tritanopie (même principe que le bloc redGreen ci-dessus — sélecteur
+   combiné, pas de jeton :root). Simulation de l'axe bleu-jaune : "rare" (vert) devient quasi
+   indiscernable de "mémoire" (bleu, tous deux virent au cyan) et "épique" (rose) de "mythique"
+   (orange, tous deux virent au corail) — les deux seules paires concernées, les autres raretés
+   restent suffisamment séparées. "rare" décalé vers un vert-pomme (reste net du cyan de
+   "mémoire" après simulation, contrairement à un vert plus pur/froid) ; "épique" décalé vers un
+   magenta-violet (reste net du corail de "mythique", contrairement au rose d'origine). */
+:root[data-colorblind='tritanopia'] .rarity-rare {
+  --rarity-color: #3fb818;
+}
+:root[data-colorblind='tritanopia'] .rarity-epic {
+  --rarity-color: #c026d3;
+}
 
 /* --- Mêmes profils, en thème clair (fonds ~blancs des 4 variantes) --- */
 :root[data-theme='light'][data-colorblind='redGreen'] {
@@ -674,10 +687,32 @@ button.icon-btn.help-icon-btn {
   --dmg-earth: #0f6b8c;
   --channel-recrutement: #0067e0;
 }
+/* Rareté (redGreen) : équivalents assombris des teintes sombres ci-dessus, pas les mêmes valeurs
+   telles quelles — #17b8a0/#e0c200 tombent respectivement à 2,5:1 et 1,77:1 sur le panneau blanc
+   de ce thème (variante par défaut, --panel-bg: #ffffff), trop pâles pour rester lisibles en
+   accent de bordure/dégradé sur fond clair. "legendary" n'est pas assombri au-delà de #c5ab00 :
+   plus sombre, son rendu simulé (rouge-vert) se rapproche trop de "mythical" (les deux virent au
+   brun-olive une fois la luminosité réduite) — un contraste plus élevé n'a pas ici priorité sur
+   la distinction entre raretés, seul objectif réel de cette palette (voir --rarity-color, pas une
+   couleur de texte : jamais soumise à la barre AA 4.5:1, contrairement à --dmg-xxx). */
+:root[data-theme='light'][data-colorblind='redGreen'] .rarity-rare {
+  --rarity-color: #108170;
+}
+:root[data-theme='light'][data-colorblind='redGreen'] .rarity-legendary {
+  --rarity-color: #c5ab00;
+}
 :root[data-theme='light'][data-colorblind='tritanopia'] {
   --dmg-water: #187ba8;
   --dmg-light: #976c00;
   --channel-commerce: #926800;
+}
+/* Rareté (tritanopie) : mêmes teintes que le bloc sombre ci-dessus, assombries pour rester
+   lisibles sur le panneau blanc (même rationale que redGreen ci-dessus). */
+:root[data-theme='light'][data-colorblind='tritanopia'] .rarity-rare {
+  --rarity-color: #2c8111;
+}
+:root[data-theme='light'][data-colorblind='tritanopia'] .rarity-epic {
+  --rarity-color: #7d1989;
 }
 
 /* --- Couleurs des éléments de dégâts --- */
