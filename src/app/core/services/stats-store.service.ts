@@ -31,6 +31,10 @@ const MAX_REASSIGNMENT_HISTORY = 500;
 const MAX_ITEM_REASSIGNMENT_HISTORY = 500;
 /** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. Réutilisée telle quelle pour rapprocher un gain de kamas hors combat d'un échange conclu au même moment (voir considerHdvKamaGain) — même principe, même ordre de grandeur. */
 const PURCHASE_WINDOW_MS = 2000;
+/** Écart (heure du jour) au-delà duquel deux horodatages consécutifs sont interprétés comme un
+ * passage de minuit plutôt qu'un simple réordonnancement multi-compte (jamais plus de quelques
+ * secondes en pratique) — voir buildFullTimestampMs. */
+const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -240,8 +244,8 @@ export interface FightRecord {
   healRows: EntityDamageRow[];
   armorRows: EntityDamageRow[];
   loot: LootRow[];
-  /** Kamas gagnés pendant le combat (voir registerFightKama) — affiché dans la ligne de butin
-   * (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
+  /** Kamas gagnés pendant le combat (voir pendingFightKamas, vidé dans finalizeFight) — affiché
+   * dans la ligne de butin (`.loot-header-row`, après le nombre d'objets), 0 si aucun gain. */
   kamas: number;
   turns: number;
   durationMs: number;
@@ -284,6 +288,18 @@ interface FightWorking {
    * combattants homonymes) ayant déjà joué au cours du tour courant — voir registerFightTurn : un
    * siège qui rejoue alors qu'il a déjà joué ce tour-ci signale que le tour a bouclé. */
   turnSeatsSeen: Set<string>;
+  /**
+   * Noms (voir Fight.enemies/allies) ayant réellement rejoint CE combat via sa propre ligne
+   * "[_FL_] ... join the fight" — la seule source de vérité pour la composition d'un combat, figée
+   * dès son démarrage (voir CLAUDE.md). Sert de garde-fou pour tout événement dégâts/soin/armure
+   * (voir case 'damage'/'heal'/'armor' dans apply()) : même si `fightId` a été mal résolu par le
+   * parser (nom ambigu, repli sur le dernier combat courant...), un attaquant OU une cible qui n'a
+   * jamais rejoint CE combat précis ne doit jamais polluer ses statistiques — quel que soit le
+   * nombre de combats concurrents en cours au même moment (règle demandée explicitement : un combat
+   * dont la composition est inconnue à un instant T ne doit prendre en compte AUCUNE entité hors de
+   * son roster de départ, jamais une invocation/un décor qui n'a pas sa propre ligne de jointure).
+   */
+  memberNames: Set<string>;
 }
 
 /**
@@ -407,6 +423,21 @@ export class StatsStoreService {
    * reconnaître un gain de kamas qui vient d'être expliqué par un échange tout juste conclu (cas
    * où le 'trade-completed' précède la ligne "Vous avez gagné", voir pendingHdvKamaGain). */
   private lastTradeCompletedAtMs: number | null = null;
+  /**
+   * Butin/kamas ramassés PENDANT un combat, en attente d'attribution au bon fightId — voir
+   * finalizeFight (qui les vide) et apply() (qui les alimente, cases 'loot'/'kama-gain'). Aucune
+   * ligne de butin/gain de kamas ne référence de fightId ni de personnage dans le log : la seule
+   * façon fiable de savoir à quel combat un ramassage appartient est sa position TEMPORELLE,
+   * toujours immédiatement AVANT la fin propre du combat concerné (jamais entrelacée avec
+   * l'activité d'un autre combat concurrent — vérifié sur un vrai fichier multi-compte). Router ce
+   * ramassage par nom (`resolveCurrentFightId()`, "dernier combat touché par une action nommée")
+   * comme avant ce fix se faisait piéger par l'activité d'un second combat concurrent survenant
+   * entre le ramassage et la fin du BON combat (bug réel : butin d'un donjon affiché sous un combat
+   * d'un AUTRE donjon, tournant en parallèle). Vidé sur le TOUT PROCHAIN `combat-end`, quel que soit
+   * son fightId — volontairement PAS forcément celui résolu par le parser pour la ligne d'origine.
+   */
+  private readonly pendingFightLoot: { item: string; quantity: number }[] = [];
+  private pendingFightKamas = 0;
   /** Vrai entre une ligne 'market-occupation' active=true et son pendant active=false (session
    * marchand/HDV ouverte) — voir isPurchaseLoot dans apply(). Un achat groupé (plusieurs objets
    * achetés à la suite pendant la même session) ne déduit pas systématiquement les kamas juste
@@ -414,6 +445,16 @@ export class StatsStoreService {
    * ramassages orphelins dans le butin de combat (cas réel : achat multiple à l'Hôtel des ventes
    * pendant un combat en cours ailleurs sur le compte). */
   private inMarketOccupation = false;
+  /** Date calendaire réelle du fichier (voir LogDateAnchorEntry), `null` tant que la ligne d'ancrage
+   * n'a pas encore été rencontrée (repli sur la date système, voir buildFullTimestampMs) — reconstitue
+   * un horodatage complet à partir de `time` (HH:MM:SS,mmm) sans dépendre de la date de LECTURE. */
+  private logDateAnchor: { year: number; month: number; day: number } | null = null;
+  /** Heure de la ligne d'ancrage (ms depuis minuit), et heure de la dernière ligne déjà convertie en
+   * horodatage complet — sert uniquement à détecter un passage de minuit (voir buildFullTimestampMs) :
+   * un fichier peut couvrir une session à cheval sur deux jours calendaires. */
+  private lastTimestampTimeOfDayMs: number | null = null;
+  /** Nombre de passages de minuit détectés depuis `logDateAnchor` — ajouté à sa date pour tout horodatage ultérieur. */
+  private logDateDayOffset = 0;
 
   /** Vrai si le dernier lot de lignes traité provenait d'un rechargement initial (historique déjà vécu) — à consulter par tout consommateur voulant éviter de réagir (ex. alerte sonore) à du contenu déjà connu. */
   wasLastBatchInitialLoad(): boolean {
@@ -739,8 +780,13 @@ export class StatsStoreService {
     this.nextTradeId = 1;
     this.pendingPurchase = null;
     this.pendingHdvKamaGain = null;
+    this.pendingFightLoot.length = 0;
+    this.pendingFightKamas = 0;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
+    this.logDateAnchor = null;
+    this.lastTimestampTimeOfDayMs = null;
+    this.logDateDayOffset = 0;
 
     this.chatBuffer.length = 0;
     this.parser.reset();
@@ -781,7 +827,9 @@ export class StatsStoreService {
     switch (entry.kind) {
       case 'kama-gain':
         this.kamasEarned.update((v) => v + entry.amount);
-        this.registerFightKama(entry.fightId, entry.amount);
+        // Voir pendingFightKamas : jamais attribué directement à entry.fightId, mais mis en
+        // attente jusqu'au tout prochain combat-end (quel qu'il soit).
+        if (entry.fightId !== null) this.pendingFightKamas += entry.amount;
         this.considerHdvKamaGain(entry);
         break;
       case 'kama-loss':
@@ -802,20 +850,28 @@ export class StatsStoreService {
         break;
       case 'damage': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        const isFightEvent =
+          !!working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target);
+        if (isFightEvent) {
           // Le log ne référence l'attaquant que par nom : on l'attribue au dernier siège de la
           // file d'initiative résolu pour ce nom (voir resolveNextActor), qui distingue plusieurs
           // combattants homonymes — repli sur le nom brut si ce nom n'a encore jamais joué de sort
           // (ex. premier événement de dégâts du combat avant toute ligne "lance le sort").
-          const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
-          this.addDamage(working.attackerMap, seatKey, entry, working.fight.turnCount);
+          const seatKey = working!.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
+          this.addDamage(working!.attackerMap, seatKey, entry, working!.fight.turnCount);
+          this.classifier.registerDamageTarget(entry.target, entry.attacker);
         }
-        this.classifier.registerDamageTarget(entry.target, entry.attacker);
         break;
       }
       case 'heal': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        if (
+          working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target)
+        ) {
           const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
           this.addStatAmount(
             working.healSourceMap,
@@ -830,7 +886,11 @@ export class StatsStoreService {
       }
       case 'armor': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
-        if (working) {
+        if (
+          working &&
+          this.isRosterMember(working, entry.attacker) &&
+          this.isRosterMember(working, entry.target)
+        ) {
           const seatKey = working.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
           this.addStatAmount(
             working.armorSourceMap,
@@ -844,7 +904,13 @@ export class StatsStoreService {
         break;
       }
       case 'loot':
-        this.registerLoot(entry.item, entry.quantity, entry.fightId, isPurchaseLoot);
+        this.registerLoot(entry.item, entry.quantity);
+        // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un combat est
+        // actif au même moment (fightId résolu par erreur). Voir pendingFightLoot : jamais attribué
+        // directement à entry.fightId, mais mis en attente jusqu'au tout prochain combat-end.
+        if (!isPurchaseLoot && entry.fightId !== null) {
+          this.pendingFightLoot.push({ item: entry.item, quantity: entry.quantity });
+        }
         break;
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
@@ -878,6 +944,11 @@ export class StatsStoreService {
       case 'market-occupation':
         this.inMarketOccupation = entry.active;
         break;
+      case 'log-date-anchor':
+        this.logDateAnchor = { year: entry.year, month: entry.month, day: entry.day };
+        this.lastTimestampTimeOfDayMs = this.timeToMs(entry.time);
+        this.logDateDayOffset = 0;
+        break;
     }
   }
 
@@ -897,11 +968,19 @@ export class StatsStoreService {
         lastTurnActor: null,
         lastResolvedSeatByName: new Map(),
         turnSeatsSeen: new Set(),
+        memberNames: new Set(),
       };
       this.activeFights.set(fightId, working);
     }
     this.currentDisplayFightId = fightId;
     return working;
+  }
+
+  /** Vrai si `name` a réellement rejoint CE combat via sa propre ligne "[_FL_] ... join the fight"
+   * (voir FightWorking.memberNames) — garde-fou anti-contamination entre combats concurrents, voir
+   * ce champ pour le détail. */
+  private isRosterMember(working: FightWorking, name: string): boolean {
+    return working.memberNames.has(name);
   }
 
   private registerFighterJoin(
@@ -912,6 +991,7 @@ export class StatsStoreService {
     isControlledByAI: boolean,
   ): void {
     const working = this.getOrCreateFight(fightId, this.lastLineTime ?? '00:00:00,000');
+    working.memberNames.add(name);
     if (!working.fighterIdsSeen.has(fighterId)) {
       working.fighterIdsSeen.add(fighterId);
       if (isControlledByAI) working.fight.enemies.push({ name, id: fighterId });
@@ -1021,18 +1101,13 @@ export class StatsStoreService {
 
   private registerFightXp(fightId: number | null, character: string, amount: number): void {
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
+    // Même garde-fou que pour les dégâts/soin/armure (voir isRosterMember) : un fightId mal résolu
+    // (repli sur le dernier combat courant, nom ambigu) ne doit jamais créditer un personnage qui
+    // n'a jamais rejoint CE combat précis (bug réel : XP d'un combat concurrent affichée ici).
+    if (!working || !this.isRosterMember(working, character)) return;
     const existing = working.fight.exp.find((e) => e.name === character);
     if (existing) existing.quantity += amount;
     else working.fight.exp.push({ name: character, quantity: amount });
-  }
-
-  /** Miroir de registerFightXp, pour les kamas gagnés pendant le combat (voir Fight.kamas) — un
-   * gain hors combat (`fightId === null`) n'est jamais crédité ici, voir considerHdvKamaGain. */
-  private registerFightKama(fightId: number | null, amount: number): void {
-    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
-    working.fight.kamas += amount;
   }
 
   /** Nombre d'instances (voir Fight.enemies/allies) portant ce nom (minuscule) parmi les deux camps. */
@@ -1108,7 +1183,24 @@ export class StatsStoreService {
 
   private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
     const working = this.activeFights.get(fightId);
-    if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien à clôturer.
+
+    // Voir pendingFightLoot/pendingFightKamas : LE combat qui se termine ici est, par construction,
+    // toujours celui auquel tout butin/kamas mis en attente depuis le dernier combat-end appartient
+    // réellement (position temporelle, jamais un nom résolu à tort — voir le commentaire de ces
+    // deux champs pour le détail du bug que ça corrige). La file est vidée MÊME quand ce combat
+    // n'est pas suivi (`working` absent — ex. combat déjà en cours à l'ouverture du fichier, dont
+    // les lignes de jointure sont antérieures au début du log lu) : sans quoi ce butin resterait en
+    // attente et se retrouverait attribué au combat suivant, sans rapport (bug réel corrigé).
+    if (working) {
+      for (const pending of this.pendingFightLoot) {
+        this.addLootToFight(working, pending.item, pending.quantity);
+      }
+      working.fight.kamas += this.pendingFightKamas;
+    }
+    this.pendingFightLoot.length = 0;
+    this.pendingFightKamas = 0;
+
+    if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien d'autre à clôturer.
 
     const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
@@ -1171,13 +1263,40 @@ export class StatsStoreService {
     }
   }
 
-  /** Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) : on la combine à la date système, le fichier étant lu en direct au fil de l'eau. */
+  /**
+   * Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) sur chaque ligne : la date calendaire réelle
+   * vient de `logDateAnchor` (voir LogDateAnchorEntry, ligne technique émise une fois au tout début
+   * du fichier) — jamais de la date système de la machine qui LIT le fichier (bug réel : un combat
+   * consulté un autre jour que celui où il a eu lieu, ou un fichier plus ancien rouvert plus tard,
+   * affichait systématiquement la date du jour de lecture au lieu de la date réelle du combat).
+   * Repli sur l'ancien comportement (date système) tant que cette ligne d'ancrage n'a pas encore été
+   * rencontrée — ne devrait arriver qu'en tout début de lecture, avant la toute première ligne utile.
+   */
   private buildFullTimestampMs(time: string): number {
     const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
-    const now = new Date();
-    if (!match) return now.getTime();
-    const [, h, m, s, ms] = match;
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate(), +h, +m, +s, +ms).getTime();
+    if (!this.logDateAnchor || !match) {
+      const now = new Date();
+      if (!match) return now.getTime();
+      const [, h, m, s, ms] = match;
+      return new Date(now.getFullYear(), now.getMonth(), now.getDate(), +h, +m, +s, +ms).getTime();
+    }
+
+    const timeOfDayMs = this.timeToMs(time);
+    // Un fichier peut couvrir une session à cheval sur deux jours calendaires : un grand bond en
+    // arrière de l'heure du jour (jamais observé autrement, les lignes arrivent en ordre
+    // chronologique) signale un passage de minuit plutôt qu'un réordonnancement multi-compte.
+    if (
+      this.lastTimestampTimeOfDayMs !== null &&
+      timeOfDayMs < this.lastTimestampTimeOfDayMs - DAY_ROLLOVER_THRESHOLD_MS
+    ) {
+      this.logDateDayOffset++;
+    }
+    this.lastTimestampTimeOfDayMs = timeOfDayMs;
+
+    const { year, month, day } = this.logDateAnchor;
+    // `Date` normalise nativement un `day` débordant (ex. 32 août => 1er septembre).
+    const baseDateMs = new Date(year, month - 1, day + this.logDateDayOffset).getTime();
+    return baseDateMs + timeOfDayMs;
   }
 
   private timeToMs(time: string): number {
@@ -1250,24 +1369,21 @@ export class StatsStoreService {
     this.incrementWatched(name);
   }
 
-  private registerLoot(
-    item: string,
-    quantity: number,
-    fightId: number | null,
-    isPurchase: boolean,
-  ): void {
-    if (!this.currentBatchIsInitialLoad) {
-      this.incrementWatched(item, quantity);
-      const soundEntry = this.profile.findEnabledSoundItem(item);
-      if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
-    }
+  /** Effets de bord d'un ramassage indépendants de tout combat (suivi/watchlist, alerte sonore) —
+   * déclenchés pour CHAQUE ramassage, achat compris, qu'un combat soit en cours ou non (voir
+   * apply()). Le rattachement au butin d'un combat précis est un sujet à part entière, traité en
+   * différé — voir pendingFightLoot/addLootToFight. */
+  private registerLoot(item: string, quantity: number): void {
+    if (this.currentBatchIsInitialLoad) return;
+    this.incrementWatched(item, quantity);
+    const soundEntry = this.profile.findEnabledSoundItem(item);
+    if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
+  }
 
-    // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un
-    // combat est actif au même moment (fightId résolu par erreur) — voir `apply()`.
-    if (isPurchase) return;
-
-    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
-    if (!working) return;
+  /** Ajoute un objet au butin d'UN combat précis déjà résolu avec certitude (voir
+   * pendingFightLoot, vidé dans finalizeFight) — jamais appelé directement pour une ligne de log,
+   * dont le fightId ne peut pas être connu avec certitude au moment où elle est lue. */
+  private addLootToFight(working: FightWorking, item: string, quantity: number): void {
     const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
     if (existing) existing.quantity += quantity;
     else

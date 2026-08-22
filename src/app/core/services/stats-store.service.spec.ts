@@ -320,6 +320,159 @@ describe('StatsStoreService', () => {
       expect(stats.fightHistory()[0].kamas).toBe(0);
     });
 
+    it(
+      'utilise la date CALENDAIRE réelle du fichier (ligne d\'ancrage "build -1 [...]", voir ' +
+        'LogDateAnchorEntry) plutôt que la date système du jour de lecture (bug réel : un combat ' +
+        'consulté un autre jour que celui où il a eu lieu affichait systématiquement la date du ' +
+        'jour de LECTURE au lieu de la date réelle du combat)',
+      () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        // Date système très différente de la date réelle du fichier (voir ligne d'ancrage
+        // ci-dessous) : si le combat récupère malgré tout cette date système, le test échoue.
+        vi.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+        try {
+          const stats = TestBed.inject(StatsStoreService);
+          const access = TestBed.inject(LogFileAccessService);
+          feed(access, [
+            ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45])',
+            ' INFO 15:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ]);
+
+          const fights = stats.fightHistory();
+          expect(fights).toHaveLength(1);
+          expect(fights[0].fullTimestampMs).toBe(new Date(2026, 7, 20, 15, 0, 0, 0).getTime());
+        } finally {
+          vi.useRealTimers();
+        }
+      },
+    );
+
+    it(
+      "n'inclut jamais une entité qui n'a pas rejoint CE combat via sa propre ligne " +
+        '"[_FL_] ... join the fight" (règle demandée explicitement : la composition d\'un combat est ' +
+        'figée à son démarrage) — même une invocation qui a bien sa propre ligne technique mais avec ' +
+        'un obstacleId différent de -1 (traitée comme un décor, jamais ajoutée au roster) ne doit ' +
+        'jamais apparaître ni compter dans les dégâts du combat',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Invocation avec obstacleId != -1 : filtrée comme un décor (voir LogParser), jamais
+            // ajoutée au roster du combat — ses dégâts ne doivent donc jamais être comptés.
+            ' INFO 10:00:01,000 [T] (a:1) - [_FL_] fightId=1 Invocation breed : 99 [2] isControlledByAI=false obstacleId : 7 join the fight at {P}',
+            ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Invocation lance le sort Glyphe',
+            ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Bouftou: -40 PV (Terre)',
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        expect(fights).toHaveLength(1);
+        const names = fights[0].rows.map((r) => r.name);
+        expect(names).not.toContain('Invocation');
+        expect(names.sort()).toEqual(['Bouftou', 'Oumbra']);
+      },
+    );
+
+    it(
+      "n'accorde jamais l'XP d'un combat concurrent à un personnage qui n'a pas rejoint CE combat " +
+        '(même garde-fou que pour les dégâts/allié-ennemi)',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Bwork breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // "Caliburnus" n'a jamais rejoint le combat 1 : son XP ne doit jamais y apparaître,
+            // même si le fightId résolu par erreur pointait dessus (repli sur le dernier combat
+            // courant, nom ambigu...).
+            " INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Caliburnus : +100 points d'XP. ",
+            " INFO 10:00:07,000 [T] (a:1) - [Information (combat)] Oumbra : +50 points d'XP. ",
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+            ' INFO 10:00:11,000 [T] (a:1) - [FIGHT] End fight with id 2',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        const fight1 = fights.find((f) => f.id === 1);
+        expect(fight1).toBeTruthy();
+        expect(fight1!.xp.map((x) => x.name)).toEqual(['Oumbra']);
+      },
+    );
+
+    it(
+      "n'attribue jamais au combat suivant le butin resté en attente d'un combat-end reçu SANS " +
+        "combat connu (ex. combat déjà en cours à l'ouverture du fichier, dont les lignes de " +
+        "jointure sont antérieures au début du log lu) — bug réel : butin d'un combat totalement " +
+        'sans rapport, jamais suivi par cette session, affiché sous le combat réel suivant',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Butin ramassé pendant que le combat 1 (le seul combat SUIVI) est actif — le parser
+            // l'y rattache par défaut, mais il appartient en réalité à un combat 999 jamais vu
+            // rejoindre (jointure antérieure au début de ce log).
+            ' INFO 10:00:05,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Objet Fantome .',
+            ' INFO 10:00:05,500 [T] (a:1) - [FIGHT] End fight with id 999',
+            // Butin du VRAI combat 1, ramassé juste avant sa propre fin.
+            ' INFO 10:00:09,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Peau de Bouftou .',
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        expect(fights).toHaveLength(1);
+        const lootNames = fights[0].loot.map((l) => l.name);
+        expect(lootNames).toEqual(['Peau de Bouftou']);
+        expect(lootNames).not.toContain('Objet Fantome');
+      },
+    );
+
+    it(
+      "sépare correctement le butin de deux combats concurrents dont l'activité s'entrelace " +
+        "(bug réel signalé : butin d'un donjon affiché sous le combat d'un AUTRE donjon tournant " +
+        'en parallèle) — chaque butin reste collé à la fin du combat qui le précède immédiatement',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,000 [T] (a:1) - [_FL_] fightId=2 Caliburnus breed : 8 [2] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:05,001 [T] (a:1) - [_FL_] fightId=2 Bwork breed : 9 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // Butin du combat 2, ramassé (et le combat clos) alors que le combat 1 tourne toujours.
+            ' INFO 10:00:06,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Dent de Bwork .',
+            ' INFO 10:00:06,500 [T] (a:1) - [FIGHT] End fight with id 2',
+            // Butin du combat 1, ramassé juste avant sa propre fin — bien après celle du combat 2.
+            ' INFO 10:00:20,000 [T] (a:1) - [Information (jeu)] Vous avez ramassé 1x Peau de Bouftou .',
+            ' INFO 10:00:21,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        const fight1 = fights.find((f) => f.id === 1);
+        const fight2 = fights.find((f) => f.id === 2);
+        expect(fight1!.loot.map((l) => l.name)).toEqual(['Peau de Bouftou']);
+        expect(fight2!.loot.map((l) => l.name)).toEqual(['Dent de Bwork']);
+      },
+    );
+
     it('défaite compte solo (fight_single-account_lost.log)', () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
@@ -995,10 +1148,11 @@ describe('StatsStoreService', () => {
     });
 
     it('relire le même fichier un autre jour ne recrée aucun doublon (la clé ignore la date système)', async () => {
-      // Le log Wakfu n'écrit que l'heure : StatsStoreService lui recolle la date
-      // du jour de LECTURE. Si cette date entrait dans la clé déterministe, un
-      // fichier encore ouvert le lendemain réenverrait tout en double — d'où une
-      // signature bâtie sur la seule heure du log (voir history-event.model.ts).
+      // Le jeu de lignes ci-dessus ne contient pas la ligne d'ancrage de date réelle du fichier
+      // (voir LogDateAnchorEntry) : StatsStoreService retombe donc sur son ancien repli, la date du
+      // jour de LECTURE. Si cette date entrait dans la clé déterministe, un fichier encore ouvert le
+      // lendemain réenverrait tout en double — d'où une signature bâtie sur la seule heure du log
+      // (voir history-event.model.ts), qu'une date d'ancrage soit disponible ou non.
       vi.useFakeTimers({ toFake: ['Date'] });
       vi.setSystemTime(new Date('2026-08-11T22:00:00Z'));
 
