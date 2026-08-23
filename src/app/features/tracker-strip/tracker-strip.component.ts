@@ -44,6 +44,16 @@ const KPI_EXPAND_DURATION_MS = 320;
  * moment du calcul : elle vaut encore 58px avant que la transition ne
  * démarre). */
 const KPI_EXPANDED_WIDTH_PX = 250;
+/** Marge horizontale (px) autour des éléments interactifs de la colonne verticale (`kpiPos`
+ * gauche/droite) — boutons +/-/fermer, padding de `.kpi-strip`/`.kpi-add` (voir CSS) : valeur
+ * unique pour rester cohérente partout, affinée à l'usage (mesurée en devtools). */
+const KPI_VERTICAL_MARGIN_PX = 7;
+/** Marge supplémentaire (px) réservée sur `kpiWideWidthPx` au-delà de la marge standard — absorbe
+ * la scrollbar verticale de `.kpi-strip` (`overflow-y: auto`, voir CSS) sur un navigateur qui la
+ * rend "classique" (pas en surimpression, ex. Windows/Firefox par défaut) : sans elle, la largeur
+ * de contenu réellement disponible serait `2 * KPI_VERTICAL_MARGIN_PX` en dessous de la largeur de
+ * tuile déployée qu'elle doit pourtant loger tout juste — plus de marge, zéro. */
+const KPI_VERTICAL_SCROLLBAR_BUFFER_PX = 8;
 
 /**
  * Suivi (desktop) : bande horizontale de KPI compacts au-dessus de la ligne
@@ -79,6 +89,7 @@ const KPI_EXPANDED_WIDTH_PX = 250;
   host: {
     '[attr.data-kpi-pos]': 'layout.kpiPos()',
     '[class.kpi-strip-wide]': 'isWide()',
+    '[style.--kpi-wide-width.px]': 'kpiWideWidthPx',
   },
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
@@ -103,6 +114,14 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
+  /** Largeur de la colonne verticale une fois élargie (`.kpi-strip-wide`, voir CSS) — DOIT
+   * accueillir une tuile déployée (`--kpi-expanded-width`, même constante) sans la rogner
+   * (`.kpi-strip` a `overflow-x: hidden`, voir CSS) : un ancien `230px` fixe, plus petit que les
+   * `250px` d'une tuile déployée, la clippait horizontalement (bug réel remonté par l'utilisateur,
+   * capture à l'appui). Dérivée de la même constante + la marge standard de cette colonne (voir
+   * `KPI_VERTICAL_MARGIN_PX`) plutôt qu'un second nombre magique indépendant qui pourrait diverger. */
+  protected readonly kpiWideWidthPx =
+    KPI_EXPANDED_WIDTH_PX + 2 * KPI_VERTICAL_MARGIN_PX + KPI_VERTICAL_SCROLLBAR_BUFFER_PX;
   /** Exposée au template pour comparer `activeKey()` à la bonne entrée (voir son binding
    * `[class.expanded]`) — fonction pure, pas besoin de `this`, simple référence. */
   protected readonly entryKey = watchlistEntryKey;
@@ -189,13 +208,14 @@ export class TrackerStripComponent implements OnDestroy {
 
   /** Mode colonne (`kpiPos` gauche/droite, voir CSS) seulement : la bande reste étroite par défaut
    * (juste assez pour les boutons +/- repliés) et s'élargit en accordéon — poussant
-   * `.dashboard-main`, voisin flex, voir dashboard.component.css — dès qu'il y a quelque chose à
-   * montrer de plus large qu'une tuile repliée (formulaire d'ajout ouvert, tuile déployée, ou mode
-   * sélection groupée avec sa confirmation). Sans effet en mode ligne (haut/bas) : la largeur y est
-   * déjà celle de `.dashboard-main` au complet, rien à economiser. */
-  protected readonly isWide = computed(
-    () => this.addOpen() || this.activeKey() !== null || this.watchlist.selectMode(),
-  );
+   * `.dashboard-main`, voisin flex, voir dashboard.component.css — dès que le formulaire d'ajout
+   * s'ouvre ou qu'une tuile se déploie, les deux seuls cas qui ont réellement besoin de plus de
+   * largeur. PAS le mode sélection groupée (`.kpi-remove-wrap`/`watchlist.selectMode()`) : sa
+   * confirmation (`.kpi-bulk-delete-btn`) flotte déjà sur le CÔTÉ en `position: absolute` (voir CSS),
+   * sans avoir besoin que la colonne elle-même s'élargisse — l'inclure ici l'élargissait sans
+   * raison (retour utilisateur). Sans effet en mode ligne (haut/bas) : la largeur y est déjà celle
+   * de `.dashboard-main` au complet, rien à économiser. */
+  protected readonly isWide = computed(() => this.addOpen() || this.activeKey() !== null);
 
   /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
    * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du

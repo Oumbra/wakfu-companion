@@ -40,9 +40,14 @@
   box-sizing: border-box;
   min-height: 0;
 }
+/* `gap: 7px` (au lieu des 15px par défaut) : la colonne d'objectifs verticale s'est resserrée
+   (padding interne réduit à 7px, voir tracker-strip.component.css) — garder un gap de 15px vis-à-vis
+   de `.dashboard-main` juste à côté aurait laissé un vide disproportionné par rapport au reste de
+   la colonne, désormais bien plus compacte (retour utilisateur). */
 .dashboard[data-kpi-pos='left'],
 .dashboard[data-kpi-pos='right'] {
   flex-direction: row;
+  gap: 7px;
 }
 .dashboard[data-kpi-pos='bottom'] app-tracker-strip,
 .dashboard[data-kpi-pos='right'] app-tracker-strip {
