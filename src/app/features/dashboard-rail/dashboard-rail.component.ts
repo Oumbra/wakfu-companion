@@ -71,13 +71,13 @@ export class DashboardRailComponent {
   });
 
   protected readonly entries = computed<RailEntry[]>(() => {
-    const historySplit = this.layout.historySplit();
+    const historyGroup = this.layout.historyGroup();
     return this.layout
       .activeSlots()
       .filter((slot) => this.layout.isCollapsed(slot.key))
       .map((slot) => ({
         id: slot.key,
-        label: dashboardBodySlotLabel(this.i18n, historySplit, slot.key),
+        label: dashboardBodySlotLabel(this.i18n, historyGroup, slot.key),
         expandHint: this.i18n.t(expandHintKeyFor(slot.key)),
         icon: dashboardBodySlotIcon(slot.key),
         count: slot.key === 'chat' ? this.chatPanel.matchedMessageCount() || null : null,

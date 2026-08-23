@@ -8,16 +8,28 @@
    autre que `visible` casse le calcul, même un hôte de composant sans rôle visuel). Les variables
    CSS ci-dessous restent héritées normalement (`display: contents` ne change que la génération de
    boîte, pas la cascade). */
+/* Une couleur par volet d'historique SOLO (combats/purchases/trades, voir DashboardBodySlot.sw) en
+   plus de `history` (couleur "méta" du regroupement, voir CLAUDE.md) — palette cohérente avec le
+   thème de chaque section : rouge/épées pour Combats, bleu/commerce pour Achats, jaune pour
+   Échanges, violet neutre pour le regroupement (ni rouge ni bleu ni jaune, pour ne pas se confondre
+   avec l'un des 3 volets qu'il peut représenter), gris pour Menu, ambre pour Objectifs (déjà en
+   place), vert pour Chat (déjà en place). */
 :host {
   display: contents;
   --lp-sw-menu: #838a99;
   --lp-sw-kpi: #e0b23d;
+  --lp-sw-combats: #e2586c;
+  --lp-sw-purchases: #4f9fe0;
+  --lp-sw-trades: #d9c440;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
 }
 :host-context([data-theme='light']) {
   --lp-sw-menu: #6b7280;
   --lp-sw-kpi: #b8860f;
+  --lp-sw-combats: #c0364a;
+  --lp-sw-purchases: #2f74b5;
+  --lp-sw-trades: #a8901a;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
 }
@@ -27,6 +39,15 @@
 }
 .sw-kpi {
   --lp-sw: var(--lp-sw-kpi);
+}
+.sw-combats {
+  --lp-sw: var(--lp-sw-combats);
+}
+.sw-purchases {
+  --lp-sw: var(--lp-sw-purchases);
+}
+.sw-trades {
+  --lp-sw: var(--lp-sw-trades);
 }
 .sw-history {
   --lp-sw: var(--lp-sw-history);
@@ -236,6 +257,11 @@
   margin: 0 0 22px;
   font-size: 11.5px;
   color: var(--text-muted);
+}
+/* Rappel "il en faut 2" (voir needsSecondGroupPick) — même gabarit que `.dlp-hint`, teinte ambre
+   pour se distinguer d'un simple résumé neutre. */
+.dlp-hint-warn {
+  color: var(--lp-sw-kpi);
 }
 
 .dlp-focus-block {

@@ -7,7 +7,7 @@ export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
  * `DashboardLayoutPickerComponent`), aucun texte n'est rendu dedans : ce composant est purement
  * décoratif/structurel, jamais responsable de la traduction des libellés. */
 export interface DashboardLayoutSchemaCell {
-  readonly sw: 'history' | 'chat';
+  readonly sw: 'combats' | 'purchases' | 'trades' | 'history' | 'chat';
   /** Dernière carte d'une répartition à nombre impair : occupe toute la largeur de sa ligne (voir
    * `DashboardLayoutPickerComponent.previewCells`, même règle que la grille réelle envisagée). */
   readonly span2?: boolean;

@@ -51,6 +51,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Chargement...',
 
     'damageMeter.header': 'Combat en cours',
+    'damageMeter.combatInfo': 'Informations de combat',
     'damageMeter.allies': 'Alliés',
     'damageMeter.enemies': 'Ennemis',
     'damageMeter.emptyAllies': "Aucun allié n'a encore infligé de dégâts.",
@@ -239,11 +240,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.left.desc': "Liste verticale, pratique avec beaucoup d'objectifs.",
     'profile.dashboardLayout.kpi.right.name': 'Colonne, à droite',
     'profile.dashboardLayout.kpi.right.desc': 'Même liste verticale, le long du bord droit.',
-    'profile.dashboardLayout.historyTitle': "Découpage de l'historique",
+    'profile.dashboardLayout.historyTitle': "Regroupement de l'historique",
     'profile.dashboardLayout.historyDesc':
-      "Par défaut, un seul bloc Historique avec 3 sous-onglets. N'importe lequel peut sortir dans sa propre carte.",
-    'profile.dashboardLayout.historyOn': 'Sa propre carte.',
-    'profile.dashboardLayout.historyOff': 'Regroupée dans « Historique ».',
+      'Par défaut, Combats, Achats et Échanges ont chacun leur propre carte. Coche-en au moins deux pour les regrouper dans un seul bloc Historique.',
+    'profile.dashboardLayout.historyOn': 'Regroupée dans « Historique ».',
+    'profile.dashboardLayout.historyOff': 'Sa propre carte.',
+    'profile.dashboardLayout.historyGroupNeedsTwo': 'Coche au moins 2 éléments pour les regrouper.',
     'profile.dashboardLayout.historySplitSummaryOne': "→ 1 carte d'historique : {{names}}",
     'profile.dashboardLayout.historySplitSummaryMany':
       "→ {{count}} cartes d'historique : {{names}}",
@@ -268,6 +270,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.trades': 'Échanges',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.histGroupFull': 'Historique',
+    'profile.dashboardLayout.slot.histGroupLegend': 'Historique (regroupé)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Historique ({{parts}})',
     'profile.themeLabel': 'Thème',
     'profile.themeHint':
@@ -614,6 +617,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Loading...',
 
     'damageMeter.header': 'Current Fight',
+    'damageMeter.combatInfo': 'Combat info',
     'damageMeter.allies': 'Allies',
     'damageMeter.enemies': 'Enemies',
     'damageMeter.emptyAllies': 'No ally has dealt damage yet.',
@@ -803,11 +807,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.left.desc': 'Vertical list, handy with lots of objectives.',
     'profile.dashboardLayout.kpi.right.name': 'Column, on the right',
     'profile.dashboardLayout.kpi.right.desc': 'Same vertical list, along the right edge.',
-    'profile.dashboardLayout.historyTitle': 'History split',
+    'profile.dashboardLayout.historyTitle': 'History grouping',
     'profile.dashboardLayout.historyDesc':
-      'By default, a single History block with 3 sub-tabs. Any of them can move out into its own card.',
-    'profile.dashboardLayout.historyOn': 'Its own card.',
-    'profile.dashboardLayout.historyOff': "Grouped under 'History'.",
+      'By default, Combat, Purchases and Trades each get their own card. Check at least two to group them into a single History block.',
+    'profile.dashboardLayout.historyOn': "Grouped under 'History'.",
+    'profile.dashboardLayout.historyOff': 'Its own card.',
+    'profile.dashboardLayout.historyGroupNeedsTwo': 'Check at least 2 to group them.',
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 history card: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany': '→ {{count}} history cards: {{names}}',
     'profile.dashboardLayout.bodyTitle': 'Body composition',
@@ -831,6 +836,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.trades': 'Trades',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.histGroupFull': 'History',
+    'profile.dashboardLayout.slot.histGroupLegend': 'History (grouped)',
     'profile.dashboardLayout.slot.histGroupPartial': 'History ({{parts}})',
     'profile.themeLabel': 'Theme',
     'profile.themeHint': 'Choose the appearance of the app: dark, or one of 4 light variants.',
@@ -1170,6 +1176,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Cargando...',
 
     'damageMeter.header': 'Combate en curso',
+    'damageMeter.combatInfo': 'Información de combate',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Enemigos',
     'damageMeter.emptyAllies': 'Ningún aliado ha infligido daño todavía.',
@@ -1360,11 +1367,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.right.name': 'Columna, a la derecha',
     'profile.dashboardLayout.kpi.right.desc':
       'La misma lista vertical, a lo largo del borde derecho.',
-    'profile.dashboardLayout.historyTitle': 'División del historial',
+    'profile.dashboardLayout.historyTitle': 'Agrupación del historial',
     'profile.dashboardLayout.historyDesc':
-      'Por defecto, un único bloque Historial con 3 subpestañas. Cualquiera puede salir a su propia tarjeta.',
-    'profile.dashboardLayout.historyOn': 'Su propia tarjeta.',
-    'profile.dashboardLayout.historyOff': 'Agrupada en «Historial».',
+      'Por defecto, Combates, Compras e Intercambios tienen cada uno su propia tarjeta. Marca al menos dos para agruparlas en un solo bloque Historial.',
+    'profile.dashboardLayout.historyOn': 'Agrupada en «Historial».',
+    'profile.dashboardLayout.historyOff': 'Su propia tarjeta.',
+    'profile.dashboardLayout.historyGroupNeedsTwo': 'Marca al menos 2 para agruparlas.',
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 tarjeta de historial: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany':
       '→ {{count}} tarjetas de historial: {{names}}',
@@ -1389,6 +1397,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.trades': 'Intercambios',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.histGroupFull': 'Historial',
+    'profile.dashboardLayout.slot.histGroupLegend': 'Historial (agrupado)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Historial ({{parts}})',
     'profile.themeLabel': 'Tema',
     'profile.themeHint':
@@ -1733,6 +1742,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Carregando...',
 
     'damageMeter.header': 'Combate em curso',
+    'damageMeter.combatInfo': 'Informações de combate',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Inimigos',
     'damageMeter.emptyAllies': 'Nenhum aliado causou dano ainda.',
@@ -1922,11 +1932,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.left.desc': 'Lista vertical, prática com muitos objetivos.',
     'profile.dashboardLayout.kpi.right.name': 'Coluna, à direita',
     'profile.dashboardLayout.kpi.right.desc': 'A mesma lista vertical, ao longo da borda direita.',
-    'profile.dashboardLayout.historyTitle': 'Divisão do histórico',
+    'profile.dashboardLayout.historyTitle': 'Agrupamento do histórico',
     'profile.dashboardLayout.historyDesc':
-      'Por padrão, um único bloco Histórico com 3 subabas. Qualquer uma delas pode virar seu próprio cartão.',
-    'profile.dashboardLayout.historyOn': 'Seu próprio cartão.',
-    'profile.dashboardLayout.historyOff': 'Agrupada em «Histórico».',
+      'Por padrão, Combates, Compras e Trocas têm cada um seu próprio cartão. Marque pelo menos dois para agrupá-los em um único bloco Histórico.',
+    'profile.dashboardLayout.historyOn': 'Agrupada em «Histórico».',
+    'profile.dashboardLayout.historyOff': 'Seu próprio cartão.',
+    'profile.dashboardLayout.historyGroupNeedsTwo': 'Marque pelo menos 2 para agrupá-las.',
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 cartão de histórico: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany':
       '→ {{count}} cartões de histórico: {{names}}',
@@ -1951,6 +1962,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.trades': 'Trocas',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.histGroupFull': 'Histórico',
+    'profile.dashboardLayout.slot.histGroupLegend': 'Histórico (agrupado)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Histórico ({{parts}})',
     'profile.themeLabel': 'Tema',
     'profile.themeHint':

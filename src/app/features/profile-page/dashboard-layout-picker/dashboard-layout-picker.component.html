@@ -14,8 +14,20 @@
       >{{ 'profile.dashboardLayout.slot.kpi' | t }}</span
     >
     <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-combats"></span
+      >{{ 'profile.dashboardLayout.slot.histCombats' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-purchases"></span
+      >{{ 'profile.dashboardLayout.slot.purchases' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-trades"></span
+      >{{ 'profile.dashboardLayout.slot.trades' | t }}</span
+    >
+    <span class="dlp-legend-item"
       ><span class="dlp-legend-chip sw-history"></span
-      >{{ 'profile.dashboardLayout.slot.histGroupFull' | t }}</span
+      >{{ 'profile.dashboardLayout.slot.histGroupLegend' | t }}</span
     >
     <span class="dlp-legend-item"
       ><span class="dlp-legend-chip sw-chat"></span
@@ -100,30 +112,33 @@
     }
   </div>
 
-  <!-- ============ Découpage de l'historique ============ -->
+  <!-- ============ Regroupement de l'historique ============ -->
   <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.historyTitle' | t }}</h4>
   <p class="dlp-subdesc">{{ 'profile.dashboardLayout.historyDesc' | t }}</p>
   <div class="dlp-setting-rows">
     @for (key of histKeys; track key) {
       <div class="dlp-setting-row">
-        <span class="dlp-setting-dot sw-history"></span>
+        <span class="dlp-setting-dot" [class]="'sw-' + key"></span>
         <span class="dlp-setting-text">
           <b>{{ histLabelKey(key) | t }}</b>
           <span>{{
-            (layout.historySplit()[key]
+            (layout.historyGroup()[key]
               ? 'profile.dashboardLayout.historyOn'
               : 'profile.dashboardLayout.historyOff'
             ) | t
           }}</span>
         </span>
         <app-switch
-          [checked]="layout.historySplit()[key]"
-          (checkedChange)="layout.toggleHistorySplit(key)"
+          [checked]="layout.historyGroup()[key]"
+          (checkedChange)="layout.toggleHistoryGroup(key)"
         />
       </div>
     }
   </div>
   <p class="dlp-hint">{{ historySplitSummary() }}</p>
+  @if (needsSecondGroupPick()) {
+    <p class="dlp-hint dlp-hint-warn">{{ 'profile.dashboardLayout.historyGroupNeedsTwo' | t }}</p>
+  }
 
   <!-- ============ Composition du corps ============ -->
   <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.bodyTitle' | t }}</h4>
