@@ -11,9 +11,9 @@ export type DashboardFocusSide = 'left' | 'right';
 export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
 
 /** Identifiant d'une "carte" potentielle du corps — `'hist_group'` désigne le bloc Historique
- * restant après découpage (voir `visibleBodySlots`), son identité change de contenu mais pas de
- * clé selon `historySplit`. Pas de clé `'combat'` : le combat en cours n'est plus une carte à part
- * (voir CLAUDE.md) — il vit désormais DANS `'hist_combats'`/`'hist_group'` (voir
+ * regroupé (voir `visibleBodySlots`), son identité change de contenu mais pas de clé selon
+ * `historyGroup`. Pas de clé `'combat'` : le combat en cours n'est plus une carte à part (voir
+ * CLAUDE.md) — il vit désormais DANS `'hist_combats'`/`'hist_group'` (voir
  * `FightHistoryComponent`), ni ciblable en mise en avant ni repliable indépendamment. */
 export type DashboardBodySlotKey =
   'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat';
@@ -29,7 +29,12 @@ export type DashboardGridKey = 'tracker' | DashboardBodySlotKey;
 
 export interface DashboardBodySlot {
   readonly key: DashboardBodySlotKey;
-  readonly sw: 'history' | 'chat';
+  /** Couleur de vignette (voir DashboardLayoutSchemaComponent) — une par volet d'historique SOLO
+   * (`DashboardHistoryKey`, sa propre teinte) plutôt qu'une seule couleur "historique" partagée :
+   * ne prend la valeur générique `'history'` que pour la carte `hist_group` (regroupement d'au
+   * moins 2 volets, voir `activeSlots`), qui a sa propre couleur "méta" distincte des 3 volets
+   * individuels (voir CLAUDE.md). */
+  readonly sw: DashboardHistoryKey | 'history' | 'chat';
 }
 
 /** Placement calculé d'une case dans `.panels-row` (grille CSS, voir `dashboard.component.css`) —
@@ -54,7 +59,16 @@ export interface DashboardLayoutPrefs {
   readonly bodyMode: DashboardBodyMode;
   readonly focusTarget: DashboardBodySlotKey;
   readonly focusSide: DashboardFocusSide;
-  readonly historySplit: Readonly<Record<DashboardHistoryKey, boolean>>;
+  /** Volets qu'un utilisateur souhaite voir REGROUPÉS dans un seul bloc Historique (voir
+   * `activeSlots`) — INVERSE de l'ancien `historySplit` (où `true` scindait un volet dans sa propre
+   * carte) : par défaut (tout `false`), Combats/Achats/Échanges sont chacun leur propre carte, et
+   * il faut en cocher AU MOINS DEUX pour qu'un regroupement ait lieu (voir `activeSlots` — un seul
+   * volet coché équivaudrait à ne rien regrouper). Renommé (pas juste réinterprété) lors de
+   * l'inversion de ce réglage (voir CLAUDE.md) : un ancien `historySplit` déjà persisté chez un
+   * utilisateur ne doit surtout pas se relire sous la nouvelle clé avec un sens inversé — `applyStored`
+   * ignore simplement l'ancien champ (absent sous ce nouveau nom), l'utilisateur repart sur le
+   * nouveau défaut plutôt que de voir sa disposition basculer à l'envers sans prévenir. */
+  readonly historyGroup: Readonly<Record<DashboardHistoryKey, boolean>>;
   readonly collapsedSections: Readonly<Partial<Record<DashboardCollapsibleKey, boolean>>>;
 }
 
@@ -62,12 +76,12 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   menuPos: 'left',
   kpiPos: 'top',
   bodyMode: 'equal',
-  // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' est la
-  // carte la plus systématiquement présente (couvre Combats/Achats/Échanges tant qu'aucun n'est
-  // scindé), repli plausible par défaut.
-  focusTarget: 'hist_group',
+  // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' n'est plus
+  // systématiquement présente (voir historyGroup ci-dessous, désormais l'exception plutôt que le
+  // défaut) : 'hist_combats' est un repli plus sûr, toujours l'un des 3 volets solo par défaut.
+  focusTarget: 'hist_combats',
   focusSide: 'right',
-  historySplit: { combats: false, purchases: false, trades: false },
+  historyGroup: { combats: false, purchases: false, trades: false },
   collapsedSections: {},
 };
 
@@ -116,8 +130,8 @@ export class DashboardLayoutService {
   readonly bodyMode = signal<DashboardBodyMode>(DEFAULT_PREFS.bodyMode);
   readonly focusTarget = signal<DashboardBodySlotKey>(DEFAULT_PREFS.focusTarget);
   readonly focusSide = signal<DashboardFocusSide>(DEFAULT_PREFS.focusSide);
-  readonly historySplit = signal<Record<DashboardHistoryKey, boolean>>({
-    ...DEFAULT_PREFS.historySplit,
+  readonly historyGroup = signal<Record<DashboardHistoryKey, boolean>>({
+    ...DEFAULT_PREFS.historyGroup,
   });
   /** Repli de Menu/Objectifs/Historique — PAS Chat, voir doc de tête (délégué). */
   readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({});
@@ -142,8 +156,8 @@ export class DashboardLayoutService {
     if (stored.bodyMode) this.bodyMode.set(stored.bodyMode);
     if (stored.focusTarget) this.focusTarget.set(stored.focusTarget);
     if (stored.focusSide) this.focusSide.set(stored.focusSide);
-    if (stored.historySplit) {
-      this.historySplit.set({ ...DEFAULT_PREFS.historySplit, ...stored.historySplit });
+    if (stored.historyGroup) {
+      this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup, ...stored.historyGroup });
     }
     if (stored.collapsedSections) this.collapsedSections.set({ ...stored.collapsedSections });
   }
@@ -161,7 +175,7 @@ export class DashboardLayoutService {
       bodyMode: this.bodyMode(),
       focusTarget: this.focusTarget(),
       focusSide: this.focusSide(),
-      historySplit: this.historySplit(),
+      historyGroup: this.historyGroup(),
       collapsedSections: this.collapsedSections(),
     } satisfies DashboardLayoutPrefs);
   }
@@ -186,8 +200,8 @@ export class DashboardLayoutService {
     this.focusSide.set(value);
     this.persist();
   }
-  toggleHistorySplit(key: DashboardHistoryKey): void {
-    this.historySplit.update((cur) => ({ ...cur, [key]: !cur[key] }));
+  toggleHistoryGroup(key: DashboardHistoryKey): void {
+    this.historyGroup.update((cur) => ({ ...cur, [key]: !cur[key] }));
     this.persist();
   }
 
@@ -210,7 +224,7 @@ export class DashboardLayoutService {
     this.bodyMode.set(DEFAULT_PREFS.bodyMode);
     this.focusTarget.set(DEFAULT_PREFS.focusTarget);
     this.focusSide.set(DEFAULT_PREFS.focusSide);
-    this.historySplit.set({ ...DEFAULT_PREFS.historySplit });
+    this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup });
     this.collapsedSections.set({});
     this.persist();
   }
@@ -220,16 +234,23 @@ export class DashboardLayoutService {
   /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique. Pas de
    * carte "Combat" à part : le combat en cours vit désormais DANS `hist_combats`/`hist_group`
    * (voir CLAUDE.md/FightHistoryComponent), toujours présentes ici qu'un combat soit en cours ou
-   * non. */
+   * non.
+   *
+   * Par défaut, Combats/Achats/Échanges sont chacun leur propre carte (`sw` = leur propre couleur) —
+   * `hist_group` (couleur "méta" distincte) n'apparaît QUE si l'utilisateur a coché AU MOINS DEUX
+   * volets à regrouper (`historyGroup`, voir CLAUDE.md) : un seul volet coché ne suffit pas (ça ne
+   * regrouperait rien de plusieurs volets), il reste alors solo comme les autres — cf. la "tactique"
+   * demandée pour ce cas. */
   readonly activeSlots = computed<DashboardBodySlot[]>(() => {
     const slots: DashboardBodySlot[] = [];
-    const split = this.historySplit();
-    const splitOnes = HIST_KEYS.filter((k) => split[k]);
-    const remaining = HIST_KEYS.filter((k) => !split[k]);
-    for (const k of splitOnes) {
-      slots.push({ key: `hist_${k}` as DashboardBodySlotKey, sw: 'history' });
+    const group = this.historyGroup();
+    const groupedKeys = HIST_KEYS.filter((k) => group[k]);
+    const groupingActive = groupedKeys.length >= 2;
+    const soloKeys = groupingActive ? HIST_KEYS.filter((k) => !group[k]) : HIST_KEYS;
+    for (const k of soloKeys) {
+      slots.push({ key: `hist_${k}` as DashboardBodySlotKey, sw: k });
     }
-    if (remaining.length > 0) slots.push({ key: 'hist_group', sw: 'history' });
+    if (groupingActive) slots.push({ key: 'hist_group', sw: 'history' });
     slots.push({ key: 'chat', sw: 'chat' });
     return slots;
   });

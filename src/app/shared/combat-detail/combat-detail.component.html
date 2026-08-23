@@ -1,14 +1,25 @@
-<div class="combat-switch-row">
-  <app-damage-view-switch
-    [mode]="mode()"
-    [turn]="turn()"
-    [maxTurn]="maxTurn()"
-    [totalLabelKey]="totalLabelKey()"
-    (modeChange)="modeChange.emit($event)"
-    (turnChange)="turnChange.emit($event)"
-  />
-  <app-entity-stat-tabs [kind]="statKind()" (kindChange)="kindChange.emit($event)" />
+<div class="combat-info-toggle" (click)="toggleSwitches()">
+  <span class="combat-info-label">{{ 'damageMeter.combatInfo' | t }}</span>
+  <span class="caret" [class.expanded]="switchesExpanded()">▸</span>
 </div>
+@if (switchesExpanded()) {
+  <div class="combat-switch-row">
+    <app-damage-view-switch
+      class="combat-switch-center"
+      [mode]="mode()"
+      [turn]="turn()"
+      [maxTurn]="maxTurn()"
+      [totalLabelKey]="totalLabelKey()"
+      (modeChange)="modeChange.emit($event)"
+      (turnChange)="turnChange.emit($event)"
+    />
+    <app-entity-stat-tabs
+      class="combat-switch-right"
+      [kind]="statKind()"
+      (kindChange)="kindChange.emit($event)"
+    />
+  </div>
+}
 <div class="entity-lists-row">
   <app-entity-damage-list
     [title]="'damageMeter.allies' | t"

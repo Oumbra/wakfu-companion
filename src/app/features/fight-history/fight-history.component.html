@@ -278,7 +278,7 @@
                     <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
                   }
                 </div>
-                @if (record.loot.length > 1) {
+                @if (record.loot.length > 1 && isFightLootExpanded(record.id)) {
                   <div
                     class="icon-switch icon-switch-3 loot-sort-switch"
                     (click)="$event.stopPropagation()"

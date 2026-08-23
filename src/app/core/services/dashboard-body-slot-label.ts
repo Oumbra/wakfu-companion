@@ -17,21 +17,24 @@ export function histLabelKey(key: DashboardHistoryKey): string {
  * `DashboardLayoutPickerComponent` (Profil › Personnalisation) et par `DashboardRailComponent` (le
  * VRAI rail, dont les entrées listent désormais toutes les cartes repliées, pas seulement Chat) :
  * un seul calcul, `DashboardLayoutService` lui-même ne connaît pas l'i18n (voir sa doc de tête) donc
- * ne peut pas le porter directement. `historySplit` passé explicitement (pas lu depuis
+ * ne peut pas le porter directement. `historyGroup` passé explicitement (pas lu depuis
  * `DashboardLayoutService` ici) pour rester une fonction pure, facile à appeler depuis un `computed`
  * sans dépendance cachée. */
 export function dashboardBodySlotLabel(
   i18n: I18nService,
-  historySplit: Readonly<Record<DashboardHistoryKey, boolean>>,
+  historyGroup: Readonly<Record<DashboardHistoryKey, boolean>>,
   key: DashboardBodySlotKey,
 ): string {
   if (key === 'chat') return i18n.t('profile.dashboardLayout.slot.chat');
   if (key === 'hist_group') {
-    const remaining = HIST_KEYS.filter((k) => !historySplit[k]);
-    return remaining.length === 3
+    // N'est appelé pour cette clé que quand le regroupement est actif (voir
+    // `DashboardLayoutService.activeSlots`, au moins 2 volets cochés) — `grouped` a donc toujours
+    // 2 ou 3 éléments ici.
+    const grouped = HIST_KEYS.filter((k) => historyGroup[k]);
+    return grouped.length === 3
       ? i18n.t('profile.dashboardLayout.slot.histGroupFull')
       : i18n.t('profile.dashboardLayout.slot.histGroupPartial', {
-          parts: remaining.map((k) => i18n.t(histLabelKey(k))).join(' + '),
+          parts: grouped.map((k) => i18n.t(histLabelKey(k))).join(' + '),
         });
   }
   // 'hist_combats' | 'hist_purchases' | 'hist_trades'

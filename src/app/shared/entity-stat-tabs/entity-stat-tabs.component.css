@@ -1,33 +1,19 @@
-/* Icônes seules, taille fixe compacte (voir CLAUDE.md) — ne partage plus toute la largeur du
-   panneau avec `.view-switch-row` (voir CombatDetailComponent, désormais sur la même ligne que le
-   switch Cumulé/Tour). */
+/* Réutilise le switch icône générique (`.icon-switch`/`.icon-switch-3`, styles.css — même mécanique
+   que le tri du butin `.loot-sort-switch`/le regroupement `.fight-group-switch`) plutôt qu'un bloc
+   de boutons maison, voir CLAUDE.md ("toujours un composant/pattern partagé, jamais un bloc local
+   recopié"). Icônes seules (pas de libellé) pour rester compact — le libellé reste accessible via
+   tooltip. */
 :host {
   display: flex;
-  gap: 4px;
+  flex-shrink: 0;
 }
 
-.entity-stat-tab {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: 6px;
-  background: var(--tint-medium);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.15s;
+.entity-stat-switch {
+  width: 108px;
 }
-.entity-stat-tab:hover:not(.selected) {
-  filter: brightness(1.15);
-}
-.entity-stat-tab.selected {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-.entity-stat-tab img {
-  width: 18px;
-  height: 18px;
+
+.entity-stat-switch-option img {
+  width: 16px;
+  height: 16px;
   object-fit: contain;
 }

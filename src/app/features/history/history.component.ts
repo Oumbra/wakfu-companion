@@ -54,13 +54,14 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
  * FightHistoryComponent), l'historique des achats (voir PurchasesComponent)
  * et l'historique des échanges (voir TradesComponent).
  *
- * Découpage piloté par `DashboardLayoutService.historySplit` (réglable sur Profil ›
- * Personnalisation), désormais indépendant pour chacun des 3 volets — jusqu'à 3 panneaux
- * indépendants (`effectiveSplitKeys`, un par volet scindé) plus, s'il reste au moins un volet non
- * scindé, UN panneau groupé (`remainingKeys`) avec un sous-onglet par volet restant (1 à 3). Desktop
- * uniquement (`isDesktop`, même seuil que `.collapse-btn`) : en mobile, le découpage n'a pas de sens
- * dans la disposition "un seul panneau à la fois" — toujours le panneau groupé complet, comme avant
- * cette fonctionnalité.
+ * Regroupement piloté par `DashboardLayoutService.historyGroup` (réglable sur Profil ›
+ * Personnalisation) — INVERSE de l'ancien réglage "découpage" (voir CLAUDE.md) : par défaut, les 3
+ * volets sont chacun leur propre panneau (`effectiveSplitKeys`) ; cocher AU MOINS DEUX volets à
+ * regrouper fait apparaître UN panneau groupé (`remainingKeys`) avec un sous-onglet par volet
+ * regroupé, les volets restants (non cochés) gardant chacun leur panneau. Desktop uniquement
+ * (`isDesktop`, même seuil que `.collapse-btn`) : en mobile, le regroupement n'a pas de sens dans la
+ * disposition "un seul panneau à la fois" — toujours le panneau groupé complet (les 3 volets), comme
+ * avant cette fonctionnalité.
  *
  * `:host { display: contents }` (voir CSS) : chaque `.tool-panel` rendu par ce composant devient un
  * enfant direct du grid `.panels-row` de `DashboardComponent` — même principe que
@@ -100,17 +101,23 @@ export class HistoryComponent implements OnDestroy {
    * en desktop peut rester actif d'une session desktop précédente). */
   private readonly isDesktop = new MediaQuerySignal('(min-width: 801px)');
 
-  /** Volets effectivement scindés en panneau à part — desktop uniquement, voir doc de tête. */
+  /** Volets affichés chacun dans leur propre panneau — desktop uniquement, voir doc de tête. Tous
+   * les 3, sauf si l'utilisateur a coché au moins 2 volets à regrouper (`historyGroup`), auquel cas
+   * seuls les volets NON cochés restent solo (les cochés rejoignent le panneau groupé, voir
+   * `remainingKeys`) — même règle des "au moins 2" que `DashboardLayoutService.activeSlots`, à
+   * garder synchronisée avec elle. */
   protected readonly effectiveSplitKeys = computed<DashboardHistoryKey[]>(() => {
     if (!this.isDesktop.matches()) return [];
-    const split = this.layout.historySplit();
-    return HIST_KEYS.filter((k) => split[k]);
+    const group = this.layout.historyGroup();
+    const groupedKeys = HIST_KEYS.filter((k) => group[k]);
+    if (groupedKeys.length < 2) return [...HIST_KEYS];
+    return HIST_KEYS.filter((k) => !group[k]);
   });
-  /** Volets restant regroupés dans le panneau commun (1 à 3, jamais 0 sauf tous scindés — dans ce
-   * cas le panneau groupé ne se rend simplement pas, voir template). */
+  /** Volets regroupés dans le panneau commun (0 quand le regroupement n'est pas actif — dans ce cas
+   * le panneau groupé ne se rend simplement pas, voir template — sinon 2 ou 3). */
   protected readonly remainingKeys = computed<DashboardHistoryKey[]>(() => {
-    const split = new Set(this.effectiveSplitKeys());
-    return HIST_KEYS.filter((k) => !split.has(k));
+    const solo = new Set(this.effectiveSplitKeys());
+    return HIST_KEYS.filter((k) => !solo.has(k));
   });
 
   /** `effectiveSplitKeys` moins les volets individuellement repliés (voir `.collapse-btn`) — sans

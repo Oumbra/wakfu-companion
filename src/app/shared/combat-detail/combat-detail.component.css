@@ -12,17 +12,79 @@
   flex-direction: column;
 }
 
-/* Switch Cumulé/Tour + switch Dommage/Armure/Soin sur une seule ligne (voir CLAUDE.md) — remplace
-   les deux lignes empilées d'origine (`.view-switch-row` + pleine largeur d'EntityStatTabsComponent). */
-.combat-switch-row {
+/* Bandeau "Informations de combat" — replie/déplie UNIQUEMENT la ligne de switchs juste en dessous
+   (voir `switchesExpanded`, CombatDetailComponent) ; les listes alliés/ennemis restent toujours
+   visibles. Même gabarit que `.fight-group-row`/`.collapsible-header` (fight-history.component.css) :
+   dupliqué ici plutôt que partagé (CSS scopé par composant, voir CLAUDE.md). */
+.combat-info-toggle {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 14px;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.combat-info-toggle:hover {
+  background: var(--surface-raised);
+}
+.combat-info-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.caret {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  display: inline-block;
+  margin-left: auto;
+}
+.caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+/* Switch Cumulé/Tour (centré sur toute la largeur de la ligne) + switch Dommage/Armure/Soin (plaqué
+   à droite) — grille à 3 colonnes plutôt que flex : un flex centré "en groupe" décale le Cumulé/Tour
+   dès que le switch de droite change de largeur (stepper de tour affiché/masqué) ; la colonne du
+   milieu (`auto`, chip centrée dedans) reste elle indépendante de la largeur de la colonne de droite. */
+.combat-switch-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
+}
+.combat-switch-center {
+  grid-column: 2;
+  justify-self: center;
+}
+.combat-switch-right {
+  grid-column: 3;
+  justify-self: end;
+}
+/* Repli défensif sous 480px (téléphone étroit, panneau encore réduit par la mise en page mobile) :
+   la grille à 3 colonnes peut manquer de place une fois le pas-à-pas de tour affiché (mode 'turn',
+   voir DamageViewSwitchComponent) — empile plutôt que de laisser déborder. */
+@media (max-width: 480px) {
+  .combat-switch-row {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .combat-switch-center,
+  .combat-switch-right {
+    grid-column: 1;
+    justify-self: center;
+  }
 }
 
 :host-context([data-theme='light']) .combat-switch-row {

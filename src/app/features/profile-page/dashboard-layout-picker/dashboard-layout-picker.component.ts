@@ -37,18 +37,18 @@ const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trad
 
 /** Illustration fixe des vignettes de préréglage (menu/objectifs/corps) — indépendante du choix
  * réel de l'utilisateur, seulement là pour montrer la forme générale de chaque option (voir
- * `DashboardLayoutSchemaComponent`, purement décoratif, pas de libellé rendu dans les cases). Pas
- * de carte "Combat" (voir CLAUDE.md/DashboardBodySlotKey) : 3 cartes Historique (groupée +
- * scissions) + Chat suffisent à illustrer la forme générale. */
+ * `DashboardLayoutSchemaComponent`, purement décoratif, pas de libellé rendu dans les cases).
+ * Reprend le défaut réel (Combats/Achats/Échanges chacun leur carte, voir CLAUDE.md) plutôt qu'un
+ * regroupement — chaque volet dans sa propre couleur (voir `dashboard-layout-schema.component.css`). */
 const THUMB_CELLS: readonly DashboardLayoutSchemaCell[] = [
-  { sw: 'history' },
-  { sw: 'history' },
-  { sw: 'history' },
+  { sw: 'combats' },
+  { sw: 'purchases' },
+  { sw: 'trades' },
   { sw: 'chat' },
 ];
 const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
-  main: { sw: 'history' },
-  secondaries: [{ sw: 'history' }, { sw: 'history' }, { sw: 'chat' }],
+  main: { sw: 'combats' },
+  secondaries: [{ sw: 'purchases' }, { sw: 'trades' }, { sw: 'chat' }],
 };
 
 /**
@@ -144,10 +144,10 @@ export class DashboardLayoutPickerComponent {
   }
 
   private label(slots: readonly DashboardBodySlot[]): LabeledSlot[] {
-    const split = this.layout.historySplit();
+    const group = this.layout.historyGroup();
     return slots.map((s) => ({
       ...s,
-      label: dashboardBodySlotLabel(this.i18n, split, s.key),
+      label: dashboardBodySlotLabel(this.i18n, group, s.key),
     }));
   }
 
@@ -175,6 +175,13 @@ export class DashboardLayoutPickerComponent {
       secondaries: vis.filter((s) => s.key !== main.key).map((s) => ({ sw: s.sw })),
     };
   });
+
+  /** Vrai quand exactement 1 volet est coché "à regrouper" — insuffisant pour activer le
+   * regroupement (voir `DashboardLayoutService.activeSlots`, "au moins 2"), affiche un rappel sous
+   * les 3 lignes plutôt que de laisser l'utilisateur penser que son clic n'a rien fait. */
+  protected readonly needsSecondGroupPick = computed(
+    () => HIST_KEYS.filter((k) => this.layout.historyGroup()[k]).length === 1,
+  );
 
   protected readonly historySplitSummary = computed(() => {
     const slots = this.activeSlots().filter((s) => s.key.startsWith('hist'));

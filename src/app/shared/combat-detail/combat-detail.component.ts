@@ -1,4 +1,4 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, input, output, signal } from '@angular/core';
 import { EntityDamageRow } from '../../core/services/stats-store.service';
 import { EntityDamageListComponent } from '../../features/damage-meter/entity-damage-list/entity-damage-list.component';
 import { TranslatePipe } from '../translate.pipe';
@@ -22,6 +22,13 @@ import {
  * `EntityDamageListComponent` en dessous : un combat historique ne se replie plus qu'à un seul
  * niveau (toute l'entrée `.fight-entry`, un seul clic — voir CLAUDE.md), plus indépendamment par
  * camp comme avant cette fusion.
+ *
+ * La ligne de switchs est elle-même précédée d'un petit bandeau "Informations de combat" repliable
+ * (`switchesExpanded`, état LOCAL à cette instance — pas remonté dans `FightHistoryComponent`,
+ * volontairement plus simple que les maps `collapsedFightXpIds`/`collapsedFightLootIds` : ce
+ * composant est de toute façon détruit/recréé à chaque repli/dépli de l'entrée qui le contient,
+ * `EntityDamageListComponent`/loot/xp) : replié, seuls les switchs sont masqués, les listes
+ * alliés/ennemis en dessous restent toujours visibles.
  */
 @Component({
   selector: 'app-combat-detail',
@@ -58,4 +65,12 @@ export class CombatDetailComponent {
   /** Armure n'a pas de notion d'élément (voir EntityDamageListComponent.showElements) — dérivé
    * plutôt qu'input, les deux appelants appliquent la même règle. */
   protected readonly showElements = computed(() => this.statKind() !== 'armor');
+
+  /** Repli du bandeau "Informations de combat" (voir doc de tête) — déplié par défaut, même
+   * convention que les sous-collapses XP/butin de FightHistoryComponent. */
+  protected readonly switchesExpanded = signal(true);
+
+  protected toggleSwitches(): void {
+    this.switchesExpanded.update((v) => !v);
+  }
 }
