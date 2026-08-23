@@ -22,10 +22,23 @@
    dessous — largeur fixe plutôt que hauteur fixe, tuiles empilées. Les tuiles gardent leur
    comportement de déploiement HORIZONTAL au clic (`.kpi.expanded`, voir plus bas) même ici : une
    tuile déployée s'élargit sur place dans la colonne plutôt que de suivre un second axe
-   d'agrandissement dédié — plus simple, pas de réanimation propre à ce mode. */
+   d'agrandissement dédié — plus simple, pas de réanimation propre à ce mode.
+
+   Largeur en accordéon (`.kpi-strip-wide`, voir `TrackerStripComponent.isWide`) : repliée, 150px
+   suffit tout juste aux boutons "+"/"-" côte à côte (58px chacun + gap) — inutile de réserver la
+   largeur du formulaire de recherche/d'une tuile déployée en permanence, ça laissait un grand vide
+   quand rien n'était ouvert (voir CLAUDE.md). Élargie à 230px (mesure d'origine, confortable pour
+   le formulaire ET une tuile déployée) dès que le formulaire s'ouvre, qu'une tuile se déploie, ou
+   que le mode sélection groupée est actif — pousse `.dashboard-main` (voisin flex) comme le ferait
+   n'importe quel changement de largeur d'un flex-item, sans mécanique dédiée. */
 :host[data-kpi-pos='left'],
 :host[data-kpi-pos='right'] {
   height: auto;
+  width: 150px;
+  transition: width 0.2s ease;
+}
+:host[data-kpi-pos='left'].kpi-strip-wide,
+:host[data-kpi-pos='right'].kpi-strip-wide {
   width: 230px;
 }
 :host[data-kpi-pos='left'] .kpi-row,
@@ -70,6 +83,45 @@
 :host[data-kpi-pos='left'] .kpi-target-presets,
 :host[data-kpi-pos='right'] .kpi-target-presets {
   flex-wrap: wrap;
+}
+
+/* Confirmation de suppression groupée (`.kpi-bulk-delete-btn`, voir plus bas) : en bande
+   HORIZONTALE, `top: calc(100% + 10px)` (sous le bouton "-") ne chevauche rien puisque
+   `.kpi-strip` continue sur le CÔTÉ, pas en dessous. En colonne VERTICALE, `.kpi-add` (donc le
+   bouton "-") est en TÊTE de colonne et `.kpi-strip` s'enchaîne juste en dessous — la même règle y
+   ferait flotter la confirmation par-dessus la première tuile de la liste (bug réel constaté).
+   Basculée sur le CÔTÉ (pas au-dessus : `.kpi-add` est déjà collé en haut de la colonne, juste
+   sous l'en-tête applicatif — y flotter par-dessus l'en-tête posait le même problème de
+   chevauchement, juste déplacé) — pointe vers `.dashboard-main`, voisin flex avec largement assez
+   de place, à l'opposé du bord d'écran que longe la colonne (gauche si la colonne est à gauche,
+   inversement si elle est à droite, voir DashboardComponent/`data-kpi-pos`). */
+:host[data-kpi-pos='left'] .kpi-bulk-delete-btn {
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%);
+}
+:host[data-kpi-pos='left'] .kpi-bulk-delete-btn::before {
+  top: 50%;
+  left: auto;
+  right: 100%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-bottom-color: transparent;
+  border-right-color: #b33939;
+}
+:host[data-kpi-pos='right'] .kpi-bulk-delete-btn {
+  top: 50%;
+  left: auto;
+  right: calc(100% + 10px);
+  transform: translateY(-50%);
+}
+:host[data-kpi-pos='right'] .kpi-bulk-delete-btn::before {
+  top: 50%;
+  left: 100%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-bottom-color: transparent;
+  border-left-color: #b33939;
 }
 
 /* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :

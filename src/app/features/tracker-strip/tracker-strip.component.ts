@@ -78,6 +78,7 @@ const KPI_EXPANDED_WIDTH_PX = 250;
   // adaptation (même principe que DashboardRailComponent pour la position du menu).
   host: {
     '[attr.data-kpi-pos]': 'layout.kpiPos()',
+    '[class.kpi-strip-wide]': 'isWide()',
   },
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
@@ -176,6 +177,16 @@ export class TrackerStripComponent implements OnDestroy {
    * seul dépliait TOUTES les tuiles partageant ce nom au lieu de la seule cliquée (bug réel constaté
    * à l'usage, voir CLAUDE.md/historique de session). */
   protected readonly activeKey = signal<string | null>(null);
+
+  /** Mode colonne (`kpiPos` gauche/droite, voir CSS) seulement : la bande reste étroite par défaut
+   * (juste assez pour les boutons +/- repliés) et s'élargit en accordéon — poussant
+   * `.dashboard-main`, voisin flex, voir dashboard.component.css — dès qu'il y a quelque chose à
+   * montrer de plus large qu'une tuile repliée (formulaire d'ajout ouvert, tuile déployée, ou mode
+   * sélection groupée avec sa confirmation). Sans effet en mode ligne (haut/bas) : la largeur y est
+   * déjà celle de `.dashboard-main` au complet, rien à economiser. */
+  protected readonly isWide = computed(
+    () => this.addOpen() || this.activeKey() !== null || this.watchlist.selectMode(),
+  );
 
   /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
    * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du

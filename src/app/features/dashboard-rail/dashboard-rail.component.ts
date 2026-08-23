@@ -65,6 +65,17 @@ export class DashboardRailComponent {
     destroyRef.onDestroy(unsubscribe);
   }
 
+  /** Côté d'affichage des tooltips du rail — dépend de `layout.menuPos()` : un rail collé au bord
+   * DROIT de l'écran (`menuPos === 'right'`) doit ouvrir ses tooltips vers la GAUCHE, sans quoi ils
+   * sortiraient de la fenêtre (illisibles/tronqués). Rail horizontal (`top-left`/`top-right`, sous
+   * l'en-tête) : `bottom`, même convention que tout élément de header (voir CLAUDE.md). */
+  protected readonly railTooltipPosition = computed<'left' | 'right' | 'bottom'>(() => {
+    const pos = this.layout.menuPos();
+    if (pos === 'right') return 'left';
+    if (pos === 'top-left' || pos === 'top-right') return 'bottom';
+    return 'right';
+  });
+
   protected readonly entries = computed<RailEntry[]>(() => {
     const historySplit = this.layout.historySplit();
     return this.layout
