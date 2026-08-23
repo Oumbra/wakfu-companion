@@ -23,7 +23,7 @@ export const SYNCED_SETTING_KEYS = [
   'chatFilters',
   'combatPanelCollapsed',
   'chatPanelCollapsed',
-  'dashboardRailCollapsed',
+  'dashboardLayout',
 ] as const;
 
 export type SyncedSettingKey = (typeof SYNCED_SETTING_KEYS)[number];

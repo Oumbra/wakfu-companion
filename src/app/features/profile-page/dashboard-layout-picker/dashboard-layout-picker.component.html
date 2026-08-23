@@ -1,0 +1,229 @@
+<div class="profile-field profile-field-wide">
+  <div class="profile-label-row">
+    <label class="profile-label">{{ 'profile.dashboardLayout.title' | t }}</label>
+  </div>
+  <p class="profile-section-desc">{{ 'profile.dashboardLayout.desc' | t }}</p>
+
+  <div class="dlp-legend">
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-menu"></span
+      >{{ 'profile.dashboardLayout.slot.menu' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-kpi"></span
+      >{{ 'profile.dashboardLayout.slot.kpi' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-combats"></span
+      >{{ 'profile.dashboardLayout.slot.histCombats' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-purchases"></span
+      >{{ 'profile.dashboardLayout.slot.purchases' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-trades"></span
+      >{{ 'profile.dashboardLayout.slot.trades' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-history"></span
+      >{{ 'profile.dashboardLayout.slot.histGroupLegend' | t }}</span
+    >
+    <span class="dlp-legend-item"
+      ><span class="dlp-legend-chip sw-chat"></span
+      >{{ 'profile.dashboardLayout.slot.chat' | t }}</span
+    >
+  </div>
+
+  <div class="dlp-preview">
+    <div class="dlp-preview-head">
+      <div class="dlp-preview-summary">
+        {{ 'profile.dashboardLayout.summaryMenu' | t: { value: summaryMenuLabel() } }} ·
+        {{ 'profile.dashboardLayout.summaryKpi' | t: { value: summaryKpiLabel() } }} ·
+        {{ summaryBodyLabel() }}
+      </div>
+      <button type="button" class="dlp-reset" (click)="layout.reset()">
+        {{ 'profile.dashboardLayout.reset' | t }}
+      </button>
+    </div>
+    <div class="dlp-preview-schema">
+      <app-dashboard-layout-schema
+        [menuPos]="layout.menuPos()"
+        [kpiPos]="layout.kpiPos()"
+        [menuReduced]="layout.isCollapsed('menu')"
+        [kpiReduced]="layout.isCollapsed('kpi')"
+        [cells]="previewCells()"
+        [focus]="previewFocus()"
+        [focusSide]="layout.focusSide()"
+        [emptyLabel]="'profile.dashboardLayout.summaryBodyEmpty' | t"
+      />
+    </div>
+  </div>
+
+  <!-- ============ Menu ============ -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.menuTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.menuDesc' | t }}</p>
+  <div class="dlp-card-grid">
+    @for (opt of menuOptions; track opt.value) {
+      <button
+        type="button"
+        class="dlp-card"
+        [class.selected]="layout.menuPos() === opt.value"
+        (click)="layout.setMenuPos(opt.value)"
+      >
+        <div class="dlp-card-preview">
+          <app-dashboard-layout-schema [menuPos]="opt.value" kpiPos="top" [cells]="thumbCells" />
+          @if (layout.menuPos() === opt.value) {
+            <span class="dlp-check"><app-icon name="check" [size]="12" [strokeWidth]="3" /></span>
+          }
+        </div>
+        <span class="dlp-card-name">{{ opt.nameKey | t }}</span>
+        <span class="dlp-card-desc">{{ opt.descKey | t }}</span>
+        @if (opt.isDefault) {
+          <span class="dlp-card-default">{{ 'profile.dashboardLayout.defaultBadge' | t }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- ============ Objectifs ============ -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.kpiTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.kpiDesc' | t }}</p>
+  <div class="dlp-card-grid">
+    @for (opt of kpiOptions; track opt.value) {
+      <button
+        type="button"
+        class="dlp-card"
+        [class.selected]="layout.kpiPos() === opt.value"
+        (click)="layout.setKpiPos(opt.value)"
+      >
+        <div class="dlp-card-preview">
+          <app-dashboard-layout-schema menuPos="left" [kpiPos]="opt.value" [cells]="thumbCells" />
+          @if (layout.kpiPos() === opt.value) {
+            <span class="dlp-check"><app-icon name="check" [size]="12" [strokeWidth]="3" /></span>
+          }
+        </div>
+        <span class="dlp-card-name">{{ opt.nameKey | t }}</span>
+        <span class="dlp-card-desc">{{ opt.descKey | t }}</span>
+        @if (opt.isDefault) {
+          <span class="dlp-card-default">{{ 'profile.dashboardLayout.defaultBadge' | t }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  <!-- ============ Regroupement de l'historique ============ -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.historyTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.historyDesc' | t }}</p>
+  <div class="dlp-setting-rows">
+    @for (key of histKeys; track key) {
+      <div class="dlp-setting-row">
+        <span class="dlp-setting-dot" [class]="'sw-' + key"></span>
+        <span class="dlp-setting-text">
+          <b>{{ histLabelKey(key) | t }}</b>
+          <span>{{
+            (layout.historyGroup()[key]
+              ? 'profile.dashboardLayout.historyOn'
+              : 'profile.dashboardLayout.historyOff'
+            ) | t
+          }}</span>
+        </span>
+        <app-switch
+          [checked]="layout.historyGroup()[key]"
+          (checkedChange)="layout.toggleHistoryGroup(key)"
+        />
+      </div>
+    }
+  </div>
+  <p class="dlp-hint">{{ historySplitSummary() }}</p>
+  @if (needsSecondGroupPick()) {
+    <p class="dlp-hint dlp-hint-warn">{{ 'profile.dashboardLayout.historyGroupNeedsTwo' | t }}</p>
+  }
+
+  <!-- ============ Composition du corps ============ -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.bodyTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.bodyDesc' | t }}</p>
+  <div class="dlp-card-grid dlp-card-grid-wide">
+    @for (opt of bodyOptions; track opt.value) {
+      <button
+        type="button"
+        class="dlp-card"
+        [class.selected]="layout.bodyMode() === opt.value"
+        (click)="layout.setBodyMode(opt.value)"
+      >
+        <div class="dlp-card-preview">
+          @if (opt.value === 'focus') {
+            <app-dashboard-layout-schema [focus]="thumbFocus" />
+          } @else {
+            <app-dashboard-layout-schema [cells]="thumbCells" />
+          }
+          @if (layout.bodyMode() === opt.value) {
+            <span class="dlp-check"><app-icon name="check" [size]="12" [strokeWidth]="3" /></span>
+          }
+        </div>
+        <span class="dlp-card-name">{{ opt.nameKey | t }}</span>
+        <span class="dlp-card-desc">{{ opt.descKey | t }}</span>
+        @if (opt.isDefault) {
+          <span class="dlp-card-default">{{ 'profile.dashboardLayout.defaultBadge' | t }}</span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (layout.bodyMode() === 'focus') {
+    <div class="dlp-focus-block">
+      <div class="dlp-focus-label">{{ 'profile.dashboardLayout.focusTargetLabel' | t }}</div>
+      <div class="dlp-chip-row">
+        @for (slot of chipSlots(); track slot.key) {
+          <button
+            type="button"
+            class="dlp-chip"
+            [class]="'sw-' + slot.sw"
+            [class.selected]="layout.focusTarget() === slot.key"
+            (click)="chooseFocusTarget(slot.key)"
+          >
+            <span class="dlp-chip-dot"></span>{{ slot.label }}
+          </button>
+        }
+      </div>
+      <p class="dlp-hint">{{ 'profile.dashboardLayout.focusTargetHint' | t }}</p>
+
+      <div class="dlp-focus-label">{{ 'profile.dashboardLayout.focusSideLabel' | t }}</div>
+      <div class="dlp-chip-row">
+        @for (side of focusSideValues; track side) {
+          <button
+            type="button"
+            class="dlp-chip dlp-chip-plain"
+            [class.selected]="layout.focusSide() === side"
+            (click)="chooseFocusSide(side)"
+          >
+            {{ focusSideLabelKey(side) | t }}
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ============ Ordre des blocs ============ -->
+  <!-- Volontairement tout à la fin : n'a de sens qu'une fois le regroupement de l'historique et la
+       composition du corps déjà choisis (voir CLAUDE.md/commit) — réutilise LE MÊME composant que
+       l'aperçu du haut de page (`previewCells`/`previewFocus`, déjà indépendants du repli réel des
+       cartes, voir leur doc de tête), simplement rendu en grand et interactif. -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.orderTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.orderDesc' | t }}</p>
+  <div class="dlp-order-preview">
+    <app-dashboard-layout-schema
+      [menuPos]="layout.menuPos()"
+      [kpiPos]="layout.kpiPos()"
+      [menuReduced]="layout.isCollapsed('menu')"
+      [kpiReduced]="layout.isCollapsed('kpi')"
+      [cells]="previewCells()"
+      [focus]="previewFocus()"
+      [focusSide]="layout.focusSide()"
+      [emptyLabel]="'profile.dashboardLayout.summaryBodyEmpty' | t"
+      [interactive]="true"
+      (swap)="onOrderSwap($event)"
+    />
+  </div>
+  <p class="dlp-hint">{{ 'profile.dashboardLayout.orderHint' | t }}</p>
+</div>

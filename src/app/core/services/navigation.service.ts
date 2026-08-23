@@ -5,12 +5,15 @@ export type AppView = 'main' | 'profile' | 'legal' | 'account';
 /** Onglets mobile du tableau de bord (voir `DashboardComponent`, sur `main`) — définis ici (plutôt
  * que dans le composant) pour que `NavigationService`/`RouteSyncService`/`app.routes.ts` puissent
  * s'y référer sans dépendre d'un composant `features/`. `'tracker'` est la racine (path `''`, pas
- * de segment dédié) — voir `pagePathFor`. */
-export type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
+ * de segment dédié) — voir `pagePathFor`. Pas de `'damage'` : le combat en cours vit désormais dans
+ * `'history'` (sous-onglet Combats, voir CLAUDE.md/FightHistoryComponent) plutôt que dans un onglet
+ * dédié. */
+export type DashboardTab = 'tracker' | 'history' | 'chat';
 
 /** Onglets du rail de la page profil (voir `ProfilePageComponent`, sur `profile`) — même raison
  * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */
-export type ProfileTab = 'avatar' | 'colorblind' | 'connection' | 'alerts' | 'characters';
+export type ProfileTab =
+  'avatar' | 'customization' | 'colorblind' | 'connection' | 'alerts' | 'characters';
 
 /** Segment d'URL de chaque `ProfileTab` — distinct de l'id interne pour `colorblind`, dont le
  * segment public est `accessibility` (le rail regroupe déjà plus que le seul mode daltonien sous ce
@@ -18,6 +21,7 @@ export type ProfileTab = 'avatar' | 'colorblind' | 'connection' | 'alerts' | 'ch
  * (encore utilisé tel quel par `ColorblindService`/le reste du composant). Les autres onglets
  * gardent leur id comme segment (mapping identité). */
 const PROFILE_TAB_SEGMENT: Record<Exclude<ProfileTab, 'avatar'>, string> = {
+  customization: 'customization',
   colorblind: 'accessibility',
   connection: 'connection',
   alerts: 'alerts',

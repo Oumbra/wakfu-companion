@@ -1,6 +1,19 @@
-@for (k of kinds; track k) {
-  <button type="button" class="entity-stat-tab" [class.selected]="kind() === k" (click)="select(k)">
-    <img [src]="icons[k]" referrerpolicy="no-referrer" draggable="false" alt="" />
-    <span>{{ labelKeys[k] | t }}</span>
-  </button>
-}
+<div class="icon-switch icon-switch-3 entity-stat-switch">
+  <span
+    class="icon-switch-highlight"
+    [class.is-right]="kind() === 'armor'"
+    [class.is-far-right]="kind() === 'heal'"
+  ></span>
+  @for (k of kinds; track k) {
+    <button
+      type="button"
+      class="icon-switch-option entity-stat-switch-option"
+      [class.selected]="kind() === k"
+      [appTooltip]="labelKeys[k] | t"
+      tooltipPosition="top"
+      (click)="select(k)"
+    >
+      <img [src]="icons[k]" referrerpolicy="no-referrer" draggable="false" alt="" />
+    </button>
+  }
+</div>

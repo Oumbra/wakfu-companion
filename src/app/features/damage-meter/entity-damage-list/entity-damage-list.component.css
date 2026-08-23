@@ -16,7 +16,7 @@
   font-size: 0.75rem;
   font-weight: bold;
   letter-spacing: 1px;
-  color: var(--accent);
+  color: var(--text-muted);
   text-transform: uppercase;
   border-bottom: 1px solid var(--surface-active);
   flex-shrink: 0;
@@ -62,6 +62,7 @@
   overflow-y: auto;
   flex-grow: 1;
   min-height: 0;
+  max-height: 270px;
   transition: background-color 0.15s;
 }
 .half-list.drag-over {

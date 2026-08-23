@@ -102,6 +102,153 @@
   color: var(--accent);
 }
 
+/* Bandeau "Combat en cours" (voir CLAUDE.md, fusion avec l'ex-DamageMeterComponent) — toujours en
+   tête de liste, au-dessus de tout regroupement jour/lieu/type. Même gabarit que
+   `.collapsible-header` (icône/label + caret, hauteur fixe réduite), avec en plus un dégradé animé
+   et un badge (nombre de combats en cours, multi-compte) — même principe que
+   `.filters-toggle`/`.filters-toggle.has-filters`/`.filters-toggle-count`
+   (chat-panel.component.css) : CSS scopé par composant, pas de partage direct possible, dupliqué
+   ici sous des noms propres à ce panneau. */
+.ongoing-fight-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 41px;
+  padding: 0 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+.ongoing-fight-toggle:hover {
+  background: var(--surface-raised);
+}
+/* Replié : reste épinglé en haut de la liste pendant le scroll (même principe que
+   `.fight-summary.sticky` plus bas, appliqué ici à l'inverse SEULEMENT replié — déplié, le bandeau
+   est déjà le tout premier élément de la liste, épingler n'apporterait rien). Le dégradé de
+   `.has-active-fight` (opaque, pas de transparence) sert déjà de fond plein pour masquer le contenu
+   qui défile dessous, pas besoin de le forcer en `--panel-bg` uni comme `.fight-summary.sticky` (qui
+   n'a normalement pas ce dégradé). */
+.ongoing-fight-toggle.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.ongoing-fight-toggle.has-active-fight {
+  background: linear-gradient(
+    135deg,
+    var(--surface-well) 0%,
+    color-mix(in srgb, var(--accent) 18%, var(--surface-well)) 50%,
+    var(--surface-well) 100%
+  );
+  background-size: 220% 220%;
+  animation: ongoing-fight-glow 7s ease-in-out infinite;
+}
+.ongoing-fight-toggle.has-active-fight:hover {
+  background: var(--surface-raised);
+  animation: none;
+}
+@keyframes ongoing-fight-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ongoing-fight-toggle.has-active-fight {
+    animation: none;
+  }
+}
+.ongoing-fight-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* `margin-left: auto` ICI (pas sur le caret, voir `.fight-group-count` — même convention) : c'est
+   le badge qui doit se plaquer à droite (bug réel corrigé en session — le `margin-left: auto` était
+   posé sur le caret, qui se retrouvait bien seul tout à droite mais laissait le badge collé au
+   bouton d'aide, à gauche). Le caret suit juste après dans le flux normal, donc juste après le
+   badge, tous deux à droite. */
+.ongoing-fight-badge {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+/* Annule le `margin-left: auto` du `.caret` générique (plus bas dans ce fichier) : avec deux
+   marges auto consécutives (badge + caret), l'espace restant se répartirait entre les DEUX au lieu
+   de tout donner au badge, ouvrant un vide entre badge et caret au lieu de les coller. Sélecteur
+   plus spécifique (`.ongoing-fight-toggle .caret`) que la règle générique `.caret` seule, gagne
+   quel que soit l'ordre des règles dans la feuille. */
+.ongoing-fight-toggle .caret {
+  margin-left: 0;
+}
+
+/* Repris de l'ex-DamageMeterComponent (voir CLAUDE.md) : plusieurs combats concurrents
+   (multi-compte), un onglet par combat, affiché au-dessus du nombre de tours. */
+.fight-tabs-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.fight-tab {
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+.fight-tab:hover {
+  background: var(--surface-active);
+  color: var(--text-bright);
+}
+.fight-tab.selected {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-well));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.fight-stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 15px;
+  border-bottom: 1px solid var(--border);
+}
+.fight-turns {
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.fight-duration {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.72rem;
+}
+.fight-stats-sep {
+  color: var(--border-strong);
+}
+
 .fight-entry {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -263,13 +410,6 @@
   border-top: 1px solid var(--border);
 }
 
-.history-view-switch-row {
-  display: flex;
-  justify-content: center;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-}
-
 .collapsible-section {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
@@ -402,7 +542,10 @@
     background: var(--panel-bg);
   }
   .fight-group-controls,
-  .history-view-switch-row {
+  .fight-tabs-row {
     background: var(--surface-active);
+  }
+  .fight-stats-row {
+    background: var(--surface-well);
   }
 }

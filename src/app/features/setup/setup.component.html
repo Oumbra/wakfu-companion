@@ -36,16 +36,43 @@
         </div>
       }
       @default {
-        <div
-          class="drop-zone"
-          [class.drag-over]="dragOver()"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave()"
-          (drop)="onDrop($event)"
-          (click)="pickFile()"
-        >
-          <p class="drop-title">{{ 'setup.dropTitle' | t }}</p>
-          <p class="drop-sub">{{ 'setup.dropSub' | t }}</p>
+        <div class="drop-zone-row">
+          <div
+            class="drop-zone"
+            [class.drag-over]="dragOver()"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave()"
+            (drop)="onDrop($event)"
+            (click)="pickFile()"
+          >
+            <p class="drop-title">{{ 'setup.dropTitle' | t }}</p>
+            <p class="drop-sub">{{ 'setup.dropSub' | t }}</p>
+          </div>
+
+          <div class="hint-block">
+            <div class="hint-trigger">
+              <svg class="hint-arrow" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+                <path d="M30 10c-14-4-22 4-24 16" />
+                <path d="M2 19l4 8 9-3" />
+              </svg>
+              <button
+                type="button"
+                class="toggle-btn hint-btn"
+                [class.active]="showHint()"
+                [attr.aria-pressed]="showHint()"
+                [appTooltip]="'setup.hint.tooltip' | t"
+                (click)="toggleHint()"
+              >
+                {{ 'setup.hint.button' | t }}
+              </button>
+            </div>
+
+            @if (showHint()) {
+              <div class="hint-image-wrap">
+                <img class="hint-image" [src]="hintImageSrc()" [alt]="'setup.hint.alt' | t" />
+              </div>
+            }
+          </div>
         </div>
 
         <div class="path-hint">

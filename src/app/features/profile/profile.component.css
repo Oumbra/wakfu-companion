@@ -33,6 +33,28 @@
   font-size: 1rem;
   color: var(--accent);
 }
+
+/* Badge "new" global (voir NewSectionBadgeService/CLAUDE.md) — texte "NEW", pas une simple
+   pastille (même raison que `.profile-rail-new-badge`, voir CLAUDE.md : une pastille seule ne dit
+   pas à l'utilisateur ce qui est nouveau). Accrochée au coin bas-droit de l'avatar rond plutôt que
+   dessus — `.profile-btn` porte déjà `position: relative; overflow: visible` (voir plus haut) donc
+   rien de plus à ajuster pour qu'elle dépasse du cercle sans être clippée. */
+.profile-new-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -8px;
+  padding: 1px 3px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px var(--bg-color);
+}
 .profile-avatar {
   width: 100%;
   height: 100%;

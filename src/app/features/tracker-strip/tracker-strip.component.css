@@ -17,6 +17,195 @@
   height: 84px;
 }
 
+/* Objectifs en colonne (voir DashboardLayoutService.kpiPos, DashboardComponent) : la bande devient
+   une liste verticale scrollable à côté de `.dashboard-main` au lieu d'une ligne au-dessus/en
+   dessous — largeur fixe plutôt que hauteur fixe, tuiles empilées. Les tuiles gardent leur
+   comportement de déploiement HORIZONTAL au clic (`.kpi.expanded`, voir plus bas) même ici : une
+   tuile déployée s'élargit sur place dans la colonne plutôt que de suivre un second axe
+   d'agrandissement dédié — plus simple, pas de réanimation propre à ce mode.
+
+   Largeur en accordéon (`.kpi-strip-wide`, voir `TrackerStripComponent.isWide`) : repliée, 72px
+   suffit à un seul bouton "+"/"-" à la fois (58px + la marge standard de 7px de chaque côté, voir
+   `.kpi-add` plus bas) — les deux boutons sont empilés en colonne plutôt que côte à côte dans cet
+   état, inutile de réserver la largeur du formulaire de recherche/d'une tuile déployée en
+   permanence, ça laissait un grand vide quand rien n'était ouvert (voir CLAUDE.md). Élargie à
+   `--kpi-wide-width` (voir `TrackerStripComponent.kpiWideWidthPx` — dérivée de la largeur réelle
+   d'une tuile déployée, PAS un nombre fixe indépendant : un ancien `230px` en dur était plus étroit
+   que les `250px` d'une tuile déployée et la rognait horizontalement, `.kpi-strip` ayant
+   `overflow-x: hidden` — bug réel remonté par l'utilisateur) dès que le formulaire s'ouvre ou
+   qu'une tuile se déploie — pousse `.dashboard-main` (voisin flex) comme le ferait n'importe quel
+   changement de largeur d'un flex-item, sans mécanique dédiée. */
+:host[data-kpi-pos='left'],
+:host[data-kpi-pos='right'] {
+  height: auto;
+  width: 72px;
+  transition: width 0.2s ease;
+}
+:host[data-kpi-pos='left'].kpi-strip-wide,
+:host[data-kpi-pos='right'].kpi-strip-wide {
+  width: var(--kpi-wide-width, 272px);
+}
+:host[data-kpi-pos='left'] .kpi-row,
+:host[data-kpi-pos='right'] .kpi-row {
+  flex-direction: column;
+  height: 100%;
+}
+/* Alignement à DROITE (au lieu du `flex-start` par défaut, hérité de `.kpi-row`/`.kpi-strip` de
+   base) quand la colonne est du côté droit de l'écran : les boutons +/- et les tuiles suivies
+   doivent longer le bord droit plutôt que rester collés au bord GAUCHE de leur propre colonne (qui
+   n'est de toute façon pas le bord de l'écran ici) — retour utilisateur. `.kpi-add.expanded`
+   (formulaire de recherche ouvert) n'est PAS concerné : il garde `width: 100%` (voir plus bas), qui
+   occupe déjà toute la largeur disponible quel que soit `align-items` du parent — aucun effet visuel
+   sur lui, exactement le comportement demandé ("le formulaire doit rester comme il est
+   actuellement"). Idem pour le badge de compteur (`.kpi-count-badge`, `position: absolute` ancré à
+   CHAQUE tuile individuellement, jamais concerné par l'alignement du conteneur qui la porte). */
+:host[data-kpi-pos='right'] .kpi-row {
+  align-items: flex-end;
+}
+:host[data-kpi-pos='right'] .kpi-strip {
+  align-items: flex-end;
+}
+/* Padding horizontal réduit à 7px (au lieu des 15px hérités de la bande HORIZONTALE, où l'espace
+   n'est pas compté) — marge standard de cette colonne, voir `.kpi-add` juste en dessous pour le
+   même ajustement côté boutons. */
+:host[data-kpi-pos='left'] .kpi-strip,
+:host[data-kpi-pos='right'] .kpi-strip {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-left: 7px;
+  padding-right: 7px;
+}
+/* `flex-direction: column` : empile "+" et "-" au lieu de les garder côte à côte (défaut hérité de
+   `.kpi-add`, pensé pour la bande horizontale) — cohérent avec la largeur repliée réduite ci-dessus
+   (un seul bouton 58px à la fois, pas les deux + leur gap) et visuellement plus sobre qu'une paire
+   de carrés collés (retour utilisateur). Sans effet sur `.kpi-add.expanded` (formulaire ouvert, voir
+   plus bas) : sa propre règle de base pose déjà `flex-direction: column` pour d'autres raisons
+   (empiler switch/recherche/fermeture), donc aucun conflit.
+   `width: 72px` (pas `100%`, qui étirait la boîte à la largeur du host et centrait les boutons dans
+   un cadre visuellement trop large) + `height: 136px` + le MÊME padding horizontal que `.kpi-strip`
+   juste au-dessus (7px, symétrique cette fois — un ancien réglage asymétrique 15px/7px, hérité par
+   erreur du padding pensé pour la bande horizontale, décalait "+"/"-" par rapport aux tuiles de la
+   liste en dessous) : aligne les deux au même repère gauche (ajustement affiné à l'usage, voir
+   devtools). */
+:host[data-kpi-pos='left'] .kpi-add,
+:host[data-kpi-pos='right'] .kpi-add {
+  flex-direction: column;
+  margin-top: 0;
+  width: 72px;
+  padding: 10px 7px 16px;
+}
+:host[data-kpi-pos='left'] .kpi-add.can-bulk-delete,
+:host[data-kpi-pos='right'] .kpi-add.can-bulk-delete {
+  height: 136px;
+}
+/* Formulaire de recherche ouvert (`.kpi-add.expanded`, voir plus bas) : sa largeur fixe de 400px
+   (pensée pour la bande HORIZONTALE, où `.kpi-strip` défile pour absorber le surplus) déborderait
+   très largement une colonne de 230px et chevaucherait le panneau suivant (`.dashboard-main`, voir
+   dashboard.component.css) — `.dashboard` passe en `flex-direction: row` pour ce mode, un enfant
+   trop large empiète directement sur son voisin plutôt que de simplement dépasser dans le vide
+   (bug réel constaté à l'usage). Empile plutôt les contrôles (switch/recherche/fermeture) sur la
+   largeur de la colonne elle-même. */
+:host[data-kpi-pos='left'] .kpi-add.expanded,
+:host[data-kpi-pos='right'] .kpi-add.expanded {
+  width: 100%;
+  height: auto;
+}
+/* Grille 2 colonnes plutôt qu'un simple empilement flex-column : le switch incrémental/décompte et
+   le bouton fermer (×) partagent la même ligne (gagne une ligne de hauteur, moins de place perdue
+   dans une colonne déjà étroite — retour utilisateur), la recherche occupe la ligne du dessous en
+   pleine largeur — sans avoir besoin de réordonner le DOM (`.kpi-add-close` reste APRÈS l'autocomplete
+   dans le template, voir CLAUDE.md/`.loot-header-main` pour la même préoccupation d'ordre visuel
+   résolue différemment ailleurs ; ici la grille suffit, pas besoin d'un wrapper `display:contents`
+   supplémentaire). */
+:host[data-kpi-pos='left'] .kpi-add-form,
+:host[data-kpi-pos='right'] .kpi-add-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+:host[data-kpi-pos='left'] .kpi-add-mode-switch,
+:host[data-kpi-pos='right'] .kpi-add-mode-switch {
+  grid-column: 1;
+  grid-row: 1;
+}
+:host[data-kpi-pos='left'] .kpi-add-close,
+:host[data-kpi-pos='right'] .kpi-add-close {
+  grid-column: 2;
+  grid-row: 1;
+}
+:host[data-kpi-pos='left'] app-wakfu-autocomplete,
+:host[data-kpi-pos='right'] app-wakfu-autocomplete {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+/* Pas d'empilement en colonne ici (contrairement au formulaire ci-dessus) : les puces de quantités
+   (`.kpi-target-presets`) et le champ numérique restent sur la MÊME ligne tant que la largeur
+   (230px, colonne accordéon) le permet, et ne passent à la ligne (`flex-wrap` sur le wrapper
+   ENTIER, pas seulement sur les puces entre elles) que si vraiment nécessaire — jamais un
+   empilement systématique en pile verticale complète comme avant (retour utilisateur : l'ancien
+   empilement rendait le champ pleine largeur, peu élégant, et prenait trop de hauteur). Puces et
+   champ légèrement rétrécis (voir plus bas) pour maximiser les chances de tenir sur une seule
+   ligne dans cette largeur réduite. */
+:host[data-kpi-pos='left'] .kpi-target-wrapper,
+:host[data-kpi-pos='right'] .kpi-target-wrapper {
+  flex-wrap: wrap;
+}
+:host[data-kpi-pos='left'] .kpi-target-presets,
+:host[data-kpi-pos='right'] .kpi-target-presets {
+  flex-wrap: wrap;
+  gap: 3px;
+}
+:host[data-kpi-pos='left'] .kpi-target-chip,
+:host[data-kpi-pos='right'] .kpi-target-chip {
+  padding: 2px 6px;
+  font-size: 0.65rem;
+}
+:host[data-kpi-pos='left'] app-input-number.kpi-add-target-input,
+:host[data-kpi-pos='right'] app-input-number.kpi-add-target-input {
+  --input-number-field-width: 32px;
+}
+
+/* Confirmation de suppression groupée (`.kpi-bulk-delete-btn`, voir plus bas) : en bande
+   HORIZONTALE, `top: calc(100% + 10px)` (sous le bouton "-") ne chevauche rien puisque
+   `.kpi-strip` continue sur le CÔTÉ, pas en dessous. En colonne VERTICALE, `.kpi-add` (donc le
+   bouton "-") est en TÊTE de colonne et `.kpi-strip` s'enchaîne juste en dessous — la même règle y
+   ferait flotter la confirmation par-dessus la première tuile de la liste (bug réel constaté).
+   Basculée sur le CÔTÉ (pas au-dessus : `.kpi-add` est déjà collé en haut de la colonne, juste
+   sous l'en-tête applicatif — y flotter par-dessus l'en-tête posait le même problème de
+   chevauchement, juste déplacé) — pointe vers `.dashboard-main`, voisin flex avec largement assez
+   de place, à l'opposé du bord d'écran que longe la colonne (gauche si la colonne est à gauche,
+   inversement si elle est à droite, voir DashboardComponent/`data-kpi-pos`). */
+:host[data-kpi-pos='left'] .kpi-bulk-delete-btn {
+  top: 50%;
+  left: calc(100% + 10px);
+  transform: translateY(-50%);
+}
+:host[data-kpi-pos='left'] .kpi-bulk-delete-btn::before {
+  top: 50%;
+  left: auto;
+  right: 100%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-bottom-color: transparent;
+  border-right-color: #b33939;
+}
+:host[data-kpi-pos='right'] .kpi-bulk-delete-btn {
+  top: 50%;
+  left: auto;
+  right: calc(100% + 10px);
+  transform: translateY(-50%);
+}
+:host[data-kpi-pos='right'] .kpi-bulk-delete-btn::before {
+  top: 50%;
+  left: 100%;
+  bottom: auto;
+  transform: translateY(-50%);
+  border-bottom-color: transparent;
+  border-left-color: #b33939;
+}
+
 /* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :
    Suivi y redevient un onglet à part entière (TrackerComponent), pas une
    bande persistante — pas assez de largeur disponible pour un scroll
@@ -492,6 +681,10 @@ app-input-number.kpi-countdown-current-input {
   right: unset;
 }
 
+/* Masquée par défaut (`opacity`, pas `display`/`visibility` : une tuile survolée puis dépliée par
+   clic ne doit pas perdre-puis-retrouver ce bouton en cours d'animation) — visible seulement au
+   survol de la tuile OU quand elle est dépliée (`.kpi:hover`/`.kpi.expanded` ci-dessous), pour ne
+   pas encombrer la bande de tuiles réduites au repos. */
 .kpi-del {
   position: absolute;
   top: -9px;
@@ -510,6 +703,13 @@ app-input-number.kpi-countdown-current-input {
   cursor: pointer;
   z-index: 2;
   padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.kpi:hover .kpi-del,
+.kpi.expanded .kpi-del {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Même emplacement/gabarit que `.kpi-del` (mode sélection multiple, voir `selectMode`) — case à

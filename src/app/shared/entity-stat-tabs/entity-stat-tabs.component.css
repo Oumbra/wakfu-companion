@@ -1,36 +1,19 @@
-/* Occupe toute la largeur du panneau, sans marge/bordure/arrondi (contrairement à
-   `.icon-switch` — voir CLAUDE.md) : le composant EST la barre, `:host` porte donc directement le
-   flex plutôt qu'un wrapper interne. */
+/* Réutilise le switch icône générique (`.icon-switch`/`.icon-switch-3`, styles.css — même mécanique
+   que le tri du butin `.loot-sort-switch`/le regroupement `.fight-group-switch`) plutôt qu'un bloc
+   de boutons maison, voir CLAUDE.md ("toujours un composant/pattern partagé, jamais un bloc local
+   recopié"). Icônes seules (pas de libellé) pour rester compact — le libellé reste accessible via
+   tooltip. */
 :host {
   display: flex;
-  width: 100%;
+  flex-shrink: 0;
 }
 
-.entity-stat-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 40px;
-  border: none;
-  border-radius: 0;
-  background: var(--tint-medium);
-  color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s;
+.entity-stat-switch {
+  width: 108px;
 }
-.entity-stat-tab:hover:not(.selected) {
-  filter: brightness(1.15);
-}
-.entity-stat-tab.selected {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-.entity-stat-tab img {
-  width: 18px;
-  height: 18px;
+
+.entity-stat-switch-option img {
+  width: 16px;
+  height: 16px;
   object-fit: contain;
 }

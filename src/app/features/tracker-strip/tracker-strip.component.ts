@@ -22,13 +22,17 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
+import {
+  WatchlistTileController,
+  watchlistEntryKey,
+} from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { NavigationService } from '../../core/services/navigation.service';
 import { InputNumberComponent } from '../../shared/input-number/input-number.component';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
+import { DashboardLayoutService } from '../../core/services/dashboard-layout.service';
 
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
@@ -40,6 +44,16 @@ const KPI_EXPAND_DURATION_MS = 320;
  * moment du calcul : elle vaut encore 58px avant que la transition ne
  * démarre). */
 const KPI_EXPANDED_WIDTH_PX = 250;
+/** Marge horizontale (px) autour des éléments interactifs de la colonne verticale (`kpiPos`
+ * gauche/droite) — boutons +/-/fermer, padding de `.kpi-strip`/`.kpi-add` (voir CSS) : valeur
+ * unique pour rester cohérente partout, affinée à l'usage (mesurée en devtools). */
+const KPI_VERTICAL_MARGIN_PX = 7;
+/** Marge supplémentaire (px) réservée sur `kpiWideWidthPx` au-delà de la marge standard — absorbe
+ * la scrollbar verticale de `.kpi-strip` (`overflow-y: auto`, voir CSS) sur un navigateur qui la
+ * rend "classique" (pas en surimpression, ex. Windows/Firefox par défaut) : sans elle, la largeur
+ * de contenu réellement disponible serait `2 * KPI_VERTICAL_MARGIN_PX` en dessous de la largeur de
+ * tuile déployée qu'elle doit pourtant loger tout juste — plus de marge, zéro. */
+const KPI_VERTICAL_SCROLLBAR_BUFFER_PX = 8;
 
 /**
  * Suivi (desktop) : bande horizontale de KPI compacts au-dessus de la ligne
@@ -68,12 +82,22 @@ const KPI_EXPANDED_WIDTH_PX = 250;
     TooltipDirective,
     InputNumberComponent,
   ],
+  // Position des objectifs (voir DashboardLayoutService.kpiPos, DashboardComponent) : `left`/
+  // `right` fait passer la bande en colonne verticale (voir tracker-strip.component.css) —
+  // attribut posé ici plutôt que par le parent, ce composant reste responsable de sa propre
+  // adaptation (même principe que DashboardRailComponent pour la position du menu).
+  host: {
+    '[attr.data-kpi-pos]': 'layout.kpiPos()',
+    '[class.kpi-strip-wide]': 'isWide()',
+    '[style.--kpi-wide-width.px]': 'kpiWideWidthPx',
+  },
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
 })
 export class TrackerStripComponent implements OnDestroy {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  protected readonly layout = inject(DashboardLayoutService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly catalog = inject(CatalogService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
@@ -90,6 +114,17 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
+  /** Largeur de la colonne verticale une fois élargie (`.kpi-strip-wide`, voir CSS) — DOIT
+   * accueillir une tuile déployée (`--kpi-expanded-width`, même constante) sans la rogner
+   * (`.kpi-strip` a `overflow-x: hidden`, voir CSS) : un ancien `230px` fixe, plus petit que les
+   * `250px` d'une tuile déployée, la clippait horizontalement (bug réel remonté par l'utilisateur,
+   * capture à l'appui). Dérivée de la même constante + la marge standard de cette colonne (voir
+   * `KPI_VERTICAL_MARGIN_PX`) plutôt qu'un second nombre magique indépendant qui pourrait diverger. */
+  protected readonly kpiWideWidthPx =
+    KPI_EXPANDED_WIDTH_PX + 2 * KPI_VERTICAL_MARGIN_PX + KPI_VERTICAL_SCROLLBAR_BUFFER_PX;
+  /** Exposée au template pour comparer `activeKey()` à la bonne entrée (voir son binding
+   * `[class.expanded]`) — fonction pure, pas besoin de `this`, simple référence. */
+  protected readonly entryKey = watchlistEntryKey;
 
   protected readonly existingNames = computed(() =>
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind, id: w.catalogId })),
@@ -101,6 +136,15 @@ export class TrackerStripComponent implements OnDestroy {
   });
 
   protected readonly addOpen = signal(false);
+
+  /** Objectifs en colonne (voir CSS) : le switch incrémental/décompte partage désormais sa ligne
+   * avec le bouton fermer (×) — pas assez de place pour ses deux options en toutes lettres (110px
+   * chacune) en plus de ce bouton dans une colonne de 230px. Reste compact en PERMANENCE dans ce
+   * mode (même mécanique que `autocomplete.focused()`, qui ne s'applique elle qu'à la bande
+   * horizontale — voir template), pas seulement pendant la saisie. */
+  protected readonly switchCompact = computed(
+    () => this.layout.kpiPos() === 'left' || this.layout.kpiPos() === 'right',
+  );
 
   /** Ferme le formulaire d'ajout (`.kpi-add.expanded`) dès qu'un clic tombe en dehors du composant
    * — écouteur posé/retiré au fil de `addOpen()` plutôt que branché en permanence (voir l'`effect`
@@ -151,10 +195,27 @@ export class TrackerStripComponent implements OnDestroy {
     document.removeEventListener('click', this.onDocumentClick, { capture: true });
   }
 
-  /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
+  /** Clé du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
    * CSS) et exclusivement par clic (voir `onTileClick`) : plus de délai/verrou anti-cascade à
-   * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande. */
-  protected readonly activeName = signal<string | null>(null);
+   * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande.
+   *
+   * `watchlistEntryKey` (nom + `catalogId`, voir `watchlist-tile-controller.ts`), PAS `entry.name`
+   * seul : deux entrées peuvent légitimement partager le même nom affiché (ex. objet ET monstre
+   * homonymes, ou variantes d'un même nom réparties sur plusieurs `catalogId`) — comparer par nom
+   * seul dépliait TOUTES les tuiles partageant ce nom au lieu de la seule cliquée (bug réel constaté
+   * à l'usage, voir CLAUDE.md/historique de session). */
+  protected readonly activeKey = signal<string | null>(null);
+
+  /** Mode colonne (`kpiPos` gauche/droite, voir CSS) seulement : la bande reste étroite par défaut
+   * (juste assez pour les boutons +/- repliés) et s'élargit en accordéon — poussant
+   * `.dashboard-main`, voisin flex, voir dashboard.component.css — dès que le formulaire d'ajout
+   * s'ouvre ou qu'une tuile se déploie, les deux seuls cas qui ont réellement besoin de plus de
+   * largeur. PAS le mode sélection groupée (`.kpi-remove-wrap`/`watchlist.selectMode()`) : sa
+   * confirmation (`.kpi-bulk-delete-btn`) flotte déjà sur le CÔTÉ en `position: absolute` (voir CSS),
+   * sans avoir besoin que la colonne elle-même s'élargisse — l'inclure ici l'élargissait sans
+   * raison (retour utilisateur). Sans effet en mode ligne (haut/bas) : la largeur y est déjà celle
+   * de `.dashboard-main` au complet, rien à économiser. */
+  protected readonly isWide = computed(() => this.addOpen() || this.activeKey() !== null);
 
   /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
    * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du
@@ -164,12 +225,12 @@ export class TrackerStripComponent implements OnDestroy {
       this.watchlist.toggleSelected(entry);
       return;
     }
-    const name = entry.name;
-    if (this.activeName() === name) {
-      this.activeName.set(null);
+    const key = watchlistEntryKey(entry);
+    if (this.activeKey() === key) {
+      this.activeKey.set(null);
       return;
     }
-    this.activeName.set(name);
+    this.activeKey.set(key);
     this.scrollTileIntoView(event.currentTarget as HTMLElement);
   }
 
@@ -222,14 +283,14 @@ export class TrackerStripComponent implements OnDestroy {
       this.watchlist.exitSelectMode();
       return;
     }
-    this.activeName.set(null);
+    this.activeKey.set(null);
     this.watchlist.enterSelectMode();
   }
 
   protected requestDelete(event: Event, entry: WatchlistEntry): void {
-    const name = entry.name;
+    const key = watchlistEntryKey(entry);
     this.watchlist.requestDelete(event, entry, undefined, () => {
-      if (this.activeName() === name) this.activeName.set(null);
+      if (this.activeKey() === key) this.activeKey.set(null);
     });
   }
 
@@ -261,7 +322,7 @@ export class TrackerStripComponent implements OnDestroy {
     // Le drag démarre parfois sans mouseleave fiable (comportement natif du
     // navigateur) : on referme explicitement plutôt que de risquer une
     // tuile restée "déployée" alors qu'elle est en train d'être déplacée.
-    this.activeName.set(null);
+    this.activeKey.set(null);
     this.dragIndex = index;
     const tile = event.currentTarget as HTMLElement;
     const ghost = this.buildDragGhost(tile);

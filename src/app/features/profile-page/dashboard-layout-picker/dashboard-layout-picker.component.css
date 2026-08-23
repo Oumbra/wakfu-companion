@@ -1,0 +1,355 @@
+/* Mêmes tokens de couleur que `DashboardLayoutSchemaComponent` (voir son CSS) — dupliqués ici
+   plutôt que passés en `@Input` : ce composant en a aussi besoin pour la légende, les puces de
+   mise en avant et les pastilles de repli, indépendamment des instances du schéma. */
+/* `display: contents` : ce composant ne doit ajouter aucune boîte entre `.profile-field-wide`
+   (ci-dessous) et le véritable conteneur défilant (`.panel-body`, voir ProfilePageComponent) —
+   sans quoi le `position: sticky` de `.dlp-preview` risquerait de se retrouver cassé par une
+   boîte hôte intermédiaire (voir CLAUDE.md, piège #2 du sticky : tout ancêtre avec un `overflow`
+   autre que `visible` casse le calcul, même un hôte de composant sans rôle visuel). Les variables
+   CSS ci-dessous restent héritées normalement (`display: contents` ne change que la génération de
+   boîte, pas la cascade). */
+/* Une couleur par volet d'historique SOLO (combats/purchases/trades, voir DashboardBodySlot.sw) en
+   plus de `history` (couleur "méta" du regroupement, voir CLAUDE.md) — palette cohérente avec le
+   thème de chaque section : rouge/épées pour Combats, bleu/commerce pour Achats, orange corail pour
+   Échanges (un vrai jaune se confondait trop avec l'ambre d'Objectifs, bug remonté en session —
+   l'orange corail reste assez éloigné du rouge Combats ET de l'ambre Objectifs), violet neutre pour
+   le regroupement (ni rouge ni bleu ni orange, pour ne pas se confondre avec l'un des 3 volets qu'il
+   peut représenter), gris pour Menu, ambre pour Objectifs (déjà en place), vert pour Chat (déjà en
+   place). */
+:host {
+  display: contents;
+  --lp-sw-menu: #838a99;
+  --lp-sw-kpi: #e0b23d;
+  --lp-sw-combats: #e2586c;
+  --lp-sw-purchases: #4f9fe0;
+  --lp-sw-trades: #e0713f;
+  --lp-sw-history: #a385f0;
+  --lp-sw-chat: #46d67f;
+}
+:host-context([data-theme='light']) {
+  --lp-sw-menu: #6b7280;
+  --lp-sw-kpi: #b8860f;
+  --lp-sw-combats: #c0364a;
+  --lp-sw-purchases: #2f74b5;
+  --lp-sw-trades: #c05423;
+  --lp-sw-history: #7c4fd9;
+  --lp-sw-chat: #1f9d55;
+}
+
+.sw-menu {
+  --lp-sw: var(--lp-sw-menu);
+}
+.sw-kpi {
+  --lp-sw: var(--lp-sw-kpi);
+}
+.sw-combats {
+  --lp-sw: var(--lp-sw-combats);
+}
+.sw-purchases {
+  --lp-sw: var(--lp-sw-purchases);
+}
+.sw-trades {
+  --lp-sw: var(--lp-sw-trades);
+}
+.sw-history {
+  --lp-sw: var(--lp-sw-history);
+}
+.sw-chat {
+  --lp-sw: var(--lp-sw-chat);
+}
+
+.dlp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 10px 14px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+.dlp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.dlp-legend-chip {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--lp-sw);
+  flex-shrink: 0;
+}
+
+.dlp-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px 14px;
+  margin-bottom: 20px;
+  /* Reste visible pendant que l'utilisateur scrolle le reste de la page (comme sur la maquette
+     d'origine) — le conteneur défilant réel est `.panel-body` (ProfilePageComponent), sans ancêtre
+     `overflow` intermédiaire jusqu'à `.dlp-preview` grâce au `display: contents` du host (voir
+     ci-dessus). `top: 0` colle contre le haut du viewport de scroll (`.panel-body` n'a pas de
+     padding-top). `z-index` pour rester au-dessus du contenu qui défile sous lui une fois collé —
+     sans risque de conflit avec les tooltips (`position: fixed` posés au niveau racine, voir
+     CLAUDE.md). */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.dlp-preview-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.dlp-preview-summary {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  flex: 1;
+}
+.dlp-reset {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+.dlp-reset:hover {
+  color: var(--text-color);
+  border-color: var(--text-muted);
+}
+.dlp-preview-schema {
+  width: 100%;
+  max-width: 340px;
+  aspect-ratio: 16 / 9;
+}
+
+.dlp-subhead {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+.dlp-subdesc {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  max-width: 62ch;
+}
+
+.dlp-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.dlp-card-grid-wide {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.dlp-card {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--panel-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.dlp-card:hover {
+  border-color: var(--border-strong);
+}
+.dlp-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.dlp-card.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+.dlp-card-preview {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+.dlp-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dlp-card-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+.dlp-card-desc {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+.dlp-card-default {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.dlp-setting-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.dlp-setting-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.dlp-setting-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+  background: var(--lp-sw);
+  flex-shrink: 0;
+}
+.dlp-setting-text {
+  flex: 1;
+  min-width: 160px;
+  display: flex;
+  flex-direction: column;
+}
+.dlp-setting-text b {
+  font-size: 13px;
+  color: var(--text-color);
+}
+.dlp-setting-text span {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.dlp-hint {
+  margin: 0 0 22px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+/* Rappel "il en faut 2" (voir needsSecondGroupPick) — même gabarit que `.dlp-hint`, teinte ambre
+   pour se distinguer d'un simple résumé neutre. */
+.dlp-hint-warn {
+  color: var(--lp-sw-kpi);
+}
+
+.dlp-focus-block {
+  margin: -10px 0 22px;
+  padding: 12px 14px;
+  background: var(--surface-well);
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+}
+.dlp-focus-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.dlp-focus-block .dlp-hint {
+  margin: 10px 0 0;
+}
+.dlp-focus-block .dlp-hint + .dlp-focus-label {
+  margin-top: 14px;
+}
+
+.dlp-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dlp-chip {
+  all: unset;
+  cursor: pointer;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 6px 12px 6px 9px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-strong);
+  transition:
+    border-color 0.15s,
+    color 0.15s,
+    background 0.15s;
+}
+.dlp-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.dlp-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--lp-sw);
+  flex-shrink: 0;
+}
+.dlp-chip.selected {
+  color: var(--text-bright);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+/* Variante sans puce de couleur (choix de côté, pas de carte du corps) — repadding symétrique
+   faute du `.dlp-chip-dot` que réserve le padding-gauche réduit de `.dlp-chip`. */
+.dlp-chip-plain {
+  padding-left: 12px;
+}
+
+/* Éditeur d'ordre interactif (voir section "Ordre des blocs", tout en bas de page) — même
+   composant que l'aperçu figé du haut (`.dlp-preview-schema`), volontairement rendu plus grand ici
+   (plus de place pour les libellés + flèches directionnelles au survol de chaque carte, voir
+   `DashboardLayoutSchemaComponent`). Largeur plafonnée pour rester cohérente avec le reste de la
+   page (pas de pleine largeur sur un grand écran, qui étirerait le mini navigateur illustré au-delà
+   de ce qui reste lisible) plutôt qu'un simple `aspect-ratio` comme l'aperçu du haut. */
+.dlp-order-preview {
+  width: 100%;
+  max-width: 480px;
+  height: 260px;
+  margin-bottom: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dlp-card,
+  .dlp-chip,
+  .dlp-reset {
+    transition: none;
+  }
+}
