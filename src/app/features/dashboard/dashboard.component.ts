@@ -10,6 +10,7 @@ import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { HelpSection } from '../../core/services/help-modal.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { DashboardTab, NavigationService } from '../../core/services/navigation.service';
+import { DashboardLayoutService } from '../../core/services/dashboard-layout.service';
 
 /** En dessous du breakpoint mobile (voir dashboard.component.css), les
  * panneaux ne sont plus affichés en même temps mais sélectionnés via onglets
@@ -39,12 +40,20 @@ import { DashboardTab, NavigationService } from '../../core/services/navigation.
     DashboardRailComponent,
     TabBarComponent,
   ],
+  // Position du menu (voir DashboardLayoutService/dashboard.component.css) : attribut plutôt que
+  // plusieurs `[class.x]` — un seul point de lecture pour tout le CSS de positionnement,
+  // `top-left`/`top-right` partagent la même disposition ici (seul l'alignement interne des icônes
+  // du rail diffère, voir DashboardRailComponent).
+  host: {
+    '[attr.data-menu-pos]': 'layout.menuPos()',
+  },
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
 })
 export class DashboardComponent {
   protected readonly combatPanel = inject(CombatPanelService);
   protected readonly chatPanel = inject(ChatPanelService);
+  protected readonly layout = inject(DashboardLayoutService);
   private readonly nav = inject(NavigationService);
 
   /** Alias vers `NavigationService.dashboardTab` (source unique de vérité, voir son commentaire —

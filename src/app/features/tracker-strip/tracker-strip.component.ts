@@ -29,6 +29,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { NavigationService } from '../../core/services/navigation.service';
 import { InputNumberComponent } from '../../shared/input-number/input-number.component';
 import { RecipeTrackingService } from '../../core/services/recipe-tracking.service';
+import { DashboardLayoutService } from '../../core/services/dashboard-layout.service';
 
 /** Durée (ms) de l'animation d'ouverture/fermeture d'un KPI — largeur ET
  * contenu (nom/compteur/reset) partagent exactement cette même valeur pour
@@ -68,12 +69,20 @@ const KPI_EXPANDED_WIDTH_PX = 250;
     TooltipDirective,
     InputNumberComponent,
   ],
+  // Position des objectifs (voir DashboardLayoutService.kpiPos, DashboardComponent) : `left`/
+  // `right` fait passer la bande en colonne verticale (voir tracker-strip.component.css) —
+  // attribut posé ici plutôt que par le parent, ce composant reste responsable de sa propre
+  // adaptation (même principe que DashboardRailComponent pour la position du menu).
+  host: {
+    '[attr.data-kpi-pos]': 'layout.kpiPos()',
+  },
   templateUrl: './tracker-strip.component.html',
   styleUrl: './tracker-strip.component.css',
 })
 export class TrackerStripComponent implements OnDestroy {
   protected readonly stats = inject(StatsStoreService);
   protected readonly i18n = inject(I18nService);
+  protected readonly layout = inject(DashboardLayoutService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly catalog = inject(CatalogService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);
