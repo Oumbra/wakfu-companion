@@ -21,7 +21,15 @@
   animation: fadeIn 0.4s;
 }
 
+.drop-zone-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .drop-zone {
+  flex: 1;
+  min-width: 0;
   border: 2px dashed var(--border-strong);
   border-radius: 10px;
   background-color: var(--surface-well);
@@ -49,6 +57,92 @@
   margin: 0;
   font-size: 0.85rem;
   opacity: 0.8;
+}
+
+/* Bouton "astuce" (à droite de la zone de dépôt) + flèche décorative pointant vers elle — une
+   seule utilisation dans l'app, donc inline ici plutôt que dans le sprite partagé (voir
+   CLAUDE.md, conventions icônes). Le bloc reste flottant à côté de `.drop-zone` (flex-shrink: 0)
+   pour ne jamais lui manger de place ; en dessous de 800px (même seuil que
+   `CharacterAddFormComponent`), la rangée passe en colonne pour laisser toute la largeur à la
+   zone de dépôt. */
+.hint-block {
+  position: relative;
+  flex-shrink: 0;
+}
+.hint-trigger {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.hint-arrow {
+  width: 30px;
+  height: 30px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.hint-arrow path {
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+button.hint-btn {
+  white-space: nowrap;
+}
+
+/* Capture d'écran révélée au clic, apparaissant à droite du bouton (comme un popover) — voir
+   `SetupComponent.hintImageSrc` pour le choix entre les deux variantes (thème sombre/clair de
+   l'explorateur de fichiers). Transform de positionnement posé sur le wrapper, séparé de
+   l'animation d'apparition posée sur l'image elle-même : les deux se cumuleraient sinon (voir
+   `.why-explanation`/`fadeSlideDown` pour un exemple plus simple du même principe d'animation
+   d'apparition, ici horizontale plutôt que verticale car l'image sort du bouton vers la droite). */
+.hint-image-wrap {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  margin-left: 14px;
+  z-index: 5;
+}
+.hint-image {
+  display: block;
+  max-width: min(320px, 60vw);
+  max-height: 260px;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+  animation: fadeSlideInRight 0.3s ease;
+}
+@keyframes fadeSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 800px) {
+  .drop-zone-row {
+    flex-direction: column;
+  }
+  .hint-block {
+    align-self: center;
+  }
+  .hint-image-wrap {
+    position: static;
+    transform: none;
+    margin: 14px 0 0;
+    display: flex;
+    justify-content: center;
+  }
+  .hint-image {
+    max-width: min(320px, 80vw);
+  }
 }
 
 .path-hint {
