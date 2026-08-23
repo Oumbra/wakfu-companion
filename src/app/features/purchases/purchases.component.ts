@@ -135,11 +135,17 @@ export class PurchasesComponent {
           });
         }
       }
-      const rows = [...byItem.values()].sort((a, b) =>
-        order === 'desc'
+      const rows = [...byItem.values()].sort((a, b) => {
+        // Hôtel de vente toujours en tête de journée (encaissement, pas un achat — voir isHdvRow) :
+        // repère visuel constant pour retrouver ce gain de kamas quel que soit le tri choisi, plutôt
+        // qu'une ligne perdue au milieu des vrais achats.
+        const aHdv = a.item === HDV_KAMAS_SALE_ITEM;
+        const bHdv = b.item === HDV_KAMAS_SALE_ITEM;
+        if (aHdv !== bHdv) return aHdv ? -1 : 1;
+        return order === 'desc'
           ? b.lastTimestampMs - a.lastTimestampMs
-          : a.lastTimestampMs - b.lastTimestampMs,
-      );
+          : a.lastTimestampMs - b.lastTimestampMs;
+      });
       return {
         dateKey,
         // Une récupération de kamas à l'Hôtel de vente (voir HDV_KAMAS_SALE_ITEM) n'est pas un
