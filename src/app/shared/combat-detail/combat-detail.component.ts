@@ -23,12 +23,16 @@ import {
  * niveau (toute l'entrée `.fight-entry`, un seul clic — voir CLAUDE.md), plus indépendamment par
  * camp comme avant cette fusion.
  *
- * La ligne de switchs est elle-même précédée d'un petit bandeau "Informations de combat" repliable
- * (`switchesExpanded`, état LOCAL à cette instance — pas remonté dans `FightHistoryComponent`,
- * volontairement plus simple que les maps `collapsedFightXpIds`/`collapsedFightLootIds` : ce
- * composant est de toute façon détruit/recréé à chaque repli/dépli de l'entrée qui le contient,
- * `EntityDamageListComponent`/loot/xp) : replié, seuls les switchs sont masqués, les listes
- * alliés/ennemis en dessous restent toujours visibles.
+ * `historical()` distingue les deux appelants pour le bandeau "Informations de combat" :
+ * - `true` (combat de l'historique) : la ligne de switchs devient elle-même l'en-tête repliable
+ *   (label + switchs + caret sur UNE seule ligne, même principe que `.loot-header-row` — voir
+ *   template/CSS), qui replie/déplie switchs ET listes alliés/ennemis ENSEMBLE (`switchesExpanded`,
+ *   état LOCAL à cette instance : pas remonté dans `FightHistoryComponent`, ce composant est de
+ *   toute façon détruit/recréé à chaque repli/dépli de l'entrée qui le contient).
+ * - `false` (combat en cours, défaut) : PAS de bandeau/repli ici — le bandeau "Combat en cours"
+ *   (voir `CombatPanelService`/`FightHistoryComponent`) masque déjà tout le bloc d'un coup quand
+ *   replié, un second niveau de repli imbriqué serait un no-op fonctionnellement inutile. Les
+ *   switchs restent affichés en permanence, sans label ni caret.
  */
 @Component({
   selector: 'app-combat-detail',
@@ -45,9 +49,11 @@ export class CombatDetailComponent {
   readonly mode = input.required<DamageViewMode>();
   readonly turn = input.required<number>();
   readonly maxTurn = input.required<number>();
-  /** Clé i18n du libellé du bouton "Total" (voir DamageViewSwitchComponent) — 'damageMeter.viewTotal'
-   * par défaut (combat en cours), l'historique passe 'damageMeter.viewCumulative'. */
-  readonly totalLabelKey = input<string>('damageMeter.viewTotal');
+  /** Clé i18n du libellé du bouton "Cumulé" (voir DamageViewSwitchComponent) — même texte "Cumulé"
+   * pour le combat en cours ET l'historique (voir CLAUDE.md, les deux disaient auparavant "Total"/
+   * "Cumulé" respectivement) : 'damageMeter.viewCumulative' par défaut, l'input reste overridable
+   * pour un futur appelant qui aurait besoin d'un autre libellé. */
+  readonly totalLabelKey = input<string>('damageMeter.viewCumulative');
   readonly statKind = input.required<EntityStatKind>();
   readonly allyRows = input<EntityDamageRow[]>([]);
   readonly enemyRows = input<EntityDamageRow[]>([]);
@@ -55,6 +61,8 @@ export class CombatDetailComponent {
   readonly fightId = input<number | null>(null);
   /** Glisser-déposer actif : `true` uniquement pour le combat en cours. */
   readonly interactive = input(false);
+  /** `true` pour un combat de l'historique — voir doc de tête. */
+  readonly historical = input(false);
   readonly allyEmptyMessage = input.required<string>();
   readonly enemyEmptyMessage = input.required<string>();
 

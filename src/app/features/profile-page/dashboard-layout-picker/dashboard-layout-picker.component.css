@@ -10,17 +10,19 @@
    boîte, pas la cascade). */
 /* Une couleur par volet d'historique SOLO (combats/purchases/trades, voir DashboardBodySlot.sw) en
    plus de `history` (couleur "méta" du regroupement, voir CLAUDE.md) — palette cohérente avec le
-   thème de chaque section : rouge/épées pour Combats, bleu/commerce pour Achats, jaune pour
-   Échanges, violet neutre pour le regroupement (ni rouge ni bleu ni jaune, pour ne pas se confondre
-   avec l'un des 3 volets qu'il peut représenter), gris pour Menu, ambre pour Objectifs (déjà en
-   place), vert pour Chat (déjà en place). */
+   thème de chaque section : rouge/épées pour Combats, bleu/commerce pour Achats, orange corail pour
+   Échanges (un vrai jaune se confondait trop avec l'ambre d'Objectifs, bug remonté en session —
+   l'orange corail reste assez éloigné du rouge Combats ET de l'ambre Objectifs), violet neutre pour
+   le regroupement (ni rouge ni bleu ni orange, pour ne pas se confondre avec l'un des 3 volets qu'il
+   peut représenter), gris pour Menu, ambre pour Objectifs (déjà en place), vert pour Chat (déjà en
+   place). */
 :host {
   display: contents;
   --lp-sw-menu: #838a99;
   --lp-sw-kpi: #e0b23d;
   --lp-sw-combats: #e2586c;
   --lp-sw-purchases: #4f9fe0;
-  --lp-sw-trades: #d9c440;
+  --lp-sw-trades: #e0713f;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
 }
@@ -29,7 +31,7 @@
   --lp-sw-kpi: #b8860f;
   --lp-sw-combats: #c0364a;
   --lp-sw-purchases: #2f74b5;
-  --lp-sw-trades: #a8901a;
+  --lp-sw-trades: #c05423;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
 }
