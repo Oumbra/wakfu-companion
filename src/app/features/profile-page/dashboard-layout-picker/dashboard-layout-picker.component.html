@@ -193,23 +193,4 @@
       </div>
     </div>
   }
-
-  <!-- ============ Repli des sections ============ -->
-  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.collapseTitle' | t }}</h4>
-  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.collapseDesc' | t }}</p>
-  <div class="dlp-toggle-row">
-    @for (def of toggleDefs(); track def.key) {
-      <button
-        type="button"
-        class="dlp-toggle"
-        [class]="'sw-' + def.sw"
-        [class.on]="!layout.isCollapsed(def.key)"
-        [class.unavailable]="def.unavailable"
-        [title]="def.unavailable ? ('profile.dashboardLayout.combatUnavailable' | t) : ''"
-        (click)="toggleSection(def.key, def.unavailable)"
-      >
-        <span class="dlp-toggle-dot"></span>{{ def.label }}
-      </button>
-    }
-  </div>
 </div>

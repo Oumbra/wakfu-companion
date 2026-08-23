@@ -263,8 +263,7 @@
   margin-top: 14px;
 }
 
-.dlp-chip-row,
-.dlp-toggle-row {
+.dlp-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -313,55 +312,9 @@
   padding-left: 12px;
 }
 
-.dlp-toggle-row {
-  margin-bottom: 4px;
-}
-.dlp-toggle {
-  all: unset;
-  cursor: pointer;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 6px 12px 6px 8px;
-  border-radius: 999px;
-  border: 1.5px solid var(--border-strong);
-  color: var(--text-muted);
-  transition:
-    border-color 0.15s,
-    color 0.15s,
-    background 0.15s;
-}
-.dlp-toggle:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-.dlp-toggle-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--lp-sw);
-  flex-shrink: 0;
-}
-.dlp-toggle.on {
-  color: var(--text-bright);
-  border-color: var(--text-muted);
-  background: var(--surface-well);
-}
-.dlp-toggle:not(.on) {
-  border-style: dashed;
-}
-.dlp-toggle.unavailable {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .dlp-card,
   .dlp-chip,
-  .dlp-toggle,
   .dlp-reset {
     transition: none;
   }

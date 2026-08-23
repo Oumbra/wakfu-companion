@@ -9,12 +9,10 @@ import {
   DashboardKpiPos,
   DashboardMenuPos,
 } from '../../../shared/dashboard-layout-schema/dashboard-layout-schema.component';
-import { CombatPanelService } from '../../../core/services/combat-panel.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import {
   DashboardBodySlot,
   DashboardBodySlotKey,
-  DashboardCollapsibleKey,
   DashboardFocusSide,
   DashboardHistoryKey,
   DashboardLayoutService,
@@ -33,13 +31,6 @@ interface OptionCard<T extends string> {
   readonly nameKey: string;
   readonly descKey: string;
   readonly isDefault?: boolean;
-}
-
-interface ToggleDef {
-  readonly key: DashboardCollapsibleKey;
-  readonly label: string;
-  readonly sw: 'menu' | 'kpi' | 'combat' | 'history' | 'chat';
-  readonly unavailable?: boolean;
 }
 
 const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
@@ -75,7 +66,6 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
 })
 export class DashboardLayoutPickerComponent {
   protected readonly layout = inject(DashboardLayoutService);
-  protected readonly combatPanel = inject(CombatPanelService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly thumbCells = THUMB_CELLS;
@@ -195,24 +185,6 @@ export class DashboardLayoutPickerComponent {
         });
   });
 
-  protected readonly toggleDefs = computed<ToggleDef[]>(() => {
-    const defs: ToggleDef[] = [
-      { key: 'menu', label: this.i18n.t('profile.dashboardLayout.slot.menu'), sw: 'menu' },
-      { key: 'kpi', label: this.i18n.t('profile.dashboardLayout.slot.kpi'), sw: 'kpi' },
-      {
-        key: 'combat',
-        label: this.i18n.t('profile.dashboardLayout.slot.combat'),
-        sw: 'combat',
-        unavailable: !this.combatPanel.hasActiveFight(),
-      },
-    ];
-    for (const s of this.activeSlots()) {
-      if (s.key === 'combat') continue;
-      defs.push({ key: s.key, label: s.label, sw: s.sw });
-    }
-    return defs;
-  });
-
   protected readonly summaryMenuLabel = computed(() =>
     this.i18n.t(this.menuOptions.find((o) => o.value === this.layout.menuPos())!.nameKey),
   );
@@ -262,10 +234,5 @@ export class DashboardLayoutPickerComponent {
   }
   protected chooseFocusSide(side: DashboardFocusSide): void {
     this.layout.setFocusSide(side);
-  }
-
-  protected toggleSection(key: DashboardCollapsibleKey, unavailable: boolean | undefined): void {
-    if (unavailable) return;
-    this.layout.toggleCollapsed(key);
   }
 }
