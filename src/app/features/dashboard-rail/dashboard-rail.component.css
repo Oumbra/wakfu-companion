@@ -30,6 +30,64 @@
   width: 64px;
 }
 
+/* Position à droite (voir DashboardLayoutService.menuPos, DashboardComponent) : la bordure de
+   séparation doit rester sur le bord EXTÉRIEUR de l'écran (gauche du rail quand il est à droite),
+   pas sur le bord qui touche `.dashboard` — sans quoi elle se retrouverait au milieu de l'écran. */
+.dashboard-rail[data-menu-pos='right'] {
+  border-right: none;
+  border-left: 1px solid var(--border);
+}
+
+/* Position en haut (`top-left`/`top-right`) : bande horizontale sous l'en-tête plutôt que rail
+   vertical — icônes seules (comme repliée, voir `.is-collapsed` plus bas), pas assez de hauteur
+   pour un libellé en toutes lettres. Le repli manuel (`.dashboard-rail-collapse-toggle`) n'a plus
+   de sens dans cette orientation (déjà compacte) : masqué plutôt que réadapté. */
+.dashboard-rail[data-menu-pos^='top'] {
+  width: 100%;
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  border-right: none;
+  border-bottom: 1px solid var(--border);
+}
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-scroll {
+  flex-direction: row;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.dashboard-rail[data-menu-pos='top-right'] .dashboard-rail-scroll {
+  justify-content: flex-end;
+}
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-btn {
+  width: auto;
+  flex-shrink: 0;
+  justify-content: center;
+  padding: 10px 12px;
+  gap: 0;
+}
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-label,
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-count {
+  display: none;
+}
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-collapse-toggle {
+  display: none;
+}
+/* Même traitement flottant que `.is-collapsed` ci-dessous (badge DE NOTIFICATION de Chat, seul à
+   rester visible sans libellé) — dupliqué plutôt que fusionné dans un sélecteur combiné : les deux
+   états (repli manuel vertical / orientation horizontale) restent indépendants et pourraient
+   diverger à l'avenir. */
+.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-count-notif {
+  display: flex;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  font-size: 0.62rem;
+  border: 2px solid var(--panel-bg);
+}
+
 .dashboard-rail-scroll {
   flex: 1;
   min-height: 0;

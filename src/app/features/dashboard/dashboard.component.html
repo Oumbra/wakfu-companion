@@ -1,25 +1,37 @@
 <app-dashboard-rail />
-<div class="dashboard">
+<div class="dashboard" [attr.data-kpi-pos]="layout.kpiPos()">
   <app-tracker-strip />
 
-  <app-tab-bar
-    [items]="tabItems()"
-    [activeId]="activeTab()"
-    (activeIdChange)="selectTab($event)"
-    [mobileOnly]="true"
-  />
-  <div
-    class="panels-row"
-    [class.has-combat]="combatPanel.hasActiveFight() && !combatPanel.collapsed()"
-  >
-    @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
-      <app-damage-meter [class.tab-hidden]="activeTab() !== 'damage'" />
-    }
-    <app-tracker [class.tab-hidden]="activeTab() !== 'tracker'" />
-    <app-history [class.tab-hidden]="activeTab() !== 'history'" />
-    <app-chat-panel
-      [class.tab-hidden]="activeTab() !== 'chat'"
-      [class.panel-collapsed]="chatPanel.collapsed()"
+  <div class="dashboard-main">
+    <app-tab-bar
+      [items]="tabItems()"
+      [activeId]="activeTab()"
+      (activeIdChange)="selectTab($event)"
+      [mobileOnly]="true"
     />
+    <div
+      class="panels-row"
+      [style.grid-template-rows]="'repeat(' + layout.panelsRowCount() + ', minmax(0, 1fr))'"
+    >
+      @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
+        <app-damage-meter
+          [class.tab-hidden]="activeTab() !== 'damage'"
+          [class.grid-span2]="layout.gridPlan()['combat'].span2"
+          [style.order]="layout.gridPlan()['combat'].order"
+        />
+      }
+      <app-tracker
+        [class.tab-hidden]="activeTab() !== 'tracker'"
+        [class.grid-span2]="layout.gridPlan()['tracker'].span2"
+        [style.order]="layout.gridPlan()['tracker'].order"
+      />
+      <app-history [class.tab-hidden]="activeTab() !== 'history'" />
+      <app-chat-panel
+        [class.tab-hidden]="activeTab() !== 'chat'"
+        [class.panel-collapsed]="chatPanel.collapsed()"
+        [class.grid-span2]="layout.gridPlan()['chat'].span2"
+        [style.order]="layout.gridPlan()['chat'].order"
+      />
+    </div>
   </div>
 </div>

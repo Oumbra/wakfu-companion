@@ -1,5 +1,9 @@
 @if (entries().length > 0) {
-  <nav class="dashboard-rail" [class.is-collapsed]="isRailCollapsed()">
+  <nav
+    class="dashboard-rail"
+    [class.is-collapsed]="isRailCollapsed()"
+    [attr.data-menu-pos]="layout.menuPos()"
+  >
     <div class="dashboard-rail-scroll">
       @for (entry of entries(); track entry.id) {
         <button

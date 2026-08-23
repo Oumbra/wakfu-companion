@@ -67,6 +67,9 @@
                   @case ('avatar') {
                     ◐
                   }
+                  @case ('customization') {
+                    ▦
+                  }
                   @case ('colorblind') {
                     ◎
                   }
@@ -86,7 +89,7 @@
                     seulement, `tab.label` (mobile/tab-sheet/aide) reste inchangé. -->
                 @switch (tab.id) {
                   @case ('avatar') {
-                    {{ 'profile.railCustomization' | t }}
+                    {{ 'profile.railIdentity' | t }}
                   }
                   @case ('colorblind') {
                     {{ 'profile.railAccessibility' | t }}
@@ -259,7 +262,11 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
+        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'customization'">
+          <div class="panel-body">
             <app-dashboard-layout-picker />
           </div>
         </div>

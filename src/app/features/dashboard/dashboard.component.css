@@ -1,8 +1,20 @@
+/* Position du menu (voir DashboardLayoutService.menuPos, attribut posé par dashboard.component.ts) :
+   `left` (défaut) = ligne, rail en 1er enfant DOM = visuellement à gauche. `right` = ligne inversée
+   (rail toujours 1er dans le DOM, mais visuellement après `.dashboard`). `top-left`/`top-right` =
+   colonne, rail au-dessus — seul l'alignement interne des boutons du rail diffère entre les deux
+   (voir DashboardRailComponent), pas cette disposition externe. */
 :host {
   display: flex;
   width: 100%;
   height: 100%;
   min-height: 0;
+}
+:host[data-menu-pos='right'] {
+  flex-direction: row-reverse;
+}
+:host[data-menu-pos='top-left'],
+:host[data-menu-pos='top-right'] {
+  flex-direction: column;
 }
 
 /* `<app-dashboard-rail>` (voir DashboardRailComponent) est un sibling flex de `.dashboard` au
@@ -15,6 +27,10 @@
    second, jamais un `gap` du conteneur commun. */
 .dashboard {
   display: flex;
+  /* Position des objectifs (voir DashboardLayoutService.kpiPos, attribut ci-dessous) : `top`/
+     `bottom` (défaut) = colonne, `<app-tracker-strip>` avant/après `.dashboard-main` ; `left`/
+     `right` = ligne, la bande d'objectifs devient une colonne à côté de `.dashboard-main` (voir
+     TrackerStripComponent pour son propre passage en mode vertical). */
   flex-direction: column;
   gap: 15px;
   padding: 15px;
@@ -24,12 +40,36 @@
   box-sizing: border-box;
   min-height: 0;
 }
+.dashboard[data-kpi-pos='left'],
+.dashboard[data-kpi-pos='right'] {
+  flex-direction: row;
+}
+.dashboard[data-kpi-pos='bottom'] app-tracker-strip,
+.dashboard[data-kpi-pos='right'] app-tracker-strip {
+  order: 1;
+}
+
+.dashboard-main {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
 
 /* Barre d'onglets mobile (voir TabBarComponent, `mobileOnly`) : fusionnée visuellement avec
    l'en-tête du panneau actif (voir styles.css pour le masquage du .panel-header propre à chaque
    panneau et l'alignement du haut de .tool-panel) plutôt que d'être une rangée séparée au-dessus —
    gagne de la hauteur et lit comme un seul bloc. */
 
+/* Grille du corps (Suivi + Combat/Historique×N/Chat visibles, voir DashboardLayoutService.gridPlan)
+   — toujours 2 colonnes max (jamais plus, Combat/Historique deviennent illisibles en dessous, voir
+   CLAUDE.md), autant de lignes que nécessaire (`grid-template-rows`, posé en inline depuis le
+   template via `layout.panelsRowCount()`, calculé côté service). Chaque enfant reçoit son
+   `order`/`.grid-span2` depuis `layout.gridPlan()` (Suivi/Combat/Chat directement dans le template
+   ci-dessus, Historique en interne — voir HistoryComponent, dont les panneaux réels sont rendus par
+   un composant `display:contents` distinct de ce grid). */
 .panels-row {
   min-width: 0;
   display: grid;
@@ -40,43 +80,25 @@
      de parents jusqu'à `app-tracker`, grandit alors plus large que l'écran
      au lieu de forcer le contenu à rétrécir/tronquer en ellipsis. */
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  /* Même piège que les colonnes, mais en hauteur : sans ce `minmax(0, 1fr)`, l'unique ligne
-     implicite du grid se dimensionne `auto` (sur le contenu) — avec un historique volumineux
-     (ex. des centaines d'achats), `.tool-panel` grandit alors avec sa liste au lieu de rester capé
-     à la hauteur disponible, et c'est toute la page qui se met à scroller au lieu du seul
-     `.panel-body` interne (`overflow-y: auto`) prévu pour ça. Bug réel constaté avec un vrai
-     fichier de log volumineux. */
-  grid-template-rows: minmax(0, 1fr);
   gap: 15px;
   /* `flex-basis: 0` (via le raccourci `flex`) plutôt que `flex-grow: 1` seul (dont le
      `flex-basis: auto` implicite se base sur le contenu) : sans une base définie, la hauteur
-     "utilisée" de ce flex-item reste indéterminée tant que son contenu (donc les lignes `1fr` du
-     grid ci-dessus) n'est pas connu — circulaire. Avec une base à 0, `flex-grow` calcule une
-     hauteur finale définie à partir de l'espace disponible, que le grid peut alors utiliser comme
-     hauteur de référence pour ses lignes `1fr` (au lieu de grandir avec son contenu). */
+     "utilisée" de ce flex-item reste indéterminée tant que son contenu (donc les lignes du grid
+     ci-dessus) n'est pas connu — circulaire. Avec une base à 0, `flex-grow` calcule une hauteur
+     finale définie à partir de l'espace disponible, que le grid peut alors utiliser comme hauteur
+     de référence pour ses lignes. */
   flex: 1 1 0;
   min-height: 0;
 }
-/* Colonne Combat ajoutée (plus étroite, contenu compact) devant Historique/Chat
-   quand un combat est en cours et que le panneau n'est pas replié. */
-.panels-row.has-combat {
-  grid-template-columns: minmax(260px, 0.8fr) repeat(2, minmax(0, 1fr));
-}
-/* Chat replié (voir ChatPanelService/DashboardRailComponent) : sa colonne disparaît de la grille
-   (voir la règle `app-chat-panel.panel-collapsed { display: none }` juste en dessous) SANS que le
-   nombre de colonnes n'ait besoin de changer ici — HistoryComponent compense en scindant son
-   panneau Combats à part dès que Chat se replie (voir HistoryComponent.splitCombats), ce qui
-   restitue exactement le même nombre d'éléments réels (2 sans combat, 3 avec) que Chat
-   visible/non scindé. Une éventuelle 3ᵉ règle `.chat-collapsed` réduisant le nombre de colonnes
-   serait donc fausse ici : elle forcerait les deux panneaux d'HistoryComponent à se partager UNE
-   seule colonne au lieu de profiter chacun de la sienne. */
+/* `.grid-span2` (carte en pleine largeur) : classe GLOBALE, voir styles.css — un panneau scindé
+   d'`<app-history>` (`display:contents`) porte l'attribut d'encapsulation de vue de ce composant,
+   pas celui de `DashboardComponent`, une règle scopée ici ne l'atteindrait donc jamais. */
 
-/* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, une fois retiré de la grille
-   `.panels-row` (colonnes recalculées ci-dessus) — CSS pur (`[class.panel-collapsed]`, jamais un
-   `@if` structurel comme pour `app-damage-meter`) : le composant reste monté en permanence pour
-   que l'onglet Chat mobile continue de fonctionner même si l'état replié (togglable uniquement
-   depuis un bouton desktop, voir `.collapse-btn`/styles.css) persistait d'une session desktop à
-   une session mobile — voir la doc de tête de DashboardComponent. */
+/* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, retiré de la grille (CSS pur,
+   `[class.panel-collapsed]`, jamais un `@if` structurel comme pour `app-damage-meter`) — le
+   composant reste monté en permanence pour que l'onglet Chat mobile continue de fonctionner même
+   si l'état replié (togglable depuis le rail/la page Personnalisation, voir DashboardLayoutService)
+   persistait d'une session desktop à une session mobile. */
 @media (min-width: 801px) {
   .panels-row > app-chat-panel.panel-collapsed {
     display: none;
@@ -85,19 +107,37 @@
 
 /* En dessous de 800px, les panneaux empilés en 1 colonne n'ont plus assez
    de hauteur chacun pour être utilisables en combat (voir CLAUDE.md) : on
-   passe en mode onglet, un seul panneau affiché en plein espace disponible. */
+   passe en mode onglet, un seul panneau affiché en plein espace disponible.
+   La disposition choisie sur Profil › Personnalisation (menu/objectifs/corps) ne s'applique QUE
+   desktop, comme le reste des réglages responsive existants (rail/bande d'objectifs déjà masqués
+   sous ce seuil) — `!important` nécessaire pour l'emporter sur `grid-template-rows`, posé en style
+   INLINE (donc de spécificité supérieure à une règle de classe normale) par le template. */
 @media (max-width: 800px) {
-  .dashboard {
+  :host,
+  :host[data-menu-pos='right'],
+  :host[data-menu-pos='top-left'],
+  :host[data-menu-pos='top-right'] {
+    flex-direction: row;
+  }
+  .dashboard,
+  .dashboard[data-kpi-pos='left'],
+  .dashboard[data-kpi-pos='right'] {
+    flex-direction: column;
     gap: 0;
     padding: 0;
   }
-  .panels-row,
-  .panels-row.has-combat {
-    grid-template-columns: minmax(0, 1fr);
+  app-tracker-strip {
+    order: 0 !important;
+  }
+  .panels-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
   }
   .panels-row > .tab-hidden {
     display: none;
   }
+  /* Pas besoin de neutraliser `.grid-span2` ici : `grid-template-columns` ne définit plus qu'UNE
+     colonne juste au-dessus, `grid-column: 1 / -1` (voir styles.css) y équivaut déjà à `auto`. */
 }
 
 :host-context([data-theme='light']) {

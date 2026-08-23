@@ -12,16 +12,15 @@ import {
 import { CombatPanelService } from '../../../core/services/combat-panel.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import {
+  DashboardBodySlot,
   DashboardBodySlotKey,
   DashboardCollapsibleKey,
   DashboardHistoryKey,
   DashboardLayoutService,
 } from '../../../core/services/dashboard-layout.service';
 
-interface BodySlot {
-  readonly key: DashboardBodySlotKey;
+interface LabeledSlot extends DashboardBodySlot {
   readonly label: string;
-  readonly sw: 'combat' | 'history' | 'chat';
 }
 
 interface OptionCard<T extends string> {
@@ -57,13 +56,11 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
 /**
  * Composeur de disposition du tableau de bord (Profil › Personnalisation) — trois réglages
  * indépendants (position du menu, position des objectifs, composition du corps) plus le découpage
- * de l'historique, avec aperçu en direct. Reprend telle quelle la maquette validée avec
- * l'utilisateur (voir historique de la conversation) : mêmes cartes cliquables, même moteur de
- * schéma générique (`DashboardLayoutSchemaComponent`), même règle de grille (jamais plus de 2
- * colonnes, le dernier élément d'un total impair prend toute la largeur de sa ligne).
- *
- * Ne pilote pour l'instant QUE la préférence (`DashboardLayoutService`, persistée localement) — le
- * vrai tableau de bord ne l'applique pas encore (voir le commentaire de tête du service).
+ * de l'historique, avec aperçu en direct. La dérivation (cartes visibles, mode effectif, placement
+ * dans la grille) vit dans `DashboardLayoutService`, partagée avec le VRAI tableau de bord qui
+ * l'applique désormais (`DashboardComponent`/`DashboardRailComponent`/`TrackerStripComponent`/
+ * `HistoryComponent`) — ce composant n'ajoute que les libellés traduits par-dessus (le service ne
+ * connaît pas l'i18n).
  */
 @Component({
   selector: 'app-dashboard-layout-picker',
@@ -143,74 +140,43 @@ export class DashboardLayoutPickerComponent {
   ];
 
   /** Clé i18n du libellé d'un sous-onglet d'historique — utilisée à la fois pour construire les
-   * cartes du corps (`histSlotLabel`, déjà résolu) et directement par le template pour les 3
-   * lignes de découpage (`histLabelKey`, résolu via le pipe `| t`). */
+   * libellés des cartes du corps (`slotLabel`) et directement par le template pour les 3 lignes de
+   * découpage (`histLabelKey`, résolu via le pipe `| t`). */
   protected histLabelKey(key: DashboardHistoryKey): string {
     return key === 'combats'
       ? 'profile.dashboardLayout.slot.histCombats'
       : 'profile.dashboardLayout.slot.' + key;
   }
-  private histSlotLabel(key: DashboardHistoryKey): string {
-    return this.i18n.t(this.histLabelKey(key));
+
+  private slotLabel(key: DashboardBodySlotKey): string {
+    if (key === 'combat') return this.i18n.t('profile.dashboardLayout.slot.combat');
+    if (key === 'chat') return this.i18n.t('profile.dashboardLayout.slot.chat');
+    if (key === 'hist_group') {
+      const split = this.layout.historySplit();
+      const remaining = HIST_KEYS.filter((k) => !split[k]);
+      return remaining.length === 3
+        ? this.i18n.t('profile.dashboardLayout.slot.histGroupFull')
+        : this.i18n.t('profile.dashboardLayout.slot.histGroupPartial', {
+            parts: remaining.map((k) => this.i18n.t(this.histLabelKey(k))).join(' + '),
+          });
+    }
+    // 'hist_combats' | 'hist_purchases' | 'hist_trades'
+    const histKey = key.slice('hist_'.length) as DashboardHistoryKey;
+    return this.i18n.t(this.histLabelKey(histKey));
   }
 
-  /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique (voir
-   * `DashboardLayoutService`, doc de tête). `includeInactiveCombat` : Combat est toujours proposé
-   * comme cible de mise en avant même hors combat (repli automatique tant qu'aucun combat n'est en
-   * cours, voir `effectiveBodyMode`) — mais n'apparaît jamais dans l'aperçu réel hors combat. */
-  private computeSlots(includeInactiveCombat: boolean): BodySlot[] {
-    const slots: BodySlot[] = [];
-    if (includeInactiveCombat || this.combatPanel.hasActiveFight()) {
-      slots.push({
-        key: 'combat',
-        label: this.i18n.t('profile.dashboardLayout.slot.combat'),
-        sw: 'combat',
-      });
-    }
-    const split = this.layout.historySplit();
-    const splitOnes = HIST_KEYS.filter((k) => split[k]);
-    const remaining = HIST_KEYS.filter((k) => !split[k]);
-    for (const k of splitOnes) {
-      slots.push({
-        key: `hist_${k}` as DashboardBodySlotKey,
-        label: this.histSlotLabel(k),
-        sw: 'history',
-      });
-    }
-    if (remaining.length > 0) {
-      const label =
-        remaining.length === 3
-          ? this.i18n.t('profile.dashboardLayout.slot.histGroupFull')
-          : this.i18n.t('profile.dashboardLayout.slot.histGroupPartial', {
-              parts: remaining.map((k) => this.histSlotLabel(k)).join(' + '),
-            });
-      slots.push({ key: 'hist_group', label, sw: 'history' });
-    }
-    slots.push({
-      key: 'chat',
-      label: this.i18n.t('profile.dashboardLayout.slot.chat'),
-      sw: 'chat',
-    });
-    return slots;
+  private label(slots: readonly DashboardBodySlot[]): LabeledSlot[] {
+    return slots.map((s) => ({ ...s, label: this.slotLabel(s.key) }));
   }
 
-  /** Cartes qui existeraient compte tenu du découpage de l'historique et de l'état réel du combat —
-   * avant application du repli manuel (voir `visibleBodySlots`). */
-  protected readonly activeSlots = computed(() => this.computeSlots(false));
-  /** Mêmes cartes, Combat toujours inclus (repli automatique) — pour la liste des cibles de mise en
-   * avant, toujours proposées même indisponibles dans l'immédiat. */
-  protected readonly chipSlots = computed(() => this.computeSlots(true));
-  /** Cartes réellement visibles : `activeSlots` moins celles repliées manuellement. */
-  protected readonly visibleBodySlots = computed(() =>
-    this.activeSlots().filter((s) => !this.layout.isCollapsed(s.key)),
+  protected readonly activeSlots = computed<LabeledSlot[]>(() =>
+    this.label(this.layout.activeSlots()),
   );
-
-  protected readonly effectiveBodyMode = computed<'equal' | 'focus'>(() => {
-    if (this.layout.bodyMode() !== 'focus') return 'equal';
-    return this.visibleBodySlots().some((s) => s.key === this.layout.focusTarget())
-      ? 'focus'
-      : 'equal';
-  });
+  protected readonly chipSlots = computed<LabeledSlot[]>(() => this.label(this.layout.chipSlots()));
+  protected readonly visibleBodySlots = computed<LabeledSlot[]>(() =>
+    this.label(this.layout.visibleBodySlots()),
+  );
+  protected readonly effectiveBodyMode = this.layout.effectiveBodyMode;
 
   protected readonly previewCells = computed<DashboardLayoutSchemaCell[] | null>(() => {
     if (this.effectiveBodyMode() !== 'equal') return null;
@@ -229,7 +195,7 @@ export class DashboardLayoutPickerComponent {
   });
 
   protected readonly historySplitSummary = computed(() => {
-    const slots = this.computeSlots(false).filter((s) => s.key.startsWith('hist'));
+    const slots = this.activeSlots().filter((s) => s.key.startsWith('hist'));
     const names = slots.map((s) => s.label).join(' · ');
     return slots.length <= 1
       ? this.i18n.t('profile.dashboardLayout.historySplitSummaryOne', { names })

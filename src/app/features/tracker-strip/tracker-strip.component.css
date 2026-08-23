@@ -17,6 +17,34 @@
   height: 84px;
 }
 
+/* Objectifs en colonne (voir DashboardLayoutService.kpiPos, DashboardComponent) : la bande devient
+   une liste verticale scrollable à côté de `.dashboard-main` au lieu d'une ligne au-dessus/en
+   dessous — largeur fixe plutôt que hauteur fixe, tuiles empilées. Les tuiles gardent leur
+   comportement de déploiement HORIZONTAL au clic (`.kpi.expanded`, voir plus bas) même ici : une
+   tuile déployée s'élargit sur place dans la colonne plutôt que de suivre un second axe
+   d'agrandissement dédié — plus simple, pas de réanimation propre à ce mode. */
+:host[data-kpi-pos='left'],
+:host[data-kpi-pos='right'] {
+  height: auto;
+  width: 230px;
+}
+:host[data-kpi-pos='left'] .kpi-row,
+:host[data-kpi-pos='right'] .kpi-row {
+  flex-direction: column;
+  height: 100%;
+}
+:host[data-kpi-pos='left'] .kpi-strip,
+:host[data-kpi-pos='right'] .kpi-strip {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+:host[data-kpi-pos='left'] .kpi-add,
+:host[data-kpi-pos='right'] .kpi-add {
+  margin-top: 0;
+}
+
 /* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :
    Suivi y redevient un onglet à part entière (TrackerComponent), pas une
    bande persistante — pas assez de largeur disponible pour un scroll
