@@ -1,8 +1,30 @@
-<div class="combat-info-toggle" (click)="toggleSwitches()">
-  <span class="combat-info-label">{{ 'damageMeter.combatInfo' | t }}</span>
-  <span class="caret" [class.expanded]="switchesExpanded()">▸</span>
-</div>
-@if (switchesExpanded()) {
+@if (historical()) {
+  <div class="combat-info-toggle" (click)="toggleSwitches()">
+    <span class="combat-info-label">{{ 'damageMeter.combatInfo' | t }}</span>
+    @if (switchesExpanded()) {
+      <app-damage-view-switch
+        class="combat-switch-center"
+        [mode]="mode()"
+        [turn]="turn()"
+        [maxTurn]="maxTurn()"
+        [totalLabelKey]="totalLabelKey()"
+        (click)="$event.stopPropagation()"
+        (modeChange)="modeChange.emit($event)"
+        (turnChange)="turnChange.emit($event)"
+      />
+    }
+    <span class="combat-info-end">
+      @if (switchesExpanded()) {
+        <app-entity-stat-tabs
+          [kind]="statKind()"
+          (click)="$event.stopPropagation()"
+          (kindChange)="kindChange.emit($event)"
+        />
+      }
+      <span class="caret" [class.expanded]="switchesExpanded()">▸</span>
+    </span>
+  </div>
+} @else {
   <div class="combat-switch-row">
     <app-damage-view-switch
       class="combat-switch-center"
@@ -20,27 +42,29 @@
     />
   </div>
 }
-<div class="entity-lists-row">
-  <app-entity-damage-list
-    [title]="'damageMeter.allies' | t"
-    side="ally"
-    [rows]="allyRows()"
-    [fightId]="statKind() === 'damage' ? fightId() : null"
-    [interactive]="interactive()"
-    [viewMode]="mode()"
-    [turn]="turn()"
-    [showElements]="showElements()"
-    [emptyMessage]="allyEmptyMessage()"
-  />
-  <app-entity-damage-list
-    [title]="'damageMeter.enemies' | t"
-    side="enemy"
-    [rows]="enemyRows()"
-    [fightId]="statKind() === 'damage' ? fightId() : null"
-    [interactive]="interactive()"
-    [viewMode]="mode()"
-    [turn]="turn()"
-    [showElements]="showElements()"
-    [emptyMessage]="enemyEmptyMessage()"
-  />
-</div>
+@if (!historical() || switchesExpanded()) {
+  <div class="entity-lists-row">
+    <app-entity-damage-list
+      [title]="'damageMeter.allies' | t"
+      side="ally"
+      [rows]="allyRows()"
+      [fightId]="statKind() === 'damage' ? fightId() : null"
+      [interactive]="interactive()"
+      [viewMode]="mode()"
+      [turn]="turn()"
+      [showElements]="showElements()"
+      [emptyMessage]="allyEmptyMessage()"
+    />
+    <app-entity-damage-list
+      [title]="'damageMeter.enemies' | t"
+      side="enemy"
+      [rows]="enemyRows()"
+      [fightId]="statKind() === 'damage' ? fightId() : null"
+      [interactive]="interactive()"
+      [viewMode]="mode()"
+      [turn]="turn()"
+      [showElements]="showElements()"
+      [emptyMessage]="enemyEmptyMessage()"
+    />
+  </div>
+}

@@ -251,7 +251,7 @@
           [mode]="viewModeFor(record.id)"
           [turn]="turnFor(record)"
           [maxTurn]="record.turns"
-          totalLabelKey="damageMeter.viewCumulative"
+          [historical]="true"
           [statKind]="statKindFor(record.id)"
           [allyRows]="allyStatRowsFor(record)"
           [enemyRows]="enemyStatRowsFor(record)"
