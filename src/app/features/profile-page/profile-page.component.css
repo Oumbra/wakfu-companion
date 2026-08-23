@@ -67,7 +67,11 @@ dynamique plutôt qu'une valeur en dur fragile. */
   transition: width 0.15s ease;
 }
 .profile-rail.is-collapsed {
-  width: 64px;
+  /* 64px de base + marge pour laisser `.profile-rail-new-badge` (voir plus bas) respirer à côté de
+     l'icône sans être rogné par `overflow-x: hidden` de `.profile-rail-scroll` — vérifié en
+     navigateur : 64px seul ne laissait que quelques px après l'icône la plus large, insuffisant
+     pour le badge "NEW" (retour utilisateur, badge invisible une fois le rail replié). */
+  width: 76px;
 }
 /* Seule zone qui défile : sépare la liste des boutons de l'icône de repli (dernier enfant direct de
 `.profile-rail`, hors de cette zone) pour qu'elle reste TOUJOURS accessible en bas du rail, même
@@ -114,6 +118,7 @@ accent cyan) : teinte l'accent directement dans le fond du bouton plutôt qu'un 
   font-weight: 700 !important;
 }
 .profile-rail-icon {
+  position: relative;
   display: flex;
   flex-shrink: 0;
 }
@@ -152,19 +157,31 @@ n'importe quel `justify-content`). */
   color: var(--accent);
 }
 
-/* Badge "new" (voir NewSectionBadgeService/CLAUDE.md) — pastille pleine, sans texte : sibling de
-`.profile-rail-icon`/`.profile-rail-label` (voir template), positionnée en absolu par rapport à
-`.profile-rail-btn` (`position: relative`, voir plus haut) pour rester visible que le rail soit
-replié ou non, contrairement à un badge posé DANS l'icône ou le libellé (l'un des deux disparaît
-selon l'état, voir règles `.is-collapsed` plus bas). */
-.profile-rail-new-dot {
+/* Badge "new" (voir NewSectionBadgeService/CLAUDE.md) — texte "NEW", pas une simple pastille : une
+pastille seule ne dit pas à l'utilisateur CE QUI est nouveau (retour utilisateur). Enfant de
+`.profile-rail-icon` (`position: relative`, voir plus haut), ancré à SON coin bas-droit — reste
+donc TOUJOURS à côté de l'icône plutôt que dessus, et surtout à l'intérieur de la largeur du
+bouton (icône centrée avec de la marge de chaque côté, replié comme déplié) plutôt que d'en
+déborder : un badge posé sur tout `.profile-rail-btn` (essayé d'abord, ancré à SON coin plutôt qu'à
+celui de l'icône) débordait de sa boîte une fois le rail replié et se faisait rogner par
+`.profile-rail-scroll` (`overflow-x: hidden`, voir plus haut) — invisible alors même que le badge
+existait bien dans le DOM. `font-size` fixe (pas hérité) : `.is-collapsed .profile-rail-icon`
+grossit la taille de police du glyphe replié (voir plus haut), qui grossirait ce texte avec lui
+sans cette précision. */
+.profile-rail-new-badge {
   position: absolute;
-  top: 9px;
-  right: 9px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  bottom: -7px;
+  right: -8px;
+  padding: 1px 3px;
+  border-radius: 3px;
   background: var(--accent);
+  color: var(--on-accent);
+  font-size: 7px;
+  font-weight: 800;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  pointer-events: none;
   box-shadow: 0 0 0 2px var(--panel-bg);
 }
 
