@@ -248,6 +248,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.historySplitSummaryOne': "→ 1 carte d'historique : {{names}}",
     'profile.dashboardLayout.historySplitSummaryMany':
       "→ {{count}} cartes d'historique : {{names}}",
+    'profile.dashboardLayout.orderTitle': 'Ordre des blocs',
+    'profile.dashboardLayout.orderDesc':
+      "Choisis dans quel ordre s'affichent Combats, Achats, Échanges et Chat — cet ordre s'applique aussi bien en répartition égale qu'aux cartes secondaires empilées à côté de la mise en avant.",
+    'profile.dashboardLayout.orderUp': 'Monter',
+    'profile.dashboardLayout.orderDown': 'Descendre',
     'profile.dashboardLayout.bodyTitle': 'Composition du corps',
     'profile.dashboardLayout.bodyDesc': 'Ce qui reste une fois le menu et les objectifs placés.',
     'profile.dashboardLayout.body.equal.name': 'Répartition égale',
@@ -813,6 +818,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.historyGroupNeedsTwo': 'Check at least 2 to group them.',
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 history card: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany': '→ {{count}} history cards: {{names}}',
+    'profile.dashboardLayout.orderTitle': 'Block order',
+    'profile.dashboardLayout.orderDesc':
+      'Choose the order Combat, Purchases, Trades and Chat appear in — this order applies both to the even split and to the secondary cards stacked next to the highlighted one.',
+    'profile.dashboardLayout.orderUp': 'Move up',
+    'profile.dashboardLayout.orderDown': 'Move down',
     'profile.dashboardLayout.bodyTitle': 'Body composition',
     'profile.dashboardLayout.bodyDesc': "Whatever's left once the menu and objectives are placed.",
     'profile.dashboardLayout.body.equal.name': 'Even split',
@@ -1373,6 +1383,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 tarjeta de historial: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany':
       '→ {{count}} tarjetas de historial: {{names}}',
+    'profile.dashboardLayout.orderTitle': 'Orden de los bloques',
+    'profile.dashboardLayout.orderDesc':
+      'Elige en qué orden aparecen Combates, Compras, Intercambios y Chat — este orden se aplica tanto al reparto igual como a las tarjetas secundarias apiladas junto a la destacada.',
+    'profile.dashboardLayout.orderUp': 'Subir',
+    'profile.dashboardLayout.orderDown': 'Bajar',
     'profile.dashboardLayout.bodyTitle': 'Composición del cuerpo',
     'profile.dashboardLayout.bodyDesc': 'Lo que queda una vez colocados el menú y los objetivos.',
     'profile.dashboardLayout.body.equal.name': 'Reparto igual',
@@ -1937,6 +1952,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.historySplitSummaryOne': '→ 1 cartão de histórico: {{names}}',
     'profile.dashboardLayout.historySplitSummaryMany':
       '→ {{count}} cartões de histórico: {{names}}',
+    'profile.dashboardLayout.orderTitle': 'Ordem dos blocos',
+    'profile.dashboardLayout.orderDesc':
+      'Escolha em que ordem aparecem Combates, Compras, Trocas e Chat — essa ordem se aplica tanto à divisão igual quanto aos cartões secundários empilhados ao lado do destaque.',
+    'profile.dashboardLayout.orderUp': 'Subir',
+    'profile.dashboardLayout.orderDown': 'Descer',
     'profile.dashboardLayout.bodyTitle': 'Composição do corpo',
     'profile.dashboardLayout.bodyDesc': 'O que resta depois de posicionar o menu e os objetivos.',
     'profile.dashboardLayout.body.equal.name': 'Divisão igual',

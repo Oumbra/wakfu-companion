@@ -255,6 +255,23 @@
   font-size: 11.5px;
   color: var(--text-muted);
 }
+
+/* Ordre des blocs (voir `blockOrder`) : mêmes lignes que `.dlp-setting-row` (regroupement de
+   l'historique), avec 2 boutons monter/descendre à droite au lieu d'un switch. `chevron-left`
+   (seul chevron du sprite, voir `AppIconName`) simplement pivoté à 90°/-90° plutôt qu'un nouveau
+   symbole haut/bas dédié dans le sprite. */
+.dlp-order-btns {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.dlp-order-btn-up {
+  transform: rotate(90deg);
+}
+.dlp-order-btn-down {
+  transform: rotate(-90deg);
+}
+
 .dlp-hint {
   margin: 0 0 22px;
   font-size: 11.5px;

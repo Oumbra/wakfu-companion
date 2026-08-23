@@ -140,6 +140,46 @@
     <p class="dlp-hint dlp-hint-warn">{{ 'profile.dashboardLayout.historyGroupNeedsTwo' | t }}</p>
   }
 
+  <!-- ============ Ordre des blocs ============ -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.orderTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.orderDesc' | t }}</p>
+  <div class="dlp-setting-rows">
+    @for (
+      key of layout.blockOrder();
+      track key;
+      let i = $index;
+      let first = $first;
+      let last = $last
+    ) {
+      <div class="dlp-setting-row">
+        <span class="dlp-setting-dot" [class]="'sw-' + key"></span>
+        <span class="dlp-setting-text">
+          <b>{{ blockLabelKey(key) | t }}</b>
+        </span>
+        <div class="dlp-order-btns">
+          <button
+            type="button"
+            class="icon-btn dlp-order-btn dlp-order-btn-up"
+            [disabled]="first"
+            [appTooltip]="'profile.dashboardLayout.orderUp' | t"
+            (click)="layout.moveBlock(key, -1)"
+          >
+            <app-icon name="chevron-left" [size]="14" [strokeWidth]="2.4" />
+          </button>
+          <button
+            type="button"
+            class="icon-btn dlp-order-btn dlp-order-btn-down"
+            [disabled]="last"
+            [appTooltip]="'profile.dashboardLayout.orderDown' | t"
+            (click)="layout.moveBlock(key, 1)"
+          >
+            <app-icon name="chevron-left" [size]="14" [strokeWidth]="2.4" />
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
   <!-- ============ Composition du corps ============ -->
   <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.bodyTitle' | t }}</h4>
   <p class="dlp-subdesc">{{ 'profile.dashboardLayout.bodyDesc' | t }}</p>
