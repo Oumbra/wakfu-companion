@@ -361,55 +361,12 @@ Personnages. */
   font-family: inherit;
   font-size: 0.8125rem;
 }
-.profile-field {
-  width: 100%;
-  max-width: 950px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.profile-label {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-}
-/* Titre de section desktop (rail de navigation, voir CLAUDE.md) : `.profile-label-row` ne sert
-plus qu'à ça dans ce composant, un par onglet, jamais dupliqué — restylé en vrai titre de page
-(voir `.profile-label-row .profile-label` plus bas) plutôt qu'en petit libellé de champ (réservé
-à `.profile-label` seul, ex. "AVATAR" au-dessus de la grille d'avatars). `width`/`max-width` :
-aligné avec `.identity-row`/`.profile-field-wide` (720px) même quand le parent direct est
-`.panel-body` (centré, ne stretch pas ses enfants comme le ferait `.profile-field`) — cas de
-l'onglet Avatar, seul à ne pas passer par `.profile-field-wide`. */
-.profile-label-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-.profile-label-row .profile-label {
-  font-size: 1.05rem;
-  font-weight: 700;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--text-bright);
-}
-/* Ligne de description sous le titre de section (voir CLAUDE.md) — un paragraphe par onglet,
-même mécanique que `.profile-label-row` juste au-dessus (pleine largeur du `.profile-field`
-parent, pas de cap propre). Masquée en mobile au même titre que `.profile-label-row` (voir media
-query plus bas) : le titre d'onglet de la barre mobile suffit, sans place à revendre pour une
-description en plus sur ces petits écrans. */
-.profile-section-desc {
-  width: 100%;
-  margin: 0 0 18px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.5;
-}
+/* `.profile-field`/`.profile-label`/`.profile-label-row`/`.profile-section-desc` : déplacées en
+GLOBAL dans styles.css (section "Champs génériques page profil") — un composant enfant rendu dans
+un onglet (ex. `DashboardLayoutPickerComponent`, Personnalisation) qui réutilise ces mêmes classes
+dans SON PROPRE template ne peut jamais être atteint par une règle scopée ici (encapsulation de vue
+Angular, voir CLAUDE.md/`.tool-panel`) même si le nom de classe est identique — bug réel constaté :
+la page Personnalisation ne recevait aucune de ces mises en forme. */
 
 /* Picker "Thème" (sombre + 4 variantes claires, voir ThemeService) : grille de cartes avec un
 aperçu couleur plutôt qu'un `.icon-switch` (qui ne scale pas bien au-delà de 3 options et ne

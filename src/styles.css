@@ -597,6 +597,60 @@ button.icon-btn.help-icon-btn {
   padding-right: 10px;
 }
 
+/* --- Champs génériques page profil --- */
+/* Utilisées par la plupart des onglets de ProfilePageComponent (Identité, Accessibilité,
+   Connexion, Alertes...) ET par tout composant enfant rendu dans un onglet (ex.
+   DashboardLayoutPickerComponent, Personnalisation) — GLOBALES pour cette dernière raison : un
+   composant enfant a son propre template, avec sa propre portée d'encapsulation Angular, qu'une
+   règle scopée à `profile-page.component.css` ne peut jamais atteindre même avec un nom de classe
+   identique (voir CLAUDE.md, même piège que `.tool-panel`/`.panel-header` ci-dessus). Bug réel
+   constaté : la page Personnalisation réutilisait ces classes sans jamais recevoir leur mise en
+   forme. */
+.profile-field {
+  width: 100%;
+  max-width: 950px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+/* Titre de section desktop (rail de navigation, voir CLAUDE.md) : `.profile-label-row` ne sert
+qu'à ça, un par onglet, jamais dupliqué — restylé en vrai titre de page (voir
+`.profile-label-row .profile-label` plus bas) plutôt qu'en petit libellé de champ (réservé à
+`.profile-label` seul, ex. "AVATAR" au-dessus de la grille d'avatars). */
+.profile-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.profile-label-row .profile-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-bright);
+}
+/* Ligne de description sous le titre de section — un paragraphe par onglet, même mécanique que
+`.profile-label-row` juste au-dessus (pleine largeur du `.profile-field` parent, pas de cap
+propre). */
+.profile-section-desc {
+  width: 100%;
+  margin: 0 0 18px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .empty-state {
   display: flex;
   justify-content: center;
