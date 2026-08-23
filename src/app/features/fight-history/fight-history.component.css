@@ -200,6 +200,7 @@
    (multi-compte), un onglet par combat, affiché au-dessus du nombre de tours. */
 .fight-tabs-row {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 4px;
   padding: 6px 10px;
