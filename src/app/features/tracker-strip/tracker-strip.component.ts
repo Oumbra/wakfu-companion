@@ -118,6 +118,15 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected readonly addOpen = signal(false);
 
+  /** Objectifs en colonne (voir CSS) : le switch incrémental/décompte partage désormais sa ligne
+   * avec le bouton fermer (×) — pas assez de place pour ses deux options en toutes lettres (110px
+   * chacune) en plus de ce bouton dans une colonne de 230px. Reste compact en PERMANENCE dans ce
+   * mode (même mécanique que `autocomplete.focused()`, qui ne s'applique elle qu'à la bande
+   * horizontale — voir template), pas seulement pendant la saisie. */
+  protected readonly switchCompact = computed(
+    () => this.layout.kpiPos() === 'left' || this.layout.kpiPos() === 'right',
+  );
+
   /** Ferme le formulaire d'ajout (`.kpi-add.expanded`) dès qu'un clic tombe en dehors du composant
    * — écouteur posé/retiré au fil de `addOpen()` plutôt que branché en permanence (voir l'`effect`
    * du constructeur). Posé en phase `capture` : il s'exécute avant la phase bulle où un bouton

@@ -15,9 +15,11 @@
           <button
             type="button"
             class="icon-switch-option"
-            [appTooltip]="autocomplete.focused() ? ('tracker.countUpMode' | t) : null"
+            [appTooltip]="
+              autocomplete.focused() || switchCompact() ? ('tracker.countUpMode' | t) : null
+            "
             tooltipPosition="top-left"
-            [class.compact]="autocomplete.focused()"
+            [class.compact]="autocomplete.focused() || switchCompact()"
             [class.selected]="watchlist.addMode() === 'up'"
             (click)="setAddMode($event, 'up')"
           >
@@ -33,9 +35,11 @@
           <button
             type="button"
             class="icon-switch-option"
-            [appTooltip]="autocomplete.focused() ? ('tracker.countDownMode' | t) : null"
+            [appTooltip]="
+              autocomplete.focused() || switchCompact() ? ('tracker.countDownMode' | t) : null
+            "
             tooltipPosition="top-left"
-            [class.compact]="autocomplete.focused()"
+            [class.compact]="autocomplete.focused() || switchCompact()"
             [class.selected]="watchlist.addMode() === 'down'"
             (click)="setAddMode($event, 'down')"
           >
