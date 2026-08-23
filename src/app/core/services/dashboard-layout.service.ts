@@ -73,15 +73,17 @@ export interface DashboardLayoutPrefs {
 }
 
 const DEFAULT_PREFS: DashboardLayoutPrefs = {
-  menuPos: 'left',
+  menuPos: 'right',
   kpiPos: 'top',
-  bodyMode: 'equal',
+  bodyMode: 'focus',
   // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' n'est plus
   // systématiquement présente (voir historyGroup ci-dessous, désormais l'exception plutôt que le
   // défaut) : 'hist_combats' est un repli plus sûr, toujours l'un des 3 volets solo par défaut.
   focusTarget: 'hist_combats',
   focusSide: 'right',
-  historyGroup: { combats: false, purchases: false, trades: false },
+  // Achats + Échanges regroupés par défaut dans une seule carte Historique ; Combats reste solo,
+  // mis en avant (voir bodyMode/focusTarget ci-dessus).
+  historyGroup: { combats: false, purchases: true, trades: true },
   collapsedSections: {},
 };
 
