@@ -1,7 +1,7 @@
-import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { PersistenceService } from './persistence.service';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { CombatPanelService } from './combat-panel.service';
 import { ChatPanelService } from './chat-panel.service';
+import { UserDataService } from '../data-access/user-data.service';
 
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
@@ -57,8 +57,6 @@ export interface DashboardLayoutPrefs {
   readonly collapsedSections: Readonly<Partial<Record<DashboardCollapsibleKey, boolean>>>;
 }
 
-const DASHBOARD_LAYOUT_KEY = 'wakfu-dashboard-layout';
-
 const DEFAULT_PREFS: DashboardLayoutPrefs = {
   menuPos: 'left',
   kpiPos: 'top',
@@ -81,10 +79,11 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
 ];
 
 /**
- * Préférence de disposition du tableau de bord (Profil › Personnalisation) — préférence d'affichage
- * locale (même principe que `ThemeService`/`ColorblindService` : stockée via `PersistenceService`,
- * pas synchronisée sur le compte, ce n'est pas une des six données couvertes par
- * `user-data.keys.ts`).
+ * Préférence de disposition du tableau de bord (Profil › Personnalisation) — synchronisable avec le
+ * compte (voir `UserDataService`/CLAUDE.md, clé `dashboardLayout`) : un utilisateur qui se reconnecte
+ * sur un autre appareil/navigateur retrouve exactement la même disposition, comme les autres
+ * préférences déjà synchronisées (`CombatPanelService`/`ChatPanelService`, même mécanique
+ * `onExternalChange` ci-dessous).
  *
  * Porte l'état choisi par l'utilisateur (persisté, exposé en signaux) ET la dérivation partagée
  * (quelles cartes du corps sont visibles, quel mode s'applique réellement, comment se placent-elles
@@ -104,7 +103,7 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardLayoutService {
-  private readonly persistence = inject(PersistenceService);
+  private readonly userData = inject(UserDataService);
   private readonly combatPanel = inject(CombatPanelService);
   private readonly chatPanel = inject(ChatPanelService);
 
@@ -120,54 +119,72 @@ export class DashboardLayoutService {
   readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({});
 
   constructor() {
-    const stored = this.persistence.getJson<Partial<DashboardLayoutPrefs>>(DASHBOARD_LAYOUT_KEY);
-    if (stored) {
-      if (stored.menuPos) this.menuPos.set(stored.menuPos);
-      if (stored.kpiPos) this.kpiPos.set(stored.kpiPos);
-      if (stored.bodyMode) this.bodyMode.set(stored.bodyMode);
-      if (stored.focusTarget) this.focusTarget.set(stored.focusTarget);
-      if (stored.focusSide) this.focusSide.set(stored.focusSide);
-      if (stored.historySplit) {
-        this.historySplit.set({ ...DEFAULT_PREFS.historySplit, ...stored.historySplit });
-      }
-      if (stored.collapsedSections) this.collapsedSections.set({ ...stored.collapsedSections });
-    }
+    this.applyStored();
 
-    // Persistance en un seul bloc JSON (plutôt qu'une clé par champ comme ThemeService) : ces
-    // champs forment une seule préférence cohérente, jamais lus/écrits indépendamment les uns des
-    // autres. `effect()` posé APRÈS l'hydratation ci-dessus : les `.set()` de restauration ne
-    // déclenchent donc pas une réécriture immédiate et inutile.
-    effect(() => {
-      const snapshot: DashboardLayoutPrefs = {
-        menuPos: this.menuPos(),
-        kpiPos: this.kpiPos(),
-        bodyMode: this.bodyMode(),
-        focusTarget: this.focusTarget(),
-        focusSide: this.focusSide(),
-        historySplit: this.historySplit(),
-        collapsedSections: this.collapsedSections(),
-      };
-      this.persistence.setJson(DASHBOARD_LAYOUT_KEY, snapshot);
-    });
+    // Un autre appareil a modifié la disposition (voir UserDataService/CLAUDE.md) : recharger les
+    // signaux depuis le compte, sinon cet onglet resterait figé sur l'ancienne disposition jusqu'au
+    // prochain rechargement de page. `applyStored()` ne fait que des `.set()` (jamais de
+    // `userData.write()`, voir `persist()`) : pas de risque de réécrire aussitôt ce qu'on vient de
+    // recevoir avec un horodatage local plus récent, qui le ferait repartir en boucle vers le
+    // compte à la synchronisation suivante.
+    this.userData.onExternalChange('dashboardLayout', () => this.applyStored());
+  }
+
+  private applyStored(): void {
+    const stored = this.userData.read<Partial<DashboardLayoutPrefs>>('dashboardLayout');
+    if (!stored) return;
+    if (stored.menuPos) this.menuPos.set(stored.menuPos);
+    if (stored.kpiPos) this.kpiPos.set(stored.kpiPos);
+    if (stored.bodyMode) this.bodyMode.set(stored.bodyMode);
+    if (stored.focusTarget) this.focusTarget.set(stored.focusTarget);
+    if (stored.focusSide) this.focusSide.set(stored.focusSide);
+    if (stored.historySplit) {
+      this.historySplit.set({ ...DEFAULT_PREFS.historySplit, ...stored.historySplit });
+    }
+    if (stored.collapsedSections) this.collapsedSections.set({ ...stored.collapsedSections });
+  }
+
+  /** Écrit l'état courant en un seul bloc JSON (plutôt qu'une clé par champ comme ThemeService) :
+   * ces champs forment une seule préférence cohérente, jamais lus/écrits indépendamment les uns des
+   * autres. Appelé explicitement par chaque mutateur ci-dessous plutôt que réactivement (`effect()`) :
+   * un `effect()` réagirait aussi aux `.set()` de `applyStored()` (hydratation, `onExternalChange`)
+   * et republierait aussitôt une valeur inchangée avec un nouvel horodatage local — voir son
+   * commentaire. */
+  private persist(): void {
+    this.userData.write('dashboardLayout', {
+      menuPos: this.menuPos(),
+      kpiPos: this.kpiPos(),
+      bodyMode: this.bodyMode(),
+      focusTarget: this.focusTarget(),
+      focusSide: this.focusSide(),
+      historySplit: this.historySplit(),
+      collapsedSections: this.collapsedSections(),
+    } satisfies DashboardLayoutPrefs);
   }
 
   setMenuPos(value: DashboardMenuPos): void {
     this.menuPos.set(value);
+    this.persist();
   }
   setKpiPos(value: DashboardKpiPos): void {
     this.kpiPos.set(value);
+    this.persist();
   }
   setBodyMode(value: DashboardBodyMode): void {
     this.bodyMode.set(value);
+    this.persist();
   }
   setFocusTarget(value: DashboardBodySlotKey): void {
     this.focusTarget.set(value);
+    this.persist();
   }
   setFocusSide(value: DashboardFocusSide): void {
     this.focusSide.set(value);
+    this.persist();
   }
   toggleHistorySplit(key: DashboardHistoryKey): void {
     this.historySplit.update((cur) => ({ ...cur, [key]: !cur[key] }));
+    this.persist();
   }
 
   isCollapsed(key: DashboardCollapsibleKey): boolean {
@@ -185,6 +202,7 @@ export class DashboardLayoutService {
       return;
     }
     this.collapsedSections.update((cur) => ({ ...cur, [key]: !cur[key] }));
+    this.persist();
   }
 
   reset(): void {
@@ -195,6 +213,7 @@ export class DashboardLayoutService {
     this.focusSide.set(DEFAULT_PREFS.focusSide);
     this.historySplit.set({ ...DEFAULT_PREFS.historySplit });
     this.collapsedSections.set({});
+    this.persist();
   }
 
   // --- Dérivation partagée (corps : Combat / Historique×N / Chat) ---------------------------
