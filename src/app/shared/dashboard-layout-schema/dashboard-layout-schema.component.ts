@@ -41,6 +41,10 @@ export class DashboardLayoutSchemaComponent {
   readonly kpiReduced = input(false);
   readonly cells = input<readonly DashboardLayoutSchemaCell[] | null>(null);
   readonly focus = input<DashboardLayoutSchemaFocus | null>(null);
+  /** Côté des cartes secondaires en mode `focus` (voir `DashboardFocusSide`) — la carte principale
+   * occupe l'AUTRE côté. Défaut `'right'` : reproduit l'ordre naturel du flex (`main` puis
+   * `.dls-secondary`), `'left'` inverse via `flex-direction: row-reverse` (voir `focusDirection`). */
+  readonly focusSide = input<'left' | 'right'>('right');
   /** Texte affiché quand `cells` est un tableau vide (aucune vue visible) — déjà traduit par
    * l'appelant, ce composant ne connaît pas l'i18n (même principe que `app-stepper.label`). */
   readonly emptyLabel = input('');
@@ -72,6 +76,10 @@ export class DashboardLayoutSchemaComponent {
   );
   protected readonly kpiBasis = computed(() =>
     this.kpiVertical() ? (this.kpiReduced() ? 7 : 16) : this.kpiReduced() ? 6 : 12,
+  );
+
+  protected readonly focusDirection = computed(() =>
+    this.focusSide() === 'left' ? 'row-reverse' : 'row',
   );
 
   protected readonly rows = computed(() => Math.ceil((this.cells()?.length ?? 1) / 2));

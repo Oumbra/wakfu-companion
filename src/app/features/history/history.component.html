@@ -1,24 +1,50 @@
-@for (key of effectiveSplitKeys(); track key) {
+@for (key of visibleSplitKeys(); track key) {
   <!-- Panneau scindé à part (voir HistoryComponent.effectiveSplitKeys) : même contenu que le
        sous-onglet correspondant du panneau groupé, mais dans son propre .tool-panel — occupe la
        case de grille que lui attribue DashboardLayoutService.gridPlan. -->
   <div
     class="tool-panel"
-    [class.grid-span2]="gridSlot(slotKeyFor(key)).span2"
+    [style.grid-column]="gridSlot(slotKeyFor(key)).gridColumn"
+    [style.grid-row]="gridSlot(slotKeyFor(key)).gridRow"
     [style.order]="gridSlot(slotKeyFor(key)).order"
   >
     <div class="panel-header">
-      <span class="header-label">
-        <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
-        {{ soloHeaderKeyFor(key) | t }}
+      <span class="panel-header-label-group">
+        <span class="header-label">
+          <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
+          {{ soloHeaderKeyFor(key) | t }}
+        </span>
+        <button
+          type="button"
+          class="icon-btn help-icon-btn"
+          [appTooltip]="'help.tooltip' | t"
+          (click)="helpModal.open(helpSectionFor(key))"
+        >
+          ?
+        </button>
       </span>
       <button
-        type="button"
-        class="icon-btn help-icon-btn"
-        [appTooltip]="'help.tooltip' | t"
-        (click)="helpModal.open(helpSectionFor(key))"
+        class="collapse-btn"
+        [appTooltip]="'history.collapseHint' | t"
+        tooltipPosition="top"
+        (click)="layout.toggleCollapsed(slotKeyFor(key))"
       >
-        ?
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16px"
+          height="16px"
+          fill="none"
+          viewBox="0 0 16 17"
+          role="img"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
       </button>
     </div>
 
@@ -54,19 +80,45 @@
   </div>
 }
 
-@if (remainingKeys().length > 0) {
+@if (remainingKeys().length > 0 && !layout.isCollapsed('hist_group')) {
   <!-- Panneau groupé : un sous-onglet par volet non scindé (1 à 3, voir HistoryComponent.remainingKeys)
        — mêmes mécaniques `activeTab`/URL que d'habitude (voir HistoryComponent.groupActiveTab). -->
   <div
     class="tool-panel"
-    [class.grid-span2]="gridSlot('hist_group').span2"
+    [style.grid-column]="gridSlot('hist_group').gridColumn"
+    [style.grid-row]="gridSlot('hist_group').gridRow"
     [style.order]="gridSlot('hist_group').order"
   >
     <div class="panel-header">
-      <span class="header-label">
-        <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
-        {{ 'history.header' | t }}
+      <span class="panel-header-label-group">
+        <span class="header-label">
+          <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
+          {{ 'history.header' | t }}
+        </span>
       </span>
+      <button
+        class="collapse-btn"
+        [appTooltip]="'history.collapseHint' | t"
+        tooltipPosition="top"
+        (click)="layout.toggleCollapsed('hist_group')"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16px"
+          height="16px"
+          fill="none"
+          viewBox="0 0 16 17"
+          role="img"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+      </button>
     </div>
 
     <div class="tab-header">

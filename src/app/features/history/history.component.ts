@@ -64,8 +64,13 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
  * enfant direct du grid `.panels-row` de `DashboardComponent` — même principe que
  * `DashboardRailComponent`, nécessaire pour qu'un panneau scindé devienne une vraie case de grille
  * indépendante plutôt qu'imbriquée dans une seule. Chaque panneau reçoit son placement
- * (`grid-span2`/`order`) depuis `DashboardLayoutService.gridPlan` — calculé une fois pour tout le
- * tableau de bord, voir sa doc de tête.
+ * (`grid-column`/`grid-row`/`order`) depuis `DashboardLayoutService.gridPlan` — calculé une fois
+ * pour tout le tableau de bord, voir sa doc de tête.
+ *
+ * Chaque panneau (scindé OU groupé) est aussi repliable individuellement, comme Combat/Chat — un
+ * `.collapse-btn` dans son `panel-header` (voir template) appelle `layout.toggleCollapsed(...)`, ce
+ * qui le fait rejoindre `DashboardRailComponent` (généralisé, voir sa doc de tête) au lieu de
+ * disparaître purement et simplement.
  */
 @Component({
   selector: 'app-history',
@@ -106,6 +111,14 @@ export class HistoryComponent implements OnDestroy {
     return HIST_KEYS.filter((k) => !split.has(k));
   });
 
+  /** `effectiveSplitKeys` moins les volets individuellement repliés (voir `.collapse-btn`) — sans
+   * ce filtre, un panneau scindé "replié" resterait quand même rendu dans `.panels-row` (placement
+   * `gridColumn:'auto'` par défaut, hors du plan calculé) au lieu de disparaître pour de bon comme
+   * Combat/Chat, et rejoindre `DashboardRailComponent` (généralisé, voir sa doc de tête). */
+  protected readonly visibleSplitKeys = computed<DashboardHistoryKey[]>(() =>
+    this.effectiveSplitKeys().filter((k) => !this.layout.isCollapsed(this.slotKeyFor(k))),
+  );
+
   /** Alias vers `NavigationService.historyTab` (source unique de vérité, voir son commentaire —
    * synchronisée avec l'URL) plutôt qu'un signal local : `.set()` ici met donc directement à jour
    * la section active ET déclenche `RouteSyncService`. */
@@ -141,8 +154,8 @@ export class HistoryComponent implements OnDestroy {
       : this.archive.loadMore(TAB_EVENT_KIND[key]));
   }
 
-  /** Placement calculé (`grid-span2`/`order`, voir DashboardLayoutService.gridPlan) d'une case de
-   * `.panels-row` — appelé avec `'hist_group'` (panneau groupé) ou `slotKeyFor(key)` (panneau
+  /** Placement calculé (`grid-column`/`grid-row`/`order`, voir DashboardLayoutService.gridPlan) d'une
+   * case de `.panels-row` — appelé avec `'hist_group'` (panneau groupé) ou `slotKeyFor(key)` (panneau
    * scindé), jamais avec une autre clé depuis ce composant. */
   protected gridSlot(key: DashboardGridKey) {
     return this.layout.gridPlan()[key];

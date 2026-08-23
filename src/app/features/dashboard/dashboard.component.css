@@ -65,21 +65,15 @@
 
 /* Grille du corps (Suivi + Combat/Historique×N/Chat visibles, voir DashboardLayoutService.gridPlan)
    — toujours 2 colonnes max (jamais plus, Combat/Historique deviennent illisibles en dessous, voir
-   CLAUDE.md), autant de lignes que nécessaire (`grid-template-rows`, posé en inline depuis le
-   template via `layout.panelsRowCount()`, calculé côté service). Chaque enfant reçoit son
-   `order`/`.grid-span2` depuis `layout.gridPlan()` (Suivi/Combat/Chat directement dans le template
-   ci-dessus, Historique en interne — voir HistoryComponent, dont les panneaux réels sont rendus par
-   un composant `display:contents` distinct de ce grid). */
+   CLAUDE.md), colonnes/lignes posées en inline depuis le template (`layout.panelsColumns()`/
+   `layout.panelsRowCount()`, calculées côté service — 2 colonnes égales en répartition égale, une
+   étroite + une large du côté choisi en mise en avant). Chaque enfant reçoit son
+   `order`/`grid-column`/`grid-row` depuis `layout.gridPlan()` (Suivi/Combat/Chat directement dans le
+   template ci-dessus, Historique en interne — voir HistoryComponent, dont les panneaux réels sont
+   rendus par un composant `display:contents` distinct de ce grid). */
 .panels-row {
   min-width: 0;
   display: grid;
-  /* `minmax(0, 1fr)` plutôt que `1fr` seul : une simple `1fr` a un minimum
-     implicite `auto` (basé sur le contenu), qui laisse une colonne grandir
-     au-delà de sa part équitable si un panneau contient du texte non
-     tronqué (ex. un nom suivi trop long) — la colonne, puis toute la chaîne
-     de parents jusqu'à `app-tracker`, grandit alors plus large que l'écran
-     au lieu de forcer le contenu à rétrécir/tronquer en ellipsis. */
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
   /* `flex-basis: 0` (via le raccourci `flex`) plutôt que `flex-grow: 1` seul (dont le
      `flex-basis: auto` implicite se base sur le contenu) : sans une base définie, la hauteur
@@ -90,10 +84,6 @@
   flex: 1 1 0;
   min-height: 0;
 }
-/* `.grid-span2` (carte en pleine largeur) : classe GLOBALE, voir styles.css — un panneau scindé
-   d'`<app-history>` (`display:contents`) porte l'attribut d'encapsulation de vue de ce composant,
-   pas celui de `DashboardComponent`, une règle scopée ici ne l'atteindrait donc jamais. */
-
 /* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, retiré de la grille (CSS pur,
    `[class.panel-collapsed]`, jamais un `@if` structurel comme pour `app-damage-meter`) — le
    composant reste monté en permanence pour que l'onglet Chat mobile continue de fonctionner même
@@ -110,8 +100,11 @@
    passe en mode onglet, un seul panneau affiché en plein espace disponible.
    La disposition choisie sur Profil › Personnalisation (menu/objectifs/corps) ne s'applique QUE
    desktop, comme le reste des réglages responsive existants (rail/bande d'objectifs déjà masqués
-   sous ce seuil) — `!important` nécessaire pour l'emporter sur `grid-template-rows`, posé en style
-   INLINE (donc de spécificité supérieure à une règle de classe normale) par le template. */
+   sous ce seuil) — `!important` nécessaire pour l'emporter sur `grid-template-columns`/
+   `grid-template-rows`, posés en style INLINE (donc de spécificité supérieure à une règle de classe
+   normale) par le template. Le `grid-column`/`grid-row` explicite de chaque panneau (mise en avant,
+   voir DashboardLayoutService.gridPlan) a besoin du même traitement, mais GLOBAL — voir
+   `.panels-row .tool-panel` dans styles.css (même raison que ci-dessus concernant `<app-history>`). */
 @media (max-width: 800px) {
   :host,
   :host[data-menu-pos='right'],
@@ -136,8 +129,6 @@
   .panels-row > .tab-hidden {
     display: none;
   }
-  /* Pas besoin de neutraliser `.grid-span2` ici : `grid-template-columns` ne définit plus qu'UNE
-     colonne juste au-dessus, `grid-column: 1 / -1` (voir styles.css) y équivaut déjà à `auto`. */
 }
 
 :host-context([data-theme='light']) {

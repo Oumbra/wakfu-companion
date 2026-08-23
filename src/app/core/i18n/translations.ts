@@ -151,6 +151,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'history.header': 'Historique',
     'history.tabCombats': 'Combats',
     'history.splitCombatsHeader': 'Historique de combats',
+    'history.collapseHint': 'Réduire',
+    'history.expandHint': 'Agrandir',
     'history.group.day': 'Jour',
     'history.group.origin': 'Origine',
     'history.group.type': 'Type',
@@ -254,6 +256,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusTargetLabel': 'Vue à mettre en avant',
     'profile.dashboardLayout.focusTargetHint':
       "Si la vue choisie n'est pas visible, la répartition égale s'applique en attendant qu'elle le redevienne.",
+    'profile.dashboardLayout.focusSideLabel': 'Côté des autres sections',
+    'profile.dashboardLayout.focusSide.left': 'Sections à gauche',
+    'profile.dashboardLayout.focusSide.right': 'Sections à droite',
     'profile.dashboardLayout.collapseTitle': 'Repli des sections',
     'profile.dashboardLayout.collapseDesc':
       "Menu et Objectifs se réduisent à une bande d'icônes. Combat et les cartes d'historique/Chat disparaissent entièrement — l'espace libéré revient aux vues encore visibles.",
@@ -713,6 +718,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'history.header': 'History',
     'history.tabCombats': 'Fights',
     'history.splitCombatsHeader': 'Fight history',
+    'history.collapseHint': 'Collapse',
+    'history.expandHint': 'Expand',
     'history.group.day': 'Day',
     'history.group.origin': 'Origin',
     'history.group.type': 'Type',
@@ -816,6 +823,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusTargetLabel': 'View to highlight',
     'profile.dashboardLayout.focusTargetHint':
       "If the chosen view isn't visible, an even split applies until it is again.",
+    'profile.dashboardLayout.focusSideLabel': 'Side of the other sections',
+    'profile.dashboardLayout.focusSide.left': 'Sections on the left',
+    'profile.dashboardLayout.focusSide.right': 'Sections on the right',
     'profile.dashboardLayout.collapseTitle': 'Collapsing sections',
     'profile.dashboardLayout.collapseDesc':
       'Menu and Objectives shrink to a thin icon strip. Combat and the History/Chat cards disappear entirely — the freed space goes to whatever is still visible.',
@@ -1267,6 +1277,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'history.header': 'Historial',
     'history.tabCombats': 'Combates',
     'history.splitCombatsHeader': 'Historial de combates',
+    'history.collapseHint': 'Contraer',
+    'history.expandHint': 'Expandir',
     'history.group.day': 'Día',
     'history.group.origin': 'Origen',
     'history.group.type': 'Tipo',
@@ -1372,6 +1384,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusTargetLabel': 'Vista a destacar',
     'profile.dashboardLayout.focusTargetHint':
       'Si la vista elegida no está visible, se aplica el reparto igual hasta que vuelva a estarlo.',
+    'profile.dashboardLayout.focusSideLabel': 'Lado de las demás secciones',
+    'profile.dashboardLayout.focusSide.left': 'Secciones a la izquierda',
+    'profile.dashboardLayout.focusSide.right': 'Secciones a la derecha',
     'profile.dashboardLayout.collapseTitle': 'Repliegue de secciones',
     'profile.dashboardLayout.collapseDesc':
       'Menú y Objetivos se reducen a una franja de iconos. Combate y las tarjetas de Historial/Chat desaparecen por completo — el espacio liberado pasa a las vistas que siguen visibles.',
@@ -1828,6 +1843,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'history.header': 'Histórico',
     'history.tabCombats': 'Combates',
     'history.splitCombatsHeader': 'Histórico de combates',
+    'history.collapseHint': 'Recolher',
+    'history.expandHint': 'Expandir',
     'history.group.day': 'Dia',
     'history.group.origin': 'Origem',
     'history.group.type': 'Tipo',
@@ -1932,6 +1949,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusTargetLabel': 'Vista a destacar',
     'profile.dashboardLayout.focusTargetHint':
       'Se a vista escolhida não estiver visível, a divisão igual se aplica até ela voltar a estar.',
+    'profile.dashboardLayout.focusSideLabel': 'Lado das outras seções',
+    'profile.dashboardLayout.focusSide.left': 'Seções à esquerda',
+    'profile.dashboardLayout.focusSide.right': 'Seções à direita',
     'profile.dashboardLayout.collapseTitle': 'Recolhimento das seções',
     'profile.dashboardLayout.collapseDesc':
       'Menu e Objetivos encolhem para uma faixa de ícones. Combate e os cartões de Histórico/Chat desaparecem por completo — o espaço liberado vai para as vistas ainda visíveis.',

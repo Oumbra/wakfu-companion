@@ -15,9 +15,14 @@ import {
   DashboardBodySlot,
   DashboardBodySlotKey,
   DashboardCollapsibleKey,
+  DashboardFocusSide,
   DashboardHistoryKey,
   DashboardLayoutService,
 } from '../../../core/services/dashboard-layout.service';
+import {
+  dashboardBodySlotLabel,
+  histLabelKey,
+} from '../../../core/services/dashboard-body-slot-label';
 
 interface LabeledSlot extends DashboardBodySlot {
   readonly label: string;
@@ -139,34 +144,19 @@ export class DashboardLayoutPickerComponent {
     },
   ];
 
-  /** Clé i18n du libellé d'un sous-onglet d'historique — utilisée à la fois pour construire les
-   * libellés des cartes du corps (`slotLabel`) et directement par le template pour les 3 lignes de
-   * découpage (`histLabelKey`, résolu via le pipe `| t`). */
+  /** Clé i18n du libellé d'un sous-onglet d'historique seul — utilisée directement par le template
+   * pour les 3 lignes de découpage (résolu via le pipe `| t`). Libellé complet d'une carte du corps :
+   * voir `dashboardBodySlotLabel` (partagé avec `DashboardRailComponent`). */
   protected histLabelKey(key: DashboardHistoryKey): string {
-    return key === 'combats'
-      ? 'profile.dashboardLayout.slot.histCombats'
-      : 'profile.dashboardLayout.slot.' + key;
-  }
-
-  private slotLabel(key: DashboardBodySlotKey): string {
-    if (key === 'combat') return this.i18n.t('profile.dashboardLayout.slot.combat');
-    if (key === 'chat') return this.i18n.t('profile.dashboardLayout.slot.chat');
-    if (key === 'hist_group') {
-      const split = this.layout.historySplit();
-      const remaining = HIST_KEYS.filter((k) => !split[k]);
-      return remaining.length === 3
-        ? this.i18n.t('profile.dashboardLayout.slot.histGroupFull')
-        : this.i18n.t('profile.dashboardLayout.slot.histGroupPartial', {
-            parts: remaining.map((k) => this.i18n.t(this.histLabelKey(k))).join(' + '),
-          });
-    }
-    // 'hist_combats' | 'hist_purchases' | 'hist_trades'
-    const histKey = key.slice('hist_'.length) as DashboardHistoryKey;
-    return this.i18n.t(this.histLabelKey(histKey));
+    return histLabelKey(key);
   }
 
   private label(slots: readonly DashboardBodySlot[]): LabeledSlot[] {
-    return slots.map((s) => ({ ...s, label: this.slotLabel(s.key) }));
+    const split = this.layout.historySplit();
+    return slots.map((s) => ({
+      ...s,
+      label: dashboardBodySlotLabel(this.i18n, split, s.key),
+    }));
   }
 
   protected readonly activeSlots = computed<LabeledSlot[]>(() =>
@@ -261,6 +251,17 @@ export class DashboardLayoutPickerComponent {
 
   protected chooseFocusTarget(key: DashboardBodySlotKey): void {
     this.layout.setFocusTarget(key);
+  }
+
+  /** Les deux côtés possibles pour les cartes secondaires en mode "mise en avant" (voir
+   * `DashboardFocusSide`) — affiché uniquement quand `bodyMode() === 'focus'` (même bloc que le
+   * choix de la cible, voir template). */
+  protected readonly focusSideValues: readonly DashboardFocusSide[] = ['right', 'left'];
+  protected focusSideLabelKey(side: DashboardFocusSide): string {
+    return `profile.dashboardLayout.focusSide.${side}`;
+  }
+  protected chooseFocusSide(side: DashboardFocusSide): void {
+    this.layout.setFocusSide(side);
   }
 
   protected toggleSection(key: DashboardCollapsibleKey, unavailable: boolean | undefined): void {
