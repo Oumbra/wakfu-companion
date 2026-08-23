@@ -24,17 +24,18 @@
    tuile déployée s'élargit sur place dans la colonne plutôt que de suivre un second axe
    d'agrandissement dédié — plus simple, pas de réanimation propre à ce mode.
 
-   Largeur en accordéon (`.kpi-strip-wide`, voir `TrackerStripComponent.isWide`) : repliée, 150px
-   suffit tout juste aux boutons "+"/"-" côte à côte (58px chacun + gap) — inutile de réserver la
-   largeur du formulaire de recherche/d'une tuile déployée en permanence, ça laissait un grand vide
-   quand rien n'était ouvert (voir CLAUDE.md). Élargie à 230px (mesure d'origine, confortable pour
-   le formulaire ET une tuile déployée) dès que le formulaire s'ouvre, qu'une tuile se déploie, ou
-   que le mode sélection groupée est actif — pousse `.dashboard-main` (voisin flex) comme le ferait
-   n'importe quel changement de largeur d'un flex-item, sans mécanique dédiée. */
+   Largeur en accordéon (`.kpi-strip-wide`, voir `TrackerStripComponent.isWide`) : repliée, 100px
+   suffit à un seul bouton "+"/"-" à la fois — les deux sont empilés en colonne plutôt que côte à
+   côte dans cet état (voir `.kpi-add` plus bas), inutile de réserver la largeur du formulaire de
+   recherche/d'une tuile déployée en permanence, ça laissait un grand vide quand rien n'était ouvert
+   (voir CLAUDE.md). Élargie à 230px (mesure d'origine, confortable pour le formulaire ET une tuile
+   déployée) dès que le formulaire s'ouvre, qu'une tuile se déploie, ou que le mode sélection
+   groupée est actif — pousse `.dashboard-main` (voisin flex) comme le ferait n'importe quel
+   changement de largeur d'un flex-item, sans mécanique dédiée. */
 :host[data-kpi-pos='left'],
 :host[data-kpi-pos='right'] {
   height: auto;
-  width: 150px;
+  width: 100px;
   transition: width 0.2s ease;
 }
 :host[data-kpi-pos='left'].kpi-strip-wide,
@@ -53,8 +54,15 @@
   overflow-x: hidden;
   overflow-y: auto;
 }
+/* `flex-direction: column` : empile "+" et "-" au lieu de les garder côte à côte (défaut hérité de
+   `.kpi-add`, pensé pour la bande horizontale) — cohérent avec la largeur repliée réduite à 100px
+   ci-dessus (un seul bouton 58px à la fois, pas les deux + leur gap) et visuellement plus sobre
+   qu'une paire de carrés collés (retour utilisateur). Sans effet sur `.kpi-add.expanded` (formulaire
+   ouvert, voir plus bas) : sa propre règle de base pose déjà `flex-direction: column` pour d'autres
+   raisons (empiler switch/recherche/fermeture), donc aucun conflit. */
 :host[data-kpi-pos='left'] .kpi-add,
 :host[data-kpi-pos='right'] .kpi-add {
+  flex-direction: column;
   margin-top: 0;
   width: 100%;
 }
@@ -70,19 +78,59 @@
   width: 100%;
   height: auto;
 }
+/* Grille 2 colonnes plutôt qu'un simple empilement flex-column : le switch incrémental/décompte et
+   le bouton fermer (×) partagent la même ligne (gagne une ligne de hauteur, moins de place perdue
+   dans une colonne déjà étroite — retour utilisateur), la recherche occupe la ligne du dessous en
+   pleine largeur — sans avoir besoin de réordonner le DOM (`.kpi-add-close` reste APRÈS l'autocomplete
+   dans le template, voir CLAUDE.md/`.loot-header-main` pour la même préoccupation d'ordre visuel
+   résolue différemment ailleurs ; ici la grille suffit, pas besoin d'un wrapper `display:contents`
+   supplémentaire). */
 :host[data-kpi-pos='left'] .kpi-add-form,
 :host[data-kpi-pos='right'] .kpi-add-form {
-  flex-direction: column;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
 }
+:host[data-kpi-pos='left'] .kpi-add-mode-switch,
+:host[data-kpi-pos='right'] .kpi-add-mode-switch {
+  grid-column: 1;
+  grid-row: 1;
+}
+:host[data-kpi-pos='left'] .kpi-add-close,
+:host[data-kpi-pos='right'] .kpi-add-close {
+  grid-column: 2;
+  grid-row: 1;
+}
+:host[data-kpi-pos='left'] app-wakfu-autocomplete,
+:host[data-kpi-pos='right'] app-wakfu-autocomplete {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+/* Pas d'empilement en colonne ici (contrairement au formulaire ci-dessus) : les puces de quantités
+   (`.kpi-target-presets`) et le champ numérique restent sur la MÊME ligne tant que la largeur
+   (230px, colonne accordéon) le permet, et ne passent à la ligne (`flex-wrap` sur le wrapper
+   ENTIER, pas seulement sur les puces entre elles) que si vraiment nécessaire — jamais un
+   empilement systématique en pile verticale complète comme avant (retour utilisateur : l'ancien
+   empilement rendait le champ pleine largeur, peu élégant, et prenait trop de hauteur). Puces et
+   champ légèrement rétrécis (voir plus bas) pour maximiser les chances de tenir sur une seule
+   ligne dans cette largeur réduite. */
 :host[data-kpi-pos='left'] .kpi-target-wrapper,
 :host[data-kpi-pos='right'] .kpi-target-wrapper {
-  flex-direction: column;
-  align-items: stretch;
+  flex-wrap: wrap;
 }
 :host[data-kpi-pos='left'] .kpi-target-presets,
 :host[data-kpi-pos='right'] .kpi-target-presets {
   flex-wrap: wrap;
+  gap: 3px;
+}
+:host[data-kpi-pos='left'] .kpi-target-chip,
+:host[data-kpi-pos='right'] .kpi-target-chip {
+  padding: 2px 6px;
+  font-size: 0.65rem;
+}
+:host[data-kpi-pos='left'] app-input-number.kpi-add-target-input,
+:host[data-kpi-pos='right'] app-input-number.kpi-add-target-input {
+  --input-number-field-width: 32px;
 }
 
 /* Confirmation de suppression groupée (`.kpi-bulk-delete-btn`, voir plus bas) : en bande

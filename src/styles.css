@@ -553,6 +553,23 @@ button.reset-btn:hover {
 .collapse-btn:hover {
   color: var(--text-bright);
 }
+/* Le pictogramme (une flèche pointant vers la gauche dans un cadre, voir le SVG copié dans chaque
+   panneau) doit pointer vers le RAIL où la carte va atterrir une fois repliée (voir
+   DashboardRailComponent) — pas toujours à gauche par défaut. Global (comme `.collapse-btn`
+   lui-même) et keyé sur `[data-menu-pos]`, posé sur le HOST de `DashboardComponent` : les panneaux
+   qui portent ce bouton (damage-meter/chat-panel/history) sont chacun un composant enfant avec son
+   propre template/SVG — une règle scopée à `dashboard.component.css` ne peut pas les atteindre
+   (même piège que `.panels-row .tool-panel`, voir plus haut). `scaleX(-1)` (miroir horizontal pur)
+   pour `right` plutôt que `rotate(180deg)` (miroir + retournement vertical, invisible ici puisque
+   l'icône est elle-même symétrique haut/bas, mais sémantiquement moins correct) ; `rotate(90deg)`
+   pour `top-left`/`top-right` (flèche horizontale vers la gauche → verticale vers le haut, sens
+   horaire). */
+[data-menu-pos='right'] .collapse-btn svg {
+  transform: scaleX(-1);
+}
+[data-menu-pos^='top'] .collapse-btn svg {
+  transform: rotate(90deg);
+}
 @media (max-width: 800px) {
   .collapse-btn {
     display: none;
