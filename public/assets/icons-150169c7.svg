@@ -80,4 +80,17 @@
     <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" />
     <path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" />
   </symbol>
+  <!-- Section Achats repliée dans le menu latéral (voir DashboardRailComponent) : sac cabas,
+       distinct de l'horloge générique (symbole `clock`, réservée à l'historique de combats et au
+       panneau groupé) et du symbole Échanges ci-dessous. -->
+  <symbol id="shopping-bag" viewBox="0 0 24 24">
+    <path d="M6 8h12l1 12.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20.5L6 8z" />
+    <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+  </symbol>
+  <!-- Section Échanges repliée dans le menu latéral (voir DashboardRailComponent) : deux flèches
+       opposées (haut vers la droite, bas vers la gauche), motif classique d'échange/transfert. -->
+  <symbol id="arrows-exchange" viewBox="0 0 24 24">
+    <path d="M3 8h15M14 4l4 4-4 4" />
+    <path d="M21 16H6M10 12l-4 4 4 4" />
+  </symbol>
 </svg>
