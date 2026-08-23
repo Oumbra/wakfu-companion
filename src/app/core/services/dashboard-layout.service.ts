@@ -1,5 +1,4 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { CombatPanelService } from './combat-panel.service';
 import { ChatPanelService } from './chat-panel.service';
 import { UserDataService } from '../data-access/user-data.service';
 
@@ -13,9 +12,11 @@ export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
 
 /** Identifiant d'une "carte" potentielle du corps — `'hist_group'` désigne le bloc Historique
  * restant après découpage (voir `visibleBodySlots`), son identité change de contenu mais pas de
- * clé selon `historySplit`. */
+ * clé selon `historySplit`. Pas de clé `'combat'` : le combat en cours n'est plus une carte à part
+ * (voir CLAUDE.md) — il vit désormais DANS `'hist_combats'`/`'hist_group'` (voir
+ * `FightHistoryComponent`), ni ciblable en mise en avant ni repliable indépendamment. */
 export type DashboardBodySlotKey =
-  'combat' | 'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat';
+  'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat';
 
 /** Section repliable individuellement — le menu et les objectifs en plus des cartes du corps (voir
  * `DashboardBodySlotKey`), car eux aussi peuvent se réduire (bande d'icônes) même si leur repli ne
@@ -28,7 +29,7 @@ export type DashboardGridKey = 'tracker' | DashboardBodySlotKey;
 
 export interface DashboardBodySlot {
   readonly key: DashboardBodySlotKey;
-  readonly sw: 'combat' | 'history' | 'chat';
+  readonly sw: 'history' | 'chat';
 }
 
 /** Placement calculé d'une case dans `.panels-row` (grille CSS, voir `dashboard.component.css`) —
@@ -61,7 +62,10 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   menuPos: 'left',
   kpiPos: 'top',
   bodyMode: 'equal',
-  focusTarget: 'combat',
+  // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' est la
+  // carte la plus systématiquement présente (couvre Combats/Achats/Échanges tant qu'aucun n'est
+  // scindé), repli plausible par défaut.
+  focusTarget: 'hist_group',
   focusSide: 'right',
   historySplit: { combats: false, purchases: false, trades: false },
   collapsedSections: {},
@@ -70,7 +74,6 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
 const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
 const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
   'tracker',
-  'combat',
   'hist_combats',
   'hist_purchases',
   'hist_trades',
@@ -82,29 +85,30 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
  * Préférence de disposition du tableau de bord (Profil › Personnalisation) — synchronisable avec le
  * compte (voir `UserDataService`/CLAUDE.md, clé `dashboardLayout`) : un utilisateur qui se reconnecte
  * sur un autre appareil/navigateur retrouve exactement la même disposition, comme les autres
- * préférences déjà synchronisées (`CombatPanelService`/`ChatPanelService`, même mécanique
- * `onExternalChange` ci-dessous).
+ * préférences déjà synchronisées (`ChatPanelService`, même mécanique `onExternalChange`
+ * ci-dessous).
  *
  * Porte l'état choisi par l'utilisateur (persisté, exposé en signaux) ET la dérivation partagée
  * (quelles cartes du corps sont visibles, quel mode s'applique réellement, comment se placent-elles
  * dans `.panels-row`) — consommée à la fois par `DashboardLayoutPickerComponent` (Profil ›
  * Personnalisation, avec ses propres libellés traduits) et par le VRAI tableau de bord
  * (`DashboardComponent`/`DashboardRailComponent`/`TrackerStripComponent`/`HistoryComponent`), pour
- * n'avoir qu'un seul calcul de la disposition.
+ * n'avoir qu'un seul calcul de la disposition. Pas de carte "Combat" ici (voir
+ * `DashboardBodySlotKey`) — son contenu vit désormais DANS la carte Historique › Combats,
+ * toujours repliable/scindable/ciblable comme les autres (voir CLAUDE.md).
  *
- * Combat et Chat ont DÉJÀ leur propre notion de repli (`CombatPanelService`/`ChatPanelService`,
- * synchronisée sur le compte, pilote aussi `DashboardRailComponent`) — `isCollapsed`/
- * `toggleCollapsed` délèguent donc à ces services pour ces deux clés plutôt que de dupliquer un
- * second état déconnecté du premier (qui désynchroniserait le rail des icônes repliées et la
- * grille du corps). Toutes les autres cartes du corps (Historique groupé et chacune de ses
- * scissions) sont repliables de la MÊME façon (`.collapse-btn` sur leur panneau, voir
- * `HistoryComponent`) et rejoignent elles aussi `DashboardRailComponent`, généralisé pour lister
- * dynamiquement toute carte repliée plutôt que seulement Combat/Chat.
+ * Chat a DÉJÀ sa propre notion de repli (`ChatPanelService`, synchronisée sur le compte, pilote
+ * aussi `DashboardRailComponent`) — `isCollapsed`/`toggleCollapsed` délèguent donc à ce service
+ * pour cette clé plutôt que de dupliquer un second état déconnecté du premier (qui
+ * désynchroniserait le rail des icônes repliées et la grille du corps). Toutes les autres cartes du
+ * corps (Historique groupé et chacune de ses scissions) sont repliables de la MÊME façon
+ * (`.collapse-btn` sur leur panneau, voir `HistoryComponent`) et rejoignent elles aussi
+ * `DashboardRailComponent`, généralisé pour lister dynamiquement toute carte repliée plutôt que
+ * seulement Chat.
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardLayoutService {
   private readonly userData = inject(UserDataService);
-  private readonly combatPanel = inject(CombatPanelService);
   private readonly chatPanel = inject(ChatPanelService);
 
   readonly menuPos = signal<DashboardMenuPos>(DEFAULT_PREFS.menuPos);
@@ -115,7 +119,7 @@ export class DashboardLayoutService {
   readonly historySplit = signal<Record<DashboardHistoryKey, boolean>>({
     ...DEFAULT_PREFS.historySplit,
   });
-  /** Repli de Menu/Objectifs/Historique — PAS Combat/Chat, voir doc de tête (délégué). */
+  /** Repli de Menu/Objectifs/Historique — PAS Chat, voir doc de tête (délégué). */
   readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({});
 
   constructor() {
@@ -188,15 +192,10 @@ export class DashboardLayoutService {
   }
 
   isCollapsed(key: DashboardCollapsibleKey): boolean {
-    if (key === 'combat') return this.combatPanel.collapsed();
     if (key === 'chat') return this.chatPanel.collapsed();
     return !!this.collapsedSections()[key];
   }
   toggleCollapsed(key: DashboardCollapsibleKey): void {
-    if (key === 'combat') {
-      this.combatPanel.setCollapsed(!this.combatPanel.collapsed());
-      return;
-    }
     if (key === 'chat') {
       this.chatPanel.setCollapsed(!this.chatPanel.collapsed());
       return;
@@ -216,14 +215,14 @@ export class DashboardLayoutService {
     this.persist();
   }
 
-  // --- Dérivation partagée (corps : Combat / Historique×N / Chat) ---------------------------
+  // --- Dérivation partagée (corps : Historique×N / Chat) -------------------------------------
 
-  /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique. Combat
-   * n'y figure que pendant un combat réellement en cours (`combatPanel.hasActiveFight`),
-   * indépendamment de son repli (voir `visibleBodySlots`, qui applique le repli en plus). */
+  /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique. Pas de
+   * carte "Combat" à part : le combat en cours vit désormais DANS `hist_combats`/`hist_group`
+   * (voir CLAUDE.md/FightHistoryComponent), toujours présentes ici qu'un combat soit en cours ou
+   * non. */
   readonly activeSlots = computed<DashboardBodySlot[]>(() => {
     const slots: DashboardBodySlot[] = [];
-    if (this.combatPanel.hasActiveFight()) slots.push({ key: 'combat', sw: 'combat' });
     const split = this.historySplit();
     const splitOnes = HIST_KEYS.filter((k) => split[k]);
     const remaining = HIST_KEYS.filter((k) => !split[k]);
@@ -235,14 +234,11 @@ export class DashboardLayoutService {
     return slots;
   });
 
-  /** Mêmes cartes, Combat toujours inclus (même hors combat) — pour proposer une cible de mise en
-   * avant même indisponible dans l'immédiat (repli automatique tant qu'elle ne l'est pas, voir
-   * `effectiveBodyMode`). */
-  readonly chipSlots = computed<DashboardBodySlot[]>(() => {
-    const active = this.activeSlots();
-    if (active.some((s) => s.key === 'combat')) return active;
-    return [{ key: 'combat', sw: 'combat' }, ...active];
-  });
+  /** Toute carte du corps est désormais toujours potentiellement présente (plus de carte "Combat"
+   * apparaissant/disparaissant selon `hasActiveFight`, voir doc de tête) — alias direct
+   * d'`activeSlots`, conservé sous ce nom pour ne pas répercuter le changement sur ses appelants
+   * (`DashboardLayoutPickerComponent`). */
+  readonly chipSlots = this.activeSlots;
 
   /** Cartes réellement visibles : `activeSlots` moins celles repliées manuellement. */
   readonly visibleBodySlots = computed(() =>

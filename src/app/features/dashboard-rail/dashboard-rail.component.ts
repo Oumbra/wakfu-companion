@@ -1,5 +1,4 @@
 import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { UserDataService } from '../../core/data-access/user-data.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -25,17 +24,16 @@ interface RailEntry {
 /** Clé i18n de l'infobulle "agrandir" par type de carte — `history.expandHint` couvre le panneau
  * groupé ET chacune de ses scissions (même libellé générique, comme `history.collapseHint`). */
 function expandHintKeyFor(key: DashboardBodySlotKey): string {
-  if (key === 'combat') return 'damageMeter.expandHint';
   if (key === 'chat') return 'chat.expandHint';
   return 'history.expandHint';
 }
 /**
- * Rail d'icônes du dashboard : liste TOUTE carte du corps actuellement repliée (Combat, Chat,
- * Historique groupé ou l'une de ses scissions — voir `DashboardLayoutService.activeSlots`/
- * `isCollapsed`, généralisé pour ne plus se limiter à Combat/Chat), cliquable pour la réagrandir.
- * Combat/Chat restent délégués à leurs services dédiés (`CombatPanelService`/`ChatPanelService`,
- * synchronisés compte) via `DashboardLayoutService.isCollapsed`/`toggleCollapsed` — ce composant ne
- * distingue plus les deux cas, tout passe par le même mécanisme générique.
+ * Rail d'icônes du dashboard : liste TOUTE carte du corps actuellement repliée (Chat, Historique
+ * groupé ou l'une de ses scissions — voir `DashboardLayoutService.activeSlots`/`isCollapsed`,
+ * généralisé pour ne plus se limiter à Chat), cliquable pour la réagrandir. Chat reste délégué à
+ * son service dédié (`ChatPanelService`, synchronisé compte) via
+ * `DashboardLayoutService.isCollapsed`/`toggleCollapsed` — ce composant ne distingue pas ce cas,
+ * tout passe par le même mécanisme générique.
  */
 @Component({
   selector: 'app-dashboard-rail',
@@ -44,7 +42,6 @@ function expandHintKeyFor(key: DashboardBodySlotKey): string {
   styleUrl: './dashboard-rail.component.css',
 })
 export class DashboardRailComponent {
-  protected readonly combatPanel = inject(CombatPanelService);
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly i18n = inject(I18nService);
   protected readonly layout = inject(DashboardLayoutService);
@@ -83,12 +80,7 @@ export class DashboardRailComponent {
         label: dashboardBodySlotLabel(this.i18n, historySplit, slot.key),
         expandHint: this.i18n.t(expandHintKeyFor(slot.key)),
         icon: dashboardBodySlotIcon(slot.key),
-        count:
-          slot.key === 'combat'
-            ? this.combatPanel.activeFightCount()
-            : slot.key === 'chat'
-              ? this.chatPanel.matchedMessageCount() || null
-              : null,
+        count: slot.key === 'chat' ? this.chatPanel.matchedMessageCount() || null : null,
       }));
   });
 

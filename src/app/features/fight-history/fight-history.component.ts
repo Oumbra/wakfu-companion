@@ -1,10 +1,16 @@
 import { Component, computed, effect, inject, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { EntityDamageRow, FightRecord, LootRow } from '../../core/services/stats-store.service';
+import {
+  EntityDamageRow,
+  FightRecord,
+  LootRow,
+  StatsStoreService,
+} from '../../core/services/stats-store.service';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
+import { CombatPanelService } from '../../core/services/combat-panel.service';
+import { HelpModalService } from '../../core/services/help-modal.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
-import { EntityDamageListComponent } from '../damage-meter/entity-damage-list/entity-damage-list.component';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -38,14 +44,9 @@ import {
 } from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
-import {
-  DamageViewMode,
-  DamageViewSwitchComponent,
-} from '../../shared/damage-view-switch/damage-view-switch.component';
-import {
-  EntityStatKind,
-  EntityStatTabsComponent,
-} from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
+import { DamageViewMode } from '../../shared/damage-view-switch/damage-view-switch.component';
+import { EntityStatKind } from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
+import { CombatDetailComponent } from '../../shared/combat-detail/combat-detail.component';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -60,17 +61,23 @@ interface FightGroup {
 }
 
 /**
- * Historique des combats (liste repliable, butin, XP) — extrait de
- * DamageMeterComponent pour être affiché comme sous-onglet "Combats" de la
- * nouvelle section Historique (voir HistoryComponent), à côté des achats.
- * Rendu directement au niveau du `.tool-panel` parent (`:host{display:contents}`),
- * même principe que PurchasesComponent.
+ * Historique des combats (liste repliable, butin, XP) — sous-onglet "Combats" de la section
+ * Historique (voir HistoryComponent), à côté des achats. Rendu directement au niveau du
+ * `.tool-panel` parent (`:host{display:contents}`), même principe que PurchasesComponent.
+ *
+ * Le combat EN COURS (ex-`DamageMeterComponent`, fusionné ici — voir CLAUDE.md) est affiché en
+ * tête de liste sous forme d'un bandeau repliable à part (`.ongoing-fight-toggle`, voir template),
+ * toujours au-dessus de tout regroupement jour/lieu/type puisqu'il n'appartient à aucun d'eux —
+ * son état de repli est délégué à `CombatPanelService` (persisté, synchronisé compte), les
+ * signaux `ongoing*` ci-dessous portent le reste de son état (switch cumulé/tour, statistique
+ * affichée), indépendamment des maps `fightViewModes`/`fightTurns`/`fightStatKinds` qui gèrent le
+ * même besoin pour un combat de l'historique (déjà figé, contrairement au combat en cours qui
+ * suit un `effect()` de remise à zéro à chaque changement de combat affiché — voir constructeur).
  */
 @Component({
   selector: 'app-fight-history',
   imports: [
     NumberFrPipe,
-    EntityDamageListComponent,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,
@@ -78,8 +85,7 @@ interface FightGroup {
     IconComponent,
     NgTemplateOutlet,
     TooltipDirective,
-    DamageViewSwitchComponent,
-    EntityStatTabsComponent,
+    CombatDetailComponent,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
@@ -94,6 +100,50 @@ export class FightHistoryComponent {
   protected readonly i18n = inject(I18nService);
   private readonly catalog = inject(CatalogService);
   protected readonly auth = inject(AuthService);
+  private readonly stats = inject(StatsStoreService);
+  protected readonly combatPanel = inject(CombatPanelService);
+  protected readonly helpModal = inject(HelpModalService);
+
+  // --- Combat en cours (ex-DamageMeterComponent, voir doc de tête) ---------------------------
+
+  /** Statistique affichée par les listes alliés/ennemis du combat en cours — repart à 'damage' à
+   * chaque changement de combat affiché, comme `ongoingViewMode` ci-dessous. */
+  protected readonly ongoingStatKind = signal<EntityStatKind>('damage');
+  private readonly ongoingStatRowsByKind: Record<EntityStatKind, () => EntityDamageRow[]> = {
+    damage: () => this.stats.damageByAttacker(),
+    armor: () => this.stats.armorByAttacker(),
+    heal: () => this.stats.healByAttacker(),
+  };
+  /** `hasCurrentFight` reste volontairement basé sur les dégâts, pas sur cette statistique : un
+   * combat démarré sans encore aucun soin/armure donné ne doit pas masquer l'en-tête tours/durée. */
+  private readonly ongoingStatRows = computed<EntityDamageRow[]>(() =>
+    this.ongoingStatRowsByKind[this.ongoingStatKind()](),
+  );
+  protected readonly ongoingAllyRows = computed<EntityDamageRow[]>(() =>
+    this.ongoingStatRows().filter((r) => this.classifier.classify(r.name) === 'ally'),
+  );
+  protected readonly ongoingEnemyRows = computed<EntityDamageRow[]>(() =>
+    this.ongoingStatRows().filter((r) => this.classifier.classify(r.name) === 'enemy'),
+  );
+  protected readonly hasCurrentFight = computed(() => this.stats.damageByAttacker().length > 0);
+  protected readonly currentFightTurns = this.stats.currentFightTurns;
+  protected readonly currentFightDurationMs = this.stats.currentFightDurationMs;
+  /** Plusieurs combats concurrents (multi-compte) : un onglet par combat, affiché au-dessus du
+   * nombre de tours. */
+  protected readonly activeFightIds = this.stats.activeFightIds;
+  protected readonly displayedFightId = this.stats.displayedFightId;
+
+  /** Switch Cumulé/Tour du combat en cours — un seul état pour tout le bandeau, partagé entre
+   * alliés et ennemis (même combat, même tour). Repart à 'total' à chaque changement de combat
+   * affiché (onglet ou fin de combat) : un tour choisi pour un combat n'a aucun sens pour un
+   * autre. */
+  protected readonly ongoingViewMode = signal<DamageViewMode>('total');
+  /** Tour sélectionné explicitement par l'utilisateur (pas à pas) — `null` = suit automatiquement
+   * le tour courant du combat (comportement par défaut, voir `ongoingEffectiveTurn`). */
+  private readonly ongoingSelectedTurn = signal<number | null>(null);
+  protected readonly ongoingEffectiveTurn = computed(() =>
+    Math.min(this.ongoingSelectedTurn() ?? this.currentFightTurns(), this.currentFightTurns()),
+  );
 
   /** Combats de la section "combat" (ally/enemy) actuellement DÉPLIÉS — vide par défaut, tout
    * REPLIÉ (même convention que `expandedDungeonRunIds` ci-dessous : un combat doit démarrer
@@ -103,7 +153,7 @@ export class FightHistoryComponent {
   private readonly expandedFightIds = signal<ReadonlySet<number>>(new Set());
   /** Switch Total/Tour (voir DamageViewSwitchComponent) — indexé par `id` de combat, indépendant
    * pour chaque combat déplié (plusieurs peuvent l'être simultanément, voir `expandedFightIds`) :
-   * contrairement au combat en cours (un seul à la fois, voir DamageMeterComponent), il n'y a pas
+   * contrairement au combat en cours (un seul à la fois, voir les signaux `ongoing*` plus haut), il n'y a pas
    * ici de "combat affiché" unique auquel rattacher un état global. Absent de la map = 'total'
    * (comportement historique, aucun combat n'a de tour choisi par défaut). */
   private readonly fightViewModes = signal<ReadonlyMap<number, DamageViewMode>>(new Map());
@@ -165,6 +215,16 @@ export class FightHistoryComponent {
   private static readonly LOCATION_ORDER: readonly HistoryOrigin[] = ['session', 'account'];
 
   constructor() {
+    // Changer de combat affiché (onglet multi-compte, ou fin du combat courant révélant le
+    // suivant) invalide toute sélection de tour précédente du combat en cours — revenir au suivi
+    // automatique plutôt que de garder un numéro de tour qui ne correspond plus au même combat.
+    effect(() => {
+      this.displayedFightId();
+      this.ongoingSelectedTurn.set(null);
+      this.ongoingViewMode.set('total');
+      this.ongoingStatKind.set('damage');
+    });
+
     // Le regroupement "Origine" (session/compte) n'a d'intérêt qu'en mode connecté — en invité, il
     // n'existe qu'une seule origine possible (la session en cours), voir `auth.isAuthenticated()`
     // dans le template. Repli sur "Jour" si l'utilisateur se déconnecte alors que ce mode était
@@ -174,6 +234,41 @@ export class FightHistoryComponent {
         this.groupMode.set('day');
       }
     });
+  }
+
+  protected setOngoingViewMode(mode: DamageViewMode): void {
+    this.ongoingViewMode.set(mode);
+  }
+
+  protected setOngoingStatKind(kind: EntityStatKind): void {
+    this.ongoingStatKind.set(kind);
+  }
+
+  protected setOngoingTurn(turn: number): void {
+    this.ongoingSelectedTurn.set(turn);
+  }
+
+  /** Clé i18n du message vide du combat en cours, déclinée par statistique affichée — voir
+   * EntityStatTabsComponent. Distincte de `emptyMessageKey` (combat de l'historique, suffixe
+   * "History") : mêmes clés que `DamageMeterComponent` avant fusion. */
+  protected ongoingEmptyMessageKey(side: 'ally' | 'enemy'): string {
+    const suffix =
+      this.ongoingStatKind() === 'damage'
+        ? ''
+        : this.ongoingStatKind() === 'armor'
+          ? 'Armor'
+          : 'Heal';
+    return side === 'ally'
+      ? `damageMeter.emptyAllies${suffix}`
+      : `damageMeter.emptyEnemies${suffix}`;
+  }
+
+  protected ongoingTabLabel(index: number): string {
+    return this.i18n.t('damageMeter.combatTab', { n: index + 1 });
+  }
+
+  protected selectOngoingFight(fightId: number): void {
+    this.stats.selectDisplayedFight(fightId);
   }
 
   protected readonly fightGroups = computed<FightGroup[]>(() => {
@@ -445,8 +540,8 @@ export class FightHistoryComponent {
     }
   }
 
-  /** Clé i18n du message vide, déclinée par statistique affichée — voir DamageMeterComponent,
-   * même convention. */
+  /** Clé i18n du message vide, déclinée par statistique affichée — voir `ongoingEmptyMessageKey`
+   * (combat en cours), même convention avec un suffixe "History" en plus (combat déjà terminé). */
   protected emptyMessageKey(id: number, side: 'ally' | 'enemy'): string {
     const kind = this.statKindFor(id);
     const suffix = kind === 'damage' ? '' : kind === 'armor' ? 'Armor' : 'Heal';

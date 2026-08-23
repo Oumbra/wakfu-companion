@@ -68,12 +68,12 @@
    panneau et l'alignement du haut de .tool-panel) plutôt que d'être une rangée séparée au-dessus —
    gagne de la hauteur et lit comme un seul bloc. */
 
-/* Grille du corps (Suivi + Combat/Historique×N/Chat visibles, voir DashboardLayoutService.gridPlan)
-   — toujours 2 colonnes max (jamais plus, Combat/Historique deviennent illisibles en dessous, voir
+/* Grille du corps (Suivi + Historique×N/Chat visibles, voir DashboardLayoutService.gridPlan) —
+   toujours 2 colonnes max (jamais plus, Historique/Chat deviennent illisibles en dessous, voir
    CLAUDE.md), colonnes/lignes posées en inline depuis le template (`layout.panelsColumns()`/
    `layout.panelsRowCount()`, calculées côté service — 2 colonnes égales en répartition égale, une
    étroite + une large du côté choisi en mise en avant). Chaque enfant reçoit son
-   `order`/`grid-column`/`grid-row` depuis `layout.gridPlan()` (Suivi/Combat/Chat directement dans le
+   `order`/`grid-column`/`grid-row` depuis `layout.gridPlan()` (Suivi/Chat directement dans le
    template ci-dessus, Historique en interne — voir HistoryComponent, dont les panneaux réels sont
    rendus par un composant `display:contents` distinct de ce grid). */
 .panels-row {
@@ -90,8 +90,8 @@
   min-height: 0;
 }
 /* Panneau Chat replié (voir ChatPanelService) : desktop uniquement, retiré de la grille (CSS pur,
-   `[class.panel-collapsed]`, jamais un `@if` structurel comme pour `app-damage-meter`) — le
-   composant reste monté en permanence pour que l'onglet Chat mobile continue de fonctionner même
+   `[class.panel-collapsed]`, pas un `@if` structurel) — le composant reste monté en permanence pour
+   que l'onglet Chat mobile continue de fonctionner même
    si l'état replié (togglable depuis le rail/la page Personnalisation, voir DashboardLayoutService)
    persistait d'une session desktop à une session mobile. */
 @media (min-width: 801px) {

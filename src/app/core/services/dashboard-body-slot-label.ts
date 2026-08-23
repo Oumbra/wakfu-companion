@@ -13,11 +13,11 @@ export function histLabelKey(key: DashboardHistoryKey): string {
     : 'profile.dashboardLayout.slot.' + key;
 }
 
-/** Libellé traduit d'une carte du corps (Combat/Historique×N/Chat) — utilisé à la fois par
+/** Libellé traduit d'une carte du corps (Historique×N/Chat) — utilisé à la fois par
  * `DashboardLayoutPickerComponent` (Profil › Personnalisation) et par `DashboardRailComponent` (le
- * VRAI rail, dont les entrées listent désormais toutes les cartes repliées, pas seulement Combat/
- * Chat) : un seul calcul, `DashboardLayoutService` lui-même ne connaît pas l'i18n (voir sa doc de
- * tête) donc ne peut pas le porter directement. `historySplit` passé explicitement (pas lu depuis
+ * VRAI rail, dont les entrées listent désormais toutes les cartes repliées, pas seulement Chat) :
+ * un seul calcul, `DashboardLayoutService` lui-même ne connaît pas l'i18n (voir sa doc de tête) donc
+ * ne peut pas le porter directement. `historySplit` passé explicitement (pas lu depuis
  * `DashboardLayoutService` ici) pour rester une fonction pure, facile à appeler depuis un `computed`
  * sans dépendance cachée. */
 export function dashboardBodySlotLabel(
@@ -25,7 +25,6 @@ export function dashboardBodySlotLabel(
   historySplit: Readonly<Record<DashboardHistoryKey, boolean>>,
   key: DashboardBodySlotKey,
 ): string {
-  if (key === 'combat') return i18n.t('profile.dashboardLayout.slot.combat');
   if (key === 'chat') return i18n.t('profile.dashboardLayout.slot.chat');
   if (key === 'hist_group') {
     const remaining = HIST_KEYS.filter((k) => !historySplit[k]);
@@ -43,14 +42,11 @@ export function dashboardBodySlotLabel(
 /** Icône par type de carte du corps — chaque volet d'historique a la sienne (voir `icons-*.svg`),
  * pour rester différenciable partout où le libellé n'est pas (ou plus) visible : rail replié
  * (`DashboardRailComponent`) ET en-tête d'un panneau scindé à part (`HistoryComponent`, à la place
- * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `hist_combats`
- * (renommé "Combats", voir CLAUDE.md) reprend les mêmes épées croisées que la carte `combat` (le
- * combat EN COURS, désormais libellé "Combat en cours") — les deux se distinguent par leur libellé,
- * plus par leur icône, depuis ce renommage. `clock` reste utilisée pour le panneau groupé (mélange
- * de volets, pas d'icône plus spécifique pertinente) ; `shopping-bag`/`arrows-exchange` pour
- * Achats/Échanges. */
+ * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `clock` reste
+ * utilisée pour le panneau groupé (mélange de volets, pas d'icône plus spécifique pertinente) ;
+ * `shopping-bag`/`arrows-exchange` pour Achats/Échanges. */
 export function dashboardBodySlotIcon(key: DashboardBodySlotKey): AppIconName {
-  if (key === 'combat' || key === 'hist_combats') return 'crossed-swords';
+  if (key === 'hist_combats') return 'crossed-swords';
   if (key === 'chat') return 'messages-square';
   if (key === 'hist_purchases') return 'shopping-bag';
   if (key === 'hist_trades') return 'arrows-exchange';
