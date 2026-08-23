@@ -1,7 +1,15 @@
 /* Mêmes tokens de couleur que `DashboardLayoutSchemaComponent` (voir son CSS) — dupliqués ici
    plutôt que passés en `@Input` : ce composant en a aussi besoin pour la légende, les puces de
    mise en avant et les pastilles de repli, indépendamment des instances du schéma. */
+/* `display: contents` : ce composant ne doit ajouter aucune boîte entre `.profile-field-wide`
+   (ci-dessous) et le véritable conteneur défilant (`.panel-body`, voir ProfilePageComponent) —
+   sans quoi le `position: sticky` de `.dlp-preview` risquerait de se retrouver cassé par une
+   boîte hôte intermédiaire (voir CLAUDE.md, piège #2 du sticky : tout ancêtre avec un `overflow`
+   autre que `visible` casse le calcul, même un hôte de composant sans rôle visuel). Les variables
+   CSS ci-dessous restent héritées normalement (`display: contents` ne change que la génération de
+   boîte, pas la cascade). */
 :host {
+  display: contents;
   --lp-sw-menu: #838a99;
   --lp-sw-kpi: #e0b23d;
   --lp-sw-combat: #e2586c;
@@ -66,6 +74,16 @@
   border-radius: 10px;
   padding: 12px 14px 14px;
   margin-bottom: 20px;
+  /* Reste visible pendant que l'utilisateur scrolle le reste de la page (comme sur la maquette
+     d'origine) — le conteneur défilant réel est `.panel-body` (ProfilePageComponent), sans ancêtre
+     `overflow` intermédiaire jusqu'à `.dlp-preview` grâce au `display: contents` du host (voir
+     ci-dessus). `top: 0` colle contre le haut du viewport de scroll (`.panel-body` n'a pas de
+     padding-top). `z-index` pour rester au-dessus du contenu qui défile sous lui une fois collé —
+     sans risque de conflit avec les tooltips (`position: fixed` posés au niveau racine, voir
+     CLAUDE.md). */
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 .dlp-preview-head {
   display: flex;
@@ -241,6 +259,9 @@
 .dlp-focus-block .dlp-hint {
   margin: 10px 0 0;
 }
+.dlp-focus-block .dlp-hint + .dlp-focus-label {
+  margin-top: 14px;
+}
 
 .dlp-chip-row,
 .dlp-toggle-row {
@@ -285,6 +306,11 @@
 }
 .dlp-chip.unavailable {
   opacity: 0.5;
+}
+/* Variante sans puce de couleur (choix de côté, pas de carte du corps) — repadding symétrique
+   faute du `.dlp-chip-dot` que réserve le padding-gauche réduit de `.dlp-chip`. */
+.dlp-chip-plain {
+  padding-left: 12px;
 }
 
 .dlp-toggle-row {

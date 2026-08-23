@@ -480,16 +480,22 @@ button.reset-btn:hover {
   border: 1px solid var(--border);
 }
 
-/* Carte du corps du tableau de bord (voir DashboardLayoutService.gridPlan/dashboard.component.css)
-   en pleine largeur dans `.panels-row` — GLOBALE (pas dans dashboard.component.css) : posée par
-   `[class.grid-span2]` depuis le template PROPRE d'`HistoryComponent` (`display:contents`, un ou
-   plusieurs `.tool-panel` scindés à part, voir history.component.html), donc portant l'attribut
-   d'encapsulation de vue de CE composant, pas celui de `DashboardComponent` — une règle scopée dans
-   `dashboard.component.css` ne l'aurait donc jamais atteinte, quel que soit le combinateur CSS
-   utilisé (bug réel constaté à la vérification : classe posée, sans aucun effet visuel). Même
-   raison d'être que `.tool-panel`/`.panel-header` ci-dessus, déjà globales pour cette même raison. */
-.grid-span2 {
-  grid-column: 1 / -1;
+/* Placement d'une carte du corps du tableau de bord (voir DashboardLayoutService.gridPlan) dans
+   `.panels-row` : posé en style INLINE (`[style.grid-column]`/`[style.grid-row]`) depuis
+   DashboardComponent (Combat/Suivi/Chat) ET depuis le template PROPRE d'HistoryComponent
+   (`display:contents`, un ou plusieurs `.tool-panel` scindés à part, voir history.component.html)
+   — jamais une classe : une classe posée depuis le template d'HistoryComponent porterait son
+   attribut d'encapsulation de vue à LUI, pas celui de `DashboardComponent`, qu'aucune règle scopée
+   dans `dashboard.component.css` n'aurait jamais pu atteindre (bug réel rencontré avec l'ancienne
+   `.grid-span2`, remplacée par ce mécanisme). Un style inline n'a pas ce problème.
+   En dessous de 800px, `.panels-row` ne garde qu'UNE colonne/ligne (voir dashboard.component.css) :
+   ce placement doit alors être neutralisé pour tous les panneaux, quelle que soit sa provenance —
+   GLOBALE pour la même raison que ci-dessus (le sélecteur doit traverser `<app-history>`). */
+@media (max-width: 800px) {
+  .panels-row .tool-panel {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
 }
 
 .panel-header {

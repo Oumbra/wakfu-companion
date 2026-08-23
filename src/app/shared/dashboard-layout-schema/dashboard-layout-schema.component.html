@@ -15,7 +15,7 @@
     <div class="dls-kpi" [class.reduced]="kpiReduced()" [style.flex-basis.%]="kpiBasis()"></div>
     <div class="dls-body">
       @if (focus(); as f) {
-        <div class="dls-focus">
+        <div class="dls-focus" [style.flex-direction]="focusDirection()">
           <div class="dls-main" [class]="'sw-' + f.main.sw"></div>
           @if (f.secondaries.length) {
             <div class="dls-secondary">

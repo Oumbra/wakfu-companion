@@ -6,6 +6,9 @@ import { ChatPanelService } from './chat-panel.service';
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
 export type DashboardBodyMode = 'equal' | 'focus';
+/** Côté où se rangent les cartes secondaires en mode "mise en avant" — la carte ciblée occupe
+ * l'AUTRE côté, en pleine hauteur (voir `gridPlan`). */
+export type DashboardFocusSide = 'left' | 'right';
 export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
 
 /** Identifiant d'une "carte" potentielle du corps — `'hist_group'` désigne le bloc Historique
@@ -28,16 +31,19 @@ export interface DashboardBodySlot {
   readonly sw: 'combat' | 'history' | 'chat';
 }
 
-/** Placement calculé d'une case dans `.panels-row` (grille CSS à 2 colonnes max, voir
- * `dashboard.component.css`) — `span2` = pleine largeur (dernier élément d'un total impair en
- * répartition égale, OU la carte mise en avant en mode focus), `order` = position dans le flux
- * (`style.order`), pilote l'agencement sans dépendre de l'ordre du DOM (utile pour `HistoryComponent`,
- * dont les panneaux réels sont rendus par un composant `display:contents` distinct de
- * `DashboardComponent`, voir sa doc de tête). */
+/** Placement calculé d'une case dans `.panels-row` (grille CSS, voir `dashboard.component.css`) —
+ * `gridColumn`/`gridRow` posés tels quels en style inline (`1 / -1`, `2`, `1 / 3`...), `order` pour
+ * les cas où l'ordre visuel suffit (répartition égale, grid-auto-flow). Toujours des valeurs
+ * explicites (jamais de classe CSS externe) : un panneau scindé d'`<app-history>` (`display:contents`)
+ * porte l'attribut d'encapsulation de vue de CE composant, pas celui de `DashboardComponent` — une
+ * classe posée depuis un stylesheet scopé à `DashboardComponent` ne l'atteindrait jamais (bug réel
+ * rencontré avec `.grid-span2`, voir historique de session), alors qu'un style inline n'a pas ce
+ * problème. */
 export interface DashboardGridSlot {
   readonly key: DashboardGridKey;
   readonly visible: boolean;
-  readonly span2: boolean;
+  readonly gridColumn: string;
+  readonly gridRow: string;
   readonly order: number;
 }
 
@@ -46,6 +52,7 @@ export interface DashboardLayoutPrefs {
   readonly kpiPos: DashboardKpiPos;
   readonly bodyMode: DashboardBodyMode;
   readonly focusTarget: DashboardBodySlotKey;
+  readonly focusSide: DashboardFocusSide;
   readonly historySplit: Readonly<Record<DashboardHistoryKey, boolean>>;
   readonly collapsedSections: Readonly<Partial<Record<DashboardCollapsibleKey, boolean>>>;
 }
@@ -57,6 +64,7 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   kpiPos: 'top',
   bodyMode: 'equal',
   focusTarget: 'combat',
+  focusSide: 'right',
   historySplit: { combats: false, purchases: false, trades: false },
   collapsedSections: {},
 };
@@ -89,7 +97,10 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
  * synchronisée sur le compte, pilote aussi `DashboardRailComponent`) — `isCollapsed`/
  * `toggleCollapsed` délèguent donc à ces services pour ces deux clés plutôt que de dupliquer un
  * second état déconnecté du premier (qui désynchroniserait le rail des icônes repliées et la
- * grille du corps).
+ * grille du corps). Toutes les autres cartes du corps (Historique groupé et chacune de ses
+ * scissions) sont repliables de la MÊME façon (`.collapse-btn` sur leur panneau, voir
+ * `HistoryComponent`) et rejoignent elles aussi `DashboardRailComponent`, généralisé pour lister
+ * dynamiquement toute carte repliée plutôt que seulement Combat/Chat.
  */
 @Injectable({ providedIn: 'root' })
 export class DashboardLayoutService {
@@ -101,6 +112,7 @@ export class DashboardLayoutService {
   readonly kpiPos = signal<DashboardKpiPos>(DEFAULT_PREFS.kpiPos);
   readonly bodyMode = signal<DashboardBodyMode>(DEFAULT_PREFS.bodyMode);
   readonly focusTarget = signal<DashboardBodySlotKey>(DEFAULT_PREFS.focusTarget);
+  readonly focusSide = signal<DashboardFocusSide>(DEFAULT_PREFS.focusSide);
   readonly historySplit = signal<Record<DashboardHistoryKey, boolean>>({
     ...DEFAULT_PREFS.historySplit,
   });
@@ -114,6 +126,7 @@ export class DashboardLayoutService {
       if (stored.kpiPos) this.kpiPos.set(stored.kpiPos);
       if (stored.bodyMode) this.bodyMode.set(stored.bodyMode);
       if (stored.focusTarget) this.focusTarget.set(stored.focusTarget);
+      if (stored.focusSide) this.focusSide.set(stored.focusSide);
       if (stored.historySplit) {
         this.historySplit.set({ ...DEFAULT_PREFS.historySplit, ...stored.historySplit });
       }
@@ -130,6 +143,7 @@ export class DashboardLayoutService {
         kpiPos: this.kpiPos(),
         bodyMode: this.bodyMode(),
         focusTarget: this.focusTarget(),
+        focusSide: this.focusSide(),
         historySplit: this.historySplit(),
         collapsedSections: this.collapsedSections(),
       };
@@ -148,6 +162,9 @@ export class DashboardLayoutService {
   }
   setFocusTarget(value: DashboardBodySlotKey): void {
     this.focusTarget.set(value);
+  }
+  setFocusSide(value: DashboardFocusSide): void {
+    this.focusSide.set(value);
   }
   toggleHistorySplit(key: DashboardHistoryKey): void {
     this.historySplit.update((cur) => ({ ...cur, [key]: !cur[key] }));
@@ -175,6 +192,7 @@ export class DashboardLayoutService {
     this.kpiPos.set(DEFAULT_PREFS.kpiPos);
     this.bodyMode.set(DEFAULT_PREFS.bodyMode);
     this.focusTarget.set(DEFAULT_PREFS.focusTarget);
+    this.focusSide.set(DEFAULT_PREFS.focusSide);
     this.historySplit.set({ ...DEFAULT_PREFS.historySplit });
     this.collapsedSections.set({});
   }
@@ -217,6 +235,17 @@ export class DashboardLayoutService {
     return this.visibleBodySlots().some((s) => s.key === this.focusTarget()) ? 'focus' : 'equal';
   });
 
+  /** Colonnes de `.panels-row` (`grid-template-columns`, posé en inline depuis DashboardComponent) —
+   * 2 colonnes égales en répartition égale ; en mise en avant, une colonne étroite (les secondaires,
+   * empilées) et une large (la cible, ~2x plus large — mêmes proportions que la maquette validée
+   * avec l'utilisateur), du côté choisi (`focusSide`). */
+  readonly panelsColumns = computed<string>(() => {
+    if (this.effectiveBodyMode() !== 'focus') return 'repeat(2, minmax(0, 1fr))';
+    const narrow = 'minmax(260px, 1fr)';
+    const wide = 'minmax(0, 2fr)';
+    return this.focusSide() === 'left' ? `${narrow} ${wide}` : `${wide} ${narrow}`;
+  });
+
   /** Placement calculé de CHAQUE case possible de `.panels-row` (voir `DashboardGridSlot`) — Suivi
    * n'y participe PAS : `TrackerComponent` est `display:none` en desktop, quel que soit ce plan
    * (remplacé par `TrackerStripComponent`, voir CLAUDE.md/dashboard.component.html) — l'inclure
@@ -225,32 +254,56 @@ export class DashboardLayoutService {
    * défaut ci-dessous) uniquement pour que le template puisse lui appliquer les mêmes bindings sans
    * cas particulier, sans effet puisqu'il ne se rend jamais en desktop.
    *
-   * Répartition égale : grille à 2 colonnes max, le dernier élément d'un total impair prend toute
-   * la largeur de sa ligne. Mise en avant : la carte ciblée occupe sa PROPRE ligne en tête, pleine
-   * largeur ; les autres (les "secondaires") suivent dans l'ordre normal (2 colonnes) en dessous —
-   * MÊME règle "dernier élément impair en pleine largeur" appliquée à ce sous-groupe de secondaires
-   * (pas à l'ensemble cible+secondaires) : sans ça, une secondaire seule dans sa ligne (ex. Chat qui
-   * vient de se replier, ne laissant plus qu'une seule secondaire) resterait à moitié largeur avec
-   * une case vide à côté — bug réel constaté à la vérification. `panelsRowCount` (juste en dessous)
-   * applique le même détail : la ligne de la cible ciblée compte à part, 1 + `ceil(secondaires / 2)`,
-   * pas `ceil(total / 2)` (qui sous-compte dès que le nombre de secondaires est impair). */
+   * Répartition égale : grille à 2 colonnes max (`grid-auto-flow` gère le placement via `order`
+   * seul), le dernier élément d'un total impair prend toute la largeur de sa ligne (`gridColumn:
+   * '1 / -1'`).
+   *
+   * Mise en avant : la cible occupe TOUTE sa colonne (`gridRow: '1 / -1'`, pleine hauteur) du côté
+   * opposé à `focusSide` (voir `panelsColumns`) ; chaque secondaire occupe sa propre ligne dans
+   * l'AUTRE colonne (`gridRow` explicite, une case par ligne — jamais de partage de ligne entre
+   * secondaires, contrairement à la répartition égale) — reproduit le "bloc central massif + bande
+   * latérale empilée" de la maquette validée, plutôt que l'ancienne approximation (cible en pleine
+   * largeur en tête, secondaires en grille 2 colonnes en dessous) qui ne correspondait pas à ce qui
+   * avait été présenté à l'utilisateur. */
   readonly gridPlan = computed<Record<DashboardGridKey, DashboardGridSlot>>(() => {
     const plan = {} as Record<DashboardGridKey, DashboardGridSlot>;
-    for (const key of ALL_GRID_KEYS) plan[key] = { key, visible: false, span2: false, order: 0 };
+    for (const key of ALL_GRID_KEYS) {
+      plan[key] = { key, visible: false, gridColumn: 'auto', gridRow: 'auto', order: 0 };
+    }
 
     const items: DashboardGridKey[] = this.visibleBodySlots().map((s) => s.key);
     if (this.effectiveBodyMode() === 'focus') {
       const target = this.focusTarget();
-      plan[target] = { key: target, visible: true, span2: true, order: 0 };
+      const mainCol = this.focusSide() === 'left' ? '2' : '1';
+      const secCol = this.focusSide() === 'left' ? '1' : '2';
       const secondaries = items.filter((k) => k !== target);
-      const m = secondaries.length;
+      plan[target] = {
+        key: target,
+        visible: true,
+        gridColumn: mainCol,
+        gridRow: '1 / -1',
+        order: 0,
+      };
       secondaries.forEach((key, i) => {
-        plan[key] = { key, visible: true, span2: m % 2 === 1 && i === m - 1, order: i + 1 };
+        plan[key] = {
+          key,
+          visible: true,
+          gridColumn: secCol,
+          gridRow: String(i + 1),
+          order: i + 1,
+        };
       });
     } else {
       const n = items.length;
       items.forEach((key, i) => {
-        plan[key] = { key, visible: true, span2: n % 2 === 1 && i === n - 1, order: i };
+        const span2 = n % 2 === 1 && i === n - 1;
+        plan[key] = {
+          key,
+          visible: true,
+          gridColumn: span2 ? '1 / -1' : 'auto',
+          gridRow: 'auto',
+          order: i,
+        };
       });
     }
     return plan;
@@ -258,13 +311,13 @@ export class DashboardLayoutService {
 
   /** Nombre de lignes à donner à `.panels-row` (`grid-template-rows`, voir DashboardComponent) —
    * toujours 2 colonnes max, donc `ceil(n / 2)` lignes pour `n` cases visibles en répartition égale
-   * (Suivi exclu, voir `gridPlan`). En mise en avant, la cible occupe sa propre ligne (+1), le reste
-   * se répartit ensuite à 2 colonnes — même raison que `gridPlan` ci-dessus. Au moins 1 (une grille
-   * à 0 ligne n'a pas de sens même si `n` vaut 0). */
+   * (Suivi exclu, voir `gridPlan`). En mise en avant, une ligne par secondaire (la cible span sur
+   * TOUTES les lignes via `gridRow: '1 / -1'`, elle n'en impose donc aucune de plus). Au moins 1
+   * (une grille à 0 ligne n'a pas de sens même si `n` vaut 0, ou en mise en avant sans secondaire). */
   readonly panelsRowCount = computed(() => {
     const n = this.visibleBodySlots().length;
     if (n === 0) return 1;
-    if (this.effectiveBodyMode() === 'focus') return 1 + Math.ceil((n - 1) / 2);
+    if (this.effectiveBodyMode() === 'focus') return Math.max(1, n - 1);
     return Math.max(1, Math.ceil(n / 2));
   });
 }

@@ -46,6 +46,7 @@
         [kpiReduced]="layout.isCollapsed('kpi')"
         [cells]="previewCells()"
         [focus]="previewFocus()"
+        [focusSide]="layout.focusSide()"
         [emptyLabel]="'profile.dashboardLayout.summaryBodyEmpty' | t"
       />
     </div>
@@ -176,6 +177,20 @@
         }
       </div>
       <p class="dlp-hint">{{ 'profile.dashboardLayout.focusTargetHint' | t }}</p>
+
+      <div class="dlp-focus-label">{{ 'profile.dashboardLayout.focusSideLabel' | t }}</div>
+      <div class="dlp-chip-row">
+        @for (side of focusSideValues; track side) {
+          <button
+            type="button"
+            class="dlp-chip dlp-chip-plain"
+            [class.selected]="layout.focusSide() === side"
+            (click)="chooseFocusSide(side)"
+          >
+            {{ focusSideLabelKey(side) | t }}
+          </button>
+        }
+      </div>
     </div>
   }
 
