@@ -5,6 +5,7 @@ import { ClassPortraitComponent } from '../../shared/class-portrait/class-portra
 import { getAvatarGridEntry } from '../../core/data/class-portraits.data';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { NewSectionBadgeService } from '../../core/services/new-section-badge.service';
 
 /** Bouton profil (haut à droite) : avatar choisi ou "?" par défaut, ouvre la page profil (voir ProfilePageComponent). */
 @Component({
@@ -16,6 +17,7 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 export class ProfileComponent {
   protected readonly profile = inject(ProfileService);
   private readonly nav = inject(NavigationService);
+  protected readonly newSectionBadge = inject(NewSectionBadgeService);
 
   /** 'header' : bouton avatar rond seul (défaut) ; 'row' : ligne de menu burger (avatar + libellé). */
   readonly variant = input<'header' | 'row'>('header');

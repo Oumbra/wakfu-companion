@@ -62,6 +62,13 @@
               tooltipPosition="right"
               [tooltipDisabled]="!isNavRailCollapsed()"
             >
+              <!-- Badge "new" (voir NewSectionBadgeService/CLAUDE.md, desktop uniquement — ce rail
+                   n'existe pas en mobile) : sibling de `.profile-rail-icon`/`.profile-rail-label`,
+                   PAS un enfant de l'un d'eux, pour rester visible que le rail soit replié ou non
+                   (les deux sont cachés en `display: none` repliés, voir CSS). -->
+              @if (newSectionBadge.isUnseen(tab.id)) {
+                <span class="profile-rail-new-dot" aria-hidden="true"></span>
+              }
               <span class="profile-rail-icon">
                 @switch (tab.id) {
                   @case ('avatar') {
