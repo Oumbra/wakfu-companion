@@ -44,7 +44,7 @@ export function dashboardBodySlotLabel(
  * pour rester différenciable partout où le libellé n'est pas (ou plus) visible : rail replié
  * (`DashboardRailComponent`) ET en-tête d'un panneau scindé à part (`HistoryComponent`, à la place
  * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `hist_combats`
- * (renommé "Combat", voir CLAUDE.md) reprend les mêmes épées croisées que la carte `combat` (le
+ * (renommé "Combats", voir CLAUDE.md) reprend les mêmes épées croisées que la carte `combat` (le
  * combat EN COURS, désormais libellé "Combat en cours") — les deux se distinguent par leur libellé,
  * plus par leur icône, depuis ce renommage. `clock` reste utilisée pour le panneau groupé (mélange
  * de volets, pas d'icône plus spécifique pertinente) ; `shopping-bag`/`arrows-exchange` pour
