@@ -2,6 +2,7 @@ import { Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { IconComponent } from '../../../shared/icon/icon.component';
 import { SwitchComponent } from '../../../shared/switch/switch.component';
+import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import {
   DashboardLayoutSchemaCell,
   DashboardLayoutSchemaComponent,
@@ -11,6 +12,7 @@ import {
 } from '../../../shared/dashboard-layout-schema/dashboard-layout-schema.component';
 import { I18nService } from '../../../core/services/i18n.service';
 import {
+  DashboardBlockKey,
   DashboardBodySlot,
   DashboardBodySlotKey,
   DashboardFocusSide,
@@ -62,7 +64,13 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
  */
 @Component({
   selector: 'app-dashboard-layout-picker',
-  imports: [TranslatePipe, IconComponent, SwitchComponent, DashboardLayoutSchemaComponent],
+  imports: [
+    TranslatePipe,
+    IconComponent,
+    SwitchComponent,
+    DashboardLayoutSchemaComponent,
+    TooltipDirective,
+  ],
   templateUrl: './dashboard-layout-picker.component.html',
   styleUrl: './dashboard-layout-picker.component.css',
 })
@@ -141,6 +149,13 @@ export class DashboardLayoutPickerComponent {
    * voir `dashboardBodySlotLabel` (partagé avec `DashboardRailComponent`). */
   protected histLabelKey(key: DashboardHistoryKey): string {
     return histLabelKey(key);
+  }
+
+  /** Les 4 blocs logiques ordonnables (voir `DashboardBlockKey`) — libellé traduit réutilisant
+   * directement les clés déjà posées pour les 3 volets d'historique + Chat (légende, découpage),
+   * aucune nouvelle clé i18n nécessaire. */
+  protected blockLabelKey(key: DashboardBlockKey): string {
+    return key === 'chat' ? 'profile.dashboardLayout.slot.chat' : histLabelKey(key);
   }
 
   private label(slots: readonly DashboardBodySlot[]): LabeledSlot[] {

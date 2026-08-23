@@ -9,6 +9,12 @@ export type DashboardBodyMode = 'equal' | 'focus';
  * l'AUTRE côté, en pleine hauteur (voir `gridPlan`). */
 export type DashboardFocusSide = 'left' | 'right';
 export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
+/** Les 4 blocs "logiques" du corps, indépendamment du regroupement de l'historique (voir
+ * `historyGroup`) — sert de référentiel stable pour `blockOrder` : contrairement à
+ * `DashboardBodySlotKey`, dont `hist_group` apparaît/disparaît selon le regroupement, ces 4 clés
+ * existent toujours, ce qui permet de retrouver le rang voulu même quand la carte groupée n'est pas
+ * (ou plus) affichée (voir `activeSlots`). */
+export type DashboardBlockKey = DashboardHistoryKey | 'chat';
 
 /** Identifiant d'une "carte" potentielle du corps — `'hist_group'` désigne le bloc Historique
  * regroupé (voir `visibleBodySlots`), son identité change de contenu mais pas de clé selon
@@ -69,6 +75,10 @@ export interface DashboardLayoutPrefs {
    * ignore simplement l'ancien champ (absent sous ce nouveau nom), l'utilisateur repart sur le
    * nouveau défaut plutôt que de voir sa disposition basculer à l'envers sans prévenir. */
   readonly historyGroup: Readonly<Record<DashboardHistoryKey, boolean>>;
+  /** Ordre d'affichage voulu des 4 blocs logiques (voir `DashboardBlockKey`) — une permutation de
+   * `ALL_BLOCK_KEYS`. Pilote l'ordre des cartes du corps aussi bien en répartition égale qu'en mise
+   * en avant (l'ordre des cartes secondaires empilées suit ce même classement, voir `activeSlots`). */
+  readonly blockOrder: readonly DashboardBlockKey[];
   readonly collapsedSections: Readonly<Partial<Record<DashboardCollapsibleKey, boolean>>>;
 }
 
@@ -84,10 +94,24 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   // Achats + Échanges regroupés par défaut dans une seule carte Historique ; Combats reste solo,
   // mis en avant (voir bodyMode/focusTarget ci-dessus).
   historyGroup: { combats: false, purchases: true, trades: true },
+  blockOrder: ['combats', 'purchases', 'trades', 'chat'],
   collapsedSections: {},
 };
 
 const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
+const ALL_BLOCK_KEYS: readonly DashboardBlockKey[] = ['combats', 'purchases', 'trades', 'chat'];
+
+/** Un `blockOrder` stocké n'est utilisable que s'il contient exactement une permutation des 4 clés
+ * connues — un ancien format, une clé disparue/renommée, ou une valeur corrompue en localStorage
+ * ferait planter `indexOf`/le tri sinon silencieusement (rang `-1` mal géré) : on retombe alors
+ * entièrement sur `DEFAULT_PREFS.blockOrder` plutôt que de tenter une réparation partielle. */
+function isValidBlockOrder(value: unknown): value is DashboardBlockKey[] {
+  return (
+    Array.isArray(value) &&
+    value.length === ALL_BLOCK_KEYS.length &&
+    ALL_BLOCK_KEYS.every((k) => value.includes(k))
+  );
+}
 const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
   'tracker',
   'hist_combats',
@@ -135,6 +159,7 @@ export class DashboardLayoutService {
   readonly historyGroup = signal<Record<DashboardHistoryKey, boolean>>({
     ...DEFAULT_PREFS.historyGroup,
   });
+  readonly blockOrder = signal<DashboardBlockKey[]>([...DEFAULT_PREFS.blockOrder]);
   /** Repli de Menu/Objectifs/Historique — PAS Chat, voir doc de tête (délégué). */
   readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({});
 
@@ -161,6 +186,7 @@ export class DashboardLayoutService {
     if (stored.historyGroup) {
       this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup, ...stored.historyGroup });
     }
+    if (isValidBlockOrder(stored.blockOrder)) this.blockOrder.set([...stored.blockOrder]);
     if (stored.collapsedSections) this.collapsedSections.set({ ...stored.collapsedSections });
   }
 
@@ -178,6 +204,7 @@ export class DashboardLayoutService {
       focusTarget: this.focusTarget(),
       focusSide: this.focusSide(),
       historyGroup: this.historyGroup(),
+      blockOrder: this.blockOrder(),
       collapsedSections: this.collapsedSections(),
     } satisfies DashboardLayoutPrefs);
   }
@@ -206,6 +233,20 @@ export class DashboardLayoutService {
     this.historyGroup.update((cur) => ({ ...cur, [key]: !cur[key] }));
     this.persist();
   }
+  /** Échange `key` avec son voisin immédiat (`direction: -1` = monte, `+1` = descend) — no-op sur un
+   * bord (déjà en tête/en queue), pour ne pas avoir à désactiver les boutons de façon asynchrone côté
+   * appelant. */
+  moveBlock(key: DashboardBlockKey, direction: -1 | 1): void {
+    this.blockOrder.update((cur) => {
+      const i = cur.indexOf(key);
+      const j = i + direction;
+      if (i === -1 || j < 0 || j >= cur.length) return cur;
+      const next = [...cur];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+    this.persist();
+  }
 
   isCollapsed(key: DashboardCollapsibleKey): boolean {
     if (key === 'chat') return this.chatPanel.collapsed();
@@ -227,6 +268,7 @@ export class DashboardLayoutService {
     this.focusTarget.set(DEFAULT_PREFS.focusTarget);
     this.focusSide.set(DEFAULT_PREFS.focusSide);
     this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup });
+    this.blockOrder.set([...DEFAULT_PREFS.blockOrder]);
     this.collapsedSections.set({});
     this.persist();
   }
@@ -254,7 +296,21 @@ export class DashboardLayoutService {
     }
     if (groupingActive) slots.push({ key: 'hist_group', sw: 'history' });
     slots.push({ key: 'chat', sw: 'chat' });
-    return slots;
+
+    // Réordonne selon la préférence utilisateur (voir `blockOrder`/`DashboardBlockKey`) : une carte
+    // solo prend le rang de sa propre clé logique, la carte groupée prend le rang le plus favorable
+    // (le plus petit index) parmi les volets qu'elle regroupe — elle apparaît ainsi à la position du
+    // premier de ses membres dans le classement, plutôt qu'à une position arbitraire fixe.
+    const order = this.blockOrder();
+    const rankOf = (k: DashboardBlockKey): number => {
+      const i = order.indexOf(k);
+      return i === -1 ? order.length : i;
+    };
+    const rankOfSlot = (s: DashboardBodySlot): number =>
+      s.key === 'hist_group'
+        ? Math.min(...groupedKeys.map(rankOf))
+        : rankOf(s.sw as DashboardBlockKey);
+    return slots.sort((a, b) => rankOfSlot(a) - rankOfSlot(b));
   });
 
   /** Toute carte du corps est désormais toujours potentiellement présente (plus de carte "Combat"
