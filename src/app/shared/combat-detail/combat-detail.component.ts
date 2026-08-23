@@ -2,6 +2,7 @@ import { Component, computed, input, output, signal } from '@angular/core';
 import { EntityDamageRow } from '../../core/services/stats-store.service';
 import { EntityDamageListComponent } from '../../features/damage-meter/entity-damage-list/entity-damage-list.component';
 import { TranslatePipe } from '../translate.pipe';
+import { HEADER_ICON_COMBAT_DATA_URI } from '../../core/data/header-icons.data';
 import {
   DamageViewMode,
   DamageViewSwitchComponent,
@@ -46,6 +47,10 @@ import {
   styleUrl: './combat-detail.component.css',
 })
 export class CombatDetailComponent {
+  /** Même icône que devant le libellé "Combats" du récap de session (voir SessionRecapComponent) —
+   * réutilisée ici devant "Informations de combat" pour rester cohérent visuellement. */
+  protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
+
   readonly mode = input.required<DamageViewMode>();
   readonly turn = input.required<number>();
   readonly maxTurn = input.required<number>();

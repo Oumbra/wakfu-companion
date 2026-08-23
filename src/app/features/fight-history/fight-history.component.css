@@ -127,6 +127,18 @@
 .ongoing-fight-toggle:hover {
   background: var(--surface-raised);
 }
+/* Replié : reste épinglé en haut de la liste pendant le scroll (même principe que
+   `.fight-summary.sticky` plus bas, appliqué ici à l'inverse SEULEMENT replié — déplié, le bandeau
+   est déjà le tout premier élément de la liste, épingler n'apporterait rien). Le dégradé de
+   `.has-active-fight` (opaque, pas de transparence) sert déjà de fond plein pour masquer le contenu
+   qui défile dessous, pas besoin de le forcer en `--panel-bg` uni comme `.fight-summary.sticky` (qui
+   n'a normalement pas ce dégradé). */
+.ongoing-fight-toggle.sticky {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
 .ongoing-fight-toggle.has-active-fight {
   background: linear-gradient(
     135deg,
@@ -160,7 +172,13 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* `margin-left: auto` ICI (pas sur le caret, voir `.fight-group-count` — même convention) : c'est
+   le badge qui doit se plaquer à droite (bug réel corrigé en session — le `margin-left: auto` était
+   posé sur le caret, qui se retrouvait bien seul tout à droite mais laissait le badge collé au
+   bouton d'aide, à gauche). Le caret suit juste après dans le flux normal, donc juste après le
+   badge, tous deux à droite. */
 .ongoing-fight-badge {
+  margin-left: auto;
   font-family: monospace;
   font-size: 0.7rem;
   font-weight: 700;
@@ -169,8 +187,13 @@
   border-radius: 999px;
   padding: 1px 8px;
 }
+/* Annule le `margin-left: auto` du `.caret` générique (plus bas dans ce fichier) : avec deux
+   marges auto consécutives (badge + caret), l'espace restant se répartirait entre les DEUX au lieu
+   de tout donner au badge, ouvrant un vide entre badge et caret au lieu de les coller. Sélecteur
+   plus spécifique (`.ongoing-fight-toggle .caret`) que la règle générique `.caret` seule, gagne
+   quel que soit l'ordre des règles dans la feuille. */
 .ongoing-fight-toggle .caret {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 /* Repris de l'ex-DamageMeterComponent (voir CLAUDE.md) : plusieurs combats concurrents

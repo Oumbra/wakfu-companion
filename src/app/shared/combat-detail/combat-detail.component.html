@@ -1,6 +1,9 @@
 @if (historical()) {
   <div class="combat-info-toggle" (click)="toggleSwitches()">
-    <span class="combat-info-label">{{ 'damageMeter.combatInfo' | t }}</span>
+    <span class="combat-info-label">
+      <img [src]="combatIcon" class="combat-info-icon" alt="" />
+      {{ 'damageMeter.combatInfo' | t }}
+    </span>
     @if (switchesExpanded()) {
       <app-damage-view-switch
         class="combat-switch-center"
