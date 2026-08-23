@@ -17,6 +17,8 @@ import {
   DashboardHistoryKey,
   DashboardLayoutService,
 } from '../../core/services/dashboard-layout.service';
+import { dashboardBodySlotIcon } from '../../core/services/dashboard-body-slot-label';
+import { AppIconName } from '../../shared/icon/icon.component';
 
 /** Type d'événement archivé correspondant à chaque sous-onglet. */
 const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
@@ -162,6 +164,14 @@ export class HistoryComponent implements OnDestroy {
   }
   protected slotKeyFor(key: DashboardHistoryKey): DashboardBodySlotKey {
     return SLOT_KEY[key];
+  }
+  /** Icône du panneau scindé à part (voir `panel-header`) — même icône que dans le rail replié
+   * (`DashboardRailComponent`, généralisé) pour rester reconnaissable d'un endroit à l'autre : sans
+   * ça, Achats/Échanges scindés partageaient la même horloge générique que Combats, illisible une
+   * fois qu'il y en a plusieurs à l'écran (retour utilisateur). Le panneau GROUPÉ garde l'horloge
+   * (mélange de volets, pas d'icône plus spécifique pertinente — voir template). */
+  protected iconFor(key: DashboardHistoryKey): AppIconName {
+    return dashboardBodySlotIcon(this.slotKeyFor(key));
   }
 
   ngOnDestroy(): void {

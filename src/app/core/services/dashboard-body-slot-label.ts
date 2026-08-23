@@ -1,5 +1,6 @@
 import { I18nService } from './i18n.service';
 import { DashboardBodySlotKey, DashboardHistoryKey } from './dashboard-layout.service';
+import { AppIconName } from '../../shared/icon/icon.component';
 
 const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
 
@@ -37,4 +38,18 @@ export function dashboardBodySlotLabel(
   // 'hist_combats' | 'hist_purchases' | 'hist_trades'
   const histKey = key.slice('hist_'.length) as DashboardHistoryKey;
   return i18n.t(histLabelKey(histKey));
+}
+
+/** Icône par type de carte du corps — chaque volet d'historique a la sienne (voir `icons-*.svg`),
+ * pour rester différenciable partout où le libellé n'est pas (ou plus) visible : rail replié
+ * (`DashboardRailComponent`) ET en-tête d'un panneau scindé à part (`HistoryComponent`, à la place
+ * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `clock` reste
+ * utilisée pour l'historique de combats ET le panneau groupé (mélange de volets, pas d'icône plus
+ * spécifique pertinente) ; `shopping-bag`/`arrows-exchange` pour Achats/Échanges. */
+export function dashboardBodySlotIcon(key: DashboardBodySlotKey): AppIconName {
+  if (key === 'combat') return 'crossed-swords';
+  if (key === 'chat') return 'messages-square';
+  if (key === 'hist_purchases') return 'shopping-bag';
+  if (key === 'hist_trades') return 'arrows-exchange';
+  return 'clock';
 }
