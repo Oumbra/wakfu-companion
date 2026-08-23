@@ -39,9 +39,12 @@
 }
 
 /* Position en haut (`top-left`/`top-right`) : bande horizontale sous l'en-tête plutôt que rail
-   vertical — icônes seules (comme repliée, voir `.is-collapsed` plus bas), pas assez de hauteur
-   pour un libellé en toutes lettres. Le repli manuel (`.dashboard-rail-collapse-toggle`) n'a plus
-   de sens dans cette orientation (déjà compacte) : masqué plutôt que réadapté. */
+   vertical — icône ET libellé en toutes lettres, contrairement au repli manuel côté (voir
+   `.is-collapsed` plus bas) : largement assez de largeur disponible dans une bande horizontale
+   (même logique que le rail latéral déplié), là où celui-ci se réduit volontairement à une bande
+   d'icônes pour économiser de la LARGEUR (ressource rare sur le côté, pas ici). Le repli manuel
+   (`.dashboard-rail-collapse-toggle`) n'a donc plus de sens dans cette orientation : masqué plutôt
+   que réadapté. */
 .dashboard-rail[data-menu-pos^='top'] {
   width: 100%;
   height: auto;
@@ -61,31 +64,10 @@
 .dashboard-rail[data-menu-pos^='top'] .dashboard-rail-btn {
   width: auto;
   flex-shrink: 0;
-  justify-content: center;
-  padding: 10px 12px;
-  gap: 0;
-}
-.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-label,
-.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-count {
-  display: none;
+  padding: 8px 12px;
 }
 .dashboard-rail[data-menu-pos^='top'] .dashboard-rail-collapse-toggle {
   display: none;
-}
-/* Même traitement flottant que `.is-collapsed` ci-dessous (badge DE NOTIFICATION de Chat, seul à
-   rester visible sans libellé) — dupliqué plutôt que fusionné dans un sélecteur combiné : les deux
-   états (repli manuel vertical / orientation horizontale) restent indépendants et pourraient
-   diverger à l'avenir. */
-.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-count-notif {
-  display: flex;
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 3px;
-  font-size: 0.62rem;
-  border: 2px solid var(--panel-bg);
 }
 
 .dashboard-rail-scroll {

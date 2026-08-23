@@ -26,9 +26,16 @@ function expandHintKeyFor(key: DashboardBodySlotKey): string {
   if (key === 'chat') return 'chat.expandHint';
   return 'history.expandHint';
 }
+/** Icône par type de carte — chaque volet d'historique a la sienne (voir `icons-*.svg`) pour
+ * rester différenciable dans le rail replié, où seule l'icône reste visible (menu latéral replié,
+ * voir `DashboardRailComponent`) : `clock` pour l'historique de combats et le panneau groupé
+ * (mélange de volets, pas d'icône plus spécifique pertinente), `shopping-bag` pour Achats,
+ * `arrows-exchange` pour Échanges. */
 function iconFor(key: DashboardBodySlotKey): AppIconName {
   if (key === 'combat') return 'crossed-swords';
   if (key === 'chat') return 'messages-square';
+  if (key === 'hist_purchases') return 'shopping-bag';
+  if (key === 'hist_trades') return 'arrows-exchange';
   return 'clock';
 }
 
