@@ -256,22 +256,6 @@
   color: var(--text-muted);
 }
 
-/* Ordre des blocs (voir `blockOrder`) : mêmes lignes que `.dlp-setting-row` (regroupement de
-   l'historique), avec 2 boutons monter/descendre à droite au lieu d'un switch. `chevron-left`
-   (seul chevron du sprite, voir `AppIconName`) simplement pivoté à 90°/-90° plutôt qu'un nouveau
-   symbole haut/bas dédié dans le sprite. */
-.dlp-order-btns {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.dlp-order-btn-up {
-  transform: rotate(90deg);
-}
-.dlp-order-btn-down {
-  transform: rotate(-90deg);
-}
-
 .dlp-hint {
   margin: 0 0 22px;
   font-size: 11.5px;
@@ -343,13 +327,23 @@
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
-.dlp-chip.unavailable {
-  opacity: 0.5;
-}
 /* Variante sans puce de couleur (choix de côté, pas de carte du corps) — repadding symétrique
    faute du `.dlp-chip-dot` que réserve le padding-gauche réduit de `.dlp-chip`. */
 .dlp-chip-plain {
   padding-left: 12px;
+}
+
+/* Éditeur d'ordre interactif (voir section "Ordre des blocs", tout en bas de page) — même
+   composant que l'aperçu figé du haut (`.dlp-preview-schema`), volontairement rendu plus grand ici
+   (plus de place pour les libellés + flèches directionnelles au survol de chaque carte, voir
+   `DashboardLayoutSchemaComponent`). Largeur plafonnée pour rester cohérente avec le reste de la
+   page (pas de pleine largeur sur un grand écran, qui étirerait le mini navigateur illustré au-delà
+   de ce qui reste lisible) plutôt qu'un simple `aspect-ratio` comme l'aperçu du haut. */
+.dlp-order-preview {
+  width: 100%;
+  max-width: 480px;
+  height: 260px;
+  margin-bottom: 8px;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -16,11 +16,49 @@
     <div class="dls-body">
       @if (focus(); as f) {
         <div class="dls-focus" [style.flex-direction]="focusDirection()">
-          <div class="dls-main" [class]="'sw-' + f.main.sw"></div>
+          <div class="dls-main" [class]="'sw-' + f.main.sw">
+            @if (f.main.label) {
+              <span class="dls-cell-label">{{ f.main.label }}</span>
+            }
+          </div>
           @if (f.secondaries.length) {
             <div class="dls-secondary">
-              @for (s of f.secondaries; track $index) {
-                <div class="dls-sec" [class]="'sw-' + s.sw"></div>
+              @for (s of f.secondaries; track s.key ?? $index; let i = $index) {
+                <div
+                  class="dls-sec"
+                  [class]="'sw-' + s.sw"
+                  [class.interactive]="interactive()"
+                  [class.dragging]="draggingKey === s.key"
+                  [attr.draggable]="interactive() && s.key ? true : null"
+                  (dragstart)="onDragStart($event, s.key)"
+                  (dragend)="onDragEnd()"
+                  (dragover)="interactive() ? $event.preventDefault() : null"
+                  (drop)="interactive() ? onDrop($event, s.key) : null"
+                >
+                  @if (s.label) {
+                    <span class="dls-cell-label">{{ s.label }}</span>
+                  }
+                  @if (interactive()) {
+                    @if (i > 0) {
+                      <button
+                        type="button"
+                        class="dls-arrow dls-arrow-up"
+                        (click)="emitSwap(s.key, f.secondaries[i - 1].key)"
+                      >
+                        <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                      </button>
+                    }
+                    @if (i < f.secondaries.length - 1) {
+                      <button
+                        type="button"
+                        class="dls-arrow dls-arrow-down"
+                        (click)="emitSwap(s.key, f.secondaries[i + 1].key)"
+                      >
+                        <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                      </button>
+                    }
+                  }
+                </div>
               }
             </div>
           }
@@ -34,8 +72,65 @@
             [style.grid-template-columns]="gridColumns()"
             [style.grid-template-rows]="'repeat(' + rows() + ',1fr)'"
           >
-            @for (cell of c; track $index) {
-              <div class="dls-cell" [class]="'sw-' + cell.sw" [class.span2]="cell.span2"></div>
+            @for (cell of c; track cell.key ?? $index; let i = $index) {
+              @let leftIdx = gridNeighborIndex(i, 'left', c.length);
+              @let rightIdx = gridNeighborIndex(i, 'right', c.length);
+              @let upIdx = gridNeighborIndex(i, 'up', c.length);
+              @let downIdx = gridNeighborIndex(i, 'down', c.length);
+              <div
+                class="dls-cell"
+                [class]="'sw-' + cell.sw"
+                [class.span2]="cell.span2"
+                [class.interactive]="interactive()"
+                [class.dragging]="draggingKey === cell.key"
+                [attr.draggable]="interactive() && cell.key ? true : null"
+                (dragstart)="onDragStart($event, cell.key)"
+                (dragend)="onDragEnd()"
+                (dragover)="interactive() ? $event.preventDefault() : null"
+                (drop)="interactive() ? onDrop($event, cell.key) : null"
+              >
+                @if (cell.label) {
+                  <span class="dls-cell-label">{{ cell.label }}</span>
+                }
+                @if (interactive()) {
+                  @if (leftIdx !== null) {
+                    <button
+                      type="button"
+                      class="dls-arrow dls-arrow-left"
+                      (click)="emitSwap(cell.key, c[leftIdx].key)"
+                    >
+                      <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                    </button>
+                  }
+                  @if (rightIdx !== null) {
+                    <button
+                      type="button"
+                      class="dls-arrow dls-arrow-right"
+                      (click)="emitSwap(cell.key, c[rightIdx].key)"
+                    >
+                      <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                    </button>
+                  }
+                  @if (upIdx !== null) {
+                    <button
+                      type="button"
+                      class="dls-arrow dls-arrow-up"
+                      (click)="emitSwap(cell.key, c[upIdx].key)"
+                    >
+                      <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                    </button>
+                  }
+                  @if (downIdx !== null) {
+                    <button
+                      type="button"
+                      class="dls-arrow dls-arrow-down"
+                      (click)="emitSwap(cell.key, c[downIdx].key)"
+                    >
+                      <app-icon name="chevron-left" [size]="10" [strokeWidth]="3" />
+                    </button>
+                  }
+                }
+              </div>
             }
           </div>
         }

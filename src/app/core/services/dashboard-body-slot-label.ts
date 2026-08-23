@@ -42,6 +42,19 @@ export function dashboardBodySlotLabel(
   return i18n.t(histLabelKey(histKey));
 }
 
+/** Libellé COURT d'une carte du corps — contrairement à `dashboardBodySlotLabel` (qui détaille la
+ * composition d'une carte groupée, ex. "Historique (Achats + Échanges)", potentiellement long),
+ * toujours un seul mot ou presque : utilisé partout où la place est comptée au pixel près (le texte
+ * posé DANS une vignette colorée de `DashboardLayoutSchemaComponent`, voir
+ * `DashboardLayoutPickerComponent.previewCells`/`previewFocus`) — `hist_group` retombe sur le même
+ * "Historique" générique qu'elle soit partiellement ou totalement regroupée, l'appelant qui a besoin
+ * du détail utilise `dashboardBodySlotLabel` à la place. */
+export function shortSlotLabelKey(key: DashboardBodySlotKey): string {
+  if (key === 'chat') return 'profile.dashboardLayout.slot.chat';
+  if (key === 'hist_group') return 'profile.dashboardLayout.slot.histGroupFull';
+  return histLabelKey(key.slice('hist_'.length) as DashboardHistoryKey);
+}
+
 /** Icône par type de carte du corps — chaque volet d'historique a la sienne (voir `icons-*.svg`),
  * pour rester différenciable partout où le libellé n'est pas (ou plus) visible : rail replié
  * (`DashboardRailComponent`) ET en-tête d'un panneau scindé à part (`HistoryComponent`, à la place

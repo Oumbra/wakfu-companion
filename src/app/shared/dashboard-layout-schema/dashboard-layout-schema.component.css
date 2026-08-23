@@ -112,10 +112,14 @@
   gap: 6%;
 }
 .dls-cell {
+  position: relative;
   border-radius: 3px;
   opacity: 0.85;
   min-width: 0;
   min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .dls-cell.span2 {
   grid-column: 1 / -1;
@@ -130,11 +134,15 @@
   min-height: 0;
 }
 .dls-main {
+  position: relative;
   flex: 0 0 64%;
   border-radius: 4px;
   opacity: 0.92;
   min-height: 0;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .dls-secondary {
   flex: 1 1 auto;
@@ -145,10 +153,107 @@
   min-height: 0;
 }
 .dls-sec {
+  position: relative;
   flex: 1 1 0;
   border-radius: 3px;
   opacity: 0.8;
   min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Texte de la carte (voir `DashboardLayoutSchemaCell.label`) — par-dessus la couleur, jamais
+   responsable des événements de glisser-déposer de sa carte parente (`pointer-events: none`, sans
+   quoi un `dragstart` déclenché depuis le `<span>` plutôt que la carte perdrait `cell.key` selon le
+   navigateur). Couleur blanche fixe (pas `var(--text-color)`, sensible au thème) : les couleurs de
+   fond `--lp-sw-*` sont choisies pour rester lisibles en blanc dans les deux thèmes (voir palette
+   ci-dessus), une teinte dépendante du thème ne le garantirait pas forcément. */
+.dls-cell-label {
+  pointer-events: none;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Carte interactive (voir `interactive`/`DashboardLayoutPickerComponent`, section "Ordre des
+   blocs") — jamais posé sur `.dls-main` (voir doc de tête de `interactive`), seulement `.dls-cell`/
+   `.dls-sec`. */
+.dls-cell.interactive,
+.dls-sec.interactive {
+  cursor: grab;
+}
+.dls-cell.interactive:active,
+.dls-sec.interactive:active {
+  cursor: grabbing;
+}
+.dls-cell.dragging,
+.dls-sec.dragging {
+  opacity: 0.35;
+}
+
+/* Flèches directionnelles (voir `gridNeighborIndex`) — un seul glyphe (`chevron-left`, pointe vers
+   la gauche) pivoté par direction plutôt que 4 symboles dédiés dans le sprite (voir `AppIconName`),
+   même principe que les boutons monter/descendre déjà en place ailleurs sur cette page. Coin
+   correspondant à leur direction, visibles seulement au survol/focus de la carte pour ne pas
+   surcharger l'aperçu au repos. */
+button.dls-arrow {
+  all: unset;
+  position: absolute;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.dls-cell.interactive:hover button.dls-arrow,
+.dls-cell.interactive:focus-within button.dls-arrow,
+.dls-sec.interactive:hover button.dls-arrow,
+.dls-sec.interactive:focus-within button.dls-arrow {
+  opacity: 1;
+}
+button.dls-arrow:hover {
+  background: var(--accent);
+}
+button.dls-arrow-left {
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+button.dls-arrow-right {
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+}
+button.dls-arrow-up {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(90deg);
+}
+button.dls-arrow-down {
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.dls-arrow {
+    transition: none;
+  }
 }
 
 .dls-empty {

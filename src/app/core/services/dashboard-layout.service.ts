@@ -233,19 +233,47 @@ export class DashboardLayoutService {
     this.historyGroup.update((cur) => ({ ...cur, [key]: !cur[key] }));
     this.persist();
   }
-  /** Échange `key` avec son voisin immédiat (`direction: -1` = monte, `+1` = descend) — no-op sur un
-   * bord (déjà en tête/en queue), pour ne pas avoir à désactiver les boutons de façon asynchrone côté
-   * appelant. */
-  moveBlock(key: DashboardBlockKey, direction: -1 | 1): void {
+  /** Échange la position de 2 blocs logiques dans `blockOrder` — primitive de base pour toute
+   * réorganisation, no-op si l'une des 2 clés est absente ou si elles sont identiques. */
+  swapBlocks(a: DashboardBlockKey, b: DashboardBlockKey): void {
     this.blockOrder.update((cur) => {
-      const i = cur.indexOf(key);
-      const j = i + direction;
-      if (i === -1 || j < 0 || j >= cur.length) return cur;
+      const i = cur.indexOf(a);
+      const j = cur.indexOf(b);
+      if (i === -1 || j === -1 || i === j) return cur;
       const next = [...cur];
       [next[i], next[j]] = [next[j], next[i]];
       return next;
     });
     this.persist();
+  }
+
+  /** Membre de `blockOrder` qui détermine la position d'une CARTE du corps (voir
+   * `DashboardBodySlotKey`) — la clé elle-même pour une carte solo, le membre de rang le plus
+   * favorable (voir `activeSlots`) pour la carte Historique groupée : c'est ce même membre qui fixe
+   * où `activeSlots` place la carte groupée, donc l'échanger avec un autre bloc déplace bien la
+   * carte groupée dans son ensemble (les autres volets qu'elle regroupe gardent leur rang individuel
+   * inchangé — invisible tant qu'ils restent regroupés, voir `activeSlots`). */
+  private representativeBlockKey(key: DashboardBodySlotKey): DashboardBlockKey | null {
+    if (key === 'chat') return 'chat';
+    if (key === 'hist_group') {
+      const group = this.historyGroup();
+      const grouped = HIST_KEYS.filter((k) => group[k]);
+      if (grouped.length === 0) return null;
+      const order = this.blockOrder();
+      return grouped.reduce((best, k) => (order.indexOf(k) < order.indexOf(best) ? k : best));
+    }
+    return key.slice('hist_'.length) as DashboardBlockKey;
+  }
+
+  /** Échange la position de 2 cartes du corps (voir `DashboardBodySlotKey`, l'identité que connaît
+   * réellement l'UI — `DashboardLayoutPickerComponent`, section "Ordre des blocs") — résout chaque
+   * côté vers son `representativeBlockKey` puis délègue à `swapBlocks`, seule primitive qui touche
+   * réellement `blockOrder`. */
+  swapSlots(a: DashboardBodySlotKey, b: DashboardBodySlotKey): void {
+    const ra = this.representativeBlockKey(a);
+    const rb = this.representativeBlockKey(b);
+    if (!ra || !rb || ra === rb) return;
+    this.swapBlocks(ra, rb);
   }
 
   isCollapsed(key: DashboardCollapsibleKey): boolean {
