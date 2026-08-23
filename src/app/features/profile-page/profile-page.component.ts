@@ -14,6 +14,7 @@ import { CharacterViewMode, ProfileService } from '../../core/services/profile.s
 import { PersistenceService } from '../../core/services/persistence.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService, ProfileTab } from '../../core/services/navigation.service';
+import { NewSectionBadgeService } from '../../core/services/new-section-badge.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
@@ -173,6 +174,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly alertSound = inject(AlertSoundService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly persistence = inject(PersistenceService);
+  protected readonly newSectionBadge = inject(NewSectionBadgeService);
 
   /** Seuil mobile réactif (même 800px que `.mobile-only`/`@media` un peu partout côté CSS) — sert
    * uniquement là où le template a besoin de brancher sur ce seuil en JS, pas juste d'un
@@ -454,6 +456,13 @@ export class ProfilePageComponent implements OnDestroy {
       const fallback = accounts.find((a) => a.isDefault) ?? accounts[0];
       this.selectedAccountId.set(fallback?.id ?? null);
     });
+
+    // Badge "new" du rail (voir NewSectionBadgeService/CLAUDE.md) : marque la section affichée
+    // comme vue, aussi bien à l'ouverture de la page (valeur initiale de `activeTab`, cet effect
+    // s'exécute une 1ère fois avec elle) qu'à chaque changement d'onglet — pas seulement depuis
+    // `selectTab` (les effects ci-dessus forcent parfois `activeTab` sans passer par lui, ex.
+    // `profileConnectionTabRequested`).
+    effect(() => this.newSectionBadge.markSeen(this.activeTab()));
   }
 
   ngOnDestroy(): void {

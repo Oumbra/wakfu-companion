@@ -152,6 +152,22 @@ n'importe quel `justify-content`). */
   color: var(--accent);
 }
 
+/* Badge "new" (voir NewSectionBadgeService/CLAUDE.md) — pastille pleine, sans texte : sibling de
+`.profile-rail-icon`/`.profile-rail-label` (voir template), positionnée en absolu par rapport à
+`.profile-rail-btn` (`position: relative`, voir plus haut) pour rester visible que le rail soit
+replié ou non, contrairement à un badge posé DANS l'icône ou le libellé (l'un des deux disparaît
+selon l'état, voir règles `.is-collapsed` plus bas). */
+.profile-rail-new-dot {
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--panel-bg);
+}
+
 /* Rail replié (voir ProfilePageComponent.isNavRailCollapsed/isRosterRailCollapsed) : ne plus
 montrer que `.profile-rail-icon` (ou `.profile-rail-index-badge` pour les boutons qui n'en ont
 pas, ex. les comptes du rail de personnages) de chaque bouton, centrée. Règle partagée entre

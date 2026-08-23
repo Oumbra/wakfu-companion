@@ -33,6 +33,20 @@
   font-size: 1rem;
   color: var(--accent);
 }
+
+/* Badge "new" global (voir NewSectionBadgeService/CLAUDE.md) — pastille pleine accrochée au bord
+   de l'avatar rond, `.profile-btn` porte déjà `position: relative; overflow: visible` (voir plus
+   haut) donc rien de plus à ajuster pour qu'elle dépasse du cercle sans être clippée. */
+.profile-new-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--bg-color);
+}
 .profile-avatar {
   width: 100%;
   height: 100%;
