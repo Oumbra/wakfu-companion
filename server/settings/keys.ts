@@ -24,6 +24,7 @@ export const SYNCED_SETTING_KEYS = [
   'combatPanelCollapsed',
   'chatPanelCollapsed',
   'dashboardRailCollapsed',
+  'dashboardLayout',
 ] as const;
 
 export type SyncedSettingKey = (typeof SYNCED_SETTING_KEYS)[number];
