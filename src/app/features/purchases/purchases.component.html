@@ -22,7 +22,7 @@
         @if (!isCollapsed(group.dateKey)) {
           @for (row of group.rows; track row.item + '|' + row.catalogId) {
             @if (isHdvRow(row)) {
-              <div class="purchase-row">
+              <div class="purchase-row is-hdv">
                 <img
                   class="purchase-hdv-icon"
                   [src]="hdvIconUrl"

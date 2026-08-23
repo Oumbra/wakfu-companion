@@ -14,6 +14,7 @@ import { CharacterViewMode, ProfileService } from '../../core/services/profile.s
 import { PersistenceService } from '../../core/services/persistence.service';
 import { AppDataExportService } from '../../core/services/app-data-export.service';
 import { NavigationService, ProfileTab } from '../../core/services/navigation.service';
+import { NewSectionBadgeService } from '../../core/services/new-section-badge.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
@@ -56,6 +57,7 @@ import { AppTheme, LightThemeVariant, ThemeService } from '../../core/services/t
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
+import { DashboardLayoutPickerComponent } from './dashboard-layout-picker/dashboard-layout-picker.component';
 
 /** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
  * variantes claires — fusionne `ThemeService.theme`/`lightVariant` (deux signaux indépendants) en
@@ -151,6 +153,7 @@ const COLORBLIND_SWATCHES: Record<
     TooltipDirective,
     EditableNameComponent,
     AuthProviderButtonsComponent,
+    DashboardLayoutPickerComponent,
   ],
   templateUrl: './profile-page.component.html',
   styleUrl: './profile-page.component.css',
@@ -171,6 +174,7 @@ export class ProfilePageComponent implements OnDestroy {
   private readonly alertSound = inject(AlertSoundService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly persistence = inject(PersistenceService);
+  protected readonly newSectionBadge = inject(NewSectionBadgeService);
 
   /** Seuil mobile réactif (même 800px que `.mobile-only`/`@media` un peu partout côté CSS) — sert
    * uniquement là où le template a besoin de brancher sur ce seuil en JS, pas juste d'un
@@ -301,6 +305,7 @@ export class ProfilePageComponent implements OnDestroy {
    * d'empilement desktop, voir le template). */
   private static readonly TAB_DEFS: readonly TabBarItem[] = [
     { id: 'avatar', label: 'profile.railIdentity' },
+    { id: 'customization', label: 'profile.railCustomization' },
     { id: 'colorblind', label: 'profile.railAccessibility' },
     { id: 'connection', label: 'profile.tabConnection' },
     { id: 'alerts', label: 'profile.railSoundAlerts' },
@@ -451,6 +456,13 @@ export class ProfilePageComponent implements OnDestroy {
       const fallback = accounts.find((a) => a.isDefault) ?? accounts[0];
       this.selectedAccountId.set(fallback?.id ?? null);
     });
+
+    // Badge "new" du rail (voir NewSectionBadgeService/CLAUDE.md) : marque la section affichée
+    // comme vue, aussi bien à l'ouverture de la page (valeur initiale de `activeTab`, cet effect
+    // s'exécute une 1ère fois avec elle) qu'à chaque changement d'onglet — pas seulement depuis
+    // `selectTab` (les effects ci-dessus forcent parfois `activeTab` sans passer par lui, ex.
+    // `profileConnectionTabRequested`).
+    effect(() => this.newSectionBadge.markSeen(this.activeTab()));
   }
 
   ngOnDestroy(): void {

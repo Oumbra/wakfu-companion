@@ -62,10 +62,20 @@
               tooltipPosition="right"
               [tooltipDisabled]="!isNavRailCollapsed()"
             >
+              <!-- Badge "new" (voir NewSectionBadgeService/CLAUDE.md, desktop uniquement — ce rail
+                   n'existe pas en mobile) : enfant de `.profile-rail-icon` (PAS de tout le bouton),
+                   ancré à SON coin bas-droit — reste donc à côté de l'icône (jamais dessus) et à
+                   l'intérieur de la largeur du bouton que le rail soit replié ou non, sans jamais
+                   déborder dans `.profile-rail-scroll` (`overflow-x: hidden`, voir CSS) : un badge
+                   posé sur tout le bouton (essayé d'abord) débordait de sa boîte et se faisait
+                   rogner une fois le rail replié (retour utilisateur, voir CLAUDE.md). -->
               <span class="profile-rail-icon">
                 @switch (tab.id) {
                   @case ('avatar') {
                     ◐
+                  }
+                  @case ('customization') {
+                    ▦
                   }
                   @case ('colorblind') {
                     ◎
@@ -79,6 +89,11 @@
                   @case ('characters') {
                     ☰
                   }
+                }
+                @if (newSectionBadge.isUnseen(tab.id)) {
+                  <!-- Texte "NEW" volontairement non traduit (voir CLAUDE.md) : le mot-clé reste
+                       le même quelle que soit la langue de l'app. -->
+                  <span class="profile-rail-new-badge" aria-hidden="true">NEW</span>
                 }
               </span>
               <span class="profile-rail-label">
@@ -259,6 +274,15 @@
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div
+          class="tool-panel customization-tool-panel"
+          [class.tab-hidden]="activeTab() !== 'customization'"
+        >
+          <div class="panel-body">
+            <app-dashboard-layout-picker />
           </div>
         </div>
 

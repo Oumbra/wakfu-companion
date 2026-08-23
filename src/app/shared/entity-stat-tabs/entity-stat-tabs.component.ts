@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { TranslatePipe } from '../translate.pipe';
+import { TooltipDirective } from '../tooltip/tooltip.directive';
 
 export type EntityStatKind = 'damage' | 'armor' | 'heal';
 
@@ -17,16 +18,15 @@ const STAT_LABEL_KEYS: Record<EntityStatKind, string> = {
 };
 
 /**
- * Sélecteur Dommage/Armure/Soin affiché sous le switch Cumulé/Tour (DamageViewSwitchComponent) —
- * un combat (en cours ou de l'historique) n'affiche qu'un seul type de statistique par entité à la
- * fois, tributaire du même switch cumulé/tour (voir DamageMeterComponent/FightHistoryComponent).
- * Contrairement au switch Cumulé/Tour (`.icon-switch`, encart bordé/arrondi centré), celui-ci
- * occupe toute la largeur du panneau, sans marge/bordure/arrondi, chaque option affichant son
- * libellé (pas seulement une icône) — maquette fournie par l'utilisateur.
+ * Sélecteur Dommage/Armure/Soin affiché à côté du switch Cumulé/Tour (voir CombatDetailComponent,
+ * `.combat-switch-row`) — un combat (en cours ou de l'historique) n'affiche qu'un seul type de
+ * statistique par entité à la fois, tributaire du même switch cumulé/tour. Icônes seules (pas de
+ * libellé) pour rester compact sur la même ligne que le switch Cumulé/Tour — le libellé reste
+ * accessible via tooltip (`TooltipDirective`, voir CLAUDE.md).
  */
 @Component({
   selector: 'app-entity-stat-tabs',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, TooltipDirective],
   templateUrl: './entity-stat-tabs.component.html',
   styleUrl: './entity-stat-tabs.component.css',
 })

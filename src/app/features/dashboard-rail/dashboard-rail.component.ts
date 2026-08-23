@@ -1,44 +1,46 @@
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
-import { CombatPanelService } from '../../core/services/combat-panel.service';
+import { Component, computed, inject } from '@angular/core';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
-import { UserDataService } from '../../core/data-access/user-data.service';
 import { I18nService } from '../../core/services/i18n.service';
+import {
+  DashboardBodySlotKey,
+  DashboardLayoutService,
+} from '../../core/services/dashboard-layout.service';
+import {
+  dashboardBodySlotIcon,
+  dashboardBodySlotLabel,
+} from '../../core/services/dashboard-body-slot-label';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
-import { IconComponent } from '../../shared/icon/icon.component';
-
-type CollapsiblePanelId = 'combat' | 'chat';
+import { AppIconName, IconComponent } from '../../shared/icon/icon.component';
 
 interface RailEntry {
-  id: CollapsiblePanelId;
+  id: DashboardBodySlotKey;
   label: string;
-  /** Toujours affiché en tooltip (contrairement à `.profile-rail-btn`, dont le tooltip
-   * n'apparaît que rail replié — voir template) : contrairement à un simple changement d'onglet,
-   * cliquer une entrée ici agrandit le panneau correspondant, une action qui vaut la peine d'être
-   * rappelée même quand le libellé est déjà visible (rail déplié). */
-  expandHint: string;
-  /** Badge affiché sur l'entrée, `null` pour le masquer entièrement — nombre de combats en cours
-   * (multi-compte, jamais `null` : l'entrée Combat n'existe elle-même que pendant un combat en
-   * cours, toujours ≥ 1) pour Combat ; nombre de messages correspondant aux filtres configurés
-   * pour Chat (voir ChatPanelService.matchedMessageCount), `null` tant qu'il vaut 0 — un vrai
-   * badge DE NOTIFICATION n'a rien à signaler dans ce cas, contrairement à Combat. */
+  /** Texte complet d'infobulle : nom de la carte + indication "Agrandir" — le libellé n'étant
+   * jamais affiché à côté de l'icône (rail toujours en icônes seules), c'est la seule façon pour
+   * l'utilisateur de savoir ce que chaque icône représente sans avoir à cliquer dessus. */
+  tooltipText: string;
+  icon: AppIconName;
   count: number | null;
 }
 
+/** Clé i18n de l'infobulle "agrandir" par type de carte — `history.expandHint` couvre le panneau
+ * groupé ET chacune de ses scissions (même libellé générique, comme `history.collapseHint`). */
+function expandHintKeyFor(key: DashboardBodySlotKey): string {
+  if (key === 'chat') return 'chat.expandHint';
+  return 'history.expandHint';
+}
 /**
- * Menu latéral des sections du dashboard repliées (Combat/Chat, desktop uniquement — voir
- * CombatPanelService/ChatPanelService) : chaque section repliée y devient un bouton icône+libellé,
- * cliquer dessus la déplie de nouveau. Remplace l'ancien `CombatEdgeTabComponent` (onglet flottant
- * `position: fixed`, root-level) — celui-ci ne gérait que Combat seul et ne pouvait pas se
- * généraliser à plusieurs sections repliées à la fois sans devenir une vraie mini-liste. Rendu en
- * flux normal (PAS `position: fixed`) au sein de `DashboardComponent`, comme `.profile-rail` dans
- * `ProfilePageComponent` — même principe de rail réductible en icônes seules
- * (`isRailCollapsed`/`toggleRailCollapsed`, voir CLAUDE.md).
+ * Rail d'icônes du dashboard : liste TOUTE carte du corps actuellement repliée (Chat, Historique
+ * groupé ou l'une de ses scissions — voir `DashboardLayoutService.activeSlots`/`isCollapsed`,
+ * généralisé pour ne plus se limiter à Chat), cliquable pour la réagrandir. Chat reste délégué à
+ * son service dédié (`ChatPanelService`, synchronisé compte) via
+ * `DashboardLayoutService.isCollapsed`/`toggleCollapsed` — ce composant ne distingue pas ce cas,
+ * tout passe par le même mécanisme générique.
  *
- * `:host { display: contents }` + `@if` englobant tout le template (voir dashboard-rail.component.html)
- * : n'occupe RIEN dans le flex `:host` de `DashboardComponent` (voir dashboard.component.css) tant
- * qu'aucune section n'est repliée, plutôt qu'un rail vide qui gaspillerait de la largeur. Rendu
- * comme SIBLING de `.dashboard` (pas imbriqué dedans) pour toucher le bord gauche de l'écran,
- * exactement comme `.profile-rail` touche celui de la page profil.
+ * Toujours affiché en icônes seules (positions latérales) — pas de repli manuel réglable par
+ * l'utilisateur : contrairement à `.profile-rail`, ce rail-ci n'a jamais de mode "déplié" (retour
+ * utilisateur : prend trop de place latéralement). Le nom de la carte, absent visuellement, est
+ * reporté dans l'infobulle (voir `entries`/`tooltipText`) plutôt que perdu.
  */
 @Component({
   selector: 'app-dashboard-rail',
@@ -47,62 +49,39 @@ interface RailEntry {
   styleUrl: './dashboard-rail.component.css',
 })
 export class DashboardRailComponent {
-  protected readonly combatPanel = inject(CombatPanelService);
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly i18n = inject(I18nService);
-  private readonly userData = inject(UserDataService);
+  protected readonly layout = inject(DashboardLayoutService);
 
-  protected readonly isRailCollapsed = signal<boolean>(
-    this.userData.read<boolean>('dashboardRailCollapsed') ?? false,
-  );
-
-  constructor() {
-    // Contrairement à CombatPanelService/ChatPanelService (`providedIn: 'root'`, jamais détruits),
-    // ce composant est démonté/remonté avec DashboardComponent (voir app.html, `@if (status ===
-    // 'connected')`) : désabonnement nécessaire, même principe que ChatPanelComponent.
-    const destroyRef = inject(DestroyRef);
-    const unsubscribe = this.userData.onExternalChange('dashboardRailCollapsed', () =>
-      this.isRailCollapsed.set(this.userData.read<boolean>('dashboardRailCollapsed') ?? false),
-    );
-    destroyRef.onDestroy(unsubscribe);
-  }
-
-  /** Une section n'apparaît dans le rail que si elle est effectivement repliée — Combat en plus
-   * n'y figure que pendant un combat en cours (même condition que l'ancien CombatEdgeTabComponent,
-   * `CombatPanelService.hasActiveFight` : replié sans combat actif n'a rien à montrer/agrandir). */
-  protected readonly entries = computed<RailEntry[]>(() => {
-    const list: RailEntry[] = [];
-    if (this.combatPanel.collapsed() && this.combatPanel.hasActiveFight()) {
-      list.push({
-        id: 'combat',
-        label: this.i18n.t('damageMeter.header'),
-        expandHint: this.i18n.t('damageMeter.expandHint'),
-        count: this.combatPanel.activeFightCount(),
-      });
-    }
-    if (this.chatPanel.collapsed()) {
-      list.push({
-        id: 'chat',
-        label: this.i18n.t('chat.header'),
-        expandHint: this.i18n.t('chat.expandHint'),
-        // `null` (badge masqué, voir template) plutôt que `0` : un vrai badge DE NOTIFICATION
-        // n'a rien à signaler tant qu'aucun message ne correspond à un filtre — contrairement au
-        // compteur de combats de Combat ci-dessus, jamais 0 en pratique (l'entrée n'existe que
-        // pendant un combat en cours, toujours au moins 1).
-        count: this.chatPanel.matchedMessageCount() || null,
-      });
-    }
-    return list;
+  /** Côté d'affichage des tooltips du rail — dépend de `layout.menuPos()` : un rail collé au bord
+   * DROIT de l'écran (`menuPos === 'right'`) doit ouvrir ses tooltips vers la GAUCHE, sans quoi ils
+   * sortiraient de la fenêtre (illisibles/tronqués). Rail horizontal (`top-left`/`top-right`, sous
+   * l'en-tête) : `bottom`, même convention que tout élément de header (voir CLAUDE.md). */
+  protected readonly railTooltipPosition = computed<'left' | 'right' | 'bottom'>(() => {
+    const pos = this.layout.menuPos();
+    if (pos === 'right') return 'left';
+    if (pos === 'top-left' || pos === 'top-right') return 'bottom';
+    return 'right';
   });
 
-  protected toggleRailCollapsed(): void {
-    const next = !this.isRailCollapsed();
-    this.isRailCollapsed.set(next);
-    this.userData.write('dashboardRailCollapsed', next);
-  }
+  protected readonly entries = computed<RailEntry[]>(() => {
+    const historyGroup = this.layout.historyGroup();
+    return this.layout
+      .activeSlots()
+      .filter((slot) => this.layout.isCollapsed(slot.key))
+      .map((slot) => {
+        const label = dashboardBodySlotLabel(this.i18n, historyGroup, slot.key);
+        return {
+          id: slot.key,
+          label,
+          tooltipText: `${label} — ${this.i18n.t(expandHintKeyFor(slot.key))}`,
+          icon: dashboardBodySlotIcon(slot.key),
+          count: slot.key === 'chat' ? this.chatPanel.matchedMessageCount() || null : null,
+        };
+      });
+  });
 
-  protected expand(id: CollapsiblePanelId): void {
-    if (id === 'combat') this.combatPanel.setCollapsed(false);
-    else this.chatPanel.setCollapsed(false);
+  protected expand(id: DashboardBodySlotKey): void {
+    this.layout.toggleCollapsed(id);
   }
 }

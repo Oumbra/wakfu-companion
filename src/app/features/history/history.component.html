@@ -1,20 +1,50 @@
-@if (splitCombats()) {
-  <!-- Panneau Combats, scindé à part (voir HistoryComponent.splitCombats) : même contenu que
-       l'ancien sous-onglet "Combats", mais dans son propre .tool-panel plutôt qu'un onglet parmi
-       d'autres — occupe la colonne de grille libérée par Chat replié (voir dashboard.component.css). -->
-  <div class="tool-panel">
+@for (key of visibleSplitKeys(); track key) {
+  <!-- Panneau scindé à part (voir HistoryComponent.effectiveSplitKeys) : même contenu que le
+       sous-onglet correspondant du panneau groupé, mais dans son propre .tool-panel — occupe la
+       case de grille que lui attribue DashboardLayoutService.gridPlan. -->
+  <div
+    class="tool-panel"
+    [style.grid-column]="gridSlot(slotKeyFor(key)).gridColumn"
+    [style.grid-row]="gridSlot(slotKeyFor(key)).gridRow"
+    [style.order]="gridSlot(slotKeyFor(key)).order"
+  >
     <div class="panel-header">
-      <span class="header-label">
-        <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
-        {{ 'history.splitCombatsHeader' | t }}
+      <span class="panel-header-label-group">
+        <span class="header-label">
+          <app-icon [name]="iconFor(key)" [strokeWidth]="1.8" [size]="18" />
+          {{ soloHeaderKeyFor(key) | t }}
+        </span>
+        <button
+          type="button"
+          class="icon-btn help-icon-btn"
+          [appTooltip]="'help.tooltip' | t"
+          (click)="helpModal.open(helpSectionFor(key))"
+        >
+          ?
+        </button>
       </span>
       <button
-        type="button"
-        class="icon-btn help-icon-btn"
-        [appTooltip]="'help.tooltip' | t"
-        (click)="helpModal.open('fightHistory')"
+        class="collapse-btn"
+        [appTooltip]="'history.collapseHint' | t"
+        tooltipPosition="top"
+        (click)="layout.toggleCollapsed(slotKeyFor(key))"
       >
-        ?
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16px"
+          height="16px"
+          fill="none"
+          viewBox="0 0 16 17"
+          role="img"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
       </button>
     </div>
 
@@ -28,56 +58,86 @@
       </div>
     }
 
-    <app-fight-history />
+    @switch (key) {
+      @case ('combats') {
+        <app-fight-history />
+      }
+      @case ('purchases') {
+        <app-purchases />
+      }
+      @default {
+        <app-trades />
+      }
+    }
 
-    @if (combatsHasMore()) {
+    @if (hasMoreFor(key)) {
       <div class="history-load-more">
-        <button type="button" (click)="loadMoreCombats()" [disabled]="archive.loading()">
+        <button type="button" (click)="loadMoreFor(key)" [disabled]="archive.loading()">
           {{ 'history.source.loadMore' | t }}
         </button>
       </div>
     }
   </div>
+}
 
-  <!-- Second panneau : Achats/Échanges, deux sous-onglets au lieu de trois (Combats vit maintenant
-       dans le panneau ci-dessus) — même mécanique `activeTab`/URL que d'habitude (voir
-       HistoryComponent.secondaryTab), pour rester cohérent avec la sélection mobile/panneau unique. -->
-  <div class="tool-panel">
+@if (remainingKeys().length > 0 && !layout.isCollapsed('hist_group')) {
+  <!-- Panneau groupé : un sous-onglet par volet non scindé (1 à 3, voir HistoryComponent.remainingKeys)
+       — mêmes mécaniques `activeTab`/URL que d'habitude (voir HistoryComponent.groupActiveTab). -->
+  <div
+    class="tool-panel"
+    [style.grid-column]="gridSlot('hist_group').gridColumn"
+    [style.grid-row]="gridSlot('hist_group').gridRow"
+    [style.order]="gridSlot('hist_group').order"
+  >
     <div class="panel-header">
-      <span class="header-label">
-        <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
-        {{ 'history.header' | t }}
+      <span class="panel-header-label-group">
+        <span class="header-label">
+          <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
+          {{ 'history.header' | t }}
+        </span>
       </span>
+      <button
+        class="collapse-btn"
+        [appTooltip]="'history.collapseHint' | t"
+        tooltipPosition="top"
+        (click)="layout.toggleCollapsed('hist_group')"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16px"
+          height="16px"
+          fill="none"
+          viewBox="0 0 16 17"
+          role="img"
+          aria-hidden="true"
+        >
+          <path
+            fill="currentColor"
+            fill-rule="evenodd"
+            d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+            clip-rule="evenodd"
+          ></path>
+        </svg>
+      </button>
     </div>
 
     <div class="tab-header">
-      <div class="meter-tab" [class.active]="secondaryTab() === 'purchases'">
-        <button type="button" class="meter-tab-label" (click)="activeTab.set('purchases')">
-          {{ 'purchases.header' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-btn help-icon-btn meter-tab-help-btn"
-          [appTooltip]="'help.tooltip' | t"
-          (click)="helpModal.open('purchases')"
-        >
-          ?
-        </button>
-      </div>
-      <div class="meter-tab" [class.active]="secondaryTab() === 'trades'">
-        <button type="button" class="meter-tab-label" (click)="activeTab.set('trades')">
-          {{ 'trades.header' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-btn help-icon-btn meter-tab-help-btn"
-          [appTooltip]="'help.tooltip' | t"
-          tooltipPosition="top-right"
-          (click)="helpModal.open('trades')"
-        >
-          ?
-        </button>
-      </div>
+      @for (key of remainingKeys(); track key) {
+        <div class="meter-tab" [class.active]="groupActiveTab() === key">
+          <button type="button" class="meter-tab-label" (click)="activeTab.set(key)">
+            {{ tabLabelKeyFor(key) | t }}
+          </button>
+          <button
+            type="button"
+            class="icon-btn help-icon-btn meter-tab-help-btn"
+            [appTooltip]="'help.tooltip' | t"
+            [tooltipPosition]="$last ? 'top-right' : 'top'"
+            (click)="helpModal.open(helpSectionFor(key))"
+          >
+            ?
+          </button>
+        </div>
+      }
     </div>
 
     @if (auth.isAuthenticated() && (archive.loading() || archive.failed())) {
@@ -90,93 +150,25 @@
       </div>
     }
 
-    @if (secondaryTab() === 'purchases') {
-      <app-purchases />
-    } @else {
-      <app-trades />
+    @switch (groupActiveTab()) {
+      @case ('combats') {
+        <app-fight-history />
+      }
+      @case ('purchases') {
+        <app-purchases />
+      }
+      @default {
+        <app-trades />
+      }
     }
 
-    @if (secondaryHasMore()) {
+    @if (hasMoreFor(groupActiveTab())) {
       <div class="history-load-more">
-        <button type="button" (click)="loadMoreSecondary()" [disabled]="archive.loading()">
-          {{ 'history.source.loadMore' | t }}
-        </button>
-      </div>
-    }
-  </div>
-} @else {
-  <div class="tool-panel">
-    <div class="panel-header">
-      <span class="header-label">
-        <app-icon name="clock" [strokeWidth]="1.8" [size]="18" />
-        {{ 'history.header' | t }}
-      </span>
-    </div>
-
-    <div class="tab-header">
-      <div class="meter-tab" [class.active]="activeTab() === 'combats'">
-        <button type="button" class="meter-tab-label" (click)="activeTab.set('combats')">
-          {{ 'history.tabCombats' | t }}
-        </button>
         <button
           type="button"
-          class="icon-btn help-icon-btn meter-tab-help-btn"
-          [appTooltip]="'help.tooltip' | t"
-          (click)="helpModal.open('fightHistory')"
+          (click)="loadMoreFor(groupActiveTab())"
+          [disabled]="archive.loading()"
         >
-          ?
-        </button>
-      </div>
-      <div class="meter-tab" [class.active]="activeTab() === 'purchases'">
-        <button type="button" class="meter-tab-label" (click)="activeTab.set('purchases')">
-          {{ 'purchases.header' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-btn help-icon-btn meter-tab-help-btn"
-          [appTooltip]="'help.tooltip' | t"
-          (click)="helpModal.open('purchases')"
-        >
-          ?
-        </button>
-      </div>
-      <div class="meter-tab" [class.active]="activeTab() === 'trades'">
-        <button type="button" class="meter-tab-label" (click)="activeTab.set('trades')">
-          {{ 'trades.header' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-btn help-icon-btn meter-tab-help-btn"
-          [appTooltip]="'help.tooltip' | t"
-          tooltipPosition="top-right"
-          (click)="helpModal.open('trades')"
-        >
-          ?
-        </button>
-      </div>
-    </div>
-
-    @if (auth.isAuthenticated() && (archive.loading() || archive.failed())) {
-      <div class="history-source">
-        @if (archive.loading()) {
-          <span class="history-source-status">{{ 'history.source.loading' | t }}</span>
-        } @else if (archive.failed()) {
-          <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
-        }
-      </div>
-    }
-
-    @if (activeTab() === 'combats') {
-      <app-fight-history />
-    } @else if (activeTab() === 'purchases') {
-      <app-purchases />
-    } @else {
-      <app-trades />
-    }
-
-    @if (hasMore()) {
-      <div class="history-load-more">
-        <button type="button" (click)="loadMore()" [disabled]="archive.loading()">
           {{ 'history.source.loadMore' | t }}
         </button>
       </div>

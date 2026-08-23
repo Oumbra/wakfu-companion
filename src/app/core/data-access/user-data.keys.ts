@@ -23,7 +23,7 @@ export const USER_DATA_KEYS = {
   chatFilters: 'wakfu-chat-filters',
   combatPanelCollapsed: 'wakfu-combat-panel-collapsed',
   chatPanelCollapsed: 'wakfu-chat-panel-collapsed',
-  dashboardRailCollapsed: 'wakfu-dashboard-rail-collapsed',
+  dashboardLayout: 'wakfu-dashboard-layout',
 } as const;
 
 export type UserDataKey = keyof typeof USER_DATA_KEYS;

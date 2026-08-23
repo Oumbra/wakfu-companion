@@ -46,6 +46,64 @@
 </div>
 
 <div class="panel-body meter-body">
+  @if (combatPanel.hasActiveFight()) {
+    <div
+      class="ongoing-fight-toggle has-active-fight"
+      [class.sticky]="combatPanel.collapsed()"
+      (click)="combatPanel.setCollapsed(!combatPanel.collapsed())"
+    >
+      <span class="ongoing-fight-label">{{ 'damageMeter.header' | t }}</span>
+      <button
+        type="button"
+        class="icon-btn help-icon-btn"
+        [appTooltip]="'help.tooltip' | t"
+        tooltipPosition="top"
+        (click)="$event.stopPropagation(); helpModal.open('combat')"
+      >
+        ?
+      </button>
+      <span class="ongoing-fight-badge">{{ combatPanel.activeFightCount() }}</span>
+      <span class="caret" [class.expanded]="!combatPanel.collapsed()">▸</span>
+    </div>
+    @if (!combatPanel.collapsed()) {
+      @if (activeFightIds().length > 1) {
+        <div class="fight-tabs-row">
+          @for (id of activeFightIds(); track id; let i = $index) {
+            <button
+              type="button"
+              class="fight-tab"
+              [class.selected]="id === displayedFightId()"
+              (click)="selectOngoingFight(id)"
+            >
+              {{ ongoingTabLabel(i) }}
+            </button>
+          }
+        </div>
+      }
+      @if (hasCurrentFight()) {
+        <div class="fight-stats-row">
+          <span class="fight-turns">{{ currentFightTurns() }} {{ 'damageMeter.turns' | t }}</span>
+          <span class="fight-stats-sep">|</span>
+          <span class="fight-duration">{{ formatDuration(currentFightDurationMs()) }}</span>
+        </div>
+        <app-combat-detail
+          [mode]="ongoingViewMode()"
+          [turn]="ongoingEffectiveTurn()"
+          [maxTurn]="currentFightTurns()"
+          [statKind]="ongoingStatKind()"
+          [allyRows]="ongoingAllyRows()"
+          [enemyRows]="ongoingEnemyRows()"
+          [fightId]="displayedFightId()"
+          [interactive]="true"
+          [allyEmptyMessage]="ongoingEmptyMessageKey('ally') | t"
+          [enemyEmptyMessage]="ongoingEmptyMessageKey('enemy') | t"
+          (modeChange)="setOngoingViewMode($event)"
+          (turnChange)="setOngoingTurn($event)"
+          (kindChange)="setOngoingStatKind($event)"
+        />
+      }
+    }
+  }
   @if (fightHistory().length === 0) {
     <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
   } @else {
@@ -190,41 +248,20 @@
     </div>
     @if (isFightExpanded(record.id)) {
       <div class="fight-details">
-        <div class="history-view-switch-row">
-          <app-damage-view-switch
-            [mode]="viewModeFor(record.id)"
-            [turn]="turnFor(record)"
-            [maxTurn]="record.turns"
-            totalLabelKey="damageMeter.viewCumulative"
-            (modeChange)="setViewMode(record.id, $event)"
-            (turnChange)="setTurn(record, $event)"
-          />
-        </div>
-        <app-entity-stat-tabs
-          [kind]="statKindFor(record.id)"
+        <app-combat-detail
+          [mode]="viewModeFor(record.id)"
+          [turn]="turnFor(record)"
+          [maxTurn]="record.turns"
+          [historical]="true"
+          [statKind]="statKindFor(record.id)"
+          [allyRows]="allyStatRowsFor(record)"
+          [enemyRows]="enemyStatRowsFor(record)"
+          [fightId]="record.id"
+          [allyEmptyMessage]="emptyMessageKey(record.id, 'ally') | t"
+          [enemyEmptyMessage]="emptyMessageKey(record.id, 'enemy') | t"
+          (modeChange)="setViewMode(record.id, $event)"
+          (turnChange)="setTurn(record, $event)"
           (kindChange)="setStatKind(record.id, $event)"
-        />
-        <app-entity-damage-list
-          [title]="'damageMeter.allies' | t"
-          side="ally"
-          [rows]="allyStatRowsFor(record)"
-          [fightId]="statKindFor(record.id) === 'damage' ? record.id : null"
-          [collapsible]="true"
-          [viewMode]="viewModeFor(record.id)"
-          [turn]="turnFor(record)"
-          [showElements]="statKindFor(record.id) !== 'armor'"
-          [emptyMessage]="emptyMessageKey(record.id, 'ally') | t"
-        />
-        <app-entity-damage-list
-          [title]="'damageMeter.enemies' | t"
-          side="enemy"
-          [rows]="enemyStatRowsFor(record)"
-          [fightId]="statKindFor(record.id) === 'damage' ? record.id : null"
-          [collapsible]="true"
-          [viewMode]="viewModeFor(record.id)"
-          [turn]="turnFor(record)"
-          [showElements]="statKindFor(record.id) !== 'armor'"
-          [emptyMessage]="emptyMessageKey(record.id, 'enemy') | t"
         />
         @if (record.result === 'won') {
           <div class="loot-section">
@@ -233,16 +270,16 @@
                 <div class="loot-header-left">
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
+                  @if (record.kamas > 0) {
+                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                  }
                   @if (record.loot.length > 0) {
                     <span class="loot-count"
                       >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
                     >
                   }
-                  @if (record.kamas > 0) {
-                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
-                  }
                 </div>
-                @if (record.loot.length > 1) {
+                @if (record.loot.length > 1 && isFightLootExpanded(record.id)) {
                   <div
                     class="icon-switch icon-switch-3 loot-sort-switch"
                     (click)="$event.stopPropagation()"

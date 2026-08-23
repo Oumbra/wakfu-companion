@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { ThemeService } from '../../core/services/theme.service';
 import {
   BrowserIconComponent,
   BrowserKind,
@@ -39,15 +40,28 @@ export class SetupComponent {
   protected readonly logFileAccess = inject(LogFileAccessService);
   protected readonly auth = inject(AuthService);
   private readonly i18n = inject(I18nService);
+  private readonly theme = inject(ThemeService);
   protected readonly dragOver = signal(false);
   protected readonly compatibleBrowsers = COMPATIBLE_BROWSERS;
   protected readonly showWhy = signal(false);
+  /** Bouton "astuce" à droite de la zone de dépôt : révèle une capture d'écran montrant
+   * l'emplacement du fichier wakfu.log dans l'explorateur de fichiers. Deux variantes fournies
+   * (thème sombre/clair de l'explorateur Windows) — on choisit celle qui correspond au thème actif
+   * de l'app plutôt que de forcer une seule image qui jurerait avec l'autre thème. */
+  protected readonly showHint = signal(false);
+  protected readonly hintImageSrc = computed(() =>
+    this.theme.theme() === 'light' ? 'assets/setup-hint-light.png' : 'assets/setup-hint-dark.png',
+  );
   /** Affiche les boutons Discord/Google en dessous du bouton "passer cette étape" (mobile) — voir
    * `skipLogFile()` : uniquement quand l'utilisateur n'est pas encore connecté. */
   protected readonly showSkipLoginPrompt = signal(false);
 
   protected toggleWhy(): void {
     this.showWhy.update((value) => !value);
+  }
+
+  protected toggleHint(): void {
+    this.showHint.update((value) => !value);
   }
 
   /**

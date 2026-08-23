@@ -123,6 +123,11 @@
   min-width: 62px;
   text-align: right;
 }
+/* Encaissement Hôtel de vente (voir isHdvRow) : même vert que la victoire (fight-history
+   `.fight-badge.won`) plutôt que le jaune kamas des vrais achats — repère visuel dédié à ce gain. */
+.purchase-row.is-hdv .purchase-cost {
+  color: var(--btn-active-green);
+}
 
 :host-context([data-theme='light']) {
   .controls-row {

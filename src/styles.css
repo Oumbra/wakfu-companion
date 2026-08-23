@@ -480,6 +480,24 @@ button.reset-btn:hover {
   border: 1px solid var(--border);
 }
 
+/* Placement d'une carte du corps du tableau de bord (voir DashboardLayoutService.gridPlan) dans
+   `.panels-row` : posé en style INLINE (`[style.grid-column]`/`[style.grid-row]`) depuis
+   DashboardComponent (Combat/Suivi/Chat) ET depuis le template PROPRE d'HistoryComponent
+   (`display:contents`, un ou plusieurs `.tool-panel` scindés à part, voir history.component.html)
+   — jamais une classe : une classe posée depuis le template d'HistoryComponent porterait son
+   attribut d'encapsulation de vue à LUI, pas celui de `DashboardComponent`, qu'aucune règle scopée
+   dans `dashboard.component.css` n'aurait jamais pu atteindre (bug réel rencontré avec l'ancienne
+   `.grid-span2`, remplacée par ce mécanisme). Un style inline n'a pas ce problème.
+   En dessous de 800px, `.panels-row` ne garde qu'UNE colonne/ligne (voir dashboard.component.css) :
+   ce placement doit alors être neutralisé pour tous les panneaux, quelle que soit sa provenance —
+   GLOBALE pour la même raison que ci-dessus (le sélecteur doit traverser `<app-history>`). */
+@media (max-width: 800px) {
+  .panels-row .tool-panel {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+}
+
 .panel-header {
   background: var(--panel-header-bg);
   padding: 10px 15px;
@@ -535,6 +553,23 @@ button.reset-btn:hover {
 .collapse-btn:hover {
   color: var(--text-bright);
 }
+/* Le pictogramme (une flèche pointant vers la gauche dans un cadre, voir le SVG copié dans chaque
+   panneau) doit pointer vers le RAIL où la carte va atterrir une fois repliée (voir
+   DashboardRailComponent) — pas toujours à gauche par défaut. Global (comme `.collapse-btn`
+   lui-même) et keyé sur `[data-menu-pos]`, posé sur le HOST de `DashboardComponent` : les panneaux
+   qui portent ce bouton (damage-meter/chat-panel/history) sont chacun un composant enfant avec son
+   propre template/SVG — une règle scopée à `dashboard.component.css` ne peut pas les atteindre
+   (même piège que `.panels-row .tool-panel`, voir plus haut). `scaleX(-1)` (miroir horizontal pur)
+   pour `right` plutôt que `rotate(180deg)` (miroir + retournement vertical, invisible ici puisque
+   l'icône est elle-même symétrique haut/bas, mais sémantiquement moins correct) ; `rotate(90deg)`
+   pour `top-left`/`top-right` (flèche horizontale vers la gauche → verticale vers le haut, sens
+   horaire). */
+[data-menu-pos='right'] .collapse-btn svg {
+  transform: scaleX(-1);
+}
+[data-menu-pos^='top'] .collapse-btn svg {
+  transform: rotate(90deg);
+}
 @media (max-width: 800px) {
   .collapse-btn {
     display: none;
@@ -577,6 +612,60 @@ button.icon-btn.help-icon-btn {
   overflow-y: auto;
   min-height: 0;
   padding-right: 10px;
+}
+
+/* --- Champs génériques page profil --- */
+/* Utilisées par la plupart des onglets de ProfilePageComponent (Identité, Accessibilité,
+   Connexion, Alertes...) ET par tout composant enfant rendu dans un onglet (ex.
+   DashboardLayoutPickerComponent, Personnalisation) — GLOBALES pour cette dernière raison : un
+   composant enfant a son propre template, avec sa propre portée d'encapsulation Angular, qu'une
+   règle scopée à `profile-page.component.css` ne peut jamais atteindre même avec un nom de classe
+   identique (voir CLAUDE.md, même piège que `.tool-panel`/`.panel-header` ci-dessus). Bug réel
+   constaté : la page Personnalisation réutilisait ces classes sans jamais recevoir leur mise en
+   forme. */
+.profile-field {
+  width: 100%;
+  max-width: 950px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+/* Titre de section desktop (rail de navigation, voir CLAUDE.md) : `.profile-label-row` ne sert
+qu'à ça, un par onglet, jamais dupliqué — restylé en vrai titre de page (voir
+`.profile-label-row .profile-label` plus bas) plutôt qu'en petit libellé de champ (réservé à
+`.profile-label` seul, ex. "AVATAR" au-dessus de la grille d'avatars). */
+.profile-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.profile-label-row .profile-label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-bright);
+}
+/* Ligne de description sous le titre de section — un paragraphe par onglet, même mécanique que
+`.profile-label-row` juste au-dessus (pleine largeur du `.profile-field` parent, pas de cap
+propre). */
+.profile-section-desc {
+  width: 100%;
+  margin: 0 0 18px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.5;
 }
 
 .empty-state {

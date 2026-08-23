@@ -1,0 +1,287 @@
+/* Palette des vignettes — n'existe nulle part ailleurs dans l'app (aucune section du tableau de
+   bord n'est aujourd'hui identifiée par une couleur, voir CLAUDE.md) : introduite ici, scopée au
+   composant, avec sa propre bascule thème clair/sombre (même mécanisme que `styles.css`, `<html
+   data-theme>`) plutôt que de piocher dans les jetons globaux qui n'ont pas ce rôle. */
+:host {
+  --lp-sw-menu: #838a99;
+  --lp-sw-kpi: #e0b23d;
+  --lp-sw-combats: #e2586c;
+  --lp-sw-purchases: #4f9fe0;
+  --lp-sw-trades: #e0713f;
+  --lp-sw-history: #a385f0;
+  --lp-sw-chat: #46d67f;
+
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+:host-context([data-theme='light']) {
+  --lp-sw-menu: #6b7280;
+  --lp-sw-kpi: #b8860f;
+  --lp-sw-combats: #c0364a;
+  --lp-sw-purchases: #2f74b5;
+  --lp-sw-trades: #c05423;
+  --lp-sw-history: #7c4fd9;
+  --lp-sw-chat: #1f9d55;
+}
+
+.dls-top {
+  height: 12%;
+  flex-shrink: 0;
+  background: var(--border-strong);
+  display: flex;
+  align-items: center;
+  padding: 0 6%;
+  gap: 4%;
+}
+.dls-top span {
+  width: 5%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--text-muted);
+  opacity: 0.6;
+}
+
+.dls-frame {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  padding: 6%;
+  gap: 6%;
+}
+
+.dls-menu {
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--lp-sw-menu);
+  opacity: 0.85;
+  display: flex;
+  align-items: center;
+}
+.dls-menu.reduced {
+  background: transparent;
+  border: 1.5px dashed var(--text-muted);
+  opacity: 0.6;
+}
+.dls-menu-dot {
+  width: 10%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.6);
+  margin: 0 4%;
+}
+.dls-menu.reduced .dls-menu-dot {
+  display: none;
+}
+
+.dls-after {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  gap: 6%;
+}
+.dls-kpi {
+  flex-shrink: 0;
+  border-radius: 3px;
+  background: var(--lp-sw-kpi);
+  opacity: 0.85;
+}
+.dls-kpi.reduced {
+  background: transparent;
+  border: 1.5px dashed var(--text-muted);
+  opacity: 0.6;
+}
+
+.dls-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.dls-equal {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  gap: 6%;
+}
+.dls-cell {
+  position: relative;
+  border-radius: 3px;
+  opacity: 0.85;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dls-cell.span2 {
+  grid-column: 1 / -1;
+}
+
+.dls-focus {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 6%;
+  min-width: 0;
+  min-height: 0;
+}
+.dls-main {
+  position: relative;
+  flex: 0 0 64%;
+  border-radius: 4px;
+  opacity: 0.92;
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dls-secondary {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6%;
+  min-width: 0;
+  min-height: 0;
+}
+.dls-sec {
+  position: relative;
+  flex: 1 1 0;
+  border-radius: 3px;
+  opacity: 0.8;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Texte de la carte (voir `DashboardLayoutSchemaCell.label`) — par-dessus la couleur, jamais
+   responsable des événements de glisser-déposer de sa carte parente (`pointer-events: none`, sans
+   quoi un `dragstart` déclenché depuis le `<span>` plutôt que la carte perdrait `cell.key` selon le
+   navigateur). Couleur blanche fixe (pas `var(--text-color)`, sensible au thème) : les couleurs de
+   fond `--lp-sw-*` sont choisies pour rester lisibles en blanc dans les deux thèmes (voir palette
+   ci-dessus), une teinte dépendante du thème ne le garantirait pas forcément. */
+.dls-cell-label {
+  pointer-events: none;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+  padding: 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+/* Carte interactive (voir `interactive`/`DashboardLayoutPickerComponent`, section "Ordre des
+   blocs") — jamais posé sur `.dls-main` (voir doc de tête de `interactive`), seulement `.dls-cell`/
+   `.dls-sec`. */
+.dls-cell.interactive,
+.dls-sec.interactive {
+  cursor: grab;
+}
+.dls-cell.interactive:active,
+.dls-sec.interactive:active {
+  cursor: grabbing;
+}
+.dls-cell.dragging,
+.dls-sec.dragging {
+  opacity: 0.35;
+}
+
+/* Flèches directionnelles (voir `gridNeighborIndex`) — un seul glyphe (`chevron-left`, pointe vers
+   la gauche) pivoté par direction plutôt que 4 symboles dédiés dans le sprite (voir `AppIconName`),
+   même principe que les boutons monter/descendre déjà en place ailleurs sur cette page. Coin
+   correspondant à leur direction, visibles seulement au survol/focus de la carte pour ne pas
+   surcharger l'aperçu au repos. */
+button.dls-arrow {
+  all: unset;
+  position: absolute;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+.dls-cell.interactive:hover button.dls-arrow,
+.dls-cell.interactive:focus-within button.dls-arrow,
+.dls-sec.interactive:hover button.dls-arrow,
+.dls-sec.interactive:focus-within button.dls-arrow {
+  opacity: 1;
+}
+button.dls-arrow:hover {
+  background: var(--accent);
+}
+button.dls-arrow-left {
+  left: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+button.dls-arrow-right {
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%) rotate(180deg);
+}
+button.dls-arrow-up {
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(90deg);
+}
+button.dls-arrow-down {
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.dls-arrow {
+    transition: none;
+  }
+}
+
+.dls-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--text-muted);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+  text-align: center;
+  padding: 8%;
+}
+
+.sw-combats {
+  background: var(--lp-sw-combats);
+}
+.sw-purchases {
+  background: var(--lp-sw-purchases);
+}
+.sw-trades {
+  background: var(--lp-sw-trades);
+}
+.sw-history {
+  background: var(--lp-sw-history);
+}
+.sw-chat {
+  background: var(--lp-sw-chat);
+}

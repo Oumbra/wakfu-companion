@@ -1,0 +1,158 @@
+/* Pas de `flex:1;min-height:0` ici (contrairement à `EntityDamageListComponent`, voir plus bas) :
+   ce composant est rendu à l'intérieur de `.panel-body.meter-body` (FightHistoryComponent), un
+   conteneur DÉJÀ défilant (`overflow-y:auto`) qui contient AUSSI, juste après, la liste de
+   l'historique — un `flex:1` ici entrerait en concurrence avec cette liste pour l'espace restant
+   et, sur un écran bas (mobile), peut retomber à une hauteur de 0 avec tout son contenu qui se
+   chevauche visuellement (bug réel rencontré en session : `.half-header` alliés/ennemis
+   superposées au pixel près). Hauteur naturelle (contenu), exactement le même principe que
+   `.fight-details` (combat de l'historique, fight-history.component.css) — c'est `.panel-body` qui
+   défile pour tout le monde, pas un scroll interne par combat. */
+:host {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Bandeau "Informations de combat" (combat de l'historique UNIQUEMENT, voir `historical()`) : LA
+   ligne de switchs EST l'en-tête repliable (même principe qu'une seule ligne que
+   `.loot-header-row`/`.loot-sort-switch`, fight-history.component.css) — label + caret TOUJOURS
+   visibles (sinon plus moyen de redéplier), les deux switchs rendus `@if (switchesExpanded())`
+   SEULEMENT à l'intérieur de cette même ligne (voir template) : repliée, ils disparaissent
+   entièrement au lieu de rester affichés à côté d'un caret fermé — la ligne de switchs ET les listes
+   alliés/ennemis en dessous se replient/déplient donc ENSEMBLE, d'un seul geste (voir
+   `switchesExpanded`). Grille à 3 colonnes (comme `.combat-switch-row` ci-dessous, même raison : le
+   switch Cumulé/Tour reste centré sur toute la largeur de la ligne, indépendamment de la largeur du
+   groupe de droite) — colonne 1 le label, colonne 3 le groupe [switch Dommage/Armure/Soin
+   (optionnel) + caret]. */
+.combat-info-toggle {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  height: 41px;
+  padding: 0 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+.combat-info-toggle:hover {
+  background: var(--surface-raised);
+}
+.combat-info-label {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.combat-info-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.combat-info-end {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.caret {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+:host-context([data-theme='light']) .combat-info-toggle {
+  background: var(--surface-active);
+}
+
+/* Switch Cumulé/Tour (centré sur toute la largeur de la ligne) + switch Dommage/Armure/Soin (plaqué
+   à droite) — combat EN COURS uniquement (voir `historical()`, pas de label/caret/repli ici, voir
+   `.combat-info-toggle` ci-dessus pour l'historique). Grille à 3 colonnes plutôt que flex : un flex
+   centré "en groupe" décale le Cumulé/Tour dès que le switch de droite change de largeur (stepper
+   de tour affiché/masqué) ; la colonne du milieu (`auto`, chip centrée dedans) reste elle
+   indépendante de la largeur de la colonne de droite. */
+.combat-switch-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.combat-switch-center {
+  grid-column: 2;
+  justify-self: center;
+}
+.combat-switch-right {
+  grid-column: 3;
+  justify-self: end;
+}
+/* Repli défensif sous 480px (téléphone étroit, panneau encore réduit par la mise en page mobile) :
+   la grille à 3 colonnes peut manquer de place une fois le pas-à-pas de tour affiché (mode 'turn',
+   voir DamageViewSwitchComponent) — empile plutôt que de laisser déborder. S'applique aux deux
+   variantes de ligne (combat en cours ET en-tête historique). */
+@media (max-width: 480px) {
+  .combat-switch-row,
+  .combat-info-toggle {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    height: auto;
+    padding: 8px 10px;
+  }
+  .combat-switch-center,
+  .combat-switch-right,
+  .combat-info-label,
+  .combat-info-end {
+    grid-column: 1;
+    justify-self: center;
+  }
+}
+
+:host-context([data-theme='light']) .combat-switch-row {
+  background: var(--surface-active);
+}
+
+/* Alliés/ennemis empilés par défaut (mobile inchangé, alliés au-dessus comme avant) ; côte à côte
+   à partir du même seuil desktop que `.collapse-btn`/`MediaQuerySignal` (voir CLAUDE.md). Ordre DOM
+   volontairement inchangé (alliés puis ennemis) — `row-reverse` inverse seulement l'affichage
+   visuel (ennemis à gauche, alliés à droite) sans toucher à l'ordre logique. Pas de
+   `flex:1;min-height:0` (voir `:host` ci-dessus, même raison) : hauteur naturelle en mobile
+   (colonne) ; en desktop (ligne), ce sont les DEUX `app-entity-damage-list` enfants qui se
+   partagent la largeur via LEUR PROPRE `flex:1` (EntityDamageListComponent), pas ce conteneur. */
+.entity-lists-row {
+  display: flex;
+  flex-direction: column;
+}
+@media (min-width: 801px) {
+  .entity-lists-row {
+    flex-direction: row-reverse;
+  }
+  .entity-lists-row > * {
+    min-width: 0;
+  }
+  /* `row-reverse` : le dernier enfant DOM (ennemis) s'affiche visuellement en premier (à gauche) —
+     c'est donc SON bord droit qui touche l'élément suivant (alliés, à droite) et doit porter la
+     ligne de séparation, pas le premier enfant DOM (dont le bord droit serait le bord extérieur
+     du conteneur une fois affiché en dernier/à droite). */
+  .entity-lists-row > *:last-child {
+    border-right: 1px solid var(--border);
+  }
+}
