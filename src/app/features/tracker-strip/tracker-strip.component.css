@@ -59,12 +59,21 @@
    ci-dessus (un seul bouton 58px à la fois, pas les deux + leur gap) et visuellement plus sobre
    qu'une paire de carrés collés (retour utilisateur). Sans effet sur `.kpi-add.expanded` (formulaire
    ouvert, voir plus bas) : sa propre règle de base pose déjà `flex-direction: column` pour d'autres
-   raisons (empiler switch/recherche/fermeture), donc aucun conflit. */
+   raisons (empiler switch/recherche/fermeture), donc aucun conflit.
+   `width: 80px` (pas `100%`, qui étirait la boîte à la largeur du host — 100px — et centrait les
+   boutons dans un cadre visuellement trop large) + `height: 136px` + le MÊME padding que
+   `.kpi-strip` juste au-dessus (`10px 15px 16px`, `padding-right` réduit à 7px pour compenser la
+   marge déjà prise par la scrollbar verticale de `.kpi-strip`) : aligne "+"/"-" avec les tuiles de
+   la liste en dessous plutôt que deux cadres aux repères différents (ajustement affiné à l'usage,
+   voir devtools). */
 :host[data-kpi-pos='left'] .kpi-add,
 :host[data-kpi-pos='right'] .kpi-add {
   flex-direction: column;
   margin-top: 0;
-  width: 100%;
+  width: 80px;
+  height: 136px;
+  padding: 10px 15px 16px;
+  padding-right: 7px;
 }
 /* Formulaire de recherche ouvert (`.kpi-add.expanded`, voir plus bas) : sa largeur fixe de 400px
    (pensée pour la bande HORIZONTALE, où `.kpi-strip` défile pour absorber le surplus) déborderait
