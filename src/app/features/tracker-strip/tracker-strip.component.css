@@ -43,6 +43,33 @@
 :host[data-kpi-pos='left'] .kpi-add,
 :host[data-kpi-pos='right'] .kpi-add {
   margin-top: 0;
+  width: 100%;
+}
+/* Formulaire de recherche ouvert (`.kpi-add.expanded`, voir plus bas) : sa largeur fixe de 400px
+   (pensée pour la bande HORIZONTALE, où `.kpi-strip` défile pour absorber le surplus) déborderait
+   très largement une colonne de 230px et chevaucherait le panneau suivant (`.dashboard-main`, voir
+   dashboard.component.css) — `.dashboard` passe en `flex-direction: row` pour ce mode, un enfant
+   trop large empiète directement sur son voisin plutôt que de simplement dépasser dans le vide
+   (bug réel constaté à l'usage). Empile plutôt les contrôles (switch/recherche/fermeture) sur la
+   largeur de la colonne elle-même. */
+:host[data-kpi-pos='left'] .kpi-add.expanded,
+:host[data-kpi-pos='right'] .kpi-add.expanded {
+  width: 100%;
+  height: auto;
+}
+:host[data-kpi-pos='left'] .kpi-add-form,
+:host[data-kpi-pos='right'] .kpi-add-form {
+  flex-direction: column;
+  align-items: stretch;
+}
+:host[data-kpi-pos='left'] .kpi-target-wrapper,
+:host[data-kpi-pos='right'] .kpi-target-wrapper {
+  flex-direction: column;
+  align-items: stretch;
+}
+:host[data-kpi-pos='left'] .kpi-target-presets,
+:host[data-kpi-pos='right'] .kpi-target-presets {
+  flex-wrap: wrap;
 }
 
 /* Masqué en dessous du breakpoint mobile (voir dashboard.component.css) :

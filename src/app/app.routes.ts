@@ -103,6 +103,12 @@ export const routes: Routes = [
         canActivate: [fileConnectedGuard],
       },
       {
+        path: 'profile/customization',
+        component: RouteBridgeComponent,
+        data: { view: 'profile', profileTab: 'customization' },
+        canActivate: [fileConnectedGuard],
+      },
+      {
         // Segment public `accessibility` — l'id interne du rail reste `colorblind` (voir
         // `NavigationService.PROFILE_TAB_SEGMENT`), inchangé ailleurs dans le composant.
         path: 'profile/accessibility',
