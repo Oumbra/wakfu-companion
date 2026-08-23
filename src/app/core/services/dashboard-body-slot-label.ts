@@ -43,11 +43,14 @@ export function dashboardBodySlotLabel(
 /** Icône par type de carte du corps — chaque volet d'historique a la sienne (voir `icons-*.svg`),
  * pour rester différenciable partout où le libellé n'est pas (ou plus) visible : rail replié
  * (`DashboardRailComponent`) ET en-tête d'un panneau scindé à part (`HistoryComponent`, à la place
- * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `clock` reste
- * utilisée pour l'historique de combats ET le panneau groupé (mélange de volets, pas d'icône plus
- * spécifique pertinente) ; `shopping-bag`/`arrows-exchange` pour Achats/Échanges. */
+ * de l'horloge générique auparavant utilisée pour les 3 volets indifféremment). `hist_combats`
+ * (renommé "Combat", voir CLAUDE.md) reprend les mêmes épées croisées que la carte `combat` (le
+ * combat EN COURS, désormais libellé "Combat en cours") — les deux se distinguent par leur libellé,
+ * plus par leur icône, depuis ce renommage. `clock` reste utilisée pour le panneau groupé (mélange
+ * de volets, pas d'icône plus spécifique pertinente) ; `shopping-bag`/`arrows-exchange` pour
+ * Achats/Échanges. */
 export function dashboardBodySlotIcon(key: DashboardBodySlotKey): AppIconName {
-  if (key === 'combat') return 'crossed-swords';
+  if (key === 'combat' || key === 'hist_combats') return 'crossed-swords';
   if (key === 'chat') return 'messages-square';
   if (key === 'hist_purchases') return 'shopping-bag';
   if (key === 'hist_trades') return 'arrows-exchange';
