@@ -82,12 +82,12 @@ export class DashboardLayoutPickerComponent {
       value: 'left',
       nameKey: 'profile.dashboardLayout.menu.left.name',
       descKey: 'profile.dashboardLayout.menu.left.desc',
+      isDefault: true,
     },
     {
       value: 'right',
       nameKey: 'profile.dashboardLayout.menu.right.name',
       descKey: 'profile.dashboardLayout.menu.right.desc',
-      isDefault: true,
     },
     {
       value: 'top-left',

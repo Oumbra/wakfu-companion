@@ -1,6 +1,5 @@
-import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
-import { UserDataService } from '../../core/data-access/user-data.service';
 import { I18nService } from '../../core/services/i18n.service';
 import {
   DashboardBodySlotKey,
@@ -16,7 +15,10 @@ import { AppIconName, IconComponent } from '../../shared/icon/icon.component';
 interface RailEntry {
   id: DashboardBodySlotKey;
   label: string;
-  expandHint: string;
+  /** Texte complet d'infobulle : nom de la carte + indication "Agrandir" — le libellé n'étant
+   * jamais affiché à côté de l'icône (rail toujours en icônes seules), c'est la seule façon pour
+   * l'utilisateur de savoir ce que chaque icône représente sans avoir à cliquer dessus. */
+  tooltipText: string;
   icon: AppIconName;
   count: number | null;
 }
@@ -34,6 +36,11 @@ function expandHintKeyFor(key: DashboardBodySlotKey): string {
  * son service dédié (`ChatPanelService`, synchronisé compte) via
  * `DashboardLayoutService.isCollapsed`/`toggleCollapsed` — ce composant ne distingue pas ce cas,
  * tout passe par le même mécanisme générique.
+ *
+ * Toujours affiché en icônes seules (positions latérales) — pas de repli manuel réglable par
+ * l'utilisateur : contrairement à `.profile-rail`, ce rail-ci n'a jamais de mode "déplié" (retour
+ * utilisateur : prend trop de place latéralement). Le nom de la carte, absent visuellement, est
+ * reporté dans l'infobulle (voir `entries`/`tooltipText`) plutôt que perdu.
  */
 @Component({
   selector: 'app-dashboard-rail',
@@ -45,19 +52,6 @@ export class DashboardRailComponent {
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly i18n = inject(I18nService);
   protected readonly layout = inject(DashboardLayoutService);
-  private readonly userData = inject(UserDataService);
-
-  protected readonly isRailCollapsed = signal<boolean>(
-    this.userData.read<boolean>('dashboardRailCollapsed') ?? false,
-  );
-
-  constructor() {
-    const destroyRef = inject(DestroyRef);
-    const unsubscribe = this.userData.onExternalChange('dashboardRailCollapsed', () =>
-      this.isRailCollapsed.set(this.userData.read<boolean>('dashboardRailCollapsed') ?? false),
-    );
-    destroyRef.onDestroy(unsubscribe);
-  }
 
   /** Côté d'affichage des tooltips du rail — dépend de `layout.menuPos()` : un rail collé au bord
    * DROIT de l'écran (`menuPos === 'right'`) doit ouvrir ses tooltips vers la GAUCHE, sans quoi ils
@@ -75,20 +69,17 @@ export class DashboardRailComponent {
     return this.layout
       .activeSlots()
       .filter((slot) => this.layout.isCollapsed(slot.key))
-      .map((slot) => ({
-        id: slot.key,
-        label: dashboardBodySlotLabel(this.i18n, historyGroup, slot.key),
-        expandHint: this.i18n.t(expandHintKeyFor(slot.key)),
-        icon: dashboardBodySlotIcon(slot.key),
-        count: slot.key === 'chat' ? this.chatPanel.matchedMessageCount() || null : null,
-      }));
+      .map((slot) => {
+        const label = dashboardBodySlotLabel(this.i18n, historyGroup, slot.key);
+        return {
+          id: slot.key,
+          label,
+          tooltipText: `${label} — ${this.i18n.t(expandHintKeyFor(slot.key))}`,
+          icon: dashboardBodySlotIcon(slot.key),
+          count: slot.key === 'chat' ? this.chatPanel.matchedMessageCount() || null : null,
+        };
+      });
   });
-
-  protected toggleRailCollapsed(): void {
-    const next = !this.isRailCollapsed();
-    this.isRailCollapsed.set(next);
-    this.userData.write('dashboardRailCollapsed', next);
-  }
 
   protected expand(id: DashboardBodySlotKey): void {
     this.layout.toggleCollapsed(id);
