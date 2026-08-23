@@ -23,7 +23,6 @@ export const SYNCED_SETTING_KEYS = [
   'chatFilters',
   'combatPanelCollapsed',
   'chatPanelCollapsed',
-  'dashboardRailCollapsed',
   'dashboardLayout',
 ] as const;
 

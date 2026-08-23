@@ -6,30 +6,26 @@
   display: contents;
 }
 
-/* Même design/comportement que `.profile-rail` (page profil, profile-page.component.css) : rail
-   vertical collé au bord gauche de l'écran (sibling flex de `.dashboard`, PAS niché dedans — voir
-   son commentaire CSS), réductible en icônes seules, séparé du contenu par une simple bordure
-   droite plutôt qu'une carte flottante (pas de `border-radius`/bordure complète). `position`
-   normale (pas `sticky` comme `.profile-rail`) : DashboardComponent n'a pas de zone scrollable
-   verticalement (contrairement à `.profile-layout`, voir son commentaire CSS) — `sticky` n'y
-   aurait aucun effet différent de `static`, pas besoin de la même mécanique `max-height`/
-   `ResizeObserver` non plus. */
+/* Même esprit que `.profile-rail` (page profil, profile-page.component.css) : rail vertical collé
+   au bord de l'écran (sibling flex de `.dashboard`, PAS niché dedans — voir son commentaire CSS),
+   séparé du contenu par une simple bordure plutôt qu'une carte flottante (pas de `border-radius`/
+   bordure complète). Contrairement à `.profile-rail`, TOUJOURS en icônes seules en position
+   latérale (pas de repli manuel réglable — retour utilisateur : prend trop de place ; voir
+   commentaire de classe dans `DashboardRailComponent`), d'où la largeur fixe et étroite ci-dessous
+   au lieu d'une largeur "dépliée" + variante repliée. `position` normale (pas `sticky` comme
+   `.profile-rail`) : DashboardComponent n'a pas de zone scrollable verticalement (contrairement à
+   `.profile-layout`, voir son commentaire CSS) — `sticky` n'y aurait aucun effet différent de
+   `static`, pas besoin de la même mécanique `max-height`/`ResizeObserver` non plus. */
 .dashboard-rail {
   flex: none;
   height: 100%;
-  width: 180px;
+  width: 64px;
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 15px;
   background: var(--panel-bg);
   border-right: 1px solid var(--border);
-  transition: width 0.15s ease;
-}
-/* `:not([data-menu-pos^='top'])` : voir le commentaire détaillé plus bas ("Rail replié") — même
-   raison, `isRailCollapsed` n'a pas de sens en position haute. */
-.dashboard-rail.is-collapsed:not([data-menu-pos^='top']) {
-  width: 64px;
 }
 
 /* Position à droite (voir DashboardLayoutService.menuPos, DashboardComponent) : la bordure de
@@ -41,12 +37,10 @@
 }
 
 /* Position en haut (`top-left`/`top-right`) : bande horizontale sous l'en-tête plutôt que rail
-   vertical — icône ET libellé en toutes lettres, contrairement au repli manuel côté (voir
-   `.is-collapsed` plus bas) : largement assez de largeur disponible dans une bande horizontale
-   (même logique que le rail latéral déplié), là où celui-ci se réduit volontairement à une bande
-   d'icônes pour économiser de la LARGEUR (ressource rare sur le côté, pas ici). Le repli manuel
-   (`.dashboard-rail-collapse-toggle`) n'a donc plus de sens dans cette orientation : masqué plutôt
-   que réadapté. */
+   vertical — icône ET libellé en toutes lettres, contrairement aux positions latérales (toujours
+   en icônes seules, voir plus bas) : largement assez de largeur disponible dans une bande
+   horizontale, là où le rail latéral se réduit volontairement à une bande d'icônes pour économiser
+   de la LARGEUR (ressource rare sur le côté, pas ici). */
 .dashboard-rail[data-menu-pos^='top'] {
   width: 100%;
   height: auto;
@@ -76,9 +70,6 @@
   width: auto;
   flex-shrink: 0;
   padding: 8px 12px;
-}
-.dashboard-rail[data-menu-pos^='top'] .dashboard-rail-collapse-toggle {
-  display: none;
 }
 
 .dashboard-rail-scroll {
@@ -174,24 +165,21 @@
   color: var(--on-accent);
 }
 
-/* Rail replié : ne plus montrer que l'icône de chaque bouton, centrée — même règle que
-   `.profile-rail.is-collapsed`. `:not([data-menu-pos^='top'])` sur les 3 règles de ce bloc :
-   `isRailCollapsed` (le repli MANUEL du rail, voir DashboardRailComponent) est un état indépendant
-   de `menuPos`, persisté séparément — un utilisateur peut très bien l'avoir replié en position
-   latérale puis être passé en position haute, où ce repli manuel n'a de toute façon plus de sens
-   (bouton masqué, voir plus haut). Sans cette exclusion, ces 3 règles gagnaient quand même la
-   cascade face aux règles `[data-menu-pos^='top']` plus haut (même spécificité, mais déclarées
-   AVANT dans ce fichier) et masquaient silencieusement libellés/badges même en position haute — bug
-   réel remonté par l'utilisateur (capture à l'appui), un rail haut réduit à une mince bande
-   d'icônes sans libellé, avec en prime une scrollbar horizontale inutile (bande artificiellement
-   trop étroite pour son contenu réel une fois les libellés coupés). */
-.dashboard-rail.is-collapsed:not([data-menu-pos^='top']) .dashboard-rail-btn {
+/* Rail toujours en icônes seules en position latérale (pas de repli manuel réglable, voir
+   commentaire de classe dans `DashboardRailComponent`) : ne montrer que l'icône de chaque bouton,
+   centrée — même rendu que `.profile-rail.is-collapsed`, mais permanent ici plutôt que conditionné
+   à un état repliable. `:not([data-menu-pos^='top'])` sur les 3 règles de ce bloc : la position
+   haute (bande horizontale) affiche icône ET libellé, voir plus haut — sans cette exclusion, ces
+   règles gagneraient quand même la cascade face à `[data-menu-pos^='top']` (même spécificité, mais
+   déclarée avant dans ce fichier) et masqueraient silencieusement libellés/badges même en position
+   haute. */
+.dashboard-rail:not([data-menu-pos^='top']) .dashboard-rail-btn {
   justify-content: center;
   padding: 14px 0;
   gap: 0;
 }
-.dashboard-rail.is-collapsed:not([data-menu-pos^='top']) .dashboard-rail-label,
-.dashboard-rail.is-collapsed:not([data-menu-pos^='top']) .dashboard-rail-count {
+.dashboard-rail:not([data-menu-pos^='top']) .dashboard-rail-label,
+.dashboard-rail:not([data-menu-pos^='top']) .dashboard-rail-count {
   display: none;
 }
 /* Contrairement au simple compteur de Combat ci-dessus, le badge DE NOTIFICATION de Chat reste
@@ -201,7 +189,7 @@
    (comme un badge d'appli classique) plutôt que la pilule alignée à droite du libellé — ce
    dernier est masqué, plus de place pour l'aligner ainsi. `.dashboard-rail-btn` porte déjà
    `position: relative`, sert ici d'ancre pour ce `position: absolute`. */
-.dashboard-rail.is-collapsed:not([data-menu-pos^='top']) .dashboard-rail-count-notif {
+.dashboard-rail:not([data-menu-pos^='top']) .dashboard-rail-count-notif {
   display: flex;
   position: absolute;
   top: 18px;
@@ -211,44 +199,6 @@
   padding: 0 3px;
   font-size: 0.62rem;
   border: 2px solid var(--panel-bg);
-}
-
-.dashboard-rail-collapse-toggle {
-  flex-shrink: 0;
-  display: flex;
-  justify-content: flex-start;
-  height: 32px;
-  color: var(--text-muted);
-  background: transparent;
-  cursor: pointer;
-  border-radius: 7px;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
-}
-.dashboard-rail-collapse-toggle:hover {
-  background: var(--tint-weak);
-  color: var(--text-color);
-}
-/* Rotation sur un `<span>` wrapper, pas directement sur `<svg>` — même raison que
-   `.profile-rail-collapse-icon` (voir CLAUDE.md, icônes SVG génériques). Pointe vers la gauche
-   (replier) déplié, vers la droite (déplier) replié. */
-.dashboard-rail-collapse-icon {
-  display: flex;
-  transition: transform 0.15s ease;
-}
-.dashboard-rail-collapse-icon.is-collapsed {
-  transform: rotate(180deg);
-}
-/* Miroir horizontal quand le rail est à DROITE (voir `.dashboard-rail[data-menu-pos='right']`
-   plus haut) : par défaut l'icône pointe vers la gauche (replier vers un rail à gauche) — sans ce
-   miroir, elle continuerait de pointer à gauche même une fois le rail passé à droite, à l'opposé
-   du sens réel de repli. */
-.dashboard-rail[data-menu-pos='right'] .dashboard-rail-collapse-icon {
-  transform: scaleX(-1);
-}
-.dashboard-rail[data-menu-pos='right'] .dashboard-rail-collapse-icon.is-collapsed {
-  transform: scaleX(-1) rotate(180deg);
 }
 
 /* Menu latéral desktop uniquement — Combat/Chat redeviennent de simples onglets en mobile, la

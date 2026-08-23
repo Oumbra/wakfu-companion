@@ -83,7 +83,7 @@ export interface DashboardLayoutPrefs {
 }
 
 const DEFAULT_PREFS: DashboardLayoutPrefs = {
-  menuPos: 'right',
+  menuPos: 'left',
   kpiPos: 'top',
   bodyMode: 'focus',
   // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' n'est plus
@@ -94,7 +94,7 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   // Achats + Échanges regroupés par défaut dans une seule carte Historique ; Combats reste solo,
   // mis en avant (voir bodyMode/focusTarget ci-dessus).
   historyGroup: { combats: false, purchases: true, trades: true },
-  blockOrder: ['combats', 'purchases', 'trades', 'chat'],
+  blockOrder: ['combats', 'chat', 'purchases', 'trades'],
   collapsedSections: {},
 };
 

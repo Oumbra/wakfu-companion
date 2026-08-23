@@ -62,6 +62,7 @@
   overflow-y: auto;
   flex-grow: 1;
   min-height: 0;
+  max-height: 270px;
   transition: background-color 0.15s;
 }
 .half-list.drag-over {
