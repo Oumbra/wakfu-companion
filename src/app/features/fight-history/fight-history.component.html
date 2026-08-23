@@ -49,6 +49,7 @@
   @if (combatPanel.hasActiveFight()) {
     <div
       class="ongoing-fight-toggle has-active-fight"
+      [class.sticky]="combatPanel.collapsed()"
       (click)="combatPanel.setCollapsed(!combatPanel.collapsed())"
     >
       <span class="ongoing-fight-label">{{ 'damageMeter.header' | t }}</span>
@@ -269,13 +270,13 @@
                 <div class="loot-header-left">
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
+                  @if (record.kamas > 0) {
+                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                  }
                   @if (record.loot.length > 0) {
                     <span class="loot-count"
                       >{{ record.loot.length }} {{ 'damageMeter.items' | t }}</span
                     >
-                  }
-                  @if (record.kamas > 0) {
-                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
                   }
                 </div>
                 @if (record.loot.length > 1 && isFightLootExpanded(record.id)) {

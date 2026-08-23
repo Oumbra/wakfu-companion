@@ -29,14 +29,14 @@
   align-items: center;
   gap: 10px;
   height: 41px;
-  padding: 0 10px;
+  padding: 0 15px;
   cursor: pointer;
   flex-shrink: 0;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
+  letter-spacing: 1px;
+  color: var(--accent);
   border-bottom: 1px solid var(--border);
 }
 .combat-info-toggle:hover {
@@ -45,9 +45,19 @@
 .combat-info-label {
   grid-column: 1;
   justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.combat-info-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 .combat-info-end {
   grid-column: 3;
