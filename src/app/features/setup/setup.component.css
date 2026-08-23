@@ -106,8 +106,8 @@ button.hint-btn {
 }
 .hint-image {
   display: block;
-  max-width: min(320px, 60vw);
-  max-height: 260px;
+  max-width: min(700px, 60vw);
+  max-height: 500px;
   width: auto;
   height: auto;
   border-radius: 8px;
@@ -133,6 +133,9 @@ button.hint-btn {
   .hint-block {
     align-self: center;
   }
+  .hint-trigger {
+    flex-direction: row-reverse;
+  }
   .hint-image-wrap {
     position: static;
     transform: none;
@@ -142,6 +145,9 @@ button.hint-btn {
   }
   .hint-image {
     max-width: min(320px, 80vw);
+  }
+  .hint-arrow {
+    transform: rotate(164deg);
   }
 }
 
