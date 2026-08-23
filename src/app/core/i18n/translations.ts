@@ -250,9 +250,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "→ {{count}} cartes d'historique : {{names}}",
     'profile.dashboardLayout.orderTitle': 'Ordre des blocs',
     'profile.dashboardLayout.orderDesc':
-      "Choisis dans quel ordre s'affichent Combats, Achats, Échanges et Chat — cet ordre s'applique aussi bien en répartition égale qu'aux cartes secondaires empilées à côté de la mise en avant.",
-    'profile.dashboardLayout.orderUp': 'Monter',
-    'profile.dashboardLayout.orderDown': 'Descendre',
+      "Glisse une carte sur une autre pour échanger leur place, ou utilise les flèches qui apparaissent au survol. En mise en avant, seules les cartes secondaires (empilées à côté) peuvent changer d'ordre entre elles — la carte mise en avant se choisit juste au-dessus.",
+    'profile.dashboardLayout.orderHint':
+      'Cet aperçu montre toutes les cartes actives, même celles repliées en ce moment sur le vrai tableau de bord.',
     'profile.dashboardLayout.bodyTitle': 'Composition du corps',
     'profile.dashboardLayout.bodyDesc': 'Ce qui reste une fois le menu et les objectifs placés.',
     'profile.dashboardLayout.body.equal.name': 'Répartition égale',
@@ -820,9 +820,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.historySplitSummaryMany': '→ {{count}} history cards: {{names}}',
     'profile.dashboardLayout.orderTitle': 'Block order',
     'profile.dashboardLayout.orderDesc':
-      'Choose the order Combat, Purchases, Trades and Chat appear in — this order applies both to the even split and to the secondary cards stacked next to the highlighted one.',
-    'profile.dashboardLayout.orderUp': 'Move up',
-    'profile.dashboardLayout.orderDown': 'Move down',
+      'Drag a card onto another to swap places, or use the arrows that appear on hover. In highlight mode, only the secondary cards (stacked alongside) can swap order — the highlighted card itself is chosen just above.',
+    'profile.dashboardLayout.orderHint':
+      'This preview shows every active card, even ones currently collapsed on the real dashboard.',
     'profile.dashboardLayout.bodyTitle': 'Body composition',
     'profile.dashboardLayout.bodyDesc': "Whatever's left once the menu and objectives are placed.",
     'profile.dashboardLayout.body.equal.name': 'Even split',
@@ -1385,9 +1385,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       '→ {{count}} tarjetas de historial: {{names}}',
     'profile.dashboardLayout.orderTitle': 'Orden de los bloques',
     'profile.dashboardLayout.orderDesc':
-      'Elige en qué orden aparecen Combates, Compras, Intercambios y Chat — este orden se aplica tanto al reparto igual como a las tarjetas secundarias apiladas junto a la destacada.',
-    'profile.dashboardLayout.orderUp': 'Subir',
-    'profile.dashboardLayout.orderDown': 'Bajar',
+      'Arrastra una tarjeta sobre otra para intercambiar su posición, o usa las flechas que aparecen al pasar el cursor. En modo destacado, solo las tarjetas secundarias (apiladas al lado) pueden cambiar de orden entre sí — la tarjeta destacada se elige justo arriba.',
+    'profile.dashboardLayout.orderHint':
+      'Esta vista previa muestra todas las tarjetas activas, incluso las que ahora mismo están plegadas en el panel real.',
     'profile.dashboardLayout.bodyTitle': 'Composición del cuerpo',
     'profile.dashboardLayout.bodyDesc': 'Lo que queda una vez colocados el menú y los objetivos.',
     'profile.dashboardLayout.body.equal.name': 'Reparto igual',
@@ -1954,9 +1954,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       '→ {{count}} cartões de histórico: {{names}}',
     'profile.dashboardLayout.orderTitle': 'Ordem dos blocos',
     'profile.dashboardLayout.orderDesc':
-      'Escolha em que ordem aparecem Combates, Compras, Trocas e Chat — essa ordem se aplica tanto à divisão igual quanto aos cartões secundários empilhados ao lado do destaque.',
-    'profile.dashboardLayout.orderUp': 'Subir',
-    'profile.dashboardLayout.orderDown': 'Descer',
+      'Arraste um cartão sobre outro para trocar de lugar, ou use as setas que aparecem ao passar o cursor. No modo destaque, só os cartões secundários (empilhados ao lado) podem trocar de ordem entre si — o cartão em destaque se escolhe logo acima.',
+    'profile.dashboardLayout.orderHint':
+      'Esta prévia mostra todos os cartões ativos, mesmo os que estão recolhidos agora no painel real.',
     'profile.dashboardLayout.bodyTitle': 'Composição do corpo',
     'profile.dashboardLayout.bodyDesc': 'O que resta depois de posicionar o menu e os objetivos.',
     'profile.dashboardLayout.body.equal.name': 'Divisão igual',

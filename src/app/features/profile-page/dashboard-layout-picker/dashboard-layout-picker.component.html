@@ -140,46 +140,6 @@
     <p class="dlp-hint dlp-hint-warn">{{ 'profile.dashboardLayout.historyGroupNeedsTwo' | t }}</p>
   }
 
-  <!-- ============ Ordre des blocs ============ -->
-  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.orderTitle' | t }}</h4>
-  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.orderDesc' | t }}</p>
-  <div class="dlp-setting-rows">
-    @for (
-      key of layout.blockOrder();
-      track key;
-      let i = $index;
-      let first = $first;
-      let last = $last
-    ) {
-      <div class="dlp-setting-row">
-        <span class="dlp-setting-dot" [class]="'sw-' + key"></span>
-        <span class="dlp-setting-text">
-          <b>{{ blockLabelKey(key) | t }}</b>
-        </span>
-        <div class="dlp-order-btns">
-          <button
-            type="button"
-            class="icon-btn dlp-order-btn dlp-order-btn-up"
-            [disabled]="first"
-            [appTooltip]="'profile.dashboardLayout.orderUp' | t"
-            (click)="layout.moveBlock(key, -1)"
-          >
-            <app-icon name="chevron-left" [size]="14" [strokeWidth]="2.4" />
-          </button>
-          <button
-            type="button"
-            class="icon-btn dlp-order-btn dlp-order-btn-down"
-            [disabled]="last"
-            [appTooltip]="'profile.dashboardLayout.orderDown' | t"
-            (click)="layout.moveBlock(key, 1)"
-          >
-            <app-icon name="chevron-left" [size]="14" [strokeWidth]="2.4" />
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-
   <!-- ============ Composition du corps ============ -->
   <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.bodyTitle' | t }}</h4>
   <p class="dlp-subdesc">{{ 'profile.dashboardLayout.bodyDesc' | t }}</p>
@@ -220,7 +180,6 @@
             class="dlp-chip"
             [class]="'sw-' + slot.sw"
             [class.selected]="layout.focusTarget() === slot.key"
-            [class.unavailable]="!isChipAvailable(slot.key)"
             (click)="chooseFocusTarget(slot.key)"
           >
             <span class="dlp-chip-dot"></span>{{ slot.label }}
@@ -244,4 +203,27 @@
       </div>
     </div>
   }
+
+  <!-- ============ Ordre des blocs ============ -->
+  <!-- Volontairement tout à la fin : n'a de sens qu'une fois le regroupement de l'historique et la
+       composition du corps déjà choisis (voir CLAUDE.md/commit) — réutilise LE MÊME composant que
+       l'aperçu du haut de page (`previewCells`/`previewFocus`, déjà indépendants du repli réel des
+       cartes, voir leur doc de tête), simplement rendu en grand et interactif. -->
+  <h4 class="dlp-subhead">{{ 'profile.dashboardLayout.orderTitle' | t }}</h4>
+  <p class="dlp-subdesc">{{ 'profile.dashboardLayout.orderDesc' | t }}</p>
+  <div class="dlp-order-preview">
+    <app-dashboard-layout-schema
+      [menuPos]="layout.menuPos()"
+      [kpiPos]="layout.kpiPos()"
+      [menuReduced]="layout.isCollapsed('menu')"
+      [kpiReduced]="layout.isCollapsed('kpi')"
+      [cells]="previewCells()"
+      [focus]="previewFocus()"
+      [focusSide]="layout.focusSide()"
+      [emptyLabel]="'profile.dashboardLayout.summaryBodyEmpty' | t"
+      [interactive]="true"
+      (swap)="onOrderSwap($event)"
+    />
+  </div>
+  <p class="dlp-hint">{{ 'profile.dashboardLayout.orderHint' | t }}</p>
 </div>

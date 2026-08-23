@@ -2,17 +2,17 @@ import { Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { IconComponent } from '../../../shared/icon/icon.component';
 import { SwitchComponent } from '../../../shared/switch/switch.component';
-import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 import {
   DashboardLayoutSchemaCell,
   DashboardLayoutSchemaComponent,
   DashboardLayoutSchemaFocus,
+  DashboardLayoutSchemaSwap,
   DashboardKpiPos,
   DashboardMenuPos,
 } from '../../../shared/dashboard-layout-schema/dashboard-layout-schema.component';
 import { I18nService } from '../../../core/services/i18n.service';
 import {
-  DashboardBlockKey,
+  DashboardBodyMode,
   DashboardBodySlot,
   DashboardBodySlotKey,
   DashboardFocusSide,
@@ -22,6 +22,7 @@ import {
 import {
   dashboardBodySlotLabel,
   histLabelKey,
+  shortSlotLabelKey,
 } from '../../../core/services/dashboard-body-slot-label';
 
 interface LabeledSlot extends DashboardBodySlot {
@@ -64,13 +65,7 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
  */
 @Component({
   selector: 'app-dashboard-layout-picker',
-  imports: [
-    TranslatePipe,
-    IconComponent,
-    SwitchComponent,
-    DashboardLayoutSchemaComponent,
-    TooltipDirective,
-  ],
+  imports: [TranslatePipe, IconComponent, SwitchComponent, DashboardLayoutSchemaComponent],
   templateUrl: './dashboard-layout-picker.component.html',
   styleUrl: './dashboard-layout-picker.component.css',
 })
@@ -151,13 +146,6 @@ export class DashboardLayoutPickerComponent {
     return histLabelKey(key);
   }
 
-  /** Les 4 blocs logiques ordonnables (voir `DashboardBlockKey`) — libellé traduit réutilisant
-   * directement les clés déjà posées pour les 3 volets d'historique + Chat (légende, découpage),
-   * aucune nouvelle clé i18n nécessaire. */
-  protected blockLabelKey(key: DashboardBlockKey): string {
-    return key === 'chat' ? 'profile.dashboardLayout.slot.chat' : histLabelKey(key);
-  }
-
   private label(slots: readonly DashboardBodySlot[]): LabeledSlot[] {
     const group = this.layout.historyGroup();
     return slots.map((s) => ({
@@ -166,30 +154,63 @@ export class DashboardLayoutPickerComponent {
     }));
   }
 
+  /** Cartes actives, avec leur libellé COURT (voir `shortSlotLabelKey`) — celui posé DANS les
+   * vignettes colorées (`previewCells`/`previewFocus` ci-dessous), distinct du libellé long
+   * (`activeSlots`/`LabeledSlot.label`) utilisé pour les chips "Vue à mettre en avant" et les
+   * résumés textuels. */
+  private shortLabel(slots: readonly DashboardBodySlot[]): LabeledSlot[] {
+    return slots.map((s) => ({ ...s, label: this.i18n.t(shortSlotLabelKey(s.key)) }));
+  }
+
   protected readonly activeSlots = computed<LabeledSlot[]>(() =>
     this.label(this.layout.activeSlots()),
   );
   protected readonly chipSlots = computed<LabeledSlot[]>(() => this.label(this.layout.chipSlots()));
-  protected readonly visibleBodySlots = computed<LabeledSlot[]>(() =>
-    this.label(this.layout.visibleBodySlots()),
-  );
-  protected readonly effectiveBodyMode = this.layout.effectiveBodyMode;
+
+  /** Mode "effectif" pour LA PAGE DE PERSONNALISATION — sciemment DIFFÉRENT de
+   * `layout.effectiveBodyMode()` (celui du vrai tableau de bord) : ce dernier retombe sur la
+   * répartition égale si la cible visée est actuellement repliée EN VRAI, ce qui ferait dépendre
+   * l'aperçu/l'éditeur d'ordre de cet état de repli ponctuel — précisément ce qu'on veut éviter ici
+   * (retour utilisateur : l'aperçu doit montrer la disposition "au complet", pas ce qui est
+   * actuellement replié). Seule la logique de regroupement (une cible retirée par `historyGroup`,
+   * pas par un repli manuel) fait encore basculer en répartition égale, car ÇA reste une vraie
+   * incohérence de configuration à refléter. */
+  protected readonly previewBodyMode = computed<DashboardBodyMode>(() => {
+    if (this.layout.bodyMode() !== 'focus') return 'equal';
+    return this.layout.activeSlots().some((s) => s.key === this.layout.focusTarget())
+      ? 'focus'
+      : 'equal';
+  });
 
   protected readonly previewCells = computed<DashboardLayoutSchemaCell[] | null>(() => {
-    if (this.effectiveBodyMode() !== 'equal') return null;
-    const vis = this.visibleBodySlots();
-    return vis.map((s, i) => ({ sw: s.sw, span2: vis.length % 2 === 1 && i === vis.length - 1 }));
+    if (this.previewBodyMode() !== 'equal') return null;
+    const vis = this.shortLabel(this.layout.activeSlots());
+    return vis.map((s, i) => ({
+      sw: s.sw,
+      span2: vis.length % 2 === 1 && i === vis.length - 1,
+      label: s.label,
+      key: s.key,
+    }));
   });
   protected readonly previewFocus = computed<DashboardLayoutSchemaFocus | null>(() => {
-    if (this.effectiveBodyMode() !== 'focus') return null;
-    const vis = this.visibleBodySlots();
+    if (this.previewBodyMode() !== 'focus') return null;
+    const vis = this.shortLabel(this.layout.activeSlots());
     const main = vis.find((s) => s.key === this.layout.focusTarget());
     if (!main) return null;
     return {
-      main: { sw: main.sw },
-      secondaries: vis.filter((s) => s.key !== main.key).map((s) => ({ sw: s.sw })),
+      main: { sw: main.sw, label: main.label },
+      secondaries: vis
+        .filter((s) => s.key !== main.key)
+        .map((s) => ({ sw: s.sw, label: s.label, key: s.key })),
     };
   });
+
+  /** Relaie l'échange émis par l'éditeur d'ordre interactif (voir `interactive`/`swap` sur
+   * `<app-dashboard-layout-schema>`, section "Ordre des blocs" du template) — les clés sont celles
+   * posées ci-dessus (`DashboardBodySlotKey`), le composant schéma ne les interprète pas lui-même. */
+  protected onOrderSwap(event: DashboardLayoutSchemaSwap): void {
+    this.layout.swapSlots(event.a as DashboardBodySlotKey, event.b as DashboardBodySlotKey);
+  }
 
   /** Vrai quand exactement 1 volet est coché "à regrouper" — insuffisant pour activer le
    * regroupement (voir `DashboardLayoutService.activeSlots`, "au moins 2"), affiche un rappel sous
@@ -216,8 +237,8 @@ export class DashboardLayoutPickerComponent {
     this.i18n.t(this.kpiOptions.find((o) => o.value === this.layout.kpiPos())!.nameKey),
   );
   protected readonly summaryBodyLabel = computed(() => {
-    const vis = this.visibleBodySlots();
-    const mode = this.effectiveBodyMode();
+    const vis = this.activeSlots();
+    const mode = this.previewBodyMode();
     if (vis.length === 0) return this.i18n.t('profile.dashboardLayout.summaryBodyEmpty');
     if (mode === 'focus') {
       const target = this.chipSlots().find((s) => s.key === this.layout.focusTarget());
@@ -240,10 +261,6 @@ export class DashboardLayoutPickerComponent {
       })
     );
   });
-
-  protected isChipAvailable(key: DashboardBodySlotKey): boolean {
-    return this.visibleBodySlots().some((s) => s.key === key);
-  }
 
   protected chooseFocusTarget(key: DashboardBodySlotKey): void {
     this.layout.setFocusTarget(key);
