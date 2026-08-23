@@ -28,6 +28,8 @@
        de ce bouton, jamais 'row' — voir CLAUDE.md), tant qu'au moins une section du rail profil a
        quelque chose de nouveau. -->
   @if (variant() === 'header' && newSectionBadge.hasAnyUnseen()) {
-    <span class="profile-new-dot" aria-hidden="true"></span>
+    <!-- Texte "NEW" volontairement non traduit (voir CLAUDE.md) : même mot-clé quelle que soit la
+         langue de l'app. -->
+    <span class="profile-new-badge" aria-hidden="true">NEW</span>
   }
 </button>
