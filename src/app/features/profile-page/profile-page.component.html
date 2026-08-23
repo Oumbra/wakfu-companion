@@ -265,7 +265,10 @@
           </div>
         </div>
 
-        <div class="tool-panel" [class.tab-hidden]="activeTab() !== 'customization'">
+        <div
+          class="tool-panel customization-tool-panel"
+          [class.tab-hidden]="activeTab() !== 'customization'"
+        >
           <div class="panel-body">
             <app-dashboard-layout-picker />
           </div>

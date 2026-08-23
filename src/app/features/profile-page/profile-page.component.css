@@ -247,6 +247,10 @@ même colonne étroite que les sections courtes (voir CLAUDE.md, décalage signa
   border: unset;
   border-radius: unset;
   overflow: hidden;
+  /* NB : `overflow: hidden` ci-dessus est levé pour l'onglet Personnalisation (voir
+     `.customization-tool-panel` plus bas, même besoin de sticky que `.roster-tool-panel`) — même
+     spécificité scopée (0,2,0), donc l'override doit rester déclaré APRÈS cette règle-ci dans le
+     fichier pour gagner la cascade (ordre source, pas juste la spécificité). */
   align-items: center;
 }
 .panel-body {
@@ -897,6 +901,18 @@ en flux normal pour que les deux se poussent au lieu de se chevaucher. */
   width: 14px;
   height: 14px;
   flex-shrink: 0;
+}
+
+/* Même piège sticky que `.roster-tool-panel` juste en dessous (voir son commentaire détaillé et
+CLAUDE.md) : `.tool-panel` porte `overflow: hidden` (règle générale ci-dessus ET globale de
+styles.css) — n'importe quel ancêtre avec un overflow autre que `visible` entre l'élément sticky
+(`.dlp-preview`, DashboardLayoutPickerComponent) et le vrai conteneur défilant (`.app-page-body`)
+casse le calcul du sticky, même sans jamais rien clipper visuellement en pratique. Override scopé
+à CET onglet seul (classe dédiée) : les autres `.tool-panel` de la page gardent le clip habituel.
+Déclaré ICI (après la règle `.tool-panel` générale ci-dessus, même spécificité scopée 0,2,0) pour
+gagner la cascade par ordre source — voir NB sur cette règle générale. */
+.customization-tool-panel {
+  overflow: visible;
 }
 
 /* `container-type: inline-size` posé sur `.roster-tool-panel` (l'ANCÊTRE), pas sur
