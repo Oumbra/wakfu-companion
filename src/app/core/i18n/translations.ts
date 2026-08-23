@@ -259,10 +259,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSideLabel': 'Côté des autres sections',
     'profile.dashboardLayout.focusSide.left': 'Sections à gauche',
     'profile.dashboardLayout.focusSide.right': 'Sections à droite',
-    'profile.dashboardLayout.collapseTitle': 'Repli des sections',
-    'profile.dashboardLayout.collapseDesc':
-      "Menu et Objectifs se réduisent à une bande d'icônes. Combat et les cartes d'historique/Chat disparaissent entièrement — l'espace libéré revient aux vues encore visibles.",
-    'profile.dashboardLayout.combatUnavailable': 'Indisponible hors combat',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objectifs',
     'profile.dashboardLayout.slot.combat': 'Combat',
@@ -826,10 +822,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSideLabel': 'Side of the other sections',
     'profile.dashboardLayout.focusSide.left': 'Sections on the left',
     'profile.dashboardLayout.focusSide.right': 'Sections on the right',
-    'profile.dashboardLayout.collapseTitle': 'Collapsing sections',
-    'profile.dashboardLayout.collapseDesc':
-      'Menu and Objectives shrink to a thin icon strip. Combat and the History/Chat cards disappear entirely — the freed space goes to whatever is still visible.',
-    'profile.dashboardLayout.combatUnavailable': 'Unavailable outside combat',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objectives',
     'profile.dashboardLayout.slot.combat': 'Combat',
@@ -1387,10 +1379,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSideLabel': 'Lado de las demás secciones',
     'profile.dashboardLayout.focusSide.left': 'Secciones a la izquierda',
     'profile.dashboardLayout.focusSide.right': 'Secciones a la derecha',
-    'profile.dashboardLayout.collapseTitle': 'Repliegue de secciones',
-    'profile.dashboardLayout.collapseDesc':
-      'Menú y Objetivos se reducen a una franja de iconos. Combate y las tarjetas de Historial/Chat desaparecen por completo — el espacio liberado pasa a las vistas que siguen visibles.',
-    'profile.dashboardLayout.combatUnavailable': 'No disponible fuera de combate',
     'profile.dashboardLayout.slot.menu': 'Menú',
     'profile.dashboardLayout.slot.kpi': 'Objetivos',
     'profile.dashboardLayout.slot.combat': 'Combate',
@@ -1952,10 +1940,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSideLabel': 'Lado das outras seções',
     'profile.dashboardLayout.focusSide.left': 'Seções à esquerda',
     'profile.dashboardLayout.focusSide.right': 'Seções à direita',
-    'profile.dashboardLayout.collapseTitle': 'Recolhimento das seções',
-    'profile.dashboardLayout.collapseDesc':
-      'Menu e Objetivos encolhem para uma faixa de ícones. Combate e os cartões de Histórico/Chat desaparecem por completo — o espaço liberado vai para as vistas ainda visíveis.',
-    'profile.dashboardLayout.combatUnavailable': 'Indisponível fora de combate',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objetivos',
     'profile.dashboardLayout.slot.combat': 'Combate',
