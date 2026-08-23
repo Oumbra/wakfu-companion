@@ -220,6 +220,16 @@
 .dashboard-rail-collapse-icon.is-collapsed {
   transform: rotate(180deg);
 }
+/* Miroir horizontal quand le rail est à DROITE (voir `.dashboard-rail[data-menu-pos='right']`
+   plus haut) : par défaut l'icône pointe vers la gauche (replier vers un rail à gauche) — sans ce
+   miroir, elle continuerait de pointer à gauche même une fois le rail passé à droite, à l'opposé
+   du sens réel de repli. */
+.dashboard-rail[data-menu-pos='right'] .dashboard-rail-collapse-icon {
+  transform: scaleX(-1);
+}
+.dashboard-rail[data-menu-pos='right'] .dashboard-rail-collapse-icon.is-collapsed {
+  transform: scaleX(-1) rotate(180deg);
+}
 
 /* Menu latéral desktop uniquement — Combat/Chat redeviennent de simples onglets en mobile, la
    notion de repli ne s'y applique pas (même breakpoint que `.collapse-btn`, styles.css). */
