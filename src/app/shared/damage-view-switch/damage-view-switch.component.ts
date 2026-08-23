@@ -9,9 +9,9 @@ export type DamageViewMode = 'total' | 'turn';
  * (voir EntityDamageListComponent) — un seul exemplaire pilote les deux listes
  * d'un même combat, jamais un par liste (la notion de tour est celle du
  * combat, pas d'un camp). Le pas à pas de tour (‹ Tour N ›) n'apparaît qu'en
- * mode 'turn'. Réutilisé par DamageMeterComponent (combat en cours) et
- * FightHistoryComponent (un combat de l'historique) plutôt que dupliqué :
- * même règle que les autres panneaux d'outils (voir CLAUDE.md).
+ * mode 'turn'. Réutilisé par CombatDetailComponent (combat en cours ET combat de l'historique,
+ * voir FightHistoryComponent) plutôt que dupliqué : même règle que les autres panneaux d'outils
+ * (voir CLAUDE.md).
  */
 @Component({
   selector: 'app-damage-view-switch',
@@ -26,10 +26,9 @@ export class DamageViewSwitchComponent {
   /** Dernier tour disponible pour ce combat (voir Fight.turnCount/FightRecord.turns) — borne haute
    * du pas à pas, toujours >= 1. */
   readonly maxTurn = input.required<number>();
-  /** Clé i18n du libellé du bouton "Total" — surchargeable par l'appelant (ex.
-   * FightHistoryComponent utilise "Cumulé" plutôt que "Total", un combat de l'historique
-   * étant déjà terminé). Par défaut 'damageMeter.viewTotal' (utilisé par DamageMeterComponent,
-   * combat en cours). */
+  /** Clé i18n du libellé du bouton "Total" — surchargeable par l'appelant (ex. un combat de
+   * l'historique utilise "Cumulé" plutôt que "Total", étant déjà terminé). Par défaut
+   * 'damageMeter.viewTotal' (combat en cours). */
   readonly totalLabelKey = input<string>('damageMeter.viewTotal');
 
   readonly modeChange = output<DamageViewMode>();

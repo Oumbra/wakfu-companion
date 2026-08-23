@@ -37,15 +37,17 @@ const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trad
 
 /** Illustration fixe des vignettes de préréglage (menu/objectifs/corps) — indépendante du choix
  * réel de l'utilisateur, seulement là pour montrer la forme générale de chaque option (voir
- * `DashboardLayoutSchemaComponent`, purement décoratif, pas de libellé rendu dans les cases). */
+ * `DashboardLayoutSchemaComponent`, purement décoratif, pas de libellé rendu dans les cases). Pas
+ * de carte "Combat" (voir CLAUDE.md/DashboardBodySlotKey) : 3 cartes Historique (groupée +
+ * scissions) + Chat suffisent à illustrer la forme générale. */
 const THUMB_CELLS: readonly DashboardLayoutSchemaCell[] = [
-  { sw: 'combat' },
+  { sw: 'history' },
   { sw: 'history' },
   { sw: 'history' },
   { sw: 'chat' },
 ];
 const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
-  main: { sw: 'combat' },
+  main: { sw: 'history' },
   secondaries: [{ sw: 'history' }, { sw: 'history' }, { sw: 'chat' }],
 };
 

@@ -14,14 +14,6 @@
       [style.grid-template-columns]="layout.panelsColumns()"
       [style.grid-template-rows]="'repeat(' + layout.panelsRowCount() + ', minmax(0, 1fr))'"
     >
-      @if (combatPanel.hasActiveFight() && !combatPanel.collapsed()) {
-        <app-damage-meter
-          [class.tab-hidden]="activeTab() !== 'damage'"
-          [style.grid-column]="layout.gridPlan()['combat'].gridColumn"
-          [style.grid-row]="layout.gridPlan()['combat'].gridRow"
-          [style.order]="layout.gridPlan()['combat'].order"
-        />
-      }
       <app-tracker
         [class.tab-hidden]="activeTab() !== 'tracker'"
         [style.grid-column]="layout.gridPlan()['tracker'].gridColumn"

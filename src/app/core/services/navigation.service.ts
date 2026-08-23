@@ -5,8 +5,10 @@ export type AppView = 'main' | 'profile' | 'legal' | 'account';
 /** Onglets mobile du tableau de bord (voir `DashboardComponent`, sur `main`) — définis ici (plutôt
  * que dans le composant) pour que `NavigationService`/`RouteSyncService`/`app.routes.ts` puissent
  * s'y référer sans dépendre d'un composant `features/`. `'tracker'` est la racine (path `''`, pas
- * de segment dédié) — voir `pagePathFor`. */
-export type DashboardTab = 'damage' | 'tracker' | 'history' | 'chat';
+ * de segment dédié) — voir `pagePathFor`. Pas de `'damage'` : le combat en cours vit désormais dans
+ * `'history'` (sous-onglet Combats, voir CLAUDE.md/FightHistoryComponent) plutôt que dans un onglet
+ * dédié. */
+export type DashboardTab = 'tracker' | 'history' | 'chat';
 
 /** Onglets du rail de la page profil (voir `ProfilePageComponent`, sur `profile`) — même raison
  * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */

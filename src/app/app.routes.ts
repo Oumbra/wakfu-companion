@@ -18,7 +18,7 @@ import { PersistenceService } from './core/services/persistence.service';
  *
  * Sous `main`/`profile`, un segment supplémentaire annonce en plus la SECTION active de la page
  * (`NavigationService.dashboardTab`/`profileTab`, et un cran plus bas `historyTab` sous
- * `history`) — un chemin dédié par section (`history`, `chat`, `damage`, `profile/accessibility`,
+ * `history`) — un chemin dédié par section (`history`, `chat`, `profile/accessibility`,
  * `history/purchases`...) plutôt qu'un paramètre, pour qu'Angular détruise/recrée
  * `RouteBridgeComponent` à chaque changement de section exactement comme entre deux vues (voir son
  * commentaire). Omis pour la section "racine" de chaque page (`tracker`/`avatar`/`combats`, voir
@@ -92,9 +92,11 @@ export const routes: Routes = [
         data: { view: 'main', dashboardTab: 'chat' },
       },
       {
+        // Ancien onglet "Combat en cours", fusionné dans Historique › Combats (voir CLAUDE.md) —
+        // redirection plutôt que suppression, pour ne pas casser un favori/lien externe antérieur.
         path: 'damage',
-        component: RouteBridgeComponent,
-        data: { view: 'main', dashboardTab: 'damage' },
+        pathMatch: 'full',
+        redirectTo: 'history/fights',
       },
       {
         path: 'profile',

@@ -1,0 +1,35 @@
+<div class="combat-switch-row">
+  <app-damage-view-switch
+    [mode]="mode()"
+    [turn]="turn()"
+    [maxTurn]="maxTurn()"
+    [totalLabelKey]="totalLabelKey()"
+    (modeChange)="modeChange.emit($event)"
+    (turnChange)="turnChange.emit($event)"
+  />
+  <app-entity-stat-tabs [kind]="statKind()" (kindChange)="kindChange.emit($event)" />
+</div>
+<div class="entity-lists-row">
+  <app-entity-damage-list
+    [title]="'damageMeter.allies' | t"
+    side="ally"
+    [rows]="allyRows()"
+    [fightId]="statKind() === 'damage' ? fightId() : null"
+    [interactive]="interactive()"
+    [viewMode]="mode()"
+    [turn]="turn()"
+    [showElements]="showElements()"
+    [emptyMessage]="allyEmptyMessage()"
+  />
+  <app-entity-damage-list
+    [title]="'damageMeter.enemies' | t"
+    side="enemy"
+    [rows]="enemyRows()"
+    [fightId]="statKind() === 'damage' ? fightId() : null"
+    [interactive]="interactive()"
+    [viewMode]="mode()"
+    [turn]="turn()"
+    [showElements]="showElements()"
+    [emptyMessage]="enemyEmptyMessage()"
+  />
+</div>

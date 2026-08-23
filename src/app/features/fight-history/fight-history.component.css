@@ -102,6 +102,129 @@
   color: var(--accent);
 }
 
+/* Bandeau "Combat en cours" (voir CLAUDE.md, fusion avec l'ex-DamageMeterComponent) — toujours en
+   tête de liste, au-dessus de tout regroupement jour/lieu/type. Même gabarit que
+   `.collapsible-header` (icône/label + caret, hauteur fixe réduite), avec en plus un dégradé animé
+   et un badge (nombre de combats en cours, multi-compte) — même principe que
+   `.filters-toggle`/`.filters-toggle.has-filters`/`.filters-toggle-count`
+   (chat-panel.component.css) : CSS scopé par composant, pas de partage direct possible, dupliqué
+   ici sous des noms propres à ce panneau. */
+.ongoing-fight-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 41px;
+  padding: 0 15px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+.ongoing-fight-toggle:hover {
+  background: var(--surface-raised);
+}
+.ongoing-fight-toggle.has-active-fight {
+  background: linear-gradient(
+    135deg,
+    var(--surface-well) 0%,
+    color-mix(in srgb, var(--accent) 18%, var(--surface-well)) 50%,
+    var(--surface-well) 100%
+  );
+  background-size: 220% 220%;
+  animation: ongoing-fight-glow 7s ease-in-out infinite;
+}
+.ongoing-fight-toggle.has-active-fight:hover {
+  background: var(--surface-raised);
+  animation: none;
+}
+@keyframes ongoing-fight-glow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ongoing-fight-toggle.has-active-fight {
+    animation: none;
+  }
+}
+.ongoing-fight-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ongoing-fight-badge {
+  font-family: monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: var(--surface-raised);
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.ongoing-fight-toggle .caret {
+  margin-left: auto;
+}
+
+/* Repris de l'ex-DamageMeterComponent (voir CLAUDE.md) : plusieurs combats concurrents
+   (multi-compte), un onglet par combat, affiché au-dessus du nombre de tours. */
+.fight-tabs-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.fight-tab {
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+}
+.fight-tab:hover {
+  background: var(--surface-active);
+  color: var(--text-bright);
+}
+.fight-tab.selected {
+  background: color-mix(in srgb, var(--accent) 20%, var(--surface-well));
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.fight-stats-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 15px;
+  border-bottom: 1px solid var(--border);
+}
+.fight-turns {
+  color: var(--text-color);
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.fight-duration {
+  color: var(--text-muted);
+  font-family: monospace;
+  font-size: 0.72rem;
+}
+.fight-stats-sep {
+  color: var(--border-strong);
+}
+
 .fight-entry {
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -263,13 +386,6 @@
   border-top: 1px solid var(--border);
 }
 
-.history-view-switch-row {
-  display: flex;
-  justify-content: center;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-}
-
 .collapsible-section {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
@@ -402,7 +518,10 @@
     background: var(--panel-bg);
   }
   .fight-group-controls,
-  .history-view-switch-row {
+  .fight-tabs-row {
     background: var(--surface-active);
+  }
+  .fight-stats-row {
+    background: var(--surface-well);
   }
 }

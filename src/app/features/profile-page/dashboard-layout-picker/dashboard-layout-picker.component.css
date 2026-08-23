@@ -12,14 +12,12 @@
   display: contents;
   --lp-sw-menu: #838a99;
   --lp-sw-kpi: #e0b23d;
-  --lp-sw-combat: #e2586c;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
 }
 :host-context([data-theme='light']) {
   --lp-sw-menu: #6b7280;
   --lp-sw-kpi: #b8860f;
-  --lp-sw-combat: #c0364a;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
 }
@@ -29,9 +27,6 @@
 }
 .sw-kpi {
   --lp-sw: var(--lp-sw-kpi);
-}
-.sw-combat {
-  --lp-sw: var(--lp-sw-combat);
 }
 .sw-history {
   --lp-sw: var(--lp-sw-history);

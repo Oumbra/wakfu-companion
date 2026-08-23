@@ -1,24 +1,21 @@
-/* Occupe toute la largeur du panneau, sans marge/bordure/arrondi (contrairement à
-   `.icon-switch` — voir CLAUDE.md) : le composant EST la barre, `:host` porte donc directement le
-   flex plutôt qu'un wrapper interne. */
+/* Icônes seules, taille fixe compacte (voir CLAUDE.md) — ne partage plus toute la largeur du
+   panneau avec `.view-switch-row` (voir CombatDetailComponent, désormais sur la même ligne que le
+   switch Cumulé/Tour). */
 :host {
   display: flex;
-  width: 100%;
+  gap: 4px;
 }
 
 .entity-stat-tab {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   border: none;
-  border-radius: 0;
+  border-radius: 6px;
   background: var(--tint-medium);
   color: var(--text-muted);
-  font-size: 0.8rem;
-  font-weight: 700;
   cursor: pointer;
   transition: background 0.15s;
 }

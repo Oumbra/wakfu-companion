@@ -51,8 +51,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Chargement...',
 
     'damageMeter.header': 'Combat en cours',
-    'damageMeter.collapseHint': 'Réduire',
-    'damageMeter.expandHint': 'Agrandir',
     'damageMeter.allies': 'Alliés',
     'damageMeter.enemies': 'Ennemis',
     'damageMeter.emptyAllies': "Aucun allié n'a encore infligé de dégâts.",
@@ -207,7 +205,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Voir tous les avatars sur mon compte Ankama',
     'profile.dashboardLayout.title': 'Disposition du tableau de bord',
     'profile.dashboardLayout.desc':
-      'Choisis la position du menu et des objectifs, et comment se répartissent Combat, Historique et Chat.',
+      'Choisis la position du menu et des objectifs, et comment se répartissent Historique et Chat.',
     'profile.dashboardLayout.reset': 'Réinitialiser',
     'profile.dashboardLayout.defaultBadge': 'Réglage par défaut',
     'profile.dashboardLayout.summaryMenu': 'Menu : {{value}}',
@@ -265,7 +263,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSide.right': 'Sections à droite',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objectifs',
-    'profile.dashboardLayout.slot.combat': 'Combat en cours',
     'profile.dashboardLayout.slot.histCombats': 'Combats',
     'profile.dashboardLayout.slot.purchases': 'Achats',
     'profile.dashboardLayout.slot.trades': 'Échanges',
@@ -617,8 +614,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Loading...',
 
     'damageMeter.header': 'Current Fight',
-    'damageMeter.collapseHint': 'Collapse',
-    'damageMeter.expandHint': 'Expand',
     'damageMeter.allies': 'Allies',
     'damageMeter.enemies': 'Enemies',
     'damageMeter.emptyAllies': 'No ally has dealt damage yet.',
@@ -773,7 +768,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'See all avatars on my Ankama account',
     'profile.dashboardLayout.title': 'Dashboard layout',
     'profile.dashboardLayout.desc':
-      'Choose where the menu and objectives sit, and how Combat, History and Chat share the rest of the space.',
+      'Choose where the menu and objectives sit, and how History and Chat share the rest of the space.',
     'profile.dashboardLayout.reset': 'Reset',
     'profile.dashboardLayout.defaultBadge': 'Current default',
     'profile.dashboardLayout.summaryMenu': 'Menu: {{value}}',
@@ -831,7 +826,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSide.right': 'Sections on the right',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objectives',
-    'profile.dashboardLayout.slot.combat': 'Current Fight',
     'profile.dashboardLayout.slot.histCombats': 'Combats',
     'profile.dashboardLayout.slot.purchases': 'Purchases',
     'profile.dashboardLayout.slot.trades': 'Trades',
@@ -1176,8 +1170,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Cargando...',
 
     'damageMeter.header': 'Combate en curso',
-    'damageMeter.collapseHint': 'Contraer',
-    'damageMeter.expandHint': 'Expandir',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Enemigos',
     'damageMeter.emptyAllies': 'Ningún aliado ha infligido daño todavía.',
@@ -1332,7 +1324,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Ver todos los avatares en mi cuenta Ankama',
     'profile.dashboardLayout.title': 'Disposición del panel',
     'profile.dashboardLayout.desc':
-      'Elige la posición del menú y de los objetivos, y cómo se reparten Combate, Historial y Chat.',
+      'Elige la posición del menú y de los objetivos, y cómo se reparten Historial y Chat.',
     'profile.dashboardLayout.reset': 'Restablecer',
     'profile.dashboardLayout.defaultBadge': 'Ajuste por defecto',
     'profile.dashboardLayout.summaryMenu': 'Menú: {{value}}',
@@ -1392,7 +1384,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSide.right': 'Secciones a la derecha',
     'profile.dashboardLayout.slot.menu': 'Menú',
     'profile.dashboardLayout.slot.kpi': 'Objetivos',
-    'profile.dashboardLayout.slot.combat': 'Combate en curso',
     'profile.dashboardLayout.slot.histCombats': 'Combates',
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Intercambios',
@@ -1742,8 +1733,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'app.loading': 'Carregando...',
 
     'damageMeter.header': 'Combate em curso',
-    'damageMeter.collapseHint': 'Recolher',
-    'damageMeter.expandHint': 'Expandir',
     'damageMeter.allies': 'Aliados',
     'damageMeter.enemies': 'Inimigos',
     'damageMeter.emptyAllies': 'Nenhum aliado causou dano ainda.',
@@ -1898,7 +1887,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Ver todos os avatares na minha conta Ankama',
     'profile.dashboardLayout.title': 'Disposição do painel',
     'profile.dashboardLayout.desc':
-      'Escolha a posição do menu e dos objetivos, e como Combate, Histórico e Chat dividem o espaço.',
+      'Escolha a posição do menu e dos objetivos, e como Histórico e Chat dividem o espaço.',
     'profile.dashboardLayout.reset': 'Redefinir',
     'profile.dashboardLayout.defaultBadge': 'Ajuste padrão',
     'profile.dashboardLayout.summaryMenu': 'Menu: {{value}}',
@@ -1957,7 +1946,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.focusSide.right': 'Seções à direita',
     'profile.dashboardLayout.slot.menu': 'Menu',
     'profile.dashboardLayout.slot.kpi': 'Objetivos',
-    'profile.dashboardLayout.slot.combat': 'Combate em curso',
     'profile.dashboardLayout.slot.histCombats': 'Combates',
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Trocas',
