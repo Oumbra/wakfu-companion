@@ -238,9 +238,13 @@ export class DashboardLayoutService {
   /** Colonnes de `.panels-row` (`grid-template-columns`, posé en inline depuis DashboardComponent) —
    * 2 colonnes égales en répartition égale ; en mise en avant, une colonne étroite (les secondaires,
    * empilées) et une large (la cible, ~2x plus large — mêmes proportions que la maquette validée
-   * avec l'utilisateur), du côté choisi (`focusSide`). */
+   * avec l'utilisateur), du côté choisi (`focusSide`). Une seule colonne quand la cible est SEULE
+   * visible (toutes les secondaires repliées) : sans ce cas particulier, la cible resterait confinée
+   * à sa colonne large habituelle avec un vide béant à côté — plus aucune raison de réserver une
+   * colonne à des secondaires qui n'existent plus (bug réel remonté par l'utilisateur). */
   readonly panelsColumns = computed<string>(() => {
     if (this.effectiveBodyMode() !== 'focus') return 'repeat(2, minmax(0, 1fr))';
+    if (this.visibleBodySlots().length <= 1) return 'minmax(0, 1fr)';
     const narrow = 'minmax(260px, 1fr)';
     const wide = 'minmax(0, 2fr)';
     return this.focusSide() === 'left' ? `${narrow} ${wide}` : `${wide} ${narrow}`;
@@ -274,25 +278,32 @@ export class DashboardLayoutService {
     const items: DashboardGridKey[] = this.visibleBodySlots().map((s) => s.key);
     if (this.effectiveBodyMode() === 'focus') {
       const target = this.focusTarget();
-      const mainCol = this.focusSide() === 'left' ? '2' : '1';
-      const secCol = this.focusSide() === 'left' ? '1' : '2';
       const secondaries = items.filter((k) => k !== target);
-      plan[target] = {
-        key: target,
-        visible: true,
-        gridColumn: mainCol,
-        gridRow: '1 / -1',
-        order: 0,
-      };
-      secondaries.forEach((key, i) => {
-        plan[key] = {
-          key,
+      if (secondaries.length === 0) {
+        // Cible seule visible (toutes les secondaires repliées, voir `panelsColumns` — grille
+        // ramenée à une seule colonne dans ce cas) : pleine largeur plutôt que confinée à sa
+        // colonne habituelle.
+        plan[target] = { key: target, visible: true, gridColumn: '1 / -1', gridRow: '1', order: 0 };
+      } else {
+        const mainCol = this.focusSide() === 'left' ? '2' : '1';
+        const secCol = this.focusSide() === 'left' ? '1' : '2';
+        plan[target] = {
+          key: target,
           visible: true,
-          gridColumn: secCol,
-          gridRow: String(i + 1),
-          order: i + 1,
+          gridColumn: mainCol,
+          gridRow: '1 / -1',
+          order: 0,
         };
-      });
+        secondaries.forEach((key, i) => {
+          plan[key] = {
+            key,
+            visible: true,
+            gridColumn: secCol,
+            gridRow: String(i + 1),
+            order: i + 1,
+          };
+        });
+      }
     } else {
       const n = items.length;
       items.forEach((key, i) => {
