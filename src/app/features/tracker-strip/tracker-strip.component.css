@@ -681,6 +681,10 @@ app-input-number.kpi-countdown-current-input {
   right: unset;
 }
 
+/* Masquée par défaut (`opacity`, pas `display`/`visibility` : une tuile survolée puis dépliée par
+   clic ne doit pas perdre-puis-retrouver ce bouton en cours d'animation) — visible seulement au
+   survol de la tuile OU quand elle est dépliée (`.kpi:hover`/`.kpi.expanded` ci-dessous), pour ne
+   pas encombrer la bande de tuiles réduites au repos. */
 .kpi-del {
   position: absolute;
   top: -9px;
@@ -699,6 +703,13 @@ app-input-number.kpi-countdown-current-input {
   cursor: pointer;
   z-index: 2;
   padding: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.kpi:hover .kpi-del,
+.kpi.expanded .kpi-del {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /* Même emplacement/gabarit que `.kpi-del` (mode sélection multiple, voir `selectMode`) — case à
