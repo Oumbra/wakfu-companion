@@ -50,6 +50,21 @@
   flex-direction: column;
   height: 100%;
 }
+/* Alignement à DROITE (au lieu du `flex-start` par défaut, hérité de `.kpi-row`/`.kpi-strip` de
+   base) quand la colonne est du côté droit de l'écran : les boutons +/- et les tuiles suivies
+   doivent longer le bord droit plutôt que rester collés au bord GAUCHE de leur propre colonne (qui
+   n'est de toute façon pas le bord de l'écran ici) — retour utilisateur. `.kpi-add.expanded`
+   (formulaire de recherche ouvert) n'est PAS concerné : il garde `width: 100%` (voir plus bas), qui
+   occupe déjà toute la largeur disponible quel que soit `align-items` du parent — aucun effet visuel
+   sur lui, exactement le comportement demandé ("le formulaire doit rester comme il est
+   actuellement"). Idem pour le badge de compteur (`.kpi-count-badge`, `position: absolute` ancré à
+   CHAQUE tuile individuellement, jamais concerné par l'alignement du conteneur qui la porte). */
+:host[data-kpi-pos='right'] .kpi-row {
+  align-items: flex-end;
+}
+:host[data-kpi-pos='right'] .kpi-strip {
+  align-items: flex-end;
+}
 /* Padding horizontal réduit à 7px (au lieu des 15px hérités de la bande HORIZONTALE, où l'espace
    n'est pas compté) — marge standard de cette colonne, voir `.kpi-add` juste en dessous pour le
    même ajustement côté boutons. */
