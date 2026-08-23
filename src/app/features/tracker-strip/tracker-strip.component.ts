@@ -22,7 +22,10 @@ import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakf
 import { WakfuSearchResult } from '../../core/services/wakfu-search.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { WatchlistTileController } from '../../core/utils/watchlist-tile-controller';
+import {
+  WatchlistTileController,
+  watchlistEntryKey,
+} from '../../core/utils/watchlist-tile-controller';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
@@ -99,6 +102,9 @@ export class TrackerStripComponent implements OnDestroy {
 
   protected readonly expandDurationMs = KPI_EXPAND_DURATION_MS;
   protected readonly expandedWidthPx = KPI_EXPANDED_WIDTH_PX;
+  /** Exposée au template pour comparer `activeKey()` à la bonne entrée (voir son binding
+   * `[class.expanded]`) — fonction pure, pas besoin de `this`, simple référence. */
+  protected readonly entryKey = watchlistEntryKey;
 
   protected readonly existingNames = computed(() =>
     this.stats.watchlist().map((w) => ({ name: w.name, kind: w.kind, id: w.catalogId })),
@@ -160,10 +166,16 @@ export class TrackerStripComponent implements OnDestroy {
     document.removeEventListener('click', this.onDocumentClick, { capture: true });
   }
 
-  /** Nom du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
+  /** Clé du KPI actuellement déployé — une seule tuile à la fois, pilotée en JS (pas de `:hover`
    * CSS) et exclusivement par clic (voir `onTileClick`) : plus de délai/verrou anti-cascade à
-   * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande. */
-  protected readonly activeName = signal<string | null>(null);
+   * gérer ici, un clic n'a pas les faux déclenchements d'un survol qui balaie la bande.
+   *
+   * `watchlistEntryKey` (nom + `catalogId`, voir `watchlist-tile-controller.ts`), PAS `entry.name`
+   * seul : deux entrées peuvent légitimement partager le même nom affiché (ex. objet ET monstre
+   * homonymes, ou variantes d'un même nom réparties sur plusieurs `catalogId`) — comparer par nom
+   * seul dépliait TOUTES les tuiles partageant ce nom au lieu de la seule cliquée (bug réel constaté
+   * à l'usage, voir CLAUDE.md/historique de session). */
+  protected readonly activeKey = signal<string | null>(null);
 
   /** Seul déclencheur d'ouverture/fermeture d'une tuile (voir CLAUDE.md — le survol n'ouvre plus
    * rien). Les clics sur les boutons/inputs internes (reset, suppression, valeur actuelle du
@@ -173,12 +185,12 @@ export class TrackerStripComponent implements OnDestroy {
       this.watchlist.toggleSelected(entry);
       return;
     }
-    const name = entry.name;
-    if (this.activeName() === name) {
-      this.activeName.set(null);
+    const key = watchlistEntryKey(entry);
+    if (this.activeKey() === key) {
+      this.activeKey.set(null);
       return;
     }
-    this.activeName.set(name);
+    this.activeKey.set(key);
     this.scrollTileIntoView(event.currentTarget as HTMLElement);
   }
 
@@ -231,14 +243,14 @@ export class TrackerStripComponent implements OnDestroy {
       this.watchlist.exitSelectMode();
       return;
     }
-    this.activeName.set(null);
+    this.activeKey.set(null);
     this.watchlist.enterSelectMode();
   }
 
   protected requestDelete(event: Event, entry: WatchlistEntry): void {
-    const name = entry.name;
+    const key = watchlistEntryKey(entry);
     this.watchlist.requestDelete(event, entry, undefined, () => {
-      if (this.activeName() === name) this.activeName.set(null);
+      if (this.activeKey() === key) this.activeKey.set(null);
     });
   }
 
@@ -270,7 +282,7 @@ export class TrackerStripComponent implements OnDestroy {
     // Le drag démarre parfois sans mouseleave fiable (comportement natif du
     // navigateur) : on referme explicitement plutôt que de risquer une
     // tuile restée "déployée" alors qu'elle est en train d'être déplacée.
-    this.activeName.set(null);
+    this.activeKey.set(null);
     this.dragIndex = index;
     const tile = event.currentTarget as HTMLElement;
     const ghost = this.buildDragGhost(tile);

@@ -226,8 +226,14 @@ export class DashboardLayoutService {
    * cas particulier, sans effet puisqu'il ne se rend jamais en desktop.
    *
    * Répartition égale : grille à 2 colonnes max, le dernier élément d'un total impair prend toute
-   * la largeur de sa ligne. Mise en avant : la carte ciblée passe en tête et prend toute la largeur,
-   * les autres suivent dans l'ordre normal (2 colonnes) en dessous. */
+   * la largeur de sa ligne. Mise en avant : la carte ciblée occupe sa PROPRE ligne en tête, pleine
+   * largeur ; les autres (les "secondaires") suivent dans l'ordre normal (2 colonnes) en dessous —
+   * MÊME règle "dernier élément impair en pleine largeur" appliquée à ce sous-groupe de secondaires
+   * (pas à l'ensemble cible+secondaires) : sans ça, une secondaire seule dans sa ligne (ex. Chat qui
+   * vient de se replier, ne laissant plus qu'une seule secondaire) resterait à moitié largeur avec
+   * une case vide à côté — bug réel constaté à la vérification. `panelsRowCount` (juste en dessous)
+   * applique le même détail : la ligne de la cible ciblée compte à part, 1 + `ceil(secondaires / 2)`,
+   * pas `ceil(total / 2)` (qui sous-compte dès que le nombre de secondaires est impair). */
   readonly gridPlan = computed<Record<DashboardGridKey, DashboardGridSlot>>(() => {
     const plan = {} as Record<DashboardGridKey, DashboardGridSlot>;
     for (const key of ALL_GRID_KEYS) plan[key] = { key, visible: false, span2: false, order: 0 };
@@ -235,9 +241,11 @@ export class DashboardLayoutService {
     const items: DashboardGridKey[] = this.visibleBodySlots().map((s) => s.key);
     if (this.effectiveBodyMode() === 'focus') {
       const target = this.focusTarget();
-      const ordered = [target, ...items.filter((k) => k !== target)];
-      ordered.forEach((key, i) => {
-        plan[key] = { key, visible: true, span2: i === 0, order: i };
+      plan[target] = { key: target, visible: true, span2: true, order: 0 };
+      const secondaries = items.filter((k) => k !== target);
+      const m = secondaries.length;
+      secondaries.forEach((key, i) => {
+        plan[key] = { key, visible: true, span2: m % 2 === 1 && i === m - 1, order: i + 1 };
       });
     } else {
       const n = items.length;
@@ -249,9 +257,14 @@ export class DashboardLayoutService {
   });
 
   /** Nombre de lignes à donner à `.panels-row` (`grid-template-rows`, voir DashboardComponent) —
-   * toujours 2 colonnes max, donc `ceil(n / 2)` lignes pour `n` cases visibles (Suivi exclu, voir
-   * `gridPlan`). Au moins 1 (une grille à 0 ligne n'a pas de sens même si `n` vaut 0). */
-  readonly panelsRowCount = computed(() =>
-    Math.max(1, Math.ceil(this.visibleBodySlots().length / 2)),
-  );
+   * toujours 2 colonnes max, donc `ceil(n / 2)` lignes pour `n` cases visibles en répartition égale
+   * (Suivi exclu, voir `gridPlan`). En mise en avant, la cible occupe sa propre ligne (+1), le reste
+   * se répartit ensuite à 2 colonnes — même raison que `gridPlan` ci-dessus. Au moins 1 (une grille
+   * à 0 ligne n'a pas de sens même si `n` vaut 0). */
+  readonly panelsRowCount = computed(() => {
+    const n = this.visibleBodySlots().length;
+    if (n === 0) return 1;
+    if (this.effectiveBodyMode() === 'focus') return 1 + Math.ceil((n - 1) / 2);
+    return Math.max(1, Math.ceil(n / 2));
+  });
 }

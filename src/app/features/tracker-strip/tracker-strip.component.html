@@ -145,11 +145,11 @@
         class="kpi"
         [class]="watchlist.rarityClass(entry)"
         [class.is-monster]="entry.kind === 'enemy'"
-        [class.expanded]="activeName() === entry.name"
+        [class.expanded]="activeKey() === entryKey(entry)"
         [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
         [attr.draggable]="!watchlist.selectMode()"
         [appTooltip]="
-          entry.mode === 'down' && activeName() !== entry.name
+          entry.mode === 'down' && activeKey() !== entryKey(entry)
             ? watchlist.countdownProgressTooltip(entry)
             : null
         "
