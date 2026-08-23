@@ -205,7 +205,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Voir tous les avatars sur mon compte Ankama',
     'profile.dashboardLayout.title': 'Disposition du tableau de bord',
     'profile.dashboardLayout.desc':
-      'Choisis la position du menu et des objectifs, et comment se répartissent Historique et Chat.',
+      "Choisis la position du menu et des objectifs, comment regrouper l'historique, et comment se répartissent les cartes restantes (Historique et Chat).",
     'profile.dashboardLayout.reset': 'Réinitialiser',
     'profile.dashboardLayout.defaultBadge': 'Réglage par défaut',
     'profile.dashboardLayout.summaryMenu': 'Menu : {{value}}',
@@ -770,7 +770,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'See all avatars on my Ankama account',
     'profile.dashboardLayout.title': 'Dashboard layout',
     'profile.dashboardLayout.desc':
-      'Choose where the menu and objectives sit, and how History and Chat share the rest of the space.',
+      'Choose where the menu and objectives sit, how to group History, and how the remaining cards (History and Chat) share the rest of the space.',
     'profile.dashboardLayout.reset': 'Reset',
     'profile.dashboardLayout.defaultBadge': 'Current default',
     'profile.dashboardLayout.summaryMenu': 'Menu: {{value}}',
@@ -1328,7 +1328,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Ver todos los avatares en mi cuenta Ankama',
     'profile.dashboardLayout.title': 'Disposición del panel',
     'profile.dashboardLayout.desc':
-      'Elige la posición del menú y de los objetivos, y cómo se reparten Historial y Chat.',
+      'Elige la posición del menú y de los objetivos, cómo agrupar el Historial, y cómo se reparten las tarjetas restantes (Historial y Chat).',
     'profile.dashboardLayout.reset': 'Restablecer',
     'profile.dashboardLayout.defaultBadge': 'Ajuste por defecto',
     'profile.dashboardLayout.summaryMenu': 'Menú: {{value}}',
@@ -1893,7 +1893,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.avatarFanartLinkLabel': 'Ver todos os avatares na minha conta Ankama',
     'profile.dashboardLayout.title': 'Disposição do painel',
     'profile.dashboardLayout.desc':
-      'Escolha a posição do menu e dos objetivos, e como Histórico e Chat dividem o espaço.',
+      'Escolha a posição do menu e dos objetivos, como agrupar o Histórico, e como os demais cartões (Histórico e Chat) dividem o espaço.',
     'profile.dashboardLayout.reset': 'Redefinir',
     'profile.dashboardLayout.defaultBadge': 'Ajuste padrão',
     'profile.dashboardLayout.summaryMenu': 'Menu: {{value}}',

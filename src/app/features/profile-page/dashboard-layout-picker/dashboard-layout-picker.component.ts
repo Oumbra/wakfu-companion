@@ -79,12 +79,12 @@ export class DashboardLayoutPickerComponent {
       value: 'left',
       nameKey: 'profile.dashboardLayout.menu.left.name',
       descKey: 'profile.dashboardLayout.menu.left.desc',
-      isDefault: true,
     },
     {
       value: 'right',
       nameKey: 'profile.dashboardLayout.menu.right.name',
       descKey: 'profile.dashboardLayout.menu.right.desc',
+      isDefault: true,
     },
     {
       value: 'top-left',
@@ -127,12 +127,12 @@ export class DashboardLayoutPickerComponent {
       value: 'equal',
       nameKey: 'profile.dashboardLayout.body.equal.name',
       descKey: 'profile.dashboardLayout.body.equal.desc',
-      isDefault: true,
     },
     {
       value: 'focus',
       nameKey: 'profile.dashboardLayout.body.focus.name',
       descKey: 'profile.dashboardLayout.body.focus.desc',
+      isDefault: true,
     },
   ];
 
