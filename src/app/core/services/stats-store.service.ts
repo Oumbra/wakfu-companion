@@ -309,6 +309,16 @@ interface FightWorking {
    * l'ennemi qui les inflige.
    */
   summonNames: Set<string>;
+  /** Noms (minuscule) ayant déjà encaissé au moins un événement de dégâts valide de ce combat (voir
+   * case 'damage' dans apply()) — sert de filtre de bruit pour `buildEntityDamageRows` : une entité
+   * inconnue du référentiel officiel qui n'a NI infligé NI encaissé le moindre dégât sur tout le
+   * combat (ex. "Rocher", décor invoqué par un mécanisme de boss sans annonce "Invoque" détectable,
+   * voir CLAUDE.md/EntityClassifierService) est un simple bruit d'affichage plutôt qu'un vrai
+   * combattant, et n'a donc pas sa propre ligne dans le récap (bug réel corrigé le 2026-08-24, ~40
+   * lignes "Rocher" à 0 dégât dans un même combat). Un monstre du référentiel officiel reste
+   * TOUJOURS affiché même à 0 dégât (l'inverse serait trop risqué : un vrai combattant jamais engagé
+   * dans un combat normal ne doit pas disparaître). */
+  damagedNames: Set<string>;
 }
 
 /**
@@ -871,6 +881,7 @@ export class StatsStoreService {
           const seatKey = working!.lastResolvedSeatByName.get(entry.attacker) ?? entry.attacker;
           this.addDamage(working!.attackerMap, seatKey, entry, working!.fight.turnCount);
           this.classifier.registerDamageTarget(entry.target, entry.attacker);
+          working!.damagedNames.add(entry.target.toLowerCase());
         }
         break;
       }
@@ -980,6 +991,7 @@ export class StatsStoreService {
         turnSeatsSeen: new Set(),
         memberNames: new Set(),
         summonNames: new Set(),
+        damagedNames: new Set(),
       };
       this.activeFights.set(fightId, working);
     }
@@ -1256,14 +1268,23 @@ export class StatsStoreService {
     }
 
     working.fight.endDate = new Date(this.buildFullTimestampMs(time));
+    // Filtre de bruit d'affichage (voir FightWorking.damagedNames/computeInertEnemyNoiseNames) :
+    // appliqué UNIQUEMENT à la finalisation, jamais au suivi EN COURS (damageByAttacker()/...,
+    // voir plus bas dans ce fichier) — un ennemi qui vient de rejoindre n'a simplement pas encore
+    // eu l'occasion d'agir, le filtrer en direct le ferait disparaître puis réapparaître au premier
+    // coup échangé (clignotement), alors qu'un combat déjà terminé donne un signal définitif.
+    const rows = this.buildEntityDamageRows(working);
+    const healRows = this.buildEntityDamageRows(working, working.healSourceMap);
+    const armorRows = this.buildEntityDamageRows(working, working.armorSourceMap);
+    const noiseNames = this.computeInertEnemyNoiseNames(working, rows, healRows, armorRows);
     const record: FightRecord = {
       id: fightId,
       time,
       fullTimestampMs: working.fight.startDate.getTime(),
       result,
-      rows: this.buildEntityDamageRows(working),
-      healRows: this.buildEntityDamageRows(working, working.healSourceMap),
-      armorRows: this.buildEntityDamageRows(working, working.armorSourceMap),
+      rows: rows.filter((r) => !noiseNames.has(r.name)),
+      healRows: healRows.filter((r) => !noiseNames.has(r.name)),
+      armorRows: armorRows.filter((r) => !noiseNames.has(r.name)),
       loot: working.fight.loots.map((l) => ({
         name: l.name,
         catalogId: l.catalogId,
@@ -1666,6 +1687,38 @@ export class StatsStoreService {
     this.purchaseHistory.set([...this.purchaseHistoryList]);
     this.tradeHistory.set([...this.tradeHistoryList]);
     this.chatMessages.set([...this.chatBuffer]);
+  }
+
+  /**
+   * Noms d'ennemis à exclure des 3 listes de lignes d'un combat FINALISÉ (voir finalizeFight) — bug
+   * réel corrigé le 2026-08-24 (~40 lignes "Rocher" à 0 dégât dans un même combat, décor invoqué par
+   * un mécanisme de boss sans annonce "Invoque" détectable par EntityClassifierService, voir
+   * CLAUDE.md). Un nom est du bruit s'il cumule STRICTEMENT 0 (dégâts + soins + armure, toutes
+   * instances confondues) sur l'ensemble du combat, N'A JAMAIS encaissé de dégâts non plus (voir
+   * FightWorking.damagedNames), N'EST PAS un monstre du référentiel officiel (un vrai monstre connu
+   * reste toujours affiché même à 0, voir CatalogService.isKnownWakfuMonsterName), et est classé
+   * ENNEMI (`classify` — un allié, donc un vrai joueur, ne doit JAMAIS disparaître de son propre
+   * récap, même à 0 partout : rejoint juste avant la fin du combat, rôle purement support...).
+   */
+  private computeInertEnemyNoiseNames(
+    working: FightWorking,
+    ...rowLists: EntityDamageRow[][]
+  ): Set<string> {
+    const totalByName = new Map<string, number>();
+    for (const list of rowLists) {
+      for (const row of list) {
+        totalByName.set(row.name, (totalByName.get(row.name) ?? 0) + row.total);
+      }
+    }
+    const noise = new Set<string>();
+    for (const [name, total] of totalByName) {
+      if (total !== 0) continue;
+      if (working.damagedNames.has(name.toLowerCase())) continue;
+      if (this.catalog.isKnownWakfuMonsterName(name)) continue;
+      if (this.classifier.classify(name) !== 'enemy') continue;
+      noise.add(name);
+    }
+    return noise;
   }
 
   /**
