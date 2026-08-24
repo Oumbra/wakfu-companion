@@ -624,14 +624,17 @@ export class FightHistoryComponent {
     ).fallbackUrls.join('|');
   }
 
-  /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
+  /** Tooltip nom du donjon/monstre associé à l'illustration, texte fixe pour une brèche/brèche
+   * ultime, ou `null` (illustration générique) — voir resolveFightImageInfo. */
   protected fightImageTooltip(record: FightRecord, isDungeonBossRow = false): string | null {
     const source = resolveFightImageInfo(
       this.catalog,
       this.enemyRowsFor(record).map((row) => row.name),
       isDungeonBossRow,
     ).tooltipSource;
-    return source ? source.names[this.i18n.locale()] : null;
+    if (!source) return null;
+    if (source.kind === 'text') return this.i18n.t(source.translationKey);
+    return source.names[this.i18n.locale()];
   }
 
   /** Id Ankama de la pierre de donjon à afficher en badge sur l'illustration d'un combat isolé

@@ -69,6 +69,11 @@ export interface FightImageLocalizedName {
 export type FightImageTooltipSource =
   | { kind: 'dungeon'; names: FightImageLocalizedName }
   | { kind: 'monster'; names: FightImageLocalizedName }
+  /** Brèche/brèche ultime détectée par heuristique (voir resolveFightImageInfo) : pas de nom
+   * précis à afficher (composition en familles pas encore exploitée, voir breach-icon.data.ts),
+   * juste une clé de traduction fixe ('damageMeter.breach'/'damageMeter.ultimateBreach', voir
+   * translations.ts) résolue par l'appelant (fightImageTooltip dans fight-history.component.ts). */
+  | { kind: 'text'; translationKey: string }
   | null;
 
 export interface FightImageInfo {
@@ -122,9 +127,10 @@ export function findDungeonForEnemies(
  * FightRecord.rows, déjà trié ainsi) pour que le repli n°5 pointe vers le
  * bon monstre. Les noms sans entrée catalogue connue sont ignorés à
  * chaque étape (aucune image disponible pour eux). `tooltipSource` est
- * `null` pour une illustration de donjon-brèche (`isDungeonBreach`) ou pour
- * l'illustration générique de repli (horde hétérogène/inconnue) — voir
- * feature "tooltip sur les images d'historique de combat".
+ * `null` pour une illustration de donjon-brèche (`isDungeonBreach`) ; de type
+ * `'text'` (clé de traduction fixe, pas de nom précis) pour les priorités 0/2
+ * (brèche/brèche ultime, depuis le 2026-08-24) — voir feature "tooltip sur
+ * les images d'historique de combat".
  *
  * `fallbackUrls` (voir FightImageInfo) accompagne `url` pour les priorités 1(repli)/3/4/5 (propre
  * image d'un monstre, jamais un donjon) : des replis wakassets, à essayer par l'appelant si `url`
@@ -153,7 +159,11 @@ export function resolveFightImageInfo(
 
   const bossEntries = entries.filter((entry) => entry.isBoss);
   if (bossEntries.length > 1) {
-    return { url: ULTIMATE_BREACH_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
+    return {
+      url: ULTIMATE_BREACH_IMAGE_URL,
+      tooltipSource: { kind: 'text', translationKey: 'damageMeter.ultimateBreach' },
+      fallbackUrls: [],
+    };
   }
 
   const bossEntry = bossEntries[0];
@@ -179,7 +189,11 @@ export function resolveFightImageInfo(
     // dungeon référencé) tant que la composition en familles des brèches connues n'est pas saisie
     // dans le référentiel — voir breach-icon.data.ts. BREACH_IMAGE_URL en repli plutôt que
     // DEFAULT_FIGHT_IMAGE_URL (générique, sans rapport avec une brèche) depuis le 2026-08-24.
-    return { url: BREACH_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
+    return {
+      url: BREACH_IMAGE_URL,
+      tooltipSource: { kind: 'text', translationKey: 'damageMeter.breach' },
+      fallbackUrls: [],
+    };
   }
 
   const archiEntry = entries.find((entry) => entry.isArchi);

@@ -235,13 +235,16 @@ describe('resolveFightImageUrl', () => {
 });
 
 describe('resolveFightImageInfo (tooltip)', () => {
-  it('plusieurs boss simultanés (brèche ultime) -> aucune tooltip, aucun repli (asset statique local)', async () => {
+  it('plusieurs boss simultanés (brèche ultime) -> tooltip texte fixe "damageMeter.ultimateBreach", aucun repli (asset statique local)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
     const info = resolveFightImageInfo(catalog, ['Boss Avec Donjon', 'Boss Second']);
 
-    expect(info.tooltipSource).toBeNull();
+    expect(info.tooltipSource).toEqual({
+      kind: 'text',
+      translationKey: 'damageMeter.ultimateBreach',
+    });
     expect(info.fallbackUrls).toEqual([]);
   });
 
@@ -266,7 +269,7 @@ describe('resolveFightImageInfo (tooltip)', () => {
     });
   });
 
-  it('illustration de brèche (horde hétérogène) -> aucune tooltip', async () => {
+  it('illustration de brèche (horde hétérogène) -> tooltip texte fixe "damageMeter.breach"', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
@@ -276,7 +279,7 @@ describe('resolveFightImageInfo (tooltip)', () => {
     );
 
     expect(info.url).toBe(BREACH_IMAGE_URL);
-    expect(info.tooltipSource).toBeNull();
+    expect(info.tooltipSource).toEqual({ kind: 'text', translationKey: 'damageMeter.breach' });
   });
 
   it('aucun ennemi connu -> aucune tooltip', async () => {
