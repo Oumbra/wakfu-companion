@@ -6,6 +6,7 @@ import {
   resolveFightImageUrl,
   resolveFightTypeClassification,
 } from './fight-image.util';
+import { BREACH_IMAGE_URL } from '../data/breach-icon.data';
 import { CatalogService } from '../api/catalog.service';
 import { ApiClientService, ApiResult } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
@@ -137,7 +138,7 @@ describe('resolveFightImageUrl', () => {
     expect(result).toBe(monsterPictureUrl('900102'));
   });
 
-  it('priorité 2 : plus de 4 familles distinctes parmi les ennemis (sans boss) -> illustration générique', async () => {
+  it('priorité 2 : plus de 4 familles distinctes parmi les ennemis (sans boss) -> illustration de brèche (heuristique de détection de brèche)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
@@ -146,7 +147,7 @@ describe('resolveFightImageUrl', () => {
       HORDE.map((m) => m[1] as string),
     );
 
-    expect(result).toBe(DEFAULT_FIGHT_IMAGE_URL);
+    expect(result).toBe(BREACH_IMAGE_URL);
   });
 
   it('priorité 2 : 4 familles distinctes ou moins ne déclenche pas le repli générique', async () => {
@@ -232,7 +233,7 @@ describe('resolveFightImageInfo (tooltip)', () => {
     });
   });
 
-  it('illustration générique (horde hétérogène) -> aucune tooltip', async () => {
+  it('illustration de brèche (horde hétérogène) -> aucune tooltip', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
@@ -241,7 +242,7 @@ describe('resolveFightImageInfo (tooltip)', () => {
       HORDE.map((m) => m[1] as string),
     );
 
-    expect(info.url).toBe(DEFAULT_FIGHT_IMAGE_URL);
+    expect(info.url).toBe(BREACH_IMAGE_URL);
     expect(info.tooltipSource).toBeNull();
   });
 
@@ -277,7 +278,7 @@ describe('resolveFightImageInfo (fallbackUrls, bug réel corrigé le 2026-08-24 
     expect(info.fallbackUrls).toEqual([]);
   });
 
-  it('illustration générique (horde hétérogène) -> aucun repli', async () => {
+  it('illustration de brèche (horde hétérogène) -> aucun repli (asset statique local, pas de CDN tiers)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
