@@ -6,8 +6,12 @@ import {
   isDungeonBreach,
 } from '../api/catalog.service';
 import { normalizeWakfuName } from './wakfu-name.util';
+import { BREACH_IMAGE_URL } from '../data/breach-icon.data';
 
-/** Illustration générique wakassets, utilisée aussi bien en repli erreur réseau qu'en cas de trop grande diversité de monstres (voir resolveFightImageUrl). */
+/** Illustration générique wakassets, utilisée en repli erreur réseau (voir onFightImageError dans
+ * fight-history.component.ts) quand même les replis wakassets d'un monstre échouent. Depuis le
+ * 2026-08-24, n'est PLUS utilisée pour le cas "horde hétérogène" (voir BREACH_IMAGE_URL ci-dessous,
+ * plus précis). */
 export const DEFAULT_FIGHT_IMAGE_URL =
   'https://vertylo.github.io/wakassets/bossIllustrations/default.png';
 
@@ -101,7 +105,10 @@ export function findDungeonForEnemies(
  *    le boss (`bossMonsterId` dans repository/dungeons.json), ou à
  *    défaut (aucun donjon référencé pour ce boss) sa propre `pictureUrl`.
  * 2. Plus de ${DISTINCT_FAMILY_THRESHOLD} familles de monstres distinctes parmi les ennemis
- *    (horde hétérogène, pas un combat de donjon/archi/dominant) -> illustration générique.
+ *    (horde hétérogène, pas un combat de donjon/archi/dominant) -> illustration de brèche
+ *    (BREACH_IMAGE_URL, voir breach-icon.data.ts) — heuristique de détection de brèche actuelle,
+ *    faute d'un signal plus précis (pas de distinction simple/ultime pour l'instant, voir
+ *    breach-icon.data.ts).
  * 3. Un archimonstre (`isArchi`) présent -> sa `pictureUrl`.
  * 4. Un dominant (`isDominant`) présent -> sa `pictureUrl`.
  * 5. Sinon, l'ennemi ayant infligé le plus de dégâts -> sa `pictureUrl`.
@@ -158,7 +165,11 @@ export function resolveFightImageInfo(
 
   const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
   if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
-    return { url: DEFAULT_FIGHT_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
+    // Heuristique actuelle de détection de brèche : aucun autre signal fiable (pas de boss, pas de
+    // dungeon référencé) tant que la composition en familles des brèches connues n'est pas saisie
+    // dans le référentiel — voir breach-icon.data.ts. BREACH_IMAGE_URL en repli plutôt que
+    // DEFAULT_FIGHT_IMAGE_URL (générique, sans rapport avec une brèche) depuis le 2026-08-24.
+    return { url: BREACH_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
   }
 
   const archiEntry = entries.find((entry) => entry.isArchi);
