@@ -73,6 +73,33 @@ const SUMMON_ANNOUNCE_RE = /^(.+?): Invoque (?:un\(e\)|une créature du) /;
  * le fichier de référence : marge pour la latence/l'entrelacement multi-compte, tout en restant très
  * en-dessous du moindre écart entre deux véritables combattants distincts (secondes à minutes). */
 const SUMMON_JOIN_WINDOW_MS = 500;
+/** Ligne technique SANS crochet de catégorie ("(eXG:105) - Instanciation d'une nouvelle invocation
+ * avec un id de N", ou son équivalent anglais côté client "(eXM:91) - New summon with id N" — les
+ * deux variantes coexistent dans un même fichier, vérifié sur le fichier de référence Fayto,
+ * probablement deux sous-systèmes client différents) émise juste avant la ligne "[_FL_] ... join the
+ * fight" de TOUTE invocation, y compris celles qu'aucune annonce "X: Invoque ..." ne précède (bug
+ * réel corrigé le 2026-08-24, ex. les "Rocher" d'un mécanisme de boss "Sor'Hon, Seigneur de la
+ * Flamme: fait tomber des rochers au sol" déclenché par le sort "Effondrement", sans aucune annonce
+ * "Invoque" détectable) — voir parseContent, qui l'exploite en repli de SUMMON_ANNOUNCE_RE plutôt
+ * qu'à sa place (celui-ci reste la source la PLUS fiable, avec le nom du lanceur explicite dans le
+ * texte ; ce repli déduit le lanceur du dernier sort casté dans ce même combat, `FightParseState.lastCast`,
+ * moins direct mais fonctionne pour toute invocation liée à un sort qui vient d'être lancé, allié ou
+ * ennemi). Une précédente tentative d'exploiter cette même ligne pour CORRÉLER une annonce précise à
+ * son instanciation (appariement par comptage) avait été abandonnée (voir CLAUDE.md) à cause d'un
+ * écart de comptage entre les deux — non pertinent ici : ce nouvel usage ne compte ni n'apparie rien,
+ * il sert uniquement de GARDE-FOU binaire ("cette jointure est une invocation, qui que soit son
+ * invocateur présumé") gated par ANNOUNCE_TO_INSTANTIATION_WINDOW_MS pour ne jamais pousser un doublon
+ * quand SUMMON_ANNOUNCE_RE vient déjà de pousser LA MÊME invocation l'instant d'avant. */
+const INVOCATION_INSTANTIATED_RE =
+  /^(?:Instanciation d'une nouvelle invocation avec un id de|New summon with id) -?\d+$/;
+/** Écart maximum toléré entre une annonce "Invoque" (SUMMON_ANNOUNCE_RE, qui pousse déjà son propre
+ * invocateur dans pendingSummonCasters) et la ligne technique INVOCATION_INSTANTIATED_RE qui la suit
+ * TOUJOURS de très près (0 à 8ms observés, comme pour SUMMON_JOIN_WINDOW_MS) : sert uniquement à
+ * détecter "cette ligne technique est la continuation d'une annonce déjà traitée" pour ne pas pousser
+ * un second invocateur (potentiellement erroné si `lastCast` a changé entre-temps) en double —
+ * beaucoup plus court que SUMMON_JOIN_WINDOW_MS, volontairement : seul le tout dernier événement
+ * "Invoque" compte ici, pas une fenêtre large de corrélation. */
+const ANNOUNCE_TO_INSTANTIATION_WINDOW_MS = 50;
 /** "X: transformé(e) en Y !" (ex. Poupée Lapino du Sadida qui évolue en cours de combat) — la
  * nouvelle forme rejoint le combat via sa PROPRE ligne "[_FL_] ... join the fight" quelques lignes
  * plus tard, sans nouvelle annonce "Invoque" ni ligne d'instanciation : c'est le nom X qui doit être
@@ -186,8 +213,11 @@ interface FightParseState {
    * invocateur, avec le nom de l'invocation comme libellé de "sort" (voir CLAUDE.md). */
   summonOwners: Map<string, string>;
   /** Casters en attente d'une invocation qui va rejoindre CE combat (FIFO, horodatée) — alimentée
-   * par SUMMON_ANNOUNCE_RE, consommée par le PROCHAIN combattant au fighterId encore jamais vu de ce
-   * combat SURVENANT DANS LES `SUMMON_JOIN_WINDOW_MS` SUIVANTS (voir seenFighterIds/parseFighterJoin,
+   * par SUMMON_ANNOUNCE_RE (annonce "X: Invoque ...", source la plus fiable) ET, en repli, par
+   * INVOCATION_INSTANTIATED_RE (ligne technique d'instanciation SANS annonce "Invoque" détectable,
+   * caster déduit de `lastCast` — voir CLAUDE.md, cas "Rocher" du 2026-08-24), consommée par le
+   * PROCHAIN combattant au fighterId encore jamais vu de ce combat SURVENANT DANS LES
+   * `SUMMON_JOIN_WINDOW_MS` SUIVANTS (voir seenFighterIds/parseFighterJoin,
    * CLAUDE.md) — un tout nouveau fighterId N'EST PAS forcément une invocation : un combat long peut
    * voir un vrai monstre/allié supplémentaire rejoindre bien plus tard (renfort de boss à plusieurs
    * phases, vague d'une brèche...), et un monstre peut LUI AUSSI invoquer (annonce "Invoque"
@@ -319,6 +349,18 @@ export class LogParser {
     }
     if (MARKET_OCCUPATION_END_RE.test(content)) {
       return { kind: 'market-occupation', time, active: false };
+    }
+
+    if (INVOCATION_INSTANTIATED_RE.test(content)) {
+      const state = this.getFightState(this.resolveCurrentFightId());
+      const nowMs = this.timeToMs(time);
+      const lastPending = state.pendingSummonCasters[state.pendingSummonCasters.length - 1];
+      const justAnnounced =
+        !!lastPending && nowMs - lastPending.timeMs <= ANNOUNCE_TO_INSTANTIATION_WINDOW_MS;
+      if (!justAnnounced && state.lastCast) {
+        state.pendingSummonCasters.push({ caster: state.lastCast.caster, timeMs: nowMs });
+      }
+      return null;
     }
 
     const buildDate = CLIENT_BUILD_DATE_RE.exec(content);

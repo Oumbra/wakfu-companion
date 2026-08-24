@@ -362,6 +362,13 @@ describe('StatsStoreService', () => {
           lines: [
             ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
             ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : 7 join the fight at {P}',
+            // Sort effectivement lancé (pas juste une ligne de dégâts orpheline) : nécessaire depuis
+            // le filtre de bruit "ennemi inconnu du référentiel + jamais touché" (voir
+            // StatsStoreService.computeInertEnemyNoiseNames) pour que Bouftou soit bien reconnu
+            // comme ayant encaissé des dégâts, sans quoi ce fixture minimal (catalogue non chargé
+            // dans ce test) le ferait passer à tort pour du bruit décoratif et disparaître du récap
+            // — sans rapport avec ce que ce test vérifie réellement (obstacleId).
+            ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
             ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Bouftou: -40 PV (Terre)',
             ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
           ],
@@ -405,6 +412,36 @@ describe('StatsStoreService', () => {
         const oumbra = fights[0].rows.find((r) => r.name === 'Oumbra')!;
         expect(oumbra.spells.map((s) => s.spell)).toContain('Dark Lapino');
         expect(oumbra.spells.find((s) => s.spell === 'Dark Lapino')!.total).toBe(40);
+      },
+    );
+
+    it(
+      "exclut du récap final un ennemi inconnu du référentiel qui n'a NI infligé NI encaissé le " +
+        'moindre dégât sur tout le combat (bruit décoratif, ex. les invocations "Rocher" d\'un ' +
+        'mécanisme de boss sans annonce "Invoque" détectable — voir CLAUDE.md/computeInertEnemyNoiseNames), ' +
+        "tout en gardant un vrai combattant qui n'a fait qu'ENCAISSER des dégâts",
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        access.newLines$.next({
+          lines: [
+            ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            // "Rocher" rejoint comme un vrai combattant IA (obstacleId non -1, comme dans le vrai
+            // fichier ayant révélé le bug) mais n'agit jamais et n'est jamais visé individuellement.
+            ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Rocher breed : 5875 [3] isControlledByAI=true obstacleId : 8 join the fight at {P}',
+            ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Frappe',
+            ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Bouftou: -40 PV (Terre)',
+            ' INFO 10:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ],
+          isInitialLoad: true,
+        });
+
+        const fights = stats.fightHistory();
+        expect(fights).toHaveLength(1);
+        const names = fights[0].rows.map((r) => r.name);
+        expect(names).not.toContain('Rocher');
+        expect(names.sort()).toEqual(['Bouftou', 'Oumbra']);
       },
     );
 

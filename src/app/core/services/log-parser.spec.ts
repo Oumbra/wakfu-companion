@@ -625,4 +625,60 @@ describe('LogParser — invocations (voir CLAUDE.md)', () => {
       expect(join.summonedBy).toBeNull();
     },
   );
+
+  it(
+    'identifie une invocation SANS aucune annonce "Invoque" détectable (repli sur la ligne technique ' +
+      "d'instanciation, caster déduit du dernier sort casté) — bug réel corrigé le 2026-08-24 : " +
+      '"Sor\'Hon, Seigneur de la Flamme lance le sort Effondrement" fait tomber des "Rocher" au sol ' +
+      'sans jamais émettre de ligne "X: Invoque ...", contrairement à toutes les autres invocations',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 SorHon breed : 10 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] SorHon lance le sort Effondrement',
+        " INFO 10:00:01,090 [T] (eXG:105) - Instanciation d'une nouvelle invocation avec un id de 2",
+        ' INFO 10:00:01,091 [T] (a:1) - [_FL_] fightId=1 Rocher breed : 5875 [2] isControlledByAI=true obstacleId : 8 join the fight at {P}',
+        // Une 2e invocation quasi immédiate (comme les vagues successives de rochers réelles) : doit
+        // être attribuée au même caster, pas laissée orpheline par la consommation de la 1re.
+        " INFO 10:00:01,105 [T] (eXG:105) - Instanciation d'une nouvelle invocation avec un id de 3",
+        ' INFO 10:00:01,106 [T] (a:1) - [_FL_] fightId=1 Rocher breed : 5875 [3] isControlledByAI=true obstacleId : 9 join the fight at {P}',
+        ' INFO 10:00:01,200 [T] (a:1) - [Information (combat)] SorHon: fait tomber des rochers au sol',
+      ];
+      const entries = parseAll(parser, lines).filter(
+        (e): e is Extract<LogEntry, { kind: 'fighter-joined' }> =>
+          e.kind === 'fighter-joined' && e.name === 'Rocher',
+      );
+      expect(entries.map((e) => e.summonedBy)).toEqual(['SorHon', 'SorHon']);
+    },
+  );
+
+  it(
+    'ne pousse jamais un invocateur en double quand une invocation DÉJÀ annoncée ("Invoque") est ' +
+      "suivie de sa ligne technique d'instanciation — un doublon non consommé polluerait la file " +
+      "et s'attribuerait à tort au PROCHAIN combattant sans rapport",
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 PremierBoss breed : 10 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Invocation',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Oumbra: Invoque un(e) Dark Lapino ',
+        " INFO 10:00:01,505 [T] (eXG:105) - Instanciation d'une nouvelle invocation avec un id de 2",
+        ' INFO 10:00:01,510 [T] (a:1) - [_FL_] fightId=1 Dark Lapino breed : 5528 [2] isControlledByAI=true obstacleId : 6 join the fight at {P}',
+        // Un vrai combattant sans rapport, bien après (mais dans SUMMON_JOIN_WINDOW_MS de l'annonce
+        // ci-dessus si — bug — un 2e invocateur fantôme était resté dans la file).
+        ' INFO 10:00:01,900 [T] (a:1) - [_FL_] fightId=1 DeuxiemeBoss breed : 11 [3] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ];
+      const entries = parseAll(parser, lines);
+      const dark = entries.find(
+        (e) => e.kind === 'fighter-joined' && e.name === 'Dark Lapino',
+      ) as Extract<LogEntry, { kind: 'fighter-joined' }>;
+      const deuxieme = entries.find(
+        (e) => e.kind === 'fighter-joined' && e.name === 'DeuxiemeBoss',
+      ) as Extract<LogEntry, { kind: 'fighter-joined' }>;
+      expect(dark.summonedBy).toBe('Oumbra');
+      expect(deuxieme.summonedBy).toBeNull();
+    },
+  );
 });
