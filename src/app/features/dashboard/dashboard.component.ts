@@ -39,6 +39,7 @@ import { DashboardLayoutService } from '../../core/services/dashboard-layout.ser
   // du rail diffère, voir DashboardRailComponent).
   host: {
     '[attr.data-menu-pos]': 'layout.menuPos()',
+    '(document:keydown)': 'onStreamerHotkey($event)',
   },
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css',
@@ -78,5 +79,17 @@ export class DashboardComponent {
 
   protected selectTab(id: string): void {
     this.activeTab.set(id as DashboardTab);
+  }
+
+  /** Ctrl+Shift+Alt+S : bascule `data-streamer` sur `<html>` (mode "streamer", ex. masquage de
+   * contenu sensible via CSS ciblant cet attribut) — écouté sur `document` plutôt que l'hôte pour
+   * fonctionner même si le focus est ailleurs dans la page (aucun input texte concerné par cette
+   * combinaison). */
+  protected onStreamerHotkey(event: KeyboardEvent): void {
+    if (!event.ctrlKey || !event.shiftKey || !event.altKey) return;
+    if (event.key.toLowerCase() !== 's') return;
+    event.preventDefault();
+    const html = document.documentElement;
+    html.setAttribute('data-streamer', html.getAttribute('data-streamer') === 'on' ? 'off' : 'on');
   }
 }
