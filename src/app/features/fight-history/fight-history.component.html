@@ -219,6 +219,7 @@
           <img
             class="fight-image"
             [src]="imageUrl"
+            [attr.data-fallback-urls]="fightImageFallbacks(record, isBossRow)"
             referrerpolicy="no-referrer"
             draggable="false"
             (error)="onFightImageError($event)"
