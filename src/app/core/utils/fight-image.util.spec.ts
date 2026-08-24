@@ -255,6 +255,41 @@ describe('resolveFightImageInfo (tooltip)', () => {
   });
 });
 
+describe('resolveFightImageInfo (fallbackUrls, bug réel corrigé le 2026-08-24 : image Ankama absente pour certains monstres, ex. "Larve Verte")', () => {
+  it('propre image d’un monstre (repli boss/archi/dominant/plus gros dégât) -> 2 replis wakassets (monsters puis monsterIllustrations)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(catalog, ['Ennemi Normal A', 'Ennemi Normal B']);
+
+    expect(info.fallbackUrls).toEqual([
+      'https://vertylo.github.io/wakassets/monsters/900110.png',
+      'https://vertylo.github.io/wakassets/monsterIllustrations/900110.png',
+    ]);
+  });
+
+  it('illustration de donjon -> aucun repli (pas concerné par le bug Ankama/monstre)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(catalog, ['Ennemi Normal A', 'Boss Avec Donjon']);
+
+    expect(info.fallbackUrls).toEqual([]);
+  });
+
+  it('illustration générique (horde hétérogène) -> aucun repli', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(
+      catalog,
+      HORDE.map((m) => m[1] as string),
+    );
+
+    expect(info.fallbackUrls).toEqual([]);
+  });
+});
+
 describe('resolveFightTypeClassification (regroupement "Type" de l’historique)', () => {
   it('deux monstres de MÊME famille mais de noms différents -> même clé de groupe (bug corrigé : ne doit plus dépendre du nom)', async () => {
     const catalog = setupCatalog();
