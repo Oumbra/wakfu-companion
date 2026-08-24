@@ -29,7 +29,8 @@ function makeDungeon(
     level: 1,
     bracket: 1,
     type: 'ULTIMATE_BOSS', // type "1 seul combat" par défaut (équivalent de l'ancien roomCount=null)
-    bossMonsterId: 900 + overrides.id,
+    bossMonsterId: [900 + overrides.id],
+    monsterFamilyId: [800 + overrides.id],
     pictureUrl: `https://example.test/dungeon-${overrides.id}.png`,
     wakassetsAvailable: true,
     hasPreBossArchi: false,

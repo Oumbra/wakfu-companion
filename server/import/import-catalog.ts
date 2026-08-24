@@ -108,10 +108,27 @@ interface RawDungeon {
   level: number;
   bracket: number;
   type: WakfuDungeonType;
-  bossMonsterId?: number | null;
+  // Curé à la main dans repository/dungeons.json sous 3 formes possibles selon le donjon : `null`
+  // (aucun boss, ex. BREACH/ARCADE), un entier (un seul boss, cas le plus courant) ou un tableau
+  // (plusieurs boss simultanés, ex. ULTIMATE_BREACH) — voir toIdArray, qui normalise toujours vers
+  // un tableau (jamais nu ni `null`) avant insertion en base.
+  bossMonsterId?: number | number[] | null;
+  // Même convention à 3 formes que bossMonsterId ci-dessus (`null`/entier/tableau) — un donjon
+  // classique référence une seule famille, une brèche (BREACH/ULTIMATE_BREACH) plusieurs.
+  monsterFamilyId?: number | number[] | null;
   picture_url: string;
   wakassets_available: boolean;
   has_pre_boss_archi?: boolean;
+}
+
+/** Normalise `null | number | number[]` (forme de curation manuelle de repository/dungeons.json,
+ * voir RawDungeon.bossMonsterId/monsterFamilyId) vers un tableau, toujours — jamais un entier nu
+ * ni `null` : c'est cette forme unique qui est insérée en base (dungeons.boss_monster_id/
+ * monster_family_id, voir server/db/schema.ts) et donc celle que renvoie l'API /dungeons à tout
+ * consommateur, quel que soit le nombre de valeurs (0, 1, ou plusieurs). */
+function toIdArray(value: number | number[] | null | undefined): number[] {
+  if (value === null || value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 // Seule implémentation de cette logique depuis le lot 3.1 étape 8 (l'équivalent client,
@@ -358,6 +375,22 @@ interface ItemCategoryRow {
   pt: string;
 }
 
+interface DungeonRow {
+  id: number;
+  fr: string;
+  en: string;
+  es: string;
+  pt: string;
+  level: number;
+  bracket: number;
+  type: WakfuDungeonType;
+  bossMonsterId: number[];
+  monsterFamilyId: number[];
+  pictureUrl: string;
+  wakassetsAvailable: boolean;
+  hasPreBossArchi: boolean;
+}
+
 async function main(): Promise<void> {
   const databaseUrl = process.env['DATABASE_URL'];
   if (!databaseUrl) throw new Error('DATABASE_URL manquant.');
@@ -448,7 +481,7 @@ async function main(): Promise<void> {
     isDominant: monster.isDominant ?? false,
   }));
 
-  const dungeonRows = rawDungeons.map((dungeon) => ({
+  const dungeonRows: DungeonRow[] = rawDungeons.map((dungeon) => ({
     id: dungeon.id,
     fr: dungeon.fr,
     en: dungeon.en,
@@ -457,7 +490,8 @@ async function main(): Promise<void> {
     level: dungeon.level,
     bracket: dungeon.bracket,
     type: dungeon.type,
-    bossMonsterId: dungeon.bossMonsterId ?? null,
+    bossMonsterId: toIdArray(dungeon.bossMonsterId),
+    monsterFamilyId: toIdArray(dungeon.monsterFamilyId),
     pictureUrl: dungeon.picture_url,
     wakassetsAvailable: dungeon.wakassets_available,
     hasPreBossArchi: dungeon.has_pre_boss_archi ?? false,

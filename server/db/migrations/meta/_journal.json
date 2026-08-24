@@ -127,6 +127,13 @@
       "when": 1787046631126,
       "tag": "0017_item_categories_i18n",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1787605800640,
+      "tag": "0018_add_dungeon_boss_family_arrays",
+      "breakpoints": true
     }
   ]
 }
