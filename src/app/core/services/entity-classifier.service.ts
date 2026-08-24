@@ -38,7 +38,9 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
  * `fighterAiSide`, alimenté soit par `registerFighterJoin` pour un vrai
  * combattant, soit par `registerSummonJoin` pour une invocation identifiée
  * par LogParser — qui hérite alors du camp de son invocateur plutôt que du
- * flag brut, toujours `true` pour une invocation, voir CLAUDE.md) → base de
+ * flag brut, toujours `true` pour une invocation, voir CLAUDE.md — SAUF si
+ * l'invocation est elle-même un vrai monstre du référentiel officiel, voir
+ * l'exception documentée sur `registerSummonJoin`) → base de
  * monstres officielle → roster de personnages déclarés → classe détectée via
  * les sorts lancés → invocations connues (liste statique `WAKFU_ALLY_SUMMONS`,
  * repli pour un historique reconstruit sans ligne `_FL_` exploitable) →
@@ -141,8 +143,28 @@ export class EntityClassifierService {
    * FighterJoinedEntry.summonedBy) : son camp suit celui de son invocateur plutôt que le flag brut
    * "isControlledByAI" (toujours `true` pour une invocation, alors qu'elle appartient le plus
    * souvent à un allié — voir CLAUDE.md). `casterName` a normalement déjà rejoint ce même combat
-   * avant de pouvoir invoquer quoi que ce soit, son camp est donc déjà connu de `classify()`. */
+   * avant de pouvoir invoquer quoi que ce soit, son camp est donc déjà connu de `classify()`.
+   *
+   * EXCEPTION (bug réel corrigé le 2026-08-24, combat "K'abah'al, Gardien de la route des morts") :
+   * un vrai monstre du référentiel officiel (`isConfirmedEnemy`, ex. un boss) ne doit JAMAIS hériter
+   * du camp d'un "invocateur", même si `LogParser`/`SUMMON_ANNOUNCE_RE` a détecté une ligne
+   * "X: Invoque ...". Certains mécanismes de combat détournent ce texte pour un tout autre usage :
+   * ce boss punit chaque joueur touché par son affaiblissement en le forçant à afficher
+   * "<Joueur>: Invoque un(e) Résidu de K'abah'al" dans le log (un add HOSTILE, pas un familier du
+   * joueur), qui à son tour peut réinvoquer le boss lui-même de la même façon — sans ce garde-fou,
+   * le boss finissait classé allié (hérité en cascade via ce "Résidu"), donc absent de la liste des
+   * ennemis. Le référentiel de monstres (breed/nom croisé avec repository/monsters.json) est un
+   * signal strictement plus fiable qu'une ligne de log détournée par une mécanique de boss : un vrai
+   * monstre catalogué reste toujours ennemi, quoi qu'il arrive. Sans effet sur les VRAIES invocations
+   * alliées (Sadida/Osamodas/Eniripsa...) : celles-ci ne sont normalement pas elles-mêmes des
+   * entrées du référentiel (voir CLAUDE.md, homonymie "Chimère veilleuse" — le cas où l'invocation
+   * partage son nom avec un monstre sauvage réel reste un angle mort déjà documenté, pas aggravé
+   * par ce correctif). */
   registerSummonJoin(name: string, casterName: string): void {
+    if (this.isConfirmedEnemy(name)) {
+      this.fighterAiSide.set(name, 'enemy');
+      return;
+    }
     this.fighterAiSide.set(name, this.classify(casterName));
   }
 
