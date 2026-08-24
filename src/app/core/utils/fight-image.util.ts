@@ -6,7 +6,7 @@ import {
   isDungeonBreach,
 } from '../api/catalog.service';
 import { normalizeWakfuName } from './wakfu-name.util';
-import { BREACH_IMAGE_URL } from '../data/breach-icon.data';
+import { BREACH_IMAGE_URL, ULTIMATE_BREACH_IMAGE_URL } from '../data/breach-icon.data';
 
 /** Illustration générique wakassets, utilisée en repli erreur réseau (voir onFightImageError dans
  * fight-history.component.ts) quand même les replis wakassets d'un monstre échouent. Depuis le
@@ -101,9 +101,14 @@ export function findDungeonForEnemies(
 /**
  * Détermine l'illustration à afficher pour une entrée de l'historique des
  * combats, par ordre de priorité :
- * 1. Un ennemi boss (`isBoss`) présent -> illustration du donjon dont il est
- *    le boss (`bossMonsterId` dans repository/dungeons.json), ou à
- *    défaut (aucun donjon référencé pour ce boss) sa propre `pictureUrl`.
+ * 0. PLUSIEURS ennemis boss (`isBoss`) présents simultanément -> illustration de brèche ultime
+ *    (ULTIMATE_BREACH_IMAGE_URL, voir breach-icon.data.ts). Volontairement AVANT la priorité 1
+ *    (sans quoi un seul des boss serait détecté par `entries.find` et le combat traité comme un
+ *    donjon/boss classique) : seul cas connu dans le jeu à ce jour où plusieurs monstres `isBoss`
+ *    rejoignent le même combat, ajouté le 2026-08-24 à la demande de l'utilisateur.
+ * 1. Un ennemi boss (`isBoss`) présent (SEUL, voir priorité 0 ci-dessus) -> illustration du donjon
+ *    dont il est le boss (`bossMonsterId` dans repository/dungeons.json), ou à défaut (aucun donjon
+ *    référencé pour ce boss) sa propre `pictureUrl`.
  * 2. Plus de ${DISTINCT_FAMILY_THRESHOLD} familles de monstres distinctes parmi les ennemis
  *    (horde hétérogène, pas un combat de donjon/archi/dominant) -> illustration de brèche
  *    (BREACH_IMAGE_URL, voir breach-icon.data.ts) — heuristique de détection de brèche actuelle,
@@ -146,7 +151,12 @@ export function resolveFightImageInfo(
     .map((name) => catalog.findWakfuMonsterEntry(name))
     .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
 
-  const bossEntry = entries.find((entry) => entry.isBoss);
+  const bossEntries = entries.filter((entry) => entry.isBoss);
+  if (bossEntries.length > 1) {
+    return { url: ULTIMATE_BREACH_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
+  }
+
+  const bossEntry = bossEntries[0];
   if (bossEntry) {
     const dungeon = forceBossOwnImage ? null : findDungeonForEnemies(catalog, enemyNames);
     if (dungeon) {
