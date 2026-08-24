@@ -1241,6 +1241,26 @@ export class StatsStoreService {
 
     if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien d'autre à clôturer.
 
+    // Deux compositions dégénérées, jamais un vrai combat PvE à afficher/compter :
+    //  - aucun ennemi (`working.fight.enemies` vide) : un défi entre joueurs (PvP) — hors-sujet
+    //    pour un compagnon de suivi PvE, à ignorer entièrement plutôt qu'interprété (pas de
+    //    victoire/défaite PvE cohérente à en tirer).
+    //  - aucun allié (`working.fight.allies` vide) : n'arrive normalement jamais pour un combat où
+    //    le porteur du log a réellement participé (il rejoint toujours son propre combat) — signe
+    //    d'un faux positif de suivi (ex. combat d'un tiers capté par erreur), à retirer plutôt qu'à
+    //    afficher.
+    // Dans les deux cas, le combat est purement abandonné : ni historique, ni comptage
+    // gagné/perdu, ni butin de session, ni XP — toujours en amont de resolveFightResult, qui
+    // suppose au moins l'un des deux non vide pour ses replis (voir sa documentation).
+    if (working.fight.enemies.length === 0 || working.fight.allies.length === 0) {
+      this.activeFights.delete(fightId);
+      if (this.currentDisplayFightId === fightId) {
+        const remaining = [...this.activeFights.keys()];
+        this.currentDisplayFightId = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+      }
+      return;
+    }
+
     const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
       // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
