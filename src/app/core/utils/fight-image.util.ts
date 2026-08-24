@@ -107,18 +107,24 @@ export function findDungeonForEnemies(
  * Détermine l'illustration à afficher pour une entrée de l'historique des
  * combats, par ordre de priorité :
  * 0. PLUSIEURS ennemis boss (`isBoss`) présents simultanément -> illustration de brèche ultime
- *    (ULTIMATE_BREACH_IMAGE_URL, voir breach-icon.data.ts). Volontairement AVANT la priorité 1
- *    (sans quoi un seul des boss serait détecté par `entries.find` et le combat traité comme un
- *    donjon/boss classique) : seul cas connu dans le jeu à ce jour où plusieurs monstres `isBoss`
- *    rejoignent le même combat, ajouté le 2026-08-24 à la demande de l'utilisateur.
+ *    (ULTIMATE_BREACH_IMAGE_URL, voir breach-icon.data.ts), avec pour tooltip le nom de LA brèche
+ *    ultime identifiée (parmi les 3 connues, `type: 'ULTIMATE_BREACH'` dans repository/dungeons.json)
+ *    via ses boss (`bossMonsterId`) — voir CatalogService.findWakfuUltimateBreachByBossMonsters,
+ *    repli sur un libellé générique si aucune ne correspond (référentiel incomplet, ou combat qui
+ *    n'est en réalité pas une brèche ultime). Volontairement AVANT la priorité 1 (sans quoi un seul
+ *    des boss serait détecté par `entries.find` et le combat traité comme un donjon/boss classique) :
+ *    seul cas connu dans le jeu à ce jour où plusieurs monstres `isBoss` rejoignent le même combat,
+ *    ajouté le 2026-08-24 à la demande de l'utilisateur.
  * 1. Un ennemi boss (`isBoss`) présent (SEUL, voir priorité 0 ci-dessus) -> illustration du donjon
  *    dont il est le boss (`bossMonsterId` dans repository/dungeons.json), ou à défaut (aucun donjon
  *    référencé pour ce boss) sa propre `pictureUrl`.
  * 2. Plus de ${DISTINCT_FAMILY_THRESHOLD} familles de monstres distinctes parmi les ennemis
  *    (horde hétérogène, pas un combat de donjon/archi/dominant) -> illustration de brèche
  *    (BREACH_IMAGE_URL, voir breach-icon.data.ts) — heuristique de détection de brèche actuelle,
- *    faute d'un signal plus précis (pas de distinction simple/ultime pour l'instant, voir
- *    breach-icon.data.ts).
+ *    faute d'un signal plus précis pour savoir SI c'en est bien une. Tooltip : nom de LA brèche
+ *    identifiée (parmi les 7 connues, `type: 'BREACH'`) via les familles de monstre réellement
+ *    présentes — voir CatalogService.findWakfuBreachByMonsterFamilies, même repli générique en
+ *    l'absence de correspondance.
  * 3. Un archimonstre (`isArchi`) présent -> sa `pictureUrl`.
  * 4. Un dominant (`isDominant`) présent -> sa `pictureUrl`.
  * 5. Sinon, l'ennemi ayant infligé le plus de dégâts -> sa `pictureUrl`.
@@ -127,10 +133,12 @@ export function findDungeonForEnemies(
  * FightRecord.rows, déjà trié ainsi) pour que le repli n°5 pointe vers le
  * bon monstre. Les noms sans entrée catalogue connue sont ignorés à
  * chaque étape (aucune image disponible pour eux). `tooltipSource` est
- * `null` pour une illustration de donjon-brèche (`isDungeonBreach`) ; de type
- * `'text'` (clé de traduction fixe, pas de nom précis) pour les priorités 0/2
- * (brèche/brèche ultime, depuis le 2026-08-24) — voir feature "tooltip sur
- * les images d'historique de combat".
+ * `null` pour une illustration de donjon-brèche classique trouvée par boss unique
+ * (`isDungeonBreach`, priorité 1 — cas qui ne devrait plus se produire pour une vraie brèche
+ * depuis la priorité 0, gardé par sécurité) ; de type `'dungeon'` (nom précis, comme un donjon
+ * classique) pour les priorités 0/2 quand la brèche/brèche ultime a pu être identifiée, sinon de
+ * type `'text'` (clé de traduction fixe générique) — voir feature "tooltip sur les images
+ * d'historique de combat".
  *
  * `fallbackUrls` (voir FightImageInfo) accompagne `url` pour les priorités 1(repli)/3/4/5 (propre
  * image d'un monstre, jamais un donjon) : des replis wakassets, à essayer par l'appelant si `url`
@@ -159,9 +167,17 @@ export function resolveFightImageInfo(
 
   const bossEntries = entries.filter((entry) => entry.isBoss);
   if (bossEntries.length > 1) {
+    // Identification précise de LA brèche ultime (parmi les 3 connues) via ses boss — voir
+    // findWakfuUltimateBreachByBossMonsters. Repli sur le libellé générique si aucune ne
+    // correspond (référentiel incomplet, ou combat qui n'est en réalité pas une brèche ultime).
+    const ultimateBreach = catalog.findWakfuUltimateBreachByBossMonsters(
+      bossEntries.map((entry) => entry.id),
+    );
     return {
       url: ULTIMATE_BREACH_IMAGE_URL,
-      tooltipSource: { kind: 'text', translationKey: 'damageMeter.ultimateBreach' },
+      tooltipSource: ultimateBreach
+        ? { kind: 'dungeon', names: ultimateBreach }
+        : { kind: 'text', translationKey: 'damageMeter.ultimateBreach' },
       fallbackUrls: [],
     };
   }
@@ -186,12 +202,19 @@ export function resolveFightImageInfo(
   const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
   if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
     // Heuristique actuelle de détection de brèche : aucun autre signal fiable (pas de boss, pas de
-    // dungeon référencé) tant que la composition en familles des brèches connues n'est pas saisie
-    // dans le référentiel — voir breach-icon.data.ts. BREACH_IMAGE_URL en repli plutôt que
-    // DEFAULT_FIGHT_IMAGE_URL (générique, sans rapport avec une brèche) depuis le 2026-08-24.
+    // dungeon référencé). Identification précise de LA brèche (parmi celles connues) via les
+    // familles de monstre réellement présentes — voir findWakfuBreachByMonsterFamilies. Repli sur
+    // le libellé générique si aucune ne correspond (référentiel incomplet, ou horde hétérogène qui
+    // n'est en réalité pas une brèche).
+    const enemyFamilyIds = [...distinctFamilies].filter(
+      (family): family is number => family !== NO_FAMILY_KEY,
+    );
+    const breach = catalog.findWakfuBreachByMonsterFamilies(enemyFamilyIds);
     return {
       url: BREACH_IMAGE_URL,
-      tooltipSource: { kind: 'text', translationKey: 'damageMeter.breach' },
+      tooltipSource: breach
+        ? { kind: 'dungeon', names: breach }
+        : { kind: 'text', translationKey: 'damageMeter.breach' },
       fallbackUrls: [],
     };
   }

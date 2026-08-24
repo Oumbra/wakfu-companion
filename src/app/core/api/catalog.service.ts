@@ -224,6 +224,10 @@ export class CatalogService {
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
+  /** Toutes les entrées donjon telles que reçues (contrairement à dungeonsByBossMonsterId, pas
+   * indexée — sert uniquement à balayer les brèches, en nombre restreint, voir
+   * findWakfuBreachByMonsterFamilies/findWakfuUltimateBreachByBossMonsters). */
+  private dungeons: readonly CatalogDungeonEntry[] = [];
   private monsterFamiliesById = new Map<number, CatalogMonsterFamilyEntry>();
 
   async initialize(): Promise<void> {
@@ -302,6 +306,45 @@ export class CatalogService {
 
   findWakfuDungeonByBossMonsterId(bossMonsterId: number): CatalogDungeonEntry | undefined {
     return this.dungeonsByBossMonsterId.get(bossMonsterId);
+  }
+
+  /** Trouve la brèche dimensionnelle simple (`type: 'BREACH'`) dont la composition en familles de
+   * monstres couvre `enemyFamilyIds` (voir CLAUDE.md "Invocations"... non — voir la demande
+   * utilisateur du 2026-08-24 : annotation du nom de brèche). Un combat de brèche est reconnu par
+   * `resolveFightImageInfo` (fight-image.util.ts) via une heuristique sans boss ni donjon
+   * référencé ; cette méthode va plus loin en identifiant LAQUELLE des brèches connues, à partir
+   * des familles de monstre réellement présentes parmi les ennemis du combat. Correspondance
+   * retenue : TOUTES les familles observées (`enemyFamilyIds`, sans doublon) doivent figurer dans
+   * `monsterFamilyId` d'une même brèche — les brèches ne partagent aucune famille entre elles
+   * (vérifié sur le référentiel actuel), donc un match, s'il existe, est unique. Renvoie
+   * `undefined` si `enemyFamilyIds` est vide ou si aucune brèche connue ne couvre entièrement cet
+   * ensemble (référentiel incomplet, ou combat qui n'est en réalité pas une brèche) : l'appelant se
+   * rabat alors sur un libellé générique. */
+  findWakfuBreachByMonsterFamilies(
+    enemyFamilyIds: readonly number[],
+  ): CatalogDungeonEntry | undefined {
+    if (enemyFamilyIds.length === 0) return undefined;
+    return this.dungeons.find(
+      (dungeon) =>
+        dungeon.type === 'BREACH' &&
+        enemyFamilyIds.every((familyId) => dungeon.monsterFamilyId.includes(familyId)),
+    );
+  }
+
+  /** Même principe que findWakfuBreachByMonsterFamilies, pour une brèche ultime (`type:
+   * 'ULTIMATE_BREACH'`) : identifiée par ses BOSS (`bossMonsterId`, plusieurs par brèche ultime)
+   * plutôt que par familles — une brèche ultime a plusieurs monstres `isBoss`, réunis dans le même
+   * combat (voir priorité 0 de resolveFightImageInfo), contrairement à une brèche simple qui n'en a
+   * aucun. */
+  findWakfuUltimateBreachByBossMonsters(
+    enemyBossIds: readonly number[],
+  ): CatalogDungeonEntry | undefined {
+    if (enemyBossIds.length === 0) return undefined;
+    return this.dungeons.find(
+      (dungeon) =>
+        dungeon.type === 'ULTIMATE_BREACH' &&
+        enemyBossIds.every((bossId) => dungeon.bossMonsterId.includes(bossId)),
+    );
   }
 
   /** Résout `CatalogMonsterEntry.family` vers son libellé localisé — `undefined` si la famille
@@ -532,7 +575,22 @@ export class CatalogService {
     this.revision.update((v) => v + 1);
   }
 
-  private applyDungeons(dungeons: CatalogDungeonEntry[]): void {
+  private applyDungeons(rawDungeons: CatalogDungeonEntry[]): void {
+    // Défensif : le type promet `bossMonsterId`/`monsterFamilyId` toujours tableaux (normalisés à
+    // l'import côté serveur, voir toIdArray dans import-catalog.ts + colonnes `.notNull().default([])`
+    // dans server/db/schema.ts), mais un payload réel peut temporairement y déroger (ex. base pas
+    // encore ré-importée après une mise à jour de repository/dungeons.json) — bug réel constaté le
+    // 2026-08-24 : une seule ligne à `bossMonsterId: null` faisait planter `for...of` ci-dessous et
+    // bloquait `status` à `'loading'` pour TOUT le catalogue (objets/monstres compris, pas seulement
+    // les donjons), l'app entière restant inutilisable. Normaliser ici plutôt que de faire confiance
+    // aveuglément au typage TypeScript (qui n'est qu'une promesse de compilation, pas une garantie
+    // runtime sur des données réseau).
+    const dungeons = rawDungeons.map((dungeon) => ({
+      ...dungeon,
+      bossMonsterId: Array.isArray(dungeon.bossMonsterId) ? dungeon.bossMonsterId : [],
+      monsterFamilyId: Array.isArray(dungeon.monsterFamilyId) ? dungeon.monsterFamilyId : [],
+    }));
+
     const byBossMonsterId = new Map<number, CatalogDungeonEntry>();
     for (const dungeon of dungeons) {
       for (const bossMonsterId of dungeon.bossMonsterId) {
@@ -542,6 +600,7 @@ export class CatalogService {
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
+    this.dungeons = dungeons;
     this.revision.update((v) => v + 1);
   }
 

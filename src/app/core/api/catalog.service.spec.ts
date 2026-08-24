@@ -239,6 +239,27 @@ describe('CatalogService', () => {
     expect(service.findWakfuItemEntry('Coiffe Test')).toBeUndefined();
   });
 
+  it('tolère un bossMonsterId/monsterFamilyId non-tableau (null) reçu du serveur, sans planter le reste du catalogue', async () => {
+    // Bug réel constaté le 2026-08-24 : une base pas encore ré-importée peut encore renvoyer `null`
+    // au lieu d'un tableau vide (contrat pourtant garanti par le type CatalogDungeonEntry) — un
+    // simple `for...of` sur cette valeur plantait alors `applyDungeons` et bloquait `status` à
+    // `'loading'` pour tout le catalogue, objets/monstres compris.
+    const malformedDungeon = { ...DUNGEON_ROW, bossMonsterId: null, monsterFamilyId: null };
+    const { service } = setup({
+      cachedIndex: undefined,
+      cachedDungeons: undefined,
+      version: ok({ indexHash: 'v1' }),
+      index: ok({ items: [ITEM_TUPLE], monsters: [MONSTER_TUPLE] }),
+      dungeons: ok([malformedDungeon]),
+    });
+
+    await service.initialize();
+
+    expect(service.status()).toBe('ready');
+    expect(service.findWakfuItemEntryById(1234)?.fr).toBe('Coiffe Test');
+    expect(service.findWakfuDungeonByBossMonsterId(42)).toBeUndefined();
+  });
+
   it('recherche un objet par nom quelle que soit sa langue (FR/EN/ES/PT)', async () => {
     const { service } = setup({
       cachedIndex: { indexHash: 'abc', items: [ITEM_TUPLE], monsters: [] },
@@ -264,5 +285,91 @@ describe('CatalogService', () => {
 
     await expect(service.getItemDetail(1234)).resolves.toMatchObject({ id: 1234 });
     await expect(service.getMonsterDetail(42)).resolves.toBeUndefined();
+  });
+
+  describe('findWakfuBreachByMonsterFamilies / findWakfuUltimateBreachByBossMonsters', () => {
+    const BREACH_A = {
+      ...DUNGEON_ROW,
+      id: 20,
+      fr: 'Brèche A',
+      type: 'BREACH' as const,
+      bossMonsterId: [],
+      monsterFamilyId: [10, 11, 12, 13, 14],
+    };
+    const BREACH_B = {
+      ...DUNGEON_ROW,
+      id: 21,
+      fr: 'Brèche B',
+      type: 'BREACH' as const,
+      bossMonsterId: [],
+      monsterFamilyId: [20, 21, 22],
+    };
+    const ULTIMATE_BREACH_A = {
+      ...DUNGEON_ROW,
+      id: 22,
+      fr: 'Brèche Ultime A',
+      type: 'ULTIMATE_BREACH' as const,
+      bossMonsterId: [901, 902, 903],
+      monsterFamilyId: [30, 31],
+    };
+
+    async function setupBreaches() {
+      const { service } = setup({
+        cachedIndex: undefined,
+        cachedDungeons: undefined,
+        version: ok({ indexHash: 'v1' }),
+        index: ok({ items: [], monsters: [] }),
+        dungeons: ok([DUNGEON_ROW, BREACH_A, BREACH_B, ULTIMATE_BREACH_A]),
+      });
+      await service.initialize();
+      return service;
+    }
+
+    it('trouve la brèche dont TOUTES les familles observées figurent dans sa composition', async () => {
+      const service = await setupBreaches();
+
+      expect(service.findWakfuBreachByMonsterFamilies([10, 12])?.id).toBe(20);
+      expect(service.findWakfuBreachByMonsterFamilies([20, 22])?.id).toBe(21);
+    });
+
+    it('ne matche pas une brèche dont la composition ne couvre pas toutes les familles observées', async () => {
+      const service = await setupBreaches();
+
+      // Famille 99 absente de toute brèche connue.
+      expect(service.findWakfuBreachByMonsterFamilies([10, 99])).toBeUndefined();
+      // Familles à cheval sur deux brèches distinctes : aucune ne couvre l'ensemble.
+      expect(service.findWakfuBreachByMonsterFamilies([10, 20])).toBeUndefined();
+    });
+
+    it('ignore les donjons non-BREACH même en cas de chevauchement de famille', async () => {
+      const service = await setupBreaches();
+
+      // DUNGEON_ROW (type ULTIMATE_BOSS) porte la famille 1, jamais retournée par cette méthode.
+      expect(service.findWakfuBreachByMonsterFamilies([1])).toBeUndefined();
+    });
+
+    it('renvoie undefined pour un tableau de familles vide', async () => {
+      const service = await setupBreaches();
+
+      expect(service.findWakfuBreachByMonsterFamilies([])).toBeUndefined();
+    });
+
+    it('trouve la brèche ultime dont TOUS les boss observés figurent dans sa composition', async () => {
+      const service = await setupBreaches();
+
+      expect(service.findWakfuUltimateBreachByBossMonsters([901, 903])?.id).toBe(22);
+    });
+
+    it('ne matche pas une brèche ultime dont les boss ne couvrent pas tous ceux observés', async () => {
+      const service = await setupBreaches();
+
+      expect(service.findWakfuUltimateBreachByBossMonsters([901, 999])).toBeUndefined();
+    });
+
+    it('renvoie undefined pour un tableau de boss vide', async () => {
+      const service = await setupBreaches();
+
+      expect(service.findWakfuUltimateBreachByBossMonsters([])).toBeUndefined();
+    });
   });
 });
