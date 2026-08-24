@@ -201,7 +201,19 @@ export const dungeons = pgTable(
     pt: text('pt').notNull(),
     level: integer('level').notNull(),
     bracket: integer('bracket').notNull(),
-    bossMonsterId: integer('boss_monster_id'), // référence monsters.id, nullable (pas de FK stricte : un id de boss peut temporairement ne pas encore être importé selon l'ordre des tables)
+    // Toujours un tableau (jamais un entier nu ni `null`) — même pour un donjon classique à un
+    // seul boss (tableau à 1 élément) : normalisé ainsi à l'import (voir
+    // server/import/import-catalog.ts, toIdArray) pour que tout consommateur (client ET serveur)
+    // n'ait qu'une seule forme à gérer. Plusieurs éléments uniquement pour ULTIMATE_BREACH
+    // (plusieurs boss simultanés) ; tableau vide pour un type sans boss (BREACH, ARCADE).
+    // Référence monsters.id (pas de FK stricte : un id de boss peut temporairement ne pas encore
+    // être importé selon l'ordre des tables).
+    bossMonsterId: integer('boss_monster_id').array().notNull().default([]),
+    // Famille(s) de monstre du donjon/de la brèche (repository/dungeons.json) — même convention
+    // "toujours un tableau" que bossMonsterId ci-dessus. Plusieurs éléments pour BREACH/
+    // ULTIMATE_BREACH (composition en familles), tableau vide pour un type sans famille connue
+    // (ex. ARCADE). Référence monster_families.id (pas de FK stricte, même raison).
+    monsterFamilyId: integer('monster_family_id').array().notNull().default([]),
     pictureUrl: text('picture_url').notNull(),
     wakassetsAvailable: boolean('wakassets_available').notNull(),
     // Catégorie du donjon (curée à la main dans repository/dungeons.json, JAMAIS déductible
@@ -217,7 +229,7 @@ export const dungeons = pgTable(
     // `type` plutôt que d'y être inclus (garde-fou dédié dans dungeon-run-grouping.util.ts).
     hasPreBossArchi: boolean('has_pre_boss_archi').notNull().default(false),
   },
-  (table) => [index('dungeons_boss_monster_id_idx').on(table.bossMonsterId)],
+  (table) => [index('dungeons_boss_monster_id_idx').using('gin', table.bossMonsterId)],
 );
 
 /**

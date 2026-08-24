@@ -97,7 +97,13 @@ export interface CatalogDungeonEntry {
   level: number;
   bracket: number;
   type: WakfuDungeonType;
-  bossMonsterId: number | null;
+  /** Toujours un tableau, quel que soit le nombre de boss (0, 1, ou plusieurs pour
+   * ULTIMATE_BREACH — voir repository/dungeons.json) : normalisé ainsi côté serveur (voir
+   * server/import/import-catalog.ts, toIdArray), jamais un entier nu ni `null` ici. */
+  bossMonsterId: readonly number[];
+  /** Famille(s) de monstre du donjon/de la brèche — même convention "toujours un tableau" que
+   * bossMonsterId ci-dessus (plusieurs éléments pour BREACH/ULTIMATE_BREACH, vide si inconnue). */
+  monsterFamilyId: readonly number[];
   pictureUrl: string;
   wakassetsAvailable: boolean;
   /** Vrai pour les rares donjons avec un combat d'archimonstre supplémentaire avant le boss (ex.
@@ -529,9 +535,10 @@ export class CatalogService {
   private applyDungeons(dungeons: CatalogDungeonEntry[]): void {
     const byBossMonsterId = new Map<number, CatalogDungeonEntry>();
     for (const dungeon of dungeons) {
-      if (dungeon.bossMonsterId === null) continue;
-      if (!byBossMonsterId.has(dungeon.bossMonsterId)) {
-        byBossMonsterId.set(dungeon.bossMonsterId, dungeon);
+      for (const bossMonsterId of dungeon.bossMonsterId) {
+        if (!byBossMonsterId.has(bossMonsterId)) {
+          byBossMonsterId.set(bossMonsterId, dungeon);
+        }
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
