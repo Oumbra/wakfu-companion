@@ -681,4 +681,45 @@ describe('LogParser — invocations (voir CLAUDE.md)', () => {
       expect(deuxieme.summonedBy).toBeNull();
     },
   );
+
+  it(
+    "remonte une CHAÎNE d'invocations jusqu'à son sommet (invocation qui en invoque une autre) " +
+      "plutôt que de s'arrêter à un niveau intermédiaire — bug réel corrigé le 2026-08-24 sur un " +
+      'vrai fichier (Fayto, fightId 1680001273) : "Druidre" (vrai ennemi) invoque "Résidu" ; ' +
+      '"Résidu" meurt puis réinstancie "Glouto" (un AUTRE vrai ennemi déjà présent) via sa propre ' +
+      'annonce "Invoque" — une seule résolution attribuait alors les dégâts de "Glouto" à "Résidu", ' +
+      "qui n'a lui-même jamais rejoint le récap en tant qu'invocation (nom fantôme absent de " +
+      'fight.enemies) plutôt qu\'à "Druidre", le VRAI combattant tout en haut de la chaîne',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Druidre breed : 10 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Glouto breed : 11 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Druidre invoque Résidu.
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Druidre: Invoque un(e) Résidu ',
+        ' INFO 10:00:01,001 [T] (a:1) - [_FL_] fightId=1 Résidu breed : 12 [-3] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Glouto (1re instance) meurt.
+        ' INFO 10:00:05,000 [T] (a:1) - [Information (combat)] Glouto est hors-combat !',
+        // Résidu "réinstancie" Glouto (2e instance, nouveau fighterId) via sa propre annonce Invoque.
+        ' INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Résidu: Invoque un(e) Glouto ',
+        ' INFO 10:00:06,001 [T] (a:1) - [_FL_] fightId=1 Glouto breed : 11 [-4] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        // Cette 2e instance de Glouto agit : doit remonter jusqu'à Druidre, pas s'arrêter à Résidu.
+        ' INFO 10:00:07,000 [T] (a:1) - [Information (combat)] Glouto lance le sort Griffe',
+        ' INFO 10:00:07,500 [T] (a:1) - [Information (combat)] Oumbra: -50 PV (Terre)',
+      ];
+      const entries = parseAll(parser, lines);
+
+      const secondGloutoJoin = entries
+        .filter(
+          (e): e is Extract<LogEntry, { kind: 'fighter-joined' }> =>
+            e.kind === 'fighter-joined' && e.name === 'Glouto',
+        )
+        .at(-1)!;
+      expect(secondGloutoJoin.summonedBy).toBe('Résidu');
+
+      const dmg = entries.find((e) => e.kind === 'damage');
+      expect(dmg).toMatchObject({ attacker: 'Druidre', spell: 'Glouto', amount: 50 });
+    },
+  );
 });
