@@ -781,10 +781,7 @@ app-input-number.kpi-countdown-current-input {
 /* Monstres : bordure grise, fond toujours transparent (pas de dégradé, même déployé). */
 .kpi.is-monster {
   border-color: var(--text-muted);
-  background: transparent;
-}
-.kpi.expanded.is-monster {
-  background: transparent;
+  background: var(--panel-bg);
 }
 
 /* Tuile cochée en mode sélection multiple : bordure accent par-dessus la couleur de rareté, pour
@@ -809,5 +806,11 @@ app-input-number.kpi-countdown-current-input {
     --input-number-field-color: var(--accent);
     --input-number-focus-color: var(--accent);
     --input-number-field-bg: var(--bg-color);
+  }
+}
+
+:host-context([data-streamer='on']) {
+  .kpi-strip {
+    background: magenta;
   }
 }
