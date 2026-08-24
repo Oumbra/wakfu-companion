@@ -6,7 +6,7 @@ import {
   resolveFightImageUrl,
   resolveFightTypeClassification,
 } from './fight-image.util';
-import { BREACH_IMAGE_URL } from '../data/breach-icon.data';
+import { BREACH_IMAGE_URL, ULTIMATE_BREACH_IMAGE_URL } from '../data/breach-icon.data';
 import { CatalogService } from '../api/catalog.service';
 import { ApiClientService, ApiResult } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
@@ -19,6 +19,8 @@ function monsterPictureUrl(gfxId: string): string {
 // [id, fr, en, es, pt, gfxId, family(-1 si null), isBoss(0|1), isArchi(0|1), isDominant(0|1)]
 const BOSS_WITH_DUNGEON = [101, 'Boss Avec Donjon', 'en', 'es', 'pt', '900101', 1, 1, 0, 0];
 const BOSS_WITHOUT_DUNGEON = [102, 'Boss Sans Donjon', 'en', 'es', 'pt', '900102', 1, 1, 0, 0];
+// Second boss, utilisé uniquement pour le cas "plusieurs boss simultanés -> brèche ultime".
+const BOSS_SECOND = [116, 'Boss Second', 'en', 'es', 'pt', '900116', 1, 1, 0, 0];
 const ARCHI = [103, 'Archi Test', 'en', 'es', 'pt', '900103', 2, 0, 1, 0];
 const DOMINANT = [104, 'Dominant Test', 'en', 'es', 'pt', '900104', 3, 0, 0, 1];
 // 5 familles distinctes, aucun boss/archi/dominant — pour le test "horde hétérogène".
@@ -92,6 +94,7 @@ function setupCatalog(): CatalogService {
         monsters: [
           BOSS_WITH_DUNGEON,
           BOSS_WITHOUT_DUNGEON,
+          BOSS_SECOND,
           ARCHI,
           DOMINANT,
           ...HORDE,
@@ -119,6 +122,26 @@ function setupCatalog(): CatalogService {
 }
 
 describe('resolveFightImageUrl', () => {
+  it('priorité 0 : PLUSIEURS boss simultanés -> illustration de brèche ultime (avant toute logique de donjon)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = resolveFightImageUrl(catalog, ['Boss Avec Donjon', 'Boss Second']);
+
+    expect(result).toBe(ULTIMATE_BREACH_IMAGE_URL);
+    expect(result).not.toBe(DUNGEON_FOR_BOSS.pictureUrl);
+  });
+
+  it('priorité 0 (repli) : un seul boss malgré la présence d’un 2e ennemi non-boss -> ne déclenche PAS la brèche ultime', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = resolveFightImageUrl(catalog, ['Ennemi Normal A', 'Boss Avec Donjon']);
+
+    expect(result).not.toBe(ULTIMATE_BREACH_IMAGE_URL);
+    expect(result).toBe(DUNGEON_FOR_BOSS.pictureUrl);
+  });
+
   it('priorité 1 : boss présent -> illustration du donjon dont il est le boss (croisée via bossMonsterId)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
@@ -212,6 +235,16 @@ describe('resolveFightImageUrl', () => {
 });
 
 describe('resolveFightImageInfo (tooltip)', () => {
+  it('plusieurs boss simultanés (brèche ultime) -> aucune tooltip, aucun repli (asset statique local)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(catalog, ['Boss Avec Donjon', 'Boss Second']);
+
+    expect(info.tooltipSource).toBeNull();
+    expect(info.fallbackUrls).toEqual([]);
+  });
+
   it('boss avec donjon référencé -> tooltipSource de type donjon (nom localisé du donjon)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
