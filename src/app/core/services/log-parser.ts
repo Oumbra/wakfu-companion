@@ -644,7 +644,11 @@ export class LogParser {
       const from = transform[1].trim();
       const to = transform[2].trim();
       const state = this.getFightState(this.resolveFightIdForName(from));
-      const owner = state.summonOwners.get(from);
+      // Remonte jusqu'au sommet de la chaîne (voir resolveSummonRootOwner) plutôt qu'une seule
+      // résolution : `from` peut lui-même être une invocation d'une AUTRE invocation (ex. Poupée
+      // Lapino invoquée, puis évoluant) — propager l'invocateur RACINE évite le même piège que dans
+      // resolveEffectTail (nom fantôme, jamais un vrai combattant du récap).
+      const owner = this.resolveSummonRootOwner(state, from);
       if (owner) state.summonOwners.set(to, owner);
       return null;
     }
@@ -824,12 +828,41 @@ export class LogParser {
       spell = effectTag;
     }
 
-    const summonOwner = state.summonOwners.get(attacker);
-    if (summonOwner) {
+    const rootOwner = this.resolveSummonRootOwner(state, attacker);
+    if (rootOwner) {
       spell = attacker;
-      attacker = summonOwner;
+      attacker = rootOwner;
     }
     return { attacker, spell, element };
+  }
+
+  /**
+   * Remonte la chaîne `summonOwners` jusqu'à son sommet (un nom qui n'est lui-même l'invocation de
+   * personne) plutôt qu'une seule résolution — bug réel corrigé le 2026-08-24, cas "boss qui
+   * réinstancie une invocation déjà connue via sa propre annonce Invoque" (ex. fichier Fayto,
+   * fightId 1680001273 : "Glouto" — vrai ennemi, jamais lui-même une invocation — meurt puis
+   * réapparaît via "Résidu: Invoque un(e) Glouto", "Résidu" étant DÉJÀ une invocation connue de
+   * "Druidre" ; sans ce parcours, une seule résolution attribuait l'action à "Résidu" — qui n'a
+   * lui-même jamais rejoint `fight.enemies`/`fight.allies` en tant qu'invocation — laissant
+   * `attacker` pointer vers un nom fantôme, absent du récap mais réapparaissant comme ligne à part
+   * via le repli de `buildEntityDamageRows`, CLAUDE.md). Garde anti-cycle (`visited`) au cas où deux
+   * invocations finiraient par se désigner mutuellement comme invocateur (non observé en pratique,
+   * mais `summonOwners` est alimenté par du texte de log, pas une structure garantie acyclique).
+   * Renvoie `null` si `name` n'est l'invocation de personne (cas de très loin le plus fréquent).
+   */
+  private resolveSummonRootOwner(state: FightParseState, name: string): string | null {
+    let current = name;
+    let owner = state.summonOwners.get(current);
+    if (!owner) return null;
+    const visited = new Set<string>([current]);
+    while (!visited.has(owner)) {
+      visited.add(owner);
+      current = owner;
+      const next = state.summonOwners.get(current);
+      if (!next) break;
+      owner = next;
+    }
+    return owner;
   }
 
   /** Ignore les doublons stricts (même type d'événement, mêmes champs hors horodatage) survenant dans un intervalle très court — signature d'une observation multi-compte d'un même combat/échange, où chaque compte connecté loggue sa propre copie du flux serveur. */
