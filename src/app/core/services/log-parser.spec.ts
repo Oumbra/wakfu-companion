@@ -509,3 +509,94 @@ describe('LogParser — armure donnée (onglet Armure)', () => {
     });
   });
 });
+
+describe('LogParser — invocations (voir CLAUDE.md)', () => {
+  it(
+    'identifie une invocation via "X: Invoque un(e) Y" suivi de sa jointure, réattribue ses ' +
+      "dégâts à l'invocateur avec le nom de l'invocation comme libellé de sort — même quand le nom " +
+      'annoncé ne correspond pas au nom qui rejoint réellement le combat (sort "Invocation" de ' +
+      'l\'Osamodas, qui annonce une créature "du" thème invoqué sans être son nom réel)',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Invocation',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Oumbra: Invoque une créature du Gobgob',
+        ' INFO 10:00:01,510 [T] (eXM:91) - New summon with id 2',
+        ' INFO 10:00:01,520 [T] (a:1) - [_FL_] fightId=1 Chafer Elite breed : 4741 [2] isControlledByAI=true obstacleId : 15 join the fight at {P}',
+        ' INFO 10:00:02,000 [T] (a:1) - [Information (combat)] Chafer Elite lance le sort Sabre',
+        ' INFO 10:00:02,500 [T] (a:1) - [Information (combat)] Bouftou: -100 PV (Terre)',
+      ];
+      const entries = parseAll(parser, lines);
+      const join = entries.find(
+        (e) => e.kind === 'fighter-joined' && e.name === 'Chafer Elite',
+      ) as Extract<(typeof entries)[number], { kind: 'fighter-joined' }>;
+      expect(join.summonedBy).toBe('Oumbra');
+
+      const dmg = entries.find((e) => e.kind === 'damage');
+      expect(dmg).toEqual({
+        kind: 'damage',
+        time: '10:00:02,500',
+        target: 'Bouftou',
+        attacker: 'Oumbra',
+        spell: 'Chafer Elite',
+        element: 'Terre',
+        amount: 100,
+        fightId: 1,
+      });
+    },
+  );
+
+  it(
+    'distingue une invocation homonyme de vrais ennemis du même nom au sein du MÊME combat ' +
+      "(ex. une créature aléatoire invoquée qui porte le nom d'un monstre déjà présent) : seule " +
+      "l'instance réellement invoquée porte summonedBy",
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,002 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-2] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Invocation',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Oumbra: Invoque une créature du Blop',
+        ' INFO 10:00:01,520 [T] (a:1) - [_FL_] fightId=1 Blop breed : 4777 [-3] isControlledByAI=true obstacleId : 15 join the fight at {P}',
+      ];
+      const entries = parseAll(parser, lines).filter(
+        (e): e is Extract<LogEntry, { kind: 'fighter-joined' }> =>
+          e.kind === 'fighter-joined' && e.name === 'Blop',
+      );
+      expect(entries.map((e) => [e.fighterId, e.summonedBy])).toEqual([
+        [-1, null],
+        [-2, null],
+        [-3, 'Oumbra'],
+      ]);
+    },
+  );
+
+  it(
+    'propage l\'invocateur à travers une transformation ("X: transformé(e) en Y !") sans nouvelle ' +
+      'annonce "Invoque" — cas de la Poupée Lapino du Sadida qui évolue en cours de combat',
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Lapino',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Oumbra: Invoque un(e) Dark Lapino ',
+        ' INFO 10:00:01,520 [T] (a:1) - [_FL_] fightId=1 Dark Lapino breed : 5528 [2] isControlledByAI=true obstacleId : 6 join the fight at {P}',
+        ' INFO 10:00:05,000 [T] (a:1) - [Information (combat)] Dark Lapino: transformé en Super Dark Lapino !',
+        ' INFO 10:00:05,010 [T] (a:1) - [_FL_] fightId=1 Super Dark Lapino breed : 5533 [3] isControlledByAI=true obstacleId : 6 join the fight at {P}',
+        ' INFO 10:00:06,000 [T] (a:1) - [Information (combat)] Super Dark Lapino lance le sort Griffe',
+        ' INFO 10:00:06,500 [T] (a:1) - [Information (combat)] Ennemi: -50 PV (Terre)',
+      ];
+      const entries = parseAll(parser, lines);
+      const transformedJoin = entries.find(
+        (e) => e.kind === 'fighter-joined' && e.name === 'Super Dark Lapino',
+      ) as Extract<(typeof entries)[number], { kind: 'fighter-joined' }>;
+      expect(transformedJoin.summonedBy).toBe('Oumbra');
+
+      const dmg = entries.find((e) => e.kind === 'damage');
+      expect(dmg).toMatchObject({ attacker: 'Oumbra', spell: 'Super Dark Lapino', amount: 50 });
+    },
+  );
+});

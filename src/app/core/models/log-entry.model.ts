@@ -186,6 +186,12 @@ export interface FighterJoinedEntry {
   /** Identifiant du combattant pour cette instance de combat (valeur entre crochets). */
   fighterId: number;
   isControlledByAI: boolean;
+  /** Nom du personnage qui a invoqué ce combattant (résolu par LogParser à partir des lignes
+   * "X: Invoque un(e)/une créature du Y" et "X: transformé(e) en Y !", voir CLAUDE.md), `null` pour
+   * un combattant qui n'est pas une invocation. TOUJOURS `isControlledByAI=true` en pratique (une
+   * invocation est un monstre) mais son CAMP réel suit celui de son invocateur, pas ce flag brut —
+   * voir EntityClassifierService.registerSummonJoin. */
+  summonedBy: string | null;
 }
 
 export interface TradeSide {

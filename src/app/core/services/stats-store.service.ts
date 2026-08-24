@@ -300,6 +300,15 @@ interface FightWorking {
    * son roster de départ, jamais une invocation/un décor qui n'a pas sa propre ligne de jointure).
    */
   memberNames: Set<string>;
+  /** Noms (minuscule) identifiés comme une invocation de ce combat (voir
+   * FighterJoinedEntry.summonedBy) — jamais ajoutés à `fight.enemies`/`fight.allies` ni à
+   * `attackerMap`/`healSourceMap`/`armorSourceMap` (leurs actions sont déjà réattribuées à leur
+   * invocateur par LogParser, voir CLAUDE.md) : sert de garde-fou pour ne jamais leur créer de ligne
+   * fantôme à 0 dégât dans le récap (`ensurePresent`/`registerFightDefeat`). Restent dans
+   * `memberNames` : les dégâts qu'elles ENCAISSENT doivent toujours compter dans le total de
+   * l'ennemi qui les inflige.
+   */
+  summonNames: Set<string>;
 }
 
 /**
@@ -933,6 +942,7 @@ export class StatsStoreService {
           entry.breed,
           entry.fighterId,
           entry.isControlledByAI,
+          entry.summonedBy,
         );
         break;
       case 'trade-completed':
@@ -969,6 +979,7 @@ export class StatsStoreService {
         lastResolvedSeatByName: new Map(),
         turnSeatsSeen: new Set(),
         memberNames: new Set(),
+        summonNames: new Set(),
       };
       this.activeFights.set(fightId, working);
     }
@@ -989,9 +1000,21 @@ export class StatsStoreService {
     breed: number,
     fighterId: number,
     isControlledByAI: boolean,
+    summonedBy: string | null,
   ): void {
     const working = this.getOrCreateFight(fightId, this.lastLineTime ?? '00:00:00,000');
     working.memberNames.add(name);
+    if (summonedBy) {
+      // Une invocation (voir CLAUDE.md) n'est jamais un combattant à part entière du récap : ni
+      // `fight.enemies`/`fight.allies` (son camp suit celui de son invocateur, pas son propre flag
+      // `isControlledByAI`, toujours `true`), ni `ensurePresent` (ses actions sont déjà réattribuées
+      // à son invocateur par LogParser, voir resolveEffectTail — lui créer une ligne ici produirait
+      // un doublon fantôme à 0 dégât). Reste dans `memberNames` : les dégâts qu'elle ENCAISSE
+      // doivent toujours compter dans le total de l'ennemi qui les lui inflige.
+      working.summonNames.add(name.toLowerCase());
+      this.classifier.registerSummonJoin(name, summonedBy);
+      return;
+    }
     if (!working.fighterIdsSeen.has(fighterId)) {
       working.fighterIdsSeen.add(fighterId);
       if (isControlledByAI) working.fight.enemies.push({ name, id: fighterId });
@@ -1128,6 +1151,10 @@ export class StatsStoreService {
     const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
     if (!working) return;
     const key = name.toLowerCase();
+    // Une invocation ignorée (voir FightWorking.summonNames/CLAUDE.md) n'est jamais créditée comme
+    // "vaincue" : ni dans le suivi (watchlist), ni comme ligne fantôme du récap — sa propre mise
+    // hors-combat (transformation, mort, re-invocation) est un non-événement pour le combat.
+    if (working.summonNames.has(key)) return;
     working.defeatedNames.add(key);
     this.ensurePresent(working, name);
 
@@ -1315,6 +1342,11 @@ export class StatsStoreService {
    * plus produirait une ligne fantôme en double des lignes par instance.
    */
   private ensurePresent(working: FightWorking, name: string): void {
+    // Garde-fou défensif : une invocation n'a jamais de ligne à elle dans le récap (voir
+    // FightWorking.summonNames) — sans ce filtre, un appelant qui ne connaît pas cette distinction
+    // (ex. registerFightDefeat sur un marqueur "hors-combat" de l'invocation) lui créerait une
+    // entrée fantôme à 0 dégât dans attackerMap.
+    if (working.summonNames.has(name.toLowerCase())) return;
     const instanceCount = this.countNameInstances(working, name.toLowerCase()) || 1;
     if (instanceCount > 1) return;
     if (!working.attackerMap.has(name)) working.attackerMap.set(name, new Map());
