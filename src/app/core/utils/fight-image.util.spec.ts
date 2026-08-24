@@ -46,6 +46,23 @@ const NORMAL_A_VARIANT = [112, 'Ennemi Normal A Variant', 'en', 'es', 'pt', '900
 const NO_FAMILY_A = [113, 'Sans Famille A', 'en', 'es', 'pt', '900113', -1, 0, 0, 0];
 const NO_FAMILY_B = [114, 'Sans Famille B', 'en', 'es', 'pt', '900114', -1, 0, 0, 0];
 const BOSS_OF_BREACH = [115, 'Boss De Brèche', 'en', 'es', 'pt', '900115', 30, 1, 0, 0];
+// 5 familles distinctes (50-54), destinées à matcher exactement BREACH_MATCH_DUNGEON ci-dessous —
+// sert à vérifier l'identification précise de LA brèche (pas seulement l'heuristique de détection).
+const HORDE_MATCH = [50, 51, 52, 53, 54].map((family, i) => [
+  120 + i,
+  `Horde Match ${i}`,
+  'en',
+  'es',
+  'pt',
+  `90030${i}`,
+  family,
+  0,
+  0,
+  0,
+]);
+// Deux boss destinés à matcher exactement ULTIMATE_BREACH_MATCH_DUNGEON ci-dessous.
+const BOSS_ULTIMATE_MATCH_A = [117, 'Boss Ultime Match A', 'en', 'es', 'pt', '900117', 40, 1, 0, 0];
+const BOSS_ULTIMATE_MATCH_B = [118, 'Boss Ultime Match B', 'en', 'es', 'pt', '900118', 41, 1, 0, 0];
 
 const DUNGEON_FOR_BOSS = {
   id: 500,
@@ -74,6 +91,40 @@ const BREACH_DUNGEON = {
   bossMonsterId: [115],
   monsterFamilyId: [30],
   pictureUrl: 'https://example.test/dungeon-501.png',
+  wakassetsAvailable: true,
+  hasPreBossArchi: false,
+};
+// Composition volontairement en SUPERSET (famille 55 en plus, jamais présente dans HORDE_MATCH) :
+// vérifie que le matching n'exige pas une égalité stricte, juste que les familles OBSERVÉES soient
+// toutes couvertes — voir CatalogService.findWakfuBreachByMonsterFamilies.
+const BREACH_MATCH_DUNGEON = {
+  id: 502,
+  fr: 'Brèche Correspondante',
+  en: 'Matching Breach',
+  es: 'Brecha Correspondiente',
+  pt: 'Brecha Correspondente',
+  level: 1,
+  bracket: 1,
+  type: 'BREACH',
+  bossMonsterId: [],
+  monsterFamilyId: [50, 51, 52, 53, 54, 55],
+  pictureUrl: 'https://example.test/dungeon-502.png',
+  wakassetsAvailable: true,
+  hasPreBossArchi: false,
+};
+// Même principe en SUPERSET pour les boss (id 119 en plus, jamais présent dans le combat testé).
+const ULTIMATE_BREACH_MATCH_DUNGEON = {
+  id: 503,
+  fr: 'Brèche Ultime Correspondante',
+  en: 'Matching Ultimate Breach',
+  es: 'Brecha Definitiva Correspondiente',
+  pt: 'Brecha Suprema Correspondente',
+  level: 1,
+  bracket: 1,
+  type: 'ULTIMATE_BREACH',
+  bossMonsterId: [117, 118, 119],
+  monsterFamilyId: [],
+  pictureUrl: 'https://example.test/dungeon-503.png',
   wakassetsAvailable: true,
   hasPreBossArchi: false,
 };
@@ -106,10 +157,19 @@ function setupCatalog(): CatalogService {
           NO_FAMILY_A,
           NO_FAMILY_B,
           BOSS_OF_BREACH,
+          ...HORDE_MATCH,
+          BOSS_ULTIMATE_MATCH_A,
+          BOSS_ULTIMATE_MATCH_B,
         ],
       });
     }
-    if (path === '/dungeons') return ok([DUNGEON_FOR_BOSS, BREACH_DUNGEON]);
+    if (path === '/dungeons')
+      return ok([
+        DUNGEON_FOR_BOSS,
+        BREACH_DUNGEON,
+        BREACH_MATCH_DUNGEON,
+        ULTIMATE_BREACH_MATCH_DUNGEON,
+      ]);
     if (path === '/monster-families') return ok([]);
     throw new Error(`unexpected path in test: ${path}`);
   };
@@ -271,7 +331,7 @@ describe('resolveFightImageInfo (tooltip)', () => {
     });
   });
 
-  it('illustration de brèche (horde hétérogène) -> tooltip texte fixe "damageMeter.breach"', async () => {
+  it('illustration de brèche (horde hétérogène) -> tooltip texte fixe "damageMeter.breach" quand aucune brèche connue ne correspond', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
@@ -282,6 +342,29 @@ describe('resolveFightImageInfo (tooltip)', () => {
 
     expect(info.url).toBe(BREACH_IMAGE_URL);
     expect(info.tooltipSource).toEqual({ kind: 'text', translationKey: 'damageMeter.breach' });
+  });
+
+  it('illustration de brèche identifiée précisément via les familles de monstre observées -> tooltipSource de type donjon (nom de LA brèche)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(
+      catalog,
+      HORDE_MATCH.map((m) => m[1] as string),
+    );
+
+    expect(info.url).toBe(BREACH_IMAGE_URL);
+    expect(info.tooltipSource).toEqual({ kind: 'dungeon', names: BREACH_MATCH_DUNGEON });
+  });
+
+  it('brèche ultime identifiée précisément via ses boss observés -> tooltipSource de type donjon (nom de LA brèche ultime)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(catalog, ['Boss Ultime Match A', 'Boss Ultime Match B']);
+
+    expect(info.url).toBe(ULTIMATE_BREACH_IMAGE_URL);
+    expect(info.tooltipSource).toEqual({ kind: 'dungeon', names: ULTIMATE_BREACH_MATCH_DUNGEON });
   });
 
   it('aucun ennemi connu -> aucune tooltip', async () => {
