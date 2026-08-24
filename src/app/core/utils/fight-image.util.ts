@@ -14,13 +14,36 @@ export const DEFAULT_FIGHT_IMAGE_URL =
 /**
  * Illustration officielle Ankama d'un monstre (utilisée pour l'illustration de combat, PAS pour
  * l'icône de dégâts/suivi — voir entity-icon.component.ts qui utilise wakassets). Contrairement à
- * l'URL équivalente pour un objet (voir item-icon.component.ts), celle-ci EST intégralement
+ * l'URL équivalente pour un objet (voir item-icon.component.ts), le GABARIT d'URL EST intégralement
  * déductible du `gfxId` : vérifié strictement 851/851 sur le référentiel actuel (le segment "42"
  * est constant pour tous les monstres) — c'est pourquoi elle n'est volontairement PAS incluse dans
- * l'index compact du catalogue (voir server/catalog/compact-index.ts).
+ * l'index compact du catalogue (voir server/catalog/compact-index.ts). ⚠️ Ne garantit PAS que
+ * l'asset existe réellement à cette URL pour tout `gfxId` (au moins 24/851 renvoient 403, voir
+ * monsterPictureFallbacks juste en dessous — bug réel corrigé le 2026-08-24, ex. "Larve Verte") :
+ * cette fonction reste volontairement le 1er choix (image officielle) mais jamais la seule
+ * tentative côté appelant.
  */
 function monsterPictureUrl(gfxId: string): string {
   return `https://static.ankama.com/wakfu/portal/game/monster/42/${gfxId}.png`;
+}
+
+/**
+ * URLs de repli (wakassets, voir shared/entity-icon/entity-icon.component.ts) pour l'illustration
+ * "propre image du monstre" de resolveFightImageInfo — bug réel corrigé le 2026-08-24 : contrairement
+ * à ce qu'affirmait un commentaire d'origine ("851/851 déductible du gfxId"), au moins 24 monstres du
+ * référentiel actuel (`repository/monsters.json`, champ `wakfu_available: false`, ex. "Larve Verte")
+ * n'ont PAS d'image sur le CDN Ankama (403, asset absent) alors que wakassets l'a bien (200) — ce
+ * champ `wakfu_available` n'est de toute façon pas inclus dans l'index compact servi au client (voir
+ * server/catalog/compact-index.ts), donc pas exploitable directement ici : on tente Ankama en premier
+ * (image officielle, meilleure qualité) puis ces deux replis en cas d'échec de chargement (voir
+ * onFightImageError dans fight-history.component.ts), plutôt que de tomber directement sur
+ * l'illustration générique DEFAULT_FIGHT_IMAGE_URL comme avant ce correctif.
+ */
+function monsterPictureFallbacks(gfxId: string): string[] {
+  return [
+    `https://vertylo.github.io/wakassets/monsters/${gfxId}.png`,
+    `https://vertylo.github.io/wakassets/monsterIllustrations/${gfxId}.png`,
+  ];
 }
 
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, le combat est considéré comme une horde hétérogène (pas un donjon/archi/dominant précis) — voir resolveFightImageUrl. */
@@ -47,6 +70,10 @@ export type FightImageTooltipSource =
 export interface FightImageInfo {
   url: string | null;
   tooltipSource: FightImageTooltipSource;
+  /** URLs de repli à essayer, dans l'ordre, si `url` échoue à charger (voir onFightImageError dans
+   * fight-history.component.ts) — vide pour un `url` de donjon ou déjà générique (repli direct sur
+   * DEFAULT_FIGHT_IMAGE_URL dans ces cas, comme avant ce champ), voir monsterPictureFallbacks. */
+  fallbackUrls: string[];
 }
 
 /** Donjon dont un boss présent parmi `enemyNames` est le boss attitré, ou `null` (aucun boss
@@ -87,6 +114,10 @@ export function findDungeonForEnemies(
  * l'illustration générique de repli (horde hétérogène/inconnue) — voir
  * feature "tooltip sur les images d'historique de combat".
  *
+ * `fallbackUrls` (voir FightImageInfo) accompagne `url` pour les priorités 1(repli)/3/4/5 (propre
+ * image d'un monstre, jamais un donjon) : des replis wakassets, à essayer par l'appelant si `url`
+ * (CDN Ankama) échoue au chargement — voir monsterPictureFallbacks.
+ *
  * Fonction PARAMÉTRÉE (pas un service) : `catalog` doit être un
  * `CatalogService` déjà injecté par l'appelant (composant), voir
  * getWakfuItemRarity (wakfu-item-rarity.data.ts) pour le même principe.
@@ -115,17 +146,19 @@ export function resolveFightImageInfo(
       return {
         url: dungeon.pictureUrl,
         tooltipSource: isDungeonBreach(dungeon) ? null : { kind: 'dungeon', names: dungeon },
+        fallbackUrls: [],
       };
     }
     return {
       url: monsterPictureUrl(bossEntry.gfxId),
       tooltipSource: { kind: 'monster', names: bossEntry },
+      fallbackUrls: monsterPictureFallbacks(bossEntry.gfxId),
     };
   }
 
   const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
   if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
-    return { url: DEFAULT_FIGHT_IMAGE_URL, tooltipSource: null };
+    return { url: DEFAULT_FIGHT_IMAGE_URL, tooltipSource: null, fallbackUrls: [] };
   }
 
   const archiEntry = entries.find((entry) => entry.isArchi);
@@ -133,6 +166,7 @@ export function resolveFightImageInfo(
     return {
       url: monsterPictureUrl(archiEntry.gfxId),
       tooltipSource: { kind: 'monster', names: archiEntry },
+      fallbackUrls: monsterPictureFallbacks(archiEntry.gfxId),
     };
   }
 
@@ -141,6 +175,7 @@ export function resolveFightImageInfo(
     return {
       url: monsterPictureUrl(dominantEntry.gfxId),
       tooltipSource: { kind: 'monster', names: dominantEntry },
+      fallbackUrls: monsterPictureFallbacks(dominantEntry.gfxId),
     };
   }
 
@@ -149,10 +184,11 @@ export function resolveFightImageInfo(
     return {
       url: monsterPictureUrl(topDamageEntry.gfxId),
       tooltipSource: { kind: 'monster', names: topDamageEntry },
+      fallbackUrls: monsterPictureFallbacks(topDamageEntry.gfxId),
     };
   }
 
-  return { url: null, tooltipSource: null };
+  return { url: null, tooltipSource: null, fallbackUrls: [] };
 }
 
 /** Repli sans métadonnée de tooltip — voir resolveFightImageInfo. */

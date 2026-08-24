@@ -612,6 +612,18 @@ export class FightHistoryComponent {
     ).url;
   }
 
+  /** URLs de repli pour `fightImageUrl` ci-dessus si l'URL Ankama échoue au chargement (voir
+   * onFightImageError/monsterPictureFallbacks) — vide pour un donjon ou une illustration déjà
+   * générique. Encodées dans un attribut `data-*` de l'`<img>` (voir template) plutôt que dans un
+   * état de composant : chaque `<img>` porte lui-même sa propre chaîne de secours restante. */
+  protected fightImageFallbacks(record: FightRecord, isDungeonBossRow = false): string {
+    return resolveFightImageInfo(
+      this.catalog,
+      this.enemyRowsFor(record).map((row) => row.name),
+      isDungeonBossRow,
+    ).fallbackUrls.join('|');
+  }
+
   /** Tooltip nom du donjon/monstre associé à l'illustration, ou `null` (brèche/illustration générique) — voir resolveFightImageInfo. */
   protected fightImageTooltip(record: FightRecord, isDungeonBossRow = false): string | null {
     const source = resolveFightImageInfo(
@@ -651,8 +663,21 @@ export class FightHistoryComponent {
     return entry.representative.loot.some((item) => item.catalogId === stoneId) ? stoneId : null;
   }
 
+  /** L'URL Ankama de `fightImageUrl` (1er choix, meilleure qualité) peut ne pas exister pour de vrai
+   * (403, ~24/851 monstres du référentiel actuel — voir monsterPictureFallbacks) : avant de tomber
+   * sur l'illustration générique, essayer un par un les replis wakassets posés sur l'`<img>` via
+   * `data-fallback-urls` (voir template/fightImageFallbacks) — même principe que
+   * EntityIconComponent.onError, adapté ici en pur DOM (pas de state de composant par ligne) car
+   * cette illustration est rendue inline dans un `@for`, pas via un composant dédié par entité. */
   protected onFightImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
+    const remaining = (img.dataset['fallbackUrls'] ?? '').split('|').filter(Boolean);
+    const [next, ...rest] = remaining;
+    if (next) {
+      img.dataset['fallbackUrls'] = rest.join('|');
+      img.src = next;
+      return;
+    }
     if (img.src !== DEFAULT_FIGHT_IMAGE_URL) img.src = DEFAULT_FIGHT_IMAGE_URL;
   }
 
