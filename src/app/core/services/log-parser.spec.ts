@@ -599,4 +599,30 @@ describe('LogParser — invocations (voir CLAUDE.md)', () => {
       expect(dmg).toMatchObject({ attacker: 'Oumbra', spell: 'Super Dark Lapino', amount: 50 });
     },
   );
+
+  it(
+    "n'attribue jamais un combattant survenant bien plus tard à une annonce périmée (fenêtre " +
+      'SUMMON_JOIN_WINDOW_MS) — un combat long (boss à plusieurs phases, vague de brèche) peut voir ' +
+      'un TOUT AUTRE combattant réel rejoindre bien après une invocation sans rapport ; bug réel ' +
+      "corrigé (2026-08-24) : de vrais boss d'un combat ultime attribués à tort comme invocations " +
+      "d'un allié qui n'avait rien invoqué de tel",
+    () => {
+      const parser = new LogParser();
+      const lines = [
+        ' INFO 10:00:00,000 [T] (a:1) - [_FL_] fightId=1 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:00,001 [T] (a:1) - [_FL_] fightId=1 PremierBoss breed : 10 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 10:00:01,000 [T] (a:1) - [Information (combat)] Oumbra lance le sort Lapino',
+        ' INFO 10:00:01,500 [T] (a:1) - [Information (combat)] Oumbra: Invoque un(e) Dark Lapino ',
+        ' INFO 10:00:01,520 [T] (a:1) - [_FL_] fightId=1 Dark Lapino breed : 5528 [2] isControlledByAI=true obstacleId : 6 join the fight at {P}',
+        // 40 secondes plus tard : bien au-delà de SUMMON_JOIN_WINDOW_MS (500ms) — un renfort de
+        // phase du boss, jamais annoncé par une ligne "Invoque".
+        ' INFO 10:00:41,000 [T] (a:1) - [_FL_] fightId=1 DeuxiemeBoss breed : 11 [3] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ];
+      const entries = parseAll(parser, lines);
+      const join = entries.find(
+        (e) => e.kind === 'fighter-joined' && e.name === 'DeuxiemeBoss',
+      ) as Extract<LogEntry, { kind: 'fighter-joined' }>;
+      expect(join.summonedBy).toBeNull();
+    },
+  );
 });
