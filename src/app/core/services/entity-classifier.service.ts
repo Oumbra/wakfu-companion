@@ -35,8 +35,13 @@ function buildSpellToClassMap(): ReadonlyMap<string, string> {
 /**
  * Cascade de classification allié/ennemi : override manuel → marqueur
  * déterministe "[_FL_] ... isControlledByAI=..." du combat (voir
- * `fighterAiSide`) → base de monstres officielle → roster de personnages
- * déclarés → classe détectée via les sorts lancés → invocations connues →
+ * `fighterAiSide`, alimenté soit par `registerFighterJoin` pour un vrai
+ * combattant, soit par `registerSummonJoin` pour une invocation identifiée
+ * par LogParser — qui hérite alors du camp de son invocateur plutôt que du
+ * flag brut, toujours `true` pour une invocation, voir CLAUDE.md) → base de
+ * monstres officielle → roster de personnages déclarés → classe détectée via
+ * les sorts lancés → invocations connues (liste statique `WAKFU_ALLY_SUMMONS`,
+ * repli pour un historique reconstruit sans ligne `_FL_` exploitable) →
  * dégâts encaissés d'un ennemi confirmé → ennemi par défaut.
  *
  * Cascade de DÉTECTION DE CLASSE d'un allié (voir `getDetectedClass`) :
@@ -119,7 +124,8 @@ export class EntityClassifierService {
     }
   }
 
-  /** À appeler pour chaque ligne "[_FL_] ... isControlledByAI=..." rencontrée. */
+  /** À appeler pour chaque ligne "[_FL_] ... isControlledByAI=..." rencontrée, pour un combattant
+   * qui N'EST PAS une invocation (voir registerSummonJoin sinon) — le flag brut fait foi. */
   registerFighterJoin(name: string, isControlledByAI: boolean, breed: number): void {
     this.fighterAiSide.set(name, isControlledByAI ? 'enemy' : 'ally');
     if (isControlledByAI) return;
@@ -129,6 +135,15 @@ export class EntityClassifierService {
       this.detectedClassesDirty = true;
     }
     this.breedDetectedNames.add(name);
+  }
+
+  /** À appeler pour un combattant identifié comme une invocation (voir LogParser,
+   * FighterJoinedEntry.summonedBy) : son camp suit celui de son invocateur plutôt que le flag brut
+   * "isControlledByAI" (toujours `true` pour une invocation, alors qu'elle appartient le plus
+   * souvent à un allié — voir CLAUDE.md). `casterName` a normalement déjà rejoint ce même combat
+   * avant de pouvoir invoquer quoi que ce soit, son camp est donc déjà connu de `classify()`. */
+  registerSummonJoin(name: string, casterName: string): void {
+    this.fighterAiSide.set(name, this.classify(casterName));
   }
 
   /** À appeler pour chaque ligne de dégâts rencontrée. */

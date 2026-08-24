@@ -61,6 +61,19 @@ const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
 const KO_RE = /^(.+?) est KO !$/;
 /** Diffusion générale de mise hors-combat, émise pour N'IMPORTE QUEL combattant (allié ou ennemi) — contrairement à KO_RE, réservé aux alliés. Signal principal pour détecter la mort d'un ennemi. */
 const HORS_COMBAT_RE = /^(.+?) est hors-combat !$/;
+/** "X: Invoque un(e) Y"/"X: Invoque une créature du Y" — annonce une invocation sur le point de
+ * rejoindre le combat. `Y` n'est PAS fiable comme nom de la créature qui rejoindra réellement (le
+ * sort "Invocation" de l'Osamodas annonce une créature "du" thème invoqué, ex. "Invoque une
+ * créature du Gobgob", mais le combattant qui rejoint ensuite peut porter un tout autre nom, ex.
+ * "Chafer Elite" — voir CLAUDE.md) : seul le nom du lanceur (groupe 1) est exploité, voir
+ * FightParseState.pendingSummonCasters/parseFighterJoin. */
+const SUMMON_ANNOUNCE_RE = /^(.+?): Invoque (?:un\(e\)|une créature du) /;
+/** "X: transformé(e) en Y !" (ex. Poupée Lapino du Sadida qui évolue en cours de combat) — la
+ * nouvelle forme rejoint le combat via sa PROPRE ligne "[_FL_] ... join the fight" quelques lignes
+ * plus tard, sans nouvelle annonce "Invoque" ni ligne d'instanciation : c'est le nom X qui doit être
+ * reconnu comme invocation déjà connue pour que Y hérite du même invocateur (voir
+ * FightParseState.summonOwners, propagé dans parseCombatLine). */
+const TRANSFORM_RE = /^(.+?): transformée? en (.+?)\s*!?$/;
 const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
 /** Diffusée à chaque allié mis KO (y compris via abandon de combat, où "est KO !"/"est hors-combat !" peuvent manquer) : signal de défaite le plus fiable, y compris en multi-compte. */
 const OCCUPATION_RE = /^Lancement de l'occupation pour le joueur (.+)$/;
@@ -76,10 +89,18 @@ const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b
 const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]/;
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
- * — présent pour chaque combattant de chaque combat. `obstacleId` différent de
- * -1 signale un décor/praticable de la zone (ex. "Larme d'Ogrest" dans un
- * donjon Abraknyde) qui "rejoint" techniquement le combat sans être un vrai
- * personnage à classer allié/ennemi.
+ * — présent pour chaque combattant de chaque combat. `obstacleId` (groupe 6, capturé mais plus
+ * exploité pour filtrer — voir plus bas) a longtemps été supposé signaler du décor pur (ex. "Larme
+ * d'Ogrest") dès qu'il diffère de -1 ; vérifié FAUX sur un vrai fichier multi-donjons (2026-08-24,
+ * `wakfu.log` de Fayto) : la majorité des MONSTRES RÉELS d'un combat (jusqu'à 61% des lignes
+ * "join the fight" du fichier) ont un `obstacleId` non -1 — probablement leur position de départ sur
+ * une case elle-même praticable/obstacle, sans rapport avec leur nature de combattant. Un ancien
+ * filtre `obstacleId !== '-1' => ignoré` (voir git blame, fix ciblant "Larme d'Ogrest") faisait donc
+ * disparaître silencieusement la MAJORITÉ des ennemis de nombreux combats du récap (bug réel corrigé :
+ * absence d'illustration de combat malgré un monstre solo ayant infligé des dizaines de milliers de
+ * dégâts, dégâts reçus/infligés sous-comptés) — retiré, voir parseFighterJoin. Les invocations (voir
+ * SUMMON_ANNOUNCE_RE) sont désormais distinguées des vrais ennemis par corrélation à leur invocateur,
+ * pas par ce champ.
  */
 const FIGHTER_JOIN_RE =
   /^fightId=(-?\d+) (.+?) breed : (\d+) \[(-?\d+)\] isControlledByAI=(true|false) obstacleId : (-?\d+) join the fight/;
@@ -153,10 +174,37 @@ interface FightParseState {
   lastDamage: { attacker: string; target: string } | null;
   effectOwners: Map<string, EffectOwnership>;
   spellCasters: Map<string, string>;
+  /** Invocateur par nom d'invocation CONNUE de ce combat (voir CLAUDE.md, section invocations) :
+   * alimentée dès qu'une invocation rejoint le combat (voir parseFighterJoin) et propagée à sa
+   * nouvelle forme le cas échéant (voir TRANSFORM_RE) — consultée en dernière étape de
+   * resolveEffectTail pour réattribuer toute action de l'invocation (dégâts/soin/armure) à son
+   * invocateur, avec le nom de l'invocation comme libellé de "sort" (voir CLAUDE.md). */
+  summonOwners: Map<string, string>;
+  /** Casters en attente d'une invocation qui va rejoindre CE combat (FIFO) — alimentée par
+   * SUMMON_ANNOUNCE_RE, consommée par le PROCHAIN combattant au fighterId encore jamais vu de ce
+   * combat (voir seenFighterIds/parseFighterJoin) : un simple ordre chronologique global (plutôt
+   * qu'une corrélation par id, essayée puis abandonnée — voir CLAUDE.md, le nombre de lignes
+   * d'instanciation ne correspond pas au nombre d'annonces "Invoque", trop de faux appariements)
+   * suffit car un tout nouveau fighterId en cours de combat ne peut réalistement être qu'une
+   * invocation qui vient d'être annoncée. */
+  pendingSummonCasters: string[];
+  /** fighterId déjà vus dans CE combat (voir FightParseState.pendingSummonCasters) — distingue un
+   * combattant réellement nouveau (candidat à consommer la file d'invocations en attente) d'une
+   * simple resynchronisation ("[_FL_] ... join the fight" est réémis de nombreuses fois par
+   * combattant au fil d'un même combat, pas seulement à son arrivée). */
+  seenFighterIds: Set<number>;
 }
 
 function createFightParseState(): FightParseState {
-  return { lastCast: null, lastDamage: null, effectOwners: new Map(), spellCasters: new Map() };
+  return {
+    lastCast: null,
+    lastDamage: null,
+    effectOwners: new Map(),
+    spellCasters: new Map(),
+    summonOwners: new Map(),
+    pendingSummonCasters: [],
+    seenFighterIds: new Set(),
+  };
 }
 
 /**
@@ -342,12 +390,25 @@ export class LogParser {
 
   private parseFighterJoin(time: string, content: string): LogEntry | null {
     const join = FIGHTER_JOIN_RE.exec(content);
-    if (!join || join[6] !== '-1') return null;
+    if (!join) return null;
     const fightId = Number(join[1]);
     const name = join[2].trim();
     const breed = Number(join[3]);
     const fighterId = Number(join[4]);
     const isControlledByAI = join[5] === 'true';
+
+    // Voir FightParseState.summonOwners/pendingSummonCasters/seenFighterIds : une invocation déjà
+    // connue de ce nom (rejointe une 1ʳᵉ fois, ou héritée d'une transformation, voir TRANSFORM_RE)
+    // garde son invocateur ; sinon, un fighterId encore jamais vu dans CE combat consomme la
+    // prochaine invocation annoncée en attente, s'il y en a une.
+    const state = this.getFightState(fightId);
+    const isNewFighter = !state.seenFighterIds.has(fighterId);
+    state.seenFighterIds.add(fighterId);
+    let summonedBy = state.summonOwners.get(name) ?? null;
+    if (!summonedBy && isNewFighter && state.pendingSummonCasters.length > 0) {
+      summonedBy = state.pendingSummonCasters.shift()!;
+      state.summonOwners.set(name, summonedBy);
+    }
 
     let fightIds = this.nameToFightIds.get(name);
     if (!fightIds) {
@@ -363,7 +424,16 @@ export class LogParser {
     members.add(name);
     this.currentFightId = fightId;
 
-    return { kind: 'fighter-joined', time, fightId, name, breed, fighterId, isControlledByAI };
+    return {
+      kind: 'fighter-joined',
+      time,
+      fightId,
+      name,
+      breed,
+      fighterId,
+      isControlledByAI,
+      summonedBy,
+    };
   }
 
   /** Oublie un combat terminé : libère les noms de combattants qui n'appartiennent à aucun autre combat actif, pour éviter qu'un nom de monstre courant reste faussement ambigu pour un futur combat sans rapport. */
@@ -496,6 +566,24 @@ export class LogParser {
       return { kind: 'enemy-defeated', time, name, fightId: this.resolveFightIdForName(name) };
     }
 
+    const summonAnnounce = SUMMON_ANNOUNCE_RE.exec(content);
+    if (summonAnnounce) {
+      const caster = summonAnnounce[1].trim();
+      const fightId = this.resolveFightIdForName(caster);
+      this.getFightState(fightId).pendingSummonCasters.push(caster);
+      return null;
+    }
+
+    const transform = TRANSFORM_RE.exec(content);
+    if (transform) {
+      const from = transform[1].trim();
+      const to = transform[2].trim();
+      const state = this.getFightState(this.resolveFightIdForName(from));
+      const owner = state.summonOwners.get(from);
+      if (owner) state.summonOwners.set(to, owner);
+      return null;
+    }
+
     const cast = SPELL_CAST_RE.exec(content);
     if (cast) {
       const caster = cast[1].trim();
@@ -620,6 +708,13 @@ export class LogParser {
    *   du tour pour N'IMPORTE QUEL sort déjà lancé par N'IMPORTE QUI, ce qui créditerait à tort un
    *   adversaire pour le passif défensif propre de sa cible (ex. armure gagnée par la cible d'une
    *   attaque, taguée du nom du sort qui vient de la toucher — cas réel constaté, voir tests).
+   *
+   * Dernière étape, commune à tous les appelants : si l'`attacker` résolu ci-dessus est le nom d'une
+   * invocation connue de ce combat (voir FightParseState.summonOwners), l'action est réattribuée à
+   * son invocateur avec le nom de l'invocation comme libellé de "sort" — ex. le Sadida "Fayto"
+   * apparaît crédité d'un sort nommé "Dark Lapino" plutôt que "Dark Lapino" d'un sort nommé "Murmures
+   * d'affaiblissement" (voir CLAUDE.md, section invocations : une invocation est traitée comme un
+   * sort de son invocateur, jamais comme une entité séparée du combat).
    */
   private resolveEffectTail(
     target: string,
@@ -662,6 +757,12 @@ export class LogParser {
         attacker = target;
       }
       spell = effectTag;
+    }
+
+    const summonOwner = state.summonOwners.get(attacker);
+    if (summonOwner) {
+      spell = attacker;
+      attacker = summonOwner;
     }
     return { attacker, spell, element };
   }

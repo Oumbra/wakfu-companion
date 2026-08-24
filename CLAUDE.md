@@ -101,6 +101,74 @@ Deux catégories d'état dans `StatsStoreService`, à traiter différemment à c
 
 Si un nouveau champ cumulatif est ajouté au store, se demander explicitement : persistant (jamais reset) ou dérivé du fichier (reset à chaque `isInitialLoad`, dans `resetSessionState()`) ?
 
+## Invocations : traitées comme des sorts de leur invocateur, jamais comme des combattants à part
+
+Deux bugs distincts, découverts et corrigés ensemble le 2026-08-24 sur un vrai `wakfu.log` fourni par
+l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
+
+1. **`obstacleId != -1` ne signale PAS du décor** — hypothèse fausse qui existait depuis un vieux fix
+   ("Larme d'Ogrest"). Vérifié sur ce fichier réel : **jusqu'à 61% des lignes `[_FL_] ... join the
+   fight` de VRAIS monstres** (pas des invocations, pas du décor) ont un `obstacleId` non -1 — sans
+   rapport avec leur nature de combattant (probablement leur position de départ sur une case
+   elle-même praticable/obstacle). L'ancien filtre `if (join[6] !== '-1') return null;` dans
+   `LogParser.parseFighterJoin` faisait donc disparaître silencieusement la MAJORITÉ des ennemis de
+   nombreux combats — plus aucune image de combat (voir `resolveFightImageInfo`, `entries` vide car
+   aucun ennemi connu du catalogue n'avait pu être enregistré), dégâts infligés/encaissés sous-comptés
+   (`isRosterMember` rejette toute ligne dont l'attaquant ou la cible n'a jamais "rejoint" le combat).
+   **Filtre retiré entièrement** — aucun signal fiable de substitution trouvé pour distinguer un vrai
+   décor (rare, ex. "Rocher"/"Sac à patates" dans ce même fichier — mais ceux-ci avaient en réalité
+   `obstacleId : -1`, contredisant encore l'hypothèse d'origine) : ces entités sans image ni monstre
+   catalogué restent de toute façon neutralisées par le filtrage catalogue de `resolveFightImageInfo`
+   et n'ont aucun autre effet néfaste observé.
+2. **Une invocation (`isControlledByAI=true` systématiquement, y compris pour l'invocation d'un
+   ALLIÉ) n'était donc pas non plus visible avant ce fix** (même filtre `obstacleId` que ci-dessus).
+   Architecture retenue plutôt qu'une simple correction de classification allié/ennemi (demande
+   explicite de l'utilisateur) : une invocation n'est **jamais** une ligne séparée du récap — ses
+   dégâts/soins/armure DONNÉS sont réattribués à son invocateur, avec le nom de l'invocation comme
+   libellé de "sort" (ex. l'Eniripsa "Fayto" apparaît crédité d'un sort nommé "Supra Latino" plutôt
+   que "Supra Latino" créditée d'un sort "Mot Ka..."). Les dégâts qu'une invocation ENCAISSE restent
+   comptés normalement dans le total de l'ennemi qui les inflige.
+   - Séquence log type : `"X lance le sort Y"` → `"X: Invoque un(e)/une créature du Z"` (`Z` **pas
+     fiable** comme nom réel — le sort "Invocation" de l'Osamodas annonce une créature "du" thème
+     invoqué, ex. "Invoque une créature du Gobgob", mais le combattant qui rejoint peut s'appeler
+     "Chafer Elite") → ligne technique sans crochets `"(eXG:...) - Instanciation d'une nouvelle
+     invocation avec un id de N"` ou `"(eXM:...) - New summon with id N"` (comptage total DIFFÉRENT du
+     nombre d'annonces "Invoque" sur ce fichier — glyphes/décor/transformations en produisent aussi —
+     **volontairement pas exploitée** pour corréler, corrélation par id essayée puis abandonnée :
+     l'écart entre les deux comptages cause de faux appariements) → `"[_FL_] ... Z ... join the
+     fight"`.
+   - Corrélation retenue (`LogParser`, `FightParseState.pendingSummonCasters`/`summonOwners`, voir
+     `SUMMON_ANNOUNCE_RE`) : chaque annonce "Invoque" empile son invocateur dans une file PAR COMBAT ;
+     le PROCHAIN combattant au `fighterId` encore jamais vu de ce combat (voir `seenFighterIds` —
+     crucial : une simple resynchronisation, très fréquente, ne doit jamais consommer la file) dépile
+     cette file. Un tout nouveau `fighterId` en cours de combat ne peut réalistement être qu'une
+     invocation (Wakfu n'ajoute pas de renfort monstre mi-combat hors invocation).
+   - Une transformation (`"X: transformé(e) en Y !"`, ex. Poupée Lapino du Sadida qui évolue) ne
+     réémet PAS d'annonce "Invoque" pour `Y` : `TRANSFORM_RE` propage directement `summonOwners.get(X)`
+     vers `Y` avant que la ligne `_FL_` de `Y` n'arrive.
+   - Une invocation homonyme d'un vrai ennemi PEUT coexister dans le MÊME combat (vérifié : donjon
+     avec 2 "Chimère veilleuse" ennemies + 1 "Chimère veilleuse" invoquée par un Osamodas via le sort
+     aléatoire "Invocation") — seule l'instance réellement invoquée (bon `fighterId`) porte
+     `summonedBy`, les deux autres restent classées normalement. Limite acceptée (architecture
+     name-only préexistante, voir `EntityClassifierService`) : l'affichage final (`classify(name)`)
+     reste par NOM, pas par instance — un nom qui serait À LA FOIS invocation alliée dans un combat ET
+     vrai ennemi dans un combat CONCURRENT (deux combats actifs en même temps, multi-compte) peut
+     encore se tromper d'un côté ; non rencontré en pratique.
+   - Réattribution effective dans `LogParser.resolveEffectTail` (dernière étape, commune
+     dégâts/soins/armure) : si l'`attacker` résolu est un nom présent dans `state.summonOwners`,
+     `spell = attacker` puis `attacker = summonOwners.get(attacker)`. Couvre tous les cas (sort propre
+     de l'invocation, statut qu'elle porte/applique, riposte, passif auto) car c'est un unique point de
+     sortie commun à `resolveEffectTail`.
+   - Côté `StatsStoreService` (`FightWorking.summonNames`) : une invocation identifiée n'est jamais
+     poussée dans `fight.enemies`/`fight.allies` ni dans `attackerMap` (`ensurePresent` s'y refuse
+     explicitement) — sinon elle resterait une ligne fantôme à 0 dégât dans le récap malgré la
+     réattribution. Reste dans `memberNames` (les dégâts qu'elle encaisse doivent compter pour
+     l'ennemi qui frappe) et son camp est déterminé via `EntityClassifierService.registerSummonJoin`
+     (`classify(casterName)`, PAS le flag `isControlledByAI` brut, toujours `true` pour une
+     invocation). `registerFightDefeat` ignore aussi silencieusement les invocations (marqueurs
+     "hors-combat" répétés d'une invocation qui meurt/se retransforme ne doivent jamais alimenter la
+     watchlist "ennemis vaincus").
+
 ## Gotchas plateforme (navigateur) déjà rencontrés
 
 - **`File.size` est figé pour toujours** à la valeur captée au moment de la sélection (`<input type="file">` classique, aujourd'hui supprimé de l'app) — ne reflète JAMAIS la taille réelle sur le disque ensuite, et ne lève **aucune erreur** à la relecture (contrairement à `FileSystemFileHandle.getFile()` qui lève `NotReadableError` si le fichier a changé). C'est précisément pour cette raison que le sélecteur classique a été retiré entièrement : seule l'API File System Access (bouton = `showOpenFilePicker()`, glisser-déposer = `getAsFileSystemHandle()`) permet une vraie lecture continue.
