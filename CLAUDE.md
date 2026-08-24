@@ -138,11 +138,25 @@ l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
      l'écart entre les deux comptages cause de faux appariements) → `"[_FL_] ... Z ... join the
      fight"`.
    - Corrélation retenue (`LogParser`, `FightParseState.pendingSummonCasters`/`summonOwners`, voir
-     `SUMMON_ANNOUNCE_RE`) : chaque annonce "Invoque" empile son invocateur dans une file PAR COMBAT ;
-     le PROCHAIN combattant au `fighterId` encore jamais vu de ce combat (voir `seenFighterIds` —
-     crucial : une simple resynchronisation, très fréquente, ne doit jamais consommer la file) dépile
-     cette file. Un tout nouveau `fighterId` en cours de combat ne peut réalistement être qu'une
-     invocation (Wakfu n'ajoute pas de renfort monstre mi-combat hors invocation).
+     `SUMMON_ANNOUNCE_RE`) : chaque annonce "Invoque" empile son invocateur (+ horodatage) dans une
+     file PAR COMBAT ; le PROCHAIN combattant au `fighterId` encore jamais vu de ce combat (voir
+     `seenFighterIds` — crucial : une simple resynchronisation, très fréquente, ne doit jamais
+     consommer la file) dépile cette file **à condition de survenir dans `SUMMON_JOIN_WINDOW_MS`
+     (500ms) suivant l'annonce** — voir `SUMMON_JOIN_WINDOW_MS`. Hypothèse initiale FAUSSE, corrigée
+     le 2026-08-24 après un 2ᵉ passage de bugs signalés par l'utilisateur : "un tout nouveau
+     `fighterId` en cours de combat ne peut être qu'une invocation" ne tient pas — un combat long
+     (boss à plusieurs phases type combat ultime, vague d'une brèche où des ennemis rejoignent au fil
+     de l'eau, ou même un monstre qui invoque un autre monstre comme mécanique de jeu légitime) voit
+     de VRAIS nouveaux combattants rejoindre en cours de combat sans rapport avec une invocation ;
+     sans fenêtre, une annonce laissée en attente capturait à tort N'IMPORTE QUEL combattant suivant,
+     même des dizaines de secondes/minutes plus tard (bug réel constaté : dans un combat ultime à
+     plusieurs boss, TOUS les boss successifs finissaient classés comme des invocations d'un allié
+     n'ayant invoqué qu'un simple familier des dizaines de secondes plus tôt — combat affiché avec 0
+     ennemi). Fenêtre calibrée sur le fichier réel : les 186 annonces "Invoque" y sont TOUJOURS
+     suivies de leur propre jointure en 0 à 8ms (log quasi synchrone), largement sous les 500ms
+     retenus — et très en-dessous du moindre écart observé entre deux combattants réels distincts
+     (secondes à minutes). Une annonce dont la fenêtre expire sans jointure est abandonnée (retirée de
+     la file) plutôt que laissée bloquer indéfiniment toute jointure future sans rapport.
    - Une transformation (`"X: transformé(e) en Y !"`, ex. Poupée Lapino du Sadida qui évolue) ne
      réémet PAS d'annonce "Invoque" pour `Y` : `TRANSFORM_RE` propage directement `summonOwners.get(X)`
      vers `Y` avant que la ligne `_FL_` de `Y` n'arrive.

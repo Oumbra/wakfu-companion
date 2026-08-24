@@ -68,6 +68,11 @@ const HORS_COMBAT_RE = /^(.+?) est hors-combat !$/;
  * "Chafer Elite" — voir CLAUDE.md) : seul le nom du lanceur (groupe 1) est exploité, voir
  * FightParseState.pendingSummonCasters/parseFighterJoin. */
 const SUMMON_ANNOUNCE_RE = /^(.+?): Invoque (?:un\(e\)|une créature du) /;
+/** Délai maximum toléré entre une annonce "Invoque" et la jointure qu'elle corrèle — voir
+ * FightParseState.pendingSummonCasters. Généreux (60x) par rapport au maximum réel observé (8ms) sur
+ * le fichier de référence : marge pour la latence/l'entrelacement multi-compte, tout en restant très
+ * en-dessous du moindre écart entre deux véritables combattants distincts (secondes à minutes). */
+const SUMMON_JOIN_WINDOW_MS = 500;
 /** "X: transformé(e) en Y !" (ex. Poupée Lapino du Sadida qui évolue en cours de combat) — la
  * nouvelle forme rejoint le combat via sa PROPRE ligne "[_FL_] ... join the fight" quelques lignes
  * plus tard, sans nouvelle annonce "Invoque" ni ligne d'instanciation : c'est le nom X qui doit être
@@ -180,14 +185,19 @@ interface FightParseState {
    * resolveEffectTail pour réattribuer toute action de l'invocation (dégâts/soin/armure) à son
    * invocateur, avec le nom de l'invocation comme libellé de "sort" (voir CLAUDE.md). */
   summonOwners: Map<string, string>;
-  /** Casters en attente d'une invocation qui va rejoindre CE combat (FIFO) — alimentée par
-   * SUMMON_ANNOUNCE_RE, consommée par le PROCHAIN combattant au fighterId encore jamais vu de ce
-   * combat (voir seenFighterIds/parseFighterJoin) : un simple ordre chronologique global (plutôt
-   * qu'une corrélation par id, essayée puis abandonnée — voir CLAUDE.md, le nombre de lignes
-   * d'instanciation ne correspond pas au nombre d'annonces "Invoque", trop de faux appariements)
-   * suffit car un tout nouveau fighterId en cours de combat ne peut réalistement être qu'une
-   * invocation qui vient d'être annoncée. */
-  pendingSummonCasters: string[];
+  /** Casters en attente d'une invocation qui va rejoindre CE combat (FIFO, horodatée) — alimentée
+   * par SUMMON_ANNOUNCE_RE, consommée par le PROCHAIN combattant au fighterId encore jamais vu de ce
+   * combat SURVENANT DANS LES `SUMMON_JOIN_WINDOW_MS` SUIVANTS (voir seenFighterIds/parseFighterJoin,
+   * CLAUDE.md) — un tout nouveau fighterId N'EST PAS forcément une invocation : un combat long peut
+   * voir un vrai monstre/allié supplémentaire rejoindre bien plus tard (renfort de boss à plusieurs
+   * phases, vague d'une brèche...), et un monstre peut LUI AUSSI invoquer (annonce "Invoque"
+   * identique, ex. un boss qui invoque des adds). Sans cette fenêtre, une annonce laissée en attente
+   * (invocation jamais matérialisée, ou combat très long) capturait à tort N'IMPORTE QUEL combattant
+   * suivant, même des dizaines de secondes/minutes plus tard (bug réel corrigé : de vrais boss d'un
+   * combat ultime "invoqués" par un allié qui n'avait rien à voir). Fenêtre calibrée sur le fichier
+   * réel qui a servi à ce fix : les 186 annonces "Invoque" y sont TOUJOURS suivies de leur propre
+   * jointure en 0 à 8ms (log quasi synchrone) — voir SUMMON_JOIN_WINDOW_MS. */
+  pendingSummonCasters: { caster: string; timeMs: number }[];
   /** fighterId déjà vus dans CE combat (voir FightParseState.pendingSummonCasters) — distingue un
    * combattant réellement nouveau (candidat à consommer la file d'invocations en attente) d'une
    * simple resynchronisation ("[_FL_] ... join the fight" est réémis de nombreuses fois par
@@ -399,14 +409,24 @@ export class LogParser {
 
     // Voir FightParseState.summonOwners/pendingSummonCasters/seenFighterIds : une invocation déjà
     // connue de ce nom (rejointe une 1ʳᵉ fois, ou héritée d'une transformation, voir TRANSFORM_RE)
-    // garde son invocateur ; sinon, un fighterId encore jamais vu dans CE combat consomme la
-    // prochaine invocation annoncée en attente, s'il y en a une.
+    // garde son invocateur ; sinon, un fighterId encore jamais vu dans CE combat, survenant dans la
+    // fenêtre SUMMON_JOIN_WINDOW_MS suivant la plus ancienne annonce en attente, consomme celle-ci.
     const state = this.getFightState(fightId);
     const isNewFighter = !state.seenFighterIds.has(fighterId);
     state.seenFighterIds.add(fighterId);
+    const joinTimeMs = this.timeToMs(time);
+    while (
+      state.pendingSummonCasters.length > 0 &&
+      joinTimeMs - state.pendingSummonCasters[0].timeMs > SUMMON_JOIN_WINDOW_MS
+    ) {
+      // Annonce trop ancienne, jamais suivie d'une jointure dans la fenêtre : abandonnée (invocation
+      // qui n'a en pratique jamais rejoint le combat, ou dont la jointure a été manquée) plutôt que
+      // laissée bloquer indéfiniment la file pour toute future jointure sans rapport.
+      state.pendingSummonCasters.shift();
+    }
     let summonedBy = state.summonOwners.get(name) ?? null;
     if (!summonedBy && isNewFighter && state.pendingSummonCasters.length > 0) {
-      summonedBy = state.pendingSummonCasters.shift()!;
+      summonedBy = state.pendingSummonCasters.shift()!.caster;
       state.summonOwners.set(name, summonedBy);
     }
 
@@ -570,7 +590,10 @@ export class LogParser {
     if (summonAnnounce) {
       const caster = summonAnnounce[1].trim();
       const fightId = this.resolveFightIdForName(caster);
-      this.getFightState(fightId).pendingSummonCasters.push(caster);
+      this.getFightState(fightId).pendingSummonCasters.push({
+        caster,
+        timeMs: this.timeToMs(time),
+      });
       return null;
     }
 
