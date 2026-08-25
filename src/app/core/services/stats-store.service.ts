@@ -1196,17 +1196,32 @@ export class StatsStoreService {
   /**
    * Les marqueurs explicites "Vous avez été vaincu(e) !" (transitoire : simple KO, le personnage
    * peut être relevé) et "Lancement de l'occupation" (diffusé en fin de TOUT combat, gagné ou
-   * perdu) ne suffisent pas à déterminer une défaite. Cascade de signaux, du plus fiable au moins
-   * fiable :
+   * perdu) ne suffisent pas À EUX SEULS à déterminer une défaite — c'est pourquoi `parsedResult`
+   * (LogParser, `fightLostFlags`) part d'un défaut 'won' tant qu'aucun des deux n'a été vu (ex.
+   * entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). Mais UNE FOIS
+   * que l'un de ces marqueurs a bien été vu pour ce combat (parsedResult === 'lost'), il ne peut
+   * plus s'agir d'un faux positif — Wakfu ne les émet jamais sans raison — et cette conclusion prime
+   * sur toute inférence ci-dessous : bug réel corrigé le 2026-08-25, un combat où l'équipe entière
+   * s'est fait vaincre (5/5 alliés avec marqueur `[DEATH] Lancement de l'occupation`, confirmé par
+   * un enchaînement automatique sur un nouveau combat contre le MÊME boss quelques secondes plus
+   * tard — impossible après une victoire dans un donjon à salles, voir CLAUDE.md) affiché à tort
+   * comme gagné : de l'XP avait malgré tout été distribuée en tout début de résolution de fin de
+   * combat (probablement un solde de dégâts/kills déjà acquis avant le wipe), invalidant
+   * l'hypothèse d'origine "Wakfu ne verse de l'XP qu'en cas de victoire".
+   *
+   * Cascade de signaux pour le seul cas restant (`parsedResult === 'won'` par défaut, faute de
+   * marqueur explicite), du plus fiable au moins fiable :
    *  1) Wakfu ne verse de l'XP de combat qu'en cas de victoire : dès qu'un gain d'XP a été
    *     enregistré pour ce combat, c'est une victoire.
    *  2) Repli : tous les ennemis ayant rejoint le combat (par instance, voir Fight.enemies) sont
    *     morts => victoire, même sans XP (ex. combat n'en accordant pas).
    *  3) Repli : tous les alliés ayant rejoint le combat sont KO à la fin => défaite, quoi qu'en
    *     dise le marqueur explicite (absent par ex. en entraînement contre un mannequin).
-   *  4) Dernier repli : le marqueur explicite du parser.
+   *  4) Dernier repli : le marqueur explicite du parser (donc 'won' par construction ici).
    */
   private resolveFightResult(parsedResult: 'won' | 'lost', working: FightWorking): 'won' | 'lost' {
+    if (parsedResult === 'lost') return 'lost';
+
     if (working.fight.exp.length > 0) return 'won';
 
     const enemies = working.fight.enemies;

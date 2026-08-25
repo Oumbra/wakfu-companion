@@ -184,14 +184,33 @@ function setupCatalog(): CatalogService {
 }
 
 describe('resolveFightImageUrl', () => {
-  it('priorité 0 : PLUSIEURS boss simultanés -> illustration de brèche ultime (avant toute logique de donjon)', async () => {
+  it("priorité 0 : PLUSIEURS boss simultanés D'IDS DISTINCTS correspondant à une brèche ultime connue -> illustration de brèche ultime (avant toute logique de donjon)", async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = resolveFightImageUrl(catalog, ['Boss Ultime Match A', 'Boss Ultime Match B']);
+
+    expect(result).toBe(ULTIMATE_BREACH_IMAGE_URL);
+  });
+
+  it("priorité 0 (repli) : PLUSIEURS boss d'ids distincts mais ne correspondant à AUCUNE brèche ultime connue -> ne déclenche PAS la brèche ultime, retombe sur le 1er boss (référentiel des brèches ultimes exhaustif, pas de repli générique)", async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
     const result = resolveFightImageUrl(catalog, ['Boss Avec Donjon', 'Boss Second']);
 
-    expect(result).toBe(ULTIMATE_BREACH_IMAGE_URL);
-    expect(result).not.toBe(DUNGEON_FOR_BOSS.pictureUrl);
+    expect(result).not.toBe(ULTIMATE_BREACH_IMAGE_URL);
+    expect(result).toBe(DUNGEON_FOR_BOSS.pictureUrl);
+  });
+
+  it('priorité 0 (repli) : le MÊME boss présent plusieurs fois (ex. resynchronisation en cours de combat réémettant sa jointure sous un nouveau fighterId) ne compte jamais comme plusieurs boss distincts', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = resolveFightImageUrl(catalog, ['Boss Avec Donjon', 'Boss Avec Donjon']);
+
+    expect(result).not.toBe(ULTIMATE_BREACH_IMAGE_URL);
+    expect(result).toBe(DUNGEON_FOR_BOSS.pictureUrl);
   });
 
   it('priorité 0 (repli) : un seul boss malgré la présence d’un 2e ennemi non-boss -> ne déclenche PAS la brèche ultime', async () => {
@@ -297,17 +316,26 @@ describe('resolveFightImageUrl', () => {
 });
 
 describe('resolveFightImageInfo (tooltip)', () => {
-  it('plusieurs boss simultanés (brèche ultime) -> tooltip texte fixe "damageMeter.ultimateBreach", aucun repli (asset statique local)', async () => {
+  it('plusieurs boss simultanés correspondant à une brèche ultime connue -> tooltip texte fixe (nom de brèche non résolu), aucun repli (asset statique local)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightImageInfo(catalog, ['Boss Ultime Match A', 'Boss Ultime Match B']);
+
+    expect(info.tooltipSource).toEqual({
+      kind: 'dungeon',
+      names: ULTIMATE_BREACH_MATCH_DUNGEON,
+    });
+    expect(info.fallbackUrls).toEqual([]);
+  });
+
+  it('plusieurs boss simultanés ne correspondant à AUCUNE brèche ultime connue -> pas de tooltip générique, retombe sur le tooltip du 1er boss (référentiel exhaustif)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
     const info = resolveFightImageInfo(catalog, ['Boss Avec Donjon', 'Boss Second']);
 
-    expect(info.tooltipSource).toEqual({
-      kind: 'text',
-      translationKey: 'damageMeter.ultimateBreach',
-    });
-    expect(info.fallbackUrls).toEqual([]);
+    expect(info.tooltipSource).toEqual({ kind: 'dungeon', names: DUNGEON_FOR_BOSS });
   });
 
   it('boss avec donjon référencé -> tooltipSource de type donjon (nom localisé du donjon)', async () => {
