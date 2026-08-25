@@ -13,6 +13,7 @@ import {
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
 import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
 import { HistorySyncService } from './history-sync.service';
+import { SyncedFightsRegistry } from './synced-fights-registry.service';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -132,6 +133,7 @@ export class HistoryArchiveService {
   private readonly catalog = inject(CatalogService);
   private readonly i18n = inject(I18nService);
   private readonly historySync = inject(HistorySyncService);
+  private readonly syncedFights = inject(SyncedFightsRegistry);
 
   private readonly _fights = signal<readonly FightRecord[]>([]);
   private readonly _purchases = signal<readonly PurchaseRecord[]>([]);
@@ -238,21 +240,25 @@ export class HistoryArchiveService {
     }
 
     switch (kind) {
-      case 'fight':
-        this._fights.update((current) => [
-          ...current,
-          ...(result.data as FightPage).entries.map((entry, index) =>
-            toFightRecord(
-              entry,
-              current.length + index,
-              this.catalog,
-              this.i18n,
-              this.stats,
-              this.historySync,
-            ),
+      case 'fight': {
+        const loaded = (result.data as FightPage).entries.map((entry, index) =>
+          toFightRecord(
+            entry,
+            this._fights().length + index,
+            this.catalog,
+            this.i18n,
+            this.stats,
+            this.historySync,
           ),
-        ]);
+        );
+        // Alimente le registre dès que ces combats sont connus — voir SyncedFightsRegistry.
+        // L'ordre par rapport à un éventuel appel historySync.recordFight() déjà fait PAR
+        // toFightRecord (renvoi immédiat d'une correction, voir sa doc) n'a pas d'importance :
+        // seuls les PROCHAINS envois consultent ce registre.
+        this.syncedFights.register(loaded);
+        this._fights.update((current) => [...current, ...loaded]);
         break;
+      }
       case 'purchase':
         this._purchases.update((current) => [
           ...current,
@@ -329,6 +335,7 @@ export class HistoryArchiveService {
     this.loaded.clear();
     this._exhausted.set([]);
     this._failed.set(false);
+    this.syncedFights.reset();
   }
 
   /**
@@ -547,7 +554,16 @@ function toFightRecord(
     instanceCount: instanceCounts.get(participant.name) ?? 1,
   }));
 
-  const time = toLogTime(entry.startedAt);
+  // `FightRecord.time` est par construction l'heure de FIN du combat (voir
+  // StatsStoreService.finalizeFight : `record.time = time` où `time` est l'argument de fin,
+  // tandis que `fullTimestampMs` est le DÉBUT) — c'est aussi la convention utilisée par
+  // fightSignature/fightDedupKey. `entry.startedAt` renvoyé par le serveur est le DÉBUT
+  // (FightPayload.startedAt) : il faut lui ajouter la durée pour reconstruire la même heure de
+  // FIN, sans quoi fightDedupKey ne correspond plus jamais à la copie de session du même combat
+  // (mismatch systématique dès qu'un combat dure plus de quelques secondes — bug réel constaté :
+  // tout combat déjà archivé s'affichait EN PLUS de sa copie de session au lieu de la remplacer).
+  const durationMs = entry.durationMs ?? 0;
+  const time = toLogTime(new Date(new Date(entry.startedAt).getTime() + durationMs).toISOString());
   const result = entry.won === false ? 'lost' : 'won';
   const sortedRows = rows.sort((a, b) => b.total - a.total);
   // Calculable dès maintenant (ne dépend que de time/result/participants, jamais du butin) — sert à
@@ -580,7 +596,7 @@ function toFightRecord(
     loot,
     kamas: entry.kamasGained ?? 0,
     turns: entry.turns ?? 0,
-    durationMs: entry.durationMs ?? 0,
+    durationMs,
     xp: buildXpRows(entry),
   };
   // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
