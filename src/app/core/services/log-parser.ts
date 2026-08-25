@@ -106,8 +106,24 @@ const ANNOUNCE_TO_INSTANTIATION_WINDOW_MS = 50;
  * reconnu comme invocation déjà connue pour que Y hérite du même invocateur (voir
  * FightParseState.summonOwners, propagé dans parseCombatLine). */
 const TRANSFORM_RE = /^(.+?): transformée? en (.+?)\s*!?$/;
+/** "Vous avez été vaincu(e) !" : marqueur PERSONNEL et TRANSITOIRE — un allié mis KO en cours de
+ * combat peut être relevé (soin, résurrection...) et le combat se terminer malgré tout par une
+ * victoire de l'équipe. NE contribue PLUS à `fightLostFlags` depuis le 2026-08-25 (voir
+ * OCCUPATION_RE juste en dessous, qui reste le seul signal explicite fiable) : bug réel corrigé,
+ * un combat effectivement long (5 KO "vaincu(e)" de personnages DIFFÉRENTS répartis sur ~15
+ * minutes, chacun relevé entre-temps) finissant par une authentique victoire (le boss meurt, XP de
+ * fin de combat) était marqué à tort comme perdu, la toute première occurrence de ce marqueur
+ * suffisant à armer `fightLostFlags` pour le reste du combat. Toujours renvoyé en LogEntry
+ * (`combat-defeat-marker`, actuellement un no-op côté StatsStoreService) au cas où un futur usage
+ * (UI temps réel affichant les KO en cours, par exemple) en aurait besoin. */
 const DEFEAT_MARKER_RE = /^Vous avez été vaincu\(e\) !$/;
-/** Diffusée à chaque allié mis KO (y compris via abandon de combat, où "est KO !"/"est hors-combat !" peuvent manquer) : signal de défaite le plus fiable, y compris en multi-compte. */
+/** "Lancement de l'occupation pour le joueur X" : diffusé UNE FOIS PAR ALLIÉ, mais seulement au
+ * moment où le combat se conclut RÉELLEMENT par une défaite totale de l'équipe (vérifié sur un vrai
+ * fichier multi-compte, 2026-08-25 — ne se déclenche JAMAIS pour un simple KO relevable en cours de
+ * combat, y compris quand "Vous avez été vaincu(e) !"/"est KO !" apparaissent à plusieurs reprises
+ * dans un combat finalement gagné) — y compris via abandon de combat, où "est KO !"/"est
+ * hors-combat !" peuvent manquer. Signal de défaite le plus fiable, y compris en multi-compte : seul
+ * marqueur explicite autorisé à armer `fightLostFlags` (voir DEFEAT_MARKER_RE ci-dessus). */
 const OCCUPATION_RE = /^Lancement de l'occupation pour le joueur (.+)$/;
 /** Marqueur technique fiable de fin de combat, émis systématiquement (y compris pour un entraînement contre un mannequin, qui n'affiche jamais l'écran de fin de combat). Capture l'id pour distinguer plusieurs combats concurrents (multi-compte). */
 const FIGHT_END_RE = /^\[FIGHT\] End fight with id (-?\d+)$/;
@@ -611,9 +627,9 @@ export class LogParser {
 
   private parseCombatLine(time: string, content: string): LogEntry | null {
     if (DEFEAT_MARKER_RE.test(content)) {
-      const fightId = this.resolveCurrentFightId();
-      if (fightId !== null) this.fightLostFlags.set(fightId, true);
-      return { kind: 'combat-defeat-marker', time, fightId };
+      // N'arme PLUS fightLostFlags (voir doc de DEFEAT_MARKER_RE) : un simple KO relevable ne
+      // suffit pas à conclure à une défaite du combat entier.
+      return { kind: 'combat-defeat-marker', time, fightId: this.resolveCurrentFightId() };
     }
 
     const ko = KO_RE.exec(content);
@@ -877,6 +893,16 @@ export class LogParser {
       (rest as { sides: TradeSide[] }).sides = [...(rest as { sides: TradeSide[] }).sides].sort(
         (a, b) => a.playerName.localeCompare(b.playerName),
       );
+    }
+    if (entry.kind === 'combat-end') {
+      // Doublon multi-compte : chaque compte connecté au même combat loggue sa propre ligne
+      // "[FIGHT] End fight with id N", mais `result` peut différer entre les deux occurrences —
+      // `forgetFight` (voir parseContent) efface `fightLostFlags` dès la 1ʳᵉ occurrence traitée, donc
+      // la 2ᵉ relit une défaite déjà oubliée et calcule à tort 'won'. Dédoublonner sur le seul
+      // `fightId` (jamais sur `result`) : bug réel corrigé le 2026-08-25, un combat réellement perdu
+      // (vaincu total de l'équipe, marqueurs [DEATH] confirmés) affiché comme gagné à cause de ce
+      // 2e événement bogué qui écrasait le bon résultat dans StatsStoreService.
+      delete (rest as { result?: unknown }).result;
     }
     const signature = `${entry.kind}|${JSON.stringify(rest)}`;
     const nowMs = this.timeToMs(entry.time);
