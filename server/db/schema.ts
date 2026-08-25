@@ -501,11 +501,26 @@ export const fights = pgTable(
     xpGained: bigint('xp_gained', { mode: 'number' }),
     kamasGained: bigint('kamas_gained', { mode: 'number' }),
     gameServer: text('game_server').references(() => gameServers.code),
+    /**
+     * `fightId` du log Wakfu ayant produit ce combat (`Fight.id` côté client — voir
+     * fight.model.ts), PUREMENT DIAGNOSTIC : sert à retrouver une ligne depuis un `wakfu.log`
+     * fourni en support (`SELECT * FROM fights WHERE fight_log_id = …`) sans avoir à recouper
+     * approximativement par horodatage. N'entre dans AUCUN mécanisme d'idempotence — c'est
+     * `clientKey` (dérivé du contenu, voir sa doc) qui continue seul de garantir l'absence de
+     * doublon, car ce `fightId` n'a aucune garantie d'unicité au-delà d'une session de jeu
+     * (remis à zéro par le client à chaque lancement). `null` pour un combat renvoyé depuis une
+     * correction faite sur un combat déjà archivé (voir HistoryArchiveService.toFightRecord,
+     * qui n'a jamais connaissance du fightId d'origine) plutôt que depuis la session — jamais
+     * écrasé dans ce cas grâce à `ON CONFLICT DO NOTHING` sur cette table (événement immuable).
+     */
+    fightLogId: bigint('fight_log_id', { mode: 'number' }),
   },
   (table) => [
     uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
     // Pagination : « les N combats de cet utilisateur les plus récents ».
     index('fights_user_started_at_idx').on(table.userId, table.startedAt),
+    // Recherche diagnostique par fightId de log (voir doc de la colonne) — pas unique.
+    index('fights_fight_log_id_idx').on(table.fightLogId),
   ],
 );
 

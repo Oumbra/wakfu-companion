@@ -7,10 +7,12 @@ import {
   fightSignature,
   purchaseSignature,
   tradeSignature,
+  type FightLootPayload,
   type FightParticipantPayload,
   type TradeItemPayload,
 } from './history-event.model';
 import { SyncQueueService } from './sync-queue.service';
+import { SyncedFightsRegistry } from './synced-fights-registry.service';
 
 /**
  * Traduit les enregistrements d'historique de `StatsStoreService` en événements
@@ -40,6 +42,7 @@ export class HistorySyncService {
   private readonly classifier = inject(EntityClassifierService);
   private readonly catalog = inject(CatalogService);
   private readonly gameServer = inject(GameServerService);
+  private readonly syncedFights = inject(SyncedFightsRegistry);
 
   /** Vrai quand le compte est connecté et que la file accepte des événements. */
   readonly enabled = signal(false);
@@ -110,16 +113,17 @@ export class HistorySyncService {
     return this.catalog.findWakfuMonsterEntry(name)?.id ?? null;
   }
 
-  recordFight(record: FightRecord): void {
-    if (!this.queue.isActive()) return;
-
+  /** Construit la ventilation par participant envoyée au serveur — factorisé pour être appelé
+   * aussi bien sur le combat à envoyer que, dans `recordFight`, sur sa copie déjà archivée (même
+   * calcul des deux côtés = comparaison fiable, voir sa doc). */
+  private buildParticipants(record: FightRecord): FightParticipantPayload[] {
     // L'XP est nommée dans le log exactement comme le combattant qui l'a
     // gagnée (`Caliburnus : +7 374 187 points d'XP.`) : elle se rattache donc
     // au participant. Un même nom ne peut pas recevoir deux gains distincts
     // dans un même combat (registerFightXp les cumule déjà).
     const xpByName = new Map(record.xp.map((row) => [row.name, row.amount]));
 
-    const participants: FightParticipantPayload[] = record.rows.map((row) => {
+    return record.rows.map((row) => {
       const side = this.classifier.classify(row.name);
       return {
         side,
@@ -151,6 +155,43 @@ export class HistorySyncService {
         })),
       };
     });
+  }
+
+  /** Miroir de buildParticipants, pour le butin — même raison d'être factorisé. */
+  private buildLoot(record: FightRecord): FightLootPayload[] {
+    return record.loot.map((row) => ({
+      ...this.itemPayload(row.name, row.catalogId),
+      quantity: row.quantity,
+    }));
+  }
+
+  recordFight(record: FightRecord): void {
+    if (!this.queue.isActive()) return;
+
+    const participants = this.buildParticipants(record);
+    const loot = this.buildLoot(record);
+
+    // Optimisation de trafic (pas de correction de doublon : celle-ci est déjà garantie côté
+    // serveur par clientKey, voir history-event.model.ts) : si l'archive du compte connaît déjà
+    // CE combat (même identité de contenu, voir fightDedupKey) avec EXACTEMENT la même ventilation
+    // par participant et le même butin, il n'y a rien de nouveau à envoyer — évite de renvoyer
+    // tout l'historique reconstruit à chaque (re)connexion (principe d'architecture n°2, CLAUDE.md)
+    // alors que la quasi-totalité est déjà connue du compte. Une VRAIE différence (réattribution
+    // manuelle de dégâts ou d'objet, voir reassignSpell/reassignLootItem) fait forcément diverger
+    // participants/loot de la copie archivée : jamais silencieusement perdue par ce court-circuit.
+    // `syncedFights` n'est alimenté que par ce que l'archive a déjà chargé (best-effort, voir sa
+    // doc) : un combat pas encore vu ici part simplement comme avant.
+    const archived = this.syncedFights.get(record);
+    if (archived) {
+      const archivedParticipants = this.buildParticipants(archived);
+      const archivedLoot = this.buildLoot(archived);
+      if (
+        JSON.stringify(participants) === JSON.stringify(archivedParticipants) &&
+        JSON.stringify(loot) === JSON.stringify(archivedLoot)
+      ) {
+        return;
+      }
+    }
 
     const signature = fightSignature({
       time: record.time,
@@ -164,6 +205,11 @@ export class HistorySyncService {
       kind: 'fight',
       signature,
       payload: {
+        // Purement diagnostique côté serveur (fights.fightLogId) — voir sa doc. `archiveId()`
+        // (HistoryArchiveService) attribue toujours un id négatif à un combat reconstruit depuis
+        // l'archive, jamais un vrai fightId de log (toujours positif, voir sa propre doc) : ce
+        // renvoi de correction n'a simplement plus le fightId d'origine à transmettre.
+        fightId: record.id > 0 ? record.id : null,
         startedAt: new Date(record.fullTimestampMs).toISOString(),
         durationMs: record.durationMs,
         won: record.result === 'won',
@@ -178,10 +224,7 @@ export class HistorySyncService {
         kamasGained: record.kamas,
         gameServer: this.currentServer(),
         participants,
-        loot: record.loot.map((row) => ({
-          ...this.itemPayload(row.name, row.catalogId),
-          quantity: row.quantity,
-        })),
+        loot,
       },
     });
   }
