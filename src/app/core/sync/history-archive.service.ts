@@ -547,7 +547,16 @@ function toFightRecord(
     instanceCount: instanceCounts.get(participant.name) ?? 1,
   }));
 
-  const time = toLogTime(entry.startedAt);
+  // `FightRecord.time` est par construction l'heure de FIN du combat (voir
+  // StatsStoreService.finalizeFight : `record.time = time` où `time` est l'argument de fin,
+  // tandis que `fullTimestampMs` est le DÉBUT) — c'est aussi la convention utilisée par
+  // fightSignature/fightDedupKey. `entry.startedAt` renvoyé par le serveur est le DÉBUT
+  // (FightPayload.startedAt) : il faut lui ajouter la durée pour reconstruire la même heure de
+  // FIN, sans quoi fightDedupKey ne correspond plus jamais à la copie de session du même combat
+  // (mismatch systématique dès qu'un combat dure plus de quelques secondes — bug réel constaté :
+  // tout combat déjà archivé s'affichait EN PLUS de sa copie de session au lieu de la remplacer).
+  const durationMs = entry.durationMs ?? 0;
+  const time = toLogTime(new Date(new Date(entry.startedAt).getTime() + durationMs).toISOString());
   const result = entry.won === false ? 'lost' : 'won';
   const sortedRows = rows.sort((a, b) => b.total - a.total);
   // Calculable dès maintenant (ne dépend que de time/result/participants, jamais du butin) — sert à
@@ -580,7 +589,7 @@ function toFightRecord(
     loot,
     kamas: entry.kamasGained ?? 0,
     turns: entry.turns ?? 0,
-    durationMs: entry.durationMs ?? 0,
+    durationMs,
     xp: buildXpRows(entry),
   };
   // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
