@@ -600,6 +600,23 @@ export class FightHistoryComponent {
     );
   }
 
+  /** Vrai si `record` est LUI-MÊME un combat de boss de donjon (peu importe gagné ou perdu) — à
+   * passer en `isDungeonBossRow` à `fightImageUrl`/`fightImageTooltip`/`fightStoneItemId` pour
+   * toute ligne À L'INTÉRIEUR d'un regroupement de donjon déjà déplié. PAS un simple test
+   * `record.id === entry.representative.id` (bug réel corrigé le 2026-08-25) : un run de donjon
+   * peut contenir PLUSIEURS tentatives de boss (ex. une défaite suivie d'une victoire, voir
+   * groupDungeonRuns étape 1), la représentative n'étant que la plus RÉCENTE d'entre elles — les
+   * tentatives de boss plus anciennes affichaient alors à tort l'image du donjon (déjà portée par
+   * l'en-tête du regroupement, redondante) au lieu de leur propre boss. */
+  protected isDungeonBossRow(record: HistoryFight): boolean {
+    return (
+      findDungeonForEnemies(
+        this.catalog,
+        this.enemyRowsFor(record).map((row) => row.name),
+      ) !== null
+    );
+  }
+
   /** Illustration du combat (boss de donjon / archi / dominant / plus gros dégât), voir
    * resolveFightImageInfo. `isDungeonBossRow` (voir template) force l'illustration propre du boss
    * plutôt que celle du donjon pour la ligne de boss À L'INTÉRIEUR d'un regroupement déjà déplié
