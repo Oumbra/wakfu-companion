@@ -88,11 +88,18 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
  *    (`hasArchiEnemy`) — `hasPreBossArchi` indique seulement qu'un tel combat PEUT exister pour ce
  *    donjon, pas qu'il a eu lieu cette fois-ci (bug corrigé : l'ancienne version rattachait un
  *    5e combat même sans archimonstre dedans, dès que `hasPreBossArchi` était vrai).
- * 3. Salles précédentes : jusqu'à `dungeonRoomCount(dungeon) - 1` combats consécutifs
- *    supplémentaires (plus anciens encore), qu'ils soient gagnés ou perdus (garde-fou explicite :
- *    une salle perdue puis retentée reste correctement rattachée au groupe). Un combat qui inclut
- *    n'importe quel boss de donjon interrompt aussitôt ce ramassage (garde-fou : n'avale jamais la
- *    fin d'un run antérieur distinct).
+ * 3. Salles précédentes : jusqu'à `dungeonRoomCount(dungeon) - 1` salles supplémentaires (plus
+ *    anciennes encore) — PAS `dungeonRoomCount(dungeon) - 1` COMBATS. Une salle peut avoir été
+ *    perdue puis retentée un nombre arbitraire de fois avant d'être gagnée : tous les combats
+ *    consécutifs qui séparent deux salles réussies appartiennent à la salle la plus récente des
+ *    deux (bug réel corrigé le 2026-08-26, voir dungeon-run-grouping.util.spec.ts — l'ancienne
+ *    version comptait `roomSlots` COMBATS bruts au lieu de `roomSlots` VICTOIRES, ce qui décalait
+ *    la fenêtre de collecte dès qu'une salle avait été retentée et faisait perdre la salle la plus
+ *    ancienne du run, hors de la fenêtre). Concrètement : on avance combat par combat, une salle
+ *    n'est "comptée" (roomsFound++) que lorsqu'on rencontre une VICTOIRE ; toute défaite croisée en
+ *    chemin est ramassée sans compter pour une salle à elle seule. Un combat qui inclut n'importe
+ *    quel boss de donjon interrompt aussitôt ce ramassage (garde-fou : n'avale jamais la fin d'un
+ *    run antérieur distinct).
  *
  * Un groupe d'un seul combat (salle manquante en tout début d'historique) redevient une entrée
  * `single` classique plutôt qu'un collapse à un seul élément.
@@ -147,11 +154,17 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
       j++;
     }
 
+    // Salles précédentes (étape 3) : on avance combat par combat, et une salle n'est comptée que
+    // lorsqu'on rencontre une VICTOIRE — toute défaite croisée en chemin (salle retentée) est
+    // ramassée sans compter à elle seule, pour ne pas décaler la fenêtre de collecte.
     const roomSlots = dungeonRoomCount(dungeon) - 1;
     let roomsFound = 0;
-    while (roomsFound < roomSlots && j < records.length && !findDungeon(records[j])) {
+    while (roomsFound < roomSlots && j < records.length) {
+      const candidate = findDungeon(records[j]);
+      if (candidate) break; // combat de boss (ce donjon ou un autre) : fin d'un run antérieur.
+      const won = records[j].result === 'won';
       j++;
-      roomsFound++;
+      if (won) roomsFound++;
     }
 
     for (let k = i; k < j; k++) consumed[k] = true;
