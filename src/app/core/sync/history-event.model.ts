@@ -83,6 +83,13 @@ export interface FightLootPayload {
 }
 
 export interface FightPayload {
+  /** `fightId` du log Wakfu d'origine (`Fight.id`/`FightRecord.id` — voir fight.model.ts),
+   * purement diagnostique côté serveur (`fights.fightLogId`) : n'entre dans AUCUN mécanisme
+   * d'idempotence, c'est `clientKey` (dérivé de la signature ci-dessous) qui continue seul de
+   * garantir l'absence de doublon — voir sa doc en tête de fichier. `null` pour un renvoi de
+   * correction fait depuis un combat déjà archivé (HistoryArchiveService.toFightRecord n'a
+   * jamais connaissance du fightId d'origine, seulement l'id d'affichage négatif `archiveId`). */
+  fightId: number | null;
   startedAt: string;
   durationMs: number | null;
   won: boolean;

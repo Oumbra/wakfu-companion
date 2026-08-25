@@ -68,6 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       parsed.value.map((fight) => ({
         userId,
         clientKey: fight.clientKey,
+        fightLogId: fight.fightId,
         startedAt: fight.startedAt,
         durationMs: fight.durationMs,
         won: fight.won,

@@ -13,6 +13,7 @@ import {
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
 import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
 import { HistorySyncService } from './history-sync.service';
+import { SyncedFightsRegistry } from './synced-fights-registry.service';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -132,6 +133,7 @@ export class HistoryArchiveService {
   private readonly catalog = inject(CatalogService);
   private readonly i18n = inject(I18nService);
   private readonly historySync = inject(HistorySyncService);
+  private readonly syncedFights = inject(SyncedFightsRegistry);
 
   private readonly _fights = signal<readonly FightRecord[]>([]);
   private readonly _purchases = signal<readonly PurchaseRecord[]>([]);
@@ -238,21 +240,25 @@ export class HistoryArchiveService {
     }
 
     switch (kind) {
-      case 'fight':
-        this._fights.update((current) => [
-          ...current,
-          ...(result.data as FightPage).entries.map((entry, index) =>
-            toFightRecord(
-              entry,
-              current.length + index,
-              this.catalog,
-              this.i18n,
-              this.stats,
-              this.historySync,
-            ),
+      case 'fight': {
+        const loaded = (result.data as FightPage).entries.map((entry, index) =>
+          toFightRecord(
+            entry,
+            this._fights().length + index,
+            this.catalog,
+            this.i18n,
+            this.stats,
+            this.historySync,
           ),
-        ]);
+        );
+        // Alimente le registre dès que ces combats sont connus — voir SyncedFightsRegistry.
+        // L'ordre par rapport à un éventuel appel historySync.recordFight() déjà fait PAR
+        // toFightRecord (renvoi immédiat d'une correction, voir sa doc) n'a pas d'importance :
+        // seuls les PROCHAINS envois consultent ce registre.
+        this.syncedFights.register(loaded);
+        this._fights.update((current) => [...current, ...loaded]);
         break;
+      }
       case 'purchase':
         this._purchases.update((current) => [
           ...current,
@@ -329,6 +335,7 @@ export class HistoryArchiveService {
     this.loaded.clear();
     this._exhausted.set([]);
     this._failed.set(false);
+    this.syncedFights.reset();
   }
 
   /**
