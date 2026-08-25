@@ -198,6 +198,34 @@ describe('groupDungeonRuns', () => {
     ]);
   });
 
+  it(
+    "rattache TOUTES les défaites d'une salle retentée à cette salle, sans décaler la fenêtre " +
+      "et perdre une salle plus ancienne (bug réel Kokokolantha, corrigé le 2026-08-26)',",
+    () => {
+      // Cas réel (donjon FOUR_ROOMS = 3 salles + boss, roomSlots = 3) : salle 3 gagnée du premier
+      // coup, salle 2 perdue une fois puis regagnée, salle 1 gagnée du premier coup. Ça fait 4
+      // combats de "salle" avant le boss (pas 3) — l'ancienne version comptait 3 COMBATS bruts
+      // (room3, room2Lost, room2Win) et perdait room1, hors fenêtre.
+      const boss = fight(5, 'Boss Kokokolantha', 'won', DUNGEON_ARCHI.id);
+      const room3 = fight(4, 'Salle 3', 'won', null);
+      const room2Win = fight(3, 'Salle 2 - victoire (retentée)', 'won', null);
+      const room2Lost = fight(2, 'Salle 2 - défaite', 'lost', null);
+      const room1 = fight(1, 'Salle 1', 'won', null);
+      const records = [boss, room3, room2Win, room2Lost, room1];
+
+      const result = group(records);
+
+      expect(result).toEqual([
+        {
+          kind: 'dungeonRun',
+          dungeon: DUNGEON_ARCHI,
+          fights: [boss, room3, room2Win, room2Lost, room1],
+          representative: boss,
+        },
+      ]);
+    },
+  );
+
   it("s'arrête sans erreur si moins de salles que prévu sont disponibles (début de l'historique)", () => {
     // Donjon 3 salles (type THREE_ROOMS, 2 salles attendues) mais une seule salle disponible avant le
     // boss dans l'historique fourni (garde-fou : ne doit pas planter, ni sortir du tableau).
