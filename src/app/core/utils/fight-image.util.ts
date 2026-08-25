@@ -106,15 +106,25 @@ export function findDungeonForEnemies(
 /**
  * Détermine l'illustration à afficher pour une entrée de l'historique des
  * combats, par ordre de priorité :
- * 0. PLUSIEURS ennemis boss (`isBoss`) présents simultanément -> illustration de brèche ultime
- *    (ULTIMATE_BREACH_IMAGE_URL, voir breach-icon.data.ts), avec pour tooltip le nom de LA brèche
- *    ultime identifiée (parmi les 3 connues, `type: 'ULTIMATE_BREACH'` dans repository/dungeons.json)
- *    via ses boss (`bossMonsterId`) — voir CatalogService.findWakfuUltimateBreachByBossMonsters,
- *    repli sur un libellé générique si aucune ne correspond (référentiel incomplet, ou combat qui
- *    n'est en réalité pas une brèche ultime). Volontairement AVANT la priorité 1 (sans quoi un seul
- *    des boss serait détecté par `entries.find` et le combat traité comme un donjon/boss classique) :
- *    seul cas connu dans le jeu à ce jour où plusieurs monstres `isBoss` rejoignent le même combat,
- *    ajouté le 2026-08-24 à la demande de l'utilisateur.
+ * 0. PLUSIEURS ennemis boss (`isBoss`) D'IDS DISTINCTS présents simultanément ET correspondant
+ *    exactement aux boss d'UNE des 3 brèches ultimes connues (`type: 'ULTIMATE_BREACH'` dans
+ *    repository/dungeons.json, voir CatalogService.findWakfuUltimateBreachByBossMonsters) ->
+ *    illustration de brèche ultime (ULTIMATE_BREACH_IMAGE_URL, voir breach-icon.data.ts), tooltip =
+ *    nom de la brèche identifiée. Le référentiel des brèches ultimes étant exhaustif (seulement 3
+ *    connues à ce jour), une combinaison de boss qui ne correspond à AUCUNE d'elles n'est PAR
+ *    DÉFINITION jamais une brèche ultime réelle — pas de repli sur un libellé générique ici
+ *    (contrairement à la priorité 2, brèche simple, dont le référentiel est loin d'être exhaustif) :
+ *    on retombe alors sur la priorité 1 ci-dessous. Le comptage se fait sur les IDS DISTINCTS de
+ *    boss, jamais sur le nombre brut d'entrées `isBoss` : bug réel corrigé le 2026-08-25 (fichier
+ *    utilisateur avec 2 lignes `[_FL_] ... join the fight` pour LE MÊME boss "Cendragon", provoquées
+ *    par une resynchronisation en cours de combat qui réémet un nouveau `fighterId` de circonstance
+ *    pour un combattant déjà présent — voir CLAUDE.md "Invocations" pour un phénomène de
+ *    resynchronisation similaire — comptées à tort comme 2 boss distincts, un combat de donjon
+ *    classique affichant alors à tort l'image générique de brèche ultime). Volontairement AVANT la
+ *    priorité 1 (sans quoi un seul des boss serait détecté par `entries.find` et le combat traité
+ *    comme un donjon/boss classique) : seul cas connu dans le jeu à ce jour où plusieurs monstres
+ *    `isBoss` D'IDS DIFFÉRENTS rejoignent légitimement le même combat, ajouté le 2026-08-24 à la
+ *    demande de l'utilisateur.
  * 1. Un ennemi boss (`isBoss`) présent (SEUL, voir priorité 0 ci-dessus) -> illustration du donjon
  *    dont il est le boss (`bossMonsterId` dans repository/dungeons.json), ou à défaut (aucun donjon
  *    référencé pour ce boss) sa propre `pictureUrl`.
@@ -166,20 +176,23 @@ export function resolveFightImageInfo(
     .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
 
   const bossEntries = entries.filter((entry) => entry.isBoss);
-  if (bossEntries.length > 1) {
-    // Identification précise de LA brèche ultime (parmi les 3 connues) via ses boss — voir
-    // findWakfuUltimateBreachByBossMonsters. Repli sur le libellé générique si aucune ne
-    // correspond (référentiel incomplet, ou combat qui n'est en réalité pas une brèche ultime).
-    const ultimateBreach = catalog.findWakfuUltimateBreachByBossMonsters(
-      bossEntries.map((entry) => entry.id),
-    );
-    return {
-      url: ULTIMATE_BREACH_IMAGE_URL,
-      tooltipSource: ultimateBreach
-        ? { kind: 'dungeon', names: ultimateBreach }
-        : { kind: 'text', translationKey: 'damageMeter.ultimateBreach' },
-      fallbackUrls: [],
-    };
+  // Ids distincts, PAS le nombre brut d'entrées `isBoss` : une resynchronisation en cours de combat
+  // peut faire rejoindre le MÊME boss une 2e fois sous un nouveau `fighterId` (voir doc ci-dessus) —
+  // ça ne fait jamais de lui 2 boss différents.
+  const distinctBossIds = [...new Set(bossEntries.map((entry) => entry.id))];
+  if (distinctBossIds.length > 1) {
+    // Référentiel des brèches ultimes exhaustif (3 connues) : si cette combinaison précise de boss
+    // n'en identifie AUCUNE, ce n'est par définition pas une brèche ultime — pas de repli générique
+    // ici (voir doc ci-dessus), on retombe sur la priorité 1 (boss unique/dungeon classique) via
+    // `bossEntries[0]` plutôt que d'afficher à tort l'illustration de brèche ultime.
+    const ultimateBreach = catalog.findWakfuUltimateBreachByBossMonsters(distinctBossIds);
+    if (ultimateBreach) {
+      return {
+        url: ULTIMATE_BREACH_IMAGE_URL,
+        tooltipSource: { kind: 'dungeon', names: ultimateBreach },
+        fallbackUrls: [],
+      };
+    }
   }
 
   const bossEntry = bossEntries[0];

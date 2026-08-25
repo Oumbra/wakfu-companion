@@ -1,0 +1,33 @@
+- generic [ref=f5e3]:
+  - banner [ref=f5e5]:
+    - button "Wakfu Companion beta" [ref=f5e7] [cursor=pointer]:
+      - generic [ref=f5e8]:
+        - text: Wakfu Companion
+        - generic [ref=f5e9]: beta
+    - generic [ref=f5e10]:
+      - button "?" [ref=f5e11] [cursor=pointer]
+      - generic [ref=f5e15]:
+        - button [disabled] [ref=f5e16]
+        - button [ref=f5e17] [cursor=pointer]
+      - button [ref=f5e20] [cursor=pointer]:
+        - img "fr" [ref=f5e22]
+  - generic [ref=f5e30]:
+    - main [ref=f5e32]:
+      - generic [ref=f5e35]:
+        - generic [ref=f5e36]:
+          - paragraph [ref=f5e37]: Ce navigateur ne permet pas de lire wakfu.log en continu. Utilisez l'un des navigateurs compatibles ci-dessous.
+          - generic [ref=f5e38]:
+            - link "Google Chrome" [ref=f5e39] [cursor=pointer]:
+              - /url: https://www.google.com/chrome/
+            - link "Microsoft Edge" [ref=f5e49] [cursor=pointer]:
+              - /url: https://www.microsoft.com/edge
+            - link "Opera" [ref=f5e63] [cursor=pointer]:
+              - /url: https://www.opera.com/download
+        - button "Pourquoi ?" [ref=f5e71] [cursor=pointer]
+    - contentinfo [ref=f5e73]:
+      - generic [ref=f5e74]:
+        - navigation [ref=f5e75]:
+          - button "Mentions légales" [ref=f5e76] [cursor=pointer]
+          - button "Politique de confidentialité" [ref=f5e77] [cursor=pointer]
+        - generic [ref=f5e78]: "WAKFU MMORPG : © 2012-2025 Ankama Studio. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays. Le site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama."
+      - generic [ref=f5e79]: Build 1.108.0 • 25 août 2026, 17:03
