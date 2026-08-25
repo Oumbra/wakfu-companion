@@ -70,6 +70,11 @@ export interface FightLootInput {
 
 export interface FightInput {
   clientKey: string;
+  /** `fightId` du log Wakfu d'origine — purement diagnostique, voir `fights.fightLogId`
+   * (server/db/schema.ts) : n'entre dans aucun mécanisme d'idempotence. `null` pour un renvoi
+   * de correction fait depuis un combat déjà archivé (le client n'a alors plus le fightId
+   * d'origine, voir HistoryArchiveService.toFightRecord). */
+  fightId: number | null;
   startedAt: Date;
   durationMs: number | null;
   won: boolean | null;
@@ -338,6 +343,8 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
       if (!clientKey.ok) return clientKey;
+      const fightId = parseCount(entry['fightId'], 'fightId', true);
+      if (!fightId.ok) return fightId;
       const startedAt = parseDate(entry['startedAt'], 'startedAt');
       if (!startedAt.ok) return startedAt;
       const durationMs = parseCount(entry['durationMs'], 'durationMs', true);
@@ -394,6 +401,7 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
         ok: true,
         value: {
           clientKey: clientKey.value,
+          fightId: fightId.value,
           startedAt: startedAt.value,
           durationMs: durationMs.value,
           won: won.value,
