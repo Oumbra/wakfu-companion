@@ -1,179 +1,189 @@
-@if (recapService.isOpen()) {
-  <div
-    class="recap-backdrop"
-    (click)="recapService.close()"
-    appEscapeClose
-    (appEscapeClose)="recapService.close()"
-  ></div>
-  <div
-    class="recap-panel"
-    #panel
-    [class.positioned]="position() !== null"
-    [style.left.px]="position()?.left"
-    [style.top.px]="position()?.top"
-  >
-    <div class="recap-header" (mousedown)="onHeaderMouseDown($event, panel)">
-      <div class="recap-header-group">
-        <img [src]="headerIcon" class="recap-icon" alt="" />
-        <h3>{{ 'sessionRecap.title' | t }}</h3>
-      </div>
-      <button class="close-btn" (click)="recapService.close()">×</button>
+<div class="tool-panel">
+  <div class="panel-header">
+    <span class="panel-header-label-group">
+      <span class="header-label">
+        <app-icon name="scroll" [strokeWidth]="1.8" [size]="18" />
+        {{ 'sessionRecap.title' | t }}
+      </span>
+    </span>
+    <button
+      class="collapse-btn"
+      [appTooltip]="'history.collapseHint' | t"
+      tooltipPosition="top"
+      (click)="layout.toggleCollapsed('recap')"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16px"
+        height="16px"
+        fill="none"
+        viewBox="0 0 16 17"
+        role="img"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          fill-rule="evenodd"
+          d="M1.75 1.75A.75.75 0 0 0 1 2.5V15c0 .41.34.75.75.75H15v-1.5H5.5v-11H15v-1.5zM4 3.25H2.5v11H4zM9.81 9.5l1.22 1.22-1.06 1.06-2.5-2.5-.53-.53.53-.53 2.5-2.5 1.06 1.06L9.81 8H14v1.5z"
+          clip-rule="evenodd"
+        ></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="panel-body recap-body">
+    <div class="duration-box">
+      <span class="duration-label">{{ 'sessionRecap.duration' | t }}</span>
+      <span class="duration-value">{{ duration() }}</span>
     </div>
 
-    <div class="recap-body">
-      <div class="duration-box">
-        <span class="duration-label">{{ 'sessionRecap.duration' | t }}</span>
-        <span class="duration-value">{{ duration() }}</span>
+    <div class="recap-section">
+      <div class="recap-section-header">
+        <img [src]="xpIcon" class="section-icon" alt="" />
+        <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
       </div>
-
-      <div class="recap-section">
-        <div class="recap-section-header">
-          <img [src]="xpIcon" class="section-icon" alt="" />
-          <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
-        </div>
-        @if (stats.xpByCharacter().length === 0) {
-          <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
-        } @else {
-          <div class="xp-list" #xpList [class.expanded]="xpExpanded()">
-            @for (row of stats.xpByCharacter(); track row.name; let first = $first) {
-              <div
-                class="xp-row"
-                [appTooltip]="'damageMeter.classHint' | t"
-                [tooltipPosition]="first ? 'bottom' : 'top'"
-                (contextmenu)="onXpNameContextMenu($event, row.name)"
-              >
-                <app-entity-icon [name]="row.name" side="ally" />
-                <span class="xp-name">{{ row.name }}</span>
-                <span class="xp-amount">+{{ row.amount | numberFr }}</span>
-              </div>
-            }
-          </div>
-          @if (stats.xpByCharacter().length > 3) {
-            <button class="show-more-btn" (click)="toggleXp()">
-              {{ (xpExpanded() ? 'sessionRecap.showLess' : 'sessionRecap.showMore') | t }}
-              <span class="section-caret" [class.expanded]="xpExpanded()">▸</span>
-            </button>
+      @if (stats.xpByCharacter().length === 0) {
+        <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
+      } @else {
+        <div class="xp-list" #xpList [class.expanded]="xpExpanded()">
+          @for (row of stats.xpByCharacter(); track row.name; let first = $first) {
+            <div
+              class="xp-row"
+              [appTooltip]="'damageMeter.classHint' | t"
+              [tooltipPosition]="first ? 'bottom' : 'top'"
+              (contextmenu)="onXpNameContextMenu($event, row.name)"
+            >
+              <app-entity-icon [name]="row.name" side="ally" />
+              <span class="xp-name">{{ row.name }}</span>
+              <span class="xp-amount">+{{ row.amount | numberFr }}</span>
+            </div>
           }
-        }
-      </div>
-
-      <div class="recap-section">
-        <div class="recap-section-header clickable" (click)="toggleKamas()">
-          <img [src]="kamasIcon" class="section-icon" alt="" />
-          <span>{{ 'sessionRecap.kamas' | t }}</span>
-          <span class="section-header-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
-          <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
         </div>
-        @if (kamasExpanded()) {
-          <div class="kama-detail">
-            <div class="recap-row">
-              <span class="recap-label">{{ 'sessionRecap.earned' | t }}</span>
-              <span class="recap-value gain">+{{ stats.kamasEarned() | numberFr }} ₭</span>
+        @if (stats.xpByCharacter().length > 3) {
+          <button class="show-more-btn" (click)="toggleXp()">
+            {{ (xpExpanded() ? 'sessionRecap.showLess' : 'sessionRecap.showMore') | t }}
+            <span class="section-caret" [class.expanded]="xpExpanded()">▸</span>
+          </button>
+        }
+      }
+    </div>
+
+    <div class="recap-section">
+      <div class="recap-section-header clickable" (click)="toggleKamas()">
+        <img [src]="kamasIcon" class="section-icon" alt="" />
+        <span>{{ 'sessionRecap.kamas' | t }}</span>
+        <span class="section-header-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
+        <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
+      </div>
+      @if (kamasExpanded()) {
+        <div class="kama-detail">
+          <div class="recap-row">
+            <span class="recap-label">{{ 'sessionRecap.earned' | t }}</span>
+            <span class="recap-value gain">+{{ stats.kamasEarned() | numberFr }} ₭</span>
+          </div>
+          <div class="recap-row">
+            <span class="recap-label">{{ 'sessionRecap.spent' | t }}</span>
+            <span class="recap-value loss">-{{ stats.kamasLost() | numberFr }} ₭</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="recap-section">
+      <div class="recap-section-header clickable" (click)="toggleCombats()">
+        <img [src]="combatIcon" class="section-icon" alt="" />
+        <span>{{ 'sessionRecap.combats' | t }}</span>
+        <span class="section-header-value">{{ stats.totalCombats() }}</span>
+        <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
+      </div>
+      @if (combatsExpanded()) {
+        <div class="kama-detail">
+          <div class="split-row">
+            <div class="split-part">
+              <span class="split-value gain">{{ stats.combatsWon() }}</span>
+              <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
             </div>
-            <div class="recap-row">
-              <span class="recap-label">{{ 'sessionRecap.spent' | t }}</span>
-              <span class="recap-value loss">-{{ stats.kamasLost() | numberFr }} ₭</span>
+            <span class="split-sep">|</span>
+            <div class="split-part">
+              <span class="split-value loss">{{ stats.combatsLost() }}</span>
+              <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
             </div>
           </div>
-        }
-      </div>
-
-      <div class="recap-section">
-        <div class="recap-section-header clickable" (click)="toggleCombats()">
-          <img [src]="combatIcon" class="section-icon" alt="" />
-          <span>{{ 'sessionRecap.combats' | t }}</span>
-          <span class="section-header-value">{{ stats.totalCombats() }}</span>
-          <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
-        </div>
-        @if (combatsExpanded()) {
-          <div class="kama-detail">
+          <div class="challenges-block">
+            <div class="challenges-title">
+              <img [src]="challengesIcon" class="section-icon" alt="" />
+              <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
+            </div>
+            <div class="challenges-sep"></div>
             <div class="split-row">
               <div class="split-part">
-                <span class="split-value gain">{{ stats.combatsWon() }}</span>
-                <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
+                <span class="split-value gain">{{ stats.challengesPassed() }}</span>
+                <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
               </div>
               <span class="split-sep">|</span>
               <div class="split-part">
-                <span class="split-value loss">{{ stats.combatsLost() }}</span>
-                <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
-              </div>
-            </div>
-            <div class="challenges-block">
-              <div class="challenges-title">
-                <img [src]="challengesIcon" class="section-icon" alt="" />
-                <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
-              </div>
-              <div class="challenges-sep"></div>
-              <div class="split-row">
-                <div class="split-part">
-                  <span class="split-value gain">{{ stats.challengesPassed() }}</span>
-                  <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
-                </div>
-                <span class="split-sep">|</span>
-                <div class="split-part">
-                  <span class="split-value loss">{{ stats.challengesFailed() }}</span>
-                  <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="recap-loot-block">
-              <div class="loot-header-row">
-                <div class="loot-header-main">
-                  <div class="loot-header-left">
-                    <img [src]="lootIcon" class="collapsible-icon" alt="" />
-                    <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
-                    @if (stats.sessionLoot().length > 0) {
-                      <span class="loot-count"
-                        >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
-                      >
-                    }
-                  </div>
-                  @if (stats.sessionLoot().length > 1) {
-                    <div class="icon-switch icon-switch-3 loot-sort-switch">
-                      <span
-                        class="icon-switch-highlight"
-                        [class.is-right]="lootSort() === 'quantity'"
-                        [class.is-far-right]="lootSort() === 'rarity'"
-                      ></span>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'name'"
-                        [appTooltip]="lootSortTooltip('name')"
-                        (click)="setLootSort('name')"
-                      >
-                        Az
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'quantity'"
-                        [appTooltip]="lootSortTooltip('quantity')"
-                        (click)="setLootSort('quantity')"
-                      >
-                        Nb
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'rarity'"
-                        [appTooltip]="lootSortTooltip('rarity')"
-                        (click)="setLootSort('rarity')"
-                      >
-                        <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
-              <div class="loot-body">
-                <app-loot-list [items]="sortedLoot()" emptyVariant="recap" />
+                <span class="split-value loss">{{ stats.challengesFailed() }}</span>
+                <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
               </div>
             </div>
           </div>
-        }
-      </div>
+
+          <div class="recap-loot-block">
+            <div class="loot-header-row">
+              <div class="loot-header-main">
+                <div class="loot-header-left">
+                  <img [src]="lootIcon" class="collapsible-icon" alt="" />
+                  <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
+                  @if (stats.sessionLoot().length > 0) {
+                    <span class="loot-count"
+                      >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
+                    >
+                  }
+                </div>
+                @if (stats.sessionLoot().length > 1) {
+                  <div class="icon-switch icon-switch-3 loot-sort-switch">
+                    <span
+                      class="icon-switch-highlight"
+                      [class.is-right]="lootSort() === 'quantity'"
+                      [class.is-far-right]="lootSort() === 'rarity'"
+                    ></span>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="lootSort() === 'name'"
+                      [appTooltip]="lootSortTooltip('name')"
+                      (click)="setLootSort('name')"
+                    >
+                      Az
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="lootSort() === 'quantity'"
+                      [appTooltip]="lootSortTooltip('quantity')"
+                      (click)="setLootSort('quantity')"
+                    >
+                      Nb
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="lootSort() === 'rarity'"
+                      [appTooltip]="lootSortTooltip('rarity')"
+                      (click)="setLootSort('rarity')"
+                    >
+                      <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="loot-body">
+              <app-loot-list [items]="sortedLoot()" emptyVariant="recap" />
+            </div>
+          </div>
+        </div>
+      }
     </div>
   </div>
-}
+</div>

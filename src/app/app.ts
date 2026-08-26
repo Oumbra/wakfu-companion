@@ -9,7 +9,6 @@ import { CatalogService } from './core/api/catalog.service';
 import { NavigationService } from './core/services/navigation.service';
 import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { SessionRecapComponent } from './features/session-recap/session-recap.component';
 import { ProfilePageComponent } from './features/profile-page/profile-page.component';
 import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
@@ -48,7 +47,6 @@ import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-
     RouterOutlet,
     SetupComponent,
     DashboardComponent,
-    SessionRecapComponent,
     ProfilePageComponent,
     LootAlertComponent,
     ClassPickerComponent,

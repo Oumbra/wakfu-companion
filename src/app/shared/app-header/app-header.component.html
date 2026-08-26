@@ -85,16 +85,6 @@
     }
   </div>
   <div class="app-header-right app-header-right-desktop">
-    @if (logFileAccess.status() === 'connected') {
-      <button
-        class="icon-btn session-recap-btn"
-        [appTooltip]="'app.sessionRecap' | t"
-        tooltipPosition="bottom"
-        (click)="sessionRecapService.toggle()"
-      >
-        <img [src]="sessionRecapIcon" class="session-recap-icon" alt="" />
-      </button>
-    }
     <!-- Diaporama de présentation (voir OnboardingTourService) : entièrement autonome, ne dépend
          d'aucune donnée du fichier connecté — disponible dès la page de setup, pas seulement une
          fois un wakfu.log connecté (contrairement au recap/profil ci-dessus/dessous). -->
@@ -157,15 +147,6 @@
               <span>{{ 'app.gameServerUnset' | t }}</span>
             </button>
           }
-        }
-        @if (logFileAccess.status() === 'connected') {
-          <button
-            class="mobile-menu-item"
-            (click)="sessionRecapService.toggle(); closeMobileMenu()"
-          >
-            <img [src]="sessionRecapIcon" class="mobile-menu-icon" alt="" />
-            <span>{{ 'app.sessionRecap' | t }}</span>
-          </button>
         }
         <!-- Voir le commentaire équivalent côté desktop : disponible dès la page de setup. -->
         <button class="mobile-menu-item" (click)="startOnboardingTour()">

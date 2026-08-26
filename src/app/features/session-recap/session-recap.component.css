@@ -2,105 +2,8 @@
   display: contents;
 }
 
-.recap-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.recap-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 501;
-  width: 450px;
-  max-height: 80vh;
-  display: flex;
-  flex-direction: column;
-  background: var(--panel-bg);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-  animation: fadeIn 0.2s;
-}
-.recap-panel.positioned {
-  transform: none;
-}
-
-.recap-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  background: var(--panel-header-bg);
-  border-bottom: 1px solid var(--border);
-  cursor: grab;
-  user-select: none;
-}
-.recap-header:active {
-  cursor: grabbing;
-}
-
-/* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
-   plutôt qu'une fenêtre flottante centrée, le panneau recouvre toute la zone
-   dashboard (tab-bar Combat/Suivi/Chat comprise) avec la même largeur que la
-   carte. `top` = hauteur .app-header mobile (45px, voir app.css) +
-   padding-top .dashboard (15px) — à garder synchronisé si l'une des 2
-   change. Glisser n'a plus de sens à taille fixe : curseur par défaut. */
-@media (max-width: 800px) {
-  .recap-panel {
-    top: 60px;
-    left: 15px;
-    right: 15px;
-    bottom: 15px;
-    width: auto;
-    max-height: none;
-    transform: none;
-  }
-  .recap-header {
-    cursor: default;
-  }
-  .recap-header:active {
-    cursor: default;
-  }
-}
-.recap-header-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.recap-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-.recap-header h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.3rem;
-  line-height: 1;
-  padding: 0;
-  height: auto;
-  cursor: pointer;
-}
-.close-btn:hover {
-  color: var(--text-bright);
-}
-
 .recap-body {
   padding: 14px 24px 14px 16px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -324,7 +227,7 @@
   justify-content: flex-start;
 }
 
-/* Section butin de la modale recap : réplique le design/actions/tri de la
+/* Section butin de la carte recap : réplique le design/actions/tri de la
    section historique > combat > butin (voir FightHistoryComponent), adaptée
    aux séparateurs en pointillés déjà utilisés dans ce panneau (voir
    .challenges-sep) plutôt qu'aux bordures pleines de fight-history. */
