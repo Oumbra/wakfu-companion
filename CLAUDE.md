@@ -197,9 +197,47 @@ calendaire (jour/mois/année **civils**, jamais glissants).
 - Pas de cache multi-période côté client (`HistoryStatsService` ne garde qu'un seul résultat en
   mémoire, rechargé à chaque changement de switch) : décision délibérée, la requête serveur étant
   déjà agrégée et rapide — une mise en cache multi-clé aurait été une optimisation prématurée.
-- **Hors scope de cette itération, à reprendre plus tard** : regroupement par donjon/type de combat
-  au sein d'une période (mentionné par l'utilisateur comme suite logique), navigation vers une
-  période passée, mise en cache multi-période.
+- **Regroupement par donjon** (ajouté le 2026-08-26, suite logique demandée par l'utilisateur) : 6ᵉ
+  requête SQL (`GROUP BY fights.dungeon_id`) — AUCUNE migration requise, `fights.dungeon_id`
+  existait déjà (lot 8). Le serveur renvoie l'id Ankama brut (`null` = hors donjon) sans rejoindre
+  `dungeons` : le nom localisé est résolu côté client via `CatalogService.findWakfuDungeonEntryById`
+  (nouvelle méthode, miroir de `findWakfuItemEntryById` — même raison que pour `itemId`/`itemName`
+  du butin : le serveur ne connaît pas la locale d'affichage). "Type de combat" (mentionné dans la
+  demande d'origine) volontairement PAS traité comme un axe de regroupement séparé de `dungeonId` —
+  chaque donjon a de toute façon un `type` (`WakfuDungeonType`) qui lui est propre, un second niveau
+  de regroupement n'apportait pas de valeur claire supplémentaire pour cette itération.
+- **Navigation vers une période passée** (même date) : stepper `‹ label ›` (réutilise `app-stepper`,
+  déjà existant — voir section "Conventions UI transverses", pas de nouveau composant) au-dessus du
+  contenu de période, piloté par un `periodOffset` (0 = période EN COURS, négatif = passé, jamais
+  positif — `[max]="0"` sur le stepper). Bornes calculées par `periodBounds`
+  (`core/utils/local-period.util.ts`, avec `addLocalDays`/`addLocalMonths`/`addLocalYears` — passage
+  par le constructeur `Date(année, mois, jour)`, qui normalise nativement un débordement de
+  composant, jamais une arithmétique en millisecondes qui casserait autour du changement d'heure
+  été/hiver). **Simplification notable par rapport à l'itération précédente** : `until` est
+  maintenant TOUJOURS le début de la période suivante (jamais un "now + marge") — y compris pour la
+  période EN COURS, ce qui revient à demander "jusqu'à demain minuit" alors qu'on est encore
+  aujourd'hui : aucun combat ne peut avoir un horodatage futur, donc ça ne change rien au résultat
+  tout en unifiant la formule pour tous les offsets (plus besoin de `PERIOD_UNTIL_BUFFER_MS`,
+  supprimée). Changer de granularité (switch) réinitialise toujours `periodOffset` à `0` — naviguer
+  et changer de granularité restent deux gestes distincts, ne jamais hériter d'un offset d'une
+  granularité précédente sur une autre.
+- **Cache multi-période** (même date, revient sur la décision "pas de cache" de l'itération
+  précédente à la demande explicite de l'utilisateur) : `HistoryStatsService` garde désormais un
+  `Map<string, PeriodStats>` clé `"{granularité}:{offset}"`, alimenté uniquement pour les périodes
+  PASSÉES (`offset !== 0`) — la période EN COURS n'est JAMAIS mise en cache ni servie depuis le
+  cache, elle reste par nature susceptible de changer tant qu'elle n'est pas terminée. Un passé déjà
+  écoulé, lui, ne change plus (hors correction manuelle d'objet a posteriori, cas limite ignoré).
+  Navigation rapide dans le stepper protégée par un compteur de requête (`requestSeq`) : une réponse
+  réseau arrivée après une plus récente est silencieusement ignorée plutôt que d'écraser l'affichage
+  avec un résultat périmé.
+- Vérifié en navigateur (Chromium réel via `playwright-core`, MCP playwright resté figé sur Firefox
+  cette session — voir gotcha dédié plus bas) avec un id de donjon RÉEL du référentiel (65 =
+  "Larventura") : résolution de nom correcte, `null` → "Hors donjon". Navigation testée sur 3 pas
+  (0 → -1 → -2 → -1 → 0) : bornes `since`/`until` exactes à chaque pas, AUCUN appel réseau
+  supplémentaire en revenant sur un offset déjà visité (cache), UN appel en revenant sur l'offset 0
+  (jamais servi depuis le cache), bouton "suivant" désactivé à l'offset 0 (jamais de période
+  future), libellés corrects dans les 3 granularités ("Aujourd'hui"/"Hier" pour jour, "août 2026"
+  pour mois, "2026" pour année).
 - Comme pour tous les lots serveur précédents (voir `server/README.md`) : seul un déploiement réel
   avec la vraie base Neon permet de valider les requêtes SQL contre de vraies données — ce sandbox ne
   peut atteindre ni Neon ni `*.pages.dev`. Vérifié ici en navigateur (Chromium/playwright-core,

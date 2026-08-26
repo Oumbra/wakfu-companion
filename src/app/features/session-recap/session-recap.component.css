@@ -20,6 +20,65 @@
   font-weight: 600;
 }
 
+/* Stepper de navigation par période (‹ label ›, voir app-stepper) — centré plutôt que collé à un
+   bord, `.recap-body` étant une colonne flex sans children à centrer par ailleurs. Négatif : réduit
+   l'écart avec le switch juste au-dessus, plus proche visuellement l'un de l'autre que du contenu
+   qui suit (les deux pilotent ensemble "quelle période afficher"). */
+.recap-period-nav {
+  display: flex;
+  justify-content: center;
+  margin-top: -6px;
+}
+
+/* Regroupement par donjon (voir PeriodStats.dungeons) — même principe de liste défilante que
+   `.xp-list.expanded` (hauteur plafonnée, scroll interne) plutôt qu'un "voir plus" dédié : le
+   nombre de donjons distincts sur une période reste rarement assez grand pour justifier ce
+   mécanisme en plus. */
+.dungeon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.dungeon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+.dungeon-name {
+  color: var(--text-color);
+  font-weight: 600;
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dungeon-count {
+  font-family: monospace;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.dungeon-wl {
+  font-family: monospace;
+  flex-shrink: 0;
+}
+.dungeon-wl .gain {
+  color: var(--btn-active-green);
+}
+.dungeon-wl .loss {
+  color: var(--btn-active-red);
+}
+.dungeon-kamas {
+  font-family: monospace;
+  color: var(--kama-color);
+  text-align: right;
+  flex-shrink: 0;
+  min-width: 72px;
+}
+
 .duration-box {
   display: flex;
   align-items: center;
