@@ -366,7 +366,13 @@ export class HistoryArchiveService {
         return corrected;
       }),
     );
-    if (corrected) this.historySync.recordFight(corrected);
+    // `[corrected]` seul (pas tout l'historique fusionné) : un rattachement de donjon éventuel a
+    // déjà été résolu et envoyé lors de la synchronisation d'origine de ce combat — ce renvoi ne
+    // sert qu'à sa correction de butin. `resolveDungeonAssignment` sans salles voisines ne peut
+    // reconnaître QUE le cas où `corrected` contient lui-même un boss ; sinon `null`/`null`, ce qui
+    // n'efface jamais une valeur déjà connue côté serveur (voir `COALESCE`,
+    // `functions/api/v1/history/fights.ts`).
+    if (corrected) this.historySync.recordFight(corrected, [corrected]);
   }
 
   /** Miroir de reassignLootItem, pour un achat. Une correction partielle crée un second achat
@@ -603,7 +609,9 @@ function toFightRecord(
   // n'était pas encore chargée au moment de la correction d'origine, voir StatsStoreService.
   // applyLootReassign) — c'est cette première rencontre qui s'en charge, avec la même garantie
   // d'idempotence (ON CONFLICT DO UPDATE) que tout autre renvoi.
-  if (anyCorrected) historySync.recordFight(record);
+  // `[record]` seul — même raison que HistoryArchiveService.reassignLootItem ci-dessus (rattachement
+  // de donjon déjà connu du serveur pour ce combat, ce renvoi ne concerne que le butin corrigé).
+  if (anyCorrected) historySync.recordFight(record, [record]);
   return record;
 }
 

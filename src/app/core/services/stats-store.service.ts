@@ -1336,7 +1336,7 @@ export class StatsStoreService {
     // Envoi au compte AVANT le plafonnement en mémoire : `MAX_FIGHT_HISTORY`
     // borne ce que l'appareil garde affiché, pas ce que le compte archive —
     // c'est tout l'objet de ce lot (« historique illimité »).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
 
     this.activeFights.delete(fightId);
@@ -1674,7 +1674,8 @@ export class StatsStoreService {
    * n'est donc pas renvoyé.
    */
   private replayHistoryToSync(): void {
-    for (const record of this.fightHistoryList) this.historySync.recordFight(record);
+    for (const record of this.fightHistoryList)
+      this.historySync.recordFight(record, this.fightHistoryList);
     for (const record of this.purchaseHistoryList) this.historySync.recordPurchase(record);
     for (const record of this.tradeHistoryList) this.historySync.recordTrade(record);
   }
@@ -1901,7 +1902,7 @@ export class StatsStoreService {
     // seul le détail du combat est rafraîchi côté compte (voir
     // `fight_participants`, écrit en ON CONFLICT DO UPDATE).
     const corrected = this.fightHistoryList.find((record) => record.id === fightId);
-    if (corrected) this.historySync.recordFight(corrected);
+    if (corrected) this.historySync.recordFight(corrected, this.fightHistoryList);
   }
 
   /** Rejoue tout le journal des réattributions persistées (voir reassignSpell) — appelé après chaque
@@ -2189,7 +2190,7 @@ export class StatsStoreService {
     // seule(s) la/les ligne(s) `fight_loot` visée(s) sont mises à jour côté serveur
     // (ON CONFLICT DO UPDATE) — la ligne scindée éventuelle part avec le même envoi (tout le combat
     // est renvoyé d'un bloc).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
   }
 
   private applyPurchaseReassign(
