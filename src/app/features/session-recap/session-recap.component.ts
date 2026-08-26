@@ -1,5 +1,9 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
-import { LootRow, StatsStoreService } from '../../core/services/stats-store.service';
+import {
+  LootRow,
+  SESSION_GAP_THRESHOLD_MS,
+  StatsStoreService,
+} from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
@@ -135,13 +139,23 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * Durée = temps ACTIF déjà accumulé depuis le fichier (voir StatsStoreService.
+   * sessionActiveDurationMs — ne grandit que quand de vraies lignes ont été lues) + une extension
+   * "temps réel" qui prolonge visuellement ce total entre deux lots de lignes tant qu'une partie
+   * semble en cours (voir sessionLastIngestAtMs), plafonnée à SESSION_GAP_THRESHOLD_MS — au-delà de
+   * ce plafond, on considère que le fichier n'est plus alimenté et la durée cesse d'augmenter
+   * automatiquement (comportement demandé explicitement : contrairement à l'ancien calcul, purement
+   * `Date.now() - dateDeConnexion`, qui grandissait indéfiniment même client fermé/PC en veille).
+   */
   private updateDuration(): void {
-    const startedAt = this.stats.sessionStartedAt();
-    if (startedAt === null) {
-      this.duration.set('00:00:00');
-      return;
-    }
-    const elapsedMs = Date.now() - startedAt;
+    const activeMs = this.stats.sessionActiveDurationMs();
+    const lastIngestAtMs = this.stats.sessionLastIngestAtMs();
+    const liveExtensionMs =
+      lastIngestAtMs === null
+        ? 0
+        : Math.min(Math.max(Date.now() - lastIngestAtMs, 0), SESSION_GAP_THRESHOLD_MS);
+    const elapsedMs = activeMs + liveExtensionMs;
     const hours = Math.floor(elapsedMs / 3_600_000);
     const minutes = Math.floor((elapsedMs % 3_600_000) / 60_000);
     const seconds = Math.floor((elapsedMs % 60_000) / 1000);

@@ -105,6 +105,51 @@ Deux catégories d'état dans `StatsStoreService`, à traiter différemment à c
 
 Si un nouveau champ cumulatif est ajouté au store, se demander explicitement : persistant (jamais reset) ou dérivé du fichier (reset à chaque `isInitialLoad`, dans `resetSessionState()`) ?
 
+## Durée de session (carte Récap) : dérivée du fichier, pas de l'horloge murale
+
+Corrigé le 2026-08-26 : l'ancien calcul (`Date.now() - dateDeConnexion`, un simple chrono démarré à
+la connexion) grandissait indéfiniment tant que l'onglet restait ouvert — y compris client Wakfu
+fermé, PC en veille, ou fichier contenant plusieurs sessions de jeu distinctes (utilisateur
+déconnecté puis reconnecté plus tard dans le MÊME `wakfu.log`). La durée affichée doit correspondre
+au temps **réellement actif** d'après le contenu du fichier, pas au temps écoulé depuis l'ouverture
+de l'app.
+
+Architecture retenue (`StatsStoreService.accumulateSessionDuration`, appelée sur CHAQUE ligne brute
+dans `ingest()`, avant même `LogParser.parseLine`) :
+
+- `sessionActiveDurationMs` (signal, reset à 0 dans `resetSessionState()`, donc à chaque
+  `isInitialLoad` — état DÉRIVÉ DU FICHIER, voir principe `isInitialLoad` ci-dessus) accumule
+  l'écart entre deux lignes horodatées consécutives du fichier, **sauf** si cet écart atteint
+  `SESSION_GAP_THRESHOLD_MS` (5 min, exporté) — auquel cas il est considéré comme une coupure
+  (fermeture du client, crash, veille...) et n'est PAS ajouté au total. Basé sur `peekLineTime`
+  (voir `log-parser.ts`, déjà utilisé par `primeLogDateAnchorFromBatch` pour l'ancrage de date) sur
+  la ligne BRUTE, PAS sur `LogEntry`/`apply()` : une ligne purement technique sans `LogEntry` associé
+  (ex. `"Stopping cFC..."`, arrêt du client) compte quand même comme une preuve d'activité — sinon
+  une période sans combat/butin/chat (navigation de menus, par exemple) paraîtrait à tort "coupée".
+- Seuil (5 min) volontairement **générique** (écart entre lignes), pas basé sur la détection de la
+  ligne `"Stopping cFC..."` elle-même malgré sa présence dans le fichier de calibration (voir
+  ci-dessous) : cette ligne ne signale qu'une fermeture PROPRE, jamais un crash/une perte
+  réseau/une mise en veille/un `wakfu.exe` tué depuis le gestionnaire de tâches. Un seuil générique
+  couvre tous ces cas uniformément, sans dépendre d'une chaîne de log qu'Ankama pourrait faire
+  évoluer.
+- Calibré sur un vrai fichier fourni par l'utilisateur (deux sessions de jeu distinctes dans le même
+  `wakfu.log`, fermeture complète du client puis reconnexion ~41 min plus tard) : le plus grand écart
+  normal À L'INTÉRIEUR de chacune des deux sessions n'y dépassait jamais ~51s (mesuré), très en
+  dessous des 5 min retenues — et l'écart RÉEL entre les deux sessions (41 min 35s) y est très
+  largement au-dessus. Résultat vérifié EXACT au diagnostic de l'utilisateur : segments
+  `14:13:32,174 → 14:52:25,542` et `15:34:00,974 → 16:52:12,618`, total actif `1h57m05s`.
+- `sessionLastIngestAtMs` (signal, horloge MURALE — `Date.now()`, PAS une valeur du fichier — posé à
+  la fin de CHAQUE `ingest()`) sert uniquement à `SessionRecapComponent` pour prolonger
+  l'affichage "en temps réel" entre deux lots de lignes tant qu'une partie semble en cours,
+  plafonné à `SESSION_GAP_THRESHOLD_MS` (même constante, réutilisée côté affichage) : au-delà de ce
+  plafond, la durée cesse d'augmenter automatiquement (comportement explicitement demandé) — vérifié
+  en navigateur : figée à `activeMs + 5min` quand `sessionLastIngestAtMs` remonte à plus de 5 min,
+  ne progresse plus ensuite tant qu'aucun nouveau lot n'arrive.
+- Affichée = `sessionActiveDurationMs + min(max(Date.now() - sessionLastIngestAtMs, 0),
+  SESSION_GAP_THRESHOLD_MS)` (voir `SessionRecapComponent.updateDuration`) — les deux composantes
+  du calcul (accumulation pure côté store, extension temps réel plafonnée côté composant) partagent
+  la même constante `SESSION_GAP_THRESHOLD_MS` exportée de `stats-store.service.ts`.
+
 ## Invocations : traitées comme des sorts de leur invocateur, jamais comme des combattants à part
 
 Deux bugs distincts, découverts et corrigés ensemble le 2026-08-24 sur un vrai `wakfu.log` fourni par

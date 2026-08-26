@@ -35,6 +35,27 @@ const PURCHASE_WINDOW_MS = 2000;
  * passage de minuit plutôt qu'un simple réordonnancement multi-compte (jamais plus de quelques
  * secondes en pratique) — voir buildFullTimestampMs. */
 const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
+/**
+ * Écart entre deux lignes horodatées consécutives du fichier au-delà duquel la durée de session
+ * affichée (voir sessionActiveDurationMs) considère qu'il y a EU UNE COUPURE plutôt qu'une simple
+ * accalmie de jeu — le temps passé dans cet écart n'est alors PAS ajouté au total (voir
+ * accumulateSessionDuration). Calibré sur un vrai fichier fourni par l'utilisateur contenant deux
+ * sessions de jeu distinctes dans le même wakfu.log (reconnexion ~40 min après une fermeture
+ * complète du client) : le plus grand écart normal À L'INTÉRIEUR de chacune des deux sessions n'y
+ * dépassait jamais ~51s (mesuré), très en-dessous des 5 minutes retenues ici — et l'écart RÉEL entre
+ * les deux sessions (~41 min 35s, la fermeture puis relance du client) y est très largement au-dessus,
+ * aucune valeur intermédiaire raisonnable ne change donc le résultat sur ce fichier de référence.
+ * Exporté : réutilisé par SessionRecapComponent pour plafonner l'extension "temps réel" affichée
+ * entre deux lots de lignes (voir sessionLastIngestAtMs) — même seuil, même principe, des deux côtés.
+ *
+ * Volontairement PAS basé sur la ligne technique "Stopping cFC..." (arrêt propre du client, présente
+ * dans le fichier de calibration) malgré sa fiabilité apparente : elle ne capture qu'une fermeture
+ * PROPRE (bouton quitter), pas un crash, une perte réseau, une mise en veille du PC, ou simplement
+ * `wakfu.exe` tué depuis le gestionnaire de tâches — un seuil générique sur l'écart entre lignes
+ * couvre tous ces cas uniformément, sans dépendre d'une chaîne de log précise que Ankama pourrait
+ * faire évoluer.
+ */
+export const SESSION_GAP_THRESHOLD_MS = 5 * 60 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -364,7 +385,21 @@ export class StatsStoreService {
   /** Envoi de l'historique au compte (lot 8) — no-op complet en mode invité, voir HistorySyncService. */
   private readonly historySync = inject(HistorySyncService);
 
-  readonly sessionStartedAt = signal<number | null>(null);
+  /** Durée active de la session, en ms — calculée à partir des horodatages du fichier lui-même
+   * (pas de l'horloge murale), en excluant tout écart ≥ SESSION_GAP_THRESHOLD_MS entre deux lignes
+   * consécutives (coupure : fermeture du client, crash, veille...). Voir
+   * accumulateSessionDuration/SESSION_GAP_THRESHOLD_MS pour le détail. Contrairement à l'ancien
+   * `sessionStartedAt` (retiré), ne suffit PAS seul à afficher une durée qui continue de "vivre" en
+   * temps réel pendant une partie effectivement en cours — voir sessionLastIngestAtMs, combiné côté
+   * SessionRecapComponent. */
+  readonly sessionActiveDurationMs = signal(0);
+  /** Horodatage MUR (Date.now(), pas une valeur du fichier) du dernier lot de lignes traité — sert
+   * uniquement à SessionRecapComponent pour prolonger l'affichage en temps réel entre deux lots
+   * (l'utilisateur joue "maintenant", de nouvelles lignes n'ont juste pas encore été lues), plafonné
+   * à SESSION_GAP_THRESHOLD_MS pour ne jamais laisser la durée grimper indéfiniment si le fichier
+   * n'est plus alimenté (client fermé, onglet resté ouvert). `null` tant qu'aucun lot n'a encore été
+   * traité pour la connexion en cours. */
+  readonly sessionLastIngestAtMs = signal<number | null>(null);
 
   readonly kamasEarned = signal(0);
   readonly kamasLost = signal(0);
@@ -432,6 +467,11 @@ export class StatsStoreService {
   private currentDisplayFightId: number | null = null;
   /** Horodatage de la dernière ligne traitée : sert à calculer la durée écoulée du combat affiché. */
   private lastLineTime: string | null = null;
+  /** Horodatage complet (ms, voir buildFullTimestampMs) de la dernière ligne DU FICHIER vue par
+   * accumulateSessionDuration — PAS limité aux lignes reconnues comme LogEntry par LogParser
+   * (contrairement à lastLineTime) : une ligne purement technique (ex. "Stopping cFC...") compte
+   * quand même comme une preuve d'activité pour la durée de session, voir sa doc de tête. */
+  private lastSessionActivityMs: number | null = null;
   /** Vrai pendant le traitement du tout premier lot de lignes d'une connexion (contenu déjà présent dans le fichier) : les compteurs de suivi ne doivent pas être incrémentés pour cet historique déjà vécu. */
   private currentBatchIsInitialLoad = false;
   private nextPurchaseId = 1;
@@ -766,6 +806,10 @@ export class StatsStoreService {
       this.primeLogDateAnchorFromBatch(lines);
     }
     for (const line of lines) {
+      // Basé sur la ligne BRUTE (pas sur `entry`, voir accumulateSessionDuration) : une ligne
+      // purement technique sans LogEntry associé (ex. "Stopping cFC...") compte quand même comme
+      // une preuve d'activité pour la durée de session.
+      this.accumulateSessionDuration(line);
       const entry = this.parser.parseLine(line);
       if (entry) this.apply(entry);
     }
@@ -784,6 +828,11 @@ export class StatsStoreService {
     // ci-dessus vient de reconstruire l'historique depuis zéro (voir gating isInitialLoad, CLAUDE.md),
     // sans quoi les combats concernés retrouveraient leur attribution automatique d'origine.
     if (isInitialLoad) this.replayPersistedReassignments();
+    // Horloge MURALE (pas une valeur du fichier) : "on vient de finir de lire tout ce qui était
+    // disponible, à cet instant réel" — ancrage pour l'extension "temps réel" de
+    // SessionRecapComponent entre ce lot et le prochain (voir sessionLastIngestAtMs). Posé
+    // systématiquement, même si `lines` ne contenait aucune ligne exploitable.
+    this.sessionLastIngestAtMs.set(Date.now());
     this.publish();
   }
 
@@ -795,7 +844,9 @@ export class StatsStoreService {
    * explicite et complète demandée par l'utilisateur).
    */
   private resetSessionState(): void {
-    this.sessionStartedAt.set(Date.now());
+    this.sessionActiveDurationMs.set(0);
+    this.sessionLastIngestAtMs.set(null);
+    this.lastSessionActivityMs = null;
 
     this.kamasEarned.set(0);
     this.kamasLost.set(0);
@@ -1473,6 +1524,36 @@ export class StatsStoreService {
     // `Date` normalise nativement un `day` débordant (ex. 32 août => 1er septembre).
     const baseDateMs = new Date(year, month - 1, day + this.logDateDayOffset).getTime();
     return baseDateMs + timeOfDayMs;
+  }
+
+  /**
+   * Ajoute à sessionActiveDurationMs l'écart entre cette ligne et la précédente ligne DU FICHIER vue
+   * (voir lastSessionActivityMs), SAUF si cet écart atteint ou dépasse SESSION_GAP_THRESHOLD_MS — un
+   * tel écart est alors traité comme une coupure (fermeture du client, crash, veille du PC...), le
+   * temps qu'il représente n'est PAS compté dans la durée de session affichée. Utilise `peekLineTime`
+   * (comme primeLogDateAnchorFromBatch) plutôt que `LogEntry`/`apply()` : une ligne purement
+   * technique sans LogEntry associé (ex. "Stopping cFC...") reste une preuve valable d'activité au
+   * même titre qu'une ligne de combat/butin/chat — s'en priver aurait pu faire paraître "coupée" une
+   * période en réalité continue (ex. un joueur qui navigue des menus sans combattre).
+   *
+   * Premier appel d'une (nouvelle) session — `lastSessionActivityMs === null`, voir
+   * resetSessionState() — : rien à ajouter (pas de ligne précédente à comparer), seulement amorcer
+   * `lastSessionActivityMs`.
+   */
+  private accumulateSessionDuration(rawLine: string): void {
+    const peeked = peekLineTime(rawLine);
+    if (!peeked) return;
+    const fullMs = this.buildFullTimestampMs(peeked.time);
+    if (this.lastSessionActivityMs !== null) {
+      const gap = fullMs - this.lastSessionActivityMs;
+      // `gap <= 0` : lignes quasi simultanées de threads distincts capturées dans un ordre
+      // légèrement différent de leur horodatage strict (vérifié sur un vrai fichier — jamais plus
+      // d'1-2ms d'écart) — rien à ajouter plutôt que de risquer de faire reculer le total.
+      if (gap > 0 && gap < SESSION_GAP_THRESHOLD_MS) {
+        this.sessionActiveDurationMs.update((v) => v + gap);
+      }
+    }
+    this.lastSessionActivityMs = fullMs;
   }
 
   private timeToMs(time: string): number {
