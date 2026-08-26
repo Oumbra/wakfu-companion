@@ -148,6 +148,13 @@
       "when": 1787735738548,
       "tag": "0020_rainy_black_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787743818418,
+      "tag": "0021_fight_challenges_stats",
+      "breakpoints": true
     }
   ]
 }

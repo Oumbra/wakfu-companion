@@ -103,6 +103,31 @@ describe('parseFightsBody', () => {
     expect(parsed).toEqual({ ok: true, value: [] });
   });
 
+  it('défaute challengesPassed/challengesFailed à 0 quand absents (0 est une vraie valeur, pas "inconnu")', () => {
+    const parsed = parseFightsBody({ entries: [fightEntry()] });
+    expect(parsed.ok && parsed.value[0].challengesPassed).toBe(0);
+    expect(parsed.ok && parsed.value[0].challengesFailed).toBe(0);
+  });
+
+  it('transporte challengesPassed/challengesFailed quand fournis', () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ challengesPassed: 2, challengesFailed: 1 })],
+    });
+    expect(parsed.ok && parsed.value[0].challengesPassed).toBe(2);
+    expect(parsed.ok && parsed.value[0].challengesFailed).toBe(1);
+  });
+
+  it('refuse un challengesPassed négatif ou non entier', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ challengesPassed: -1 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('challengesPassed'),
+    });
+    expect(parseFightsBody({ entries: [fightEntry({ challengesFailed: 1.5 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('challengesFailed'),
+    });
+  });
+
   it('accepte un combat sans serveur de jeu résolu (champ vide, jamais un repli inventé)', () => {
     const parsed = parseFightsBody({ entries: [fightEntry({ gameServer: null })] });
     expect(parsed.ok && parsed.value[0].gameServer).toBe(null);

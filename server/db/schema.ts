@@ -537,6 +537,17 @@ export const fights = pgTable(
      * jour a posteriori que `dungeonId` ci-dessus.
      */
     dungeonRunKey: text('dungeon_run_key'),
+    /**
+     * Nombre de challenges de combat réussis/échoués annoncés pendant ce combat (log "Le challenge
+     * "X" est réussi/a échoué", voir `FightRecord.challengesPassed/Failed` côté client). `0` par
+     * défaut plutôt que `NULL` : un combat archivé avant l'introduction de ce suivi n'a par
+     * définition connu AUCUN challenge compté (pas une valeur inconnue à distinguer d'un vrai zéro,
+     * même raisonnement que `fightParticipants.xpGained` ci-dessus) — permet un
+     * `SUM(challenges_passed)` direct sans `COALESCE` à chaque requête statistique long terme (par
+     * mois/année/type de combat) qui est la raison d'être de ces deux colonnes.
+     */
+    challengesPassed: integer('challenges_passed').notNull().default(0),
+    challengesFailed: integer('challenges_failed').notNull().default(0),
   },
   (table) => [
     uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
