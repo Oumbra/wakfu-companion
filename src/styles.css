@@ -512,6 +512,9 @@ button.reset-btn:hover {
 }
 
 .panel-header .header-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.95rem;
   letter-spacing: 1px;
   color: var(--accent);
