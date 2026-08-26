@@ -32,20 +32,24 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { AuthService } from '../../core/auth/auth.service';
 import { HistoryStatsService, PeriodStats } from '../../core/sync/history-stats.service';
 import { resolveItemName } from '../../core/sync/history-archive.service';
-import { localDayStart, localMonthStart, localYearStart } from '../../core/utils/local-period.util';
+import { PeriodGranularity, periodBounds } from '../../core/utils/local-period.util';
+import { StepperComponent } from '../../shared/stepper/stepper.component';
 
 /** Granularité du switch Session/Jour/Mois/Année — voir `setGranularity`. `'session'` (défaut)
  * reste piloté par `StatsStoreService` (contenu du fichier connecté, inchangé) ; les trois autres
  * agrègent côté compte via `HistoryStatsService` (voir `functions/api/v1/history/stats.ts`), donc
  * uniquement pertinentes pour un utilisateur connecté (voir template, `auth.status()`). */
-type Granularity = 'session' | 'day' | 'month' | 'year';
-/** Marge ajoutée à "maintenant" pour la borne `until` envoyée au serveur — la période demandée est
- * toujours EN COURS (pas de navigation vers une période passée dans cette itération), `until` doit
- * donc rester strictement postérieur à `since` même dans le cas limite d'un changement de switch
- * survenant à la toute première milliseconde du jour/mois/année (voir parseStatsQuery côté
- * serveur, qui rejette `until <= since`) et couvrir tout ce qui a pu être ingéré dans la minute qui
- * vient de s'écouler. */
-const PERIOD_UNTIL_BUFFER_MS = 60_000;
+type Granularity = 'session' | PeriodGranularity;
+
+/** Borne basse (en pas de `periodOffset`, voir `setGranularity`/`onOffsetChange`) du stepper de
+ * navigation par granularité — garde-fou UI généreux plutôt qu'une vraie limite fonctionnelle (une
+ * période sans donnée s'affiche simplement à zéro, elle ne produit jamais d'erreur) : borne le
+ * nombre de clics utiles avant de basculer sur une granularité plus large. */
+const OFFSET_MIN: Record<PeriodGranularity, number> = {
+  day: -3650, // ~10 ans
+  month: -120, // 10 ans
+  year: -50,
+};
 
 /**
  * Carte du dashboard "Récap de session" — au même titre que Combats/Achats/Échanges/Chat (voir
@@ -66,6 +70,7 @@ const PERIOD_UNTIL_BUFFER_MS = 60_000;
     LootListComponent,
     TooltipDirective,
     IconComponent,
+    StepperComponent,
   ],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
@@ -89,6 +94,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly historyStats = inject(HistoryStatsService);
 
   protected readonly granularity = signal<Granularity>('session');
+  /** Pas courant dans le stepper de navigation par période — `0` = période EN COURS (jour/mois/
+   * année contenant maintenant), négatif = passé (voir `periodBounds`). Toujours réinitialisé à
+   * `0` par `setGranularity` : changer de granularité repart de la période courante. */
+  protected readonly periodOffset = signal(0);
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
@@ -153,22 +162,66 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return computeLootSortTooltip(this.i18n, this.lootSort(), this.lootSortReverse(), mode);
   }
 
-  /** Change de granularité et, hors 'session', déclenche l'agrégation serveur de la période EN
-   * COURS (pas de navigation vers une période passée dans cette itération, voir CLAUDE.md). Pas de
-   * cache : reproduit le rechargement à chaque changement de switch (décision explicite, voir
-   * HistoryStatsService) — resélectionner une granularité déjà active recharge donc aussi, ce qui
-   * reste cohérent (l'utilisateur peut vouloir rafraîchir un agrégat resté ouvert un moment). */
+  /** Change de granularité : repart toujours de la période EN COURS (`periodOffset` à `0`), même
+   * si l'utilisateur avait navigué dans le passé sur la granularité précédente — changer de
+   * granularité et naviguer sont deux gestes distincts, mélanger les deux surprendrait plus qu'autre
+   * chose (« je clique sur Mois, je m'attends au mois EN COURS, pas à un mois arbitraire hérité du
+   * dernier `periodOffset` laissé sur Jour »). */
   protected setGranularity(next: Granularity): void {
     this.granularity.set(next);
+    this.periodOffset.set(0);
     if (next === 'session') return;
-    const now = Date.now();
-    const since =
-      next === 'day'
-        ? localDayStart(now)
-        : next === 'month'
-          ? localMonthStart(now)
-          : localYearStart(now);
-    void this.historyStats.load(new Date(since), new Date(now + PERIOD_UNTIL_BUFFER_MS));
+    this.loadPeriod(next, 0);
+  }
+
+  /** Callback du stepper de navigation (‹ précédent / suivant ›, voir template) — émis déjà borné à
+   * [OFFSET_MIN, 0] par `app-stepper`. */
+  protected onOffsetChange(next: number): void {
+    this.periodOffset.set(next);
+    const g = this.granularity();
+    if (g === 'session') return; // stepper masqué en session, ne devrait jamais être atteint
+    this.loadPeriod(g, next);
+  }
+
+  /** Sans paramètre (plutôt que `(g: PeriodGranularity)`) pour rester appelable telle quelle depuis
+   * le template : `granularity()` y est du type large `Granularity`, que le template ne rétrécit
+   * jamais automatiquement vers `PeriodGranularity` même sous un `@if` qui exclut `'session'` (à la
+   * différence d'une variable locale TypeScript classique) — lire `this.granularity()` ICI, où un
+   * simple `if` suffit à rétrécir normalement, évite ce frottement de typage côté template. */
+  protected offsetMin(): number {
+    const g = this.granularity();
+    return g === 'session' ? 0 : OFFSET_MIN[g];
+  }
+
+  /** Déclenche l'agrégation serveur pour `granularity` au pas `offset` — période EN COURS (`0`,
+   * jamais mise en cache : voir HistoryStatsService) ou PASSÉE (mise en cache par
+   * `HistoryStatsService`, un passé déjà écoulé ne change plus). */
+  private loadPeriod(g: PeriodGranularity, offset: number): void {
+    const { start, end } = periodBounds(g, offset, Date.now());
+    const cacheKey = offset === 0 ? undefined : `${g}:${offset}`;
+    void this.historyStats.load(new Date(start), new Date(end), cacheKey);
+  }
+
+  /** Libellé affiché par le stepper (‹ label ›, voir StepperComponent) — texte déjà formaté/traduit
+   * pour la période sélectionnée : termes relatifs pour les jours récents ("Aujourd'hui"/"Hier",
+   * voir `formatRelativeDay`), "mois année" pour un mois, année seule pour une année. */
+  protected periodLabel(): string {
+    const g = this.granularity();
+    if (g === 'session') return '';
+    const { start } = periodBounds(g, this.periodOffset(), Date.now());
+    if (g === 'day') return this.i18n.formatRelativeDay(start);
+    if (g === 'month') return this.i18n.formatMonth(start);
+    return this.i18n.formatYear(start);
+  }
+
+  /** Nom localisé d'un donjon du regroupement par période (voir PeriodStats.dungeons) — `null` =
+   * combat hors donjon (chasse libre, PvP...), résolu vers un libellé dédié plutôt que vers le
+   * catalogue. Repli sur ce même libellé si l'id n'est plus résolu (référentiel pas encore importé
+   * pour un donjon récent, cas limite). */
+  protected dungeonLabel(dungeonId: number | null): string {
+    if (dungeonId === null) return this.i18n.t('sessionRecap.period.noDungeon');
+    const entry = this.catalog.findWakfuDungeonEntryById(dungeonId);
+    return entry?.[this.i18n.locale()] ?? this.i18n.t('sessionRecap.period.noDungeon');
   }
 
   /** Butin de la période agrégée (voir HistoryStatsService), converti au format `LootRow` attendu

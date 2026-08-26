@@ -224,6 +224,7 @@ export class CatalogService {
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
+  private dungeonsById = new Map<number, CatalogDungeonEntry>();
   /** Toutes les entrées donjon telles que reçues (contrairement à dungeonsByBossMonsterId, pas
    * indexée — sert uniquement à balayer les brèches, en nombre restreint, voir
    * findWakfuBreachByMonsterFamilies/findWakfuUltimateBreachByBossMonsters). */
@@ -306,6 +307,14 @@ export class CatalogService {
 
   findWakfuDungeonByBossMonsterId(bossMonsterId: number): CatalogDungeonEntry | undefined {
     return this.dungeonsByBossMonsterId.get(bossMonsterId);
+  }
+
+  /** Miroir de `findWakfuItemEntryById` — résolution non ambiguë par id Ankama, utilisée par le
+   * regroupement par donjon de la carte Récap (`GET /api/v1/history/stats`, champ `dungeons[].
+   * dungeonId` — voir SessionRecapComponent) : le serveur renvoie l'id brut, jamais un nom localisé
+   * (il ne connaît pas la locale d'affichage de l'utilisateur, voir CLAUDE.md). */
+  findWakfuDungeonEntryById(id: number): CatalogDungeonEntry | undefined {
+    return this.dungeonsById.get(id);
   }
 
   /** Trouve la brèche dimensionnelle simple (`type: 'BREACH'`) dont la composition en familles de
@@ -600,6 +609,7 @@ export class CatalogService {
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
+    this.dungeonsById = new Map(dungeons.map((dungeon) => [dungeon.id, dungeon]));
     this.dungeons = dungeons;
     this.revision.update((v) => v + 1);
   }

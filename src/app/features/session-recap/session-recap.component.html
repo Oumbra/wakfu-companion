@@ -77,6 +77,23 @@
       </div>
     }
 
+    <!-- Navigation vers une période PASSÉE (jour/mois/année précédent) — n'a de sens que hors
+         'session' (le fichier connecté n'a qu'une seule "période", la session en cours elle-même).
+         `[max]="0"` : jamais de période future, `app-stepper` borne déjà `valueChange` en interne. -->
+    @if (granularity() !== 'session') {
+      <div class="recap-period-nav">
+        <app-stepper
+          [label]="periodLabel()"
+          [value]="periodOffset()"
+          [min]="offsetMin()"
+          [max]="0"
+          [prevTooltip]="'sessionRecap.period.prev' | t"
+          [nextTooltip]="'sessionRecap.period.next' | t"
+          (valueChange)="onOffsetChange($event)"
+        />
+      </div>
+    }
+
     @if (granularity() === 'session') {
       <div class="duration-box">
         <span class="duration-label">{{ 'sessionRecap.duration' | t }}</span>
@@ -403,6 +420,35 @@
                   <app-loot-list [items]="sortedPeriodLoot()" emptyVariant="recap" />
                 </div>
               </div>
+            </div>
+          }
+        </div>
+
+        <div class="recap-section">
+          <div class="recap-section-header">
+            <img [src]="combatIcon" class="section-icon" alt="" />
+            <span>{{ 'sessionRecap.period.byDungeon' | t }}</span>
+          </div>
+          @if (period.dungeons.length === 0) {
+            <div class="empty-state small">{{ 'sessionRecap.period.noDungeons' | t }}</div>
+          } @else {
+            <div class="dungeon-list">
+              @for (row of period.dungeons; track row.dungeonId) {
+                <div class="dungeon-row">
+                  <span
+                    class="dungeon-name"
+                    [appTooltip]="dungeonLabel(row.dungeonId)"
+                    [tooltipOnlyIfTruncated]="true"
+                    >{{ dungeonLabel(row.dungeonId) }}</span
+                  >
+                  <span class="dungeon-count">{{ row.fights }}×</span>
+                  <span class="dungeon-wl"
+                    ><span class="gain">{{ row.won }}</span
+                    >/<span class="loss">{{ row.lost }}</span></span
+                  >
+                  <span class="dungeon-kamas">+{{ row.kamasGained | numberFr }} ₭</span>
+                </div>
+              }
             </div>
           }
         </div>

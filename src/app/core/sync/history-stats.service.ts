@@ -22,15 +22,32 @@ export interface PeriodStats {
   };
   xpByCharacter: { name: string; amount: number }[];
   loot: { itemId: number | null; itemName: string | null; quantity: number }[];
+  /** Regroupement des combats de la période par donjon (`dungeonId` = id Ankama, `null` = hors
+   * donjon) — voir `SessionRecapComponent`/`CatalogService.findWakfuDungeonEntryById` pour la
+   * résolution du nom localisé, jamais faite côté serveur. Trié par nombre de combats décroissant. */
+  dungeons: {
+    dungeonId: number | null;
+    fights: number;
+    won: number;
+    lost: number;
+    kamasGained: number;
+    xpGained: number;
+  }[];
 }
 
 /**
- * Agrégation par période (switch Session/Jour/Mois/Année de la carte Récap) — un seul résultat en
- * mémoire à la fois, rechargé à chaque changement de granularité (pas de cache multi-période : la
- * requête serveur est déjà agrégée et rapide, une mise en cache multi-clé serait une optimisation
- * prématurée pour cette itération). Ne connaît PAS la granularité elle-même ('jour'/'mois'/'année')
- * ni comment calculer ses bornes (voir `core/utils/local-period.util.ts`) — ce service se contente
- * de demander l'agrégat entre deux instants déjà résolus par l'appelant (`SessionRecapComponent`).
+ * Agrégation par période (switch Session/Jour/Mois/Année + navigation vers une période passée de
+ * la carte Récap). Un seul résultat "actif" à la fois (`stats`, ce que le composant affiche), plus
+ * un cache mémoire des PÉRIODES PASSÉES déjà chargées (voir `load`, paramètre `cacheKey`) — jamais
+ * la période EN COURS (offset 0 dans `SessionRecapComponent`), qui reste par nature toujours
+ * susceptible de changer tant qu'elle n'est pas terminée et doit donc toujours être rechargée
+ * depuis le serveur. Un passé déjà écoulé, lui, ne change plus (hors correction manuelle d'objet,
+ * cas limite ignoré ici) : le rejouer depuis le cache évite une requête réseau à chaque aller-retour
+ * dans le stepper de périodes. Vidé à la déconnexion (`reset()`).
+ *
+ * Ne connaît PAS la granularité elle-même ('jour'/'mois'/'année') ni comment calculer ses bornes
+ * (voir `core/utils/local-period.util.ts`) — ce service se contente de demander l'agrégat entre
+ * deux instants déjà résolus par l'appelant (`SessionRecapComponent`).
  *
  * N'a de sens que pour un compte connecté (voir `AuthService`) : appelé uniquement depuis un
  * contexte déjà su authentifié, jamais spontanément.
@@ -49,10 +66,34 @@ export class HistoryStatsService {
    * entre-temps) — un 401 est déjà traité globalement (retour en mode invité) par `ApiClientService`. */
   readonly failed = this._failed.asReadonly();
 
-  async load(since: Date, until: Date): Promise<void> {
+  /** Cache des périodes PASSÉES (voir doc de classe) — pas de limite de taille : le nombre de clés
+   * réellement visitées dans une session (granularité × pas de stepper effectivement parcourus)
+   * reste négligeable. */
+  private readonly cache = new Map<string, PeriodStats>();
+
+  /** Incrémenté à chaque appel — sert à ignorer une réponse réseau arrivée après une plus récente
+   * (navigation rapide dans le stepper de périodes) : sans ça, une réponse lente pourrait écraser
+   * après coup le résultat d'un clic plus récent déjà affiché. */
+  private requestSeq = 0;
+
+  /** `cacheKey`, quand fourni, identifie une période PASSÉE réutilisable (voir doc de classe) —
+   * omis pour la période en cours, toujours rechargée. */
+  async load(since: Date, until: Date, cacheKey?: string): Promise<void> {
+    const cached = cacheKey ? this.cache.get(cacheKey) : undefined;
+    if (cached) {
+      this._stats.set(cached);
+      this._failed.set(false);
+      this._loading.set(false);
+      return;
+    }
+
+    const requestId = ++this.requestSeq;
     this._loading.set(true);
     const query = `?since=${encodeURIComponent(since.toISOString())}&until=${encodeURIComponent(until.toISOString())}`;
     const result = await this.api.getJson<PeriodStats>(`/history/stats${query}`, { retries: 0 });
+    // Une requête plus récente a pris le relais entre-temps (navigation rapide) : cette réponse est
+    // périmée, ne surtout pas écraser ce qui est déjà affiché avec elle.
+    if (requestId !== this.requestSeq) return;
     this._loading.set(false);
 
     if (!result.ok) {
@@ -61,6 +102,7 @@ export class HistoryStatsService {
     }
     this._failed.set(false);
     this._stats.set(result.data);
+    if (cacheKey) this.cache.set(cacheKey, result.data);
   }
 
   /** Repart de zéro (déconnexion) — même principe que `HistoryArchiveService.reset`. */
@@ -68,5 +110,6 @@ export class HistoryStatsService {
     this._stats.set(null);
     this._loading.set(false);
     this._failed.set(false);
+    this.cache.clear();
   }
 }

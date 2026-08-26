@@ -128,6 +128,23 @@ export class I18nService {
     );
   }
 
+  /** Formate "mois année" (ex. "août 2026") — libellé du stepper de navigation par mois de la
+   * carte Récap (voir `local-period.util.ts` periodBounds, `SessionRecapComponent`). */
+  formatMonth(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], {
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(ms));
+  }
+
+  /** Formate l'année seule (ex. "2026") — pendant de `formatMonth` pour le stepper de navigation
+   * par année. */
+  formatYear(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { year: 'numeric' }).format(
+      new Date(ms),
+    );
+  }
+
   /** Même usage que `formatDate` (en-tête de regroupement par jour — combats/achats/échanges),
    * mais avec des termes relatifs pour les 3 derniers jours ("Aujourd'hui"/"Hier"/"Avant-hier"),
    * bien plus parlants qu'une date complète pour ce cas précis. Repli sur `formatDate` au-delà.
