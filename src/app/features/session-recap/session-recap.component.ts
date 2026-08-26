@@ -28,8 +28,9 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 
 /**
  * Carte du dashboard "Récap de session" — au même titre que Combats/Achats/Échanges/Chat (voir
- * DashboardLayoutService/DashboardBodySlotKey), plus une fenêtre flottante déplaçable. Ce
- * composant n'est monté dans le DOM QUE quand la carte n'est pas repliée (voir
+ * DashboardLayoutService/DashboardBodySlotKey), pas une fenêtre flottante déplaçable comme
+ * auparavant (voir CLAUDE.md). Ce composant n'est monté dans le DOM QUE quand la carte n'est pas
+ * repliée (voir
  * `dashboard.component.html`, même principe que les panneaux scindés d'`HistoryComponent`) — pas
  * besoin d'un service `isOpen`/`open`/`close` séparé comme auparavant (`SessionRecapService`,
  * supprimé), le cycle de vie Angular standard (`OnInit`/`OnDestroy`) suffit à piloter le ticker de
