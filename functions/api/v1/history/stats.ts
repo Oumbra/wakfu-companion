@@ -33,6 +33,21 @@ import type { Env } from '../../_types';
  * locale d'affichage de l'utilisateur, voir CLAUDE.md). Aucune migration requise : `fights.dungeonId`
  * existe déjà (lot 8, alimenté par `HistorySyncService` à l'ingestion).
  */
+/**
+ * Coerce vers un vrai number JS. Indispensable ici : `sql<number>` n'est qu'une annotation
+ * TypeScript côté Drizzle, elle ne caste rien à l'exécution — `sum()`/`count(*)` sur une colonne
+ * bigint/integer renvoient respectivement `numeric`/`bigint` côté Postgres, et le driver
+ * `@neondatabase/serverless` sérialise ces deux types en CHAÎNE (évite une perte de précision sur
+ * les entiers 64 bits, mais chaque champ ci-dessous reste largement sous 2^53). Sans ce passage,
+ * les valeurs voyagent en JSON comme des chaînes ("9", "1639"...) : `won + lost` côté client
+ * devient une concaténation ("9"+"0" → "90") plutôt qu'une addition, et `NumberFrPipe`
+ * (`value.toLocaleString('fr-FR')`) tombe sur `Object.prototype.toLocaleString` — qui ignore la
+ * locale et renvoie la chaîne brute non séparée par milliers. Voir session-recap.component.html.
+ */
+function num(value: unknown): number {
+  return typeof value === 'number' ? value : Number(value ?? 0);
+}
+
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
@@ -149,32 +164,32 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     since: since.toISOString(),
     until: until.toISOString(),
     combats: {
-      won: fightRow.won,
-      lost: fightRow.lost,
-      challengesPassed: fightRow.challengesPassed,
-      challengesFailed: fightRow.challengesFailed,
+      won: num(fightRow.won),
+      lost: num(fightRow.lost),
+      challengesPassed: num(fightRow.challengesPassed),
+      challengesFailed: num(fightRow.challengesFailed),
     },
     kamas: {
-      fromCombat: fightRow.kamasFromCombat,
-      fromHdvSales: purchaseRow.fromHdvSales,
-      spentOnPurchases: purchaseRow.spentOnPurchases,
-      tradesAcquired: tradeRow.tradesAcquired,
-      tradesGiven: tradeRow.tradesGiven,
-      tradeCount: tradeRow.tradeCount,
+      fromCombat: num(fightRow.kamasFromCombat),
+      fromHdvSales: num(purchaseRow.fromHdvSales),
+      spentOnPurchases: num(purchaseRow.spentOnPurchases),
+      tradesAcquired: num(tradeRow.tradesAcquired),
+      tradesGiven: num(tradeRow.tradesGiven),
+      tradeCount: num(tradeRow.tradeCount),
     },
-    xpByCharacter: xpRows.map((row) => ({ name: row.name, amount: row.amount })),
+    xpByCharacter: xpRows.map((row) => ({ name: row.name, amount: num(row.amount) })),
     loot: lootRows.map((row) => ({
       itemId: row.itemId,
       itemName: row.itemName,
-      quantity: row.quantity,
+      quantity: num(row.quantity),
     })),
     dungeons: dungeonRows.map((row) => ({
       dungeonId: row.dungeonId,
-      fights: row.fightsCount,
-      won: row.won,
-      lost: row.lost,
-      kamasGained: row.kamasGained,
-      xpGained: row.xpGained,
+      fights: num(row.fightsCount),
+      won: num(row.won),
+      lost: num(row.lost),
+      kamasGained: num(row.kamasGained),
+      xpGained: num(row.xpGained),
     })),
   });
 };

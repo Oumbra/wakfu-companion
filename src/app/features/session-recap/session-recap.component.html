@@ -156,7 +156,7 @@
         <div class="recap-section-header clickable" (click)="toggleCombats()">
           <img [src]="combatIcon" class="section-icon" alt="" />
           <span>{{ 'sessionRecap.combats' | t }}</span>
-          <span class="section-header-value">{{ stats.totalCombats() }}</span>
+          <span class="section-header-value">{{ stats.totalCombats() | numberFr }}</span>
           <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
         </div>
         @if (combatsExpanded()) {
@@ -329,7 +329,9 @@
           <div class="recap-section-header clickable" (click)="toggleCombats()">
             <img [src]="combatIcon" class="section-icon" alt="" />
             <span>{{ 'sessionRecap.combats' | t }}</span>
-            <span class="section-header-value">{{ period.combats.won + period.combats.lost }}</span>
+            <span class="section-header-value">{{
+              period.combats.won + period.combats.lost | numberFr
+            }}</span>
             <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
           </div>
           @if (combatsExpanded()) {
