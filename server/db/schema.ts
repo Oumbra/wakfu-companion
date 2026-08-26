@@ -514,6 +514,29 @@ export const fights = pgTable(
      * écrasé dans ce cas grâce à `ON CONFLICT DO NOTHING` sur cette table (événement immuable).
      */
     fightLogId: bigint('fight_log_id', { mode: 'number' }),
+    /**
+     * Donjon identifié pour ce combat (id Ankama, catalogue `dungeons`) — `null` pour un combat
+     * hors donjon (chasse libre, PvP...) ou dont le donjon n'est pas encore identifié (combat de
+     * salle synchronisé avant le combat de boss qui révèle le donjon, voir `dungeonRunKey`
+     * ci-dessous). Résolu côté client (`HistorySyncService`, même logique que l'affichage —
+     * `findDungeonForEnemies`/`groupDungeonRuns`, voir dungeon-run-grouping.util.ts), jamais
+     * recalculé côté serveur.
+     *
+     * Contrairement au reste de cette table (événement immuable, voir `fightLogId` ci-dessus),
+     * MODIFIABLE après insertion (`ON CONFLICT DO UPDATE`, voir functions/api/v1/history/fights.ts)
+     * : une salle envoyée avant le boss de son run est réenfilée par le client dès que celui-ci est
+     * identifié, pour recevoir sa valeur a posteriori.
+     */
+    dungeonId: integer('dungeon_id').references(() => dungeons.id),
+    /**
+     * Identifiant partagé par tous les combats d'un même run de donjon (salles + boss), pour
+     * permettre un `GROUP BY` direct côté statistiques sans avoir à rejouer le regroupement client
+     * (`groupDungeonRuns`) — dérivé côté client de la signature du combat de boss du run, même
+     * mécanisme de hachage que `clientKey` (voir `client-key.util.ts`). `null` en miroir de
+     * `dungeonId` (combat hors donjon multi-salles, ou pas encore rattaché). Même règle de mise à
+     * jour a posteriori que `dungeonId` ci-dessus.
+     */
+    dungeonRunKey: text('dungeon_run_key'),
   },
   (table) => [
     uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
@@ -521,6 +544,8 @@ export const fights = pgTable(
     index('fights_user_started_at_idx').on(table.userId, table.startedAt),
     // Recherche diagnostique par fightId de log (voir doc de la colonne) — pas unique.
     index('fights_fight_log_id_idx').on(table.fightLogId),
+    // Statistiques par run de donjon (voir doc de dungeonRunKey) : « tous les combats de ce run ».
+    index('fights_user_dungeon_run_key_idx').on(table.userId, table.dungeonRunKey),
   ],
 );
 
