@@ -79,6 +79,8 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         gameServer: fight.gameServer,
         dungeonId: fight.dungeonId,
         dungeonRunKey: fight.dungeonRunKey,
+        challengesPassed: fight.challengesPassed,
+        challengesFailed: fight.challengesFailed,
       })),
     )
     // Le cœur de l'idempotence : rejouer le même log ne réécrit rien. Seule
@@ -265,6 +267,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       gameServer: row.gameServer,
       dungeonId: row.dungeonId,
       dungeonRunKey: row.dungeonRunKey,
+      challengesPassed: row.challengesPassed,
+      challengesFailed: row.challengesFailed,
       participants: (participantsByFight.get(row.id) ?? []).map((participant) => ({
         side: participant.side,
         name: participant.name,

@@ -641,11 +641,23 @@ export class LogParser {
     }
     const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
     if (challengeSuccess) {
-      return { kind: 'challenge-result', time, name: challengeSuccess[1].trim(), success: true };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeSuccess[1].trim(),
+        success: true,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     const challengeFail = CHALLENGE_FAIL_RE.exec(content);
     if (challengeFail) {
-      return { kind: 'challenge-result', time, name: challengeFail[1].trim(), success: false };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeFail[1].trim(),
+        success: false,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     return null;
   }

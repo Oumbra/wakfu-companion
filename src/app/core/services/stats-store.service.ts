@@ -250,6 +250,12 @@ export interface FightRecord {
   turns: number;
   durationMs: number;
   xp: XpRow[];
+  /** Nombre de challenges réussis/échoués pendant ce combat (voir Fight.challengesPassed/Failed) —
+   * base des statistiques long terme (fights.challengesPassed/Failed côté serveur, voir
+   * HistorySyncService.recordFight), pas seulement les compteurs de session déjà affichés
+   * (StatsStoreService.challengesPassed/Failed, indépendants de ce champ). */
+  challengesPassed: number;
+  challengesFailed: number;
 }
 
 /** État de travail d'un combat en cours, indexé par fightId — voir Fight (core/models/fight.model.ts). Isoler cet état par combat (plutôt qu'un unique état global) permet à plusieurs combats concurrents (multi-compte) de ne jamais se corrompre l'un l'autre. */
@@ -457,6 +463,14 @@ export class StatsStoreService {
    */
   private readonly pendingFightLoot: { item: string; quantity: number }[] = [];
   private pendingFightKamas = 0;
+  /** Résultats de challenge en attente d'attribution au bon fightId — même mécanisme et même
+   * raison que pendingFightLoot/pendingFightKamas ci-dessus (la ligne "Le challenge ... a
+   * échoué/réussi" ne référence ni fightId ni personnage, seule sa position TEMPORELLE, toujours
+   * immédiatement avant la fin propre du combat concerné, permet de l'attribuer correctement en
+   * multi-compte — vérifié sur fight_multi-account_twice-fight-simultaneously.log, deux challenges
+   * distincts avant la fin du même combat pendant qu'un second combat concurrent restait ouvert). */
+  private pendingFightChallengesPassed = 0;
+  private pendingFightChallengesFailed = 0;
   /** Vrai entre une ligne 'market-occupation' active=true et son pendant active=false (session
    * marchand/HDV ouverte) — voir isPurchaseLoot dans apply(). Un achat groupé (plusieurs objets
    * achetés à la suite pendant la même session) ne déduit pas systématiquement les kamas juste
@@ -807,6 +821,8 @@ export class StatsStoreService {
     this.pendingHdvKamaGain = null;
     this.pendingFightLoot.length = 0;
     this.pendingFightKamas = 0;
+    this.pendingFightChallengesPassed = 0;
+    this.pendingFightChallengesFailed = 0;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
     this.logDateAnchor = null;
@@ -941,6 +957,12 @@ export class StatsStoreService {
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
         else this.challengesFailed.update((v) => v + 1);
+        // Voir pendingFightChallengesPassed/Failed : jamais attribué directement à entry.fightId,
+        // mais mis en attente jusqu'au tout prochain combat-end (même principe que pendingFightKamas).
+        if (entry.fightId !== null) {
+          if (entry.success) this.pendingFightChallengesPassed++;
+          else this.pendingFightChallengesFailed++;
+        }
         break;
       case 'chat':
         this.chatBuffer.push(entry);
@@ -1256,9 +1278,13 @@ export class StatsStoreService {
         this.addLootToFight(working, pending.item, pending.quantity);
       }
       working.fight.kamas += this.pendingFightKamas;
+      working.fight.challengesPassed += this.pendingFightChallengesPassed;
+      working.fight.challengesFailed += this.pendingFightChallengesFailed;
     }
     this.pendingFightLoot.length = 0;
     this.pendingFightKamas = 0;
+    this.pendingFightChallengesPassed = 0;
+    this.pendingFightChallengesFailed = 0;
 
     if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien d'autre à clôturer.
 
@@ -1337,6 +1363,8 @@ export class StatsStoreService {
       xp: working.fight.exp
         .map((e) => ({ name: e.name, amount: e.quantity }))
         .sort((a, b) => b.amount - a.amount),
+      challengesPassed: working.fight.challengesPassed,
+      challengesFailed: working.fight.challengesFailed,
     };
     this.fightHistoryList.unshift(record);
     // Envoi au compte AVANT le plafonnement en mémoire : `MAX_FIGHT_HISTORY`

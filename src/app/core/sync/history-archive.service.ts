@@ -48,6 +48,8 @@ interface FightPage {
     xpGained: number | null;
     kamasGained: number | null;
     gameServer: string | null;
+    challengesPassed: number | null;
+    challengesFailed: number | null;
     participants: {
       side: 'ally' | 'enemy';
       name: string;
@@ -604,6 +606,8 @@ function toFightRecord(
     turns: entry.turns ?? 0,
     durationMs,
     xp: buildXpRows(entry),
+    challengesPassed: entry.challengesPassed ?? 0,
+    challengesFailed: entry.challengesFailed ?? 0,
   };
   // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
   // n'était pas encore chargée au moment de la correction d'origine, voir StatsStoreService.

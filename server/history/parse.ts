@@ -87,6 +87,10 @@ export interface FightInput {
    * ensemble ou absents ensemble, voir `parseDungeonAssignment`. */
   dungeonId: number | null;
   dungeonRunKey: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat — voir `fights.challengesPassed/Failed`
+   * (server/db/schema.ts), `0` par défaut (jamais `null`, colonnes `NOT NULL DEFAULT 0`). */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantInput[];
   loot: FightLootInput[];
 }
@@ -390,6 +394,10 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!xpGained.ok) return xpGained;
       const kamasGained = parseCount(entry['kamasGained'], 'kamasGained', true);
       if (!kamasGained.ok) return kamasGained;
+      const challengesPassed = parseCount(entry['challengesPassed'] ?? 0, 'challengesPassed');
+      if (!challengesPassed.ok) return challengesPassed;
+      const challengesFailed = parseCount(entry['challengesFailed'] ?? 0, 'challengesFailed');
+      if (!challengesFailed.ok) return challengesFailed;
       const won = parseFlag(entry['won'], 'won');
       if (!won.ok) return won;
       const gameServer = parseGameServer(entry['gameServer']);
@@ -447,6 +455,8 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
           gameServer: gameServer.value,
           dungeonId: dungeonAssignment.value.dungeonId,
           dungeonRunKey: dungeonAssignment.value.dungeonRunKey,
+          challengesPassed: challengesPassed.value ?? 0,
+          challengesFailed: challengesFailed.value ?? 0,
           participants,
           loot,
         },
