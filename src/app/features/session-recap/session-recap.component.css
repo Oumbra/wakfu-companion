@@ -9,6 +9,17 @@
   gap: 14px;
 }
 
+/* Switch Session/Jour/Mois/Année (voir CLAUDE.md) — réutilise `.icon-switch`/`.icon-switch-4`
+   (styles.css), pleine largeur (contrairement au switch de tri du butin, plus loin, qui reste
+   compact) : 4 libellés traduits (pas des abréviations à 2 caractères) ont besoin de la place. */
+.recap-period-switch {
+  width: 100%;
+}
+.recap-period-switch .icon-switch-option {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .duration-box {
   display: flex;
   align-items: center;
