@@ -8,7 +8,7 @@ import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { GameServerService } from './game-server.service';
 import { LogFileAccessService } from './log-file-access.service';
-import { LogParser } from './log-parser';
+import { LogParser, peekLineTime } from './log-parser';
 import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
@@ -745,6 +745,12 @@ export class StatsStoreService {
       // dupliqués au lieu d'être simplement reconstruits à l'identique.
       this.resetSessionState();
     }
+    // Sans ancrage déjà connu (tout début de lecture, avant la toute première ligne d'ancrage
+    // rencontrée), pré-balayer ce lot pour retrouver un ancrage situé plus loin qu'en tête et dater
+    // correctement les lignes qui le PRÉCÈDENT — voir primeLogDateAnchorFromBatch.
+    if (this.logDateAnchor === null) {
+      this.primeLogDateAnchorFromBatch(lines);
+    }
     for (const line of lines) {
       const entry = this.parser.parseLine(line);
       if (entry) this.apply(entry);
@@ -1336,7 +1342,7 @@ export class StatsStoreService {
     // Envoi au compte AVANT le plafonnement en mémoire : `MAX_FIGHT_HISTORY`
     // borne ce que l'appareil garde affiché, pas ce que le compte archive —
     // c'est tout l'objet de ce lot (« historique illimité »).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
 
     this.activeFights.delete(fightId);
@@ -1347,13 +1353,72 @@ export class StatsStoreService {
   }
 
   /**
+   * Pré-balaie EN LECTURE SEULE (sans faire progresser l'état du parser) le lot de lignes qui va être
+   * traité, pour trouver la première ligne d'ancrage de date calendaire — pas seulement en tête du
+   * lot. Une (re)connexion relit tout le fichier depuis le début (voir CLAUDE.md) : si ce fichier
+   * contient déjà des combats d'une session de jeu ANTÉRIEURE au lancement client qui a produit la
+   * ligne d'ancrage (banner absent en tête de fichier, présent plus loin — cas vécu : un fichier
+   * concaténant plusieurs sessions, dont un relancement du client en cours de journée), le forward-only
+   * d'origine (voir buildFullTimestampMs) faisait retomber toutes les lignes PRÉCÉDANT cet ancrage sur
+   * la date système du jour de LECTURE — bug réel signalé par l'utilisateur (2026-08-26) : des combats
+   * joués le 2026-08-25, avant un relancement du client survenu plus tard le même jour, affichés à la
+   * date du jour de lecture au lieu de leur vraie date.
+   *
+   * Reconstitue la date de la toute première ligne du lot en "remontant" depuis l'ancrage trouvé plus
+   * loin, via le même mécanisme de détection de passage de minuit (recul de l'heure du jour, voir
+   * DAY_ROLLOVER_THRESHOLD_MS) que buildFullTimestampMs, mais exécuté ici sur les horodatages bruts de
+   * TOUTES les lignes du lot (pas seulement celles qui produisent un LogEntry) : ne modifie que
+   * `logDateAnchor`/`lastTimestampTimeOfDayMs`/`logDateDayOffset`, sur lesquels la boucle normale qui
+   * suit continue ensuite sans discontinuité (et re-posera de toute façon `logDateAnchor` à la valeur
+   * littérale de l'ancrage en l'atteignant, voir apply() cas 'log-date-anchor'). Ne fait rien si aucun
+   * ancrage n'est trouvé dans ce lot : le traitement normal retombe alors sur l'ancien repli (date
+   * système) jusqu'à ce qu'un ancrage soit rencontré, comme avant ce fix.
+   */
+  private primeLogDateAnchorFromBatch(lines: string[]): void {
+    let firstTimeOfDayMs: number | null = null;
+    let lastTimeOfDayMs: number | null = null;
+    let rolloversBeforeAnchor = 0;
+
+    for (const line of lines) {
+      const peeked = peekLineTime(line);
+      if (!peeked) continue;
+      const timeOfDayMs = this.timeToMs(peeked.time);
+      if (firstTimeOfDayMs === null) firstTimeOfDayMs = timeOfDayMs;
+      if (lastTimeOfDayMs !== null && timeOfDayMs < lastTimeOfDayMs - DAY_ROLLOVER_THRESHOLD_MS) {
+        rolloversBeforeAnchor++;
+      }
+      lastTimeOfDayMs = timeOfDayMs;
+
+      if (peeked.buildDate) {
+        // `Date` normalise nativement un `day` débordant en-dessous de 1 (ex. jour 0 => dernier jour
+        // du mois précédent), symétrique du repli déjà utilisé plus bas dans buildFullTimestampMs.
+        const anchorDate = new Date(
+          peeked.buildDate.year,
+          peeked.buildDate.month - 1,
+          peeked.buildDate.day - rolloversBeforeAnchor,
+        );
+        this.logDateAnchor = {
+          year: anchorDate.getFullYear(),
+          month: anchorDate.getMonth() + 1,
+          day: anchorDate.getDate(),
+        };
+        this.lastTimestampTimeOfDayMs = firstTimeOfDayMs;
+        this.logDateDayOffset = 0;
+        return;
+      }
+    }
+  }
+
+  /**
    * Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) sur chaque ligne : la date calendaire réelle
    * vient de `logDateAnchor` (voir LogDateAnchorEntry, ligne technique émise une fois au tout début
    * du fichier) — jamais de la date système de la machine qui LIT le fichier (bug réel : un combat
    * consulté un autre jour que celui où il a eu lieu, ou un fichier plus ancien rouvert plus tard,
    * affichait systématiquement la date du jour de lecture au lieu de la date réelle du combat).
    * Repli sur l'ancien comportement (date système) tant que cette ligne d'ancrage n'a pas encore été
-   * rencontrée — ne devrait arriver qu'en tout début de lecture, avant la toute première ligne utile.
+   * rencontrée (voir primeLogDateAnchorFromBatch pour le cas où un ancrage existe plus loin dans le
+   * lot en cours) — ne devrait sinon arriver qu'en tout début de lecture, avant la toute première
+   * ligne utile.
    */
   private buildFullTimestampMs(time: string): number {
     const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
@@ -1674,7 +1739,8 @@ export class StatsStoreService {
    * n'est donc pas renvoyé.
    */
   private replayHistoryToSync(): void {
-    for (const record of this.fightHistoryList) this.historySync.recordFight(record);
+    for (const record of this.fightHistoryList)
+      this.historySync.recordFight(record, this.fightHistoryList);
     for (const record of this.purchaseHistoryList) this.historySync.recordPurchase(record);
     for (const record of this.tradeHistoryList) this.historySync.recordTrade(record);
   }
@@ -1901,7 +1967,7 @@ export class StatsStoreService {
     // seul le détail du combat est rafraîchi côté compte (voir
     // `fight_participants`, écrit en ON CONFLICT DO UPDATE).
     const corrected = this.fightHistoryList.find((record) => record.id === fightId);
-    if (corrected) this.historySync.recordFight(corrected);
+    if (corrected) this.historySync.recordFight(corrected, this.fightHistoryList);
   }
 
   /** Rejoue tout le journal des réattributions persistées (voir reassignSpell) — appelé après chaque
@@ -2189,7 +2255,7 @@ export class StatsStoreService {
     // seule(s) la/les ligne(s) `fight_loot` visée(s) sont mises à jour côté serveur
     // (ON CONFLICT DO UPDATE) — la ligne scindée éventuelle part avec le même envoi (tout le combat
     // est renvoyé d'un bloc).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
   }
 
   private applyPurchaseReassign(
