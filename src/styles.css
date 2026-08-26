@@ -434,6 +434,14 @@ button.badge-close-btn {
 .icon-switch-highlight.is-far-right {
   transform: translateX(200%);
 }
+/* Variante à 4 options (switch Session/Jour/Mois/Année, voir SessionRecapComponent) — même
+   mécanique, un 4ᵉ arrêt en plus de .is-right/.is-far-right ci-dessus. */
+.icon-switch-4 .icon-switch-highlight {
+  width: calc(100% / 4);
+}
+.icon-switch-highlight.is-farthest-right {
+  transform: translateX(300%);
+}
 
 /* Déclaré après .icon-btn : au repos, le bouton de réinitialisation (icon-btn
    + reset-btn) est identique au bouton "changer de fichier" (fond transparent,

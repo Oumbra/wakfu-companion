@@ -29,6 +29,23 @@ import {
 } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { AuthService } from '../../core/auth/auth.service';
+import { HistoryStatsService, PeriodStats } from '../../core/sync/history-stats.service';
+import { resolveItemName } from '../../core/sync/history-archive.service';
+import { localDayStart, localMonthStart, localYearStart } from '../../core/utils/local-period.util';
+
+/** Granularité du switch Session/Jour/Mois/Année — voir `setGranularity`. `'session'` (défaut)
+ * reste piloté par `StatsStoreService` (contenu du fichier connecté, inchangé) ; les trois autres
+ * agrègent côté compte via `HistoryStatsService` (voir `functions/api/v1/history/stats.ts`), donc
+ * uniquement pertinentes pour un utilisateur connecté (voir template, `auth.status()`). */
+type Granularity = 'session' | 'day' | 'month' | 'year';
+/** Marge ajoutée à "maintenant" pour la borne `until` envoyée au serveur — la période demandée est
+ * toujours EN COURS (pas de navigation vers une période passée dans cette itération), `until` doit
+ * donc rester strictement postérieur à `since` même dans le cas limite d'un changement de switch
+ * survenant à la toute première milliseconde du jour/mois/année (voir parseStatsQuery côté
+ * serveur, qui rejette `until <= since`) et couvrir tout ce qui a pu être ingéré dans la minute qui
+ * vient de s'écouler. */
+const PERIOD_UNTIL_BUFFER_MS = 60_000;
 
 /**
  * Carte du dashboard "Récap de session" — au même titre que Combats/Achats/Échanges/Chat (voir
@@ -68,6 +85,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly layout = inject(DashboardLayoutService);
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
+  protected readonly auth = inject(AuthService);
+  protected readonly historyStats = inject(HistoryStatsService);
+
+  protected readonly granularity = signal<Granularity>('session');
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
@@ -130,6 +151,51 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
 
   protected lootSortTooltip(mode: LootSort): string {
     return computeLootSortTooltip(this.i18n, this.lootSort(), this.lootSortReverse(), mode);
+  }
+
+  /** Change de granularité et, hors 'session', déclenche l'agrégation serveur de la période EN
+   * COURS (pas de navigation vers une période passée dans cette itération, voir CLAUDE.md). Pas de
+   * cache : reproduit le rechargement à chaque changement de switch (décision explicite, voir
+   * HistoryStatsService) — resélectionner une granularité déjà active recharge donc aussi, ce qui
+   * reste cohérent (l'utilisateur peut vouloir rafraîchir un agrégat resté ouvert un moment). */
+  protected setGranularity(next: Granularity): void {
+    this.granularity.set(next);
+    if (next === 'session') return;
+    const now = Date.now();
+    const since =
+      next === 'day'
+        ? localDayStart(now)
+        : next === 'month'
+          ? localMonthStart(now)
+          : localYearStart(now);
+    void this.historyStats.load(new Date(since), new Date(now + PERIOD_UNTIL_BUFFER_MS));
+  }
+
+  /** Butin de la période agrégée (voir HistoryStatsService), converti au format `LootRow` attendu
+   * par `sortLootRows`/`LootListComponent` — même résolution de nom que l'archive de compte
+   * (`resolveItemName`, voir history-archive.service.ts) : `itemId`/`itemName` sont mutuellement
+   * exclusifs côté serveur, un objet résolu n'a pas de nom transmis (résolu ici via le catalogue). */
+  protected sortedPeriodLoot(): LootRow[] {
+    const period = this.historyStats.stats();
+    if (!period) return [];
+    const rows: LootRow[] = period.loot.map((row) => ({
+      name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
+      catalogId: row.itemId,
+      quantity: row.quantity,
+    }));
+    return sortLootRows(this.catalog, rows, this.lootSort(), this.lootSortReverse());
+  }
+
+  /** Kamas gagnés sur la période (combat + ventes HDV + reçu en échange) — voir HistoryStatsService.
+   * PeriodStats.kamas, ventilation détaillée absente de la vue Session (volontairement plus simple,
+   * inchangée — voir CLAUDE.md). */
+  protected periodKamasEarned(period: PeriodStats): number {
+    return period.kamas.fromCombat + period.kamas.fromHdvSales + period.kamas.tradesAcquired;
+  }
+
+  /** Kamas perdus sur la période (achats + donné en échange). */
+  protected periodKamasLost(period: PeriodStats): number {
+    return period.kamas.spentOnPurchases + period.kamas.tradesGiven;
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {
