@@ -166,6 +166,50 @@ légitimement atteindre ~50s sans aucune ligne) ; `SESSION_LIVE_TICK_GRACE_MS` d
 l'AFFICHAGE peut optimistement continuer à tourner AVANT qu'une telle ligne n'arrive, sans savoir
 encore si elle viendra (doit rester court pour ne pas mentir visuellement).
 
+## Switch Session/Jour/Mois/Année (carte Récap) : agrégation SQL serveur, bornes calculées côté client
+
+Ajouté le 2026-08-26 : la carte Récap propose, pour un compte connecté uniquement (aucune donnée
+persistante au-delà de la session de fichier courante en mode invité — voir `AuthService`), un
+switch qui agrège XP par personnage, kamas détaillés, combats/défis et butin sur une période
+calendaire (jour/mois/année **civils**, jamais glissants).
+
+- **`GET /api/v1/history/stats?since=&until=`** (`functions/api/v1/history/stats.ts`) — 5 `SELECT`
+  indépendants en parallèle sur `fights`/`fightParticipants`/`fightLoot`/`purchases`/`trades`
+  (`GROUP BY`/`SUM`/`count(*) filter (where ...)`), filtrés par `userId` + la plage. Aucune écriture,
+  aucune transaction requise (driver `neon-http`, déjà sans transaction interactive).
+- **`since`/`until` sont calculés côté CLIENT** (`core/utils/local-period.util.ts` —
+  `localDayStart`/`localMonthStart`/`localYearStart`, calendrier LOCAL du navigateur) et envoyés en
+  instants ISO explicites — jamais un paramètre `granularity` interprété côté serveur, qui ne connaît
+  pas le fuseau horaire de l'utilisateur. Toujours la période EN COURS dans cette itération (pas de
+  navigation vers une période passée).
+- **Kamas : ventilation détaillée**, volontairement plus riche que la vue Session (`kamasEarned`/
+  `kamasLost` simples, inchangée) : combat (`fights.kamas_gained`), ventes HDV vs achats classiques
+  (même table `purchases`, distingués par le sentinel `HDV_KAMAS_SALE_ITEM` =
+  `'__hdv_kamas_sale__'` — dupliqué côté serveur avec renvoi croisé en commentaire,
+  `server/history/stats-query.ts`, `server/` ne dépend jamais de `src/`, même principe que
+  `server/settings/keys.ts`), et échanges (`kamasAcquired`/`kamasGiven` + nombre d'échanges).
+- Butin de la période : `{itemId, itemName, quantity}` par ligne (mutuellement exclusifs, comme
+  partout dans l'historique) — résolu en nom affichable via `resolveItemName` (exportée de
+  `history-archive.service.ts`, déjà utilisée pour l'archive de combats), pas recalculé côté
+  composant.
+- Pas de cache multi-période côté client (`HistoryStatsService` ne garde qu'un seul résultat en
+  mémoire, rechargé à chaque changement de switch) : décision délibérée, la requête serveur étant
+  déjà agrégée et rapide — une mise en cache multi-clé aurait été une optimisation prématurée.
+- **Hors scope de cette itération, à reprendre plus tard** : regroupement par donjon/type de combat
+  au sein d'une période (mentionné par l'utilisateur comme suite logique), navigation vers une
+  période passée, mise en cache multi-période.
+- Comme pour tous les lots serveur précédents (voir `server/README.md`) : seul un déploiement réel
+  avec la vraie base Neon permet de valider les requêtes SQL contre de vraies données — ce sandbox ne
+  peut atteindre ni Neon ni `*.pages.dev`. Vérifié ici en navigateur (Chromium/playwright-core,
+  `ng serve`) avec `/api/v1/history/stats` simulé par interception de `fetch` (les Pages Functions
+  n'existent pas sous `ng serve`, même méthode déjà établie pour les lots précédents) : switch masqué
+  en invité, apparition une fois authentifié simulé, bornes `since`/`until` correctes pour les 3
+  granularités (vérifiées avec le changement d'heure d'été/hiver, `localYearStart` au 1er janvier
+  donnant `+1` UTC en hiver contre `+2` en été pour les autres cas testés — cohérent, JS `Date`
+  applique le bon décalage pour CHAQUE date, pas un décalage fixe), positions du fond glissant à 4
+  arrêts, ventilation kamas/combats/défis/butin (résolution de nom par catalogue incluse) affichée
+  correctement, état de chargement et d'erreur réseau.
+
 ## Invocations : traitées comme des sorts de leur invocateur, jamais comme des combattants à part
 
 Deux bugs distincts, découverts et corrigés ensemble le 2026-08-24 sur un vrai `wakfu.log` fourni par
