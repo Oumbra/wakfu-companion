@@ -16,6 +16,35 @@ navigate { url: "http://localhost:4200" }
 
 Si le port 4200 est déjà occupé par un `node.exe` non suivi par l'outil (arrive après une session longue), vérifier la commande du process (`Get-CimInstance Win32_Process -Filter "ProcessId=X"`) puis le tuer si c'est bien un `ng serve` du même projet, avant de relancer `preview_start`.
 
+## ⚠️ Vérifier le navigateur RÉELLEMENT piloté avant toute conclusion
+
+L'app dépend de l'API File System Access (voir plus bas), absente de Firefox — tout ce qui touche
+réellement `LogFileAccessService`/le sélecteur de fichier n'a de sens QUE sous Chrome/Chromium.
+Piège vécu deux fois (2026-08-25 et 2026-08-26, la seconde fois découvert par l'utilisateur via des
+captures d'écran montrant une fenêtre Firefox Nightly après qu'une session a affirmé à tort
+« Chrome confirmé ») : **`claude mcp get playwright` ne prouve RIEN sur le navigateur réellement en
+cours d'exécution.** Cette commande lit la config déclarée, pas le processus MCP déjà lancé pour
+CETTE session — le choix de navigateur est figé au démarrage du processus et ne se recharge jamais
+à chaud (`claude mcp remove`/`add` avec un autre `--browser` ne prend effet qu'à la **prochaine**
+session), donc `Args: ... --browser chrome` peut s'afficher pendant qu'un Firefox tourne réellement
+depuis le début.
+
+**Seule vérification fiable, à faire systématiquement juste après `navigate`, avant tout test FSA :**
+```js
+navigator.userAgent // doit contenir "Chrome", jamais "Firefox"/"Gecko"
+```
+Si ça renvoie Firefox alors que Chrome est nécessaire MAINTENANT (pas seulement à la prochaine
+session) : ne pas insister via l'outil MCP, lancer un vrai Chrome indépendant avec `playwright-core`
+(déjà présent après un premier `npm install playwright-core` dans le répertoire scratchpad) :
+```js
+const { chromium } = require('playwright-core');
+const browser = await chromium.launch({
+  executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  headless: false,
+});
+```
+Voir CLAUDE.md pour le détail complet de ce gotcha (section Chrome/Chromium).
+
 ## Simuler une connexion au fichier de log
 
 Le sélecteur classique (`<input type="file">`) a été supprimé : l'app n'utilise plus que l'API File System Access (bouton/clic sur la zone de dépôt = `showOpenFilePicker()`, bloqué sous `%AppData%\Roaming` ; glisser-déposer = `getAsFileSystemHandle()`, non bloqué — voir CLAUDE.md). Aucune des deux ne s'injecte facilement depuis la console (un vrai `FileSystemFileHandle` n'est pas synthétisable en JS).
