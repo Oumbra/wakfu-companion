@@ -472,7 +472,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Retrouvez ce pas-à-pas à tout moment via le bouton d'aide dans l'en-tête. Bon jeu !",
 
     'footer.copyright':
-      "WAKFU MMORPG : © 2012-2025 Ankama Games. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays.\nLe site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama.",
+      "WAKFU MMORPG : © 2012-2026 Ankama Games. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays.\nLe site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama.",
     'footer.notice': 'Mentions légales',
     'footer.privacy': 'Politique de confidentialité',
     'footer.terms': "Conditions d'utilisation",
@@ -1048,7 +1048,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Find this walkthrough again anytime from the help button in the header. Have fun!',
 
     'footer.copyright':
-      'WAKFU MMORPG: © 2012-2025 Ankama Games. All rights reserved. WAKFU and ANKAMA are trademarks or registered trademarks of Ankama in France and/or other countries.\nWAKFU-COMPANION is an unofficial site with no affiliation to Ankama.',
+      'WAKFU MMORPG: © 2012-2026 Ankama Games. All rights reserved. WAKFU and ANKAMA are trademarks or registered trademarks of Ankama in France and/or other countries.\nWAKFU-COMPANION is an unofficial site with no affiliation to Ankama.',
     'footer.notice': 'Legal notice',
     'footer.privacy': 'Privacy policy',
     'footer.terms': 'Terms of use',
@@ -1623,7 +1623,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Vuelve a encontrar este tutorial en cualquier momento desde el botón de ayuda de la cabecera. ¡Que te diviertas!',
 
     'footer.copyright':
-      'WAKFU MMORPG: © 2012-2025 Ankama Games. Todos los derechos reservados. WAKFU y ANKAMA son marcas o marcas registradas de Ankama en Francia y/o en otros países.\nEl sitio WAKFU-COMPANION es un sitio no oficial sin ningún vínculo con Ankama.',
+      'WAKFU MMORPG: © 2012-2026 Ankama Games. Todos los derechos reservados. WAKFU y ANKAMA son marcas o marcas registradas de Ankama en Francia y/o en otros países.\nEl sitio WAKFU-COMPANION es un sitio no oficial sin ningún vínculo con Ankama.',
     'footer.notice': 'Aviso legal',
     'footer.privacy': 'Política de privacidad',
     'footer.terms': 'Condiciones de uso',
@@ -2200,7 +2200,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Reencontre este tutorial a qualquer momento através do botão de ajuda no cabeçalho. Bom jogo!',
 
     'footer.copyright':
-      'WAKFU MMORPG: © 2012-2025 Ankama Games. Todos os direitos reservados. WAKFU e ANKAMA são marcas ou marcas registradas da Ankama na França e/ou em outros países.\nO site WAKFU-COMPANION é um site não oficial sem qualquer vínculo com a Ankama.',
+      'WAKFU MMORPG: © 2012-2026 Ankama Games. Todos os direitos reservados. WAKFU e ANKAMA são marcas ou marcas registradas da Ankama na França e/ou em outros países.\nO site WAKFU-COMPANION é um site não oficial sem qualquer vínculo com a Ankama.',
     'footer.notice': 'Aviso legal',
     'footer.privacy': 'Política de privacidade',
     'footer.terms': 'Termos de utilização',
