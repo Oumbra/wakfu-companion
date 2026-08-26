@@ -1,4 +1,4 @@
-import { Component, effect, ElementRef, inject, OnDestroy, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { LootRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -7,7 +7,8 @@ import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.compon
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
-import { SessionRecapService } from '../../core/services/session-recap.service';
+import { IconComponent } from '../../shared/icon/icon.component';
+import { DashboardLayoutService } from '../../core/services/dashboard-layout.service';
 import {
   HEADER_ICON_CHALLENGES_DATA_URI,
   HEADER_ICON_COMBAT_DATA_URI,
@@ -15,7 +16,6 @@ import {
   HEADER_ICON_LOOT_DATA_URI,
   HEADER_ICON_XP_DATA_URI,
 } from '../../core/data/header-icons.data';
-import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import {
   LootSort,
@@ -25,16 +25,15 @@ import {
 } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
-import { EscapeCloseDirective } from '../../shared/escape-close.directive';
 
 /**
- * Fenêtre flottante "Session Recap" : masquée par défaut, déplaçable par son
- * en-tête (comme `makeDraggable` sur le site de référence — pas besoin
- * d'Angular CDK pour un simple glisser). Overlay de fond opaque (comme les
- * autres modales, voir `.recap-backdrop`) fermable au clic extérieur ou à
- * Échap (`appEscapeClose`) — le drag reste possible malgré ce backdrop
- * puisqu'il se déclenche sur l'en-tête du panneau, au-dessus dans l'ordre
- * d'empilement (voir z-index dans session-recap.component.css).
+ * Carte du dashboard "Récap de session" — au même titre que Combats/Achats/Échanges/Chat (voir
+ * DashboardLayoutService/DashboardBodySlotKey), plus une fenêtre flottante déplaçable. Ce
+ * composant n'est monté dans le DOM QUE quand la carte n'est pas repliée (voir
+ * `dashboard.component.html`, même principe que les panneaux scindés d'`HistoryComponent`) — pas
+ * besoin d'un service `isOpen`/`open`/`close` séparé comme auparavant (`SessionRecapService`,
+ * supprimé), le cycle de vie Angular standard (`OnInit`/`OnDestroy`) suffit à piloter le ticker de
+ * durée.
  */
 @Component({
   selector: 'app-session-recap',
@@ -44,13 +43,12 @@ import { EscapeCloseDirective } from '../../shared/escape-close.directive';
     EntityIconComponent,
     LootListComponent,
     TooltipDirective,
-    EscapeCloseDirective,
+    IconComponent,
   ],
   templateUrl: './session-recap.component.html',
   styleUrl: './session-recap.component.css',
 })
-export class SessionRecapComponent implements OnDestroy {
-  protected readonly headerIcon = SESSION_RECAP_ICON_DATA_URI;
+export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly xpIcon = HEADER_ICON_XP_DATA_URI;
   protected readonly kamasIcon = HEADER_ICON_KAMAS_DATA_URI;
   protected readonly combatIcon = HEADER_ICON_COMBAT_DATA_URI;
@@ -62,14 +60,13 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly stats = inject(StatsStoreService);
   private readonly catalog = inject(CatalogService);
   protected readonly i18n = inject(I18nService);
-  protected readonly recapService = inject(SessionRecapService);
+  protected readonly layout = inject(DashboardLayoutService);
   private readonly classifier = inject(EntityClassifierService);
   private readonly classPickerService = inject(ClassPickerService);
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
   protected readonly duration = signal('00:00:00');
-  protected readonly position = signal<{ left: number; top: number } | null>(null);
   protected readonly kamasExpanded = signal(false);
   /** Combat et expérience ouverts par défaut (le butin, imbriqué sous "Combats" ci-dessous, en
    * bénéficie du même coup) — seul Kamas reste replié par défaut. */
@@ -81,30 +78,14 @@ export class SessionRecapComponent implements OnDestroy {
   protected readonly lootSortReverse = signal(false);
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
-  private dragStartMouse = { x: 0, y: 0 };
-  private dragStartPos = { left: 0, top: 0 };
-  private dragging = false;
 
-  constructor() {
-    // Réagit à l'état piloté par le service (ouvert depuis plusieurs headers
-    // distincts — header principal et AppHeaderComponent des pages
-    // secondaires — voir SessionRecapService) plutôt qu'un open()/close()
-    // local invoqué via référence de template.
-    effect(() => {
-      if (this.recapService.isOpen()) {
-        this.updateDuration();
-        this.tickInterval ??= setInterval(() => this.updateDuration(), 1000);
-      } else {
-        // Sinon une position glissée en desktop (coordonnées pixel absolues)
-        // reste appliquée telle quelle après un passage en mode mobile — le
-        // panneau peut alors se retrouver hors écran/invisible à la réouverture.
-        this.position.set(null);
-        if (this.tickInterval !== null) {
-          clearInterval(this.tickInterval);
-          this.tickInterval = null;
-        }
-      }
-    });
+  ngOnInit(): void {
+    this.updateDuration();
+    this.tickInterval = setInterval(() => this.updateDuration(), 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.tickInterval !== null) clearInterval(this.tickInterval);
   }
 
   toggleKamas(): void {
@@ -151,36 +132,6 @@ export class SessionRecapComponent implements OnDestroy {
     this.classPickerService.open(name, event.clientX, event.clientY, (className, gender) => {
       this.classifier.setManualClass(name, className, gender);
     });
-  }
-
-  ngOnDestroy(): void {
-    if (this.tickInterval !== null) clearInterval(this.tickInterval);
-  }
-
-  protected onHeaderMouseDown(event: MouseEvent, panel: HTMLElement): void {
-    event.preventDefault();
-    const rect = panel.getBoundingClientRect();
-    this.position.set({ left: rect.left, top: rect.top });
-    this.dragStartPos = { left: rect.left, top: rect.top };
-    this.dragStartMouse = { x: event.clientX, y: event.clientY };
-    this.dragging = true;
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      if (!this.dragging) return;
-      const deltaX = moveEvent.clientX - this.dragStartMouse.x;
-      const deltaY = moveEvent.clientY - this.dragStartMouse.y;
-      this.position.set({
-        left: this.dragStartPos.left + deltaX,
-        top: this.dragStartPos.top + deltaY,
-      });
-    };
-    const onMouseUp = () => {
-      this.dragging = false;
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
   }
 
   private updateDuration(): void {

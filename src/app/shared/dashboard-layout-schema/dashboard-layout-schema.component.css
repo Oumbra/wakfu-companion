@@ -10,6 +10,7 @@
   --lp-sw-trades: #e0713f;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
+  --lp-sw-recap: #c9973f;
 
   display: flex;
   flex-direction: column;
@@ -28,6 +29,7 @@
   --lp-sw-trades: #c05423;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
+  --lp-sw-recap: #a8791f;
 }
 
 .dls-top {
@@ -284,4 +286,7 @@ button.dls-arrow-down {
 }
 .sw-chat {
   background: var(--lp-sw-chat);
+}
+.sw-recap {
+  background: var(--lp-sw-recap);
 }

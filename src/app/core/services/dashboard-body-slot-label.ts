@@ -26,6 +26,7 @@ export function dashboardBodySlotLabel(
   key: DashboardBodySlotKey,
 ): string {
   if (key === 'chat') return i18n.t('profile.dashboardLayout.slot.chat');
+  if (key === 'recap') return i18n.t('profile.dashboardLayout.slot.recap');
   if (key === 'hist_group') {
     // N'est appelé pour cette clé que quand le regroupement est actif (voir
     // `DashboardLayoutService.activeSlots`, au moins 2 volets cochés) — `grouped` a donc toujours
@@ -51,6 +52,7 @@ export function dashboardBodySlotLabel(
  * du détail utilise `dashboardBodySlotLabel` à la place. */
 export function shortSlotLabelKey(key: DashboardBodySlotKey): string {
   if (key === 'chat') return 'profile.dashboardLayout.slot.chat';
+  if (key === 'recap') return 'profile.dashboardLayout.slot.recap';
   if (key === 'hist_group') return 'profile.dashboardLayout.slot.histGroupFull';
   return histLabelKey(key.slice('hist_'.length) as DashboardHistoryKey);
 }
@@ -66,5 +68,6 @@ export function dashboardBodySlotIcon(key: DashboardBodySlotKey): AppIconName {
   if (key === 'chat') return 'messages-square';
   if (key === 'hist_purchases') return 'shopping-bag';
   if (key === 'hist_trades') return 'arrows-exchange';
+  if (key === 'recap') return 'scroll';
   return 'clock';
 }

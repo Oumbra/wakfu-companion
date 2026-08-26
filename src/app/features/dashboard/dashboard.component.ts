@@ -3,6 +3,7 @@ import { ChatPanelComponent } from '../chat-panel/chat-panel.component';
 import { TrackerComponent } from '../tracker/tracker.component';
 import { TrackerStripComponent } from '../tracker-strip/tracker-strip.component';
 import { HistoryComponent } from '../history/history.component';
+import { SessionRecapComponent } from '../session-recap/session-recap.component';
 import { DashboardRailComponent } from '../dashboard-rail/dashboard-rail.component';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { HelpSection } from '../../core/services/help-modal.service';
@@ -18,17 +19,20 @@ import { DashboardLayoutService } from '../../core/services/dashboard-layout.ser
  * désormais dans l'onglet Historique (sous-onglet Combats, voir
  * FightHistoryComponent) — la barre d'onglets mobile est donc fixe.
  *
- * Desktop uniquement, Historique ET Chat sont aussi repliables individuellement
+ * Desktop uniquement, Historique/Chat/Récap sont aussi repliables individuellement
  * (voir DashboardLayoutService/ChatPanelService) — une section repliée rejoint le
  * menu latéral `<app-dashboard-rail>` (voir DashboardRailComponent) plutôt que
  * de disparaître purement et simplement. Chat reste monté en permanence même
- * replié (repli géré en CSS via `.panel-collapsed`, voir dashboard.component.css). */
+ * replié (repli géré en CSS via `.panel-collapsed`, voir dashboard.component.css) ;
+ * Récap, comme Historique, est simplement retiré du DOM tant qu'il est replié
+ * (voir SessionRecapComponent, pas de connexion à maintenir vivante). */
 @Component({
   selector: 'app-dashboard',
   imports: [
     TrackerComponent,
     TrackerStripComponent,
     HistoryComponent,
+    SessionRecapComponent,
     ChatPanelComponent,
     DashboardRailComponent,
     TabBarComponent,

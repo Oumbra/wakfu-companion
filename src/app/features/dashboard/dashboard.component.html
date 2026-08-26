@@ -21,6 +21,21 @@
         [style.order]="layout.gridPlan()['tracker'].order"
       />
       <app-history [class.tab-hidden]="activeTab() !== 'history'" />
+      @if (!layout.isCollapsed('recap')) {
+        <!-- class="tab-hidden" statique (pas de binding) : Récap n'a pas d'onglet dédié dans la
+             barre mobile (voir TAB_ORDER/DashboardComponent, tracker/history/chat seulement) ni de
+             rail replié en dessous de 800px (voir dashboard-rail.component.css) — sans ce
+             masquage, une carte laissée dépliée sur desktop (préférence synchronisée compte)
+             s'afficherait en permanence, empilée par-dessus l'onglet mobile actif. La règle CSS
+             `.panels-row > .tab-hidden` (dashboard.component.css) n'a d'effet que sous 800px :
+             aucun impact desktop. -->
+        <app-session-recap
+          class="tab-hidden"
+          [style.grid-column]="layout.gridPlan()['recap'].gridColumn"
+          [style.grid-row]="layout.gridPlan()['recap'].gridRow"
+          [style.order]="layout.gridPlan()['recap'].order"
+        />
+      }
       <app-chat-panel
         [class.tab-hidden]="activeTab() !== 'chat'"
         [class.panel-collapsed]="chatPanel.collapsed()"

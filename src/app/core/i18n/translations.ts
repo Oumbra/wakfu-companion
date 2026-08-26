@@ -34,7 +34,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.simulatedFileName': 'Mode mobile (sans fichier)',
 
     'app.goHome': "Retour à l'accueil",
-    'app.sessionRecap': 'Session recap',
     'app.reset': 'Réinitialiser',
     'app.confirmReset': 'Réinitialiser la session ?',
     'app.changeFile': 'Changer de fichier',
@@ -275,6 +274,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.purchases': 'Achats',
     'profile.dashboardLayout.slot.trades': 'Échanges',
     'profile.dashboardLayout.slot.chat': 'Chat',
+    'profile.dashboardLayout.slot.recap': 'Récap de session',
     'profile.dashboardLayout.slot.histGroupFull': 'Historique',
     'profile.dashboardLayout.slot.histGroupLegend': 'Historique (regroupé)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Historique ({{parts}})',
@@ -612,7 +612,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.simulatedFileName': 'Mobile mode (no file)',
 
     'app.goHome': 'Back to home',
-    'app.sessionRecap': 'Session recap',
     'app.reset': 'Reset',
     'app.confirmReset': 'Reset the session?',
     'app.changeFile': 'Change file',
@@ -853,6 +852,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.purchases': 'Purchases',
     'profile.dashboardLayout.slot.trades': 'Trades',
     'profile.dashboardLayout.slot.chat': 'Chat',
+    'profile.dashboardLayout.slot.recap': 'Session recap',
     'profile.dashboardLayout.slot.histGroupFull': 'History',
     'profile.dashboardLayout.slot.histGroupLegend': 'History (grouped)',
     'profile.dashboardLayout.slot.histGroupPartial': 'History ({{parts}})',
@@ -1183,7 +1183,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.simulatedFileName': 'Modo móvil (sin archivo)',
 
     'app.goHome': 'Volver al inicio',
-    'app.sessionRecap': 'Resumen de sesión',
     'app.reset': 'Reiniciar',
     'app.confirmReset': '¿Reiniciar la sesión?',
     'app.changeFile': 'Cambiar archivo',
@@ -1426,6 +1425,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Intercambios',
     'profile.dashboardLayout.slot.chat': 'Chat',
+    'profile.dashboardLayout.slot.recap': 'Resumen de sesión',
     'profile.dashboardLayout.slot.histGroupFull': 'Historial',
     'profile.dashboardLayout.slot.histGroupLegend': 'Historial (agrupado)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Historial ({{parts}})',
@@ -1761,7 +1761,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.simulatedFileName': 'Modo mobile (sem arquivo)',
 
     'app.goHome': 'Voltar ao início',
-    'app.sessionRecap': 'Resumo da sessão',
     'app.reset': 'Reiniciar',
     'app.confirmReset': 'Reiniciar a sessão?',
     'app.changeFile': 'Trocar arquivo',
@@ -2003,6 +2002,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Trocas',
     'profile.dashboardLayout.slot.chat': 'Chat',
+    'profile.dashboardLayout.slot.recap': 'Resumo da sessão',
     'profile.dashboardLayout.slot.histGroupFull': 'Histórico',
     'profile.dashboardLayout.slot.histGroupLegend': 'Histórico (agrupado)',
     'profile.dashboardLayout.slot.histGroupPartial': 'Histórico ({{parts}})',
