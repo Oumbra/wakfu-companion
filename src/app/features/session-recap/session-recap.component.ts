@@ -1,7 +1,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import {
   LootRow,
-  SESSION_GAP_THRESHOLD_MS,
+  SESSION_LIVE_TICK_GRACE_MS,
   StatsStoreService,
 } from '../../core/services/stats-store.service';
 import { NumberFrPipe } from '../../shared/number-fr.pipe';
@@ -143,10 +143,13 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * Durée = temps ACTIF déjà accumulé depuis le fichier (voir StatsStoreService.
    * sessionActiveDurationMs — ne grandit que quand de vraies lignes ont été lues) + une extension
    * "temps réel" qui prolonge visuellement ce total entre deux lots de lignes tant qu'une partie
-   * semble en cours (voir sessionLastIngestAtMs), plafonnée à SESSION_GAP_THRESHOLD_MS — au-delà de
-   * ce plafond, on considère que le fichier n'est plus alimenté et la durée cesse d'augmenter
-   * automatiquement (comportement demandé explicitement : contrairement à l'ancien calcul, purement
-   * `Date.now() - dateDeConnexion`, qui grandissait indéfiniment même client fermé/PC en veille).
+   * semble en cours (voir sessionLastIngestAtMs), plafonnée à SESSION_LIVE_TICK_GRACE_MS — au-delà
+   * de ce plafond (10s), on considère que le fichier n'est plus alimenté et la durée cesse
+   * d'augmenter automatiquement (comportement demandé explicitement — voir sa doc de tête pour
+   * pourquoi ce délai de grâce reste bien plus court que le seuil de segmentation des coupures
+   * historiques, SESSION_SEGMENT_GAP_THRESHOLD_MS, une question différente). Ne repart QUE lorsque
+   * le fichier est de nouveau alimenté (prochain `ingest()`, qui avance sessionLastIngestAtMs et
+   * potentiellement sessionActiveDurationMs) — jamais de lui-même.
    */
   private updateDuration(): void {
     const activeMs = this.stats.sessionActiveDurationMs();
@@ -154,7 +157,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     const liveExtensionMs =
       lastIngestAtMs === null
         ? 0
-        : Math.min(Math.max(Date.now() - lastIngestAtMs, 0), SESSION_GAP_THRESHOLD_MS);
+        : Math.min(Math.max(Date.now() - lastIngestAtMs, 0), SESSION_LIVE_TICK_GRACE_MS);
     const elapsedMs = activeMs + liveExtensionMs;
     const hours = Math.floor(elapsedMs / 3_600_000);
     const minutes = Math.floor((elapsedMs % 3_600_000) / 60_000);

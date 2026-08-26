@@ -37,16 +37,18 @@ const PURCHASE_WINDOW_MS = 2000;
 const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
 /**
  * Écart entre deux lignes horodatées consécutives du fichier au-delà duquel la durée de session
- * affichée (voir sessionActiveDurationMs) considère qu'il y a EU UNE COUPURE plutôt qu'une simple
- * accalmie de jeu — le temps passé dans cet écart n'est alors PAS ajouté au total (voir
- * accumulateSessionDuration). Calibré sur un vrai fichier fourni par l'utilisateur contenant deux
- * sessions de jeu distinctes dans le même wakfu.log (reconnexion ~40 min après une fermeture
- * complète du client) : le plus grand écart normal À L'INTÉRIEUR de chacune des deux sessions n'y
- * dépassait jamais ~51s (mesuré), très en-dessous des 5 minutes retenues ici — et l'écart RÉEL entre
- * les deux sessions (~41 min 35s, la fermeture puis relance du client) y est très largement au-dessus,
- * aucune valeur intermédiaire raisonnable ne change donc le résultat sur ce fichier de référence.
- * Exporté : réutilisé par SessionRecapComponent pour plafonner l'extension "temps réel" affichée
- * entre deux lots de lignes (voir sessionLastIngestAtMs) — même seuil, même principe, des deux côtés.
+ * (voir sessionActiveDurationMs) considère qu'il y a EU UNE COUPURE plutôt qu'une simple accalmie de
+ * jeu — le temps passé dans cet écart n'est alors PAS ajouté au total (voir
+ * accumulateSessionDuration). PAS le même seuil que SESSION_LIVE_TICK_GRACE_MS ci-dessous (voir sa
+ * doc de tête pour la distinction) : celui-ci reste large exprès, pour ne jamais faire disparaître du
+ * temps réellement joué de l'historique déjà confirmé par une ligne suivante.
+ *
+ * Calibré sur un vrai fichier fourni par l'utilisateur contenant deux sessions de jeu distinctes dans
+ * le même wakfu.log (reconnexion ~40 min après une fermeture complète du client) : le plus grand
+ * écart normal À L'INTÉRIEUR de chacune des deux sessions n'y dépassait jamais ~51s (mesuré), très
+ * en-dessous des 5 minutes retenues ici — et l'écart RÉEL entre les deux sessions (~41 min 35s, la
+ * fermeture puis relance du client) y est très largement au-dessus, aucune valeur intermédiaire
+ * raisonnable ne change donc le résultat sur ce fichier de référence.
  *
  * Volontairement PAS basé sur la ligne technique "Stopping cFC..." (arrêt propre du client, présente
  * dans le fichier de calibration) malgré sa fiabilité apparente : elle ne capture qu'une fermeture
@@ -55,7 +57,25 @@ const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
  * couvre tous ces cas uniformément, sans dépendre d'une chaîne de log précise que Ankama pourrait
  * faire évoluer.
  */
-export const SESSION_GAP_THRESHOLD_MS = 5 * 60 * 1000;
+const SESSION_SEGMENT_GAP_THRESHOLD_MS = 5 * 60 * 1000;
+/**
+ * Délai de grâce, en ms, avant que l'affichage "temps réel" de la durée de session (voir
+ * sessionLastIngestAtMs/SessionRecapComponent.updateDuration) ne se FIGE faute de nouvelle ligne —
+ * DISTINCT de SESSION_SEGMENT_GAP_THRESHOLD_MS ci-dessus, une valeur BEAUCOUP PLUS COURTE
+ * volontairement : les deux constantes répondent à des questions différentes.
+ * SESSION_SEGMENT_GAP_THRESHOLD_MS décide, une fois qu'une ligne confirme la suite, si le temps
+ * DÉJÀ ÉCOULÉ entre deux lignes comptait comme du jeu actif (large, car un vrai écart de jeu normal
+ * peut légitimement atteindre ~50s sans aucune ligne, voir sa doc de tête) — celui-ci décide combien
+ * de temps l'AFFICHAGE peut optimistement continuer à tourner AVANT qu'une telle ligne n'arrive,
+ * sans savoir encore si elle viendra. Réduit à 10s (2026-08-27, retour utilisateur après un test
+ * réel sur le fichier de calibration : l'ancien réglage, aligné sur SESSION_SEGMENT_GAP_THRESHOLD_MS
+ * ci-dessus à 5 min, laissait le chronomètre visiblement continuer à tourner jusqu'à 5 minutes après
+ * la fin de toute activité du fichier — bien trop long pour un affichage "en direct" senseé refléter
+ * l'état réel du fichier à chaque instant) : le chronomètre se fige désormais 10s après la dernière
+ * ligne lue et ne reprend QUE quand le fichier est de nouveau alimenté (prochain `ingest()`, voir
+ * sessionLastIngestAtMs) — jamais de lui-même. Exporté pour SessionRecapComponent.
+ */
+export const SESSION_LIVE_TICK_GRACE_MS = 10 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -386,19 +406,20 @@ export class StatsStoreService {
   private readonly historySync = inject(HistorySyncService);
 
   /** Durée active de la session, en ms — calculée à partir des horodatages du fichier lui-même
-   * (pas de l'horloge murale), en excluant tout écart ≥ SESSION_GAP_THRESHOLD_MS entre deux lignes
-   * consécutives (coupure : fermeture du client, crash, veille...). Voir
-   * accumulateSessionDuration/SESSION_GAP_THRESHOLD_MS pour le détail. Contrairement à l'ancien
-   * `sessionStartedAt` (retiré), ne suffit PAS seul à afficher une durée qui continue de "vivre" en
-   * temps réel pendant une partie effectivement en cours — voir sessionLastIngestAtMs, combiné côté
-   * SessionRecapComponent. */
+   * (pas de l'horloge murale), en excluant tout écart ≥ SESSION_SEGMENT_GAP_THRESHOLD_MS entre deux
+   * lignes consécutives (coupure : fermeture du client, crash, veille...). Voir
+   * accumulateSessionDuration/SESSION_SEGMENT_GAP_THRESHOLD_MS pour le détail. Contrairement à
+   * l'ancien `sessionStartedAt` (retiré), ne suffit PAS seul à afficher une durée qui continue de
+   * "vivre" en temps réel pendant une partie effectivement en cours — voir sessionLastIngestAtMs,
+   * combiné côté SessionRecapComponent. */
   readonly sessionActiveDurationMs = signal(0);
   /** Horodatage MUR (Date.now(), pas une valeur du fichier) du dernier lot de lignes traité — sert
    * uniquement à SessionRecapComponent pour prolonger l'affichage en temps réel entre deux lots
    * (l'utilisateur joue "maintenant", de nouvelles lignes n'ont juste pas encore été lues), plafonné
-   * à SESSION_GAP_THRESHOLD_MS pour ne jamais laisser la durée grimper indéfiniment si le fichier
-   * n'est plus alimenté (client fermé, onglet resté ouvert). `null` tant qu'aucun lot n'a encore été
-   * traité pour la connexion en cours. */
+   * à SESSION_LIVE_TICK_GRACE_MS (bien plus court que SESSION_SEGMENT_GAP_THRESHOLD_MS ci-dessus,
+   * voir sa doc de tête pour la distinction) pour ne jamais laisser la durée grimper indéfiniment si
+   * le fichier n'est plus alimenté (client fermé, onglet resté ouvert). `null` tant qu'aucun lot n'a
+   * encore été traité pour la connexion en cours. */
   readonly sessionLastIngestAtMs = signal<number | null>(null);
 
   readonly kamasEarned = signal(0);
@@ -1528,8 +1549,9 @@ export class StatsStoreService {
 
   /**
    * Ajoute à sessionActiveDurationMs l'écart entre cette ligne et la précédente ligne DU FICHIER vue
-   * (voir lastSessionActivityMs), SAUF si cet écart atteint ou dépasse SESSION_GAP_THRESHOLD_MS — un
-   * tel écart est alors traité comme une coupure (fermeture du client, crash, veille du PC...), le
+   * (voir lastSessionActivityMs), SAUF si cet écart atteint ou dépasse
+   * SESSION_SEGMENT_GAP_THRESHOLD_MS — un tel écart est alors traité comme une coupure (fermeture du
+   * client, crash, veille du PC...), le
    * temps qu'il représente n'est PAS compté dans la durée de session affichée. Utilise `peekLineTime`
    * (comme primeLogDateAnchorFromBatch) plutôt que `LogEntry`/`apply()` : une ligne purement
    * technique sans LogEntry associé (ex. "Stopping cFC...") reste une preuve valable d'activité au
@@ -1549,7 +1571,7 @@ export class StatsStoreService {
       // `gap <= 0` : lignes quasi simultanées de threads distincts capturées dans un ordre
       // légèrement différent de leur horodatage strict (vérifié sur un vrai fichier — jamais plus
       // d'1-2ms d'écart) — rien à ajouter plutôt que de risquer de faire reculer le total.
-      if (gap > 0 && gap < SESSION_GAP_THRESHOLD_MS) {
+      if (gap > 0 && gap < SESSION_SEGMENT_GAP_THRESHOLD_MS) {
         this.sessionActiveDurationMs.update((v) => v + gap);
       }
     }
