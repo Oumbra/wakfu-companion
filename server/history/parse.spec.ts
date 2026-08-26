@@ -108,6 +108,38 @@ describe('parseFightsBody', () => {
     expect(parsed.ok && parsed.value[0].gameServer).toBe(null);
   });
 
+  it('accepte et transporte un rattachement de donjon (dungeonId + dungeonRunKey)', () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ dungeonId: 500, dungeonRunKey: KEY_B })],
+    });
+    expect(parsed.ok && parsed.value[0].dungeonId).toBe(500);
+    expect(parsed.ok && parsed.value[0].dungeonRunKey).toBe(KEY_B);
+  });
+
+  it('accepte un combat sans rattachement de donjon (champs absents, jamais requis)', () => {
+    const parsed = parseFightsBody({ entries: [fightEntry()] });
+    expect(parsed.ok && parsed.value[0].dungeonId).toBe(null);
+    expect(parsed.ok && parsed.value[0].dungeonRunKey).toBe(null);
+  });
+
+  it("refuse un dungeonRunKey qui n'est pas un sha256 hexadécimal", () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ dungeonId: 500, dungeonRunKey: 'run-1' })],
+    });
+    expect(parsed).toEqual({ ok: false, error: expect.stringContaining('dungeonRunKey') });
+  });
+
+  it('refuse un dungeonId renseigné sans dungeonRunKey (et inversement)', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ dungeonId: 500 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('ensemble'),
+    });
+    expect(parseFightsBody({ entries: [fightEntry({ dungeonRunKey: KEY_B })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('ensemble'),
+    });
+  });
+
   it("refuse un clientKey qui n'est pas un sha256 hexadécimal", () => {
     expect(parseFightsBody({ entries: [fightEntry({ clientKey: 'fight-1' })] })).toEqual({
       ok: false,

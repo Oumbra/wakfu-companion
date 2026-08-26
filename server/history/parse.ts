@@ -83,6 +83,10 @@ export interface FightInput {
   xpGained: number | null;
   kamasGained: number | null;
   gameServer: string | null;
+  /** Voir `fights.dungeonId`/`fights.dungeonRunKey` (server/db/schema.ts) — toujours renseignés
+   * ensemble ou absents ensemble, voir `parseDungeonAssignment`. */
+  dungeonId: number | null;
+  dungeonRunKey: string | null;
   participants: FightParticipantInput[];
   loot: FightLootInput[];
 }
@@ -179,6 +183,35 @@ function parseFlag(raw: unknown, field: string): ParseResult<boolean | null> {
   if (raw === null || raw === undefined) return { ok: true, value: null };
   if (typeof raw !== 'boolean') return { ok: false, error: `${field} invalide` };
   return { ok: true, value: raw };
+}
+
+/**
+ * `dungeonId`/`dungeonRunKey` : toujours renseignés ensemble ou absents ensemble — même principe
+ * d'invariant renforcé côté serveur que `parseItemIdentity` ci-dessus (les deux sont dérivés du
+ * même calcul client, voir `HistorySyncService`/`dungeon-run-grouping.util.ts`, jamais l'un sans
+ * l'autre en pratique, mais on ne fait pas confiance au client pour le garantir). `dungeonRunKey`
+ * a le même format qu'un `clientKey` (sha256 hexadécimal, voir `client-key.util.ts` côté client) —
+ * motif identique, réutilisé tel quel.
+ */
+function parseDungeonAssignment(
+  dungeonIdRaw: unknown,
+  dungeonRunKeyRaw: unknown,
+): ParseResult<{ dungeonId: number | null; dungeonRunKey: string | null }> {
+  const dungeonId = parseCount(dungeonIdRaw, 'dungeonId', true);
+  if (!dungeonId.ok) return dungeonId;
+
+  let dungeonRunKey: string | null = null;
+  if (dungeonRunKeyRaw !== null && dungeonRunKeyRaw !== undefined) {
+    if (typeof dungeonRunKeyRaw !== 'string' || !CLIENT_KEY_PATTERN.test(dungeonRunKeyRaw)) {
+      return { ok: false, error: 'dungeonRunKey invalide (sha256 hexadécimal attendu)' };
+    }
+    dungeonRunKey = dungeonRunKeyRaw;
+  }
+
+  if ((dungeonId.value === null) !== (dungeonRunKey === null)) {
+    return { ok: false, error: 'dungeonId et dungeonRunKey doivent être renseignés ensemble' };
+  }
+  return { ok: true, value: { dungeonId: dungeonId.value, dungeonRunKey } };
 }
 
 /**
@@ -361,6 +394,8 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!won.ok) return won;
       const gameServer = parseGameServer(entry['gameServer']);
       if (!gameServer.ok) return gameServer;
+      const dungeonAssignment = parseDungeonAssignment(entry['dungeonId'], entry['dungeonRunKey']);
+      if (!dungeonAssignment.ok) return dungeonAssignment;
 
       const rawParticipants = entry['participants'] ?? [];
       if (!Array.isArray(rawParticipants)) return { ok: false, error: 'participants invalide' };
@@ -410,6 +445,8 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
           xpGained: xpGained.value,
           kamasGained: kamasGained.value,
           gameServer: gameServer.value,
+          dungeonId: dungeonAssignment.value.dungeonId,
+          dungeonRunKey: dungeonAssignment.value.dungeonRunKey,
           participants,
           loot,
         },
