@@ -14,7 +14,7 @@ import {
   SESSION_LIVE_TICK_GRACE_MS,
   StatsStoreService,
 } from '../../core/services/stats-store.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
@@ -183,7 +183,7 @@ interface RecapGroupSection {
   selector: 'app-session-recap',
   imports: [
     NgTemplateOutlet,
-    NumberFrPipe,
+    LocaleNumberPipe,
     TranslatePipe,
     EntityIconComponent,
     ItemIconComponent,
@@ -746,27 +746,30 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return period.kamas.spentOnPurchases + period.kamas.tradesGiven;
   }
 
-  /** Construit le texte aligné (libellé à gauche, valeur à droite) d'une tooltip Kamas — partagé
-   * entre `kamasTooltip` (Session) et `periodKamasTooltip` (Jour/Mois/Année), demande explicite de
-   * l'utilisateur (2026-08-28) : les deux affichaient auparavant deux mises en page DIFFÉRENTES
-   * (2 lignes non alignées pour la Session vs 4 lignes alignées pour la période), désormais la MÊME
-   * ventilation par origine à 5 lignes (combat/Hôtel de vente/achats/échanges REÇUS/échanges DONNÉS
-   * — les échanges scindés en deux lignes plutôt qu'un seul solde net, un échange pouvant être à la
-   * fois un gain ET une perte).
+  /** Construit les lignes [libellé, valeur] (rendues en grille CSS par `TooltipComponent`, voir
+   * `TooltipRequest.rows`) d'une tooltip Kamas — partagé entre `kamasTooltip` (Session) et
+   * `periodKamasTooltip` (Jour/Mois/Année), demande explicite de l'utilisateur (2026-08-28) : les
+   * deux affichaient auparavant deux mises en page DIFFÉRENTES (2 lignes non alignées pour la
+   * Session vs 4 lignes alignées pour la période), désormais la MÊME ventilation par origine à 5
+   * lignes (combat/Hôtel de vente/achats/échanges REÇUS/échanges DONNÉS — les échanges scindés en
+   * deux lignes plutôt qu'un seul solde net, un échange pouvant être à la fois un gain ET une
+   * perte).
    *
-   * Colonnes alignées : `.app-tooltip-multiline` (`white-space: pre-line`) collapse les espaces
-   * normaux mais PAS les espaces insécables (` `), d'où leur usage ici pour le padding plutôt
-   * que de simples espaces — combiné à `[tooltipMonospace]` (voir template) pour que le padding en
-   * nombre de caractères corresponde bien à un espacement visuel constant. */
-  private buildKamasTooltip(kamas: {
+   * Un tableau de lignes structurées plutôt qu'un texte pré-aligné par padding de caractères :
+   * l'ancienne approche (police monospace + espaces insécables comptés en nombre de caractères)
+   * supposait une largeur de libellé prévisible — cassée en espagnol/portugais, où des libellés
+   * comme "Intercambios recibidos"/"Casa de subastas" dépassent la largeur du tooltip et
+   * retournent à la ligne, désalignant toute la colonne valeurs. Une grille CSS n'a pas cette
+   * limite. */
+  private buildKamasTooltipRows(kamas: {
     fromCombat: number;
     fromHdvSales: number;
     spentOnPurchases: number;
     tradesAcquired: number;
     tradesGiven: number;
-  }): string {
+  }): [string, string][] {
     const fmt = (n: number) => this.i18n.formatNumber(n);
-    const lines: [string, string][] = [
+    return [
       [this.i18n.t('sessionRecap.period.kamasFromCombat'), `+${fmt(kamas.fromCombat)} ₭`],
       [this.i18n.t('sessionRecap.period.kamasFromHdvSales'), `+${fmt(kamas.fromHdvSales)} ₭`],
       [
@@ -776,19 +779,12 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       [this.i18n.t('sessionRecap.period.kamasTradesAcquired'), `+${fmt(kamas.tradesAcquired)} ₭`],
       [this.i18n.t('sessionRecap.period.kamasTradesGiven'), `-${fmt(kamas.tradesGiven)} ₭`],
     ];
-    const labelWidth = Math.max(...lines.map(([label]) => label.length));
-    const valueWidth = Math.max(...lines.map(([, value]) => value.length));
-    return lines
-      .map(
-        ([label, value]) => `${label.padEnd(labelWidth, ' ')} ${value.padStart(valueWidth, ' ')}`,
-      )
-      .join('\n');
   }
 
-  /** Tooltip Kamas du bandeau en mode période (voir `buildKamasTooltip`) — remplace l'ancienne
+  /** Tooltip Kamas du bandeau en mode période (voir `buildKamasTooltipRows`) — remplace l'ancienne
    * section "Kamas" dépliable (voir CLAUDE.md). */
-  protected periodKamasTooltip(period: PeriodStats): string {
-    return this.buildKamasTooltip(period.kamas);
+  protected periodKamasTooltip(period: PeriodStats): [string, string][] {
+    return this.buildKamasTooltipRows(period.kamas);
   }
 
   /** XP total de la session (case "Expérience" de la bande coup d'oeil, voir template) — simple
@@ -820,12 +816,12 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return max > 0 ? (amount / max) * 100 : 0;
   }
 
-  /** Tooltip Kamas de la bande "coup d'oeil" en mode Session (voir `buildKamasTooltip`) — même
-   * ventilation à 5 lignes que le mode période (voir `StatsStoreService.kamasFromCombat` et les 4
-   * signaux jumeaux, ajoutés le 2026-08-28 spécifiquement pour égaler cette ventilation, alors
-   * qu'avant seul un total Gagné/Dépensé non ventilé était disponible côté session). */
-  protected kamasTooltip(): string {
-    return this.buildKamasTooltip({
+  /** Tooltip Kamas de la bande "coup d'oeil" en mode Session (voir `buildKamasTooltipRows`) —
+   * même ventilation à 5 lignes que le mode période (voir `StatsStoreService.kamasFromCombat` et
+   * les 4 signaux jumeaux, ajoutés le 2026-08-28 spécifiquement pour égaler cette ventilation,
+   * alors qu'avant seul un total Gagné/Dépensé non ventilé était disponible côté session). */
+  protected kamasTooltip(): [string, string][] {
+    return this.buildKamasTooltipRows({
       fromCombat: this.stats.kamasFromCombat(),
       fromHdvSales: this.stats.kamasFromHdvSales(),
       spentOnPurchases: this.stats.kamasSpentOnPurchases(),

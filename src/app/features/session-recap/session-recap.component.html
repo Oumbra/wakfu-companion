@@ -202,21 +202,16 @@
             class="bandeau-value accent"
             [appTooltip]="i18n.formatNumber(sessionXpTotal())"
             [tooltipOnlyIfTruncated]="true"
-            >+{{ sessionXpTotal() | numberFr }}</span
+            >+{{ sessionXpTotal() | localeNumber }}</span
           >
         </div>
         <div class="bandeau-sep"></div>
-        <div
-          class="bandeau-cell"
-          [appTooltip]="kamasTooltip()"
-          [tooltipMultiline]="true"
-          [tooltipMonospace]="true"
-        >
+        <div class="bandeau-cell" [appTooltip]="null" [tooltipRows]="kamasTooltip()">
           <span class="bandeau-head">
             <img [src]="kamasIcon" class="bandeau-icon" alt="" />
             <span class="bandeau-label has-tip">{{ 'sessionRecap.kamas' | t }}</span>
           </span>
-          <span class="bandeau-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
+          <span class="bandeau-value gold">{{ stats.netKamas() | localeNumber }} ₭</span>
         </div>
         <div class="bandeau-sep"></div>
         <div class="bandeau-cell">
@@ -230,9 +225,9 @@
             >
           </span>
           <span class="bandeau-value">
-            <span class="gain">{{ stats.combatsWon() }}</span>
+            <span class="gain">{{ stats.combatsWon() | localeNumber }}</span>
             <span class="wl-dash">-</span>
-            <span class="loss">{{ stats.combatsLost() }}</span>
+            <span class="loss">{{ stats.combatsLost() | localeNumber }}</span>
           </span>
         </div>
         <div class="bandeau-sep"></div>
@@ -247,9 +242,9 @@
             >
           </span>
           <span class="bandeau-value">
-            <span class="gain">{{ stats.challengesPassed() }}</span>
+            <span class="gain">{{ stats.challengesPassed() | localeNumber }}</span>
             <span class="wl-dash">-</span>
-            <span class="loss">{{ stats.challengesFailed() }}</span>
+            <span class="loss">{{ stats.challengesFailed() | localeNumber }}</span>
           </span>
         </div>
         <div class="bandeau-cell">
@@ -284,7 +279,7 @@
                     class="xp-amount"
                     [appTooltip]="i18n.formatNumber(row.amount)"
                     [tooltipOnlyIfTruncated]="true"
-                    >+{{ row.amount | numberFr }}</span
+                    >+{{ row.amount | localeNumber }}</span
                   >
                 </div>
                 <div class="xp-bar-track">
@@ -313,7 +308,7 @@
             <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
             @if (stats.sessionLoot().length > 0) {
               <span class="loot-count"
-                >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
+                >{{ stats.sessionLoot().length | localeNumber }} {{ 'damageMeter.items' | t }}</span
               >
             }
           </div>
@@ -416,22 +411,17 @@
               class="bandeau-value accent"
               [appTooltip]="i18n.formatNumber(periodXpTotal(period))"
               [tooltipOnlyIfTruncated]="true"
-              >+{{ periodXpTotal(period) | numberFr }}</span
+              >+{{ periodXpTotal(period) | localeNumber }}</span
             >
           </div>
           <div class="bandeau-sep"></div>
-          <div
-            class="bandeau-cell"
-            [appTooltip]="periodKamasTooltip(period)"
-            [tooltipMultiline]="true"
-            [tooltipMonospace]="true"
-          >
+          <div class="bandeau-cell" [appTooltip]="null" [tooltipRows]="periodKamasTooltip(period)">
             <span class="bandeau-head">
               <img [src]="kamasIcon" class="bandeau-icon" alt="" />
               <span class="bandeau-label has-tip">{{ 'sessionRecap.kamas' | t }}</span>
             </span>
             <span class="bandeau-value gold"
-              >{{ periodKamasEarned(period) - periodKamasLost(period) | numberFr }} ₭</span
+              >{{ periodKamasEarned(period) - periodKamasLost(period) | localeNumber }} ₭</span
             >
           </div>
           <div class="bandeau-sep"></div>
@@ -446,9 +436,9 @@
               >
             </span>
             <span class="bandeau-value">
-              <span class="gain">{{ period.combats.won }}</span>
+              <span class="gain">{{ period.combats.won | localeNumber }}</span>
               <span class="wl-dash">-</span>
-              <span class="loss">{{ period.combats.lost }}</span>
+              <span class="loss">{{ period.combats.lost | localeNumber }}</span>
             </span>
           </div>
           <div class="bandeau-sep"></div>
@@ -463,9 +453,9 @@
               >
             </span>
             <span class="bandeau-value">
-              <span class="gain">{{ period.combats.challengesPassed }}</span>
+              <span class="gain">{{ period.combats.challengesPassed | localeNumber }}</span>
               <span class="wl-dash">-</span>
-              <span class="loss">{{ period.combats.challengesFailed }}</span>
+              <span class="loss">{{ period.combats.challengesFailed | localeNumber }}</span>
             </span>
           </div>
         </div>
@@ -492,7 +482,7 @@
                         class="xp-amount"
                         [appTooltip]="i18n.formatNumber(row.amount)"
                         [tooltipOnlyIfTruncated]="true"
-                        >+{{ row.amount | numberFr }}</span
+                        >+{{ row.amount | localeNumber }}</span
                       >
                     </div>
                     <div class="xp-bar-track">
@@ -514,7 +504,7 @@
                 <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
                 @if (period.loot.length > 0) {
                   <span class="loot-count"
-                    >{{ period.loot.length }} {{ 'damageMeter.items' | t }}</span
+                    >{{ period.loot.length | localeNumber }} {{ 'damageMeter.items' | t }}</span
                   >
                 }
               </div>
@@ -688,7 +678,7 @@
           <span class="dungeon-name" [appTooltip]="row.label" [tooltipOnlyIfTruncated]="true">{{
             row.label
           }}</span>
-          <span class="dungeon-count">×{{ rowCount(row.totals) | numberFr }}</span>
+          <span class="dungeon-count">×{{ rowCount(row.totals) | localeNumber }}</span>
         </div>
         @if (isGroupExpanded(row.key)) {
           <div class="group-detail">
@@ -712,7 +702,7 @@
                   class="bandeau-value accent"
                   [appTooltip]="i18n.formatNumber(rowXpTotal(row.totals))"
                   [tooltipOnlyIfTruncated]="true"
-                  >+{{ rowXpTotal(row.totals) | numberFr }}</span
+                  >+{{ rowXpTotal(row.totals) | localeNumber }}</span
                 >
               </div>
               <div class="bandeau-sep"></div>
@@ -730,7 +720,7 @@
                   class="bandeau-value gold"
                   [appTooltip]="i18n.formatNumber(row.totals.kamasGained)"
                   [tooltipOnlyIfTruncated]="true"
-                  >+{{ row.totals.kamasGained | numberFr }} ₭</span
+                  >+{{ row.totals.kamasGained | localeNumber }} ₭</span
                 >
               </div>
               <div class="bandeau-sep"></div>
@@ -756,7 +746,7 @@
                     >{{ 'sessionRecap.wins' | t }}</span
                   >
                 </span>
-                <span class="bandeau-value gain">{{ row.totals.won | numberFr }}</span>
+                <span class="bandeau-value gain">{{ row.totals.won | localeNumber }}</span>
               </div>
               <div class="bandeau-sep"></div>
               <div class="bandeau-cell">
@@ -781,7 +771,7 @@
                     >{{ 'sessionRecap.losses' | t }}</span
                   >
                 </span>
-                <span class="bandeau-value loss">{{ row.totals.lost | numberFr }}</span>
+                <span class="bandeau-value loss">{{ row.totals.lost | localeNumber }}</span>
               </div>
             </div>
 
@@ -838,7 +828,7 @@
                           <path d="M6 20h12"></path>
                         </svg>
                       }
-                      <span class="dungeon-tile-count">×{{ tile.count | numberFr }}</span>
+                      <span class="dungeon-tile-count">×{{ tile.count | localeNumber }}</span>
                     </div>
                   </div>
                 }
@@ -862,7 +852,7 @@
                         class="xp-amount"
                         [appTooltip]="i18n.formatNumber(xp.amount)"
                         [tooltipOnlyIfTruncated]="true"
-                        >+{{ xp.amount | numberFr }}</span
+                        >+{{ xp.amount | localeNumber }}</span
                       >
                     </div>
                     <div class="xp-bar-track">
@@ -883,7 +873,8 @@
                   <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
                   @if (row.totals.loot.length > 0) {
                     <span class="loot-count"
-                      >{{ row.totals.loot.length }} {{ 'damageMeter.items' | t }}</span
+                      >{{ row.totals.loot.length | localeNumber }}
+                      {{ 'damageMeter.items' | t }}</span
                     >
                   }
                 </div>

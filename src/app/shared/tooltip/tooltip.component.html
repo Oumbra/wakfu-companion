@@ -4,11 +4,18 @@
     [id]="req.id"
     role="tooltip"
     [class.app-tooltip-multiline]="req.multiline"
-    [class.app-tooltip-monospace]="req.monospace"
+    [class.app-tooltip-rows]="!!req.rows"
     [style.left.px]="style()!.left"
     [style.top.px]="style()!.top"
     [style.transform]="style()!.transform"
   >
-    {{ req.text }}
+    @if (req.rows; as rows) {
+      @for (row of rows; track row[0]) {
+        <span class="app-tooltip-row-label">{{ row[0] }}</span>
+        <span class="app-tooltip-row-value">{{ row[1] }}</span>
+      }
+    } @else {
+      {{ req.text }}
+    }
   </div>
 }

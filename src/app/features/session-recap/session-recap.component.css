@@ -366,7 +366,7 @@
   letter-spacing: 0.4px;
 }
 /* Case avec tooltip (Kamas, mode Session) : discret repère visuel au survol — voir
-   `kamasTooltip()`/`[tooltipMultiline]`. */
+   `kamasTooltip()`/`[tooltipRows]`. */
 .bandeau-label.has-tip {
   border-bottom: 1px dotted var(--text-muted);
   cursor: help;
