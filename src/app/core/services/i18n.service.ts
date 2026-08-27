@@ -180,6 +180,16 @@ export class I18nService {
     return this.formatDate(ms);
   }
 
+  /** Formate un nombre entier selon les conventions de la langue courante (séparateur de milliers,
+   * ex. espace insécable en français, virgule en anglais). Miroir numérique de `formatDateTime` —
+   * utilisé pour tout grand nombre affiché EN CLAIR (voir `SessionRecapComponent.bigNumberFontRem` :
+   * la notation abrégée K/M/Md a été retirée le 2026-08-28, jugée peu lisible/parlante par
+   * l'utilisateur — un grand nombre reste toujours affiché en entier, seule sa taille de police
+   * varie). */
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat(LOCALE_TAGS[this.locale()]).format(value);
+  }
+
   /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama
    * vers la locale courante de l'app. `name` peut être dans n'importe
    * laquelle des 4 langues (le client Wakfu de l'utilisateur n'est pas

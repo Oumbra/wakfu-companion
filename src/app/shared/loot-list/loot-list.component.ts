@@ -41,6 +41,11 @@ export class LootListComponent {
    * session" (`session-recap`), qui agrège plusieurs combats et ne peut donc pas cibler une ligne
    * précise — seul "+ Suivre" reste offert dans ce cas (voir ItemPickerRequest.onChosen). */
   readonly fight = input<Pick<FightRecord, 'time' | 'result' | 'rows'> | null>(null);
+  /** `false` désactive le clic droit "Interagir" (suivi + correction d'objet) sur toutes les
+   * lignes — voir SessionRecapComponent, qui n'expose volontairement aucune interaction sur son
+   * butin (carte de lecture seule). `true` par défaut : comportement inchangé pour les autres
+   * appelants (FightHistoryComponent). */
+  readonly interactive = input(true);
 
   protected rarityClass(row: LootRow): string {
     return lootRarityClass(this.catalog, row.name, row.catalogId);

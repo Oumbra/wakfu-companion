@@ -115,3 +115,23 @@ export function offsetForPeriodStart(
   }
   return target.getFullYear() - now.getFullYear();
 }
+
+/** Date fixe, IDENTIQUE POUR TOUT LE MONDE (pas propre à chaque utilisateur) : aucune donnée
+ * serveur n'existe avant ce jour (lancement de l'historique serveur côté compte, voir
+ * server/README.md "lot 8", migration `0006_history_tables.sql`) — sert de vraie borne minimale de
+ * navigation (voir `minOffsetForGranularity`), demandée explicitement par l'utilisateur le
+ * 2026-08-28 en remplacement de l'ancien garde-fou arbitraire (`OFFSET_MIN`,
+ * `SessionRecapComponent`, ±10 ans sans rapport avec les données réellement disponibles). À
+ * repousser manuellement seulement si l'historique serveur venait à être repurgé/relancé depuis
+ * une date plus tardive — ne peut techniquement pas AVANCER davantage dans le passé, aucune donnée
+ * n'y a jamais existé. */
+export const HISTORY_TRACKING_START_MS = new Date(2026, 7, 1).getTime();
+
+/** Borne minimale de navigation (voir `SessionRecapComponent.offsetMin`) pour `granularity` : le
+ * pas (négatif ou nul) de la période civile locale contenant `HISTORY_TRACKING_START_MS`,
+ * relativement à la période contenant `nowMs` — réutilise `offsetForPeriodStart` tel quel plutôt
+ * que d'écrire un second calcul de date, `HISTORY_TRACKING_START_MS` n'étant qu'une cible comme une
+ * autre pour cette fonction. */
+export function minOffsetForGranularity(granularity: PeriodGranularity, nowMs: number): number {
+  return offsetForPeriodStart(granularity, HISTORY_TRACKING_START_MS, nowMs);
+}
