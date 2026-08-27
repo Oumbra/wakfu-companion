@@ -382,7 +382,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     // carte ne se limite plus au récap de la session de fichier courante (switch Session/Jour/
     // Mois/Année, voir CLAUDE.md) — "Récap de session" n'aurait alors plus de sens.
     'sessionRecap.titleGeneric': 'Récap',
-    'sessionRecap.duration': 'Durée :',
+    'sessionRecap.duration': 'Durée',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Gagné',
     'sessionRecap.spent': 'Dépensé',
@@ -409,6 +409,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.prev': 'Période précédente',
     'sessionRecap.period.next': 'Période suivante',
     'sessionRecap.period.noDungeon': 'Hors donjon',
+    'sessionRecap.period.dungeons': 'Donjons',
     'sessionRecap.period.noDungeons': 'Aucun combat sur cette période.',
     'sessionRecap.period.noFamily': 'Famille inconnue',
     'sessionRecap.period.otherFamily': 'Autres',
@@ -987,7 +988,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'sessionRecap.title': 'Session Recap',
     'sessionRecap.titleGeneric': 'Recap',
-    'sessionRecap.duration': 'Duration:',
+    'sessionRecap.duration': 'Duration',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Earned',
     'sessionRecap.spent': 'Spent',
@@ -1014,6 +1015,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.prev': 'Previous period',
     'sessionRecap.period.next': 'Next period',
     'sessionRecap.period.noDungeon': 'No dungeon',
+    'sessionRecap.period.dungeons': 'Dungeons',
     'sessionRecap.period.noDungeons': 'No fights in this period.',
     'sessionRecap.period.noFamily': 'Unknown family',
     'sessionRecap.period.otherFamily': 'Other',
@@ -1591,7 +1593,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'sessionRecap.title': 'Resumen de sesión',
     'sessionRecap.titleGeneric': 'Resumen',
-    'sessionRecap.duration': 'Duración:',
+    'sessionRecap.duration': 'Duración',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Ganado',
     'sessionRecap.spent': 'Gastado',
@@ -1618,6 +1620,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.prev': 'Período anterior',
     'sessionRecap.period.next': 'Período siguiente',
     'sessionRecap.period.noDungeon': 'Sin mazmorra',
+    'sessionRecap.period.dungeons': 'Mazmorras',
     'sessionRecap.period.noDungeons': 'Ningún combate en este período.',
     'sessionRecap.period.noFamily': 'Familia desconocida',
     'sessionRecap.period.otherFamily': 'Otros',
@@ -2197,7 +2200,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
 
     'sessionRecap.title': 'Resumo da Sessão',
     'sessionRecap.titleGeneric': 'Resumo',
-    'sessionRecap.duration': 'Duração:',
+    'sessionRecap.duration': 'Duração',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Ganho',
     'sessionRecap.spent': 'Gasto',
@@ -2224,6 +2227,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.prev': 'Período anterior',
     'sessionRecap.period.next': 'Próximo período',
     'sessionRecap.period.noDungeon': 'Sem masmorra',
+    'sessionRecap.period.dungeons': 'Masmorras',
     'sessionRecap.period.noDungeons': 'Nenhuma luta neste período.',
     'sessionRecap.period.noFamily': 'Família desconhecida',
     'sessionRecap.period.otherFamily': 'Outros',
