@@ -28,7 +28,16 @@ export const MAX_HISTORY_BATCH = 100;
 
 /** Bornes de forme : au-delà, la charge utile ne vient plus d'un log Wakfu. */
 const MAX_NAME_LENGTH = 200;
-const MAX_PARTICIPANTS_PER_FIGHT = 64;
+/**
+ * 64 s'est révélé trop bas en pratique (bug réel, 2026-08-28) : un vrai combat de type « vague/
+ * brèche » (ennemis qui rejoignent en continu au fil du combat, voir la doc « Invocations » de
+ * CLAUDE.md) a produit 73 participants distincts sur un fichier `wakfu.log` fourni par l'utilisateur
+ * (fightId Wakfu 1680001273, ~89 lignes `[_FL_] ... join the fight` brutes avant dédoublonnage
+ * client) — rejeté par l'API avec `trop de participants (max 64)`. 128 garde une marge confortable
+ * au-dessus de ce cas réel tout en restant une borne de forme (un combat classique en a rarement
+ * plus d'une douzaine).
+ */
+const MAX_PARTICIPANTS_PER_FIGHT = 128;
 const MAX_ITEMS_PER_TRADE = 128;
 /** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
 const MAX_SPELLS_PER_PARTICIPANT = 64;
