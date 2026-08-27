@@ -30,6 +30,8 @@ Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagno
 
 Pour toute tâche avec un effet visuel ou comportemental (CSS, layout, interaction, nouveau composant, tooltip, scroll...), ne jamais se contenter d'une relecture du code : **vérifier réellement dans un navigateur piloté par Playwright** avant de déclarer la tâche terminée. La confiance "ça devrait marcher d'après le CSS" a produit plusieurs faux positifs dans l'historique du projet (ex. z-index du header, clipping de grille CSS, tooltip natif invisible).
 
+**Consigne permanente de l'utilisateur : n'utiliser QUE le serveur MCP Playwright, avec Chrome comme navigateur.** Quand la session s'exécute dans le terminal de l'utilisateur (pas un environnement cloud/sandbox distant sans accès à sa machine), c'est SON Chrome réel qui doit être piloté — pas un binaire Playwright isolé, pas un autre navigateur par convenance. Le repli `playwright-core` documenté plus bas (pointé sur `C:\Program Files\Google\Chrome\Application\chrome.exe`, un VRAI Chrome donc toujours conforme à cette consigne) reste légitime uniquement quand le processus MCP de la session est démontrablement figé sur un autre navigateur (voir plus bas) — jamais un choix par défaut ou de confort.
+
 Démarche standard :
 
 1. `npm start` (ou vérifier que le serveur de dev tourne déjà sur le port 4200).

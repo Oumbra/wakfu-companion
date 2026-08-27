@@ -1,5 +1,18 @@
+/* Un vrai `flex` (pas `display:contents`, contrairement à `HistoryComponent` qui gère lui-même le
+   placement grid de ses volets scindés) : cette carte est toujours un unique panneau, placé par
+   `DashboardComponent` via `[style.grid-column]`/`[style.grid-row]`/`[style.order]` posés sur le
+   HOST `<app-session-recap>` (voir dashboard.component.html) — un host `display:contents` n'a pas
+   de boîte propre, ces styles inline y seraient donc silencieusement ignorés et c'est `.tool-panel`
+   (sans aucun placement propre) qui deviendrait l'item de grille réel, retombant sur un placement
+   automatique au lieu du span demandé. Bug réel corrigé le 2026-08-27 (carte Récap ne prenait pas
+   toute la largeur quand elle était la seule carte visible, contrairement à Combat/Achats/Échanges/
+   Chat) — même principe que `.tool-panel { height: 100% }`, voir styles.css : le host doit avoir
+   une vraie boîte pour que `.tool-panel` (`height:100%`) ait une hauteur de référence. */
 :host {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
 .recap-body {

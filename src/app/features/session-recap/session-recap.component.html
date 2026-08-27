@@ -3,7 +3,10 @@
     <span class="panel-header-label-group">
       <span class="header-label">
         <app-icon name="scroll" [strokeWidth]="1.8" [size]="18" />
-        {{ 'sessionRecap.title' | t }}
+        {{
+          (auth.status() === 'authenticated' ? 'sessionRecap.titleGeneric' : 'sessionRecap.title')
+            | t
+        }}
       </span>
     </span>
     <button

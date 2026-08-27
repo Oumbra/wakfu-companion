@@ -378,6 +378,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.communaute': 'Communauté',
 
     'sessionRecap.title': 'Recap. de la session',
+    // Titre affiché à la place du précédent une fois connecté (voir SessionRecapComponent) : la
+    // carte ne se limite plus au récap de la session de fichier courante (switch Session/Jour/
+    // Mois/Année, voir CLAUDE.md) — "Récap de session" n'aurait alors plus de sens.
+    'sessionRecap.titleGeneric': 'Récap',
     'sessionRecap.duration': 'Durée :',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Gagné',
@@ -969,6 +973,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.communaute': 'Community',
 
     'sessionRecap.title': 'Session Recap',
+    'sessionRecap.titleGeneric': 'Recap',
     'sessionRecap.duration': 'Duration:',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Earned',
@@ -1559,6 +1564,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.communaute': 'Comunidad',
 
     'sessionRecap.title': 'Resumen de sesión',
+    'sessionRecap.titleGeneric': 'Resumen',
     'sessionRecap.duration': 'Duración:',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Ganado',
@@ -2151,6 +2157,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.communaute': 'Comunidade',
 
     'sessionRecap.title': 'Resumo da Sessão',
+    'sessionRecap.titleGeneric': 'Resumo',
     'sessionRecap.duration': 'Duração:',
     'sessionRecap.kamas': 'Kamas',
     'sessionRecap.earned': 'Ganho',
