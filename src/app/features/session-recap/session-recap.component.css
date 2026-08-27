@@ -1,5 +1,17 @@
+/* `display: flex` (pas `contents`, copié à tort du pattern d'HistoryComponent — voir CLAUDE.md) :
+   cette carte est un panneau UNIQUE placé par DashboardComponent via des styles inline
+   (`grid-column`/`grid-row`/`order` posés sur le host, voir dashboard.component.html) — un host
+   `display: contents` n'a pas de boîte propre, ces styles étaient silencieusement ignorés. Même
+   principe que ChatPanelComponent (`:host { display: flex; height: 100% }`). */
 :host {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tool-panel {
+  height: 100%;
 }
 
 .recap-body {
@@ -26,20 +38,62 @@
    qui suit (les deux pilotent ensemble "quelle période afficher"). */
 .recap-period-nav {
   display: flex;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
   margin-top: -6px;
+}
+
+/* Switch Cumulé/Donjon & Famille/Type (voir SessionRecapComponent.detailMode) — même largeur
+   pleine que .recap-period-switch (3 libellés traduits, pas des abréviations). */
+.recap-detail-switch {
+  width: 100%;
+}
+.recap-detail-switch .icon-switch-option {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0 2px;
+  text-align: center;
+  line-height: 1.15;
 }
 
 /* Regroupement par donjon (voir PeriodStats.dungeons) — même principe de liste défilante que
    `.xp-list.expanded` (hauteur plafonnée, scroll interne) plutôt qu'un "voir plus" dédié : le
    nombre de donjons distincts sur une période reste rarement assez grand pour justifier ce
    mécanisme en plus. */
-.dungeon-list {
+/* Accordéon des modes Donjon & Famille/Type (voir SessionRecapComponent.activeGroupRows) — chaque
+   ligne (`.group-item`) est un `.recap-section` (fond/bordure propres, cohérent avec les autres
+   sections repliables de la carte) contenant sa propre ligne d'en-tête (`.dungeon-row`, réutilisée
+   telle quelle) + un caret, et un détail dépliable (`.group-detail`, même principe que
+   `.kama-detail`). Pas de plafond de hauteur (contrairement à l'ancienne liste plate "Par donjon",
+   remplacée par cet accordéon) : `.panel-body` scrolle déjà toute la carte, et une ligne dépliée a
+   besoin de sa pleine hauteur. */
+.group-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 160px;
-  overflow-y: auto;
+  gap: 6px;
+}
+.group-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+.group-row {
+  cursor: pointer;
+}
+.group-row .section-caret {
+  flex-shrink: 0;
+}
+.group-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--surface-active);
 }
 .dungeon-row {
   display: flex;

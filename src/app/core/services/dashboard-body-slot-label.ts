@@ -19,14 +19,22 @@ export function histLabelKey(key: DashboardHistoryKey): string {
  * un seul calcul, `DashboardLayoutService` lui-même ne connaît pas l'i18n (voir sa doc de tête) donc
  * ne peut pas le porter directement. `historyGroup` passé explicitement (pas lu depuis
  * `DashboardLayoutService` ici) pour rester une fonction pure, facile à appeler depuis un `computed`
- * sans dépendance cachée. */
+ * sans dépendance cachée. Idem pour `isAuthenticated` (pas lu depuis `AuthService` ici) : la carte
+ * Récap n'a plus de titre fixe une fois connectée (switch Session/Jour/Mois/Année, "Récap" plutôt
+ * que "Récap. de la session" — voir `sessionRecap.titleGeneric`, même bascule que
+ * `SessionRecapComponent.html`), les deux appelants doivent lui passer `auth.isAuthenticated()`. */
 export function dashboardBodySlotLabel(
   i18n: I18nService,
   historyGroup: Readonly<Record<DashboardHistoryKey, boolean>>,
   key: DashboardBodySlotKey,
+  isAuthenticated: boolean,
 ): string {
   if (key === 'chat') return i18n.t('profile.dashboardLayout.slot.chat');
-  if (key === 'recap') return i18n.t('profile.dashboardLayout.slot.recap');
+  if (key === 'recap') {
+    return isAuthenticated
+      ? i18n.t('sessionRecap.titleGeneric')
+      : i18n.t('profile.dashboardLayout.slot.recap');
+  }
   if (key === 'hist_group') {
     // N'est appelé pour cette clé que quand le regroupement est actif (voir
     // `DashboardLayoutService.activeSlots`, au moins 2 volets cochés) — `grouped` a donc toujours

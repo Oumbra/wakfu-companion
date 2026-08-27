@@ -145,6 +145,26 @@ export class I18nService {
     );
   }
 
+  /** Nom de mois seul, abrégé (ex. "Jan") — grille des 12 cases du mini calendrier de navigation
+   * de période en granularité mois (`PeriodPickerComponent`), où l'année est déjà dans l'en-tête
+   * (voir `formatYear`) et n'a donc pas besoin d'être répétée dans chaque case. */
+  formatMonthShort(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { month: 'short' }).format(
+      new Date(ms),
+    );
+  }
+
+  /** Libellé court du jour de la semaine (ex. "lun.") pour l'en-tête de colonnes de la grille
+   * mensuelle du mini calendrier (`PeriodPickerComponent`) — `dayIndexMonFirst` : 0 = lundi … 6 =
+   * dimanche (convention ISO, alignée sur l'ordre des colonnes de la grille). Calculé sur une
+   * semaine de référence FIXE (5-11 janvier 2026, un lundi-dimanche confirmé) plutôt que dérivé
+   * d'une date réelle courante — le nom d'un jour de semaine ne dépend pas de l'année, pas besoin
+   * d'une vraie date de la période affichée pour ce seul calcul nominal. */
+  formatWeekdayShort(dayIndexMonFirst: number): string {
+    const day = new Date(2026, 0, 5 + dayIndexMonFirst);
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { weekday: 'short' }).format(day);
+  }
+
   /** Même usage que `formatDate` (en-tête de regroupement par jour — combats/achats/échanges),
    * mais avec des termes relatifs pour les 3 derniers jours ("Aujourd'hui"/"Hier"/"Avant-hier"),
    * bien plus parlants qu'une date complète pour ce cas précis. Repli sur `formatDate` au-delà.

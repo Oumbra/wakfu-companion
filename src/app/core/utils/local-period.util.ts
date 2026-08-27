@@ -83,3 +83,35 @@ export function periodBounds(
   const start = addLocalYears(localYearStart(nowMs), offset);
   return { start, end: addLocalYears(start, 1) };
 }
+
+/**
+ * Inverse de `periodBounds` : le `periodOffset` (voir `SessionRecapComponent`) dont la période
+ * CONTIENT `targetMs`, relativement à la période contenant `nowMs` — utilisée par le mini
+ * calendrier de navigation (`PeriodPickerComponent`) pour convertir une date choisie par clic en
+ * un pas de stepper.
+ *
+ * `day` : différence de JOURS CALENDAIRES entre les deux dates, calculée via `Date.UTC(y, m, d)`
+ * sur les deux dates plutôt qu'une simple division de millisecondes — une division directe
+ * casserait autour d'un changement d'heure été/hiver (un jour local peut durer 23h ou 25h, jamais
+ * exactement 24h à ce moment-là) ; `Date.UTC` avec des composants année/mois/jour explicites donne
+ * en revanche un nombre de jours calendaires exact, chaque "jour UTC" valant toujours 24h pile.
+ * `month`/`year` : simple arithmétique sur les composants année/mois (aucun piège de fuseau
+ * horaire à ce niveau de granularité).
+ */
+export function offsetForPeriodStart(
+  granularity: PeriodGranularity,
+  targetMs: number,
+  nowMs: number,
+): number {
+  const target = new Date(targetMs);
+  const now = new Date(nowMs);
+  if (granularity === 'day') {
+    const targetUtc = Date.UTC(target.getFullYear(), target.getMonth(), target.getDate());
+    const nowUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((targetUtc - nowUtc) / 86_400_000);
+  }
+  if (granularity === 'month') {
+    return (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+  }
+  return target.getFullYear() - now.getFullYear();
+}

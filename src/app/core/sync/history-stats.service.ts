@@ -1,6 +1,20 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
 
+/** Totaux d'un groupe de combats (un donjon, ou une famille de monstre) — voir `PeriodStats.
+ * dungeons`/`families`. Contrairement aux sections globales (XP/Kamas/Butin de toute la période),
+ * `xpByCharacter`/`loot` sont ici propres à CE groupe (déjà filtrés côté serveur), pas recalculés
+ * côté client. */
+export interface PeriodGroupTotals {
+  fights: number;
+  won: number;
+  lost: number;
+  kamasGained: number;
+  xpGained: number;
+  xpByCharacter: { name: string; amount: number }[];
+  loot: { itemId: number | null; itemName: string | null; quantity: number }[];
+}
+
 /** Miroir exact de la réponse `GET /api/v1/history/stats?since=&until=` (voir
  * `functions/api/v1/history/stats.ts`) — agrégats SQL, jamais recalculés côté client. */
 export interface PeriodStats {
@@ -22,17 +36,15 @@ export interface PeriodStats {
   };
   xpByCharacter: { name: string; amount: number }[];
   loot: { itemId: number | null; itemName: string | null; quantity: number }[];
-  /** Regroupement des combats de la période par donjon (`dungeonId` = id Ankama, `null` = hors
-   * donjon) — voir `SessionRecapComponent`/`CatalogService.findWakfuDungeonEntryById` pour la
-   * résolution du nom localisé, jamais faite côté serveur. Trié par nombre de combats décroissant. */
-  dungeons: {
-    dungeonId: number | null;
-    fights: number;
-    won: number;
-    lost: number;
-    kamasGained: number;
-    xpGained: number;
-  }[];
+  /** Regroupement des combats de la période par donjon (`dungeonId` = id Ankama, TOUJOURS non-null
+   * ici — le hors-donjon part dans `families` ci-dessous) — voir `SessionRecapComponent`/
+   * `CatalogService.findWakfuDungeonEntryById` pour la résolution du nom localisé, jamais faite
+   * côté serveur. Non trié côté client : le composant retrie selon le mode d'affichage actif. */
+  dungeons: (PeriodGroupTotals & { dungeonId: number })[];
+  /** Regroupement des combats HORS DONJON de la période par famille de monstre représentative
+   * (`familyId` = id `CatalogMonsterFamilyEntry`, `null` = famille inconnue/monstre non catalogué,
+   * voir `functions/api/v1/history/stats.ts` pour comment cette famille est déterminée). */
+  families: (PeriodGroupTotals & { familyId: number | null })[];
 }
 
 /**

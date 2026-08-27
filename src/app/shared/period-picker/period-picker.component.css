@@ -1,0 +1,125 @@
+/* Même z-index que class-picker.component.css (600/601) : les deux pickers "position: fixed" au
+   niveau racine ne s'ouvrent jamais en même temps (aucun appelant commun), la valeur exacte importe
+   surtout face au reste de l'app (`.recap-panel`/`.loot-alert-overlay`, 500). */
+.period-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.4);
+}
+.period-picker {
+  position: fixed;
+  z-index: 601;
+  width: 240px;
+  background: var(--surface-raised);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.period-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.period-picker-page-label {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: capitalize;
+}
+.period-picker-nav-btn {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tint-medium);
+  border: 1px solid var(--tint-strong);
+  border-radius: 4px;
+  color: var(--text-color);
+  font-size: 1rem;
+  line-height: 1;
+}
+.period-picker-nav-btn:hover:not(:disabled) {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.period-picker-nav-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.period-picker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.period-picker-weekday {
+  text-align: center;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.period-picker-grid {
+  display: grid;
+  gap: 3px;
+}
+.period-picker-grid-day {
+  grid-template-columns: repeat(7, 1fr);
+}
+.period-picker-grid-month {
+  grid-template-columns: repeat(4, 1fr);
+}
+.period-picker-grid-year {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.period-picker-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-color);
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+/* Grilles mois/année : cases plus larges que hautes (12/10 libellés, pas de contrainte de grille
+   7 colonnes) — aspect-ratio carré hérité ci-dessus retiré pour ces deux variantes. */
+.period-picker-grid-month .period-picker-cell,
+.period-picker-grid-year .period-picker-cell {
+  aspect-ratio: auto;
+  height: 34px;
+  font-family: inherit;
+  text-transform: capitalize;
+}
+.period-picker-cell:hover:not(:disabled) {
+  background: var(--surface-active);
+  border-color: var(--tint-strong);
+}
+.period-picker-cell.selected {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 700;
+}
+.period-picker-cell:disabled {
+  color: var(--text-muted);
+  opacity: 0.35;
+  cursor: default;
+}
+.period-picker-cell-empty {
+  border: none;
+  pointer-events: none;
+}

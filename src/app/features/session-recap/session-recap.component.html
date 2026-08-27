@@ -3,7 +3,7 @@
     <span class="panel-header-label-group">
       <span class="header-label">
         <app-icon name="scroll" [strokeWidth]="1.8" [size]="18" />
-        {{ 'sessionRecap.title' | t }}
+        {{ (auth.isAuthenticated() ? 'sessionRecap.titleGeneric' : 'sessionRecap.title') | t }}
       </span>
     </span>
     <button
@@ -34,7 +34,7 @@
   <div class="panel-body recap-body">
     <!-- Switch Session/Jour/Mois/Année : n'a de sens que pour un compte connecté, voir CLAUDE.md
          (aucune donnée persistante au-delà de la session de fichier courante en mode invité). -->
-    @if (auth.status() === 'authenticated') {
+    @if (auth.isAuthenticated()) {
       <div class="icon-switch icon-switch-4 recap-period-switch">
         <span
           class="icon-switch-highlight"
@@ -79,7 +79,9 @@
 
     <!-- Navigation vers une période PASSÉE (jour/mois/année précédent) — n'a de sens que hors
          'session' (le fichier connecté n'a qu'une seule "période", la session en cours elle-même).
-         `[max]="0"` : jamais de période future, `app-stepper` borne déjà `valueChange` en interne. -->
+         `[max]="0"` : jamais de période future, `app-stepper` borne déjà `valueChange` en interne.
+         Le bouton calendrier complète le stepper (un pas à la fois) pour rejoindre une période
+         éloignée sans multiplier les clics — voir PeriodPickerService. -->
     @if (granularity() !== 'session') {
       <div class="recap-period-nav">
         <app-stepper
@@ -91,6 +93,49 @@
           [nextTooltip]="'sessionRecap.period.next' | t"
           (valueChange)="onOffsetChange($event)"
         />
+        <button
+          type="button"
+          class="icon-btn"
+          [appTooltip]="'sessionRecap.period.pickDate' | t"
+          (click)="openPeriodPicker($event)"
+        >
+          <app-icon name="calendar" [size]="16" [strokeWidth]="1.8" />
+        </button>
+      </div>
+
+      <!-- Switch Cumulé/Donjon & Famille/Type : regroupement de la période affichée, voir
+           CLAUDE.md. En mode Cumulé, le bloc ci-dessous reproduit exactement l'ancien affichage
+           (XP/Kamas/Combats/Butin globaux) ; les deux autres modes le REMPLACENT par un accordéon. -->
+      <div class="icon-switch icon-switch-3 recap-detail-switch">
+        <span
+          class="icon-switch-highlight"
+          [class.is-right]="detailMode() === 'byGroup'"
+          [class.is-far-right]="detailMode() === 'byType'"
+        ></span>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="detailMode() === 'cumulative'"
+          (click)="setDetailMode('cumulative')"
+        >
+          {{ 'sessionRecap.detail.cumulative' | t }}
+        </button>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="detailMode() === 'byGroup'"
+          (click)="setDetailMode('byGroup')"
+        >
+          {{ 'sessionRecap.detail.byGroup' | t }}
+        </button>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [class.selected]="detailMode() === 'byType'"
+          (click)="setDetailMode('byType')"
+        >
+          {{ 'sessionRecap.detail.byType' | t }}
+        </button>
       </div>
     }
 
@@ -257,203 +302,253 @@
       } @else if (historyStats.failed()) {
         <div class="empty-state small">{{ 'sessionRecap.period.error' | t }}</div>
       } @else if (historyStats.stats(); as period) {
-        <div class="recap-section">
-          <div class="recap-section-header">
-            <img [src]="xpIcon" class="section-icon" alt="" />
-            <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
-          </div>
-          @if (period.xpByCharacter.length === 0) {
-            <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
-          } @else {
-            <div class="xp-list expanded">
-              @for (row of period.xpByCharacter; track row.name; let first = $first) {
-                <div
-                  class="xp-row"
-                  [appTooltip]="'damageMeter.classHint' | t"
-                  [tooltipPosition]="first ? 'bottom' : 'top'"
-                >
-                  <app-entity-icon [name]="row.name" side="ally" />
-                  <span class="xp-name">{{ row.name }}</span>
-                  <span class="xp-amount">+{{ row.amount | numberFr }}</span>
-                </div>
-              }
+        @if (detailMode() === 'cumulative') {
+          <div class="recap-section">
+            <div class="recap-section-header">
+              <img [src]="xpIcon" class="section-icon" alt="" />
+              <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
             </div>
-          }
-        </div>
-
-        <div class="recap-section">
-          <div class="recap-section-header clickable" (click)="toggleKamas()">
-            <img [src]="kamasIcon" class="section-icon" alt="" />
-            <span>{{ 'sessionRecap.kamas' | t }}</span>
-            <span class="section-header-value gold"
-              >{{ periodKamasEarned(period) - periodKamasLost(period) | numberFr }} ₭</span
-            >
-            <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
+            @if (period.xpByCharacter.length === 0) {
+              <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
+            } @else {
+              <div class="xp-list expanded">
+                @for (row of period.xpByCharacter; track row.name; let first = $first) {
+                  <div
+                    class="xp-row"
+                    [appTooltip]="'damageMeter.classHint' | t"
+                    [tooltipPosition]="first ? 'bottom' : 'top'"
+                  >
+                    <app-entity-icon [name]="row.name" side="ally" />
+                    <span class="xp-name">{{ row.name }}</span>
+                    <span class="xp-amount">+{{ row.amount | numberFr }}</span>
+                  </div>
+                }
+              </div>
+            }
           </div>
-          @if (kamasExpanded()) {
-            <div class="kama-detail">
-              <div class="recap-row">
-                <span class="recap-label">{{ 'sessionRecap.period.kamasFromCombat' | t }}</span>
-                <span class="recap-value gain">+{{ period.kamas.fromCombat | numberFr }} ₭</span>
-              </div>
-              <div class="recap-row">
-                <span class="recap-label">{{ 'sessionRecap.period.kamasFromHdvSales' | t }}</span>
-                <span class="recap-value gain">+{{ period.kamas.fromHdvSales | numberFr }} ₭</span>
-              </div>
-              <div class="recap-row">
-                <span class="recap-label">{{
-                  'sessionRecap.period.kamasSpentOnPurchases' | t
-                }}</span>
-                <span class="recap-value loss"
-                  >-{{ period.kamas.spentOnPurchases | numberFr }} ₭</span
-                >
-              </div>
-              <div class="recap-row">
-                <span class="recap-label">{{
-                  'sessionRecap.period.kamasTrades' | t: { count: period.kamas.tradeCount }
-                }}</span>
-                <span
-                  class="recap-value"
-                  [class.gain]="period.kamas.tradesAcquired - period.kamas.tradesGiven >= 0"
-                  [class.loss]="period.kamas.tradesAcquired - period.kamas.tradesGiven < 0"
-                >
-                  {{ period.kamas.tradesAcquired - period.kamas.tradesGiven >= 0 ? '+' : '' }}
-                  {{ period.kamas.tradesAcquired - period.kamas.tradesGiven | numberFr }} ₭
-                </span>
-              </div>
+
+          <div class="recap-section">
+            <div class="recap-section-header clickable" (click)="toggleKamas()">
+              <img [src]="kamasIcon" class="section-icon" alt="" />
+              <span>{{ 'sessionRecap.kamas' | t }}</span>
+              <span class="section-header-value gold"
+                >{{ periodKamasEarned(period) - periodKamasLost(period) | numberFr }} ₭</span
+              >
+              <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
             </div>
-          }
-        </div>
-
-        <div class="recap-section">
-          <div class="recap-section-header clickable" (click)="toggleCombats()">
-            <img [src]="combatIcon" class="section-icon" alt="" />
-            <span>{{ 'sessionRecap.combats' | t }}</span>
-            <span class="section-header-value">{{
-              period.combats.won + period.combats.lost | numberFr
-            }}</span>
-            <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
-          </div>
-          @if (combatsExpanded()) {
-            <div class="kama-detail">
-              <div class="split-row">
-                <div class="split-part">
-                  <span class="split-value gain">{{ period.combats.won }}</span>
-                  <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
+            @if (kamasExpanded()) {
+              <div class="kama-detail">
+                <div class="recap-row">
+                  <span class="recap-label">{{ 'sessionRecap.period.kamasFromCombat' | t }}</span>
+                  <span class="recap-value gain">+{{ period.kamas.fromCombat | numberFr }} ₭</span>
                 </div>
-                <span class="split-sep">|</span>
-                <div class="split-part">
-                  <span class="split-value loss">{{ period.combats.lost }}</span>
-                  <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
+                <div class="recap-row">
+                  <span class="recap-label">{{ 'sessionRecap.period.kamasFromHdvSales' | t }}</span>
+                  <span class="recap-value gain"
+                    >+{{ period.kamas.fromHdvSales | numberFr }} ₭</span
+                  >
+                </div>
+                <div class="recap-row">
+                  <span class="recap-label">{{
+                    'sessionRecap.period.kamasSpentOnPurchases' | t
+                  }}</span>
+                  <span class="recap-value loss"
+                    >-{{ period.kamas.spentOnPurchases | numberFr }} ₭</span
+                  >
+                </div>
+                <div class="recap-row">
+                  <span class="recap-label">{{
+                    'sessionRecap.period.kamasTrades' | t: { count: period.kamas.tradeCount }
+                  }}</span>
+                  <span
+                    class="recap-value"
+                    [class.gain]="period.kamas.tradesAcquired - period.kamas.tradesGiven >= 0"
+                    [class.loss]="period.kamas.tradesAcquired - period.kamas.tradesGiven < 0"
+                  >
+                    {{ period.kamas.tradesAcquired - period.kamas.tradesGiven >= 0 ? '+' : '' }}
+                    {{ period.kamas.tradesAcquired - period.kamas.tradesGiven | numberFr }} ₭
+                  </span>
                 </div>
               </div>
-              <div class="challenges-block">
-                <div class="challenges-title">
-                  <img [src]="challengesIcon" class="section-icon" alt="" />
-                  <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
-                </div>
-                <div class="challenges-sep"></div>
+            }
+          </div>
+
+          <div class="recap-section">
+            <div class="recap-section-header clickable" (click)="toggleCombats()">
+              <img [src]="combatIcon" class="section-icon" alt="" />
+              <span>{{ 'sessionRecap.combats' | t }}</span>
+              <span class="section-header-value">{{
+                period.combats.won + period.combats.lost | numberFr
+              }}</span>
+              <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
+            </div>
+            @if (combatsExpanded()) {
+              <div class="kama-detail">
                 <div class="split-row">
                   <div class="split-part">
-                    <span class="split-value gain">{{ period.combats.challengesPassed }}</span>
-                    <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
+                    <span class="split-value gain">{{ period.combats.won }}</span>
+                    <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
                   </div>
                   <span class="split-sep">|</span>
                   <div class="split-part">
-                    <span class="split-value loss">{{ period.combats.challengesFailed }}</span>
-                    <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
+                    <span class="split-value loss">{{ period.combats.lost }}</span>
+                    <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
                   </div>
                 </div>
-              </div>
+                <div class="challenges-block">
+                  <div class="challenges-title">
+                    <img [src]="challengesIcon" class="section-icon" alt="" />
+                    <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
+                  </div>
+                  <div class="challenges-sep"></div>
+                  <div class="split-row">
+                    <div class="split-part">
+                      <span class="split-value gain">{{ period.combats.challengesPassed }}</span>
+                      <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
+                    </div>
+                    <span class="split-sep">|</span>
+                    <div class="split-part">
+                      <span class="split-value loss">{{ period.combats.challengesFailed }}</span>
+                      <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
+                    </div>
+                  </div>
+                </div>
 
-              <div class="recap-loot-block">
-                <div class="loot-header-row">
-                  <div class="loot-header-main">
-                    <div class="loot-header-left">
-                      <img [src]="lootIcon" class="collapsible-icon" alt="" />
-                      <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
-                      @if (period.loot.length > 0) {
-                        <span class="loot-count"
-                          >{{ period.loot.length }} {{ 'damageMeter.items' | t }}</span
-                        >
+                <div class="recap-loot-block">
+                  <div class="loot-header-row">
+                    <div class="loot-header-main">
+                      <div class="loot-header-left">
+                        <img [src]="lootIcon" class="collapsible-icon" alt="" />
+                        <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
+                        @if (period.loot.length > 0) {
+                          <span class="loot-count"
+                            >{{ period.loot.length }} {{ 'damageMeter.items' | t }}</span
+                          >
+                        }
+                      </div>
+                      <!-- Copie jumelle du switch de tri de la vue Session ci-dessus — voir son
+                         commentaire. -->
+                      @if (period.loot.length > 1) {
+                        <div class="icon-switch icon-switch-3 loot-sort-switch">
+                          <span
+                            class="icon-switch-highlight"
+                            [class.is-right]="lootSort() === 'quantity'"
+                            [class.is-far-right]="lootSort() === 'rarity'"
+                          ></span>
+                          <button
+                            type="button"
+                            class="icon-switch-option loot-sort-switch-option"
+                            [class.selected]="lootSort() === 'name'"
+                            [appTooltip]="lootSortTooltip('name')"
+                            (click)="setLootSort('name')"
+                          >
+                            Az
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-switch-option loot-sort-switch-option"
+                            [class.selected]="lootSort() === 'quantity'"
+                            [appTooltip]="lootSortTooltip('quantity')"
+                            (click)="setLootSort('quantity')"
+                          >
+                            Nb
+                          </button>
+                          <button
+                            type="button"
+                            class="icon-switch-option loot-sort-switch-option"
+                            [class.selected]="lootSort() === 'rarity'"
+                            [appTooltip]="lootSortTooltip('rarity')"
+                            (click)="setLootSort('rarity')"
+                          >
+                            <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                          </button>
+                        </div>
                       }
                     </div>
-                    <!-- Copie jumelle du switch de tri de la vue Session ci-dessus — voir son
-                         commentaire. -->
-                    @if (period.loot.length > 1) {
-                      <div class="icon-switch icon-switch-3 loot-sort-switch">
-                        <span
-                          class="icon-switch-highlight"
-                          [class.is-right]="lootSort() === 'quantity'"
-                          [class.is-far-right]="lootSort() === 'rarity'"
-                        ></span>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'name'"
-                          [appTooltip]="lootSortTooltip('name')"
-                          (click)="setLootSort('name')"
-                        >
-                          Az
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'quantity'"
-                          [appTooltip]="lootSortTooltip('quantity')"
-                          (click)="setLootSort('quantity')"
-                        >
-                          Nb
-                        </button>
-                        <button
-                          type="button"
-                          class="icon-switch-option loot-sort-switch-option"
-                          [class.selected]="lootSort() === 'rarity'"
-                          [appTooltip]="lootSortTooltip('rarity')"
-                          (click)="setLootSort('rarity')"
-                        >
-                          <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
-                        </button>
-                      </div>
-                    }
+                  </div>
+                  <div class="loot-body">
+                    <app-loot-list [items]="sortedPeriodLoot()" emptyVariant="recap" />
                   </div>
                 </div>
-                <div class="loot-body">
-                  <app-loot-list [items]="sortedPeriodLoot()" emptyVariant="recap" />
-                </div>
               </div>
-            </div>
-          }
-        </div>
-
-        <div class="recap-section">
-          <div class="recap-section-header">
-            <img [src]="combatIcon" class="section-icon" alt="" />
-            <span>{{ 'sessionRecap.period.byDungeon' | t }}</span>
+            }
           </div>
-          @if (period.dungeons.length === 0) {
+        } @else {
+          <!-- Modes Donjon & Famille/Type : REMPLACE les sections XP/Kamas/Combats/Butin globales
+               ci-dessus par un accordéon — voir SessionRecapComponent.activeGroupRows. -->
+          @if (activeGroupRows().length === 0) {
             <div class="empty-state small">{{ 'sessionRecap.period.noDungeons' | t }}</div>
           } @else {
-            <div class="dungeon-list">
-              @for (row of period.dungeons; track row.dungeonId) {
-                <div class="dungeon-row">
-                  <span
-                    class="dungeon-name"
-                    [appTooltip]="dungeonLabel(row.dungeonId)"
-                    [tooltipOnlyIfTruncated]="true"
-                    >{{ dungeonLabel(row.dungeonId) }}</span
-                  >
-                  <span class="dungeon-count">{{ row.fights }}×</span>
-                  <span class="dungeon-wl"
-                    ><span class="gain">{{ row.won }}</span
-                    >/<span class="loss">{{ row.lost }}</span></span
-                  >
-                  <span class="dungeon-kamas">+{{ row.kamasGained | numberFr }} ₭</span>
+            <div class="group-list">
+              @for (row of activeGroupRows(); track row.key) {
+                <div class="group-item">
+                  <div class="dungeon-row group-row" (click)="toggleGroup(row.key)">
+                    <span class="section-caret" [class.expanded]="isGroupExpanded(row.key)">▸</span>
+                    <span
+                      class="dungeon-name"
+                      [appTooltip]="row.label"
+                      [tooltipOnlyIfTruncated]="true"
+                      >{{ row.label }}</span
+                    >
+                    <span class="dungeon-count">{{ row.totals.fights }}×</span>
+                    <span class="dungeon-wl"
+                      ><span class="gain">{{ row.totals.won }}</span
+                      >/<span class="loss">{{ row.totals.lost }}</span></span
+                    >
+                    <span class="dungeon-kamas">+{{ row.totals.kamasGained | numberFr }} ₭</span>
+                  </div>
+                  @if (isGroupExpanded(row.key)) {
+                    <div class="group-detail">
+                      <div class="recap-section-header">
+                        <img [src]="xpIcon" class="section-icon" alt="" />
+                        <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
+                      </div>
+                      @if (row.totals.xpByCharacter.length === 0) {
+                        <div class="empty-state small">{{ 'sessionRecap.noXp' | t }}</div>
+                      } @else {
+                        <div class="xp-list expanded">
+                          @for (xp of row.totals.xpByCharacter; track xp.name; let first = $first) {
+                            <div
+                              class="xp-row"
+                              [appTooltip]="'damageMeter.classHint' | t"
+                              [tooltipPosition]="first ? 'bottom' : 'top'"
+                            >
+                              <app-entity-icon [name]="xp.name" side="ally" />
+                              <span class="xp-name">{{ xp.name }}</span>
+                              <span class="xp-amount">+{{ xp.amount | numberFr }}</span>
+                            </div>
+                          }
+                        </div>
+                      }
+
+                      <div class="recap-loot-block">
+                        <div class="loot-header-row">
+                          <div class="loot-header-main">
+                            <div class="loot-header-left">
+                              <img [src]="lootIcon" class="collapsible-icon" alt="" />
+                              <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
+                              @if (row.totals.loot.length > 0) {
+                                <span class="loot-count"
+                                  >{{ row.totals.loot.length }} {{ 'damageMeter.items' | t }}</span
+                                >
+                              }
+                            </div>
+                          </div>
+                        </div>
+                        <div class="loot-body">
+                          <app-loot-list
+                            [items]="sortedGroupLoot(row.totals)"
+                            emptyVariant="recap"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  }
                 </div>
               }
             </div>
           }
-        </div>
+        }
       }
     }
   </div>
