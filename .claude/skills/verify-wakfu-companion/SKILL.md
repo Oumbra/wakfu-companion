@@ -18,6 +18,13 @@ Si le port 4200 est déjà occupé par un `node.exe` non suivi par l'outil (arri
 
 ## ⚠️ Vérifier le navigateur RÉELLEMENT piloté avant toute conclusion
 
+**Consigne permanente de l'utilisateur : n'utiliser QUE le serveur MCP Playwright, avec Chrome.**
+Dans le terminal de l'utilisateur, c'est SON Chrome réel (`C:\Program Files\Google\Chrome\Application\chrome.exe`)
+qui doit être piloté — jamais un autre navigateur ni un repli `playwright-core` par confort. Ce repli
+(voir plus bas) ne se justifie que lorsque le processus MCP de la session est démontrablement figé sur
+un autre navigateur (vérifié via `navigator.userAgent`, jamais supposé) ; dans ce cas il pointe lui
+aussi sur le même Chrome réel, donc reste conforme à la consigne.
+
 L'app dépend de l'API File System Access (voir plus bas), absente de Firefox — tout ce qui touche
 réellement `LogFileAccessService`/le sélecteur de fichier n'a de sens QUE sous Chrome/Chromium.
 Piège vécu deux fois (2026-08-25 et 2026-08-26, la seconde fois découvert par l'utilisateur via des
