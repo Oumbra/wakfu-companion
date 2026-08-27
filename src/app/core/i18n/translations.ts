@@ -378,6 +378,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'chat.channel.communaute': 'Communauté',
 
     'sessionRecap.title': 'Recap. de la session',
+    // Titre affiché à la place du précédent une fois connecté (voir SessionRecapComponent) : la
+    // carte ne se limite plus au récap de la session de fichier courante (switch Session/Jour/
+    // Mois/Année, voir CLAUDE.md) — "Récap de session" n'aurait alors plus de sens.
     'sessionRecap.titleGeneric': 'Récap',
     'sessionRecap.duration': 'Durée :',
     'sessionRecap.kamas': 'Kamas',
@@ -405,7 +408,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.kamasTrades': 'Échanges ({{count}})',
     'sessionRecap.period.prev': 'Période précédente',
     'sessionRecap.period.next': 'Période suivante',
-    'sessionRecap.period.byDungeon': 'Par donjon',
     'sessionRecap.period.noDungeon': 'Hors donjon',
     'sessionRecap.period.noDungeons': 'Aucun combat sur cette période.',
     'sessionRecap.period.noFamily': 'Famille inconnue',
@@ -1011,7 +1013,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.kamasTrades': 'Trades ({{count}})',
     'sessionRecap.period.prev': 'Previous period',
     'sessionRecap.period.next': 'Next period',
-    'sessionRecap.period.byDungeon': 'By dungeon',
     'sessionRecap.period.noDungeon': 'No dungeon',
     'sessionRecap.period.noDungeons': 'No fights in this period.',
     'sessionRecap.period.noFamily': 'Unknown family',
@@ -1616,7 +1617,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.kamasTrades': 'Intercambios ({{count}})',
     'sessionRecap.period.prev': 'Período anterior',
     'sessionRecap.period.next': 'Período siguiente',
-    'sessionRecap.period.byDungeon': 'Por mazmorra',
     'sessionRecap.period.noDungeon': 'Sin mazmorra',
     'sessionRecap.period.noDungeons': 'Ningún combate en este período.',
     'sessionRecap.period.noFamily': 'Familia desconocida',
@@ -2223,7 +2223,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'sessionRecap.period.kamasTrades': 'Trocas ({{count}})',
     'sessionRecap.period.prev': 'Período anterior',
     'sessionRecap.period.next': 'Próximo período',
-    'sessionRecap.period.byDungeon': 'Por masmorra',
     'sessionRecap.period.noDungeon': 'Sem masmorra',
     'sessionRecap.period.noDungeons': 'Nenhuma luta neste período.',
     'sessionRecap.period.noFamily': 'Família desconhecida',
