@@ -65,6 +65,14 @@
     />
   }
 
+  @if (periodPickerService.request(); as req) {
+    <app-period-picker
+      [position]="req"
+      (picked)="onPeriodPicked($event)"
+      (closed)="periodPickerService.close()"
+    />
+  }
+
   @if (damageReassignService.request(); as req) {
     <app-damage-reassign-picker
       [request]="req"

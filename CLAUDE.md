@@ -250,6 +250,91 @@ calendaire (jour/mois/année **civils**, jamais glissants).
   arrêts, ventilation kamas/combats/défis/butin (résolution de nom par catalogue incluse) affichée
   correctement, état de chargement et d'erreur réseau.
 
+## Carte Récap : titre dynamique, largeur, regroupement Donjon & Famille/Type, mini calendrier
+
+Ajouté/corrigé le 2026-08-27, suite à 4 retours utilisateur après test réel de la carte Récap :
+
+- **Titre dynamique** — `sessionRecap.title` ("Recap. de la session") en invité,
+  `sessionRecap.titleGeneric` ("Récap") une fois connecté, le nom "session" n'ayant plus de sens
+  une fois le switch Jour/Mois/Année en place. Propagé aux DEUX autres endroits qui affichent le
+  même libellé (`dashboardBodySlotLabel`, `core/services/dashboard-body-slot-label.ts` — fonction
+  pure partagée par `DashboardRailComponent` ET `DashboardLayoutPickerComponent`) via un nouveau
+  paramètre `isAuthenticated: boolean` passé explicitement (même principe que `historyGroup`, voir
+  sa doc de tête) plutôt que lu depuis `AuthService` à l'intérieur de la fonction — les deux
+  appelants injectent `AuthService` et lui passent `auth.isAuthenticated()`.
+- **Bug de largeur** — `SessionRecapComponent` avait `:host { display: contents }` (copié à tort du
+  pattern d'`HistoryComponent`, qui gère lui-même son placement grid) alors que cette carte est un
+  panneau UNIQUE placé par `DashboardComponent` via des styles inline (`grid-column`/`grid-row`/
+  `order` posés sur le host, voir `dashboard.component.html`) — un host `display: contents` n'a pas
+  de boîte propre, ces styles étaient silencieusement ignorés. Passé à `display: flex; height: 100%`
+  (même principe que `ChatPanelComponent`) — vérifié : la carte prend maintenant toute la largeur
+  disponible quand elle est seule visible (les autres cartes repliées).
+- **Regroupement Donjon & Famille/Type** — nouveau switch 3 positions (`detailMode`, réinitialisé à
+  `'cumulative'` par `setGranularity`) affiché uniquement hors vue Session : `'cumulative'`
+  reproduit exactement l'ancien affichage (XP/Kamas/Combats/Butin globaux, INCHANGÉ) ; `'byGroup'`/
+  `'byType'` le REMPLACENT par un accordéon (une section par ligne, repliée par défaut, détail
+  XP/butin propre à la ligne).
+  - `'byGroup'` ("Donjon & Famille") : une ligne par donjon précis + une ligne par famille de
+    monstre représentative pour les combats hors donjon (avant, tous fourrus dans un seul "Hors
+    donjon" plat sans détail propre). Deux tableaux distincts côté serveur (`PeriodStats.dungeons`/
+    `families`, jamais le même id des deux côtés), simplement concaténés puis triés par nombre de
+    combats décroissant côté client.
+  - `'byType'` : les 8 `WakfuDungeonType` fusionnés chacun en une seule ligne (peu importe le
+    donjon précis) + une ligne "Autres" fusionnant TOUTE `period.families` — calculé côté CLIENT
+    (`mergeGroupTotals`, `core/utils/period-group-merge.util.ts`) à partir des mêmes données que
+    "Donjon & Famille", aucune requête serveur supplémentaire. Un donjon dont l'id n'est pas
+    résolu par `CatalogService.findWakfuDungeonEntryById` (référentiel pas à jour) est simplement
+    ignoré ici plutôt que de faire échouer tout le regroupement — vérifié en navigateur en
+    patchant temporairement `CatalogService` (le référentiel réel n'est pas accessible dans ce
+    sandbox sans base Neon, voir plus bas).
+  - Backend (`functions/api/v1/history/stats.ts`) : la requête `dungeons` existante gagne un filtre
+    `dungeonId IS NOT NULL` (le hors-donjon part désormais dans `families`, plus dans une ligne
+    `dungeonId: null` de cette même requête) et deux nouvelles requêtes (`dungeonLoot`/`dungeonXp`,
+    même filtre) rejointes en JS par `dungeonId` (jamais en SQL — une jointure directe aurait
+    multiplié les lignes de totaux par le nombre de lignes de butin/XP, faussant les sommes).
+    "Famille représentative d'un combat hors donjon" : sous-requête dérivée (`familyPerFight`,
+    fragment `sql` interpolé, jamais matérialisé seul) reproduisant la même priorité que
+    `resolveFightTypeClassification` (client, `fight-image.util.ts`) : boss > archimonstre >
+    dominant > plus gros dégât, via `DISTINCT ON (fight_id)` — pas de support `selectDistinctOn`
+    dans la version de drizzle-orm utilisée ici (pg-core), d'où un `db.execute(sql\`...\`)` brut
+    (comme `functions/api/v1/health.ts`) plutôt qu'un enchaînement de query builder Drizzle pour
+    les 3 requêtes qui en dépendent (`families`/`familyLoot`/`familyXp`). Approximation acceptée
+    (voir demande utilisateur) : le repli générique "horde hétérogène >3 familles" de la version
+    client n'est pas reproduit côté SQL, ces combats tombent simplement dans la famille du
+    participant le mieux classé.
+- **Mini calendrier de navigation** (icône 📅, `PeriodPickerService`/`PeriodPickerComponent`,
+  `shared/period-picker/`) — complète le stepper `‹ label ›` existant (qui reste en place pour les
+  petits pas) : ouvre une grille selon la granularité active (jour → mois de 7 colonnes, mois → 12
+  cases d'une année, année → 10 cases d'une décennie), prev/next navigue par page (mois/année/
+  décennie) sans changer la sélection tant qu'aucune cellule n'est cliquée. Cellule hors bornes
+  `[OFFSET_MIN[g], 0]` désactivée (jamais masquée). Même pattern que `ClassPickerService` (rendu
+  une seule fois au niveau racine, `app.html`, hors de tout ancêtre `transform` — voir gotcha dédié
+  plus bas) plutôt que niché localement dans `SessionRecapComponent`.
+  - `offsetForPeriodStart` (`core/utils/local-period.util.ts`) : inverse de `periodBounds`, convertit
+    une date cliquée en pas de stepper. `day` : différence de JOURS CALENDAIRES via `Date.UTC(y,m,d)`
+    sur les deux dates plutôt qu'une division de ms directe (casserait autour d'un changement
+    d'heure été/hiver, un jour local pouvant durer 23h/25h à ce moment) ; `month`/`year` : simple
+    arithmétique sur les composants.
+  - Noms de mois/jours de semaine : deux nouvelles méthodes `I18nService.formatMonthShort`/
+    `formatWeekdayShort` (`Intl.DateTimeFormat` avec la locale courante), plutôt qu'une locale de
+    calendrier maison — `formatWeekdayShort` calculée sur une semaine de référence FIXE (5-11
+    janvier 2026, un lundi-dimanche confirmé) puisque le nom d'un jour de semaine ne dépend pas de
+    l'année.
+- Vérifié en navigateur (Chromium réel, `playwright-core` — pas de serveur MCP `playwright`
+  disponible dans CET environnement d'exécution distant/cloud, contrairement au poste local décrit
+  plus loin dans ce fichier) avec un compte connecté simulé et `/api/v1/history/stats` intercepté
+  (fixture avec 2 donjons + 2 familles) : titre "Récap" une fois authentifié (carte ET rail replié
+  ET Profil › Personnalisation), carte prenant toute la largeur seule visible, switch Cumulé/
+  Donjon & Famille/Type masqué en session, mode Cumulé visuellement identique à avant, mode Donjon
+  & Famille listant les 4 groupes triés par nombre de combats (labels de repli "Hors donjon"/
+  "Famille inconnue" tant que `CatalogService` n'a pas résolu les ids — confirmé en patchant
+  temporairement le service pour simuler une résolution réussie, seule façon de tester ce chemin
+  sans base Neon réelle dans ce sandbox), ligne dépliée montrant XP/butin propres au groupe, mode
+  Type fusionnant correctement en 3 buckets ("4 salles"/"2 salles"/"Autres") avec des totaux
+  recalculés exacts, calendrier affichant août 2026 en surbrillance avec septembre-décembre
+  désactivés (bornes correctes), clic sur "mars" déclenchant bien `since=2026-03-01T00:00:00.000Z&
+  until=2026-04-01T00:00:00.000Z`.
+
 ## Invocations : traitées comme des sorts de leur invocateur, jamais comme des combattants à part
 
 Deux bugs distincts, découverts et corrigés ensemble le 2026-08-24 sur un vrai `wakfu.log` fourni par

@@ -1,4 +1,13 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   LootRow,
   SESSION_LIVE_TICK_GRACE_MS,
@@ -27,18 +36,24 @@ import {
   nextLootSortState,
   sortLootRows,
 } from '../../core/utils/loot-sort.util';
-import { CatalogService } from '../../core/api/catalog.service';
+import { CatalogService, WakfuDungeonType } from '../../core/api/catalog.service';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { AuthService } from '../../core/auth/auth.service';
-import { HistoryStatsService, PeriodStats } from '../../core/sync/history-stats.service';
+import {
+  HistoryStatsService,
+  PeriodGroupTotals,
+  PeriodStats,
+} from '../../core/sync/history-stats.service';
 import { resolveItemName } from '../../core/sync/history-archive.service';
 import { PeriodGranularity, periodBounds } from '../../core/utils/local-period.util';
+import { mergeGroupTotals } from '../../core/utils/period-group-merge.util';
 import { StepperComponent } from '../../shared/stepper/stepper.component';
+import { PeriodPickerService } from '../../core/services/period-picker.service';
 
 /** Granularité du switch Session/Jour/Mois/Année — voir `setGranularity`. `'session'` (défaut)
  * reste piloté par `StatsStoreService` (contenu du fichier connecté, inchangé) ; les trois autres
  * agrègent côté compte via `HistoryStatsService` (voir `functions/api/v1/history/stats.ts`), donc
- * uniquement pertinentes pour un utilisateur connecté (voir template, `auth.status()`). */
+ * uniquement pertinentes pour un utilisateur connecté (voir template, `auth.isAuthenticated()`). */
 type Granularity = 'session' | PeriodGranularity;
 
 /** Borne basse (en pas de `periodOffset`, voir `setGranularity`/`onOffsetChange`) du stepper de
@@ -50,6 +65,44 @@ const OFFSET_MIN: Record<PeriodGranularity, number> = {
   month: -120, // 10 ans
   year: -50,
 };
+
+/** Mode d'affichage du détail Jour/Mois/Année (voir `detailMode`) — `'cumulative'` (défaut, switch
+ * réinitialisé à chaque changement de granularité) reproduit exactement l'ancien affichage (XP/
+ * Kamas/Combats/Butin globaux de la période) ; `'byGroup'`/`'byType'` le REMPLACENT par une liste
+ * accordéon (voir `activeGroupRows`) plutôt que de s'y ajouter. */
+type DetailMode = 'cumulative' | 'byGroup' | 'byType';
+
+/** Ordre d'itération stable des 8 `WakfuDungeonType` pour le mode "Type" — voir `typeRows`. */
+const DUNGEON_TYPES: readonly WakfuDungeonType[] = [
+  'TWO_ROOMS',
+  'THREE_ROOMS',
+  'FOUR_ROOMS',
+  'THREE_PLAYERS',
+  'ULTIMATE_BOSS',
+  'BREACH',
+  'ULTIMATE_BREACH',
+  'ARCADE',
+];
+
+const DUNGEON_TYPE_KEY: Record<WakfuDungeonType, string> = {
+  TWO_ROOMS: 'sessionRecap.period.dungeonType.twoRooms',
+  THREE_ROOMS: 'sessionRecap.period.dungeonType.threeRooms',
+  FOUR_ROOMS: 'sessionRecap.period.dungeonType.fourRooms',
+  THREE_PLAYERS: 'sessionRecap.period.dungeonType.threePlayers',
+  ULTIMATE_BOSS: 'sessionRecap.period.dungeonType.ultimateBoss',
+  BREACH: 'sessionRecap.period.dungeonType.breach',
+  ULTIMATE_BREACH: 'sessionRecap.period.dungeonType.ultimateBreach',
+  ARCADE: 'sessionRecap.period.dungeonType.arcade',
+};
+
+/** Ligne unifiée de l'accordéon "Donjon & Famille"/"Type" (voir `groupRows`/`typeRows`) — `key`
+ * sert au `track` du `@for` ET à l'état déplié/replié (`expandedGroups`), `totals` porte les
+ * agrégats propres à CE groupe (voir `PeriodGroupTotals`), déjà résolus côté serveur. */
+interface RecapGroupRow {
+  key: string;
+  label: string;
+  totals: PeriodGroupTotals;
+}
 
 /**
  * Carte du dashboard "Récap de session" — au même titre que Combats/Achats/Échanges/Chat (voir
@@ -92,12 +145,22 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   private readonly classPickerService = inject(ClassPickerService);
   protected readonly auth = inject(AuthService);
   protected readonly historyStats = inject(HistoryStatsService);
+  private readonly periodPickerService = inject(PeriodPickerService);
 
   protected readonly granularity = signal<Granularity>('session');
   /** Pas courant dans le stepper de navigation par période — `0` = période EN COURS (jour/mois/
    * année contenant maintenant), négatif = passé (voir `periodBounds`). Toujours réinitialisé à
    * `0` par `setGranularity` : changer de granularité repart de la période courante. */
   protected readonly periodOffset = signal(0);
+
+  /** Mode d'affichage du détail (voir `DetailMode`) — réinitialisé à `'cumulative'` par
+   * `setGranularity`, même logique que `periodOffset` : changer de granularité repart toujours du
+   * mode Cumulé. */
+  protected readonly detailMode = signal<DetailMode>('cumulative');
+  /** Clés (`RecapGroupRow.key`) actuellement dépliées dans l'accordéon "Donjon & Famille"/"Type" —
+   * un `Set` plutôt que des booléens fixes par ligne : les lignes elles-mêmes sont dynamiques
+   * (dépendent des données de la période chargée), pas une liste connue à l'avance. */
+  protected readonly expandedGroups = signal<ReadonlySet<string>>(new Set());
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
@@ -170,17 +233,131 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected setGranularity(next: Granularity): void {
     this.granularity.set(next);
     this.periodOffset.set(0);
+    this.detailMode.set('cumulative');
     if (next === 'session') return;
     this.loadPeriod(next, 0);
   }
 
-  /** Callback du stepper de navigation (‹ précédent / suivant ›, voir template) — émis déjà borné à
-   * [OFFSET_MIN, 0] par `app-stepper`. */
+  /** Callback du stepper de navigation (‹ précédent / suivant ›, voir template) ET du mini
+   * calendrier (`PeriodPickerService`/`openPeriodPicker`) — émis déjà borné à [OFFSET_MIN, 0] par
+   * l'un comme par l'autre. */
   protected onOffsetChange(next: number): void {
     this.periodOffset.set(next);
     const g = this.granularity();
     if (g === 'session') return; // stepper masqué en session, ne devrait jamais être atteint
     this.loadPeriod(g, next);
+  }
+
+  /** Ouvre le mini calendrier de navigation (icône 📅, voir template) ancré sur le bouton cliqué —
+   * même principe que `onXpNameContextMenu`/`ClassPickerService` (rendu au niveau racine, voir
+   * CLAUDE.md "position: fixed niché dans un ancêtre transform"). */
+  protected openPeriodPicker(event: MouseEvent): void {
+    const g = this.granularity();
+    if (g === 'session') return; // bouton masqué en session, ne devrait jamais être atteint
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    this.periodPickerService.open(
+      g,
+      this.periodOffset(),
+      this.offsetMin(),
+      rect.left,
+      rect.bottom + 4,
+      (offset) => this.onOffsetChange(offset),
+    );
+  }
+
+  /** Change le mode d'affichage du détail (voir `DetailMode`) — ne touche ni à la granularité ni à
+   * `periodOffset` : rester sur la même période en changeant seulement comment elle est ventilée. */
+  protected setDetailMode(mode: DetailMode): void {
+    this.detailMode.set(mode);
+  }
+
+  protected toggleGroup(key: string): void {
+    this.expandedGroups.update((set) => {
+      const next = new Set(set);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  protected isGroupExpanded(key: string): boolean {
+    return this.expandedGroups().has(key);
+  }
+
+  /** Mode "Donjon & Famille" (voir CLAUDE.md) : une ligne par donjon précis + une ligne par famille
+   * de monstre représentative pour les combats hors donjon — deux tableaux déjà distincts côté
+   * serveur (`PeriodStats.dungeons`/`families`, jamais le même id des deux côtés), simplement
+   * concaténés puis triés par nombre de combats décroissant. */
+  protected readonly groupRows = computed<RecapGroupRow[]>(() => {
+    const period = this.historyStats.stats();
+    if (!period) return [];
+    const rows: RecapGroupRow[] = [
+      ...period.dungeons.map((d) => ({
+        key: `dungeon:${d.dungeonId}`,
+        label: this.dungeonLabel(d.dungeonId),
+        totals: d,
+      })),
+      ...period.families.map((f) => ({
+        key: `family:${f.familyId ?? 'null'}`,
+        label: this.familyLabel(f.familyId),
+        totals: f,
+      })),
+    ];
+    return rows.sort((a, b) => b.totals.fights - a.totals.fights);
+  });
+
+  /** Mode "Type" (voir CLAUDE.md) : les 8 `WakfuDungeonType` fusionnés chacun en une seule ligne
+   * (peu importe le donjon précis), + une ligne "Autres" fusionnant TOUTE `period.families` —
+   * entièrement recalculé côté client à partir des mêmes données que `groupRows` (aucune requête
+   * serveur supplémentaire, voir `mergeGroupTotals`). Un donjon dont l'id n'est pas (encore) résolu
+   * par le catalogue est ignoré ici (cas limite, référentiel pas à jour) plutôt que de faire
+   * échouer tout le regroupement. */
+  protected readonly typeRows = computed<RecapGroupRow[]>(() => {
+    const period = this.historyStats.stats();
+    if (!period) return [];
+    const buckets = new Map<WakfuDungeonType, PeriodGroupTotals[]>();
+    for (const dungeon of period.dungeons) {
+      const entry = this.catalog.findWakfuDungeonEntryById(dungeon.dungeonId);
+      if (!entry) continue;
+      const bucket = buckets.get(entry.type);
+      if (bucket) bucket.push(dungeon);
+      else buckets.set(entry.type, [dungeon]);
+    }
+    const rows: RecapGroupRow[] = DUNGEON_TYPES.filter((type) => buckets.has(type)).map((type) => ({
+      key: `type:${type}`,
+      label: this.dungeonTypeLabel(type),
+      totals: mergeGroupTotals(buckets.get(type)!),
+    }));
+    if (period.families.length > 0) {
+      rows.push({
+        key: 'type:other',
+        label: this.i18n.t('sessionRecap.period.otherFamily'),
+        totals: mergeGroupTotals(period.families),
+      });
+    }
+    return rows.sort((a, b) => b.totals.fights - a.totals.fights);
+  });
+
+  /** Lignes réellement affichées par l'accordéon selon `detailMode` — vide (et donc jamais rendu)
+   * en mode 'cumulative', où le template affiche les sections globales à la place (voir template). */
+  protected readonly activeGroupRows = computed<RecapGroupRow[]>(() => {
+    const mode = this.detailMode();
+    if (mode === 'byGroup') return this.groupRows();
+    if (mode === 'byType') return this.typeRows();
+    return [];
+  });
+
+  /** Butin d'un groupe (ligne d'accordéon), converti/trié comme `sortedPeriodLoot` — partage les
+   * mêmes signaux `lootSort`/`lootSortReverse` que les autres vues (aucun switch de tri dédié par
+   * ligne d'accordéon, la liste pouvant compter de nombreuses lignes : le switch global de la vue
+   * Cumulé, bien que non affiché en mode Donjon & Famille/Type, continue de piloter ces signaux). */
+  protected sortedGroupLoot(totals: PeriodGroupTotals): LootRow[] {
+    const rows: LootRow[] = totals.loot.map((row) => ({
+      name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
+      catalogId: row.itemId,
+      quantity: row.quantity,
+    }));
+    return sortLootRows(this.catalog, rows, this.lootSort(), this.lootSortReverse());
   }
 
   /** Sans paramètre (plutôt que `(g: PeriodGranularity)`) pour rester appelable telle quelle depuis
@@ -214,14 +391,28 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return this.i18n.formatYear(start);
   }
 
-  /** Nom localisé d'un donjon du regroupement par période (voir PeriodStats.dungeons) — `null` =
-   * combat hors donjon (chasse libre, PvP...), résolu vers un libellé dédié plutôt que vers le
-   * catalogue. Repli sur ce même libellé si l'id n'est plus résolu (référentiel pas encore importé
-   * pour un donjon récent, cas limite). */
-  protected dungeonLabel(dungeonId: number | null): string {
-    if (dungeonId === null) return this.i18n.t('sessionRecap.period.noDungeon');
+  /** Nom localisé d'un donjon du regroupement "Donjon & Famille" (voir `PeriodStats.dungeons`,
+   * TOUJOURS un id non-null désormais — le hors-donjon part dans `families`, voir `familyLabel`).
+   * Repli sur `sessionRecap.period.noDungeon` si l'id n'est pas (encore) résolu par le catalogue
+   * (référentiel pas à jour pour un donjon récent, cas limite). */
+  protected dungeonLabel(dungeonId: number): string {
     const entry = this.catalog.findWakfuDungeonEntryById(dungeonId);
     return entry?.[this.i18n.locale()] ?? this.i18n.t('sessionRecap.period.noDungeon');
+  }
+
+  /** Nom localisé d'une famille de monstre du regroupement "Donjon & Famille" (voir
+   * `PeriodStats.families`) — mirroir de `dungeonLabel` : `null` = famille inconnue (monstre non
+   * catalogué, voir `functions/api/v1/history/stats.ts`), résolu vers `sessionRecap.period.
+   * noFamily`, même repli pour un id de famille pas encore résolu par le catalogue. */
+  protected familyLabel(familyId: number | null): string {
+    if (familyId === null) return this.i18n.t('sessionRecap.period.noFamily');
+    const entry = this.catalog.findWakfuMonsterFamilyById(familyId);
+    return entry?.[this.i18n.locale()] ?? this.i18n.t('sessionRecap.period.noFamily');
+  }
+
+  /** Libellé localisé d'un bucket du mode "Type" (voir `typeRows`) — un des 8 `WakfuDungeonType`. */
+  protected dungeonTypeLabel(type: WakfuDungeonType): string {
+    return this.i18n.t(DUNGEON_TYPE_KEY[type]);
   }
 
   /** Butin de la période agrégée (voir HistoryStatsService), converti au format `LootRow` attendu

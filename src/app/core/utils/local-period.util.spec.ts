@@ -1,4 +1,10 @@
-import { addLocalDays, addLocalMonths, addLocalYears, periodBounds } from './local-period.util';
+import {
+  addLocalDays,
+  addLocalMonths,
+  addLocalYears,
+  offsetForPeriodStart,
+  periodBounds,
+} from './local-period.util';
 
 describe('local-period.util', () => {
   describe('addLocalDays', () => {
@@ -70,6 +76,35 @@ describe('local-period.util', () => {
       const { start, end } = periodBounds('year', -2, now);
       expect(new Date(start)).toEqual(new Date(2024, 0, 1));
       expect(new Date(end)).toEqual(new Date(2025, 0, 1));
+    });
+  });
+
+  describe('offsetForPeriodStart', () => {
+    it('jour : inverse exactement periodBounds sur plusieurs offsets', () => {
+      const now = new Date(2026, 7, 26, 14, 30, 0).getTime();
+      for (const offset of [0, -1, -5, -40]) {
+        const { start } = periodBounds('day', offset, now);
+        expect(offsetForPeriodStart('day', start, now)).toBe(offset);
+      }
+    });
+
+    it('mois : inverse exactement periodBounds en franchissant un changement d’année', () => {
+      const now = new Date(2026, 0, 15).getTime(); // 15 janvier 2026
+      const { start } = periodBounds('month', -1, now);
+      expect(offsetForPeriodStart('month', start, now)).toBe(-1);
+    });
+
+    it('année : inverse exactement periodBounds', () => {
+      const now = new Date(2026, 5, 1).getTime();
+      const { start } = periodBounds('year', -2, now);
+      expect(offsetForPeriodStart('year', start, now)).toBe(-2);
+    });
+
+    it('jour : robuste à un changement d’heure été/hiver (pas de division ms directe)', () => {
+      // 25 octobre 2026 → 26 octobre 2026 (Europe) : nuit à 25h (passage heure d'hiver).
+      const now = new Date(2026, 9, 27, 10, 0, 0).getTime();
+      const target = new Date(2026, 9, 25, 0, 0, 0).getTime();
+      expect(offsetForPeriodStart('day', target, now)).toBe(-2);
     });
   });
 });
