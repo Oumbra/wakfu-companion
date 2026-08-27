@@ -20,7 +20,7 @@
         <span class="loot-name">{{
           i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
         }}</span>
-        <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+        <span class="loot-qty">×{{ item.quantity | localeNumber }}</span>
       </div>
     }
   </div>

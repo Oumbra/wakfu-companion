@@ -272,7 +272,7 @@
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
                   @if (record.kamas > 0) {
-                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                    <span class="loot-kamas">{{ record.kamas | localeNumber }} ₭</span>
                   }
                   @if (record.loot.length > 0) {
                     <span class="loot-count"
@@ -347,7 +347,7 @@
                   >
                     <app-entity-icon [name]="row.name" side="ally" />
                     <span class="fight-xp-name">{{ row.name }}</span>
-                    <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
+                    <span class="fight-xp-amount">+{{ row.amount | localeNumber }}</span>
                   </div>
                 }
               </div>

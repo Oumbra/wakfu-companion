@@ -10,7 +10,7 @@ import { EntityClassifierService } from '../../core/services/entity-classifier.s
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -77,7 +77,7 @@ interface FightGroup {
 @Component({
   selector: 'app-fight-history',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,
