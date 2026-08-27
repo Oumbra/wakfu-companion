@@ -34,6 +34,14 @@ export function dungeonStoneItemId(dungeon: CatalogDungeonEntry): number | null 
   return STONE_ITEM_ID_BY_TYPE[dungeon.type] ?? null;
 }
 
+/** Miroir de `dungeonStoneItemId` à partir du seul `type` (pas besoin d'une `CatalogDungeonEntry`
+ * complète) — utilisé par le regroupement "Type" de la carte Récap (`SessionRecapComponent.
+ * typeRows`), qui fusionne tous les donjons d'un même type et n'a donc pas un donjon précis à
+ * passer. */
+export function dungeonStoneItemIdForType(type: WakfuDungeonType): number | null {
+  return STONE_ITEM_ID_BY_TYPE[type] ?? null;
+}
+
 /** Combat minimal requis pour le regroupement — `FightRecord` (stats-store.service.ts) satisfait
  * largement cette contrainte, une contrainte structurelle plutôt qu'un import direct évite une
  * dépendance circulaire entre ce fichier et le store. */

@@ -16,6 +16,7 @@ import { PeriodGroupTotals } from '../sync/history-stats.service';
 export function mergeGroupTotals(rows: readonly PeriodGroupTotals[]): PeriodGroupTotals {
   const merged: PeriodGroupTotals = {
     fights: 0,
+    dungeonRuns: 0,
     won: 0,
     lost: 0,
     kamasGained: 0,
@@ -32,6 +33,7 @@ export function mergeGroupTotals(rows: readonly PeriodGroupTotals[]): PeriodGrou
 
   for (const row of rows) {
     merged.fights += row.fights;
+    merged.dungeonRuns += row.dungeonRuns;
     merged.won += row.won;
     merged.lost += row.lost;
     merged.kamasGained += row.kamasGained;

@@ -7,6 +7,11 @@ import { ApiClientService } from '../api/api-client.service';
  * côté client. */
 export interface PeriodGroupTotals {
   fights: number;
+  /** Nombre de "donjons" (regroupement de combats, PAS un décompte de combats) — voir
+   * `functions/api/v1/history/stats.ts` pour le calcul et son approximation acceptée. Toujours 0
+   * pour un groupe `families` (hors donjon) : le concept ne s'y applique pas, `SessionRecapComponent`
+   * retombe alors sur `fights`. */
+  dungeonRuns: number;
   won: number;
   lost: number;
   kamasGained: number;
