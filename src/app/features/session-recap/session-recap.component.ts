@@ -102,6 +102,13 @@ interface RecapGroupRow {
   key: string;
   label: string;
   totals: PeriodGroupTotals;
+  /** URL de l'illustration officielle Ankama du donjon (voir `CatalogDungeonEntry.pictureUrl`),
+   * uniquement pour une ligne "Donjon & Famille" adossée à un VRAI donjon résolu — `null` pour une
+   * ligne famille (aucune image par famille côté catalogue, voir `CatalogMonsterFamilyEntry`) et
+   * pour toute ligne du mode "Type" (bucket fusionné, plusieurs donjons possibles derrière une
+   * seule ligne — pas d'image unique pertinente, voir `typeRows`). Le template retombe alors sur
+   * un pictogramme générique (voir `isFamilyRow`). */
+  pictureUrl: string | null;
 }
 
 /**
@@ -146,6 +153,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly auth = inject(AuthService);
   protected readonly historyStats = inject(HistoryStatsService);
   private readonly periodPickerService = inject(PeriodPickerService);
+  /** Instanciée directement (pas d'injection : `NumberFrPipe` n'a aucune dépendance) pour formater
+   * un nombre depuis TypeScript — voir `kamasTooltip`, seul endroit de ce composant où le formatage
+   * ne peut pas passer par le pipe `| numberFr` du template (texte composite, voir sa doc). */
+  private readonly numberFr = new NumberFrPipe();
 
   protected readonly granularity = signal<Granularity>('session');
   /** Pas courant dans le stepper de navigation par période — `0` = période EN COURS (jour/mois/
@@ -161,6 +172,11 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * un `Set` plutôt que des booléens fixes par ligne : les lignes elles-mêmes sont dynamiques
    * (dépendent des données de la période chargée), pas une liste connue à l'avance. */
   protected readonly expandedGroups = signal<ReadonlySet<string>>(new Set());
+  /** Clés (`RecapGroupRow.key`) dont la vignette (`row.pictureUrl`) a échoué au chargement (image
+   * absente côté CDN Ankama pour cet id) — bascule alors sur le pictogramme générique, voir
+   * `onThumbError`/template. Jamais vidé : un échec de chargement reste un échec pour le reste de
+   * la session, pas besoin de retenter. */
+  protected readonly failedThumbs = signal<ReadonlySet<string>>(new Set());
 
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
@@ -284,6 +300,23 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return this.expandedGroups().has(key);
   }
 
+  /** Vrai pour une ligne "famille de monstre" (voir `groupRows`) OU pour le bucket "Autres" du
+   * mode "Type" (`typeRows`, qui fusionne TOUTE `period.families`) — sert au template à choisir le
+   * pictogramme générique de repli (silhouette de créature) plutôt que celui d'un donjon (porte),
+   * pour toute ligne sans `pictureUrl` résolue. Une ligne "Type" adossée à un `WakfuDungeonType`
+   * (`type:...`, pas `type:other`) reste traitée comme un donjon malgré l'absence d'image unique
+   * (plusieurs donjons fusionnés) : le pictogramme "porte" reste plus juste sémantiquement qu'une
+   * silhouette de créature. */
+  protected isFamilyRow(key: string): boolean {
+    return key.startsWith('family:') || key === 'type:other';
+  }
+
+  /** Marque la vignette de `key` comme en échec (voir `RecapGroupRow.pictureUrl`/`failedThumbs`) —
+   * `(error)` de l'`<img>`, jamais retentée ensuite. */
+  protected onThumbError(key: string): void {
+    this.failedThumbs.update((set) => new Set(set).add(key));
+  }
+
   /** Mode "Donjon & Famille" (voir CLAUDE.md) : une ligne par donjon précis + une ligne par famille
    * de monstre représentative pour les combats hors donjon — deux tableaux déjà distincts côté
    * serveur (`PeriodStats.dungeons`/`families`, jamais le même id des deux côtés), simplement
@@ -296,11 +329,13 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         key: `dungeon:${d.dungeonId}`,
         label: this.dungeonLabel(d.dungeonId),
         totals: d,
+        pictureUrl: this.catalog.findWakfuDungeonEntryById(d.dungeonId)?.pictureUrl ?? null,
       })),
       ...period.families.map((f) => ({
         key: `family:${f.familyId ?? 'null'}`,
         label: this.familyLabel(f.familyId),
         totals: f,
+        pictureUrl: null,
       })),
     ];
     return rows.sort((a, b) => b.totals.fights - a.totals.fights);
@@ -327,12 +362,16 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       key: `type:${type}`,
       label: this.dungeonTypeLabel(type),
       totals: mergeGroupTotals(buckets.get(type)!),
+      // Bucket fusionné (plusieurs donjons possibles) : pas d'image unique pertinente, voir doc de
+      // RecapGroupRow.pictureUrl.
+      pictureUrl: null,
     }));
     if (period.families.length > 0) {
       rows.push({
         key: 'type:other',
         label: this.i18n.t('sessionRecap.period.otherFamily'),
         totals: mergeGroupTotals(period.families),
+        pictureUrl: null,
       });
     }
     return rows.sort((a, b) => b.totals.fights - a.totals.fights);
@@ -440,6 +479,38 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   /** Kamas perdus sur la période (achats + donné en échange). */
   protected periodKamasLost(period: PeriodStats): number {
     return period.kamas.spentOnPurchases + period.kamas.tradesGiven;
+  }
+
+  /** XP total de la session (case "Expérience" de la bande coup d'oeil, voir template) — simple
+   * somme de `stats.xpByCharacter()`, qui ne porte que le détail par personnage. */
+  protected sessionXpTotal(): number {
+    return this.stats.xpByCharacter().reduce((sum, row) => sum + row.amount, 0);
+  }
+
+  /** Miroir de `sessionXpTotal` pour le bandeau de totaux du mode "Donjon & Famille"/"Type" (voir
+   * template) — `period.xpByCharacter` n'est autrement affiché qu'en mode Cumulé. */
+  protected periodXpTotal(period: PeriodStats): number {
+    return period.xpByCharacter.reduce((sum, row) => sum + row.amount, 0);
+  }
+
+  /** Largeur (%) de la barre de progression d'une ligne XP (voir `.xp-bar-fill`, template),
+   * relative au plus gros gain de SA PROPRE liste — jamais `rows[0]` : contrairement à
+   * `stats.xpByCharacter()` (déjà triée décroissante côté client), `PeriodGroupTotals.
+   * xpByCharacter` vient telle quelle de l'agrégation serveur, sans garantie d'ordre. */
+  protected xpBarPercent(amount: number, rows: readonly { amount: number }[]): number {
+    const max = rows.reduce((m, row) => Math.max(m, row.amount), 0);
+    return max > 0 ? (amount / max) * 100 : 0;
+  }
+
+  /** Texte (2 lignes, voir `[tooltipMultiline]` sur la case Kamas du template) de la tooltip de la
+   * bande coup d'oeil — remplace l'ancienne section Kamas dépliable du mode Session (voir
+   * CLAUDE.md). Formatage direct via `numberFr` (pas le pipe de template ici, texte composite). */
+  protected kamasTooltip(): string {
+    const earned = this.numberFr.transform(this.stats.kamasEarned());
+    const lost = this.numberFr.transform(this.stats.kamasLost());
+    const earnedLabel = this.i18n.t('sessionRecap.earned');
+    const spentLabel = this.i18n.t('sessionRecap.spent');
+    return `${earnedLabel} +${earned} ₭\n${spentLabel} -${lost} ₭`;
   }
 
   protected onXpNameContextMenu(event: MouseEvent, name: string): void {

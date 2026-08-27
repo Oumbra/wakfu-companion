@@ -24,8 +24,12 @@
     opacity: 0;
   }
 }
+/* `pre-line` (pas `normal`) : premier appelant réel à passer un texte multi-lignes explicite
+   (`\n`, voir SessionRecapComponent.kamasTooltip) plutôt qu'un simple retour à la ligne naturel au
+   `max-width` — préserve les retours à la ligne du texte tout en continuant de wrapper/collapser
+   les espaces comme `normal`, donc sans changement pour un texte sans `\n`. */
 .app-tooltip-multiline {
-  white-space: normal;
+  white-space: pre-line;
   width: max-content;
   max-width: 220px;
 }

@@ -77,72 +77,137 @@
       </div>
     }
 
-    <!-- Navigation vers une période PASSÉE (jour/mois/année précédent) — n'a de sens que hors
-         'session' (le fichier connecté n'a qu'une seule "période", la session en cours elle-même).
-         `[max]="0"` : jamais de période future, `app-stepper` borne déjà `valueChange` en interne.
-         Le bouton calendrier complète le stepper (un pas à la fois) pour rejoindre une période
-         éloignée sans multiplier les clics — voir PeriodPickerService. -->
+    <!-- Navigation vers une période PASSÉE ET switch de regroupement Cumulé/Donjon & Famille/Type
+         sur LA MÊME ligne (maquette du 2026-08-27) — n'a de sens que hors 'session' (le fichier
+         connecté n'a qu'une seule "période", la session en cours elle-même). `[max]="0"` : jamais
+         de période future, `app-stepper` borne déjà `valueChange` en interne. Le bouton calendrier
+         complète le stepper (un pas à la fois) pour rejoindre une période éloignée sans multiplier
+         les clics — voir PeriodPickerService. Le switch de regroupement passe en icônes seules
+         (tooltip pour le libellé complet, même convention que `.loot-sort-switch` plus bas) pour
+         tenir sur cette même ligne. -->
     @if (granularity() !== 'session') {
       <div class="recap-period-nav">
-        <app-stepper
-          [label]="periodLabel()"
-          [value]="periodOffset()"
-          [min]="offsetMin()"
-          [max]="0"
-          [prevTooltip]="'sessionRecap.period.prev' | t"
-          [nextTooltip]="'sessionRecap.period.next' | t"
-          (valueChange)="onOffsetChange($event)"
-        />
-        <button
-          type="button"
-          class="icon-btn"
-          [appTooltip]="'sessionRecap.period.pickDate' | t"
-          (click)="openPeriodPicker($event)"
-        >
-          <app-icon name="calendar" [size]="16" [strokeWidth]="1.8" />
-        </button>
-      </div>
+        <div class="recap-period-nav-date">
+          <app-stepper
+            [label]="periodLabel()"
+            [value]="periodOffset()"
+            [min]="offsetMin()"
+            [max]="0"
+            [prevTooltip]="'sessionRecap.period.prev' | t"
+            [nextTooltip]="'sessionRecap.period.next' | t"
+            (valueChange)="onOffsetChange($event)"
+          />
+          <button
+            type="button"
+            class="icon-btn"
+            [appTooltip]="'sessionRecap.period.pickDate' | t"
+            (click)="openPeriodPicker($event)"
+          >
+            <app-icon name="calendar" [size]="16" [strokeWidth]="1.8" />
+          </button>
+        </div>
 
-      <!-- Switch Cumulé/Donjon & Famille/Type : regroupement de la période affichée, voir
-           CLAUDE.md. En mode Cumulé, le bloc ci-dessous reproduit exactement l'ancien affichage
-           (XP/Kamas/Combats/Butin globaux) ; les deux autres modes le REMPLACENT par un accordéon. -->
-      <div class="icon-switch icon-switch-3 recap-detail-switch">
-        <span
-          class="icon-switch-highlight"
-          [class.is-right]="detailMode() === 'byGroup'"
-          [class.is-far-right]="detailMode() === 'byType'"
-        ></span>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="detailMode() === 'cumulative'"
-          (click)="setDetailMode('cumulative')"
-        >
-          {{ 'sessionRecap.detail.cumulative' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="detailMode() === 'byGroup'"
-          (click)="setDetailMode('byGroup')"
-        >
-          {{ 'sessionRecap.detail.byGroup' | t }}
-        </button>
-        <button
-          type="button"
-          class="icon-switch-option"
-          [class.selected]="detailMode() === 'byType'"
-          (click)="setDetailMode('byType')"
-        >
-          {{ 'sessionRecap.detail.byType' | t }}
-        </button>
+        <div class="icon-switch icon-switch-3 recap-group-switch">
+          <span
+            class="icon-switch-highlight"
+            [class.is-right]="detailMode() === 'byGroup'"
+            [class.is-far-right]="detailMode() === 'byType'"
+          ></span>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="detailMode() === 'cumulative'"
+            [appTooltip]="'sessionRecap.detail.cumulative' | t"
+            (click)="setDetailMode('cumulative')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M4 7h16M4 12h16M4 17h10"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="detailMode() === 'byGroup'"
+            [appTooltip]="'sessionRecap.detail.byGroup' | t"
+            (click)="setDetailMode('byGroup')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M6 20V10a6 6 0 0112 0v10"></path>
+              <path d="M6 20h12"></path>
+            </svg>
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="detailMode() === 'byType'"
+            [appTooltip]="'sessionRecap.detail.byType' | t"
+            (click)="setDetailMode('byType')"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M11 4h6a1 1 0 011 1v6l-9 9-7-7 9-9z"></path>
+              <circle cx="15" cy="8" r="1.2" fill="currentColor" stroke="none"></circle>
+            </svg>
+          </button>
+        </div>
       </div>
     }
 
     @if (granularity() === 'session') {
-      <div class="duration-box">
-        <span class="duration-label">{{ 'sessionRecap.duration' | t }}</span>
-        <span class="duration-value">{{ duration() }}</span>
+      <!-- Bande "coup d'oeil" (remplace l'ancienne .duration-box) : Durée/Expérience/Kamas/Combats
+           visibles sans rien déplier. La case Kamas porte une tooltip (détail gagné/dépensé) —
+           plus de section Kamas dépliable dédiée, voir CLAUDE.md. -->
+      <div class="recap-bandeau">
+        <div class="bandeau-cell">
+          <span class="bandeau-label">{{ 'sessionRecap.duration' | t }}</span>
+          <span class="bandeau-value accent">{{ duration() }}</span>
+        </div>
+        <div class="bandeau-sep"></div>
+        <div class="bandeau-cell">
+          <img [src]="xpIcon" class="section-icon" alt="" />
+          <span class="bandeau-label">{{ 'sessionRecap.xpByCharacter' | t }}</span>
+          <span class="bandeau-value accent">+{{ sessionXpTotal() | numberFr }}</span>
+        </div>
+        <div class="bandeau-sep"></div>
+        <div class="bandeau-cell">
+          <img [src]="kamasIcon" class="section-icon" alt="" />
+          <span
+            class="bandeau-label has-tip"
+            [appTooltip]="kamasTooltip()"
+            [tooltipMultiline]="true"
+            >{{ 'sessionRecap.kamas' | t }}</span
+          >
+          <span class="bandeau-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
+        </div>
+        <div class="bandeau-sep"></div>
+        <div class="bandeau-cell">
+          <img [src]="combatIcon" class="section-icon" alt="" />
+          <span class="bandeau-label">{{ 'sessionRecap.combats' | t }}</span>
+          <span class="bandeau-value"
+            ><span class="gain">{{ stats.combatsWon() }}</span
+            >-<span class="loss">{{ stats.combatsLost() }}</span></span
+          >
+        </div>
       </div>
 
       <div class="recap-section">
@@ -155,15 +220,23 @@
         } @else {
           <div class="xp-list" #xpList [class.expanded]="xpExpanded()">
             @for (row of stats.xpByCharacter(); track row.name; let first = $first) {
-              <div
-                class="xp-row"
-                [appTooltip]="'damageMeter.classHint' | t"
-                [tooltipPosition]="first ? 'bottom' : 'top'"
-                (contextmenu)="onXpNameContextMenu($event, row.name)"
-              >
-                <app-entity-icon [name]="row.name" side="ally" />
-                <span class="xp-name">{{ row.name }}</span>
-                <span class="xp-amount">+{{ row.amount | numberFr }}</span>
+              <div class="xp-entry">
+                <div
+                  class="xp-row"
+                  [appTooltip]="'damageMeter.classHint' | t"
+                  [tooltipPosition]="first ? 'bottom' : 'top'"
+                  (contextmenu)="onXpNameContextMenu($event, row.name)"
+                >
+                  <app-entity-icon [name]="row.name" side="ally" />
+                  <span class="xp-name">{{ row.name }}</span>
+                  <span class="xp-amount">+{{ row.amount | numberFr }}</span>
+                </div>
+                <div class="xp-bar-track">
+                  <div
+                    class="xp-bar-fill"
+                    [style.width.%]="xpBarPercent(row.amount, stats.xpByCharacter())"
+                  ></div>
+                </div>
               </div>
             }
           </div>
@@ -176,125 +249,81 @@
         }
       </div>
 
+      <!-- Challenges à plat, une seule ligne (remplace l'ancien bloc "split" imposant, désormais
+           redondant avec la case Combats de la bande ci-dessus pour les victoires/défaites). -->
       <div class="recap-section">
-        <div class="recap-section-header clickable" (click)="toggleKamas()">
-          <img [src]="kamasIcon" class="section-icon" alt="" />
-          <span>{{ 'sessionRecap.kamas' | t }}</span>
-          <span class="section-header-value gold">{{ stats.netKamas() | numberFr }} ₭</span>
-          <span class="section-caret" [class.expanded]="kamasExpanded()">▸</span>
+        <div class="recap-section-header">
+          <img [src]="challengesIcon" class="section-icon" alt="" />
+          <span>{{ 'sessionRecap.challenges' | t }}</span>
+          <span class="defis-summary"
+            ><span class="gain"
+              >{{ stats.challengesPassed() }} {{ 'sessionRecap.challengePassed' | t }}</span
+            >
+            ·
+            <span class="loss"
+              >{{ stats.challengesFailed() }} {{ 'sessionRecap.challengeFailed' | t }}</span
+            ></span
+          >
         </div>
-        @if (kamasExpanded()) {
-          <div class="kama-detail">
-            <div class="recap-row">
-              <span class="recap-label">{{ 'sessionRecap.earned' | t }}</span>
-              <span class="recap-value gain">+{{ stats.kamasEarned() | numberFr }} ₭</span>
-            </div>
-            <div class="recap-row">
-              <span class="recap-label">{{ 'sessionRecap.spent' | t }}</span>
-              <span class="recap-value loss">-{{ stats.kamasLost() | numberFr }} ₭</span>
-            </div>
-          </div>
-        }
       </div>
 
+      <!-- Butin à plat, sans mise en avant d'un objet rare. -->
       <div class="recap-section">
-        <div class="recap-section-header clickable" (click)="toggleCombats()">
-          <img [src]="combatIcon" class="section-icon" alt="" />
-          <span>{{ 'sessionRecap.combats' | t }}</span>
-          <span class="section-header-value">{{ stats.totalCombats() | numberFr }}</span>
-          <span class="section-caret" [class.expanded]="combatsExpanded()">▸</span>
-        </div>
-        @if (combatsExpanded()) {
-          <div class="kama-detail">
-            <div class="split-row">
-              <div class="split-part">
-                <span class="split-value gain">{{ stats.combatsWon() }}</span>
-                <span class="split-label">{{ 'sessionRecap.wins' | t }}</span>
-              </div>
-              <span class="split-sep">|</span>
-              <div class="split-part">
-                <span class="split-value loss">{{ stats.combatsLost() }}</span>
-                <span class="split-label">{{ 'sessionRecap.losses' | t }}</span>
-              </div>
+        <div class="loot-header-row">
+          <div class="loot-header-main">
+            <div class="loot-header-left">
+              <img [src]="lootIcon" class="collapsible-icon" alt="" />
+              <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
+              @if (stats.sessionLoot().length > 0) {
+                <span class="loot-count"
+                  >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
+                >
+              }
             </div>
-            <div class="challenges-block">
-              <div class="challenges-title">
-                <img [src]="challengesIcon" class="section-icon" alt="" />
-                <span class="challenges-label">{{ 'sessionRecap.challenges' | t }}</span>
+            <!-- Switch de tri du butin : voir la copie jumelle dans le bloc "sinon" ci-dessous
+                 (période agrégée) — mêmes signaux lootSort/lootSortReverse partagés entre les
+                 deux vues, garder les deux synchronisées si l'une change. -->
+            @if (stats.sessionLoot().length > 1) {
+              <div class="icon-switch icon-switch-3 loot-sort-switch">
+                <span
+                  class="icon-switch-highlight"
+                  [class.is-right]="lootSort() === 'quantity'"
+                  [class.is-far-right]="lootSort() === 'rarity'"
+                ></span>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="lootSort() === 'name'"
+                  [appTooltip]="lootSortTooltip('name')"
+                  (click)="setLootSort('name')"
+                >
+                  Az
+                </button>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="lootSort() === 'quantity'"
+                  [appTooltip]="lootSortTooltip('quantity')"
+                  (click)="setLootSort('quantity')"
+                >
+                  Nb
+                </button>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="lootSort() === 'rarity'"
+                  [appTooltip]="lootSortTooltip('rarity')"
+                  (click)="setLootSort('rarity')"
+                >
+                  <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                </button>
               </div>
-              <div class="challenges-sep"></div>
-              <div class="split-row">
-                <div class="split-part">
-                  <span class="split-value gain">{{ stats.challengesPassed() }}</span>
-                  <span class="split-label">{{ 'sessionRecap.challengePassed' | t }}</span>
-                </div>
-                <span class="split-sep">|</span>
-                <div class="split-part">
-                  <span class="split-value loss">{{ stats.challengesFailed() }}</span>
-                  <span class="split-label">{{ 'sessionRecap.challengeFailed' | t }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="recap-loot-block">
-              <div class="loot-header-row">
-                <div class="loot-header-main">
-                  <div class="loot-header-left">
-                    <img [src]="lootIcon" class="collapsible-icon" alt="" />
-                    <span class="challenges-label">{{ 'damageMeter.loot' | t }}</span>
-                    @if (stats.sessionLoot().length > 0) {
-                      <span class="loot-count"
-                        >{{ stats.sessionLoot().length }} {{ 'damageMeter.items' | t }}</span
-                      >
-                    }
-                  </div>
-                  <!-- Switch de tri du butin : voir la copie jumelle dans le bloc "sinon" ci-dessous
-                       (période agrégée) — mêmes signaux lootSort/lootSortReverse partagés entre les
-                       deux vues, garder les deux synchronisées si l'une change. -->
-                  @if (stats.sessionLoot().length > 1) {
-                    <div class="icon-switch icon-switch-3 loot-sort-switch">
-                      <span
-                        class="icon-switch-highlight"
-                        [class.is-right]="lootSort() === 'quantity'"
-                        [class.is-far-right]="lootSort() === 'rarity'"
-                      ></span>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'name'"
-                        [appTooltip]="lootSortTooltip('name')"
-                        (click)="setLootSort('name')"
-                      >
-                        Az
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'quantity'"
-                        [appTooltip]="lootSortTooltip('quantity')"
-                        (click)="setLootSort('quantity')"
-                      >
-                        Nb
-                      </button>
-                      <button
-                        type="button"
-                        class="icon-switch-option loot-sort-switch-option"
-                        [class.selected]="lootSort() === 'rarity'"
-                        [appTooltip]="lootSortTooltip('rarity')"
-                        (click)="setLootSort('rarity')"
-                      >
-                        <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
-              <div class="loot-body">
-                <app-loot-list [items]="sortedLoot()" emptyVariant="recap" />
-              </div>
-            </div>
+            }
           </div>
-        }
+        </div>
+        <div class="loot-body">
+          <app-loot-list [items]="sortedLoot()" emptyVariant="recap" />
+        </div>
       </div>
     } @else {
       @if (historyStats.loading()) {
@@ -475,7 +504,38 @@
           </div>
         } @else {
           <!-- Modes Donjon & Famille/Type : REMPLACE les sections XP/Kamas/Combats/Butin globales
-               ci-dessus par un accordéon — voir SessionRecapComponent.activeGroupRows. -->
+               ci-dessus par un bandeau de totaux + un accordéon — voir
+               SessionRecapComponent.activeGroupRows. -->
+          <div class="recap-bandeau">
+            <div class="bandeau-cell">
+              <img [src]="xpIcon" class="section-icon" alt="" />
+              <span class="bandeau-label">{{ 'sessionRecap.xpByCharacter' | t }}</span>
+              <span class="bandeau-value accent">+{{ periodXpTotal(period) | numberFr }}</span>
+            </div>
+            <div class="bandeau-sep"></div>
+            <div class="bandeau-cell">
+              <img [src]="kamasIcon" class="section-icon" alt="" />
+              <span class="bandeau-label">{{ 'sessionRecap.kamas' | t }}</span>
+              <span class="bandeau-value gold"
+                >{{ periodKamasEarned(period) - periodKamasLost(period) | numberFr }} ₭</span
+              >
+            </div>
+            <div class="bandeau-sep"></div>
+            <div class="bandeau-cell">
+              <img [src]="combatIcon" class="section-icon" alt="" />
+              <span class="bandeau-label">{{ 'sessionRecap.combats' | t }}</span>
+              <span class="bandeau-value"
+                ><span class="gain">{{ period.combats.won }}</span
+                >-<span class="loss">{{ period.combats.lost }}</span></span
+              >
+            </div>
+            <div class="bandeau-sep"></div>
+            <div class="bandeau-cell">
+              <span class="bandeau-label">{{ 'sessionRecap.period.dungeons' | t }}</span>
+              <span class="bandeau-value">{{ period.dungeons.length | numberFr }}</span>
+            </div>
+          </div>
+
           @if (activeGroupRows().length === 0) {
             <div class="empty-state small">{{ 'sessionRecap.period.noDungeons' | t }}</div>
           } @else {
@@ -484,21 +544,120 @@
                 <div class="group-item">
                   <div class="dungeon-row group-row" (click)="toggleGroup(row.key)">
                     <span class="section-caret" [class.expanded]="isGroupExpanded(row.key)">▸</span>
+                    <div class="dungeon-thumb">
+                      @if (row.pictureUrl && !failedThumbs().has(row.key)) {
+                        <img
+                          [src]="row.pictureUrl"
+                          alt=""
+                          referrerpolicy="no-referrer"
+                          (error)="onThumbError(row.key)"
+                        />
+                      } @else if (isFamilyRow(row.key)) {
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="18"
+                          height="18"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M9 9c-2-1-3.3 1.3-2 2.6C5 12 4 13.6 5 15c1 1.3 2.6.7 3-1"></path>
+                          <path d="M15 9c2-1 3.3 1.3 2 2.6 2 .4 3 2 2 3.4-1 1.3-2.6.7-3-1"></path>
+                          <path
+                            d="M8 15c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5-1.8 4.5-4 4.5-4-2-4-4.5z"
+                          ></path>
+                        </svg>
+                      } @else {
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="18"
+                          height="18"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M6 20V10a6 6 0 0112 0v10"></path>
+                          <path d="M6 20h12"></path>
+                        </svg>
+                      }
+                    </div>
                     <span
                       class="dungeon-name"
                       [appTooltip]="row.label"
                       [tooltipOnlyIfTruncated]="true"
                       >{{ row.label }}</span
                     >
-                    <span class="dungeon-count">{{ row.totals.fights }}×</span>
-                    <span class="dungeon-wl"
-                      ><span class="gain">{{ row.totals.won }}</span
-                      >/<span class="loss">{{ row.totals.lost }}</span></span
-                    >
-                    <span class="dungeon-kamas">+{{ row.totals.kamasGained | numberFr }} ₭</span>
+                    <span class="dungeon-count">{{ row.totals.fights | numberFr }}×</span>
                   </div>
                   @if (isGroupExpanded(row.key)) {
                     <div class="group-detail">
+                      <!-- Victoires/Défaites/Kamas ventilés dans le même bandeau que ci-dessus,
+                           plutôt qu'entassés sur la ligne repliée (voir CLAUDE.md). -->
+                      <div class="recap-bandeau">
+                        <div class="bandeau-cell">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="15"
+                            height="15"
+                            fill="none"
+                            stroke="currentColor"
+                            class="gain"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                          <span class="bandeau-label">{{ 'sessionRecap.wins' | t }}</span>
+                          <span class="bandeau-value gain">{{ row.totals.won | numberFr }}</span>
+                        </div>
+                        <div class="bandeau-sep"></div>
+                        <div class="bandeau-cell">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="15"
+                            height="15"
+                            fill="none"
+                            stroke="currentColor"
+                            class="loss"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M6 6l12 12M18 6L6 18"></path>
+                          </svg>
+                          <span class="bandeau-label">{{ 'sessionRecap.losses' | t }}</span>
+                          <span class="bandeau-value loss">{{ row.totals.lost | numberFr }}</span>
+                        </div>
+                        <div class="bandeau-sep"></div>
+                        <div class="bandeau-cell">
+                          <svg
+                            viewBox="0 0 24 24"
+                            width="15"
+                            height="15"
+                            fill="none"
+                            stroke="currentColor"
+                            style="color: var(--kama-color)"
+                            stroke-width="1.6"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="8.5"></circle>
+                            <path
+                              d="M12 7.2v1.3M12 15.5v1.3M9.3 15c0 1.1 1.1 1.8 2.7 1.8s2.7-.7 2.7-1.7c0-2.4-5.4-1-5.4-3.5 0-1 1.1-1.7 2.7-1.7s2.7.6 2.7 1.6"
+                            ></path>
+                          </svg>
+                          <span class="bandeau-label">{{ 'sessionRecap.kamas' | t }}</span>
+                          <span class="bandeau-value gold"
+                            >+{{ row.totals.kamasGained | numberFr }} ₭</span
+                          >
+                        </div>
+                      </div>
+
                       <div class="recap-section-header">
                         <img [src]="xpIcon" class="section-icon" alt="" />
                         <span>{{ 'sessionRecap.xpByCharacter' | t }}</span>
@@ -508,14 +667,24 @@
                       } @else {
                         <div class="xp-list expanded">
                           @for (xp of row.totals.xpByCharacter; track xp.name; let first = $first) {
-                            <div
-                              class="xp-row"
-                              [appTooltip]="'damageMeter.classHint' | t"
-                              [tooltipPosition]="first ? 'bottom' : 'top'"
-                            >
-                              <app-entity-icon [name]="xp.name" side="ally" />
-                              <span class="xp-name">{{ xp.name }}</span>
-                              <span class="xp-amount">+{{ xp.amount | numberFr }}</span>
+                            <div class="xp-entry">
+                              <div
+                                class="xp-row"
+                                [appTooltip]="'damageMeter.classHint' | t"
+                                [tooltipPosition]="first ? 'bottom' : 'top'"
+                              >
+                                <app-entity-icon [name]="xp.name" side="ally" />
+                                <span class="xp-name">{{ xp.name }}</span>
+                                <span class="xp-amount">+{{ xp.amount | numberFr }}</span>
+                              </div>
+                              <div class="xp-bar-track">
+                                <div
+                                  class="xp-bar-fill"
+                                  [style.width.%]="
+                                    xpBarPercent(xp.amount, row.totals.xpByCharacter)
+                                  "
+                                ></div>
+                              </div>
                             </div>
                           }
                         </div>

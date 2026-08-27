@@ -33,29 +33,31 @@
   font-weight: 600;
 }
 
-/* Stepper de navigation par période (‹ label ›, voir app-stepper) — centré plutôt que collé à un
-   bord, `.recap-body` étant une colonne flex sans children à centrer par ailleurs. Négatif : réduit
-   l'écart avec le switch juste au-dessus, plus proche visuellement l'un de l'autre que du contenu
-   qui suit (les deux pilotent ensemble "quelle période afficher"). */
+/* Stepper de navigation par période (‹ label ›, voir app-stepper) + switch de regroupement
+   Cumulé/Donjon & Famille/Type sur LA MÊME ligne (maquette utilisateur du 2026-08-27) : la
+   navigation à gauche (`.recap-period-nav-date`), le switch à droite — plutôt que deux lignes
+   pleine largeur empilées comme avant. Négatif : réduit l'écart avec le switch de période juste
+   au-dessus, plus proche visuellement l'un de l'autre que du contenu qui suit (les deux pilotent
+   ensemble "quelle période afficher"). */
 .recap-period-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: -6px;
 }
-
-/* Switch Cumulé/Donjon & Famille/Type (voir SessionRecapComponent.detailMode) — même largeur
-   pleine que .recap-period-switch (3 libellés traduits, pas des abréviations). */
-.recap-detail-switch {
-  width: 100%;
+.recap-period-nav-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.recap-detail-switch .icon-switch-option {
-  font-size: 0.68rem;
-  font-weight: 600;
-  padding: 0 2px;
-  text-align: center;
-  line-height: 1.15;
+
+/* Switch Cumulé/Donjon & Famille/Type (voir SessionRecapComponent.detailMode) — passé en icônes
+   seules (tooltip pour le libellé complet, même convention que `.loot-sort-switch` plus bas) pour
+   tenir sur la même ligne que la navigation de date ci-dessus : largeur fixe (comme
+   `.loot-sort-switch`), plus le `width:100%` pleine largeur d'avant. */
+.recap-group-switch {
+  width: 96px;
 }
 
 /* Regroupement par donjon (voir PeriodStats.dungeons) — même principe de liste défilante que
@@ -99,7 +101,7 @@
 .dungeon-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 9px;
   font-size: 0.85rem;
 }
 .dungeon-name {
@@ -116,44 +118,30 @@
   color: var(--text-muted);
   flex-shrink: 0;
 }
-.dungeon-wl {
-  font-family: monospace;
-  flex-shrink: 0;
-}
-.dungeon-wl .gain {
-  color: var(--btn-active-green);
-}
-.dungeon-wl .loss {
-  color: var(--btn-active-red);
-}
-.dungeon-kamas {
-  font-family: monospace;
-  color: var(--kama-color);
-  text-align: right;
-  flex-shrink: 0;
-  min-width: 72px;
-}
 
-.duration-box {
+/* Vignette de la ligne repliée d'un donjon/famille (maquette du 2026-08-27, plus visuel qu'un
+   simple nom de texte) — `dungeon.pictureUrl` (image officielle Ankama, voir CatalogDungeonEntry)
+   quand la ligne est un VRAI donjon résolu (mode "Donjon & Famille" uniquement, voir
+   `RecapGroupRow.pictureUrl`) ; repli SVG générique sinon (famille de monstre, ligne fusionnée du
+   mode "Type", ou id de donjon pas encore résolu par le catalogue) — voir `isFamilyRow`/
+   `onThumbError`. */
+.dungeon-thumb {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  background: var(--surface-well);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 10px;
-}
-.duration-label {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  overflow: hidden;
 }
-.duration-value {
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--accent);
-  font-size: 1.05rem;
-  letter-spacing: 1px;
+.dungeon-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .recap-section {
@@ -200,6 +188,17 @@
 .section-caret.expanded {
   transform: rotate(90deg);
   color: var(--accent);
+}
+
+/* Couleurs gain/perte génériques (vert/rouge) — utilisées telles quelles par la bande "coup
+   d'oeil" (case Combats), le bandeau Victoires/Défaites/Kamas du détail par donjon, et le résumé
+   Challenges de la ligne "Challenges" à plat (voir plus bas) : avant cette règle, seule la variante
+   scopée `.dungeon-wl .gain/.loss` existait (retirée, `.dungeon-wl` n'est plus utilisée). */
+.gain {
+  color: var(--btn-active-green);
+}
+.loss {
+  color: var(--btn-active-red);
 }
 
 .recap-row {
@@ -258,6 +257,16 @@
   border-top: 1px dashed var(--surface-active);
 }
 
+/* Résumé compact d'une ligne "Challenges" à plat (mode Session, voir `.recap-section-header` sans
+   caret ni détail dépliable juste au-dessus dans le template) — pousse le résumé coloré à droite
+   comme `.section-header-value`, sans en reprendre la couleur accent unique (ici deux couleurs,
+   voir `.gain`/`.loss`). */
+.defis-summary {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 0.82rem;
+}
+
 .split-row {
   display: flex;
   align-items: center;
@@ -292,17 +301,116 @@
   color: var(--btn-active-red);
 }
 
+/* Bande "coup d'oeil" (maquette du 2026-08-27) : remplace l'ancienne `.duration-box` (mode
+   Session) — 4 cases (Durée/Expérience/Kamas/Combats) — et sert aussi de bandeau de totaux
+   globaux en tête du mode "Donjon & Famille"/"Type" (4 cases : Expérience/Kamas/Combats/Donjons),
+   ET réutilisée telle quelle (3 cases : Victoires/Défaites/Kamas) dans le détail déplié d'une
+   ligne de donjon — voir `.group-detail .recap-bandeau` plus bas, même système visuel demandé
+   explicitement plutôt qu'un style différent par endroit. Une case sans médaillon peint
+   disponible (Durée, Donjons) reste volontairement SANS icône plutôt que de mélanger un pictogramme
+   SVG fin au milieu des médaillons dorés `HEADER_ICON_*` (voir header-icons.data.ts, qui documente
+   déjà ce même choix pour `crossed-swords` face à `HEADER_ICON_COMBAT_DATA_URI`). */
+.recap-bandeau {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 6px;
+}
+.bandeau-cell {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.bandeau-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-strong);
+  opacity: 0.6;
+}
+/* `max-width: 100%` + ellipsis (comme `.xp-name`/`.dungeon-name`) : bien que les cellules elles-
+   mêmes ne se chevauchent jamais (`flex:1`/`min-width:0` suffisent à ça), une VALEUR plus large que
+   sa cellule (grand nombre, carte étroite — 3 colonnes de dashboard à largeur réduite) déborde
+   sinon visuellement par-dessus la cellule voisine sans qu'aucune règle ne la clippe (le texte
+   reste bien dans sa boîte flex logique, seul le rendu visuel spécifique déborde) — bug réel
+   constaté à l'écran (~285px de carte, 4 cellules), pas visible sur les rects DOM eux-mêmes. */
+.bandeau-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+/* Case avec tooltip (Kamas, mode Session) : discret repère visuel au survol — voir
+   `kamasTooltip()`/`[tooltipMultiline]`. */
+.bandeau-label.has-tip {
+  border-bottom: 1px dotted var(--text-muted);
+  cursor: help;
+}
+.bandeau-value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-bright);
+}
+.bandeau-value.accent {
+  color: var(--accent);
+}
+.bandeau-value.gold {
+  color: var(--kama-color);
+}
+
+/* Détail déplié d'une ligne de donjon (mode "Donjon & Famille"/"Type") : Victoires/Défaites/Kamas
+   ventilés dans le MÊME bandeau que ci-dessus (icônes fines dédiées, cohérentes ENTRE elles dans
+   cette rangée précise — `check` du sprite partagé pour Victoires, SVG dédiés pour Défaites/Kamas,
+   voir template) plutôt que l'ancien bloc `.split-row`/ligne Kamas séparée. */
+.group-detail .recap-bandeau {
+  padding: 8px 6px;
+}
+
 .xp-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 76px;
+  gap: 8px;
+  max-height: 100px;
   overflow: hidden;
 }
 .xp-list.expanded {
-  max-height: 160px;
+  max-height: 210px;
   overflow-y: auto;
   padding-right: 10px;
+}
+
+/* Une entrée de la liste XP = la ligne existante (`.xp-row`) + sa barre de progression relative au
+   plus gros gain de la liste (voir `xpBarPercent`) — l'indentation de la barre (28px) aligne son
+   départ sous le NOM, pas sous l'icône du personnage (20px + 8px de gap). */
+.xp-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.xp-bar-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-active);
+  overflow: hidden;
+  margin-left: 28px;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
 }
 
 .show-more-btn {
