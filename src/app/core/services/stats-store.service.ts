@@ -25,6 +25,17 @@ export const REASSIGN_HISTORY_KEY = USER_DATA_KEYS.damageReassignments;
 export const ITEM_REASSIGN_HISTORY_KEY = USER_DATA_KEYS.itemReassignments;
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
+/** Famille encyclopédie "Extra Incarnam" (`repository/monster-families.json`, id 161 — zone
+ * d'entraînement/tutoriel, contient notamment "Sac à patates"/"Gros sac à patates", voir
+ * CLAUDE.md) dont les combats doivent rester INVISIBLES de tout total agrégé (XP/kamas/combats
+ * gagnés-perdus/butin de session) tout en restant visibles tels quels dans l'historique brut
+ * (`FightRecord`/`fightHistoryList`, jamais filtré) — demande explicite de l'utilisateur,
+ * 2026-08-28. PAR FAMILLE (id catalogue), PAS par nom brut du log : un filtre par nom français
+ * ("Sac à patates") ne matcherait jamais un client en anglais ("Mr. Punchy") ou toute autre
+ * locale — voir `isExcludedFight`, qui résout chaque ennemi via `CatalogService.
+ * findWakfuMonsterEntry` (déjà insensible à la langue d'origine du nom, voir sa doc) avant de
+ * comparer `family`. */
+const EXCLUDED_STATS_FAMILY_ID = 161;
 /** Borne haute du journal des réattributions persistées (voir reassignSpell/replayPersistedReassignments) — purement une garde-fou anti-croissance illimitée sur une très longue session, jamais atteinte en usage normal. */
 const MAX_REASSIGNMENT_HISTORY = 500;
 /** Miroir de MAX_REASSIGNMENT_HISTORY pour le journal de correction d'objet — voir reassignLootItem/reassignPurchaseItem/reassignTradeItem. */
@@ -425,6 +436,25 @@ export class StatsStoreService {
   readonly kamasEarned = signal(0);
   readonly kamasLost = signal(0);
   readonly netKamas = computed(() => this.kamasEarned() - this.kamasLost());
+
+  /** Ventilation de `kamasEarned`/`kamasLost` par origine — miroir SESSION de la même ventilation
+   * déjà calculée côté serveur pour un compte connecté (voir `functions/api/v1/history/stats.ts`,
+   * `PeriodStats.kamas`), ajoutée le 2026-08-28 pour que la tooltip Kamas de la vue Session (voir
+   * SessionRecapComponent.kamasTooltip) affiche le même détail que la tooltip période au lieu d'un
+   * simple "Gagné/Dépensé". Signaux dédiés plutôt que dérivés de `fightHistory` (plafonné à
+   * `MAX_FIGHT_HISTORY`, donc impropre à un total de session complet) ou de `purchaseHistory`/
+   * `tradeHistory` : incrémentés directement aux MÊMES points que `kamasEarned`/`kamasLost`
+   * (`kama-gain`/`registerPurchase`/`registerTrade` ci-dessous), donc structurellement
+   * `kamasFromCombat + kamasFromHdvSales + kamasTradesAcquired === kamasEarned` et
+   * `kamasSpentOnPurchases + kamasTradesGiven === kamasLost` (à la même approximation près que côté
+   * serveur : un kama-loss ni suivi d'un ramassage ni expliqué par un échange, cas non rencontré en
+   * pratique, ne serait imputé à aucune des deux catégories). Reset dans `resetSessionState()`
+   * (état DÉRIVÉ DU FICHIER, voir CLAUDE.md "principe d'architecture isInitialLoad"). */
+  readonly kamasFromCombat = signal(0);
+  readonly kamasFromHdvSales = signal(0);
+  readonly kamasSpentOnPurchases = signal(0);
+  readonly kamasTradesAcquired = signal(0);
+  readonly kamasTradesGiven = signal(0);
 
   readonly combatsWon = signal(0);
   readonly combatsLost = signal(0);
@@ -871,6 +901,11 @@ export class StatsStoreService {
 
     this.kamasEarned.set(0);
     this.kamasLost.set(0);
+    this.kamasFromCombat.set(0);
+    this.kamasFromHdvSales.set(0);
+    this.kamasSpentOnPurchases.set(0);
+    this.kamasTradesAcquired.set(0);
+    this.kamasTradesGiven.set(0);
     this.combatsWon.set(0);
     this.combatsLost.set(0);
     this.challengesPassed.set(0);
@@ -938,19 +973,35 @@ export class StatsStoreService {
     this.resolvePendingHdvKamaGain(entry);
 
     switch (entry.kind) {
-      case 'kama-gain':
-        this.kamasEarned.update((v) => v + entry.amount);
+      case 'kama-gain': {
+        // Voir EXCLUDED_STATS_FAMILY_ID : un gain issu d'un combat exclu ne doit alimenter AUCUN
+        // total agrégé de session — mais `pendingFightKamas` (donc `working.fight.kamas`, affiché
+        // dans le détail PROPRE à ce combat côté historique brut) reste, lui, toujours crédité
+        // normalement juste en dessous, seule la partie SESSION est exclue ici.
+        const excludedFromStats = this.isExcludedFight(entry.fightId);
+        if (!excludedFromStats) {
+          this.kamasEarned.update((v) => v + entry.amount);
+        }
         // Voir pendingFightKamas : jamais attribué directement à entry.fightId, mais mis en
         // attente jusqu'au tout prochain combat-end (quel qu'il soit).
-        if (entry.fightId !== null) this.pendingFightKamas += entry.amount;
+        if (entry.fightId !== null) {
+          this.pendingFightKamas += entry.amount;
+          if (!excludedFromStats) this.kamasFromCombat.update((v) => v + entry.amount);
+        }
         this.considerHdvKamaGain(entry);
         break;
+      }
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
         this.pendingPurchase = { amount: entry.amount, timeMs: this.timeToMs(entry.time) };
         break;
       case 'xp-gain':
-        this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
+        // Voir EXCLUDED_STATS_FAMILY_ID : `registerFightXp` (détail PROPRE à ce combat, historique
+        // brut) reste, lui, toujours alimenté normalement — seul `xpMap` (total agrégé de session)
+        // est exclu ici.
+        if (!this.isExcludedFight(entry.fightId)) {
+          this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
+        }
         this.registerFightXp(entry.fightId, entry.character, entry.amount);
         break;
       case 'combat-start':
@@ -1335,6 +1386,23 @@ export class StatsStoreService {
     return parsedResult;
   }
 
+  /** Vrai si le combat `fightId` compte un ennemi de `EXCLUDED_STATS_FAMILY_ID` — voir sa doc. Un
+   * ennemi dont le nom n'est pas résolu par le catalogue (`findWakfuMonsterEntry` renvoie
+   * `undefined`) n'est simplement jamais concerné, plutôt que de faire échouer la vérification.
+   * `working.fight.enemies` est déjà connu au moment où ce combat crédite kamas/XP (les ennemis
+   * rejoignent en tout début de combat, avant les premières lignes de dégâts/gain), donc fiable à
+   * interroger dès l'événement plutôt que de devoir attendre `finalizeFight`. `fightId === null`
+   * (gain hors combat, ex. Hôtel de vente) n'est jamais concerné. */
+  private isExcludedFight(fightId: number | null): boolean {
+    if (fightId === null) return false;
+    const working = this.activeFights.get(fightId);
+    if (!working) return false;
+    return working.fight.enemies.some(
+      (enemy) =>
+        this.catalog.findWakfuMonsterEntry(enemy.name)?.family === EXCLUDED_STATS_FAMILY_ID,
+    );
+  }
+
   private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
     const working = this.activeFights.get(fightId);
 
@@ -1380,6 +1448,11 @@ export class StatsStoreService {
       return;
     }
 
+    // Voir EXCLUDED_STATS_FAMILY_ID : combatsWon/combatsLost/sessionLootMap sont des totaux DE
+    // SESSION agrégés — exclus pour ce combat précis, mais le `FightRecord` construit plus bas
+    // (poussé dans `fightHistoryList`/synchronisé) reste, lui, TOUJOURS créé normalement, avec ses
+    // propres kamas/XP/butin déjà corrects (`working.fight.*`, jamais touchés ici).
+    const excludedFromStats = this.isExcludedFight(fightId);
     const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
       // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
@@ -1390,19 +1463,21 @@ export class StatsStoreService {
       for (const enemy of working.fight.enemies) {
         this.registerFightDefeat(fightId, enemy.name);
       }
-      this.combatsWon.update((v) => v + 1);
-      for (const loot of working.fight.loots) {
-        const key = loot.name.toLowerCase();
-        const existing = this.sessionLootMap.get(key);
-        if (existing) existing.quantity += loot.quantity;
-        else
-          this.sessionLootMap.set(key, {
-            name: loot.name,
-            catalogId: loot.catalogId,
-            quantity: loot.quantity,
-          });
+      if (!excludedFromStats) {
+        this.combatsWon.update((v) => v + 1);
+        for (const loot of working.fight.loots) {
+          const key = loot.name.toLowerCase();
+          const existing = this.sessionLootMap.get(key);
+          if (existing) existing.quantity += loot.quantity;
+          else
+            this.sessionLootMap.set(key, {
+              name: loot.name,
+              catalogId: loot.catalogId,
+              quantity: loot.quantity,
+            });
+        }
       }
-    } else {
+    } else if (!excludedFromStats) {
       this.combatsLost.update((v) => v + 1);
     }
 
@@ -1689,6 +1764,13 @@ export class StatsStoreService {
 
   /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
   private registerPurchase(amount: number, item: string, quantity: number, time: string): void {
+    // Ventilation Hôtel de vente/Achats (voir doc de kamasFromHdvSales) — même sentinelle
+    // HDV_KAMAS_SALE_ITEM que côté serveur pour distinguer les deux dans la même table.
+    if (item === HDV_KAMAS_SALE_ITEM) {
+      this.kamasFromHdvSales.update((v) => v + amount);
+    } else {
+      this.kamasSpentOnPurchases.update((v) => v + amount);
+    }
     const record: PurchaseRecord = {
       id: this.nextPurchaseId++,
       item,
@@ -1793,6 +1875,10 @@ export class StatsStoreService {
     };
     this.tradeHistoryList.unshift(record);
     this.historySync.recordTrade(record);
+    // Ventilation Échanges (voir doc de kamasTradesAcquired/kamasTradesGiven) — source directe
+    // (kamas de CE combattant.self, pas la reconciliation kama-gain/kama-loss générique).
+    if (record.kamasAcquired > 0) this.kamasTradesAcquired.update((v) => v + record.kamasAcquired);
+    if (record.kamasGiven > 0) this.kamasTradesGiven.update((v) => v + record.kamasGiven);
   }
 
   /**

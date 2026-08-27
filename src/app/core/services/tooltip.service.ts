@@ -20,6 +20,10 @@ export interface TooltipRequest {
   readonly rect: DOMRect;
   readonly position: TooltipPosition;
   readonly multiline: boolean;
+  /** Police à chasse fixe — nécessaire pour aligner des colonnes libellé/valeur par padding
+   * (espaces insécables, seuls à survivre au `white-space: pre-line` de `.app-tooltip-multiline`,
+   * voir `tooltip.component.css`). Voir `SessionRecapComponent.periodKamasTooltip`. */
+  readonly monospace: boolean;
 }
 
 /**

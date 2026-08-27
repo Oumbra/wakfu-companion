@@ -35,6 +35,7 @@ export class TooltipDirective implements OnDestroy {
   readonly appTooltip = model<string | null | undefined>();
   readonly tooltipPosition = input<TooltipPosition>('top');
   readonly tooltipMultiline = input(false);
+  readonly tooltipMonospace = input(false);
   readonly tooltipOnlyIfTruncated = input(false);
   readonly tooltipDisabled = input(false);
 
@@ -91,6 +92,7 @@ export class TooltipDirective implements OnDestroy {
       rect: el.getBoundingClientRect(),
       position: this.tooltipPosition(),
       multiline: this.tooltipMultiline(),
+      monospace: this.tooltipMonospace(),
     });
   }
 

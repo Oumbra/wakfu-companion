@@ -84,7 +84,17 @@
 }
 
 .period-picker-cell {
+  /* `padding: 0`/`height: auto` : ANNULE explicitement `button { padding: 0 12px; height: 28px; }`
+     (styles.css, règle globale) — bug réel corrigé le 2026-08-28 (remonté par l'utilisateur avec
+     capture) : ces 24px de padding horizontal hérités forçaient chaque case à une largeur minimale
+     (~39px) supérieure à sa part de grille (`1fr` sur 7 colonnes dans un `.period-picker` large de
+     240px fixe, soit ~31px/colonne) — `min-width: auto` d'un item de grille ne s'efface jamais
+     devant `1fr`, la grille entière débordait donc de son propre conteneur (~274px de pistes pour
+     218px de large réel), une partie des jours se retrouvant visuellement hors du cadre. */
+  padding: 0;
+  height: auto;
   aspect-ratio: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   justify-content: center;

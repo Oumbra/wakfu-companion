@@ -28,20 +28,27 @@ import type { Env } from '../../_types';
  * transaction interactive — voir server/README.md), lancés en parallèle : un même combat/achat/
  * échange n'est jamais compté deux fois puisque chaque requête porte sur une seule table (+ une
  * jointure en lecture seule pour XP/butin/donjon/famille), toutes filtrées par le même
- * `(userId, plage)`.
+ * `(userId, plage)` — et, pour toutes celles basées sur `fights`, par `noExcludedEnemy` (voir plus
+ * bas) : un combat contre un monstre de EXCLUDED_FAMILY_ID (voir sa doc) ne doit jamais apparaître
+ * dans un total agrégé, contrairement à `GET /api/v1/history/fights` (historique brut, fichier
+ * séparé, non concerné).
  *
- * `dungeonRuns` (par donjon uniquement, absent des groupes `families`) : un donjon est un
+ * `dungeonRuns`/`won`/`lost` (par donjon uniquement — pour un groupe `families`, `won`/`lost`
+ * restent des combats bruts, `dungeonRuns` reste 0, voir `GroupTotalsRow`) : un donjon est un
  * REGROUPEMENT de combats (salles + tentatives de boss), jamais un simple décompte de combats — un
- * clear de donjon 4 salles produit 4 lignes dans `fights` pour UN SEUL donjon "fait". Approximé ici
- * par le nombre de combats DISTINCTS de la période où un monstre `is_boss` est présent côté ennemi
- * (`dungeonBossFightRows` ci-dessous) : chaque tentative contre le boss (gagnée ou perdue) ancre
- * exactement une entrée de run au sens de `groupDungeonRuns` (core/utils/dungeon-run-grouping.util.ts),
- * à une approximation acceptée près — plusieurs tentatives PERDANTES consécutives contre le même
- * boss avant une victoire finale sont fusionnées en un seul run côté client (`groupDungeonRuns`)
- * mais comptées ici comme autant de runs distincts (pas de fenêtre temporelle de clustering
- * reproduite côté SQL, qui nécessiterait de rejouer tout l'historique ordonné plutôt qu'un simple
- * agrégat). Les donjons à un seul combat (3 joueurs, boss ultime...) ont par construction
- * `dungeonRuns === fights`, aucune approximation ne s'y applique.
+ * clear de donjon 4 salles produit 4 lignes dans `fights` pour UN SEUL donjon "fait", et les
+ * salles elles-mêmes sont presque toujours gagnées avant de progresser (une défaite de salle n'y
+ * met simplement pas fin à la tentative de donjon, contrairement à une défaite de boss). Fix
+ * 2026-08-28 (remonté par l'utilisateur) : ces trois champs sont donc calculés à partir des seuls
+ * combats DISTINCTS de la période où un monstre `is_boss` est présent côté ennemi
+ * (`dungeonBossFightRows` ci-dessous), PAS de l'ensemble des combats du donjon (salles incluses,
+ * l'ancien calcul, qui gonflait `dungeonRuns` d'une unité par tentative de salle retentée et
+ * mélangeait victoires de salle et victoires de boss dans `won`/`lost`) : une VICTOIRE de boss =
+ * un donjon terminé (`dungeonRuns`/`won`), une DÉFAITE de boss = une tentative ratée (`lost`), pas
+ * un donjon distinct — cohérent avec `groupDungeonRuns` (core/utils/dungeon-run-grouping.util.ts),
+ * qui fusionne côté client les tentatives de boss perdues avec la victoire finale en un seul run.
+ * Les donjons à un seul combat (3 joueurs, boss ultime...) ont par construction
+ * `dungeonRuns === fights` sur une période sans défaite, aucune divergence ne s'y applique.
  *
  * Le regroupement par donjon ne rejoint PAS `dungeons` : `dungeonId` est renvoyé brut (id Ankama)
  * et résolu en nom localisé côté client via `CatalogService` (même principe que `itemId`/
@@ -75,6 +82,9 @@ interface GroupTotalsRow {
   /** Toujours 0 pour un groupe `families` (voir doc de tête) — seuls les groupes `dungeons` le
    * renseignent réellement. */
   dungeonRuns: number;
+  /** Pour un groupe `dungeons` : issue du combat de BOSS uniquement (voir doc de tête) — PAS
+   * l'ensemble des combats du donjon. Pour un groupe `families` : combats bruts (pas de notion de
+   * boss hors donjon). */
   won: number;
   lost: number;
   kamasGained: number;
@@ -107,6 +117,29 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const db = createDb(context.env.DATABASE_URL);
   const userId = auth.user.id;
 
+  // Miroir de EXCLUDED_STATS_FAMILY_ID (src/app/core/services/stats-store.service.ts) — server/
+  // ne dépend jamais de src/, dupliqué comme HDV_KAMAS_SALE_ITEM (voir server/history/stats-query.ts).
+  // Famille encyclopédie "Extra Incarnam" (repository/monster-families.json, id 161 — zone
+  // d'entraînement/tutoriel, contient "Sac à patates"/"Gros sac à patates"/etc., voir CLAUDE.md).
+  // PAR FAMILLE (jointure `monsters`), PAS par nom brut du log : un filtre par nom français ne
+  // matcherait jamais un client dans une autre langue (ex. "Mr. Punchy" en anglais pour le même
+  // monstre) — fix 2026-08-28, remplace un filtre par nom déployé plus tôt le même jour et déjà
+  // signalé comme insuffisant par l'utilisateur. Un combat où un tel monstre apparaît côté ennemi
+  // doit rester TOTALEMENT invisible de tout total agrégé — `GET /api/v1/history/fights`
+  // (historique brut) n'est pas concerné par ce fichier, aucun changement nécessaire là-bas.
+  const EXCLUDED_FAMILY_ID = 161;
+  // Fragment réutilisé dans chaque requête basée sur `fights` : exclut tout combat où un ennemi de
+  // EXCLUDED_FAMILY_ID apparaît. Un ennemi non catalogué (`monster_id` NULL) ne matche jamais cette
+  // jointure, donc ne déclenche jamais l'exclusion — cohérent, seuls les VRAIS membres de cette
+  // famille sont concernés.
+  const noExcludedEnemy = sql`not exists (
+    select 1 from fight_participants fp_excl
+    join monsters m_excl on m_excl.id = fp_excl.monster_id
+    where fp_excl.fight_id = ${fights.id}
+      and fp_excl.side = 'enemy'
+      and m_excl.family = ${EXCLUDED_FAMILY_ID}
+  )`;
+
   // Sous-requête dérivée "famille représentative par combat hors-donjon" (voir doc de tête) —
   // fragment `sql` réutilisé (interpolé, pas exécuté seul) par les 3 requêtes `family*` ci-dessous.
   const familyPerFight = sql`
@@ -120,6 +153,13 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       and f.dungeon_id is null
       and fp.side = 'enemy'
       and fp.monster_id is not null
+      and not exists (
+        select 1 from fight_participants fp_excl
+        join monsters m_excl on m_excl.id = fp_excl.monster_id
+        where fp_excl.fight_id = f.id
+          and fp_excl.side = 'enemy'
+          and m_excl.family = ${EXCLUDED_FAMILY_ID}
+      )
     order by fp.fight_id,
       case when m.is_boss then 0 when m.is_archi then 1 when m.is_dominant then 2 else 3 end,
       fp.damage desc
@@ -149,7 +189,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       })
       .from(fights)
       .where(
-        and(eq(fights.userId, userId), gte(fights.startedAt, since), lt(fights.startedAt, until)),
+        and(
+          eq(fights.userId, userId),
+          gte(fights.startedAt, since),
+          lt(fights.startedAt, until),
+          noExcludedEnemy,
+        ),
       ),
 
     db
@@ -165,6 +210,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           gte(fights.startedAt, since),
           lt(fights.startedAt, until),
           eq(fightParticipants.side, 'ally'),
+          noExcludedEnemy,
         ),
       )
       .groupBy(fightParticipants.name)
@@ -179,7 +225,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       .from(fightLoot)
       .innerJoin(fights, eq(fightLoot.fightId, fights.id))
       .where(
-        and(eq(fights.userId, userId), gte(fights.startedAt, since), lt(fights.startedAt, until)),
+        and(
+          eq(fights.userId, userId),
+          gte(fights.startedAt, since),
+          lt(fights.startedAt, until),
+          noExcludedEnemy,
+        ),
       )
       // itemId/itemName mutuellement exclusifs (voir server/db/schema.ts) : grouper sur les deux
       // revient à grouper sur celui des deux qui est renseigné pour chaque ligne.
@@ -230,6 +281,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           gte(fights.startedAt, since),
           lt(fights.startedAt, until),
           isNotNull(fights.dungeonId),
+          noExcludedEnemy,
         ),
       )
       .groupBy(fights.dungeonId)
@@ -250,6 +302,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           gte(fights.startedAt, since),
           lt(fights.startedAt, until),
           isNotNull(fights.dungeonId),
+          noExcludedEnemy,
         ),
       )
       .groupBy(fights.dungeonId, fightLoot.itemId, fightLoot.itemName),
@@ -269,16 +322,21 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           lt(fights.startedAt, until),
           eq(fightParticipants.side, 'ally'),
           isNotNull(fights.dungeonId),
+          noExcludedEnemy,
         ),
       )
       .groupBy(fights.dungeonId, fightParticipants.name),
 
-    // Nombre de "donjons" (voir doc de tête, `dungeonRuns`) : combats DISTINCTS où un monstre
-    // `is_boss` apparaît côté ennemi, groupés par donjon.
+    // Nombre de "donjons" (voir doc de tête, `dungeonRuns`) ET Victoires/Défaites affichées pour un
+    // groupe donjon : combats DISTINCTS où un monstre `is_boss` apparaît côté ennemi, groupés par
+    // donjon puis par issue. Une VICTOIRE de boss = un donjon terminé (`dungeonRuns`) ; une défaite
+    // de boss = une tentative ratée, PAS un donjon distinct (voir doc de tête, fix 2026-08-28 — les
+    // salles, presque toujours gagnées avant de progresser, n'entrent plus dans ce décompte).
     db
       .select({
         dungeonId: fights.dungeonId,
-        runs: sql<number>`count(distinct ${fights.id})`,
+        bossWon: sql<number>`count(distinct ${fights.id}) filter (where ${fights.won} = true)`,
+        bossLost: sql<number>`count(distinct ${fights.id}) filter (where ${fights.won} = false)`,
       })
       .from(fights)
       .innerJoin(fightParticipants, eq(fightParticipants.fightId, fights.id))
@@ -291,6 +349,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           isNotNull(fights.dungeonId),
           eq(fightParticipants.side, 'enemy'),
           eq(monsters.isBoss, true),
+          noExcludedEnemy,
         ),
       )
       .groupBy(fights.dungeonId),
@@ -341,9 +400,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     dungeonGroups.set(dungeonId, {
       dungeonId,
       fights: num(row.fightsCount),
-      dungeonRuns: 0, // complété par dungeonBossFightRows ci-dessous, resté à 0 sans tentative de boss sur la période
-      won: num(row.won),
-      lost: num(row.lost),
+      // dungeonRuns/won/lost complétés par dungeonBossFightRows ci-dessous (issue du combat de
+      // BOSS uniquement, pas des salles — voir sa doc) ; restent à 0 sans tentative de boss sur la
+      // période (cas limite : run abandonné avant même d'atteindre le boss).
+      dungeonRuns: 0,
+      won: 0,
+      lost: 0,
       kamasGained: num(row.kamasGained),
       xpGained: num(row.xpGained),
       xpByCharacter: [],
@@ -352,11 +414,20 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
   for (const row of dungeonBossFightRows) {
     const group = dungeonGroups.get(row.dungeonId as number);
-    if (group) group.dungeonRuns = num(row.runs);
+    if (group) {
+      group.dungeonRuns = num(row.bossWon);
+      group.won = num(row.bossWon);
+      group.lost = num(row.bossLost);
+    }
   }
   for (const row of dungeonXpRows) {
     const group = dungeonGroups.get(row.dungeonId as number);
     if (group) group.xpByCharacter.push({ name: row.name, amount: num(row.amount) });
+  }
+  // Trié décroissant (comme `xpRows` au niveau top, déjà `.orderBy(desc(sum))`) : `GROUP BY` seul
+  // ne garantit aucun ordre, et le client (SessionRecapComponent) affiche cette liste telle quelle.
+  for (const group of dungeonGroups.values()) {
+    group.xpByCharacter.sort((a, b) => b.amount - a.amount);
   }
   for (const row of dungeonLootRows) {
     const group = dungeonGroups.get(row.dungeonId as number);
@@ -386,6 +457,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     if (group) {
       group.xpByCharacter.push({ name: row['name'] as string, amount: num(row['amount']) });
     }
+  }
+  // Voir le commentaire miroir sur dungeonGroups ci-dessus.
+  for (const group of familyGroups.values()) {
+    group.xpByCharacter.sort((a, b) => b.amount - a.amount);
   }
   for (const row of familyLootResult.rows as Record<string, unknown>[]) {
     const familyId = numOrNull(row['family']);

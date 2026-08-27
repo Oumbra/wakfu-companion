@@ -33,3 +33,9 @@
   width: max-content;
   max-width: 220px;
 }
+/* Police à chasse fixe — permet d'aligner des colonnes libellé/valeur par padding d'espaces
+   insécables (voir TooltipRequest.monospace) : les espaces normaux sont collapsés par
+   `white-space: pre-line` ci-dessus, pas les insécables. */
+.app-tooltip-monospace {
+  font-family: monospace;
+}

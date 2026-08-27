@@ -12,6 +12,10 @@ export interface PeriodGroupTotals {
    * pour un groupe `families` (hors donjon) : le concept ne s'y applique pas, `SessionRecapComponent`
    * retombe alors sur `fights`. */
   dungeonRuns: number;
+  /** Pour un groupe donjon (`PeriodStats.dungeons`) : issue du combat de BOSS uniquement (voir
+   * `functions/api/v1/history/stats.ts`) — PAS l'ensemble des combats du donjon (les salles,
+   * presque toujours gagnées avant de progresser, n'y comptent pas). Pour un groupe famille
+   * (`PeriodStats.families`) : combats bruts, aucune notion de boss hors donjon. */
   won: number;
   lost: number;
   kamasGained: number;

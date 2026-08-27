@@ -53,7 +53,9 @@ export function mergeGroupTotals(rows: readonly PeriodGroupTotals[]): PeriodGrou
     }
   }
 
-  merged.xpByCharacter = Array.from(xpByName, ([name, amount]) => ({ name, amount }));
+  merged.xpByCharacter = Array.from(xpByName, ([name, amount]) => ({ name, amount })).sort(
+    (a, b) => b.amount - a.amount,
+  );
   merged.loot = Array.from(lootByKey.values());
   return merged;
 }
