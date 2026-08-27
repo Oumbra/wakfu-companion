@@ -67,8 +67,7 @@
 /* Accordéon des modes Donjon & Famille/Type (voir SessionRecapComponent.activeGroupRows) — chaque
    ligne (`.group-item`) est un `.recap-section` (fond/bordure propres, cohérent avec les autres
    sections repliables de la carte) contenant sa propre ligne d'en-tête (`.dungeon-row`, réutilisée
-   telle quelle) + un caret, et un détail dépliable (`.group-detail`, même principe que
-   `.kama-detail`). Pas de plafond de hauteur (contrairement à l'ancienne liste plate "Par donjon",
+   telle quelle) + un caret, et un détail dépliable (`.group-detail`). Pas de plafond de hauteur (contrairement à l'ancienne liste plate "Par donjon",
    remplacée par cet accordéon) : `.panel-body` scrolle déjà toute la carte, et une ligne dépliée a
    besoin de sa pleine hauteur. */
 .group-list {
@@ -119,29 +118,27 @@
   flex-shrink: 0;
 }
 
-/* Vignette de la ligne repliée d'un donjon/famille (maquette du 2026-08-27, plus visuel qu'un
-   simple nom de texte) — `dungeon.pictureUrl` (image officielle Ankama, voir CatalogDungeonEntry)
-   quand la ligne est un VRAI donjon résolu (mode "Donjon & Famille" uniquement, voir
-   `RecapGroupRow.pictureUrl`) ; repli SVG générique sinon (famille de monstre, ligne fusionnée du
-   mode "Type", ou id de donjon pas encore résolu par le catalogue) — voir `isFamilyRow`/
-   `onThumbError`. */
+/* Vignette de la ligne repliée d'un donjon/famille/type (demande explicite du 2026-08-27 : PAS de
+   carré à bordure, seulement l'image à hauteur plafonnée, largeur automatique) —
+   `dungeon.pictureUrl` (image officielle Ankama, voir CatalogDungeonEntry) pour un VRAI donjon
+   résolu (mode "Donjon & Famille") ; `row.stoneItemId` (pierre du type, voir
+   `dungeonStoneItemIdForType`) pour un bucket "Type" qui en délivre une ; repli générique sinon
+   (famille de monstre, bucket "Autres", ou id pas encore résolu par le catalogue) — voir
+   `isFamilyRow`/`onThumbError`. */
 .dungeon-thumb {
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
-  background: var(--panel-header-bg);
-  border: 1px solid var(--border);
+  height: 24px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  overflow: hidden;
 }
 .dungeon-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  max-height: 24px;
+  width: auto;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .recap-section {
@@ -172,14 +169,6 @@
   height: 18px;
   object-fit: contain;
 }
-.section-header-value {
-  margin-left: auto;
-  font-family: monospace;
-  color: var(--accent);
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 700;
-}
 .section-caret {
   font-size: 0.7em;
   color: var(--text-muted);
@@ -201,51 +190,6 @@
   color: var(--btn-active-red);
 }
 
-.recap-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.recap-label {
-  color: var(--text-color);
-  font-size: 0.85rem;
-}
-.recap-value {
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--text-color);
-  text-align: right;
-}
-.recap-value.gain {
-  color: var(--btn-active-green);
-}
-.recap-value.loss {
-  color: var(--btn-active-red);
-}
-
-.section-header-value.gold {
-  color: var(--kama-color);
-}
-.kama-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--surface-active);
-}
-
-.challenges-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-.challenges-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .challenges-label {
   color: var(--accent);
   text-transform: uppercase;
@@ -253,63 +197,22 @@
   font-weight: 700;
   letter-spacing: 0.5px;
 }
-.challenges-sep {
-  border-top: 1px dashed var(--surface-active);
-}
-
-/* Résumé compact d'une ligne "Challenges" à plat (mode Session, voir `.recap-section-header` sans
-   caret ni détail dépliable juste au-dessus dans le template) — pousse le résumé coloré à droite
-   comme `.section-header-value`, sans en reprendre la couleur accent unique (ici deux couleurs,
-   voir `.gain`/`.loss`). */
+/* Résumé compact d'une ligne "Challenges" à plat (Session ET période-cumulée, voir
+   `.recap-section-header` sans caret ni détail dépliable juste au-dessus dans le template) — pousse
+   le résumé coloré à droite, deux couleurs (voir `.gain`/`.loss`) plutôt qu'une couleur accent
+   unique. */
 .defis-summary {
   margin-left: auto;
   font-family: monospace;
   font-size: 0.82rem;
 }
 
-.split-row {
-  display: flex;
-  align-items: center;
-  width: 100%;
-}
-.split-part {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-width: 0;
-}
-.split-sep {
-  flex-shrink: 0;
-  color: var(--border-strong);
-  padding: 0 10px;
-}
-.split-label {
-  font-size: 0.85rem;
-}
-.split-value {
-  font-family: monospace;
-  font-weight: 700;
-}
-.split-label.gain,
-.split-value.gain {
-  color: var(--btn-active-green);
-}
-.split-label.loss,
-.split-value.loss {
-  color: var(--btn-active-red);
-}
-
-/* Bande "coup d'oeil" (maquette du 2026-08-27) : remplace l'ancienne `.duration-box` (mode
-   Session) — 4 cases (Durée/Expérience/Kamas/Combats) — et sert aussi de bandeau de totaux
-   globaux en tête du mode "Donjon & Famille"/"Type" (4 cases : Expérience/Kamas/Combats/Donjons),
-   ET réutilisée telle quelle (3 cases : Victoires/Défaites/Kamas) dans le détail déplié d'une
-   ligne de donjon — voir `.group-detail .recap-bandeau` plus bas, même système visuel demandé
-   explicitement plutôt qu'un style différent par endroit. Une case sans médaillon peint
-   disponible (Durée, Donjons) reste volontairement SANS icône plutôt que de mélanger un pictogramme
-   SVG fin au milieu des médaillons dorés `HEADER_ICON_*` (voir header-icons.data.ts, qui documente
-   déjà ce même choix pour `crossed-swords` face à `HEADER_ICON_COMBAT_DATA_URI`). */
+/* Bande "coup d'oeil", TOUJOURS présente (voir CLAUDE.md, corrigé le 2026-08-27 : n'apparaissait
+   avant que sur la vue Session — seules les VALEURS changent désormais selon la vue) : Durée (mode
+   Session uniquement, sans équivalent pour une période agrégée)/Expérience/Kamas/Combats en tête de
+   chaque vue, ET réutilisée telle quelle (3 cases : Victoires/Défaites/Kamas) dans le détail déplié
+   d'une ligne de donjon — voir `.group-detail .recap-bandeau` plus bas, même système visuel partout
+   plutôt qu'un style différent par endroit. */
 .recap-bandeau {
   display: flex;
   align-items: stretch;
@@ -326,6 +229,22 @@
   gap: 3px;
   min-width: 0;
 }
+/* Icône + titre CÔTE À CÔTE sur une même ligne (demande explicite du 2026-08-27 : avant, l'icône
+   était empilée AU-DESSUS du titre, ce qui désalignait visuellement les icônes des différentes
+   cases entre elles) — la valeur reste sur sa propre ligne en dessous, voir `.bandeau-value`. */
+.bandeau-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.bandeau-icon {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
 .bandeau-sep {
   width: 1px;
   align-self: stretch;
@@ -339,6 +258,7 @@
    reste bien dans sa boîte flex logique, seul le rendu visuel spécifique déborde) — bug réel
    constaté à l'écran (~285px de carte, 4 cellules), pas visible sur les rects DOM eux-mêmes. */
 .bandeau-label {
+  min-width: 0;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -462,8 +382,8 @@
 
 /* Section butin de la carte recap : réplique le design/actions/tri de la
    section historique > combat > butin (voir FightHistoryComponent), adaptée
-   aux séparateurs en pointillés déjà utilisés dans ce panneau (voir
-   .challenges-sep) plutôt qu'aux bordures pleines de fight-history. */
+   aux séparateurs en pointillés déjà utilisés dans ce panneau plutôt qu'aux
+   bordures pleines de fight-history. */
 .recap-loot-block {
   margin-top: 4px;
   padding-top: 8px;

@@ -4,6 +4,7 @@ import { mergeGroupTotals } from './period-group-merge.util';
 function group(overrides: Partial<PeriodGroupTotals>): PeriodGroupTotals {
   return {
     fights: 0,
+    dungeonRuns: 0,
     won: 0,
     lost: 0,
     kamasGained: 0,
@@ -21,10 +22,11 @@ describe('mergeGroupTotals', () => {
 
   it('somme les totaux plats de plusieurs groupes', () => {
     const merged = mergeGroupTotals([
-      group({ fights: 3, won: 2, lost: 1, kamasGained: 100, xpGained: 50 }),
-      group({ fights: 2, won: 0, lost: 2, kamasGained: 20, xpGained: 10 }),
+      group({ fights: 3, dungeonRuns: 1, won: 2, lost: 1, kamasGained: 100, xpGained: 50 }),
+      group({ fights: 2, dungeonRuns: 1, won: 0, lost: 2, kamasGained: 20, xpGained: 10 }),
     ]);
     expect(merged.fights).toBe(5);
+    expect(merged.dungeonRuns).toBe(2);
     expect(merged.won).toBe(2);
     expect(merged.lost).toBe(3);
     expect(merged.kamasGained).toBe(120);

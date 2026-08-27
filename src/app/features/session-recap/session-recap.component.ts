@@ -17,6 +17,7 @@ import { NumberFrPipe } from '../../shared/number-fr.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
+import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
 import { EntityClassifierService } from '../../core/services/entity-classifier.service';
 import { ClassPickerService } from '../../core/services/class-picker.service';
@@ -37,6 +38,8 @@ import {
   sortLootRows,
 } from '../../core/utils/loot-sort.util';
 import { CatalogService, WakfuDungeonType } from '../../core/api/catalog.service';
+import { dungeonStoneItemIdForType } from '../../core/utils/dungeon-run-grouping.util';
+import { UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { AuthService } from '../../core/auth/auth.service';
 import {
@@ -109,6 +112,12 @@ interface RecapGroupRow {
    * seule ligne — pas d'image unique pertinente, voir `typeRows`). Le template retombe alors sur
    * un pictogramme générique (voir `isFamilyRow`). */
   pictureUrl: string | null;
+  /** Id Ankama de la pierre de donjon associée (voir `dungeonStoneItemIdForType`) — uniquement pour
+   * une ligne du mode "Type" adossée à un `WakfuDungeonType` qui délivre une pierre (2/3/4 salles, 3
+   * joueurs, boss ultime, voir CLAUDE.md) ; `null` pour toute ligne "Donjon & Famille" (le donjon
+   * précis a déjà sa propre illustration, voir `pictureUrl`), une famille, ou un type sans pierre
+   * (brèche, arcade). Affiché EN AVANT du libellé (voir template) plutôt qu'en vignette. */
+  stoneItemId: number | null;
 }
 
 /**
@@ -127,6 +136,7 @@ interface RecapGroupRow {
     NumberFrPipe,
     TranslatePipe,
     EntityIconComponent,
+    ItemIconComponent,
     LootListComponent,
     TooltipDirective,
     IconComponent,
@@ -143,6 +153,11 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly lootIcon = HEADER_ICON_LOOT_DATA_URI;
   /** Toujours grise, que le tri par rareté soit actif ou non — voir FightHistoryComponent (même switch). */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
+  /** Repli du bucket "Autres" du mode "Type" (voir `typeRows`) — image générique de créature/entité
+   * non reconnue, déjà utilisée ailleurs dans l'app (voir `getClassIconUri`) plutôt qu'un pictogramme
+   * SVG dédié : "Autres" fusionne précisément les combats hors donjon dont le monstre représentatif
+   * n'a pas pu être classé plus précisément. */
+  protected readonly unknownEntityIcon = UNKNOWN_ENTITY_ICON_DATA_URI;
 
   protected readonly stats = inject(StatsStoreService);
   private readonly catalog = inject(CatalogService);
@@ -181,11 +196,9 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   @ViewChild('xpList') private readonly xpListRef?: ElementRef<HTMLDivElement>;
 
   protected readonly duration = signal('00:00:00');
-  protected readonly kamasExpanded = signal(false);
-  /** Combat et expérience ouverts par défaut (le butin, imbriqué sous "Combats" ci-dessous, en
-   * bénéficie du même coup) — seul Kamas reste replié par défaut. */
+  /** Repli/dépli de la liste XP > 3 lignes en mode Session uniquement (voir template) — les autres
+   * vues (période, détail par groupe) affichent toujours la liste complète, aucun repli. */
   protected readonly xpExpanded = signal(true);
-  protected readonly combatsExpanded = signal(true);
   protected readonly lootSort = signal<LootSort>('name');
   /** Sens du tri courant (`false` = sens par défaut de `lootSort`) — inversé au reclic sur le
    * switch déjà actif, voir `nextLootSortState`. */
@@ -202,10 +215,6 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     if (this.tickInterval !== null) clearInterval(this.tickInterval);
   }
 
-  toggleKamas(): void {
-    this.kamasExpanded.update((v) => !v);
-  }
-
   toggleXp(): void {
     const next = !this.xpExpanded();
     this.xpExpanded.set(next);
@@ -216,10 +225,6 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         if (this.xpListRef) this.xpListRef.nativeElement.scrollTop = 0;
       });
     }
-  }
-
-  toggleCombats(): void {
-    this.combatsExpanded.update((v) => !v);
   }
 
   protected setLootSort(mode: LootSort): void {
@@ -317,10 +322,20 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     this.failedThumbs.update((set) => new Set(set).add(key));
   }
 
+  /** Nombre affiché en tête de ligne (badge "×N", voir template) — le nombre de DONJONS (voir
+   * `PeriodGroupTotals.dungeonRuns`), jamais le nombre de combats bruts : un donjon est un
+   * regroupement de plusieurs combats (salles + tentatives de boss). Pour une ligne "famille"
+   * (`dungeonRuns` toujours à 0, le concept ne s'y applique pas), retombe sur `fights` — chaque
+   * combat hors donjon est sa propre rencontre, pas de regroupement à défaire. */
+  protected rowCount(totals: PeriodGroupTotals): number {
+    return totals.dungeonRuns > 0 ? totals.dungeonRuns : totals.fights;
+  }
+
   /** Mode "Donjon & Famille" (voir CLAUDE.md) : une ligne par donjon précis + une ligne par famille
    * de monstre représentative pour les combats hors donjon — deux tableaux déjà distincts côté
    * serveur (`PeriodStats.dungeons`/`families`, jamais le même id des deux côtés), simplement
-   * concaténés puis triés par nombre de combats décroissant. */
+   * concaténés puis triés par nombre de DONJONS décroissant (voir `rowCount`, pas le nombre de
+   * combats bruts). */
   protected readonly groupRows = computed<RecapGroupRow[]>(() => {
     const period = this.historyStats.stats();
     if (!period) return [];
@@ -330,15 +345,17 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         label: this.dungeonLabel(d.dungeonId),
         totals: d,
         pictureUrl: this.catalog.findWakfuDungeonEntryById(d.dungeonId)?.pictureUrl ?? null,
+        stoneItemId: null,
       })),
       ...period.families.map((f) => ({
         key: `family:${f.familyId ?? 'null'}`,
         label: this.familyLabel(f.familyId),
         totals: f,
         pictureUrl: null,
+        stoneItemId: null,
       })),
     ];
-    return rows.sort((a, b) => b.totals.fights - a.totals.fights);
+    return rows.sort((a, b) => this.rowCount(b.totals) - this.rowCount(a.totals));
   });
 
   /** Mode "Type" (voir CLAUDE.md) : les 8 `WakfuDungeonType` fusionnés chacun en une seule ligne
@@ -346,7 +363,11 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * entièrement recalculé côté client à partir des mêmes données que `groupRows` (aucune requête
    * serveur supplémentaire, voir `mergeGroupTotals`). Un donjon dont l'id n'est pas (encore) résolu
    * par le catalogue est ignoré ici (cas limite, référentiel pas à jour) plutôt que de faire
-   * échouer tout le regroupement. */
+   * échouer tout le regroupement.
+   *
+   * Ordre volontairement PAS trié par nombre de donjons (contrairement à `groupRows`) : ordre FIXE
+   * demandé explicitement (2 salles, 3 salles, 4 salles, 3 joueurs, boss ultime, puis brèche/brèche
+   * ultime/arcade — l'ordre naturel de `DUNGEON_TYPES`), "Autres" toujours en dernier. */
   protected readonly typeRows = computed<RecapGroupRow[]>(() => {
     const period = this.historyStats.stats();
     if (!period) return [];
@@ -363,8 +384,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       label: this.dungeonTypeLabel(type),
       totals: mergeGroupTotals(buckets.get(type)!),
       // Bucket fusionné (plusieurs donjons possibles) : pas d'image unique pertinente, voir doc de
-      // RecapGroupRow.pictureUrl.
+      // RecapGroupRow.pictureUrl — la pierre du type (voir stoneItemId) sert de repère visuel à la
+      // place.
       pictureUrl: null,
+      stoneItemId: dungeonStoneItemIdForType(type),
     }));
     if (period.families.length > 0) {
       rows.push({
@@ -372,9 +395,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         label: this.i18n.t('sessionRecap.period.otherFamily'),
         totals: mergeGroupTotals(period.families),
         pictureUrl: null,
+        stoneItemId: null,
       });
     }
-    return rows.sort((a, b) => b.totals.fights - a.totals.fights);
+    return rows;
   });
 
   /** Lignes réellement affichées par l'accordéon selon `detailMode` — vide (et donc jamais rendu)
@@ -386,17 +410,33 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return [];
   });
 
-  /** Butin d'un groupe (ligne d'accordéon), converti/trié comme `sortedPeriodLoot` — partage les
-   * mêmes signaux `lootSort`/`lootSortReverse` que les autres vues (aucun switch de tri dédié par
-   * ligne d'accordéon, la liste pouvant compter de nombreuses lignes : le switch global de la vue
-   * Cumulé, bien que non affiché en mode Donjon & Famille/Type, continue de piloter ces signaux). */
-  protected sortedGroupLoot(totals: PeriodGroupTotals): LootRow[] {
-    const rows: LootRow[] = totals.loot.map((row) => ({
-      name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
-      catalogId: row.itemId,
-      quantity: row.quantity,
+  /** Butin d'une ligne d'accordéon (donjon, famille, ou bucket "Type"), converti/trié comme
+   * `sortedPeriodLoot` — mêmes signaux `lootSort`/`lootSortReverse` que partout ailleurs dans la
+   * carte (voir CLAUDE.md, tri du butin réutilisé identiquement à chaque endroit où du butin
+   * s'affiche), pas de switch dédié par ligne.
+   *
+   * Pour une ligne "Type" adossée à une pierre de donjon (`row.stoneItemId`, voir CLAUDE.md) : la
+   * pierre reste TOUJOURS la toute première ligne, même à quantité 0 (synthétisée si absente du
+   * butin réel de la période) — épinglée en tête, hors du tri choisi par l'utilisateur, qui ne
+   * s'applique qu'au RESTE du butin. */
+  protected sortedRowLoot(row: RecapGroupRow): LootRow[] {
+    const rows: LootRow[] = row.totals.loot.map((item) => ({
+      name: resolveItemName(item.itemId, item.itemName, this.catalog, this.i18n),
+      catalogId: item.itemId,
+      quantity: item.quantity,
     }));
-    return sortLootRows(this.catalog, rows, this.lootSort(), this.lootSortReverse());
+    if (row.stoneItemId === null) {
+      return sortLootRows(this.catalog, rows, this.lootSort(), this.lootSortReverse());
+    }
+    const stoneId = row.stoneItemId;
+    const existing = rows.find((r) => r.catalogId === stoneId);
+    const stoneRow: LootRow = existing ?? {
+      name: resolveItemName(stoneId, null, this.catalog, this.i18n),
+      catalogId: stoneId,
+      quantity: 0,
+    };
+    const rest = rows.filter((r) => r.catalogId !== stoneId);
+    return [stoneRow, ...sortLootRows(this.catalog, rest, this.lootSort(), this.lootSortReverse())];
   }
 
   /** Sans paramètre (plutôt que `(g: PeriodGranularity)`) pour rester appelable telle quelle depuis
@@ -470,8 +510,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   }
 
   /** Kamas gagnés sur la période (combat + ventes HDV + reçu en échange) — voir HistoryStatsService.
-   * PeriodStats.kamas, ventilation détaillée absente de la vue Session (volontairement plus simple,
-   * inchangée — voir CLAUDE.md). */
+   * PeriodStats.kamas. */
   protected periodKamasEarned(period: PeriodStats): number {
     return period.kamas.fromCombat + period.kamas.fromHdvSales + period.kamas.tradesAcquired;
   }
@@ -479,6 +518,28 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   /** Kamas perdus sur la période (achats + donné en échange). */
   protected periodKamasLost(period: PeriodStats): number {
     return period.kamas.spentOnPurchases + period.kamas.tradesGiven;
+  }
+
+  /** Texte (4 lignes) de la tooltip Kamas du bandeau en mode période — remplace l'ancienne section
+   * "Kamas" dépliable (voir CLAUDE.md) : même ventilation par origine (combat/ventes HDV/achats/
+   * échanges) qu'affichait le collapse, désormais dans une tooltip plutôt qu'un panneau à part,
+   * cohérent avec la case Kamas de la vue Session (voir `kamasTooltip`, plus simple : la Session
+   * n'a jamais eu cette ventilation par origine, volontairement pas alignée dessus). */
+  protected periodKamasTooltip(period: PeriodStats): string {
+    const fmt = (n: number) => this.numberFr.transform(n);
+    const netTrades = period.kamas.tradesAcquired - period.kamas.tradesGiven;
+    const combatLabel = this.i18n.t('sessionRecap.period.kamasFromCombat');
+    const hdvLabel = this.i18n.t('sessionRecap.period.kamasFromHdvSales');
+    const purchasesLabel = this.i18n.t('sessionRecap.period.kamasSpentOnPurchases');
+    const tradesLabel = this.i18n.t('sessionRecap.period.kamasTrades', {
+      count: period.kamas.tradeCount,
+    });
+    return [
+      `${combatLabel} +${fmt(period.kamas.fromCombat)} ₭`,
+      `${hdvLabel} +${fmt(period.kamas.fromHdvSales)} ₭`,
+      `${purchasesLabel} -${fmt(period.kamas.spentOnPurchases)} ₭`,
+      `${tradesLabel} ${netTrades >= 0 ? '+' : ''}${fmt(netTrades)} ₭`,
+    ].join('\n');
   }
 
   /** XP total de la session (case "Expérience" de la bande coup d'oeil, voir template) — simple
