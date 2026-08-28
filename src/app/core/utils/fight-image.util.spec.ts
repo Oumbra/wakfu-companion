@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_FIGHT_IMAGE_URL,
+  findDungeonForEnemies,
   resolveFightImageInfo,
   resolveFightImageUrl,
   resolveFightTypeClassification,
@@ -63,6 +64,24 @@ const HORDE_MATCH = [50, 51, 52, 53, 54].map((family, i) => [
 // Deux boss destinés à matcher exactement ULTIMATE_BREACH_MATCH_DUNGEON ci-dessous.
 const BOSS_ULTIMATE_MATCH_A = [117, 'Boss Ultime Match A', 'en', 'es', 'pt', '900117', 40, 1, 0, 0];
 const BOSS_ULTIMATE_MATCH_B = [118, 'Boss Ultime Match B', 'en', 'es', 'pt', '900118', 41, 1, 0, 0];
+// Boss PARTAGÉ entre un donjon classique (DUNGEON_FOR_SHARED_BOSS) ET une brèche ultime
+// (ULTIMATE_BREACH_SHARED_BOSS_DUNGEON) — reproduit le cas réel corrigé le 2026-08-28 ("Phacochemar",
+// boss de "Donjon Vandaliénés" ET l'un des 8 boss de la "Brèche dimensionnelle ultime de la
+// Shukrute" — voir CLAUDE.md). Seul, ce boss doit résoudre vers son donjon classique ; accompagné de
+// son partenaire (SHARED_PARTNER, présent uniquement dans la brèche ultime), vers la brèche ultime.
+const BOSS_SHARED = [125, 'Boss Partagé', 'en', 'es', 'pt', '900125', 45, 1, 0, 0];
+const BOSS_SHARED_PARTNER = [
+  126,
+  'Boss Partagé Partenaire',
+  'en',
+  'es',
+  'pt',
+  '900126',
+  46,
+  1,
+  0,
+  0,
+];
 
 const DUNGEON_FOR_BOSS = {
   id: 500,
@@ -128,6 +147,39 @@ const ULTIMATE_BREACH_MATCH_DUNGEON = {
   wakassetsAvailable: true,
   hasPreBossArchi: false,
 };
+// Donjon classique du boss PARTAGÉ (voir BOSS_SHARED ci-dessus).
+const DUNGEON_FOR_SHARED_BOSS = {
+  id: 504,
+  fr: 'Donjon Boss Partagé',
+  en: 'Shared Boss Dungeon',
+  es: 'Mazmorra Boss Compartido',
+  pt: 'Masmorra Chefe Compartilhado',
+  level: 1,
+  bracket: 1,
+  type: 'TWO_ROOMS',
+  bossMonsterId: [125],
+  monsterFamilyId: [45],
+  pictureUrl: 'https://example.test/dungeon-504.png',
+  wakassetsAvailable: true,
+  hasPreBossArchi: false,
+};
+// Brèche ultime qui réunit LE MÊME boss (125) que DUNGEON_FOR_SHARED_BOSS, plus un 2e boss qui n'a
+// lui aucun donjon classique — reproduit le cas réel du 2026-08-28 (voir BOSS_SHARED).
+const ULTIMATE_BREACH_SHARED_BOSS_DUNGEON = {
+  id: 505,
+  fr: 'Brèche Ultime Partagée',
+  en: 'Shared Ultimate Breach',
+  es: 'Brecha Definitiva Compartida',
+  pt: 'Brecha Suprema Compartilhada',
+  level: 1,
+  bracket: 1,
+  type: 'ULTIMATE_BREACH',
+  bossMonsterId: [125, 126],
+  monsterFamilyId: [],
+  pictureUrl: 'https://example.test/dungeon-505.png',
+  wakassetsAvailable: true,
+  hasPreBossArchi: false,
+};
 
 function ok<T>(data: T): ApiResult<T> {
   return { ok: true, data };
@@ -160,6 +212,8 @@ function setupCatalog(): CatalogService {
           ...HORDE_MATCH,
           BOSS_ULTIMATE_MATCH_A,
           BOSS_ULTIMATE_MATCH_B,
+          BOSS_SHARED,
+          BOSS_SHARED_PARTNER,
         ],
       });
     }
@@ -169,6 +223,8 @@ function setupCatalog(): CatalogService {
         BREACH_DUNGEON,
         BREACH_MATCH_DUNGEON,
         ULTIMATE_BREACH_MATCH_DUNGEON,
+        DUNGEON_FOR_SHARED_BOSS,
+        ULTIMATE_BREACH_SHARED_BOSS_DUNGEON,
       ]);
     if (path === '/monster-families') return ok([]);
     throw new Error(`unexpected path in test: ${path}`);
@@ -506,5 +562,98 @@ describe('resolveFightTypeClassification (regroupement "Type" de l’historique)
 
     expect(info.kind).toBe('other');
     expect(info.categoryRank).toBeGreaterThan(familyInfo.categoryRank);
+  });
+});
+
+describe('findDungeonForEnemies (rattachement de dungeonId, bugs réels corrigés le 2026-08-28 — voir CLAUDE.md)', () => {
+  it('boss PARTAGÉ seul (pas de brèche ultime active) -> son donjon classique', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = findDungeonForEnemies(catalog, ['Boss Partagé']);
+
+    expect(result).toEqual(DUNGEON_FOR_SHARED_BOSS);
+  });
+
+  it('boss PARTAGÉ accompagné de son partenaire de brèche ultime -> la brèche ultime, PAS son donjon classique (bug réel : ce même boss, présent seul dans un fight de donjon classique ET dans un fight de brèche ultime, se voyait toujours attribuer le donjon classique)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = findDungeonForEnemies(catalog, ['Boss Partagé', 'Boss Partagé Partenaire']);
+
+    expect(result).toEqual(ULTIMATE_BREACH_SHARED_BOSS_DUNGEON);
+    expect(result).not.toEqual(DUNGEON_FOR_SHARED_BOSS);
+  });
+
+  it("horde hétérogène SANS boss dont la composition en familles correspond exactement à une brèche connue -> cette brèche (bug réel : restait null, le combat finissait éclaté en lignes 'famille' isolées dans la carte Récap au lieu d'une section Brèche)", async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = findDungeonForEnemies(
+      catalog,
+      HORDE_MATCH.map((m) => m[1] as string),
+    );
+
+    expect(result).toEqual(BREACH_MATCH_DUNGEON);
+  });
+
+  it('horde hétérogène SANS boss ne correspondant à AUCUNE brèche connue -> null (référentiel incomplet, pas de repli générique possible pour un dungeonId)', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = findDungeonForEnemies(
+      catalog,
+      HORDE.map((m) => m[1] as string),
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it('4 familles distinctes ou moins (sans boss) -> null, ne déclenche pas la détection de brèche', async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const result = findDungeonForEnemies(
+      catalog,
+      HORDE_MATCH.slice(0, 4).map((m) => m[1] as string),
+    );
+
+    expect(result).toBeNull();
+  });
+});
+
+describe('resolveFightTypeClassification (bugs réels corrigés le 2026-08-28, mode "Type" de l’historique — voir CLAUDE.md)', () => {
+  it("boss PARTAGÉ accompagné de son partenaire de brèche ultime -> kind 'dungeon' sur la brèche ultime, PAS sur son donjon classique", async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightTypeClassification(catalog, [
+      'Boss Partagé',
+      'Boss Partagé Partenaire',
+    ]);
+
+    expect(info).toMatchObject({
+      kind: 'dungeon',
+      key: 'dungeon:505',
+      names: ULTIMATE_BREACH_SHARED_BOSS_DUNGEON,
+    });
+  });
+
+  it("horde hétérogène SANS boss identifiée précisément comme une brèche connue -> kind 'dungeon' (pas 'other'), même rang de tri qu'une brèche trouvée par boss unique", async () => {
+    const catalog = setupCatalog();
+    await catalog.initialize();
+
+    const info = resolveFightTypeClassification(
+      catalog,
+      HORDE_MATCH.map((m) => m[1] as string),
+    );
+    const breachByBossInfo = resolveFightTypeClassification(catalog, ['Boss De Brèche']);
+
+    expect(info).toMatchObject({
+      kind: 'dungeon',
+      key: 'dungeon:502',
+      names: BREACH_MATCH_DUNGEON,
+    });
+    expect(info.categoryRank).toBe(breachByBossInfo.categoryRank);
   });
 });
