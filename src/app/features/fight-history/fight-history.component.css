@@ -363,6 +363,14 @@
 .dungeon-run-summary {
   border-left: 3px solid var(--accent);
 }
+/* Déplié : liseré recoloré (`--dmg-light`, même teinte or/ambre que les dégâts Lumière — voir
+   `.dungeon-run-fights` juste en dessous) plutôt que de garder l'accent, + fond légèrement surélevé,
+   pour rester repérable au premier coup d'œil quand plusieurs regroupements de donjon se suivent
+   dans la liste (accent seul ne distingue pas "ouvert" de "fermé"). */
+.dungeon-run.expanded .dungeon-run-summary {
+  background: var(--surface-raised);
+  border-left-color: var(--dmg-light);
+}
 /* Nom du donjon, entre son image et le badge victoire/défaite (voir CLAUDE.md — le label d'un
    regroupement doit afficher l'image ET le nom du donjon, pas seulement l'image). `min-width: 0` +
    ellipsis : peut être compressé par `.dungeon-run-meta` (flush right) sur un panneau étroit
@@ -397,7 +405,13 @@
    propre à dupliquer, voir le template qui réutilise le même `ng-template`). */
 .dungeon-run-fights {
   background: var(--surface-well);
-  border-left: 3px solid var(--accent);
+  /* Même teinte que l'en-tête déplié (voir `.dungeon-run.expanded .dungeon-run-summary` ci-dessus) —
+     ce bloc n'existe dans le DOM que quand le run est déplié (voir `@if` du template), pas besoin
+     de scoper avec `.expanded` ici. */
+  border-left: 3px solid var(--dmg-light);
+  /* Léger retrait du contenu (combats) par rapport à l'en-tête du regroupement, pour marquer la
+     hiérarchie groupe → combats. */
+  padding-left: 10px;
 }
 .dungeon-run-fights .fight-entry:last-child {
   border-bottom: none;
