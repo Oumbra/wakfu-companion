@@ -113,6 +113,12 @@ export interface FightPayload {
    * `dungeonId`.
    */
   dungeonRunSignature: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat (voir `fights.challengesPassed/Failed`,
+   * server/db/schema.ts) — base des statistiques long terme (par mois/année/type de combat),
+   * volontairement PAS dans `fightSignature` (règle n°2 ci-dessus) : une valeur dérivée du log,
+   * jamais révisable après coup, comme `totalDamage`/`xpGained`. */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantPayload[];
   loot: FightLootPayload[];
 }

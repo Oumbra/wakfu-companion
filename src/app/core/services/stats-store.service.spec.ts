@@ -576,6 +576,39 @@ describe('StatsStoreService', () => {
       expect(stats.combatsWon()).toBe(2);
     });
 
+    it(
+      'attribue chaque résultat de challenge au bon combat malgré deux combats concurrents ' +
+        '(fight_multi-account_twice-fight-simultaneously.log : "Fusion" et "Fourberie" échouent ' +
+        'tous deux avant la fin de 1584117475, pendant que 1584117474 reste ouvert sans challenge)',
+      () => {
+        const stats = TestBed.inject(StatsStoreService);
+        const access = TestBed.inject(LogFileAccessService);
+        feed(access, readFixture('fight_multi-account_twice-fight-simultaneously.log'));
+
+        const fights = stats.fightHistory();
+        const withChallenges = fights.find((f) => f.id === 1584117475);
+        const withoutChallenges = fights.find((f) => f.id === 1584117474);
+        expect(withChallenges!.challengesPassed).toBe(0);
+        expect(withChallenges!.challengesFailed).toBe(2);
+        expect(withoutChallenges!.challengesPassed).toBe(0);
+        expect(withoutChallenges!.challengesFailed).toBe(0);
+      },
+    );
+
+    it('compte un challenge réussi sur le bon combat (fight_single-account_end_after-all-monsters-play.log : "Séparation" est réussi)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, readFixture('fight_single-account_end_after-all-monsters-play.log'));
+
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].challengesPassed).toBe(1);
+      expect(fights[0].challengesFailed).toBe(0);
+      // Le compteur de session (affiché indépendamment, voir CLAUDE.md) doit rester en phase.
+      expect(stats.challengesPassed()).toBe(1);
+      expect(stats.challengesFailed()).toBe(0);
+    });
+
     it("n'attribue jamais un achat (perte de kamas + ramassage immédiat) au butin de combat, même si un combat est actif au même moment (cas réel multi-compte : achat sur un compte pendant qu'un autre combat)", () => {
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
@@ -1291,6 +1324,27 @@ describe('StatsStoreService', () => {
 
       const fight = server.row('/history/fights') as { kamasGained: number };
       expect(fight.kamasGained).toBe(4);
+    });
+
+    it('envoie le décompte de challenges réussis/échoués du combat (fight_single-account_end_after-all-monsters-play.log)', async () => {
+      const server = new FakeHistoryServer();
+      configureWithServer(server);
+
+      const sync = TestBed.inject(HistorySyncService);
+      TestBed.inject(StatsStoreService);
+      await sync.enable('utilisateur-de-test');
+      feed(
+        TestBed.inject(LogFileAccessService),
+        readFixture('fight_single-account_end_after-all-monsters-play.log'),
+      );
+      await sync.flush();
+
+      const fight = server.row('/history/fights') as {
+        challengesPassed: number;
+        challengesFailed: number;
+      };
+      expect(fight.challengesPassed).toBe(1);
+      expect(fight.challengesFailed).toBe(0);
     });
 
     it("envoie l'XP rattachée à chaque personnage, et non un simple total", async () => {

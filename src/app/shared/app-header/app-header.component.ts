@@ -2,14 +2,12 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
 import { StatsStoreService } from '../../core/services/stats-store.service';
 import { NavigationService } from '../../core/services/navigation.service';
-import { SessionRecapService } from '../../core/services/session-recap.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { LanguageSwitcherComponent } from '../language-switcher/language-switcher.component';
 import { ThemeSwitchComponent } from '../theme-switch/theme-switch.component';
 import { TranslatePipe } from '../translate.pipe';
 import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
-import { SESSION_RECAP_ICON_DATA_URI } from '../../core/data/session-recap-icon.data';
 import { ProfileComponent } from '../../features/profile/profile.component';
 import { CatalogService } from '../../core/api/catalog.service';
 import { GameServerService } from '../../core/services/game-server.service';
@@ -20,14 +18,15 @@ import { OnboardingTourService } from '../../core/services/onboarding-tour.servi
 
 /**
  * En-tête du site (logo, titre, fichier connecté + actions changer/réinitialiser, serveur de jeu,
- * langue, recap de session, accès profil) — rendu une seule fois au niveau racine (voir app.html),
- * commun à toutes les pages. En dessous de 640px, serveur/recap/langue/profil se regroupent dans un
- * menu burger (même principe que `.mobile-menu` ailleurs dans l'app) car ils ne tiennent plus sur
- * une seule ligne à côté du logo/titre/fichier — le serveur y passe en tête, c'est une information
- * d'état, pas une action.
+ * langue, accès profil) — rendu une seule fois au niveau racine (voir app.html), commun à toutes
+ * les pages. En dessous de 640px, serveur/langue/profil se regroupent dans un menu burger (même
+ * principe que `.mobile-menu` ailleurs dans l'app) car ils ne tiennent plus sur une seule ligne à
+ * côté du logo/titre/fichier — le serveur y passe en tête, c'est une information d'état, pas une
+ * action. Le récap de session n'est plus ici : c'est désormais une carte du dashboard comme les
+ * autres (voir SessionRecapComponent/DashboardLayoutService, clé `'recap'`).
  *
- * Recap, profil et serveur de jeu ne s'affichent que si un fichier wakfu.log valide est connecté —
- * pour le serveur, parce qu'il se déduit du log lui-même (personnage du roster reconnu, voir
+ * Profil et serveur de jeu ne s'affichent que si un fichier wakfu.log valide est connecté — pour
+ * le serveur, parce qu'il se déduit du log lui-même (personnage du roster reconnu, voir
  * GameServerService) : l'afficher avant n'aurait rien à dire. Le bouton profil s'efface en plus sur
  * la page profil elle-même (pas de bouton pour aller vers la page où l'on se trouve déjà). Seule
  * exception : le bouton d'aide du pas-à-pas (voir `OnboardingTourService`), disponible dès la page
@@ -51,14 +50,12 @@ export class AppHeaderComponent {
   protected readonly nav = inject(NavigationService);
   protected readonly catalog = inject(CatalogService);
   protected readonly gameServers = inject(GameServerService);
-  protected readonly sessionRecapService = inject(SessionRecapService);
   protected readonly onboardingHelpMenu = inject(OnboardingHelpMenuService);
   private readonly onboardingTour = inject(OnboardingTourService);
   private readonly stats = inject(StatsStoreService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly i18n = inject(I18nService);
   protected readonly appLogo = APP_LOGO_PURPLE_DATA_URI;
-  protected readonly sessionRecapIcon = SESSION_RECAP_ICON_DATA_URI;
   protected readonly mobileMenuOpen = signal(false);
 
   /** Preview Cloudflare Pages (déploiement automatique de `claude/dev`, voir CLAUDE.md) : servie

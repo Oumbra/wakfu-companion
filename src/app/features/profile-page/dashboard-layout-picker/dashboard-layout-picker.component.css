@@ -25,6 +25,7 @@
   --lp-sw-trades: #e0713f;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
+  --lp-sw-recap: #c9973f;
 }
 :host-context([data-theme='light']) {
   --lp-sw-menu: #6b7280;
@@ -34,6 +35,7 @@
   --lp-sw-trades: #c05423;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
+  --lp-sw-recap: #a8791f;
 }
 
 .sw-menu {
@@ -56,6 +58,9 @@
 }
 .sw-chat {
   --lp-sw: var(--lp-sw-chat);
+}
+.sw-recap {
+  --lp-sw: var(--lp-sw-recap);
 }
 
 .dlp-legend {

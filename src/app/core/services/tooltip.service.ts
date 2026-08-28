@@ -20,6 +20,16 @@ export interface TooltipRequest {
   readonly rect: DOMRect;
   readonly position: TooltipPosition;
   readonly multiline: boolean;
+  /** Contenu en colonnes libellé/valeur (rendu en grille CSS par `TooltipComponent`), prioritaire
+   * sur `text` quand non `null` — remplace le 2026-08-28 un ancien mécanisme par padding de texte
+   * (police monospace + espaces insécables comptés en nombre de caractères), qui suppose une
+   * largeur de libellé fixe et casse dès qu'une traduction produit un libellé plus long que prévu
+   * (bug réel constaté en espagnol : "Intercambios recibidos"/"Casa de subastas" provoquaient un
+   * retour à la ligne qui désalignait toute la colonne valeurs). Une grille CSS n'a pas ce problème
+   * : chaque ligne garde sa valeur alignée dans sa propre colonne quelle que soit la longueur du
+   * libellé, y compris si celui-ci doit lui-même passer sur 2 lignes. Voir
+   * `SessionRecapComponent.buildKamasTooltipRows`. */
+  readonly rows: readonly (readonly [string, string])[] | null;
 }
 
 /**

@@ -339,6 +339,8 @@ export class HistorySyncService {
         gameServer: this.currentServer(),
         dungeonId,
         dungeonRunSignature,
+        challengesPassed: record.challengesPassed,
+        challengesFailed: record.challengesFailed,
         participants,
         loot,
       },

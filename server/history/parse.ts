@@ -28,7 +28,16 @@ export const MAX_HISTORY_BATCH = 100;
 
 /** Bornes de forme : au-delà, la charge utile ne vient plus d'un log Wakfu. */
 const MAX_NAME_LENGTH = 200;
-const MAX_PARTICIPANTS_PER_FIGHT = 64;
+/**
+ * 64 s'est révélé trop bas en pratique (bug réel, 2026-08-28) : un vrai combat de type « vague/
+ * brèche » (ennemis qui rejoignent en continu au fil du combat, voir la doc « Invocations » de
+ * CLAUDE.md) a produit 73 participants distincts sur un fichier `wakfu.log` fourni par l'utilisateur
+ * (fightId Wakfu 1680001273, ~89 lignes `[_FL_] ... join the fight` brutes avant dédoublonnage
+ * client) — rejeté par l'API avec `trop de participants (max 64)`. 128 garde une marge confortable
+ * au-dessus de ce cas réel tout en restant une borne de forme (un combat classique en a rarement
+ * plus d'une douzaine).
+ */
+const MAX_PARTICIPANTS_PER_FIGHT = 128;
 const MAX_ITEMS_PER_TRADE = 128;
 /** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
 const MAX_SPELLS_PER_PARTICIPANT = 64;
@@ -87,6 +96,10 @@ export interface FightInput {
    * ensemble ou absents ensemble, voir `parseDungeonAssignment`. */
   dungeonId: number | null;
   dungeonRunKey: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat — voir `fights.challengesPassed/Failed`
+   * (server/db/schema.ts), `0` par défaut (jamais `null`, colonnes `NOT NULL DEFAULT 0`). */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantInput[];
   loot: FightLootInput[];
 }
@@ -390,6 +403,10 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!xpGained.ok) return xpGained;
       const kamasGained = parseCount(entry['kamasGained'], 'kamasGained', true);
       if (!kamasGained.ok) return kamasGained;
+      const challengesPassed = parseCount(entry['challengesPassed'] ?? 0, 'challengesPassed');
+      if (!challengesPassed.ok) return challengesPassed;
+      const challengesFailed = parseCount(entry['challengesFailed'] ?? 0, 'challengesFailed');
+      if (!challengesFailed.ok) return challengesFailed;
       const won = parseFlag(entry['won'], 'won');
       if (!won.ok) return won;
       const gameServer = parseGameServer(entry['gameServer']);
@@ -447,6 +464,8 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
           gameServer: gameServer.value,
           dungeonId: dungeonAssignment.value.dungeonId,
           dungeonRunKey: dungeonAssignment.value.dungeonRunKey,
+          challengesPassed: challengesPassed.value ?? 0,
+          challengesFailed: challengesFailed.value ?? 0,
           participants,
           loot,
         },

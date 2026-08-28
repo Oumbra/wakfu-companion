@@ -9,20 +9,22 @@ export type DashboardBodyMode = 'equal' | 'focus';
  * l'AUTRE côté, en pleine hauteur (voir `gridPlan`). */
 export type DashboardFocusSide = 'left' | 'right';
 export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
-/** Les 4 blocs "logiques" du corps, indépendamment du regroupement de l'historique (voir
+/** Les 5 blocs "logiques" du corps, indépendamment du regroupement de l'historique (voir
  * `historyGroup`) — sert de référentiel stable pour `blockOrder` : contrairement à
- * `DashboardBodySlotKey`, dont `hist_group` apparaît/disparaît selon le regroupement, ces 4 clés
+ * `DashboardBodySlotKey`, dont `hist_group` apparaît/disparaît selon le regroupement, ces 5 clés
  * existent toujours, ce qui permet de retrouver le rang voulu même quand la carte groupée n'est pas
- * (ou plus) affichée (voir `activeSlots`). */
-export type DashboardBlockKey = DashboardHistoryKey | 'chat';
+ * (ou plus) affichée (voir `activeSlots`). `'recap'` (carte Récap de session, voir
+ * SessionRecapComponent) n'a, comme `'chat'`, aucun rapport avec le regroupement de l'historique. */
+export type DashboardBlockKey = DashboardHistoryKey | 'chat' | 'recap';
 
 /** Identifiant d'une "carte" potentielle du corps — `'hist_group'` désigne le bloc Historique
  * regroupé (voir `visibleBodySlots`), son identité change de contenu mais pas de clé selon
  * `historyGroup`. Pas de clé `'combat'` : le combat en cours n'est plus une carte à part (voir
  * CLAUDE.md) — il vit désormais DANS `'hist_combats'`/`'hist_group'` (voir
- * `FightHistoryComponent`), ni ciblable en mise en avant ni repliable indépendamment. */
+ * `FightHistoryComponent`), ni ciblable en mise en avant ni repliable indépendamment. `'recap'`
+ * (Récap de session) est indépendante de l'historique — jamais regroupable avec lui. */
 export type DashboardBodySlotKey =
-  'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat';
+  'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat' | 'recap';
 
 /** Section repliable individuellement — le menu et les objectifs en plus des cartes du corps (voir
  * `DashboardBodySlotKey`), car eux aussi peuvent se réduire (bande d'icônes) même si leur repli ne
@@ -40,7 +42,7 @@ export interface DashboardBodySlot {
    * ne prend la valeur générique `'history'` que pour la carte `hist_group` (regroupement d'au
    * moins 2 volets, voir `activeSlots`), qui a sa propre couleur "méta" distincte des 3 volets
    * individuels (voir CLAUDE.md). */
-  readonly sw: DashboardHistoryKey | 'history' | 'chat';
+  readonly sw: DashboardHistoryKey | 'history' | 'chat' | 'recap';
 }
 
 /** Placement calculé d'une case dans `.panels-row` (grille CSS, voir `dashboard.component.css`) —
@@ -94,12 +96,22 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   // Achats + Échanges regroupés par défaut dans une seule carte Historique ; Combats reste solo,
   // mis en avant (voir bodyMode/focusTarget ci-dessus).
   historyGroup: { combats: false, purchases: true, trades: true },
-  blockOrder: ['combats', 'chat', 'purchases', 'trades'],
-  collapsedSections: {},
+  blockOrder: ['combats', 'chat', 'purchases', 'trades', 'recap'],
+  // Récap de session repliée par défaut (rejoint le rail latéral) : contrairement aux 4 autres
+  // cartes, son ancien équivalent (bouton modal du header) était lui aussi entièrement opt-in —
+  // l'ajouter ici visible d'emblée changerait la mise en page de tous les utilisateurs existants
+  // dès ce déploiement, sans qu'ils l'aient demandé (voir CLAUDE.md/décision produit).
+  collapsedSections: { recap: true },
 };
 
 const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
-const ALL_BLOCK_KEYS: readonly DashboardBlockKey[] = ['combats', 'purchases', 'trades', 'chat'];
+const ALL_BLOCK_KEYS: readonly DashboardBlockKey[] = [
+  'combats',
+  'purchases',
+  'trades',
+  'chat',
+  'recap',
+];
 
 /** Un `blockOrder` stocké n'est utilisable que s'il contient exactement une permutation des 4 clés
  * connues — un ancien format, une clé disparue/renommée, ou une valeur corrompue en localStorage
@@ -112,6 +124,24 @@ function isValidBlockOrder(value: unknown): value is DashboardBlockKey[] {
     ALL_BLOCK_KEYS.every((k) => value.includes(k))
   );
 }
+
+/** Un `blockOrder` stocké AVANT l'introduction de la carte Récap (voir CLAUDE.md) contient une
+ * permutation exacte des 4 anciennes clés, sans `'recap'` — `isValidBlockOrder` le rejetterait tel
+ * quel (mauvaise longueur), ce qui ferait retomber tout utilisateur ayant déjà personnalisé son
+ * ordre sur `DEFAULT_PREFS.blockOrder` en entier au premier chargement après ce changement. Migré
+ * ici en ajoutant `'recap'` en fin plutôt que jeté, pour préserver l'ordre déjà choisi pour les 4
+ * blocs historiques. */
+const LEGACY_BLOCK_KEYS: readonly DashboardBlockKey[] = ['combats', 'purchases', 'trades', 'chat'];
+function migrateLegacyBlockOrder(value: unknown): DashboardBlockKey[] | null {
+  if (
+    Array.isArray(value) &&
+    value.length === LEGACY_BLOCK_KEYS.length &&
+    LEGACY_BLOCK_KEYS.every((k) => value.includes(k))
+  ) {
+    return [...(value as DashboardBlockKey[]), 'recap'];
+  }
+  return null;
+}
 const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
   'tracker',
   'hist_combats',
@@ -119,6 +149,7 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
   'hist_trades',
   'hist_group',
   'chat',
+  'recap',
 ];
 
 /**
@@ -160,8 +191,14 @@ export class DashboardLayoutService {
     ...DEFAULT_PREFS.historyGroup,
   });
   readonly blockOrder = signal<DashboardBlockKey[]>([...DEFAULT_PREFS.blockOrder]);
-  /** Repli de Menu/Objectifs/Historique — PAS Chat, voir doc de tête (délégué). */
-  readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({});
+  /** Repli de Menu/Objectifs/Historique/Récap — PAS Chat, voir doc de tête (délégué). Valeur
+   * initiale = `DEFAULT_PREFS.collapsedSections` (pas `{}`) : un nouvel utilisateur sans rien de
+   * stocké (`applyStored` retourne alors avant de toucher ce signal, voir plus bas) doit quand même
+   * démarrer avec Récap repliée par défaut, pas seulement un utilisateur ayant déjà persisté une
+   * disposition. */
+  readonly collapsedSections = signal<Partial<Record<DashboardCollapsibleKey, boolean>>>({
+    ...DEFAULT_PREFS.collapsedSections,
+  });
 
   constructor() {
     this.applyStored();
@@ -186,8 +223,23 @@ export class DashboardLayoutService {
     if (stored.historyGroup) {
       this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup, ...stored.historyGroup });
     }
-    if (isValidBlockOrder(stored.blockOrder)) this.blockOrder.set([...stored.blockOrder]);
-    if (stored.collapsedSections) this.collapsedSections.set({ ...stored.collapsedSections });
+    if (isValidBlockOrder(stored.blockOrder)) {
+      this.blockOrder.set([...stored.blockOrder]);
+    } else {
+      const migrated = migrateLegacyBlockOrder(stored.blockOrder);
+      if (migrated) this.blockOrder.set(migrated);
+    }
+    // Fusionné sur le défaut (même principe que `historyGroup` ci-dessus), pas remplacé tel quel :
+    // un utilisateur qui a persisté ce champ AVANT l'introduction d'une nouvelle clé repliable
+    // (ex. 'recap') a un objet stocké qui ne la connaît pas encore — un remplacement pur la
+    // ferait retomber à `undefined`/visible au lieu de son propre défaut (`DEFAULT_PREFS`,
+    // 'recap' repliée), pour un utilisateur qui n'a pourtant rien choisi à ce sujet.
+    if (stored.collapsedSections) {
+      this.collapsedSections.set({
+        ...DEFAULT_PREFS.collapsedSections,
+        ...stored.collapsedSections,
+      });
+    }
   }
 
   /** Écrit l'état courant en un seul bloc JSON (plutôt qu'une clé par champ comme ThemeService) :
@@ -255,6 +307,7 @@ export class DashboardLayoutService {
    * inchangé — invisible tant qu'ils restent regroupés, voir `activeSlots`). */
   private representativeBlockKey(key: DashboardBodySlotKey): DashboardBlockKey | null {
     if (key === 'chat') return 'chat';
+    if (key === 'recap') return 'recap';
     if (key === 'hist_group') {
       const group = this.historyGroup();
       const grouped = HIST_KEYS.filter((k) => group[k]);
@@ -297,7 +350,7 @@ export class DashboardLayoutService {
     this.focusSide.set(DEFAULT_PREFS.focusSide);
     this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup });
     this.blockOrder.set([...DEFAULT_PREFS.blockOrder]);
-    this.collapsedSections.set({});
+    this.collapsedSections.set({ ...DEFAULT_PREFS.collapsedSections });
     this.persist();
   }
 
@@ -324,6 +377,7 @@ export class DashboardLayoutService {
     }
     if (groupingActive) slots.push({ key: 'hist_group', sw: 'history' });
     slots.push({ key: 'chat', sw: 'chat' });
+    slots.push({ key: 'recap', sw: 'recap' });
 
     // Réordonne selon la préférence utilisateur (voir `blockOrder`/`DashboardBlockKey`) : une carte
     // solo prend le rang de sa propre clé logique, la carte groupée prend le rang le plus favorable
