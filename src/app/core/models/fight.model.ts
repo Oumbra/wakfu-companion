@@ -49,6 +49,13 @@ export class Fight {
   /** Kamas gagnés pendant le combat (voir StatsStoreService.registerFightKama) — affichés dans la
    * ligne de butin (FightRecord.kamas), en plus de `loots` ci-dessus. */
   kamas = 0;
+  /** Nombre de challenges réussis/échoués annoncés pendant ce combat (voir
+   * StatsStoreService.pendingFightChallengesPassed/Failed, alimentés comme `kamas` ci-dessus).
+   * Sert de base aux statistiques long terme (fights.challengesPassed/Failed côté serveur) — pas
+   * seulement à l'affichage en session (voir StatsStoreService.challengesPassed/Failed, compteurs
+   * de session distincts, jamais remplacés par ceux-ci). */
+  challengesPassed = 0;
+  challengesFailed = 0;
 
   constructor(id: number, startDate: Date) {
     this.id = id;

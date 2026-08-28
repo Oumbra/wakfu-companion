@@ -12,15 +12,15 @@
       <div
         class="loot-row"
         [class]="rarityClass(item)"
-        [appTooltip]="'items.interactTooltip' | t"
+        [appTooltip]="interactive() ? ('items.interactTooltip' | t) : null"
         [tooltipPosition]="first ? 'bottom' : 'top'"
-        (contextmenu)="openInteractMenu($event, item)"
+        (contextmenu)="interactive() ? openInteractMenu($event, item) : null"
       >
         <app-item-icon [name]="item.name" [id]="item.catalogId" />
         <span class="loot-name">{{
           i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
         }}</span>
-        <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
+        <span class="loot-qty">×{{ item.quantity | localeNumber }}</span>
       </div>
     }
   </div>

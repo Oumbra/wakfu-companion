@@ -225,6 +225,8 @@ describe('HistorySyncService — rattachement de donjon', () => {
       turns: 1,
       durationMs: 1000,
       xp: [],
+      challengesPassed: 0,
+      challengesFailed: 0,
     };
   }
 

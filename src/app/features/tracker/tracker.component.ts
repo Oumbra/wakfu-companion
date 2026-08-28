@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { StatsStoreService, WatchlistEntry } from '../../core/services/stats-store.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -29,7 +29,7 @@ import { InputNumberComponent } from '../../shared/input-number/input-number.com
 @Component({
   selector: 'app-tracker',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,

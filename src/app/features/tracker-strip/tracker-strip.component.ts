@@ -15,7 +15,7 @@ import {
 } from '../../core/services/stats-store.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { I18nService } from '../../core/services/i18n.service';
 import { WakfuAutocompleteComponent } from '../../shared/wakfu-autocomplete/wakfu-autocomplete.component';
@@ -73,7 +73,7 @@ const KPI_VERTICAL_SCROLLBAR_BUFFER_PX = 8;
 @Component({
   selector: 'app-tracker-strip',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,
