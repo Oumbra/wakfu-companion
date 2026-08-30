@@ -57,6 +57,11 @@ interface FightGroup {
    * sert de clé de tracking et de clé de repli, jamais affiché tel quel. */
   key: string;
   label: string;
+  /** Illustration du groupe, affichée devant `label` — seulement pour un groupe "famille de
+   * monstre" du regroupement Type dont la famille a une image connue (voir
+   * `CatalogMonsterFamilyEntry.pictureUrl`, repository/monster-families.json), `null` partout
+   * ailleurs (jour/lieu, groupe "donjon"/"autre" du mode Type, ou famille sans image). */
+  imageUrl: string | null;
   records: DungeonHistoryEntry<HistoryFight>[];
 }
 
@@ -281,7 +286,7 @@ export class FightHistoryComponent {
       const { key, label } = this.groupKeyFor(this.representativeOf(entry), mode);
       const existing = groups.get(key);
       if (existing) existing.records.push(entry);
-      else groups.set(key, { key, label, records: [entry] });
+      else groups.set(key, { key, label, imageUrl: null, records: [entry] });
     }
     const list = [...groups.values()];
     if (mode === 'location') {
@@ -355,6 +360,7 @@ export class FightHistoryComponent {
       .map((bucket) => ({
         key: bucket.key,
         label: this.typeGroupLabel(bucket),
+        imageUrl: this.typeGroupImageUrl(bucket),
         records: bucket.records,
       }));
   }
@@ -379,6 +385,16 @@ export class FightHistoryComponent {
       if (!best || candidate.count > best.count) best = candidate;
     }
     return best ? best.names[this.i18n.locale()] : this.i18n.t('history.group.otherType');
+  }
+
+  /** Illustration d'un groupe "Type" : uniquement pour un groupe "famille" dont la famille est
+   * connue de `CatalogService` ET porte une image (voir CatalogMonsterFamilyEntry.pictureUrl,
+   * `null` pour certaines familles purement thématiques) — `null` pour un groupe "donjon"/"autre"
+   * (déjà distingué par son libellé, pas besoin d'icône) ou un repli par nom de monstre (familyId
+   * `null`, voir `typeGroupLabel`). */
+  private typeGroupImageUrl(bucket: { familyId: number | null }): string | null {
+    if (bucket.familyId === null) return null;
+    return this.catalog.findWakfuMonsterFamilyById(bucket.familyId)?.pictureUrl ?? null;
   }
 
   /** Combat représentatif d'une entrée d'historique pour le regroupement jour/lieu/type (date,

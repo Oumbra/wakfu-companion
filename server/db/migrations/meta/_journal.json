@@ -141,6 +141,13 @@
       "when": 1787693333179,
       "tag": "0019_rainy_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788108479414,
+      "tag": "0020_add_monster_family_picture",
+      "breakpoints": true
     }
   ]
 }

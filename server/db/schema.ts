@@ -165,6 +165,13 @@ export const monsterFamilies = pgTable('monster_families', {
   en: text('en').notNull(),
   es: text('es').notNull(),
   pt: text('pt').notNull(),
+  // `repository/monster-families.json`, champ `picture` — `null` pour les familles purement
+  // "thématiques" sans illustration propre (ex. id 3 "Boss Ultimes", id 15 "Events") : contrairement
+  // à monsters/dungeons ci-dessus (toujours renseignée), pas de garantie d'exhaustivité sur ce
+  // référentiel curé à la main. Sert à illustrer le regroupement "Type" (palier famille) de
+  // l'historique des combats plutôt que de rester sans image (voir CatalogMonsterFamilyEntry côté
+  // client, core/utils/fight-image.util.ts).
+  pictureUrl: text('picture_url'),
 });
 
 /**

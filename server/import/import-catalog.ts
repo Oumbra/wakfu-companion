@@ -81,6 +81,10 @@ interface RawMonsterFamily {
   en: string;
   es: string;
   pt: string;
+  // Absent pour les familles sans illustration propre (voir server/db/schema.ts) — `null` distinct
+  // de `undefined` : le champ existe dans le JSON avec la valeur `null` pour ces entrées plutôt que
+  // d'être omis (voir repository/monster-families.json).
+  picture?: string | null;
 }
 
 interface RawMonster {
@@ -365,6 +369,7 @@ interface MonsterFamilyRow {
   en: string;
   es: string;
   pt: string;
+  pictureUrl: string | null;
 }
 
 interface ItemCategoryRow {
@@ -503,6 +508,7 @@ async function main(): Promise<void> {
     en: family.en,
     es: family.es,
     pt: family.pt,
+    pictureUrl: family.picture ?? null,
   }));
 
   const compactIndex = buildCompactIndex(itemRows, monsterRows);
