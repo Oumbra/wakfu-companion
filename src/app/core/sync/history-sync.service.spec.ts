@@ -218,6 +218,7 @@ describe('HistorySyncService — rattachement de donjon', () => {
         total: 100,
         spells: [],
         defeated: result === 'won',
+        fled: false,
         instanceIndex: 1,
         instanceCount: 1,
       })),

@@ -699,6 +699,13 @@ export const fightParticipants = pgTable(
     className: text('class_name'),
     damage: bigint('damage', { mode: 'number' }).notNull().default(0),
     defeated: boolean('defeated').notNull().default(false),
+    /** Combattant échappé plutôt que vaincu ("X: disparaît", voir StatsStoreService.
+     * registerFightFlee/CLAUDE.md) — mutuellement exclusif avec `defeated` (jamais les deux à
+     * `true`). Observé à ce jour uniquement sur les monstres "Mimic X" qui se révèlent puis fuient,
+     * mais le signal de log est générique (n'importe quel combattant pourrait l'émettre) : colonne
+     * posée sans restriction de nom. `false` par défaut pour tout participant existant avant
+     * l'ajout de cette colonne — comportement inchangé (affiché comme avant, ni vaincu ni fui). */
+    fled: boolean('fled').notNull().default(false),
     spells: jsonb('spells').notNull().default([]),
     /**
      * XP gagnée par ce combattant sur ce combat. Rattachée au participant plutôt

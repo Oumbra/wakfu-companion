@@ -33,6 +33,7 @@
             class="entity-row"
             [class.no-toggle]="row.total === 0"
             [class.ko-zero]="row.total === 0 && row.defeated"
+            [class.fled-zero]="row.total === 0 && row.fled"
             [appTooltip]="
               side() === 'enemy'
                 ? !isTracked(row.name)
@@ -58,6 +59,15 @@
                 [tooltipPosition]="first ? 'bottom' : 'top'"
               >
                 <app-ko-icon />
+              </span>
+            }
+            @if (row.fled) {
+              <span
+                class="fled-icon"
+                [appTooltip]="'damageMeter.fledTitle' | t"
+                [tooltipPosition]="first ? 'bottom' : 'top'"
+              >
+                <app-icon name="flee" [size]="16" />
               </span>
             }
             <app-entity-icon [name]="row.name" [side]="side()" />
