@@ -6,7 +6,12 @@
 // "universels" (Havre-Gemme, objets d'événement...) qui tombent indépendamment des monstres
 // combattus, pour constituer un référentiel séparé à exclure du doute.
 //
-// Lecture seule, aucune écriture — jetable, à supprimer une fois l'analyse livrée à l'utilisateur.
+// Lecture seule, aucune écriture — conservé (voir `npm run dev:analyze:universal-loot` /
+// `main:analyze:universal-loot`) pour être rejoué au fil de l'eau à mesure que la base grandit,
+// plutôt que jeté après ce premier passage : `distinct_dungeons` est le signal le plus fiable pour
+// juger si un objet est réellement universel (vu dans plusieurs donjons différents) ou s'il s'agit
+// simplement d'un trou du référentiel `monsters.loot` pour UN monstre d'un seul donjon (à corriger
+// via le skill wakfu-monsters-sync plutôt qu'à ajouter à un référentiel d'objets universels).
 import { createDb } from '../db/client';
 import { sql } from 'drizzle-orm';
 
