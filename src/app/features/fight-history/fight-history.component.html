@@ -39,7 +39,10 @@
       [appTooltip]="'history.group.type' | t"
       (click)="setGroupMode('type')"
     >
-      <app-icon name="swords" [size]="13" [strokeWidth]="2" />
+      <!-- Même icône que le regroupement "Donjon & Famille" de la carte Récap (session-recap,
+           demande explicite de l'utilisateur, 2026-08-30) : ce mode regroupe déjà par donjon
+           précis/famille de monstre, exactement le même concept — voir sprite `dungeon`. -->
+      <app-icon name="dungeon" [size]="13" [strokeWidth]="2" />
       <span class="fight-group-switch-label">{{ 'history.group.type' | t }}</span>
     </button>
   </div>

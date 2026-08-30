@@ -126,4 +126,14 @@
     <path d="M7 9l5-5 5 5" />
     <path d="M7 15l5 5 5-5" />
   </symbol>
+  <!-- Regroupement Donjon & Famille (voir SessionRecapComponent.detailMode et
+       FightHistoryComponent, mode "Donjons & familles") : petite porte en arche (repère visuel
+       d'un donjon), déjà dupliqué à 3 endroits avant cette extraction (switch de Récap, switch de
+       l'historique de combats, pictogramme de repli d'une ligne "Donjon & Famille" sans
+       illustration officielle) — voir CLAUDE.md, "un pictogramme rejoint le sprite dès qu'il est
+       répété". -->
+  <symbol id="dungeon" viewBox="0 0 24 24">
+    <path d="M6 20V10a6 6 0 0112 0v10" />
+    <path d="M6 20h12" />
+  </symbol>
 </svg>
