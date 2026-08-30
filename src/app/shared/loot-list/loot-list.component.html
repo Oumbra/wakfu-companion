@@ -1,4 +1,37 @@
-@if (items().length === 0) {
+@if (items().length > 0) {
+  <div class="loot-search-wrap">
+    <svg
+      class="loot-search-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+    <input
+      type="text"
+      class="loot-search-input"
+      [placeholder]="'damageMeter.lootSearchPlaceholder' | t"
+      [value]="searchQuery()"
+      (input)="searchQuery.set($any($event.target).value)"
+    />
+    @if (searchQuery()) {
+      <button
+        type="button"
+        class="loot-search-clear icon-btn"
+        [appTooltip]="'damageMeter.lootSearchClear' | t"
+        (click)="clearSearch()"
+      >
+        ×
+      </button>
+    }
+  </div>
+}
+@if (filteredItems().length === 0) {
   <div class="empty-state small" [class.recap-variant]="emptyVariant() === 'recap'">
     {{ 'damageMeter.noLoot' | t }}
   </div>
@@ -8,18 +41,16 @@
     [class.scrollable]="items().length > 5"
     [class.recap-variant]="emptyVariant() === 'recap'"
   >
-    @for (item of items(); track item.name + '#' + $index; let first = $first) {
+    @for (item of filteredItems(); track item.name + '#' + $index; let first = $first) {
       <div
         class="loot-row"
         [class]="rarityClass(item)"
-        [appTooltip]="'items.interactTooltip' | t"
+        [appTooltip]="canInteract(item) ? ('items.correctTooltip' | t) : null"
         [tooltipPosition]="first ? 'bottom' : 'top'"
         (contextmenu)="openInteractMenu($event, item)"
       >
         <app-item-icon [name]="item.name" [id]="item.catalogId" />
-        <span class="loot-name">{{
-          i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
-        }}</span>
+        <span class="loot-name">{{ displayName(item) }}</span>
         <span class="loot-qty">×{{ item.quantity | numberFr }}</span>
       </div>
     }
