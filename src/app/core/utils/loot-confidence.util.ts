@@ -18,11 +18,12 @@ import { UNIVERSAL_LOOT_ITEM_IDS } from '../data/wakfu-universal-loot.data';
  *    encore connue au moment du combat peut l'être devenue depuis (le référentiel ne fait que
  *    grandir), une confiance figée à l'écriture aurait empêché cette amélioration rétroactive.
  *
- * `findAllWakfuItemEntriesByName` (déjà utilisé par ItemPickerService pour la correction manuelle)
- * balaie tous les homonymes d'un même nom affiché (ex. "Larme d'Ogrest", ids 24029/21602, dont un
- * seul est réellement universel — voir doc de UNIVERSAL_LOOT_ITEM_IDS ; ou "Perle", ids 9792/20392,
- * même principe) — c'est ce qui permet de corriger `catalogId` au passage quand la résolution
- * "premier match" par défaut (`findWakfuItemEntry`) s'était trompée de variante.
+ * `findAllWakfuItemEntriesByName` (déjà utilisé par ItemPickerService pour la correction manuelle,
+ * O(1) — voir sa doc dans catalog.service.ts) balaie tous les homonymes d'un même nom affiché (ex.
+ * "Larme d'Ogrest", ids 24029/21602, dont un seul est réellement universel — voir doc de
+ * UNIVERSAL_LOOT_ITEM_IDS ; ou "Perle", ids 9792/20392, même principe) — c'est ce qui permet de
+ * corriger `catalogId` au passage quand la résolution "premier match" par défaut
+ * (`findWakfuItemEntry`) s'était trompée de variante.
  */
 export function resolveLootConfidence(
   catalog: CatalogService,

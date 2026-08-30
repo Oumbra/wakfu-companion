@@ -109,6 +109,61 @@ Deux catégories d'état dans `StatsStoreService`, à traiter différemment à c
 
 Si un nouveau champ cumulatif est ajouté au store, se demander explicitement : persistant (jamais reset) ou dérivé du fichier (reset à chaque `isInitialLoad`, dans `resetSessionState()`) ?
 
+## Performance du chemin chaud d'ingestion : jamais de balayage O(catalogue) par ligne
+
+Corrigé le 2026-08-30, remonté par l'utilisateur avec vidéo à l'appui : jusqu'à ~10s de gel total,
+**sans le moindre spinner**, au premier chargement d'un fichier `wakfu.log` de taille réaliste
+(~80 000 lignes) — l'utilisateur soupçonnait à raison une corrélation avec le nombre de combats.
+
+**Méthode de diagnostic** (à réutiliser pour tout futur soupçon de lenteur du parsing) : le
+chronométrage naïf (`performance.now()` autour de `ingest()`) sur un seul fichier ne suffit pas —
+il faut tester la **scalabilité** (dupliquer artificiellement un vrai fichier ×2/×5/×10/×20 dans
+`public/` — jamais commité, nettoyé après coup — et le charger via `fetch()` en navigateur plutôt
+que de coller un texte de plusieurs Mo dans un appel `browser_evaluate`, un `ng serve` démarré APRÈS
+l'ajout ne le sert pas tant qu'il n'a pas redémarré) pour distinguer une dérive linéaire normale
+d'un vrai comportement pathologique (ici : un effondrement net entre ×2 et ×5, PAS une dérive
+progressive). Une fois le palier identifié, un vrai **profil CPU** via CDP
+(`page.context().newCDPSession(page)` + `Profiler.start()/stop()`, profil analysé par temps propre
+("self time") cumulé par fonction) pointe directement la fonction coupable — bien plus fiable que
+d'empiler des `performance.now()` à la main dans le code source.
+
+**Cause identifiée** : `StatsStoreService.resolveLootConfidence` (appelée pour CHAQUE ligne "Vous
+avez ramassé...", potentiellement des milliers de fois par fichier) appelait inconditionnellement
+`CatalogService.findAllWakfuItemEntriesByName`, qui balayait alors TOUT `itemsById` (~16 000
+objets, avec normalisation de 4 noms de locale chacun) — coût négligeable tant que le catalogue
+distant n'est pas encore chargé (d'où un premier test "à froid" trompeur, très rapide), mais très
+réel une fois chargé (le cas normal : le catalogue charge en tâche de fond dès le démarrage de
+l'app, largement avant que l'utilisateur ait eu le temps de connecter son fichier). Plus de 60% des
+objets du référentiel partagent leur nom normalisé avec au moins un autre id (variantes de rareté
+d'un même équipement) : **ce n'était donc pas un cas rare** — c'est précisément la 2ᵉ fois que ce
+même piège se produit sur cette fonction (voir la doc de `CatalogService.itemEntriesByName`, 1ʳᵉ
+occurrence le même jour côté tooltips de butin, `[appTooltip]` réévalué à chaque cycle de détection
+de changement).
+
+**Leçon retenue** : corriger UN appelant en contournement (ex. vérifier `hasMultipleWakfuItemEntriesByName`
+avant d'appeler la version O(n)) ne suffit pas à empêcher un 2ᵉ appelant de retomber dans le même
+piège — surtout quand la doc de la fonction affirme "jamais un chemin chaud" alors que ce n'est plus
+garanti. La correction durable est de rendre la fonction elle-même O(1) à la source
+(`CatalogService.itemEntriesByName`, `Map<string, CatalogItemEntry[]>` précalculée une seule fois à
+la construction de l'index catalogue), pour que TOUT appelant présent et futur en bénéficie
+automatiquement, sans avoir à se souvenir d'un garde-fou à poser à chaque site d'appel.
+
+**Spinner** (2ᵉ volet de la demande utilisateur, indépendant du fix de perf) : l'infrastructure
+existait déjà et était correcte (`LogFileAccessService.initialReadPending` → `FightHistoryComponent.
+historyLoading` → `.spinner-ring`), mais ne s'affichait jamais en pratique : rien ne garantissait un
+créneau de PEINTURE navigateur entre `initialReadPending.set(true)` et le calcul synchrone bloquant
+qui suit — les deux `await` déjà présents (`getFile()`/`arrayBuffer()`) peuvent se résoudre quasi
+instantanément (fichier déjà en cache OS), sans offrir de fenêtre de rendu réelle. Corrigé en
+ajoutant un yield **macrotâche** explicite (`await new Promise(r => setTimeout(r, 0))`, jamais une
+microtâche type `Promise.resolve()` — le navigateur ne peint qu'entre deux tâches de la file, jamais
+entre deux microtâches) juste avant `newLines$.next()` dans `LogFileAccessService.processFile()`,
+uniquement pour `isInitialLoad` (les lots incrémentaux en cours de session sont déjà petits/rapides,
+pas concernés). Vérifié en navigateur (Chromium réel via `playwright-core`, MCP figé sur Firefox ce
+jour-là) via le VRAI chemin `connect()`/`poll()`/`processFile()` (handle `FileSystemFileHandle`
+factice dont `getFile()` renvoie un vrai `File` avec le contenu d'un fichier de test réel, latence de
+lecture simulée) : spinner visible dès ~90ms, historique peuplé et spinner disparu ensuite — plus de
+gel silencieux.
+
 ## Durée de session (carte Récap) : dérivée du fichier, pas de l'horloge murale
 
 Corrigé le 2026-08-26 : l'ancien calcul (`Date.now() - dateDeConnexion`, un simple chrono démarré à
