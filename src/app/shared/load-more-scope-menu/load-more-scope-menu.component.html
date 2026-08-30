@@ -1,0 +1,15 @@
+@if (menu.request(); as req) {
+  <div
+    class="load-more-scope-backdrop"
+    (click)="menu.close()"
+    appEscapeClose
+    (appEscapeClose)="menu.close()"
+  ></div>
+  <div class="load-more-scope-menu" [style.bottom.px]="req.bottom" [style.left.px]="req.left">
+    @for (option of spanOptions; track option.key) {
+      <button type="button" class="load-more-scope-item" (click)="choose(req, option.key)">
+        {{ option.labelKey | t }}
+      </button>
+    }
+  </div>
+}

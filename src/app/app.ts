@@ -41,6 +41,7 @@ import { OnboardingHelpMenuComponent } from './shared/onboarding-help-menu/onboa
 import { OnboardingTourService } from './core/services/onboarding-tour.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-notice.component';
+import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-more-scope-menu.component';
 
 @Component({
   selector: 'app-root',
@@ -68,6 +69,7 @@ import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-
     OnboardingTourComponent,
     OnboardingHelpMenuComponent,
     AppUpdateNoticeComponent,
+    LoadMoreScopeMenuComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

@@ -1,0 +1,57 @@
+:host {
+  display: contents;
+}
+
+/* z-index 600/601 : même palier que ConfirmDeletePopover/OnboardingHelpMenu/ClassPicker (voir
+   CLAUDE.md) — tous des popovers "backdrop transparent + contenu" indépendants les uns des autres,
+   jamais ouverts simultanément. */
+.load-more-scope-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: transparent;
+}
+
+.load-more-scope-menu {
+  position: fixed;
+  z-index: 601;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 130px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  padding: 6px;
+  animation: load-more-scope-fade-in 0.12s;
+}
+
+@keyframes load-more-scope-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.load-more-scope-item {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-color);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  text-align: left;
+  height: auto;
+  cursor: pointer;
+}
+
+.load-more-scope-item:hover {
+  background: var(--surface-active);
+  color: var(--text-bright);
+}

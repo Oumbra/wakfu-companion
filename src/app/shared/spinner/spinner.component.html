@@ -1,0 +1,9 @@
+<!-- Purement visuel : pas de rôle/aria-live ici (annoncerait un statut sans libellé) — au besoin,
+     c'est à l'appelant d'entourer ce composant d'un conteneur `role="status"`/texte `sr-only`
+     traduit, voir LoadingOverlayComponent. -->
+<div
+  class="app-spinner"
+  [style.width.px]="size()"
+  [style.height.px]="size()"
+  [style.border-width.px]="borderWidth()"
+></div>
