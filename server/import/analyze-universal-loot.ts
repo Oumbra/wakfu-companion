@@ -14,6 +14,7 @@
 // via le skill wakfu-monsters-sync plutôt qu'à ajouter à un référentiel d'objets universels).
 import { createDb } from '../db/client';
 import { sql } from 'drizzle-orm';
+import { writeFileSync } from 'node:fs';
 
 async function main() {
   const db = createDb(process.env.DATABASE_URL!);
@@ -136,6 +137,15 @@ async function main() {
     total_quantity: number;
     seen_with_enemies: string[] | null;
   }[];
+
+  // Sortie JSON optionnelle (voir demande utilisateur, jeu de données trop volumineux sur
+  // production pour être lu confortablement depuis la sortie console.table) : JSON_OUT=chemin.json
+  // écrit les deux jeux de résultats bruts, sans troncature du tableau seenWithEnemies.
+  if (process.env.JSON_OUT) {
+    writeFileSync(process.env.JSON_OUT, JSON.stringify({ byId, byName }, null, 2));
+    console.log(`Écrit : ${process.env.JSON_OUT}`);
+    return;
+  }
 
   console.log('=== Objets résolus (item_id) marqués doubtful ===');
   console.table(
