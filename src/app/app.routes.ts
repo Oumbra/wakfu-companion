@@ -54,6 +54,11 @@ export const routes: Routes = [
     redirectTo: redirectToPreferredLocale('/privacy-policy'),
   },
   {
+    path: 'terms-of-service',
+    pathMatch: 'full',
+    redirectTo: redirectToPreferredLocale('/terms-of-service'),
+  },
+  {
     path: ':lang',
     component: LocaleRouteComponent,
     canActivate: [localeGuard],
@@ -151,6 +156,11 @@ export const routes: Routes = [
         path: 'privacy-policy',
         component: RouteBridgeComponent,
         data: { view: 'legal', legalKind: 'privacy' },
+      },
+      {
+        path: 'terms-of-service',
+        component: RouteBridgeComponent,
+        data: { view: 'legal', legalKind: 'terms' },
       },
       { path: '**', redirectTo: '' },
     ],

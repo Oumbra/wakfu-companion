@@ -135,6 +135,31 @@ const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b
  * [2026-08-20 @ 14H18min45])") — seule source fiable de la date CALENDAIRE réelle du fichier (le
  * reste du log n'expose que l'heure HH:MM:SS,mmm, voir HEADER_RE). Voir LogDateAnchorEntry. */
 const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]/;
+
+/**
+ * Extrait uniquement l'heure d'une ligne brute (et, le cas échéant, la date calendaire si cette ligne
+ * est un ancrage `CLIENT_BUILD_DATE_RE`) — SANS passer par le pipeline stateful de `LogParser`
+ * (bufferisation multi-lignes, dédoublonnage...). Fonction pure, appelée par StatsStoreService pour
+ * un pré-balayage en LECTURE SEULE d'un lot de lignes avant traitement normal (voir
+ * `primeLogDateAnchorFromBatch`) : retrouver un ancrage de date situé plus loin dans le lot que la
+ * toute première ligne, pour dater correctement les lignes qui le PRÉCÈDENT (bug réel — voir
+ * CLAUDE.md/mémoire projet : un fichier contenant déjà des combats d'une session de jeu antérieure au
+ * lancement client qui a produit la ligne d'ancrage affichait ces combats à la date système du jour
+ * de LECTURE au lieu de leur vraie date).
+ */
+export function peekLineTime(
+  rawLine: string,
+): { time: string; buildDate: { year: number; month: number; day: number } | null } | null {
+  const headerMatch = HEADER_RE.exec(rawLine.replace(/\r$/, ''));
+  if (!headerMatch) return null;
+  const [, , time, content] = headerMatch;
+  const buildMatch = CLIENT_BUILD_DATE_RE.exec(content);
+  const buildDate = buildMatch
+    ? { year: Number(buildMatch[1]), month: Number(buildMatch[2]), day: Number(buildMatch[3]) }
+    : null;
+  return { time, buildDate };
+}
+
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
  * — présent pour chaque combattant de chaque combat. `obstacleId` (groupe 6, capturé mais plus
@@ -616,11 +641,23 @@ export class LogParser {
     }
     const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
     if (challengeSuccess) {
-      return { kind: 'challenge-result', time, name: challengeSuccess[1].trim(), success: true };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeSuccess[1].trim(),
+        success: true,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     const challengeFail = CHALLENGE_FAIL_RE.exec(content);
     if (challengeFail) {
-      return { kind: 'challenge-result', time, name: challengeFail[1].trim(), success: false };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeFail[1].trim(),
+        success: false,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     return null;
   }

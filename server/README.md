@@ -828,6 +828,20 @@ pour ce lot.
 - `GET /api/v1/history/{fights,purchases,trades}?limit=&before=` — lecture
   paginée par **curseur de date** (pas `OFFSET` : un historique s'écrit pendant
   qu'on le feuillette). `nextBefore: null` = fin de l'historique.
+- `GET /api/v1/history/stats?since=&until=` — agrégation SQL (`GROUP BY`/`SUM`) sur une période
+  (switch Session/Jour/Mois/Année de la carte Récap) : XP par personnage, kamas détaillés (combat,
+  ventes HDV, achats, échanges — voir `HDV_KAMAS_SALE_ITEM` ci-dessous), combats gagnés/perdus,
+  défis réussis/échoués, butin. `since`/`until` sont des instants ISO **fournis par le client**,
+  jamais un paramètre `granularity` interprété côté serveur : le découpage "premier jour du mois
+  civil", etc. dépend du fuseau horaire de l'utilisateur, que seul le navigateur connaît (voir
+  `core/utils/local-period.util.ts`). Plage plafonnée à 400 jours (`server/history/stats-query.ts`).
+  Cinq `SELECT` indépendants lancés en parallèle (pas de transaction requise, voir plus haut) :
+  aucune écriture, cette route ne fait qu'agréger ce que les trois routes ci-dessus ont déjà
+  ingéré. `purchases.item_name = '__hdv_kamas_sale__'` (constante `HDV_KAMAS_SALE_ITEM`, dupliquée
+  en miroir documenté de celle du même nom côté client — `server/` ne dépend jamais de `src/`,
+  même principe que `server/settings/keys.ts`) distingue une récupération de kamas à l'Hôtel de
+  vente (un gain) d'un achat classique (une dépense) : les deux partagent la même table et le même
+  signe de `total_cost`.
 
 Validation dans `server/history/parse.ts` (pure, testée sans base —
 `parse.spec.ts`). Un lot contenant une entrée invalide est refusé **en entier**,

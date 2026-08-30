@@ -5,7 +5,7 @@ import {
   TradeRecord,
 } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { getWakfuItemRarity } from '../../core/data/wakfu-item-rarity.data';
@@ -37,7 +37,7 @@ interface TradeDateGroup {
 @Component({
   selector: 'app-trades',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     TranslatePipe,
     ItemIconComponent,
     HistoryListHeaderComponent,

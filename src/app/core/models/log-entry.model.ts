@@ -149,6 +149,10 @@ export interface ChallengeResultEntry {
   time: string;
   name: string;
   success: boolean;
+  /** Combat en cours au moment du résultat, `null` hors combat — voir loot/kama-gain pour la même
+   * convention. Comme pour ces deux-là, StatsStoreService ne s'en sert que comme signal « un combat
+   * est actif », jamais pour router directement vers ce fightId précis (voir pendingFightChallenges). */
+  fightId: number | null;
 }
 
 /**

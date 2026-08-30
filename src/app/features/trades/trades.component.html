@@ -39,12 +39,12 @@
                   <span class="trade-kamas-label">{{ 'trades.kamas' | t }}</span>
                   @if (record.kamasAcquired > 0) {
                     <span class="trade-kamas-value acquired"
-                      >+{{ record.kamasAcquired | numberFr }} ₭</span
+                      >+{{ record.kamasAcquired | localeNumber }} ₭</span
                     >
                   }
                   @if (record.kamasGiven > 0) {
                     <span class="trade-kamas-value given"
-                      >-{{ record.kamasGiven | numberFr }} ₭</span
+                      >-{{ record.kamasGiven | localeNumber }} ₭</span
                     >
                   }
                 </div>
@@ -72,7 +72,7 @@
                               i18n.translateItemName(item.name)
                             )
                           }}</span>
-                          <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                          <span class="trade-item-qty">×{{ item.quantity | localeNumber }}</span>
                         </div>
                       }
                     </div>
@@ -95,7 +95,7 @@
                               i18n.translateItemName(item.name)
                             )
                           }}</span>
-                          <span class="trade-item-qty">×{{ item.quantity | numberFr }}</span>
+                          <span class="trade-item-qty">×{{ item.quantity | localeNumber }}</span>
                         </div>
                       }
                     </div>

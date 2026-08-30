@@ -55,7 +55,7 @@ type SlideDirection = 'forward' | 'backward';
  * onglet) — même règle de racine omise pour `'combats'`. */
 export function pagePathFor(
   view: AppView,
-  legalKind: 'notice' | 'privacy' | null,
+  legalKind: 'notice' | 'privacy' | 'terms' | null,
   dashboardTab: DashboardTab | null = null,
   profileTab: ProfileTab | null = null,
   historyTab: HistoryTab | null = null,
@@ -68,7 +68,9 @@ export function pagePathFor(
     case 'account':
       return '/account';
     case 'legal':
-      return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
+      if (legalKind === 'privacy') return '/privacy-policy';
+      if (legalKind === 'terms') return '/terms-of-service';
+      return '/legal-notice';
     case 'main':
       if (!dashboardTab || dashboardTab === 'tracker') return '';
       if (dashboardTab === 'history') {

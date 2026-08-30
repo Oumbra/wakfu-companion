@@ -11,7 +11,7 @@
 >
   <img [src]="headerIcon()" class="half-header-icon" alt="" />
   <span>{{ title() }}</span>
-  <span class="half-total">{{ total() | numberFr }}</span>
+  <span class="half-total">{{ total() | localeNumber }}</span>
   @if (collapsible()) {
     <span class="caret" [class.expanded]="sectionExpanded()">▸</span>
   }
@@ -67,7 +67,7 @@
               }
               {{ displayName(row) }}
             </span>
-            <span class="entity-total">{{ row.total | numberFr }}</span>
+            <span class="entity-total">{{ row.total | localeNumber }}</span>
           </div>
           @if (row.total > 0 && isExpanded(row.name)) {
             <div class="spell-list">
@@ -83,12 +83,12 @@
                     <span class="spell-elements">
                       @for (el of spell.byElement | keyvalue; track el.key) {
                         <span class="spell-element" [class]="elementClass($any(el.key))">{{
-                          el.value | numberFr
+                          el.value | localeNumber
                         }}</span>
                       }
                     </span>
                   }
-                  <span class="spell-total">{{ spell.total | numberFr }}</span>
+                  <span class="spell-total">{{ spell.total | localeNumber }}</span>
                 </div>
               }
             </div>

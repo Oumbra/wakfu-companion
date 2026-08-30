@@ -55,3 +55,6 @@ Thumbs.db
 
 /repository
 /repository/*
+
+.playwright-mcp/
+.playwright-mcp/*

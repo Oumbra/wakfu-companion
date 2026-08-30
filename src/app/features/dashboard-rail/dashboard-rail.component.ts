@@ -1,6 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { I18nService } from '../../core/services/i18n.service';
+import { AuthService } from '../../core/auth/auth.service';
 import {
   DashboardBodySlotKey,
   DashboardLayoutService,
@@ -52,6 +53,7 @@ export class DashboardRailComponent {
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly i18n = inject(I18nService);
   protected readonly layout = inject(DashboardLayoutService);
+  private readonly auth = inject(AuthService);
 
   /** Côté d'affichage des tooltips du rail — dépend de `layout.menuPos()` : un rail collé au bord
    * DROIT de l'écran (`menuPos === 'right'`) doit ouvrir ses tooltips vers la GAUCHE, sans quoi ils
@@ -70,7 +72,12 @@ export class DashboardRailComponent {
       .activeSlots()
       .filter((slot) => this.layout.isCollapsed(slot.key))
       .map((slot) => {
-        const label = dashboardBodySlotLabel(this.i18n, historyGroup, slot.key);
+        const label = dashboardBodySlotLabel(
+          this.i18n,
+          historyGroup,
+          slot.key,
+          this.auth.isAuthenticated(),
+        );
         return {
           id: slot.key,
           label,

@@ -10,11 +10,12 @@ import { EntityClassifierService } from '../../core/services/entity-classifier.s
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
+import { LootSearchComponent } from '../../shared/loot-search/loot-search.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { I18nService } from '../../core/services/i18n.service';
 import {
@@ -40,13 +41,16 @@ import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-ar
 import {
   dungeonStoneItemId,
   DungeonHistoryEntry,
+  enemyCompositionKey,
   groupDungeonRuns,
 } from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
+import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { DamageViewMode } from '../../shared/damage-view-switch/damage-view-switch.component';
 import { EntityStatKind } from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 import { CombatDetailComponent } from '../../shared/combat-detail/combat-detail.component';
+import { LogFileAccessService } from '../../core/services/log-file-access.service';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -82,11 +86,12 @@ interface FightGroup {
 @Component({
   selector: 'app-fight-history',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,
     LootListComponent,
+    LootSearchComponent,
     IconComponent,
     NgTemplateOutlet,
     TooltipDirective,
@@ -108,6 +113,7 @@ export class FightHistoryComponent {
   private readonly stats = inject(StatsStoreService);
   protected readonly combatPanel = inject(CombatPanelService);
   protected readonly helpModal = inject(HelpModalService);
+  private readonly logFileAccess = inject(LogFileAccessService);
 
   // --- Combat en cours (ex-DamageMeterComponent, voir doc de tête) ---------------------------
 
@@ -172,6 +178,11 @@ export class FightHistoryComponent {
   /** Sens du tri courant (`false` = sens par défaut de `lootSort`) — inversé au reclic sur le
    * switch déjà actif, voir `nextLootSortState`. */
   protected readonly lootSortReverse = signal(false);
+  /** Recherche texte du butin — un seul champ partagé par tous les combats affichés (même
+   * principe que `lootSort`/`lootSortReverse` ci-dessus, déjà partagés à l'identique), même
+   * convention que SessionRecapComponent (voir sa doc `lootSearch`). Filtre insensible à la
+   * casse/aux accents via `normalizeWakfuName`, appliqué AVANT le tri dans `sortedLoot`. */
+  protected readonly lootSearch = signal('');
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   /** Sections XP/butin REPLIÉES par combat — vide par défaut, tout DÉPLIÉ (même convention que
@@ -188,6 +199,23 @@ export class FightHistoryComponent {
   /** Combats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedFights). */
   protected readonly fightHistory = this.archive.mergedFights;
+
+  /** Vrai tant que la liste est réellement vide ET qu'une des deux sources qui l'alimentent est
+   * encore en train de la remplir — l'interprétation initiale du fichier de log
+   * (`LogFileAccessService.initialReadPending`, voir sa doc) et/ou la première page de l'archive du
+   * compte (`HistoryArchiveService.loading`, voir `loadAll`). Sert à afficher un spinner à la place
+   * du message "aucun combat" (voir template) pendant ce court intervalle, plutôt que de laisser le
+   * panneau paraître vide sans explication — bug réel signalé (l'utilisateur n'avait aucun moyen de
+   * distinguer "aucun combat" de "pas encore fini de charger"). Volontairement gardé à `fightHistory
+   * ().length === 0` plutôt qu'inconditionnel : une reconnexion en cours de session avec un
+   * historique déjà affiché ne doit pas faire disparaître ce qui est déjà visible pour le remplacer
+   * par un spinner. */
+  protected readonly historyLoading = computed(
+    () =>
+      this.fightHistory().length === 0 &&
+      (this.logFileAccess.initialReadPending() ||
+        (this.auth.isAuthenticated() && this.archive.loading())),
+  );
 
   /** Combats de donjon (salles + tentatives de boss) regroupés en entrées de collapse — voir
    * dungeon-run-grouping.util.ts. `fightHistory()` reste trié du plus récent au plus ancien,
@@ -207,6 +235,7 @@ export class FightHistoryComponent {
           this.enemyRowsFor(record).map((row) => row.name),
         ),
       (record) => this.hasArchiEnemy(record),
+      (record) => enemyCompositionKey(this.enemyRowsFor(record).map((row) => row.name)),
     );
   });
 
@@ -748,7 +777,22 @@ export class FightHistoryComponent {
   }
 
   protected sortedLoot(loot: LootRow[]): LootRow[] {
-    return sortLootRows(this.catalog, loot, this.lootSort(), this.lootSortReverse());
+    return sortLootRows(
+      this.catalog,
+      this.filterLootRows(loot),
+      this.lootSort(),
+      this.lootSortReverse(),
+    );
+  }
+
+  /** Filtre le butin sur `lootSearch` (voir sa doc) — appliqué AVANT le tri, même principe que
+   * SessionRecapComponent.filterLootRows : un tri par rareté sur un sous-ensemble filtré n'a pas
+   * besoin de connaître les objets exclus. Requête vide = aucun filtrage. */
+  private filterLootRows(rows: readonly LootRow[]): LootRow[] {
+    const query = this.lootSearch().trim();
+    if (!query) return [...rows];
+    const normalizedQuery = normalizeWakfuName(query);
+    return rows.filter((row) => normalizeWakfuName(row.name).includes(normalizedQuery));
   }
 
   protected lootSortTooltip(mode: LootSort): string {
