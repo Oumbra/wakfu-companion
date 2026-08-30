@@ -10,15 +10,16 @@
  *
  * Entièrement portée par `server/history/fight-type.ts` (partagé avec l'ingestion live, voir sa
  * doc pour le détail des valeurs `FightTypeCode` et l'ordre de priorité) — ce script ne fait
- * qu'exécuter les deux `UPDATE ... FROM` qui y sont définis, sans aucune logique de classification
- * dupliquée ici. Contrairement à `backfill-dungeon-runs.ts` (qui rejoue un algorithme de
- * REGROUPEMENT multi-combats en mémoire, JS obligatoire), `fight_type` est une fonction PURE d'un
- * seul combat (son `dungeon_id` + ses `fight_participants` côté ennemi + le catalogue déjà en
- * base) : tout le calcul tient en SQL, aucune lecture préalable ni boucle applicative.
+ * qu'exécuter les trois `UPDATE` qui y sont définis (donjon, famille hors donjon, `EVENT` pour le
+ * reste hors donjon sans ennemi catalogué), sans aucune logique de classification dupliquée ici.
+ * Contrairement à `backfill-dungeon-runs.ts` (qui rejoue un algorithme de REGROUPEMENT multi-combats
+ * en mémoire, JS obligatoire), `fight_type` est une fonction PURE d'un seul combat (son `dungeon_id`
+ * + ses `fight_participants` côté ennemi + le catalogue déjà en base) : tout le calcul tient en SQL,
+ * aucune lecture préalable ni boucle applicative.
  *
  * ## Idempotence / rejouabilité
  *
- * Les deux `UPDATE` recalculent `fight_type` à chaque exécution (aucun `WHERE fight_type IS NULL`)
+ * Les trois `UPDATE` recalculent `fight_type` à chaque exécution (aucun `WHERE fight_type IS NULL`)
  * — rejouer ce script après application ne change donc rien pour un combat déjà à jour, mais le
  * met AUSSI à jour un combat dont le classement aurait changé depuis (donjon nouvellement identifié
  * a posteriori par `backfill-dungeon-runs.ts`, correction du référentiel `dungeons`/`monsters`,
@@ -55,6 +56,8 @@ import type { FightTypeCode } from '../db/schema';
 import {
   dungeonFightTypeSelectSql,
   dungeonFightTypeUpdateSql,
+  eventFightTypeSelectSql,
+  eventFightTypeUpdateSql,
   familyFightTypeSelectSql,
   familyFightTypeUpdateSql,
   fightTypeDistributionSql,
@@ -69,14 +72,16 @@ interface PreviewRow {
 async function fetchPreview(
   db: ReturnType<typeof createDb>,
   scope: SQL,
-): Promise<{ dungeonRows: PreviewRow[]; familyRows: PreviewRow[] }> {
-  const [dungeonResult, familyResult] = await Promise.all([
+): Promise<{ dungeonRows: PreviewRow[]; familyRows: PreviewRow[]; eventRows: PreviewRow[] }> {
+  const [dungeonResult, familyResult, eventResult] = await Promise.all([
     db.execute(dungeonFightTypeSelectSql(scope)),
     db.execute(familyFightTypeSelectSql(scope)),
+    db.execute(eventFightTypeSelectSql(scope)),
   ]);
   return {
     dungeonRows: dungeonResult.rows as unknown as PreviewRow[],
     familyRows: familyResult.rows as unknown as PreviewRow[],
+    eventRows: eventResult.rows as unknown as PreviewRow[],
   };
 }
 
@@ -117,11 +122,13 @@ async function main(): Promise<void> {
     before.rows as { fight_type: string | null; count: unknown }[],
   );
 
-  const { dungeonRows, familyRows } = await fetchPreview(db, scope);
-  const changedRows = [...dungeonRows, ...familyRows].filter((row) => row.current !== row.computed);
+  const { dungeonRows, familyRows, eventRows } = await fetchPreview(db, scope);
+  const changedRows = [...dungeonRows, ...familyRows, ...eventRows].filter(
+    (row) => row.current !== row.computed,
+  );
 
   console.log(
-    `[backfill-fight-type] ${dungeonRows.length} combat(s) dans un donjon, ${familyRows.length} combat(s) classifiables hors donjon (famille résolue) — ${changedRows.length} changerai(en)t de valeur.`,
+    `[backfill-fight-type] ${dungeonRows.length} combat(s) dans un donjon, ${familyRows.length} combat(s) classifiables hors donjon (famille résolue), ${eventRows.length} combat(s) hors donjon sans ennemi catalogué (EVENT) — ${changedRows.length} changerai(en)t de valeur.`,
   );
 
   const sample = verbose ? changedRows : changedRows.slice(0, 20);
@@ -139,6 +146,7 @@ async function main(): Promise<void> {
   if (apply) {
     await db.execute(dungeonFightTypeUpdateSql(scope));
     await db.execute(familyFightTypeUpdateSql(scope));
+    await db.execute(eventFightTypeUpdateSql(scope));
     const after = await db.execute(fightTypeDistributionSql(scope));
     printDistribution(
       'Distribution APRÈS',

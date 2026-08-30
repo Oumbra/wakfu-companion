@@ -87,13 +87,20 @@ export type WakfuDungeonType =
  *   catalogue — `{id}` est `monsters.family` (voir `monsterFamilies`) de l'ennemi "représentatif"
  *   du combat, même priorité que `resolveFightTypeClassification`/`familyPerFight` (stats.ts) :
  *   boss > archimonstre > dominant > plus gros dégât. `FAMILY_NONE` si ce représentant n'appartient
- *   à aucune famille encyclopédie (les ~28 monstres sans famille, voir CLAUDE.md) — distinct de
- *   `null` (aucun ennemi de ce combat n'a pu être résolu dans le catalogue du tout, non
- *   classifiable, même trou déjà accepté par `familyPerFight` : ce combat reste alors invisible de
- *   toute agrégation par type). Le repli "horde hétérogène" du client (`kind: 'other'`, plus de 4
- *   familles distinctes sans brèche connue) n'a PAS d'équivalent dédié ici : comme `familyPerFight`
- *   déjà côté serveur, il retombe simplement sur la famille du participant le mieux classé — même
- *   approximation assumée, voir CLAUDE.md.
+ *   à aucune famille encyclopédie (les ~28 monstres sans famille, voir CLAUDE.md). Le repli "horde
+ *   hétérogène" du client (`kind: 'other'`, plus de 4 familles distinctes sans brèche connue) n'a
+ *   PAS d'équivalent dédié ici : comme `familyPerFight` déjà côté serveur, il retombe simplement sur
+ *   la famille du participant le mieux classé — même approximation assumée, voir CLAUDE.md.
+ * - `EVENT` : combat HORS donjon dont AUCUN ennemi n'a pu être résolu dans le catalogue `monsters`
+ *   du tout (`fight_participants.monster_id` null pour toute la ligne côté ennemi, y compris un
+ *   combat sans aucun participant ennemi enregistré) — décision utilisateur du 2026-08-30, après
+ *   audit du contenu réel de ce seau sur la base de prod (155 combats) : quasi exclusivement des
+ *   monstres d'ÉVÉNEMENT temporaire (Koutoulou, Chuchotueurs, Ougiptien, Tourbillon/Tornade du
+ *   Zinit...) ou des combats environnementaux sans vrai monstre (ex. "Enigme pyramide", une
+ *   énigme). Pas jugé rentable d'étendre `repository/monsters.json` (`wakfu-monsters-sync`, réservé
+ *   aux monstres permanents) pour ces cas ponctuels — `EVENT` leur donne un seau générique visible
+ *   dans les agrégations par type plutôt qu'un `null` invisible pour toujours (voir
+ *   `server/history/fight-type.ts` pour le calcul).
  */
 export type FightTypeCode =
   | 'DUNGEON_TWO_ROOMS'
@@ -105,7 +112,8 @@ export type FightTypeCode =
   | 'BREACH'
   | 'ULTIMATE_BREACH'
   | 'FAMILY_NONE'
-  | `FAMILY_${number}`;
+  | `FAMILY_${number}`
+  | 'EVENT';
 
 /**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très

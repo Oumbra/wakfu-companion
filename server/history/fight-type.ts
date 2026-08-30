@@ -128,6 +128,45 @@ export function familyFightTypeSelectSql(scope: SQL): SQL {
   `;
 }
 
+/**
+ * Combat HORS donjon dont AUCUN ennemi n'a pu être résolu dans le catalogue `monsters` (le "trou"
+ * `null` documenté par `FightTypeCode`/`EVENT`, `server/db/schema.ts`) — reçoit `EVENT` plutôt que
+ * de rester `null` indéfiniment. Complémentaire de `familyFightTypeUpdateSql`/`SelectSql` par
+ * construction (`NOT EXISTS` ici vs le `JOIN` sur `representativeFamilyPerFightSql` là-bas, même
+ * condition `monster_id is not null`) : un combat hors donjon reçoit toujours EXACTEMENT l'un des
+ * deux (`FAMILY_*`/`FAMILY_NONE` ou `EVENT`), jamais les deux, jamais aucun.
+ */
+function eventFightTypeValueExpr(): SQL {
+  return sql`'EVENT'`;
+}
+
+function eventFightTypeUnresolvedCondition(): SQL {
+  return sql`not exists (
+    select 1 from fight_participants fp
+    where fp.fight_id = f.id and fp.side = 'enemy' and fp.monster_id is not null
+  )`;
+}
+
+/** Écrit `fight_type = 'EVENT'` pour tous les combats HORS donjon (`dungeon_id` NULL) dont aucun
+ * ennemi n'est catalogué, matchant `scope` — voir `eventFightTypeUnresolvedCondition`. */
+export function eventFightTypeUpdateSql(scope: SQL): SQL {
+  return sql`
+    update fights as f
+    set fight_type = ${eventFightTypeValueExpr()}
+    where f.dungeon_id is null and (${scope}) and ${eventFightTypeUnresolvedCondition()}
+  `;
+}
+
+/** Aperçu (lecture seule) de la valeur `fight_type` que `eventFightTypeUpdateSql` écrirait pour
+ * chaque combat matchant `scope` — `id`/`current`/`computed` (toujours `'EVENT'`) par ligne. */
+export function eventFightTypeSelectSql(scope: SQL): SQL {
+  return sql`
+    select f.id as id, f.fight_type as current, ${eventFightTypeValueExpr()} as computed
+    from fights f
+    where f.dungeon_id is null and (${scope}) and ${eventFightTypeUnresolvedCondition()}
+  `;
+}
+
 /** Distribution de `fight_type` (compte de combats par valeur, `null` inclus) matchant `scope` —
  * utilisée par le script de rattrapage pour un aperçu avant/après. */
 export function fightTypeDistributionSql(scope: SQL): SQL {
