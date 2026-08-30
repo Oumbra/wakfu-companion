@@ -174,21 +174,33 @@ export const monsterFamilies = pgTable('monster_families', {
  * (pas de FK stricte : même raison que `dungeons.bossMonsterId`, ordre
  * d'import non garanti entre les deux tables).
  */
-export const monsters = pgTable('monsters', {
-  id: integer('id').primaryKey(),
-  fr: text('fr').notNull(),
-  en: text('en').notNull(),
-  es: text('es').notNull(),
-  pt: text('pt').notNull(),
-  gfxId: text('gfx_id').notNull(), // string côté client (CatalogMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
-  family: integer('family'),
-  pictureUrl: text('picture_url').notNull(),
-  wakassetsAvailable: boolean('wakassets_available').notNull(),
-  wakfuAvailable: boolean('wakfu_available').notNull(),
-  isBoss: boolean('is_boss').notNull(),
-  isArchi: boolean('is_archi').notNull(),
-  isDominant: boolean('is_dominant').notNull().default(false),
-});
+export const monsters = pgTable(
+  'monsters',
+  {
+    id: integer('id').primaryKey(),
+    fr: text('fr').notNull(),
+    en: text('en').notNull(),
+    es: text('es').notNull(),
+    pt: text('pt').notNull(),
+    gfxId: text('gfx_id').notNull(), // string côté client (CatalogMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
+    family: integer('family'),
+    pictureUrl: text('picture_url').notNull(),
+    wakassetsAvailable: boolean('wakassets_available').notNull(),
+    wakfuAvailable: boolean('wakfu_available').notNull(),
+    isBoss: boolean('is_boss').notNull(),
+    isArchi: boolean('is_archi').notNull(),
+    isDominant: boolean('is_dominant').notNull().default(false),
+    // Butin droppable par ce monstre (`repository/monsters.json` champ `loot`, tableau d'ids
+    // Ankama d'objets) — pas encore consommé par un endpoint/le client à ce lot, posée en
+    // prévision d'une prochaine fonctionnalité (voir demande utilisateur). Toujours un tableau
+    // (jamais `null`), tableau vide pour les ~127 monstres du référentiel actuel sans loot connu —
+    // même convention "toujours un tableau" que `dungeons.bossMonsterId`/`monsterFamilyId`.
+    // Référence `items.ankamaId` (pas de FK stricte, même raison que `family` ci-dessus : ordre
+    // d'import non garanti entre les tables).
+    loot: integer('loot').array().notNull().default([]),
+  },
+  (table) => [index('monsters_loot_idx').using('gin', table.loot)],
+);
 
 /** Donjons — `id` Ankama en clé primaire (151 donjons, tous uniques). */
 export const dungeons = pgTable(
