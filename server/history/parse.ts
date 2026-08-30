@@ -28,7 +28,16 @@ export const MAX_HISTORY_BATCH = 100;
 
 /** Bornes de forme : au-delà, la charge utile ne vient plus d'un log Wakfu. */
 const MAX_NAME_LENGTH = 200;
-const MAX_PARTICIPANTS_PER_FIGHT = 64;
+/**
+ * 64 s'est révélé trop bas en pratique (bug réel, 2026-08-28) : un vrai combat de type « vague/
+ * brèche » (ennemis qui rejoignent en continu au fil du combat, voir la doc « Invocations » de
+ * CLAUDE.md) a produit 73 participants distincts sur un fichier `wakfu.log` fourni par l'utilisateur
+ * (fightId Wakfu 1680001273, ~89 lignes `[_FL_] ... join the fight` brutes avant dédoublonnage
+ * client) — rejeté par l'API avec `trop de participants (max 64)`. 128 garde une marge confortable
+ * au-dessus de ce cas réel tout en restant une borne de forme (un combat classique en a rarement
+ * plus d'une douzaine).
+ */
+const MAX_PARTICIPANTS_PER_FIGHT = 128;
 const MAX_ITEMS_PER_TRADE = 128;
 /** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
 const MAX_SPELLS_PER_PARTICIPANT = 64;
@@ -83,6 +92,14 @@ export interface FightInput {
   xpGained: number | null;
   kamasGained: number | null;
   gameServer: string | null;
+  /** Voir `fights.dungeonId`/`fights.dungeonRunKey` (server/db/schema.ts) — toujours renseignés
+   * ensemble ou absents ensemble, voir `parseDungeonAssignment`. */
+  dungeonId: number | null;
+  dungeonRunKey: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat — voir `fights.challengesPassed/Failed`
+   * (server/db/schema.ts), `0` par défaut (jamais `null`, colonnes `NOT NULL DEFAULT 0`). */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantInput[];
   loot: FightLootInput[];
 }
@@ -179,6 +196,35 @@ function parseFlag(raw: unknown, field: string): ParseResult<boolean | null> {
   if (raw === null || raw === undefined) return { ok: true, value: null };
   if (typeof raw !== 'boolean') return { ok: false, error: `${field} invalide` };
   return { ok: true, value: raw };
+}
+
+/**
+ * `dungeonId`/`dungeonRunKey` : toujours renseignés ensemble ou absents ensemble — même principe
+ * d'invariant renforcé côté serveur que `parseItemIdentity` ci-dessus (les deux sont dérivés du
+ * même calcul client, voir `HistorySyncService`/`dungeon-run-grouping.util.ts`, jamais l'un sans
+ * l'autre en pratique, mais on ne fait pas confiance au client pour le garantir). `dungeonRunKey`
+ * a le même format qu'un `clientKey` (sha256 hexadécimal, voir `client-key.util.ts` côté client) —
+ * motif identique, réutilisé tel quel.
+ */
+function parseDungeonAssignment(
+  dungeonIdRaw: unknown,
+  dungeonRunKeyRaw: unknown,
+): ParseResult<{ dungeonId: number | null; dungeonRunKey: string | null }> {
+  const dungeonId = parseCount(dungeonIdRaw, 'dungeonId', true);
+  if (!dungeonId.ok) return dungeonId;
+
+  let dungeonRunKey: string | null = null;
+  if (dungeonRunKeyRaw !== null && dungeonRunKeyRaw !== undefined) {
+    if (typeof dungeonRunKeyRaw !== 'string' || !CLIENT_KEY_PATTERN.test(dungeonRunKeyRaw)) {
+      return { ok: false, error: 'dungeonRunKey invalide (sha256 hexadécimal attendu)' };
+    }
+    dungeonRunKey = dungeonRunKeyRaw;
+  }
+
+  if ((dungeonId.value === null) !== (dungeonRunKey === null)) {
+    return { ok: false, error: 'dungeonId et dungeonRunKey doivent être renseignés ensemble' };
+  }
+  return { ok: true, value: { dungeonId: dungeonId.value, dungeonRunKey } };
 }
 
 /**
@@ -357,10 +403,16 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!xpGained.ok) return xpGained;
       const kamasGained = parseCount(entry['kamasGained'], 'kamasGained', true);
       if (!kamasGained.ok) return kamasGained;
+      const challengesPassed = parseCount(entry['challengesPassed'] ?? 0, 'challengesPassed');
+      if (!challengesPassed.ok) return challengesPassed;
+      const challengesFailed = parseCount(entry['challengesFailed'] ?? 0, 'challengesFailed');
+      if (!challengesFailed.ok) return challengesFailed;
       const won = parseFlag(entry['won'], 'won');
       if (!won.ok) return won;
       const gameServer = parseGameServer(entry['gameServer']);
       if (!gameServer.ok) return gameServer;
+      const dungeonAssignment = parseDungeonAssignment(entry['dungeonId'], entry['dungeonRunKey']);
+      if (!dungeonAssignment.ok) return dungeonAssignment;
 
       const rawParticipants = entry['participants'] ?? [];
       if (!Array.isArray(rawParticipants)) return { ok: false, error: 'participants invalide' };
@@ -410,6 +462,10 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
           xpGained: xpGained.value,
           kamasGained: kamasGained.value,
           gameServer: gameServer.value,
+          dungeonId: dungeonAssignment.value.dungeonId,
+          dungeonRunKey: dungeonAssignment.value.dungeonRunKey,
+          challengesPassed: challengesPassed.value ?? 0,
+          challengesFailed: challengesFailed.value ?? 0,
           participants,
           loot,
         },

@@ -11,6 +11,7 @@ import {
   DashboardMenuPos,
 } from '../../../shared/dashboard-layout-schema/dashboard-layout-schema.component';
 import { I18nService } from '../../../core/services/i18n.service';
+import { AuthService } from '../../../core/auth/auth.service';
 import {
   DashboardBodyMode,
   DashboardBodySlot,
@@ -72,6 +73,7 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
 export class DashboardLayoutPickerComponent {
   protected readonly layout = inject(DashboardLayoutService);
   protected readonly i18n = inject(I18nService);
+  private readonly auth = inject(AuthService);
 
   protected readonly thumbCells = THUMB_CELLS;
   protected readonly thumbFocus = THUMB_FOCUS;
@@ -150,7 +152,7 @@ export class DashboardLayoutPickerComponent {
     const group = this.layout.historyGroup();
     return slots.map((s) => ({
       ...s,
-      label: dashboardBodySlotLabel(this.i18n, group, s.key),
+      label: dashboardBodySlotLabel(this.i18n, group, s.key, this.auth.isAuthenticated()),
     }));
   }
 

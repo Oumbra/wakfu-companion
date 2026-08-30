@@ -1,131 +1,200 @@
+/* Un vrai `flex` (pas `display:contents`, contrairement à `HistoryComponent` qui gère lui-même le
+   placement grid de ses volets scindés) : cette carte est toujours un unique panneau, placé par
+   `DashboardComponent` via `[style.grid-column]`/`[style.grid-row]`/`[style.order]` posés sur le
+   HOST `<app-session-recap>` (voir dashboard.component.html) — un host `display:contents` n'a pas
+   de boîte propre, ces styles inline y seraient donc silencieusement ignorés et c'est `.tool-panel`
+   (sans aucun placement propre) qui deviendrait l'item de grille réel, retombant sur un placement
+   automatique au lieu du span demandé. Bug réel corrigé le 2026-08-27 (carte Récap ne prenait pas
+   toute la largeur quand elle était la seule carte visible, contrairement à Combat/Achats/Échanges/
+   Chat). Pas besoin d'un `.tool-panel { height: 100% }` local en plus (contrairement à un premier
+   réflexe) : la classe globale `.tool-panel` (styles.css) le porte déjà — seul le host en manquait. */
 :host {
-  display: contents;
-}
-
-.recap-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 500;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.recap-panel {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 501;
-  width: 450px;
-  max-height: 80vh;
   display: flex;
   flex-direction: column;
-  background: var(--panel-bg);
-  border: 1px solid var(--accent);
-  border-radius: 8px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-  overflow: hidden;
-  animation: fadeIn 0.2s;
-}
-.recap-panel.positioned {
-  transform: none;
-}
-
-.recap-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 15px;
-  background: var(--panel-header-bg);
-  border-bottom: 1px solid var(--border);
-  cursor: grab;
-  user-select: none;
-}
-.recap-header:active {
-  cursor: grabbing;
-}
-
-/* Mode onglet mobile du dashboard (voir dashboard.component.css, <=800px) :
-   plutôt qu'une fenêtre flottante centrée, le panneau recouvre toute la zone
-   dashboard (tab-bar Combat/Suivi/Chat comprise) avec la même largeur que la
-   carte. `top` = hauteur .app-header mobile (45px, voir app.css) +
-   padding-top .dashboard (15px) — à garder synchronisé si l'une des 2
-   change. Glisser n'a plus de sens à taille fixe : curseur par défaut. */
-@media (max-width: 800px) {
-  .recap-panel {
-    top: 60px;
-    left: 15px;
-    right: 15px;
-    bottom: 15px;
-    width: auto;
-    max-height: none;
-    transform: none;
-  }
-  .recap-header {
-    cursor: default;
-  }
-  .recap-header:active {
-    cursor: default;
-  }
-}
-.recap-header-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.recap-icon {
-  width: 20px;
-  height: 20px;
-  object-fit: contain;
-}
-.recap-header h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.3rem;
-  line-height: 1;
-  padding: 0;
-  height: auto;
-  cursor: pointer;
-}
-.close-btn:hover {
-  color: var(--text-bright);
+  height: 100%;
+  min-height: 0;
 }
 
 .recap-body {
-  padding: 14px 24px 14px 16px;
-  overflow-y: auto;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Conteneur de requête (voir `@container` sur `.recap-bandeau` plus bas) — la largeur RÉELLEMENT
+     disponible pour le bandeau dépend de la mise en page du dashboard (carte seule/à 2 ou 3
+     colonnes), jamais de la largeur du viewport : une media query classique ne pourrait pas s'y
+     adapter correctement. */
+  container-type: inline-size;
 }
 
-.duration-box {
+/* Switch Session/Jour/Mois/Année (voir CLAUDE.md) — réutilise `.icon-switch`/`.icon-switch-4`
+   (styles.css), pleine largeur (contrairement au switch de tri du butin, plus loin, qui reste
+   compact) : 4 libellés traduits (pas des abréviations à 2 caractères) ont besoin de la place. */
+.recap-period-switch {
+  width: 100%;
+}
+.recap-period-switch .icon-switch-option {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+/* Badge "NEW" (voir RecapPeriodBadgeService) — signale la découverte du switch Session/Jour/Mois/
+   Année. Sur le titre de la carte : inline, juste après le texte (pas de `position:absolute`, le
+   `.header-label` n'a pas de boîte dédiée à ça). Sur un bouton Jour/Mois/Année (`.recap-new-badge-
+   switch`) : superposé au coin, l'espace y est trop réduit pour un badge inline. */
+.recap-new-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 5px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  vertical-align: middle;
+}
+.recap-new-badge-switch {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  margin-left: 0;
+}
+
+/* Stepper de navigation par période (‹ label ›, voir app-stepper) + switch de regroupement
+   Cumulé/Donjon & Famille/Type sur LA MÊME ligne (maquette utilisateur du 2026-08-27) : la
+   navigation à gauche (`.recap-period-nav-date`), le switch à droite — plutôt que deux lignes
+   pleine largeur empilées comme avant. Négatif : réduit l'écart avec le switch de période juste
+   au-dessus, plus proche visuellement l'un de l'autre que du contenu qui suit (les deux pilotent
+   ensemble "quelle période afficher"). */
+.recap-period-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: -6px;
+}
+.recap-period-nav-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Switch Cumulé/Donjon & Famille/Type (voir SessionRecapComponent.detailMode) — passé en icônes
+   seules (tooltip pour le libellé complet, même convention que `.loot-sort-switch` plus bas) pour
+   tenir sur la même ligne que la navigation de date ci-dessus : largeur fixe (comme
+   `.loot-sort-switch`), plus le `width:100%` pleine largeur d'avant. */
+.recap-group-switch {
+  width: 96px;
+}
+
+/* Regroupement par donjon (voir PeriodStats.dungeons) — même principe de liste défilante que
+   `.xp-list.expanded` (hauteur plafonnée, scroll interne) plutôt qu'un "voir plus" dédié : le
+   nombre de donjons distincts sur une période reste rarement assez grand pour justifier ce
+   mécanisme en plus. */
+/* Accordéon des modes Donjon & Famille/Type (voir SessionRecapComponent.activeGroupRows) — chaque
+   ligne (`.group-item`) est un `.recap-section` (fond/bordure propres, cohérent avec les autres
+   sections repliables de la carte) contenant sa propre ligne d'en-tête (`.dungeon-row`, réutilisée
+   telle quelle) + un caret, et un détail dépliable (`.group-detail`). Pas de plafond de hauteur (contrairement à l'ancienne liste plate "Par donjon",
+   remplacée par cet accordéon) : `.panel-body` scrolle déjà toute la carte, et une ligne dépliée a
+   besoin de sa pleine hauteur. */
+.group-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.group-item {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   background: var(--surface-well);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 10px;
+  padding: 8px 12px;
 }
-.duration-label {
-  color: var(--text-muted);
+.group-row {
+  cursor: pointer;
+}
+.group-row .section-caret {
+  flex-shrink: 0;
+}
+.group-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--surface-active);
+}
+.dungeon-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-size: 0.85rem;
 }
-.duration-value {
+.dungeon-name {
+  color: var(--text-color);
+  font-weight: 600;
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dungeon-count {
   font-family: monospace;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Ligne désactivée du mode "Type" (voir SessionRecapComponent.typeRows/RecapGroupRow.disabled) :
+   catégorie sans aucun combat sur la période, toujours affichée (demande explicite de
+   l'utilisateur) mais non cliquable — `(click)` déjà no-op côté template, ceci n'est que le rendu
+   visuel (grisé, curseur par défaut). Le caret/la vignette restent dans le DOM (juste atténués avec
+   le reste) plutôt que masqués : cohérent visuellement avec une ligne normale, seulement plus pâle. */
+.dungeon-row.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Titre de section non cliquable au-dessus d'un groupe de collapses (mode "Donjon & Famille" trié
+   par catégorie, voir SessionRecapComponent.groupSections) — style repris de
+   `.recap-section-header` mais en plus discret (pas d'icône, pas de fond propre : c'est un simple
+   séparateur textuel entre deux catégories dans `.group-list`). */
+.group-section-title {
+  padding: 4px 2px 0;
+  font-size: 0.68rem;
   font-weight: 700;
-  color: var(--accent);
-  font-size: 1.05rem;
-  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.group-section-title:first-child {
+  padding-top: 0;
+}
+
+/* Vignette de la ligne repliée d'un donjon/famille/type (demande explicite du 2026-08-27 : PAS de
+   carré à bordure, seulement l'image à hauteur plafonnée, largeur automatique) —
+   `dungeon.pictureUrl` (image officielle Ankama, voir CatalogDungeonEntry) pour un VRAI donjon
+   résolu (mode "Donjon & Famille") ; `row.stoneItemId` (pierre du type, voir
+   `dungeonStoneItemIdForType`) pour un bucket "Type" qui en délivre une ; repli générique sinon
+   (famille de monstre, bucket "Autres", ou id pas encore résolu par le catalogue) — voir
+   `isFamilyRow`/`onThumbError`. */
+.dungeon-thumb {
+  height: 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+.dungeon-thumb img {
+  max-height: 24px;
+  width: auto;
+  height: auto;
+  display: block;
+  object-fit: contain;
 }
 
 .recap-section {
@@ -156,14 +225,6 @@
   height: 18px;
   object-fit: contain;
 }
-.section-header-value {
-  margin-left: auto;
-  font-family: monospace;
-  color: var(--accent);
-  text-transform: none;
-  letter-spacing: normal;
-  font-weight: 700;
-}
 .section-caret {
   font-size: 0.7em;
   color: var(--text-muted);
@@ -174,51 +235,25 @@
   color: var(--accent);
 }
 
-.recap-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-.recap-label {
-  color: var(--text-color);
-  font-size: 0.85rem;
-}
-.recap-value {
-  font-family: monospace;
-  font-weight: 700;
-  color: var(--text-color);
-  text-align: right;
-}
-.recap-value.gain {
+/* Couleurs gain/perte génériques (vert/rouge) — utilisées telles quelles par la bande "coup
+   d'oeil" (case Combats), le bandeau Victoires/Défaites/Kamas du détail par donjon, et le résumé
+   Challenges de la ligne "Challenges" à plat (voir plus bas) : avant cette règle, seule la variante
+   scopée `.dungeon-wl .gain/.loss` existait (retirée, `.dungeon-wl` n'est plus utilisée). */
+.gain {
   color: var(--btn-active-green);
 }
-.recap-value.loss {
+.loss {
   color: var(--btn-active-red);
 }
-
-.section-header-value.gold {
-  color: var(--kama-color);
-}
-.kama-detail {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--surface-active);
+/* Séparateur "victoires - défaites"/"réussis - échoués" (bandeau Combats/Challenges) — demande
+   explicite de l'utilisateur (2026-08-28) : les deux valeurs étaient trop collées, peu lisibles.
+   L'espacement lui-même vient du texte inline normal entre les 3 `<span>` (voir template) ; cette
+   marge additionnelle + opacité réduite ne fait qu'accentuer/adoucir visuellement le tiret. */
+.wl-dash {
+  margin: 0 5px;
+  opacity: 0.55;
 }
 
-.challenges-block {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-}
-.challenges-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 .challenges-label {
   color: var(--accent);
   text-transform: uppercase;
@@ -226,55 +261,275 @@
   font-weight: 700;
   letter-spacing: 0.5px;
 }
-.challenges-sep {
-  border-top: 1px dashed var(--surface-active);
+/* Résumé compact d'une ligne "Challenges" à plat (Session ET période-cumulée, voir
+   `.recap-section-header` sans caret ni détail dépliable juste au-dessus dans le template) — pousse
+   le résumé coloré à droite, deux couleurs (voir `.gain`/`.loss`) plutôt qu'une couleur accent
+   unique. */
+.defis-summary {
+  margin-left: auto;
+  font-family: monospace;
+  font-size: 0.82rem;
 }
 
-.split-row {
+/* Bande "coup d'oeil", TOUJOURS présente (voir CLAUDE.md, corrigé le 2026-08-27 : n'apparaissait
+   avant que sur la vue Session — seules les VALEURS changent désormais selon la vue) : Durée (mode
+   Session uniquement, sans équivalent pour une période agrégée)/Expérience/Kamas/Combats en tête de
+   chaque vue, ET réutilisée telle quelle (3 cases : Victoires/Défaites/Kamas) dans le détail déplié
+   d'une ligne de donjon — voir `.group-detail .recap-bandeau` plus bas, même système visuel partout
+   plutôt qu'un style différent par endroit. */
+.recap-bandeau {
   display: flex;
-  align-items: center;
-  width: 100%;
+  align-items: stretch;
+  background: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 6px;
 }
-.split-part {
+.bandeau-cell {
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  gap: 3px;
   min-width: 0;
+  /* Padding latéral (demande explicite de l'utilisateur, 2026-08-28) : sans lui, la valeur d'une
+     cellule touchait quasiment `.bandeau-sep`/le bord de la case voisine — un vrai écartement
+     visuel entre le "fond" de la cellule et sa valeur, plutôt que du texte collé au bord. */
+  padding: 0 5px;
 }
-.split-sep {
+/* Icône + titre CÔTE À CÔTE sur une même ligne (demande explicite du 2026-08-27 : avant, l'icône
+   était empilée AU-DESSUS du titre, ce qui désalignait visuellement les icônes des différentes
+   cases entre elles) — la valeur reste sur sa propre ligne en dessous, voir `.bandeau-value`. */
+.bandeau-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.bandeau-icon {
+  width: 13px;
+  height: 13px;
+  object-fit: contain;
   flex-shrink: 0;
-  color: var(--border-strong);
-  padding: 0 10px;
 }
-.split-label {
-  font-size: 0.85rem;
+.bandeau-sep {
+  width: 1px;
+  align-self: stretch;
+  background: var(--border-strong);
+  opacity: 0.6;
 }
-.split-value {
+
+/* En dessous d'une certaine largeur de carte, 4 (voire 5 en mode Session) cellules serrées sur une
+   seule ligne deviennent illisibles (labels/valeurs excessivement tronqués) — demande explicite de
+   l'utilisateur, 2026-08-28, capture à l'appui. Bascule en 2 cellules par ligne (`flex-wrap`)
+   plutôt que de continuer à comprimer tout sur une seule ligne — `@container` (pas une media query
+   sur le viewport) : la largeur réellement disponible dépend de la mise en page du dashboard
+   (carte seule/à 2 ou 3 colonnes), pas de la fenêtre du navigateur (voir `container-type` sur
+   `.recap-body`). Seuil choisi empiriquement : en dessous, même 4 cellules à ~55px chacune ne
+   laissent plus assez de place pour un libellé à 14px + une valeur. */
+@container (max-width: 370px) {
+  .recap-bandeau {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .bandeau-cell {
+    /* 42% (pas 50%) : laisse la place au `gap` implicite du `flex-wrap` sans que 2 cellules pile à
+       50% ne finissent par déborder d'un pixel et retomber sur 1 seule colonne. */
+    flex: 1 1 42%;
+  }
+  /* Un séparateur VERTICAL n'a plus de sens une fois les cellules réparties sur plusieurs lignes
+     (il apparaîtrait soit au milieu d'un retour à la ligne, soit entre deux cellules qui ne sont
+     plus vraiment côte à côte) — masqué, le padding latéral de `.bandeau-cell` suffit comme seul
+     espacement dans ce mode. */
+  .bandeau-sep {
+    display: none;
+  }
+}
+/* `max-width: 100%` + ellipsis (comme `.xp-name`/`.dungeon-name`) : bien que les cellules elles-
+   mêmes ne se chevauchent jamais (`flex:1`/`min-width:0` suffisent à ça), une VALEUR plus large que
+   sa cellule (grand nombre, carte étroite — 3 colonnes de dashboard à largeur réduite) déborde
+   sinon visuellement par-dessus la cellule voisine sans qu'aucune règle ne la clippe (le texte
+   reste bien dans sa boîte flex logique, seul le rendu visuel spécifique déborde) — bug réel
+   constaté à l'écran (~285px de carte, 4 cellules), pas visible sur les rects DOM eux-mêmes. */
+.bandeau-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* 14px explicitement demandé par l'utilisateur (2026-08-28, était 0.6rem ≈ 9.6px, jugé trop
+     petit) — en px plutôt qu'en rem : valeur fixe demandée telle quelle, pas une échelle relative. */
+  font-size: 14px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+/* Case avec tooltip (Kamas, mode Session) : discret repère visuel au survol — voir
+   `kamasTooltip()`/`[tooltipRows]`. */
+.bandeau-label.has-tip {
+  border-bottom: 1px dotted var(--text-muted);
+  cursor: help;
+}
+.bandeau-value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: monospace;
   font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text-bright);
 }
-.split-label.gain,
-.split-value.gain {
-  color: var(--btn-active-green);
+.bandeau-value.accent {
+  color: var(--accent);
 }
-.split-label.loss,
-.split-value.loss {
-  color: var(--btn-active-red);
+.bandeau-value.gold {
+  color: var(--kama-color);
+}
+
+/* Tuiles "Donjon" (mode "Type" uniquement, voir DungeonTile/RecapGroupRow.tiles) — un donjon
+   précis = une tuile (image + libellé + nombre de fois fait), pour savoir quels donjons réels
+   composent le total fusionné du bucket "Type" déplié (demande explicite de l'utilisateur,
+   2026-08-28, retravaillée le même jour suite à une maquette fournie) :
+   - Peu de tuiles (≤ DUNGEON_TILE_STACK_THRESHOLD, voir template) : simple rangée avec retour à la
+     ligne (`flex-wrap`), aucun chevauchement — comportement par défaut ci-dessous.
+   - Beaucoup de tuiles (`.stacked`, voir template) : chevauchement façon "jeu de cartes en éventail"
+     (marge négative, une seule ligne) — voir règles `.stacked` plus bas, qui redéfinissent le
+     nécessaire par-dessus ces règles de base plutôt que de tout dupliquer. */
+.dungeon-tile-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 2px 0 4px;
+}
+.dungeon-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 3px 0;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  text-align: center;
+  background: var(--surface-active);
+}
+/* Cadre en arche/porte de pierre (demande explicite de l'utilisateur, 2026-08-28 — "identique à la
+   maquette fournie") : rectangle plus haut que large dont les 2 coins DU HAUT sont arrondis à un
+   demi-cercle complet (`border-radius` horizontal = moitié de la largeur de la tuile) pour un effet
+   voûte/porte, coins du bas presque droits. Couleurs fixes (pas de variable de thème) : cette
+   vignette décorative reproduit un cadre de pierre sombre identique quel que soit le thème clair/
+   sombre de l'app, comme les couleurs de rareté ailleurs dans le code. */
+.dungeon-tile-thumb {
+  position: relative;
+  height: 62px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+/* `object-fit: contain` (pas `cover`) : ne JAMAIS rogner l'illustration du donjon — demande
+   explicite de l'utilisateur, quitte à laisser une marge visible si le ratio ne correspond pas
+   exactement au gabarit de la tuile. Alignée en bas (voir `align-items: flex-end` du parent) comme
+   sur la maquette (le personnage "pose" au sol de l'arche, pas centré verticalement). */
+.dungeon-tile-thumb img {
+  width: 88%;
+  height: 88%;
+  object-fit: contain;
+  display: block;
+}
+/* Badge du nombre de fois fait, en HAUT À DROITE de la vignette (voir maquette fournie par
+   l'utilisateur, 2026-08-28 — pas en bas à gauche comme dans une itération précédente), couleur
+   "kamagold" (`--kama-color`, même teinte que les valeurs Kamas ailleurs dans l'app) pour un effet
+   flashy demandé explicitement, "×" AVANT le chiffre (pas après). Légèrement hors du cadre (haut/
+   droite négatifs) comme un badge de notification classique. */
+.dungeon-tile-count {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  padding: 1px 5px;
+  border-radius: 8px;
+  background: #1b1b1b;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--kama-color);
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 0.66rem;
+  line-height: 1.3;
+}
+/* Mode chevauché (beaucoup de tuiles, voir doc de tête) : une seule ligne, marge négative pour
+   superposer chaque tuile sur la précédente (empilement "jeu de cartes", la 1ʳᵉ tuile toujours
+   entièrement visible au-dessus des suivantes grâce au `z-index` décroissant posé par le
+   template). */
+.dungeon-tile-stack.stacked {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-top: 6px;
+}
+.dungeon-tile-stack.stacked .dungeon-tile {
+  margin-left: -26px;
+  transition:
+    margin-left 0.15s ease,
+    transform 0.15s ease;
+}
+.dungeon-tile-stack.stacked .dungeon-tile:first-child {
+  margin-left: 0;
+}
+/* Survol d'UNE tuile précise : elle se détache visuellement (remonte + s'agrandit légèrement,
+   passe devant tout le reste via z-index) ; les tuiles qui la SUIVENT dans le DOM s'écartent pour
+   lui laisser de la place (sélecteur frère général — les tuiles PRÉCÉDENTES, elles, restent
+   immobiles : limite acceptée d'un effet purement CSS, sans JS, voir demande utilisateur "les
+   autres s'écartent"). Le nom du donjon reste, lui, uniquement accessible via la tooltip native
+   (`[appTooltip]`, voir template — demande explicite de l'utilisateur, 2026-08-28 : le libellé
+   sous la tuile était jugé redondant avec elle, l'image suffit). */
+.dungeon-tile-stack.stacked .dungeon-tile:hover {
+  z-index: 999 !important;
+  transform: translateY(-4px) scale(1.12);
+}
+.dungeon-tile-stack.stacked .dungeon-tile:hover ~ .dungeon-tile {
+  margin-left: 4px;
+}
+
+/* Détail déplié d'une ligne de donjon (mode "Donjon & Famille"/"Type") : Victoires/Défaites/Kamas
+   ventilés dans le MÊME bandeau que ci-dessus (icônes fines dédiées, cohérentes ENTRE elles dans
+   cette rangée précise — `check` du sprite partagé pour Victoires, SVG dédiés pour Défaites/Kamas,
+   voir template) plutôt que l'ancien bloc `.split-row`/ligne Kamas séparée. */
+.group-detail .recap-bandeau {
+  padding: 8px 6px;
 }
 
 .xp-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 76px;
+  gap: 8px;
+  max-height: 100px;
   overflow: hidden;
 }
 .xp-list.expanded {
-  max-height: 160px;
+  max-height: 210px;
   overflow-y: auto;
   padding-right: 10px;
+}
+
+/* Une entrée de la liste XP = la ligne existante (`.xp-row`) + sa barre de progression relative au
+   plus gros gain de la liste (voir `xpBarPercent`) — l'indentation de la barre (28px) aligne son
+   départ sous le NOM, pas sous l'icône du personnage (20px + 8px de gap). */
+.xp-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.xp-bar-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--surface-active);
+  overflow: hidden;
+  margin-left: 28px;
+}
+.xp-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
 }
 
 .show-more-btn {
@@ -312,7 +567,27 @@
   font-family: monospace;
   color: var(--accent);
   text-align: right;
-  flex-shrink: 0;
+  /* Peut lui-même s'ellipser (voir [tooltipOnlyIfTruncated] côté template) pour un très grand
+     nombre plutôt que de pousser indéfiniment la largeur de la ligne — `flex-shrink:0` (avant)
+     empêchait ça, laissant `.xp-name` seul absorber toute contrainte de largeur. */
+  flex-shrink: 1;
+  min-width: 0;
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Remplace le texte "Chargement…" (voir CLAUDE.md) — centré horizontalement ET verticalement dans
+   tout l'espace restant de la carte (`flex:1`, `.recap-body` est déjà un flex-column) plutôt que
+   collé en haut comme l'ancien texte. `min-height` : garde une zone raisonnable même si la carte
+   est très basse (peu de contenu au-dessus). */
+.recap-loading {
+  flex: 1;
+  min-height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .empty-state.small {
@@ -324,10 +599,10 @@
   justify-content: flex-start;
 }
 
-/* Section butin de la modale recap : réplique le design/actions/tri de la
+/* Section butin de la carte recap : réplique le design/actions/tri de la
    section historique > combat > butin (voir FightHistoryComponent), adaptée
-   aux séparateurs en pointillés déjà utilisés dans ce panneau (voir
-   .challenges-sep) plutôt qu'aux bordures pleines de fight-history. */
+   aux séparateurs en pointillés déjà utilisés dans ce panneau plutôt qu'aux
+   bordures pleines de fight-history. */
 .recap-loot-block {
   margin-top: 4px;
   padding-top: 8px;
@@ -338,17 +613,55 @@
   align-items: center;
   gap: 8px;
 }
-.loot-header-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-grow: 1;
-  min-width: 0;
-}
 .loot-header-left {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+/* Recherche + switch de tri, sur leur PROPRE ligne (voir template) — demande explicite de
+   l'utilisateur, 2026-08-28 : sur la même ligne que le titre "BUTIN", ça devenait illisible/
+   inutilisable dès que la carte n'était pas toute petite (le champ de recherche finissait par
+   chevaucher le texte du titre). `justify-content:space-between` avec `.loot-search-wrap` en
+   `flex:1` : la recherche prend toute la place disponible, le switch reste compact à droite. */
+.loot-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.loot-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+.loot-search-icon {
+  position: absolute;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.loot-search-input {
+  width: 100%;
+  /* Même hauteur que `.icon-switch` juste à côté (32px, styles.css) — cohérence visuelle demandée
+     explicitement (2026-08-28) : `box-sizing: border-box` pour que le padding vertical ne pousse pas
+     la hauteur AU-DELÀ de cette valeur. */
+  height: 32px;
+  box-sizing: border-box;
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
+  color: var(--text-color);
+  padding: 0 8px 0 26px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 0.78rem;
+}
+.loot-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 .loot-count {
   font-family: monospace;

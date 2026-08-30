@@ -14,6 +14,8 @@ import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model'
 import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
 import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
+import { localDayStart } from '../utils/local-period.util';
+import { resolveLootConfidence } from '../utils/loot-confidence.util';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -34,14 +36,6 @@ const MAX_DAY_COMPLETION_PAGES = 40;
  * même la portée "1 an" s'arrête bien avant sur une activité de jeu réaliste. */
 const MAX_SPAN_PAGES = 400;
 
-/** Début du jour calendaire LOCAL (minuit) contenant `timestampMs` — même découpage que
- * `I18nService.formatRelativeDay` (celui qui pilote le regroupement par jour affiché), reproduit
- * ici en pur pour ne pas faire dépendre ce service d'`I18nService`. */
-function localDayStart(timestampMs: number): number {
-  const d = new Date(timestampMs);
-  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
-
 interface FightPage {
   entries: {
     clientKey: string;
@@ -53,6 +47,8 @@ interface FightPage {
     xpGained: number | null;
     kamasGained: number | null;
     gameServer: string | null;
+    challengesPassed: number | null;
+    challengesFailed: number | null;
     participants: {
       side: 'ally' | 'enemy';
       name: string;
@@ -407,7 +403,13 @@ export class HistoryArchiveService {
         return corrected;
       }),
     );
-    if (corrected) this.historySync.recordFight(corrected);
+    // `[corrected]` seul (pas tout l'historique fusionné) : un rattachement de donjon éventuel a
+    // déjà été résolu et envoyé lors de la synchronisation d'origine de ce combat — ce renvoi ne
+    // sert qu'à sa correction de butin. `resolveDungeonAssignment` sans salles voisines ne peut
+    // reconnaître QUE le cas où `corrected` contient lui-même un boss ; sinon `null`/`null`, ce qui
+    // n'efface jamais une valeur déjà connue côté serveur (voir `COALESCE`,
+    // `functions/api/v1/history/fights.ts`).
+    if (corrected) this.historySync.recordFight(corrected, [corrected]);
   }
 
   /** Miroir de reassignLootItem, pour un achat. Une correction partielle crée un second achat
@@ -554,7 +556,7 @@ function toLogTime(iso: string): string {
  * `itemId` (jamais la locale d'affichage — ce nom sert aussi d'identité pour le suivi/les alertes
  * son sur les lignes de butin fusionnées dans LootListComponent, qui comparent au nom brut du log,
  * jamais traduit). Repli sur `items.unknown` si aucun des deux n'est exploitable. */
-function resolveItemName(
+export function resolveItemName(
   itemId: number | null,
   itemName: string | null,
   catalog: CatalogService,
@@ -616,11 +618,27 @@ function toFightRecord(
   // sourceCatalogId = itemId TEL QUE RENVOYÉ PAR LE SERVEUR pour cette ligne — plus besoin de
   // compteur d'occurrence par nom (voir StatsStoreService.findLootCorrection) : le `catalogId`
   // identifie déjà la ligne sans ambiguïté.
+  //
+  // Confiance (voir LootConfidence) recalculée ICI, pas persistée côté serveur : voir la doc de
+  // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour pourquoi (un combat déjà ancien
+  // profite ainsi d'un référentiel monsters.loot devenu plus complet depuis). Une correction
+  // manuelle déjà connue (voir ci-dessous) force 'confirmed' — l'utilisateur a lui-même tranché,
+  // jamais le contredire après coup par un badge de doute, même reconstruit à la lecture.
+  const enemyNames = entry.participants.filter((p) => p.side === 'enemy').map((p) => p.name);
   const loot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
     const correction = stats.findLootCorrection(fightKey, name, row.itemId, row.quantity);
-    if (correction !== null) anyCorrected = true;
-    return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
+    if (correction !== null) {
+      anyCorrected = true;
+      return {
+        name,
+        catalogId: correction,
+        quantity: row.quantity,
+        confidence: 'confirmed' as const,
+      };
+    }
+    const { catalogId, confidence } = resolveLootConfidence(catalog, enemyNames, name, row.itemId);
+    return { name, catalogId, quantity: row.quantity, confidence };
   });
 
   const record: FightRecord = {
@@ -639,12 +657,16 @@ function toFightRecord(
     turns: entry.turns ?? 0,
     durationMs,
     xp: buildXpRows(entry),
+    challengesPassed: entry.challengesPassed ?? 0,
+    challengesFailed: entry.challengesFailed ?? 0,
   };
   // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
   // n'était pas encore chargée au moment de la correction d'origine, voir StatsStoreService.
   // applyLootReassign) — c'est cette première rencontre qui s'en charge, avec la même garantie
   // d'idempotence (ON CONFLICT DO UPDATE) que tout autre renvoi.
-  if (anyCorrected) historySync.recordFight(record);
+  // `[record]` seul — même raison que HistoryArchiveService.reassignLootItem ci-dessus (rattachement
+  // de donjon déjà connu du serveur pour ce combat, ce renvoi ne concerne que le butin corrigé).
+  if (anyCorrected) historySync.recordFight(record, [record]);
   return record;
 }
 

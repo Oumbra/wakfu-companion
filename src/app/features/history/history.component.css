@@ -8,12 +8,6 @@
   display: contents;
 }
 
-.header-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .tab-header {
   display: flex;
   align-items: center;
@@ -86,7 +80,7 @@
 
 /* Pied de panneau — toujours affiché tant qu'il reste des pages à charger (voir hasMoreFor), donc
    jamais scrollé hors de vue avec le reste de la liste. `align-items: center` en plus de
-   `justify-content: center` : le spinner (voir SpinnerComponent) affiché ici pendant un chargement
+   `justify-content: center` : le `.spinner-ring` (styles.css) affiché ici pendant un chargement
    doit être centré horizontalement ET verticalement dans cette bande, pas seulement calé sur sa
    ligne de base par défaut. */
 .history-load-more {
@@ -96,6 +90,14 @@
   flex-shrink: 0;
   padding: 8px;
   border-top: 1px solid var(--surface-active);
+}
+/* Taille réduite localement (voir styles.css, "un appelant qui veut une taille différente peut
+   surcharger width/height/border-width") : le gabarit par défaut (48px) est trop massif pour ce
+   pied de panneau étroit, à côté d'un simple bouton. */
+.history-load-more .spinner-ring {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
 }
 /* Bouton "Charger plus" + caret d'ouverture du menu de portée (voir LoadMoreScopeMenuComponent) —
    accolés en un seul contrôle scindé plutôt que deux boutons séparés par un espace. */

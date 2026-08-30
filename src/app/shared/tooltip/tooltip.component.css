@@ -24,8 +24,33 @@
     opacity: 0;
   }
 }
+/* `pre-line` (pas `normal`) : premier appelant réel à passer un texte multi-lignes explicite
+   (`\n`, voir SessionRecapComponent.kamasTooltip) plutôt qu'un simple retour à la ligne naturel au
+   `max-width` — préserve les retours à la ligne du texte tout en continuant de wrapper/collapser
+   les espaces comme `normal`, donc sans changement pour un texte sans `\n`. */
 .app-tooltip-multiline {
-  white-space: normal;
+  white-space: pre-line;
   width: max-content;
   max-width: 220px;
+}
+/* Colonnes libellé/valeur en grille CSS (voir TooltipRequest.rows) — remplace l'ancien alignement
+   par padding de texte en police monospace (voir sa doc de tête dans tooltip.service.ts) : chaque
+   ligne garde sa valeur strictement alignée dans sa propre colonne quelle que soit la longueur du
+   libellé traduit, y compris si celui-ci doit passer sur 2 lignes (`white-space: normal`, contraste
+   avec le `nowrap` de `.app-tooltip` de base). `max-width` plus généreux que `.app-tooltip-multiline`
+   : les libellés les plus longs observés (espagnol/portugais, ex. "Intercambios entregados") ont
+   besoin de plus de place avant de justifier un retour à la ligne. */
+.app-tooltip-rows {
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 14px;
+  row-gap: 3px;
+  align-items: baseline;
+  white-space: normal;
+  width: max-content;
+  max-width: 280px;
+}
+.app-tooltip-row-value {
+  text-align: right;
+  white-space: nowrap;
 }

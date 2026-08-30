@@ -106,7 +106,9 @@
   }
   @if (fightHistory().length === 0) {
     @if (historyLoading()) {
-      <div class="empty-state"><app-spinner /></div>
+      <!-- Même anneau que partout ailleurs dans l'app (voir LoadingOverlayComponent/
+           SessionRecapComponent, `.spinner-ring`, styles.css). -->
+      <div class="empty-state"><div class="spinner-ring"></div></div>
     } @else {
       <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
     }
@@ -276,7 +278,7 @@
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
                   @if (record.kamas > 0) {
-                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                    <span class="loot-kamas">{{ record.kamas | localeNumber }} ₭</span>
                   }
                   @if (record.loot.length > 0) {
                     <span class="loot-count"
@@ -351,7 +353,7 @@
                   >
                     <app-entity-icon [name]="row.name" side="ally" />
                     <span class="fight-xp-name">{{ row.name }}</span>
-                    <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
+                    <span class="fight-xp-amount">+{{ row.amount | localeNumber }}</span>
                   </div>
                 }
               </div>

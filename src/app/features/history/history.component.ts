@@ -15,7 +15,6 @@ import {
 } from '../../core/sync/history-event.model';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { LoadMoreScopeMenuService } from '../../core/services/load-more-scope-menu.service';
-import { SpinnerComponent } from '../../shared/spinner/spinner.component';
 import { HistoryTab, NavigationService } from '../../core/services/navigation.service';
 import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import {
@@ -91,7 +90,6 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
     TranslatePipe,
     IconComponent,
     TooltipDirective,
-    SpinnerComponent,
     NgTemplateOutlet,
   ],
   templateUrl: './history.component.html',

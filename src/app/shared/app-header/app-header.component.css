@@ -238,23 +238,6 @@ button.mobile-menu-server:hover {
   color: var(--text-muted);
 }
 
-.session-recap-btn {
-  height: 28px;
-  width: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.session-recap-btn:hover {
-  background: transparent;
-  border-color: var(--accent);
-}
-.session-recap-icon {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-}
-
 .file-chip {
   font-family: monospace;
   color: var(--text-muted);
@@ -306,7 +289,6 @@ button.mobile-menu-server:hover {
   .app-header {
     background: var(--surface-active);
   }
-  .session-recap-btn,
   .game-server-badge {
     background: var(--surface-well);
   }

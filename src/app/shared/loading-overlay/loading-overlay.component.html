@@ -1,6 +1,6 @@
 @if (loadingOverlay.visible()) {
   <div class="loading-overlay" role="status" aria-live="polite">
-    <app-spinner [size]="48" [borderWidth]="4" />
+    <div class="spinner-ring"></div>
     <span class="loading-overlay-sr-only">{{ 'app.loading' | t }}</span>
   </div>
 }

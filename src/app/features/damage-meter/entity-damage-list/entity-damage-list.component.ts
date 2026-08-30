@@ -10,7 +10,7 @@ import {
   EntitySide,
 } from '../../../core/services/entity-classifier.service';
 import { I18nService } from '../../../core/services/i18n.service';
-import { NumberFrPipe } from '../../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../../shared/locale-number.pipe';
 import { EntityIconComponent } from '../../../shared/entity-icon/entity-icon.component';
 import { KoIconComponent } from '../../../shared/ko-icon/ko-icon.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
@@ -43,7 +43,7 @@ const ELEMENT_CLASS: Record<DamageElement, string> = {
 @Component({
   selector: 'app-entity-damage-list',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     KeyValuePipe,
     EntityIconComponent,
     KoIconComponent,

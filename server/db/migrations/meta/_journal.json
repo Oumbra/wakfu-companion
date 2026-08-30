@@ -141,6 +141,34 @@
       "when": 1787693333179,
       "tag": "0019_rainy_mariko_yashida",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1787735738548,
+      "tag": "0020_rainy_black_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1787743818418,
+      "tag": "0021_fight_challenges_stats",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788092857529,
+      "tag": "0022_goofy_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1788082390789,
+      "tag": "0023_monster_loot",
+      "breakpoints": true
     }
   ]
 }

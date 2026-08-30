@@ -98,6 +98,27 @@ export interface FightPayload {
   xpGained: number;
   kamasGained: number | null;
   gameServer: string | null;
+  /** Id Ankama du donjon identifié pour ce combat (`null` hors donjon, ou salle dont le run n'est
+   * pas encore identifiable dans l'historique connu côté client — voir
+   * `HistorySyncService.resolveDungeonAssignment`/`dungeon-run-grouping.util.ts`). Transmis tel
+   * quel, jamais recalculé côté serveur (`fights.dungeonId`). */
+  dungeonId: number | null;
+  /**
+   * Signature de contenu (voir `fightSignature`) du combat REPRÉSENTATIF du run de donjon de ce
+   * combat (le boss, ou le combat lui-même pour un donjon à un seul combat) — PAS encore la clé
+   * finale : `SyncQueueService.send` la hache exactement comme `clientKey` (même fonction,
+   * `computeClientKey`) pour produire `fights.dungeonRunKey`, de sorte que TOUS les combats d'un
+   * même run finissent par partager le `clientKey` du combat de boss comme valeur de
+   * rattachement — sans avoir besoin d'un aller-retour serveur pour l'obtenir. `null` en miroir de
+   * `dungeonId`.
+   */
+  dungeonRunSignature: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat (voir `fights.challengesPassed/Failed`,
+   * server/db/schema.ts) — base des statistiques long terme (par mois/année/type de combat),
+   * volontairement PAS dans `fightSignature` (règle n°2 ci-dessus) : une valeur dérivée du log,
+   * jamais révisable après coup, comme `totalDamage`/`xpGained`. */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantPayload[];
   loot: FightLootPayload[];
 }
