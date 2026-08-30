@@ -153,17 +153,10 @@
             [appTooltip]="'sessionRecap.detail.byGroup' | t"
             (click)="setDetailMode('byGroup')"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M6 20V10a6 6 0 0112 0v10"></path>
-              <path d="M6 20h12"></path>
-            </svg>
+            <!-- Même icône que le pictogramme de repli des lignes "Donjon & Famille" plus bas
+                 (voir `#groupItemTpl`) et que le mode "Donjons & familles" de l'historique des
+                 combats (fight-history.component.html) — voir sprite `dungeon`. -->
+            <app-icon name="dungeon" [size]="15" [strokeWidth]="1.8" />
           </button>
           <button
             type="button"
@@ -630,19 +623,9 @@
                 <path d="M8 15c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5-1.8 4.5-4 4.5-4-2-4-4.5z"></path>
               </svg>
             } @else {
-              <svg
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M6 20V10a6 6 0 0112 0v10"></path>
-                <path d="M6 20h12"></path>
-              </svg>
+              <!-- Repli générique "donjon" (aucune illustration officielle résolue) — même icône
+                   que le switch de regroupement ci-dessus, voir sprite `dungeon`. -->
+              <app-icon name="dungeon" [size]="20" [strokeWidth]="1.7" />
             }
           </div>
           <span class="dungeon-name" [appTooltip]="row.label" [tooltipOnlyIfTruncated]="true">{{

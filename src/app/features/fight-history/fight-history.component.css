@@ -30,12 +30,28 @@
 .fight-group-toggle-all-btn {
   flex-shrink: 0;
 }
+/* `.icon-switch`/`.icon-switch-3` (styles.css) répartissent leurs options via `flex:1` sur un
+   conteneur `width:auto` (shrink-to-fit) : sans espace excédentaire à distribuer, chaque option
+   garde sa largeur intrinsèque (poussée par son libellé) au lieu d'un vrai tiers égal — invisible
+   tant que les libellés font une taille proche ("Jour"/"Origine"/"Type"), redevenu un vrai bug une
+   fois "Type" renommé "Donjons & familles" (bien plus long que les deux autres) : le fond glissant
+   `.icon-switch-highlight`, lui, reste calé sur un tiers MATHÉMATIQUE (`calc(100% / 3)`) du
+   conteneur — décalage visible entre le fond et le bouton réellement sélectionné (bug remonté par
+   l'utilisateur, capture d'écran à l'appui, 2026-08-30). Grille à colonnes `1fr` plutôt que flex :
+   dans un conteneur en `width:auto`, CSS Grid étend TOUTES les colonnes `1fr` à la largeur de la
+   plus large d'entre elles (contrairement à flex, qui n'a rien à distribuer sans largeur fixée en
+   amont) — donc 3 boutons réellement égaux quel que soit l'écart de longueur de leurs libellés,
+   sans figer de largeur en dur (qui casserait dans les 3 autres locales de traductions). */
 .fight-group-switch {
   width: auto;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
 }
 .fight-group-switch-option {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 0 10px;
   font-size: 0.68rem;
