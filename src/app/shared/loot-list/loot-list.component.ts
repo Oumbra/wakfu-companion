@@ -4,6 +4,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { lootRarityClass } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
+import { IconComponent } from '../icon/icon.component';
 import { LocaleNumberPipe } from '../locale-number.pipe';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
@@ -21,7 +22,7 @@ import { HistoryArchiveService } from '../../core/sync/history-archive.service';
  */
 @Component({
   selector: 'app-loot-list',
-  imports: [ItemIconComponent, LocaleNumberPipe, TranslatePipe, TooltipDirective],
+  imports: [ItemIconComponent, IconComponent, LocaleNumberPipe, TranslatePipe, TooltipDirective],
   templateUrl: './loot-list.component.html',
   styleUrl: './loot-list.component.css',
 })

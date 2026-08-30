@@ -625,10 +625,16 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * butin réel de la période) — épinglée en tête, hors du tri choisi par l'utilisateur, qui ne
    * s'applique qu'au RESTE du butin. */
   protected sortedRowLoot(row: RecapGroupRow): LootRow[] {
+    // `confidence: 'unknown'` : ce butin est agrégé côté serveur sur toute une période (jour/mois/
+    // année), potentiellement à travers de nombreux combats/donjons différents — pas de roster
+    // d'ennemis UNIQUE auquel le recouper (voir LootConfidence, core/models/fight.model.ts), à la
+    // différence du butin d'UN combat précis (StatsStoreService.addLootToFight/history-archive
+    // .service.ts#toFightRecord).
     const rows: LootRow[] = row.totals.loot.map((item) => ({
       name: resolveItemName(item.itemId, item.itemName, this.catalog, this.i18n),
       catalogId: item.itemId,
       quantity: item.quantity,
+      confidence: 'unknown',
     }));
     if (row.stoneItemId === null) {
       return sortLootRows(
@@ -644,6 +650,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       name: resolveItemName(stoneId, null, this.catalog, this.i18n),
       catalogId: stoneId,
       quantity: 0,
+      confidence: 'unknown',
     };
     // La pierre reste épinglée en tête MÊME si elle ne correspond pas à la recherche en cours —
     // repère visuel fixe du bucket "Type" (voir doc de RecapGroupRow.stoneItemId), pas un objet de
@@ -722,10 +729,13 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected sortedPeriodLoot(): LootRow[] {
     const period = this.historyStats.stats();
     if (!period) return [];
+    // `confidence: 'unknown'` — voir sortedRowLoot ci-dessus, même raison (butin agrégé sur toute
+    // une période, sans roster d'ennemis unique auquel le recouper).
     const rows: LootRow[] = period.loot.map((row) => ({
       name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
       catalogId: row.itemId,
       quantity: row.quantity,
+      confidence: 'unknown',
     }));
     return sortLootRows(
       this.catalog,

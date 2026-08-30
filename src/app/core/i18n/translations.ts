@@ -96,6 +96,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Tour suivant',
     'items.interactTitle': 'Interagir',
     'items.interactTooltip': 'Clic droit pour interagir',
+    'items.doubtfulLootTooltip':
+      'Provenance non confirmée : cet objet ne fait pas partie du butin connu des monstres de ce combat.',
     'items.follow': 'Suivre',
     'items.alreadyWatched': 'Déjà suivi',
     'items.modifyQuantity': 'Modifier',
@@ -710,6 +712,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Next turn',
     'items.interactTitle': 'Interact',
     'items.interactTooltip': 'Right-click to interact',
+    'items.doubtfulLootTooltip':
+      "Unconfirmed origin: this item is not part of the known loot of this fight's monsters.",
     'items.follow': 'Follow',
     'items.alreadyWatched': 'Already followed',
     'items.modifyQuantity': 'Edit',
@@ -1314,6 +1318,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Turno siguiente',
     'items.interactTitle': 'Interactuar',
     'items.interactTooltip': 'Clic derecho para interactuar',
+    'items.doubtfulLootTooltip':
+      'Procedencia no confirmada: este objeto no forma parte del botín conocido de los monstruos de este combate.',
     'items.follow': 'Seguir',
     'items.alreadyWatched': 'Ya seguido',
     'items.modifyQuantity': 'Modificar',
@@ -1925,6 +1931,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Próximo turno',
     'items.interactTitle': 'Interagir',
     'items.interactTooltip': 'Clique com o botão direito para interagir',
+    'items.doubtfulLootTooltip':
+      'Origem não confirmada: este item não faz parte do butim conhecido dos monstros deste combate.',
     'items.follow': 'Seguir',
     'items.alreadyWatched': 'Já seguido',
     'items.modifyQuantity': 'Modificar',

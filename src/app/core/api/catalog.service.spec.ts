@@ -54,6 +54,7 @@ function setup(options: {
   index?: ApiResult<{ items: unknown[]; monsters: unknown[] }>;
   dungeons?: ApiResult<unknown[]>;
   monsterFamilies?: ApiResult<unknown[]>;
+  monsterLoot?: ApiResult<unknown[]>;
 }) {
   const getCacheEntry = vi.fn(async (key: string) => {
     if (key === 'catalog-index') return options.cachedIndex;
@@ -67,6 +68,10 @@ function setup(options: {
     if (path === '/catalog/') return options.index ?? offline();
     if (path === '/dungeons') return options.dungeons ?? offline();
     if (path === '/monster-families') return options.monsterFamilies ?? offline();
+    // Payload secondaire (voir refreshSecondaryDatasetsOnly) : `offline()` par défaut, jamais
+    // testé explicitement par la plupart des cas ci-dessous (findMonsterLootItemIds n'est pas
+    // encore couvert par ce fichier), même statut de repli tolérant que monster-families.
+    if (path === '/monster-loot') return options.monsterLoot ?? offline();
     throw new Error(`unexpected path in test: ${path}`);
   });
 
