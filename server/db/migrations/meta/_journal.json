@@ -155,6 +155,13 @@
       "when": 1787743818418,
       "tag": "0021_fight_challenges_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788092857529,
+      "tag": "0022_goofy_wallop",
+      "breakpoints": true
     }
   ]
 }

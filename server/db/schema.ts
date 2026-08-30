@@ -52,6 +52,62 @@ export type WakfuDungeonType =
   | 'ARCADE';
 
 /**
+ * Classification stockée d'un combat (`fights.fightType` ci-dessous) — matérialise ce que
+ * `resolveFightTypeClassification`/`findDungeonForEnemies` (client, `fight-image.util.ts`)
+ * recalculent aujourd'hui à la volée à partir des participants + du catalogue, pour permettre un
+ * `GROUP BY`/`WHERE` direct côté SQL (carte Récap, regroupements Donjon & Famille/Type de
+ * `functions/api/v1/history/stats.ts`) sans rejoindre `fight_participants`/`monsters` à chaque
+ * requête. Calculée par `server/history/fight-type.ts` (partagé entre l'ingestion live —
+ * `functions/api/v1/history/fights.ts` — et le script de rattrapage ponctuel
+ * `server/import/backfill-fight-type.ts`), jamais par le client (contrairement à `dungeonId` ci-
+ * dessous) : elle a besoin de `monsters.is_boss`/`is_archi`/`is_dominant`/`family`, déjà en base
+ * côté serveur, alors que le client ne les expose pas tous via l'index compact du catalogue.
+ *
+ * - `DUNGEON_TWO_ROOMS`/`DUNGEON_THREE_ROOMS`/`DUNGEON_FOUR_ROOMS` : le combat de BOSS (un ennemi
+ *   `is_boss`) d'un donjon de ce type — PAS les salles qui le précèdent (voir `DUNGEON_ROOM`
+ *   ci-dessous). Peu importe l'issue (gagné ou perdu, voir `fights.won`) : une tentative de boss
+ *   ratée reste ce combat de boss précis, comme `dungeonBossFightRows` dans stats.ts.
+ * - `DUNGEON_ROOM` : une salle d'un donjon `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` PRÉCÉDANT son
+ *   boss (aucun ennemi `is_boss` dans ce combat précis) — inclut le combat d'archimonstre
+ *   supplémentaire des donjons `hasPreBossArchi` (voir `dungeons.hasPreBossArchi`), qui n'est lui
+ *   non plus jamais un `is_boss`. Volontairement générique (pas de variante par nombre de salles) :
+ *   `fights.dungeonId` porte déjà le donjon précis pour qui voudrait le nombre de salles exact.
+ * - `DUNGEON_THREE_PLAYERS`/`DUNGEON_ULTIMATE_BOSS` : donjons à un seul combat (voir
+ *   `WakfuDungeonType`) — toujours ce combat unique, jamais de salle à distinguer.
+ * - `BREACH`/`ULTIMATE_BREACH` : brèche simple/ultime identifiée (voir `findDungeonForEnemies`) —
+ *   toujours un combat unique, jamais de notion de salle.
+ * - `ARCADE` volontairement ABSENT de cette liste : aucun vrai donjon arcade n'existe en pratique
+ *   dans le jeu à ce jour (voir `session-recap.component.ts`, `typeRows`) et son type n'a par
+ *   ailleurs aucun boss référencé (`dungeons.bossMonsterId` vide pour ce type) — `dungeonId` ne
+ *   peut donc structurellement jamais pointer vers un donjon `ARCADE` avec la détection actuelle
+ *   (uniquement par boss/brèche par familles). Un combat dont le donjon résolu serait malgré tout
+ *   d'un type non couvert ici (ARCADE, ou un futur type) reste `null` plutôt qu'une valeur
+ *   inventée — voir `server/history/fight-type.ts`.
+ * - `FAMILY_{id}` : combat HORS donjon (`dungeonId` `null`) dont un ennemi a pu être résolu dans le
+ *   catalogue — `{id}` est `monsters.family` (voir `monsterFamilies`) de l'ennemi "représentatif"
+ *   du combat, même priorité que `resolveFightTypeClassification`/`familyPerFight` (stats.ts) :
+ *   boss > archimonstre > dominant > plus gros dégât. `FAMILY_NONE` si ce représentant n'appartient
+ *   à aucune famille encyclopédie (les ~28 monstres sans famille, voir CLAUDE.md) — distinct de
+ *   `null` (aucun ennemi de ce combat n'a pu être résolu dans le catalogue du tout, non
+ *   classifiable, même trou déjà accepté par `familyPerFight` : ce combat reste alors invisible de
+ *   toute agrégation par type). Le repli "horde hétérogène" du client (`kind: 'other'`, plus de 4
+ *   familles distinctes sans brèche connue) n'a PAS d'équivalent dédié ici : comme `familyPerFight`
+ *   déjà côté serveur, il retombe simplement sur la famille du participant le mieux classé — même
+ *   approximation assumée, voir CLAUDE.md.
+ */
+export type FightTypeCode =
+  | 'DUNGEON_TWO_ROOMS'
+  | 'DUNGEON_THREE_ROOMS'
+  | 'DUNGEON_FOUR_ROOMS'
+  | 'DUNGEON_THREE_PLAYERS'
+  | 'DUNGEON_ULTIMATE_BOSS'
+  | 'DUNGEON_ROOM'
+  | 'BREACH'
+  | 'ULTIMATE_BREACH'
+  | 'FAMILY_NONE'
+  | `FAMILY_${number}`;
+
+/**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très
  * peu de lignes, quasi jamais modifiée — sert de clé étrangère à tout ce qui
  * doit être ventilé par serveur (prix, futurs combats/achats côté compte).
@@ -548,6 +604,18 @@ export const fights = pgTable(
      */
     challengesPassed: integer('challenges_passed').notNull().default(0),
     challengesFailed: integer('challenges_failed').notNull().default(0),
+    /**
+     * Classification matérialisée du combat — voir `FightTypeCode` ci-dessus pour le détail des
+     * valeurs et l'ordre de priorité. Calculée côté serveur (`server/history/fight-type.ts`), à
+     * l'ingestion (`functions/api/v1/history/fights.ts`, POST) ET par le script de rattrapage
+     * `server/import/backfill-fight-type.ts` pour les combats déjà archivés avant l'ajout de cette
+     * colonne. `null` tant qu'aucun ennemi du combat n'a pu être résolu dans le catalogue (ni
+     * donjon, ni famille) — voir `FightTypeCode`. MODIFIABLE après insertion, comme `dungeonId`
+     * dont elle dépend directement : une salle qui reçoit son `dungeonId` a posteriori (voir sa
+     * doc) doit voir `fightType` recalculée dans la foulée, jamais figée à sa valeur initiale
+     * `FAMILY_*`/`null`.
+     */
+    fightType: text('fight_type').$type<FightTypeCode>(),
   },
   (table) => [
     uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
@@ -557,6 +625,9 @@ export const fights = pgTable(
     index('fights_fight_log_id_idx').on(table.fightLogId),
     // Statistiques par run de donjon (voir doc de dungeonRunKey) : « tous les combats de ce run ».
     index('fights_user_dungeon_run_key_idx').on(table.userId, table.dungeonRunKey),
+    // Regroupements/filtres par type (carte Récap, voir FightTypeCode) : « tous les combats de ce
+    // type pour ce compte ».
+    index('fights_user_fight_type_idx').on(table.userId, table.fightType),
   ],
 );
 
