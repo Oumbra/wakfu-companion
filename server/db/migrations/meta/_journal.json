@@ -159,8 +159,15 @@
     {
       "idx": 22,
       "version": "7",
+      "when": 1788092857529,
+      "tag": "0022_goofy_wallop",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
       "when": 1788082390789,
-      "tag": "0022_monster_loot",
+      "tag": "0023_monster_loot",
       "breakpoints": true
     }
   ]
