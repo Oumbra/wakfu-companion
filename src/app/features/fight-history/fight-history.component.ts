@@ -40,6 +40,7 @@ import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-ar
 import {
   dungeonStoneItemId,
   DungeonHistoryEntry,
+  enemyCompositionKey,
   groupDungeonRuns,
 } from '../../core/utils/dungeon-run-grouping.util';
 import { AuthService } from '../../core/auth/auth.service';
@@ -221,6 +222,7 @@ export class FightHistoryComponent {
           this.enemyRowsFor(record).map((row) => row.name),
         ),
       (record) => this.hasArchiEnemy(record),
+      (record) => enemyCompositionKey(this.enemyRowsFor(record).map((row) => row.name)),
     );
   });
 
