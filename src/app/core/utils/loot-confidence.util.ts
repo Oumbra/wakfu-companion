@@ -1,10 +1,12 @@
 import { CatalogService } from '../api/catalog.service';
 import { LootConfidence } from '../models/fight.model';
+import { UNIVERSAL_LOOT_ITEM_IDS } from '../data/wakfu-universal-loot.data';
 
 /**
- * Recoupe un objet de butin avec les tables de drop connues des monstres présents dans le combat
- * (`monsters.loot`, voir CatalogService.findMonsterLootItemIds) — voir LootConfidence
- * (core/models/fight.model.ts) pour le détail des 3 issues possibles.
+ * Recoupe un objet de butin avec (1) le référentiel d'objets universels (`UNIVERSAL_LOOT_ITEM_IDS`,
+ * curé à la main par l'utilisateur — voir sa doc) puis, à défaut, (2) les tables de drop connues des
+ * monstres présents dans le combat (`monsters.loot`, voir CatalogService.findMonsterLootItemIds) —
+ * voir LootConfidence (core/models/fight.model.ts) pour le détail des 3 issues possibles.
  *
  * Fonction PURE partagée entre deux appelants qui reconstruisent un `FightLoot`/`LootRow` chacun
  * depuis une source différente :
@@ -18,9 +20,9 @@ import { LootConfidence } from '../models/fight.model';
  *
  * `findAllWakfuItemEntriesByName` (déjà utilisé par ItemPickerService pour la correction manuelle)
  * balaie tous les homonymes d'un même nom affiché (ex. "Larme d'Ogrest", ids 24029/21602, dont un
- * seul est réellement le butin du monstre du même nom) — c'est ce qui permet de corriger
- * `catalogId` au passage quand la résolution "premier match" par défaut (`findWakfuItemEntry`)
- * s'était trompée de variante.
+ * seul est réellement universel — voir doc de UNIVERSAL_LOOT_ITEM_IDS ; ou "Perle", ids 9792/20392,
+ * même principe) — c'est ce qui permet de corriger `catalogId` au passage quand la résolution
+ * "premier match" par défaut (`findWakfuItemEntry`) s'était trompée de variante.
  */
 export function resolveLootConfidence(
   catalog: CatalogService,
@@ -28,6 +30,15 @@ export function resolveLootConfidence(
   itemName: string,
   defaultCatalogId: number | null,
 ): { catalogId: number | null; confidence: LootConfidence } {
+  const homonyms = catalog.findAllWakfuItemEntriesByName(itemName);
+
+  // Objet universel (ou homonyme d'un objet universel) : confirmé indépendamment des monstres du
+  // combat — voir doc de UNIVERSAL_LOOT_ITEM_IDS, testé AVANT le recoupement par monstre pour ne
+  // jamais dépendre de la complétude de `monsters.loot` (un objet universel n'a de toute façon
+  // aucune raison d'y figurer, sa présence n'est pas propre à un monstre).
+  const universalMatch = homonyms.find((entry) => UNIVERSAL_LOOT_ITEM_IDS.has(entry.id));
+  if (universalMatch) return { catalogId: universalMatch.id, confidence: 'confirmed' };
+
   const candidateItemIds = new Set<number>();
   for (const name of enemyNames) {
     const monster = catalog.findWakfuMonsterEntry(name);
@@ -39,9 +50,7 @@ export function resolveLootConfidence(
   // LootConfidence.
   if (candidateItemIds.size === 0) return { catalogId: defaultCatalogId, confidence: 'unknown' };
 
-  const matches = catalog
-    .findAllWakfuItemEntriesByName(itemName)
-    .filter((entry) => candidateItemIds.has(entry.id));
+  const matches = homonyms.filter((entry) => candidateItemIds.has(entry.id));
   if (matches.length === 0) return { catalogId: defaultCatalogId, confidence: 'doubtful' };
   // Plusieurs correspondances (ambiguïté non levée même avec les données monstre, rare) : garde la
   // première par id, déjà triée ainsi par findAllWakfuItemEntriesByName.
