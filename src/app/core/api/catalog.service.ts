@@ -232,16 +232,27 @@ export class CatalogService {
   private monstersById = new Map<number, CatalogMonsterEntry>();
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
+  /** Toutes les entrées catalogue partageant un même nom normalisé (n'importe quelle langue), triées
+   * par id — précalculé une seule fois à la (re)construction de l'index (applyIndex) pour que
+   * `findAllWakfuItemEntriesByName`/`hasMultipleWakfuItemEntriesByName` restent O(1). Sans cet
+   * index, un appelant du CHEMIN CHAUD reproduirait à chaque appel le balayage complet de tout
+   * `itemsById` (~16 000 objets × 4 normalisations Unicode chacun) : régression de performance
+   * réelle, rencontrée à DEUX endroits distincts le 2026-08-30 — (1) `[appTooltip]` évalué à chaque
+   * cycle de détection de changement pour CHAQUE ligne de butin affichée (LootListComponent/
+   * TradesComponent.canInteract), le calcul se répétant intégralement à chaque déplacement de
+   * souris faute de `OnPush` dans l'app ; (2) `StatsStoreService.resolveLootConfidence`, appelée
+   * pour CHAQUE ligne "Vous avez ramassé" lue — ~10s de gel au premier chargement d'un fichier de
+   * taille réaliste, remonté par l'utilisateur (vidéo à l'appui), confirmé par profiling CPU réel
+   * (CDP `Profiler`) : plus de 60% des ~16 000 objets du référentiel partagent leur nom normalisé
+   * avec au moins un autre id (variantes de rareté d'un même équipement, ex. "Larme d'Ogrest" ids
+   * 24029/21602) — un simple garde-fou "cas rare, on ignore" (voir `hasMultipleWakfuItemEntriesByName`
+   * en aval de ce champ) ne suffisait donc PAS à éviter le balayage complet pour la majorité des
+   * lignes de butin réelles ; seul un vrai index O(1) le peut. */
+  private itemEntriesByName = new Map<string, CatalogItemEntry[]>();
   /** Noms normalisés (voir normalizeWakfuName) partagés par au moins 2 objets distincts du
-   * référentiel — précalculé une seule fois à la (re)construction de l'index (applyIndex) pour que
-   * `hasMultipleWakfuItemEntriesByName` reste O(1). Sans cet index, un appelant appelé au fil du
-   * rendu (ex. `[appTooltip]` évalué à chaque cycle de détection de changement, pour CHAQUE ligne de
-   * butin affichée — voir LootListComponent/TradesComponent.canInteract) reproduirait à chaque tick
-   * le balayage complet de `findAllWakfuItemEntriesByName` (~19 700 objets × 4 normalisations
-   * Unicode chacun) : régression de performance réelle corrigée le 2026-08-30 (le détail d'un combat
-   * devenait quasi inutilisable — survol/scroll très lents, d'autant plus qu'il y a de butin
-   * affiché), le calcul se répétant intégralement à chaque déplacement de souris faute de `OnPush`
-   * dans l'app. */
+   * référentiel — dérivé de `itemEntriesByName` (voir sa doc), pour que
+   * `hasMultipleWakfuItemEntriesByName` n'ait même pas besoin de récupérer/mesurer le tableau
+   * complet quand seule l'AMBIGUÏTÉ importe. */
   private ambiguousItemNames = new Set<string>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
   private dungeonsById = new Map<number, CatalogDungeonEntry>();
@@ -298,20 +309,13 @@ export class CatalogService {
 
   /** Toutes les entrées catalogue partageant ce nom (n'importe quelle langue), triées par id — sert
    * à la désambiguïsation manuelle d'objets homonymes de rareté différente (ex. "Larme d'Ogrest",
-   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). Balaie tout
-   * `itemsById` (pas indexé par nom pour le cas multiple) : jamais un chemin chaud, seulement appelé
-   * à l'ouverture du sélecteur de correction (voir ItemPickerService). */
+   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). O(1) — voir
+   * `itemEntriesByName`, précalculé à la construction de l'index : appelée aussi bien à l'ouverture
+   * du sélecteur de correction (ItemPickerService) que dans le CHEMIN CHAUD du parsing
+   * (`resolveLootConfidence`, une fois par ligne de butin lue), un balayage complet du catalogue à
+   * chaque appel n'est plus une option (voir doc de `itemEntriesByName`). */
   findAllWakfuItemEntriesByName(name: string): CatalogItemEntry[] {
-    const key = normalizeWakfuName(name);
-    return [...this.itemsById.values()]
-      .filter(
-        (entry) =>
-          normalizeWakfuName(entry.fr) === key ||
-          normalizeWakfuName(entry.en) === key ||
-          normalizeWakfuName(entry.es) === key ||
-          normalizeWakfuName(entry.pt) === key,
-      )
-      .sort((a, b) => a.id - b.id);
+    return this.itemEntriesByName.get(normalizeWakfuName(name)) ?? [];
   }
 
   /** Équivalent O(1) de `findAllWakfuItemEntriesByName(name).length > 1` (voir `ambiguousItemNames`)
@@ -583,8 +587,9 @@ export class CatalogService {
     const itemsById = new Map<number, CatalogItemEntry>();
     const itemsByFrName = new Map<string, CatalogItemEntry>();
     const itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
-    // Voir doc de `ambiguousItemNames` : id -> ses noms normalisés distincts, pour compter combien
-    // d'OBJETS DISTINCTS (pas d'occurrences de locale) partagent un même nom normalisé.
+    // Voir doc de `itemEntriesByName` : id -> ses noms normalisés distincts, pour ne rattacher
+    // qu'UNE fois chaque OBJET DISTINCT (pas une fois par occurrence de locale) à chaque nom qu'il
+    // partage.
     const itemIdsByName = new Map<string, Set<number>>();
     for (const tuple of payload.items) {
       const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag, categorySortOrder] =
@@ -619,6 +624,12 @@ export class CatalogService {
     this.itemsById = itemsById;
     this.itemsByFrName = itemsByFrName;
     this.itemsByOtherLocaleName = itemsByOtherLocaleName;
+    this.itemEntriesByName = new Map(
+      [...itemIdsByName].map(([key, ids]) => [
+        key,
+        [...ids].map((id) => itemsById.get(id)!).sort((a, b) => a.id - b.id),
+      ]),
+    );
     this.ambiguousItemNames = new Set(
       [...itemIdsByName].filter(([, ids]) => ids.size > 1).map(([key]) => key),
     );
