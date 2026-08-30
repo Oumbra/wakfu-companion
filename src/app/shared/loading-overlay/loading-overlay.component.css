@@ -16,6 +16,9 @@
   background: var(--bg-color);
 }
 
+/* L'anneau lui-même (`.spinner-ring`) est une classe globale partagée (voir styles.css) depuis
+   qu'un 2ᵉ appelant est apparu (SessionRecapComponent, voir CLAUDE.md) — plus rien à redéfinir ici. */
+
 .loading-overlay-sr-only {
   position: absolute;
   width: 1px;

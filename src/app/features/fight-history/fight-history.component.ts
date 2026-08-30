@@ -10,7 +10,7 @@ import { EntityClassifierService } from '../../core/services/entity-classifier.s
 import { ClassPickerService } from '../../core/services/class-picker.service';
 import { CombatPanelService } from '../../core/services/combat-panel.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
-import { NumberFrPipe } from '../../shared/number-fr.pipe';
+import { LocaleNumberPipe } from '../../shared/locale-number.pipe';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
@@ -48,7 +48,6 @@ import { DamageViewMode } from '../../shared/damage-view-switch/damage-view-swit
 import { EntityStatKind } from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 import { CombatDetailComponent } from '../../shared/combat-detail/combat-detail.component';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
-import { SpinnerComponent } from '../../shared/spinner/spinner.component';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -79,7 +78,7 @@ interface FightGroup {
 @Component({
   selector: 'app-fight-history',
   imports: [
-    NumberFrPipe,
+    LocaleNumberPipe,
     EntityIconComponent,
     ItemIconComponent,
     TranslatePipe,
@@ -88,7 +87,6 @@ interface FightGroup {
     NgTemplateOutlet,
     TooltipDirective,
     CombatDetailComponent,
-    SpinnerComponent,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',

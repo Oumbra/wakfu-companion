@@ -30,6 +30,8 @@ Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagno
 
 Pour toute tâche avec un effet visuel ou comportemental (CSS, layout, interaction, nouveau composant, tooltip, scroll...), ne jamais se contenter d'une relecture du code : **vérifier réellement dans un navigateur piloté par Playwright** avant de déclarer la tâche terminée. La confiance "ça devrait marcher d'après le CSS" a produit plusieurs faux positifs dans l'historique du projet (ex. z-index du header, clipping de grille CSS, tooltip natif invisible).
 
+**Consigne permanente de l'utilisateur : n'utiliser QUE le serveur MCP Playwright, avec Chrome comme navigateur.** Quand la session s'exécute dans le terminal de l'utilisateur (pas un environnement cloud/sandbox distant sans accès à sa machine), c'est SON Chrome réel qui doit être piloté — pas un binaire Playwright isolé, pas un autre navigateur par convenance. Le repli `playwright-core` documenté plus bas (pointé sur `C:\Program Files\Google\Chrome\Application\chrome.exe`, un VRAI Chrome donc toujours conforme à cette consigne) reste légitime uniquement quand le processus MCP de la session est démontrablement figé sur un autre navigateur (voir plus bas) — jamais un choix par défaut ou de confort.
+
 Démarche standard :
 
 1. `npm start` (ou vérifier que le serveur de dev tourne déjà sur le port 4200).
@@ -39,9 +41,11 @@ Démarche standard :
 5. Capturer une screenshot pour confirmation visuelle quand c'est pertinent (état avant/après, hover, etc.).
 6. Une fois le résultat confirmé bon : valider aussi `npm run build` (prod classique) avant de conclure.
 
-**Chrome/Chromium est le navigateur à utiliser en priorité, pas un simple confort** : l'app dépend de l'API File System Access (`showOpenFilePicker`, `getAsFileSystemHandle` — voir gotcha dédié plus bas) pour toute connexion réelle au fichier `wakfu.log`, et **Firefox n'implémente pas du tout cette API** (pas une histoire d'automatisation plus difficile : la fonctionnalité elle-même y est absente). Un test mené sous Firefox ne peut donc JAMAIS exercer un vrai chemin FSA (bouton de connexion, glisser-déposer d'un handle) — seule la voie de contournement « pousser des lignes synthétiques sur `newLines$` » (voir `.claude/skills/verify-wakfu-companion/SKILL.md`) y fonctionne, ce qui suffit pour le parsing/store mais pas pour valider un changement touchant réellement `LogFileAccessService`/le sélecteur de fichier. Toujours vérifier que le serveur MCP `playwright` est configuré sur Chrome (`claude mcp get playwright` → `Args: ... --browser chrome`) avant de conclure qu'un test FSA est passé — un run silencieusement fait sous Firefox donnerait un faux sentiment de couverture.
+**Chrome/Chromium est le navigateur à utiliser en priorité, pas un simple confort** : l'app dépend de l'API File System Access (`showOpenFilePicker`, `getAsFileSystemHandle` — voir gotcha dédié plus bas) pour toute connexion réelle au fichier `wakfu.log`, et **Firefox n'implémente pas du tout cette API** (pas une histoire d'automatisation plus difficile : la fonctionnalité elle-même y est absente). Un test mené sous Firefox ne peut donc JAMAIS exercer un vrai chemin FSA (bouton de connexion, glisser-déposer d'un handle) — seule la voie de contournement « pousser des lignes synthétiques sur `newLines$` » (voir `.claude/skills/verify-wakfu-companion/SKILL.md`) y fonctionne, ce qui suffit pour le parsing/store mais pas pour valider un changement touchant réellement `LogFileAccessService`/le sélecteur de fichier.
 
-Le choix de navigateur du serveur MCP est fixé à son démarrage (`claude mcp add playwright -s local -- npx -y @playwright/mcp@latest --browser chrome`, ou `--browser firefox`) : le changer (`claude mcp remove` puis `claude mcp add` avec un autre `--browser`) ne prend effet qu'à la **prochaine session** — aucune commande `claude mcp` ne recharge à chaud le serveur déjà lancé dans la session courante (vérifié le 2026-08-25 : `navigator.userAgent` restait Firefox juste après la reconfiguration, tant que la session n'avait pas redémarré).
+⚠️ **`claude mcp get playwright` NE SUFFIT PAS à vérifier le navigateur réellement utilisé** — piège vécu deux fois (2026-08-25 ET 2026-08-26, la seconde fois découverte par l'utilisateur via deux captures d'écran montrant une fenêtre Firefox Nightly, après que la session ait affirmé à tort « Chrome confirmé » sur la seule foi de cette commande). Cette commande lit la **config déclarée**, pas le processus MCP réellement en cours d'exécution pour CETTE session (voir le paragraphe suivant sur le figement au démarrage) — elle peut afficher `--browser chrome` alors que le navigateur effectivement piloté est Firefox depuis le début de la session. **Seule vérification fiable : lire `navigator.userAgent` directement dans la page pilotée** (`browser_evaluate(() => navigator.userAgent)`), à faire systématiquement avant de conclure qu'un test s'est déroulé sous Chrome — jamais se contenter de la sortie de `claude mcp get`.
+
+Le choix de navigateur du serveur MCP est fixé à son démarrage (`claude mcp add playwright -s local -- npx -y @playwright/mcp@latest --browser chrome`, ou `--browser firefox`) : le changer (`claude mcp remove` puis `claude mcp add` avec un autre `--browser`) ne prend effet qu'à la **prochaine session** — aucune commande `claude mcp` ne recharge à chaud le serveur déjà lancé dans la session courante (vérifié le 2026-08-25 : `navigator.userAgent` restait Firefox juste après la reconfiguration, tant que la session n'avait pas redémarré). Si un test sous Chrome est nécessaire MAINTENANT et que le processus MCP de la session est resté figé sur Firefox : ne pas insister via l'outil MCP, utiliser directement `playwright-core` (voir plus bas, section repli sans Chrome — même mécanique) pointé sur `C:\Program Files\Google\Chrome\Application\chrome.exe`, qui lance un VRAI Chrome indépendant du processus MCP figé.
 
 **Chrome absent (cas de repli uniquement, ex. un sandbox Linux sans Chrome installé)** : si `mcp__playwright__browser_navigate` échoue avec `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, et que `npx playwright install chrome` échoue aussi (sudo indisponible), une vraie installation Chrome n'est pas récupérable dans cet environnement précis — mais ça reste une exception d'environnement, pas la référence : sur une machine où Chrome est installé (ex. ce dépôt cloné sous Windows, `C:\Program Files\Google\Chrome\Application\chrome.exe`), toujours reconfigurer le serveur MCP sur `--browser chrome` plutôt que de rester sur Firefox par défaut. Solution de repli qui fonctionne sans sudo quand Chrome est vraiment absent : installer Firefox via Playwright (`npx playwright install firefox`, ne nécessite pas de droits root) puis piloter le navigateur directement avec le paquet `playwright-core` (déjà présent après un premier `npm install playwright-core` dans le répertoire scratchpad) en pointant l'exécutable :
 
@@ -104,6 +108,234 @@ Deux catégories d'état dans `StatsStoreService`, à traiter différemment à c
 2. **État dérivé du fichier** (historique de combats, kamas, xp, combats gagnés/perdus, chat...) : DOIT être réinitialisé (`resetSessionState()`) au début de chaque `isInitialLoad`, sinon une reconnexion ajoute une deuxième copie de tout l'historique déjà reconstruit au lieu de le remplacer (bug réel corrigé en session — vérifier ce point à chaque fois qu'un nouveau signal cumulatif est ajouté à `StatsStoreService`).
 
 Si un nouveau champ cumulatif est ajouté au store, se demander explicitement : persistant (jamais reset) ou dérivé du fichier (reset à chaque `isInitialLoad`, dans `resetSessionState()`) ?
+
+## Durée de session (carte Récap) : dérivée du fichier, pas de l'horloge murale
+
+Corrigé le 2026-08-26 : l'ancien calcul (`Date.now() - dateDeConnexion`, un simple chrono démarré à
+la connexion) grandissait indéfiniment tant que l'onglet restait ouvert — y compris client Wakfu
+fermé, PC en veille, ou fichier contenant plusieurs sessions de jeu distinctes (utilisateur
+déconnecté puis reconnecté plus tard dans le MÊME `wakfu.log`). La durée affichée doit correspondre
+au temps **réellement actif** d'après le contenu du fichier, pas au temps écoulé depuis l'ouverture
+de l'app.
+
+Architecture retenue (`StatsStoreService.accumulateSessionDuration`, appelée sur CHAQUE ligne brute
+dans `ingest()`, avant même `LogParser.parseLine`) — **deux seuils distincts**, pas un seul partagé
+(voir plus bas pourquoi la version initiale à un seul seuil a dû être corrigée) :
+
+- `sessionActiveDurationMs` (signal, reset à 0 dans `resetSessionState()`, donc à chaque
+  `isInitialLoad` — état DÉRIVÉ DU FICHIER, voir principe `isInitialLoad` ci-dessus) accumule
+  l'écart entre deux lignes horodatées consécutives du fichier, **sauf** si cet écart atteint
+  `SESSION_SEGMENT_GAP_THRESHOLD_MS` (5 min, privée à `stats-store.service.ts`) — auquel cas il est
+  considéré comme une coupure (fermeture du client, crash, veille...) et n'est PAS ajouté au total.
+  Basé sur `peekLineTime` (voir `log-parser.ts`, déjà utilisé par `primeLogDateAnchorFromBatch` pour
+  l'ancrage de date) sur la ligne BRUTE, PAS sur `LogEntry`/`apply()` : une ligne purement technique
+  sans `LogEntry` associé (ex. `"Stopping cFC..."`, arrêt du client) compte quand même comme une
+  preuve d'activité — sinon une période sans combat/butin/chat (navigation de menus, par exemple)
+  paraîtrait à tort "coupée".
+- Ce seuil de segmentation (5 min) volontairement **générique** (écart entre lignes), pas basé sur la
+  détection de la ligne `"Stopping cFC..."` elle-même malgré sa présence dans le fichier de
+  calibration (voir ci-dessous) : cette ligne ne signale qu'une fermeture PROPRE, jamais un crash/une
+  perte réseau/une mise en veille/un `wakfu.exe` tué depuis le gestionnaire de tâches. Un seuil
+  générique couvre tous ces cas uniformément, sans dépendre d'une chaîne de log qu'Ankama pourrait
+  faire évoluer.
+- Calibré sur un vrai fichier fourni par l'utilisateur (deux sessions de jeu distinctes dans le même
+  `wakfu.log`, fermeture complète du client puis reconnexion ~41 min plus tard) : le plus grand écart
+  normal À L'INTÉRIEUR de chacune des deux sessions n'y dépassait jamais ~51s (mesuré), très en
+  dessous des 5 min retenues pour CE seuil — et l'écart RÉEL entre les deux sessions (41 min 35s) y
+  est très largement au-dessus. Résultat vérifié EXACT au diagnostic de l'utilisateur : segments
+  `14:13:32,174 → 14:52:25,542` et `15:34:00,974 → 16:52:12,618`, total actif `1h57m05s`.
+- `sessionLastIngestAtMs` (signal, horloge MURALE — `Date.now()`, PAS une valeur du fichier — posé à
+  la fin de CHAQUE `ingest()`) sert uniquement à `SessionRecapComponent` pour prolonger l'affichage
+  "en temps réel" entre deux lots de lignes tant qu'une partie semble en cours, plafonné à
+  `SESSION_LIVE_TICK_GRACE_MS` (10s, exportée — voir juste en dessous pourquoi une valeur bien plus
+  courte que le seuil de segmentation ci-dessus) : au-delà de ce plafond, la durée cesse d'augmenter
+  automatiquement et ne repart QUE lorsque le fichier est de nouveau alimenté (prochain `ingest()`),
+  jamais de lui-même — vérifié en navigateur (Chrome piloté directement via `playwright-core`, MCP
+  playwright bloqué ce jour-là sur un Firefox qui ne se lançait plus, voir gotcha dédié plus bas) :
+  figée à `activeMs + 10s` passé ce délai sans nouveau lot, immobile ensuite, puis reprise exacte dès
+  qu'un nouveau lot arrive (le total bondit à la nouvelle valeur confirmée, le tick repart).
+- Affichée = `sessionActiveDurationMs + min(max(Date.now() - sessionLastIngestAtMs, 0),
+  SESSION_LIVE_TICK_GRACE_MS)` (voir `SessionRecapComponent.updateDuration`).
+
+**Pourquoi deux seuils et pas un seul** (régression corrigée le 2026-08-27, remontée par
+l'utilisateur après un test réel sur le fichier de calibration) : la version initiale utilisait UNE
+SEULE constante partagée (`SESSION_GAP_THRESHOLD_MS`, 5 min) pour les deux rôles. Ça fonctionnait
+pour la segmentation historique (5 min, bien calibré) mais rendait l'affichage "en direct" visiblement
+faux : après avoir lu un fichier déjà entièrement statique (plus aucune nouvelle ligne à venir), le
+chronomètre continuait à grimper pendant 5 minutes avant de se figer — bien trop long pour un
+affichage supposé refléter l'état RÉEL du fichier à chaque instant. Les deux seuils répondent à des
+questions différentes : `SESSION_SEGMENT_GAP_THRESHOLD_MS` décide, une fois qu'une ligne confirme la
+suite, si le temps DÉJÀ ÉCOULÉ comptait comme actif (large, un vrai écart de jeu normal peut
+légitimement atteindre ~50s sans aucune ligne) ; `SESSION_LIVE_TICK_GRACE_MS` décide combien de temps
+l'AFFICHAGE peut optimistement continuer à tourner AVANT qu'une telle ligne n'arrive, sans savoir
+encore si elle viendra (doit rester court pour ne pas mentir visuellement).
+
+## Switch Session/Jour/Mois/Année (carte Récap) : agrégation SQL serveur, bornes calculées côté client
+
+Ajouté le 2026-08-26 : la carte Récap propose, pour un compte connecté uniquement (aucune donnée
+persistante au-delà de la session de fichier courante en mode invité — voir `AuthService`), un
+switch qui agrège XP par personnage, kamas détaillés, combats/défis et butin sur une période
+calendaire (jour/mois/année **civils**, jamais glissants).
+
+- **`GET /api/v1/history/stats?since=&until=`** (`functions/api/v1/history/stats.ts`) — 5 `SELECT`
+  indépendants en parallèle sur `fights`/`fightParticipants`/`fightLoot`/`purchases`/`trades`
+  (`GROUP BY`/`SUM`/`count(*) filter (where ...)`), filtrés par `userId` + la plage. Aucune écriture,
+  aucune transaction requise (driver `neon-http`, déjà sans transaction interactive).
+- **`since`/`until` sont calculés côté CLIENT** (`core/utils/local-period.util.ts` —
+  `localDayStart`/`localMonthStart`/`localYearStart`, calendrier LOCAL du navigateur) et envoyés en
+  instants ISO explicites — jamais un paramètre `granularity` interprété côté serveur, qui ne connaît
+  pas le fuseau horaire de l'utilisateur. Toujours la période EN COURS dans cette itération (pas de
+  navigation vers une période passée).
+- **Kamas : ventilation détaillée**, volontairement plus riche que la vue Session (`kamasEarned`/
+  `kamasLost` simples, inchangée) : combat (`fights.kamas_gained`), ventes HDV vs achats classiques
+  (même table `purchases`, distingués par le sentinel `HDV_KAMAS_SALE_ITEM` =
+  `'__hdv_kamas_sale__'` — dupliqué côté serveur avec renvoi croisé en commentaire,
+  `server/history/stats-query.ts`, `server/` ne dépend jamais de `src/`, même principe que
+  `server/settings/keys.ts`), et échanges (`kamasAcquired`/`kamasGiven` + nombre d'échanges).
+- Butin de la période : `{itemId, itemName, quantity}` par ligne (mutuellement exclusifs, comme
+  partout dans l'historique) — résolu en nom affichable via `resolveItemName` (exportée de
+  `history-archive.service.ts`, déjà utilisée pour l'archive de combats), pas recalculé côté
+  composant.
+- Pas de cache multi-période côté client (`HistoryStatsService` ne garde qu'un seul résultat en
+  mémoire, rechargé à chaque changement de switch) : décision délibérée, la requête serveur étant
+  déjà agrégée et rapide — une mise en cache multi-clé aurait été une optimisation prématurée.
+- **Regroupement par donjon** (ajouté le 2026-08-26, suite logique demandée par l'utilisateur) : 6ᵉ
+  requête SQL (`GROUP BY fights.dungeon_id`) — AUCUNE migration requise, `fights.dungeon_id`
+  existait déjà (lot 8). Le serveur renvoie l'id Ankama brut (`null` = hors donjon) sans rejoindre
+  `dungeons` : le nom localisé est résolu côté client via `CatalogService.findWakfuDungeonEntryById`
+  (nouvelle méthode, miroir de `findWakfuItemEntryById` — même raison que pour `itemId`/`itemName`
+  du butin : le serveur ne connaît pas la locale d'affichage). "Type de combat" (mentionné dans la
+  demande d'origine) volontairement PAS traité comme un axe de regroupement séparé de `dungeonId` —
+  chaque donjon a de toute façon un `type` (`WakfuDungeonType`) qui lui est propre, un second niveau
+  de regroupement n'apportait pas de valeur claire supplémentaire pour cette itération.
+- **Navigation vers une période passée** (même date) : stepper `‹ label ›` (réutilise `app-stepper`,
+  déjà existant — voir section "Conventions UI transverses", pas de nouveau composant) au-dessus du
+  contenu de période, piloté par un `periodOffset` (0 = période EN COURS, négatif = passé, jamais
+  positif — `[max]="0"` sur le stepper). Bornes calculées par `periodBounds`
+  (`core/utils/local-period.util.ts`, avec `addLocalDays`/`addLocalMonths`/`addLocalYears` — passage
+  par le constructeur `Date(année, mois, jour)`, qui normalise nativement un débordement de
+  composant, jamais une arithmétique en millisecondes qui casserait autour du changement d'heure
+  été/hiver). **Simplification notable par rapport à l'itération précédente** : `until` est
+  maintenant TOUJOURS le début de la période suivante (jamais un "now + marge") — y compris pour la
+  période EN COURS, ce qui revient à demander "jusqu'à demain minuit" alors qu'on est encore
+  aujourd'hui : aucun combat ne peut avoir un horodatage futur, donc ça ne change rien au résultat
+  tout en unifiant la formule pour tous les offsets (plus besoin de `PERIOD_UNTIL_BUFFER_MS`,
+  supprimée). Changer de granularité (switch) réinitialise toujours `periodOffset` à `0` — naviguer
+  et changer de granularité restent deux gestes distincts, ne jamais hériter d'un offset d'une
+  granularité précédente sur une autre.
+- **Cache multi-période** (même date, revient sur la décision "pas de cache" de l'itération
+  précédente à la demande explicite de l'utilisateur) : `HistoryStatsService` garde désormais un
+  `Map<string, PeriodStats>` clé `"{granularité}:{offset}"`, alimenté uniquement pour les périodes
+  PASSÉES (`offset !== 0`) — la période EN COURS n'est JAMAIS mise en cache ni servie depuis le
+  cache, elle reste par nature susceptible de changer tant qu'elle n'est pas terminée. Un passé déjà
+  écoulé, lui, ne change plus (hors correction manuelle d'objet a posteriori, cas limite ignoré).
+  Navigation rapide dans le stepper protégée par un compteur de requête (`requestSeq`) : une réponse
+  réseau arrivée après une plus récente est silencieusement ignorée plutôt que d'écraser l'affichage
+  avec un résultat périmé.
+- Vérifié en navigateur (Chromium réel via `playwright-core`, MCP playwright resté figé sur Firefox
+  cette session — voir gotcha dédié plus bas) avec un id de donjon RÉEL du référentiel (65 =
+  "Larventura") : résolution de nom correcte, `null` → "Hors donjon". Navigation testée sur 3 pas
+  (0 → -1 → -2 → -1 → 0) : bornes `since`/`until` exactes à chaque pas, AUCUN appel réseau
+  supplémentaire en revenant sur un offset déjà visité (cache), UN appel en revenant sur l'offset 0
+  (jamais servi depuis le cache), bouton "suivant" désactivé à l'offset 0 (jamais de période
+  future), libellés corrects dans les 3 granularités ("Aujourd'hui"/"Hier" pour jour, "août 2026"
+  pour mois, "2026" pour année).
+- Comme pour tous les lots serveur précédents (voir `server/README.md`) : seul un déploiement réel
+  avec la vraie base Neon permet de valider les requêtes SQL contre de vraies données — ce sandbox ne
+  peut atteindre ni Neon ni `*.pages.dev`. Vérifié ici en navigateur (Chromium/playwright-core,
+  `ng serve`) avec `/api/v1/history/stats` simulé par interception de `fetch` (les Pages Functions
+  n'existent pas sous `ng serve`, même méthode déjà établie pour les lots précédents) : switch masqué
+  en invité, apparition une fois authentifié simulé, bornes `since`/`until` correctes pour les 3
+  granularités (vérifiées avec le changement d'heure d'été/hiver, `localYearStart` au 1er janvier
+  donnant `+1` UTC en hiver contre `+2` en été pour les autres cas testés — cohérent, JS `Date`
+  applique le bon décalage pour CHAQUE date, pas un décalage fixe), positions du fond glissant à 4
+  arrêts, ventilation kamas/combats/défis/butin (résolution de nom par catalogue incluse) affichée
+  correctement, état de chargement et d'erreur réseau.
+
+## Carte Récap : titre dynamique, largeur, regroupement Donjon & Famille/Type, mini calendrier
+
+Ajouté/corrigé le 2026-08-27, suite à 4 retours utilisateur après test réel de la carte Récap :
+
+- **Titre dynamique** — `sessionRecap.title` ("Recap. de la session") en invité,
+  `sessionRecap.titleGeneric` ("Récap") une fois connecté, le nom "session" n'ayant plus de sens
+  une fois le switch Jour/Mois/Année en place. Propagé aux DEUX autres endroits qui affichent le
+  même libellé (`dashboardBodySlotLabel`, `core/services/dashboard-body-slot-label.ts` — fonction
+  pure partagée par `DashboardRailComponent` ET `DashboardLayoutPickerComponent`) via un nouveau
+  paramètre `isAuthenticated: boolean` passé explicitement (même principe que `historyGroup`, voir
+  sa doc de tête) plutôt que lu depuis `AuthService` à l'intérieur de la fonction — les deux
+  appelants injectent `AuthService` et lui passent `auth.isAuthenticated()`.
+- **Bug de largeur** — `SessionRecapComponent` avait `:host { display: contents }` (copié à tort du
+  pattern d'`HistoryComponent`, qui gère lui-même son placement grid) alors que cette carte est un
+  panneau UNIQUE placé par `DashboardComponent` via des styles inline (`grid-column`/`grid-row`/
+  `order` posés sur le host, voir `dashboard.component.html`) — un host `display: contents` n'a pas
+  de boîte propre, ces styles étaient silencieusement ignorés. Passé à `display: flex; height: 100%`
+  (même principe que `ChatPanelComponent`) — vérifié : la carte prend maintenant toute la largeur
+  disponible quand elle est seule visible (les autres cartes repliées).
+- **Regroupement Donjon & Famille/Type** — nouveau switch 3 positions (`detailMode`, réinitialisé à
+  `'cumulative'` par `setGranularity`) affiché uniquement hors vue Session : `'cumulative'`
+  reproduit exactement l'ancien affichage (XP/Kamas/Combats/Butin globaux, INCHANGÉ) ; `'byGroup'`/
+  `'byType'` le REMPLACENT par un accordéon (une section par ligne, repliée par défaut, détail
+  XP/butin propre à la ligne).
+  - `'byGroup'` ("Donjon & Famille") : une ligne par donjon précis + une ligne par famille de
+    monstre représentative pour les combats hors donjon (avant, tous fourrus dans un seul "Hors
+    donjon" plat sans détail propre). Deux tableaux distincts côté serveur (`PeriodStats.dungeons`/
+    `families`, jamais le même id des deux côtés), simplement concaténés puis triés par nombre de
+    combats décroissant côté client.
+  - `'byType'` : les 8 `WakfuDungeonType` fusionnés chacun en une seule ligne (peu importe le
+    donjon précis) + une ligne "Autres" fusionnant TOUTE `period.families` — calculé côté CLIENT
+    (`mergeGroupTotals`, `core/utils/period-group-merge.util.ts`) à partir des mêmes données que
+    "Donjon & Famille", aucune requête serveur supplémentaire. Un donjon dont l'id n'est pas
+    résolu par `CatalogService.findWakfuDungeonEntryById` (référentiel pas à jour) est simplement
+    ignoré ici plutôt que de faire échouer tout le regroupement — vérifié en navigateur en
+    patchant temporairement `CatalogService` (le référentiel réel n'est pas accessible dans ce
+    sandbox sans base Neon, voir plus bas).
+  - Backend (`functions/api/v1/history/stats.ts`) : la requête `dungeons` existante gagne un filtre
+    `dungeonId IS NOT NULL` (le hors-donjon part désormais dans `families`, plus dans une ligne
+    `dungeonId: null` de cette même requête) et deux nouvelles requêtes (`dungeonLoot`/`dungeonXp`,
+    même filtre) rejointes en JS par `dungeonId` (jamais en SQL — une jointure directe aurait
+    multiplié les lignes de totaux par le nombre de lignes de butin/XP, faussant les sommes).
+    "Famille représentative d'un combat hors donjon" : sous-requête dérivée (`familyPerFight`,
+    fragment `sql` interpolé, jamais matérialisé seul) reproduisant la même priorité que
+    `resolveFightTypeClassification` (client, `fight-image.util.ts`) : boss > archimonstre >
+    dominant > plus gros dégât, via `DISTINCT ON (fight_id)` — pas de support `selectDistinctOn`
+    dans la version de drizzle-orm utilisée ici (pg-core), d'où un `db.execute(sql\`...\`)` brut
+    (comme `functions/api/v1/health.ts`) plutôt qu'un enchaînement de query builder Drizzle pour
+    les 3 requêtes qui en dépendent (`families`/`familyLoot`/`familyXp`). Approximation acceptée
+    (voir demande utilisateur) : le repli générique "horde hétérogène >3 familles" de la version
+    client n'est pas reproduit côté SQL, ces combats tombent simplement dans la famille du
+    participant le mieux classé.
+- **Mini calendrier de navigation** (icône 📅, `PeriodPickerService`/`PeriodPickerComponent`,
+  `shared/period-picker/`) — complète le stepper `‹ label ›` existant (qui reste en place pour les
+  petits pas) : ouvre une grille selon la granularité active (jour → mois de 7 colonnes, mois → 12
+  cases d'une année, année → 10 cases d'une décennie), prev/next navigue par page (mois/année/
+  décennie) sans changer la sélection tant qu'aucune cellule n'est cliquée. Cellule hors bornes
+  `[OFFSET_MIN[g], 0]` désactivée (jamais masquée). Même pattern que `ClassPickerService` (rendu
+  une seule fois au niveau racine, `app.html`, hors de tout ancêtre `transform` — voir gotcha dédié
+  plus bas) plutôt que niché localement dans `SessionRecapComponent`.
+  - `offsetForPeriodStart` (`core/utils/local-period.util.ts`) : inverse de `periodBounds`, convertit
+    une date cliquée en pas de stepper. `day` : différence de JOURS CALENDAIRES via `Date.UTC(y,m,d)`
+    sur les deux dates plutôt qu'une division de ms directe (casserait autour d'un changement
+    d'heure été/hiver, un jour local pouvant durer 23h/25h à ce moment) ; `month`/`year` : simple
+    arithmétique sur les composants.
+  - Noms de mois/jours de semaine : deux nouvelles méthodes `I18nService.formatMonthShort`/
+    `formatWeekdayShort` (`Intl.DateTimeFormat` avec la locale courante), plutôt qu'une locale de
+    calendrier maison — `formatWeekdayShort` calculée sur une semaine de référence FIXE (5-11
+    janvier 2026, un lundi-dimanche confirmé) puisque le nom d'un jour de semaine ne dépend pas de
+    l'année.
+- Vérifié en navigateur (Chromium réel, `playwright-core` — pas de serveur MCP `playwright`
+  disponible dans CET environnement d'exécution distant/cloud, contrairement au poste local décrit
+  plus loin dans ce fichier) avec un compte connecté simulé et `/api/v1/history/stats` intercepté
+  (fixture avec 2 donjons + 2 familles) : titre "Récap" une fois authentifié (carte ET rail replié
+  ET Profil › Personnalisation), carte prenant toute la largeur seule visible, switch Cumulé/
+  Donjon & Famille/Type masqué en session, mode Cumulé visuellement identique à avant, mode Donjon
+  & Famille listant les 4 groupes triés par nombre de combats (labels de repli "Hors donjon"/
+  "Famille inconnue" tant que `CatalogService` n'a pas résolu les ids — confirmé en patchant
+  temporairement le service pour simuler une résolution réussie, seule façon de tester ce chemin
+  sans base Neon réelle dans ce sandbox), ligne dépliée montrant XP/butin propres au groupe, mode
+  Type fusionnant correctement en 3 buckets ("4 salles"/"2 salles"/"Autres") avec des totaux
+  recalculés exacts, calendrier affichant août 2026 en surbrillance avec septembre-décembre
+  désactivés (bornes correctes), clic sur "mars" déclenchant bien `since=2026-03-01T00:00:00.000Z&
+  until=2026-04-01T00:00:00.000Z`.
 
 ## Invocations : traitées comme des sorts de leur invocateur, jamais comme des combattants à part
 
@@ -194,7 +426,7 @@ l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
 - **`transform: translateX(-50%)` ≠ `left: -50%`** : le premier se résout par rapport à la largeur de l'élément lui-même, le second par rapport au bloc englobant. Confondre les deux dans le slider deux-panneaux (`app.css` `.view-slider`) a produit un vrai bug de nav (écran coupé en deux en permanence) — toujours utiliser `transform` pour ce genre de translation proportionnelle à un conteneur plus large que son parent.
 - **`static.ankama.com` bloque les requêtes d'image portant un en-tête `Referer` d'un domaine tiers** (protection anti-hotlink) — un `<img src="https://static.ankama.com/...">` chargé normalement échoue silencieusement (pas d'erreur réseau visible autrement que l'event `error` de l'`<img>`), alors que la même URL fonctionne très bien ouverte directement ou via `curl` (qui n'envoie pas de Referer). Solution : `referrerpolicy="no-referrer"` sur la balise `<img>` (voir `item-icon.component.ts`) — supprime l'en-tête, débloque le chargement. Vérifié avec 3 URLs réelles (`Jeton Brut`, `Eclat`, `Mimicroquettes`).
 - **`wakassets` répartit les monstres sur DEUX dossiers d'images distincts** : `monsters/{imgId}.png` (icônes carrées standard, ~200x200) ET `monsterIllustrations/{imgId}.png` (bannières rectangulaires ~132x41, souvent pour des boss/monstres spéciaux type "Troolk Hoogan"/"The Undertroolker"/"Rey Mystroolrio" — absents de `monsters/` mais présents dans `monsterIllustrations/`). Un même `imgId` ne se trouve jamais dans les deux. Vérifié : ajouter `monsterIllustrations/` en repli dans `entity-icon.component.ts` résout 34 des 61 monstres du référentiel (`wakfu-monster-catalog.data.ts`) qui n'avaient aucune image sous `monsters/` seul.
-- **Le `gfxId` Ankama est la clé stable reliant les JSON officiels aux CDN d'images tiers** (`vertylo.github.io/wakassets/items/{gfxId}.png`, `cdn.wakfuli.com/items/{gfxId}.webp`) — les deux indexent par ce même id, vérifié sur plusieurs objets. Utile pour toute extension future du référentiel d'objets (voir `repository/items.json` et `core/api/catalog.service.ts` — le catalogue est servi par l'API distante depuis le lot 3.1, plus de table embarquée côté client).
+- **Le `gfxId` Ankama est la clé stable reliant les JSON officiels au CDN d'images tiers** (`vertylo.github.io/wakassets/items/{gfxId}.png`) — vérifié sur plusieurs objets. Utile pour toute extension future du référentiel d'objets (voir `repository/items.json` et `core/api/catalog.service.ts` — le catalogue est servi par l'API distante depuis le lot 3.1, plus de table embarquée côté client).
 - **Planche `class-portraits.data.ts` (`class-portraits-v2-*.png`, 320x1458, 4 colonnes x 18 lignes de cases 80x81 : [mâle coloré, mâle mat, femelle coloré, femelle mat])** : portraits "grand format" par classe ET par sexe, bien plus détaillés que `class-breeds.data.ts` (35x35). Reconstruite le 2026-08-15 à partir de DEUX sources officielles Ankama :
   - `static.ankama.com/.../breeds/assets/icons/big.png` (planche d'origine, 2 colonnes x 18 lignes) : 1 SEUL portrait par classe (pas les 2 sexes) — colonne 0 nettement plus saturée que la colonne 1 (vérifié : saturation HSV moyenne ~30-40% plus basse), utilisées pour le crossfade "mat au repos, coloré au survol" (voir `ClassPortraitComponent`, pas de filtre CSS). **L'ordre des 18 lignes N'EST PAS l'id interne Ankama** (hypothèse initiale fausse, seule la 1ère ligne — Féca, id 1 — coïncidait par hasard) : `feca, sadida, sacrier, pandawa, rogue, zobal, foggernaut, osamodas, enutrof, sram, xelor, ecaflip, eniripsa, iop, cra, eliotrope, huppermage, ouginak`. Se fier UNIQUEMENT à une source objective pour ce genre d'ordre (ici : les `background-position` CSS réellement utilisés par le site officiel pour sa barre de sélection de classe, `.ak-breed-icon-big.breed{id}_0` sur une page `.../encyclopedie/classes/{id}-{slug}`, `ligne = |offsetY| / 81`, lisible via `getComputedStyle` en Playwright) plutôt que déduire "à l'œil" depuis un ordre voisin (slugs, id...) qui n'a pas de raison de correspondre.
   - `static.ankama.com/.../breeds/assets/bg/breed-{id}.jpg` (fond de la page encyclopédie d'une classe, ex. `breed-4.jpg` = Sram) : contient en fait les DEUX illustrations complètes (mâle ET femelle) de la classe, côte à côte, l'une mise en avant et l'autre en silhouette fantôme derrière — mais les deux sont bien présentes en pleine qualité dans le même fichier. A servi à recadrer à la main les 18 portraits manquants (un sexe par classe), en repérant le personnage à l'œil (position très variable d'une classe à l'autre, taille de canvas différente aussi : 988 à 2252px de haut).
@@ -295,7 +527,6 @@ de l'app (fr/en/es/pt).
 - [github.com/Nexus-Hub/Wakfu-Companion/tree/master/public/](https://github.com/Nexus-Hub/Wakfu-Companion/tree/master/public/) — dépôt d'origine du site de référence (extraction ponctuelle de données statiques : `wakfu-monster-names.data.ts`, `wakfu-enemy-families.data.ts`, `wakfu-ally-summons.data.ts`, `wakfu-class-spells.data.ts`). N'est PLUS la source des images (voir ci-dessous).
 - [github.com/Vertylo/wakassets](https://github.com/Vertylo/wakassetvs/tree/main) — dépôt communautaire exposant la quasi-totalité des images du jeu (objets, monstres, illustrations...), utilisé comme CDN principal via GitHub Pages : `vertylo.github.io/wakassets/{items,monsters}/{gfxId ou imgId}.png` (voir `shared/item-icon`, `shared/entity-icon`, `wakfu-monster-images.data.ts`). Cloné localement pour l'audit de couverture (`wakfu-item-catalog.data.ts`, `wakfu-monster-catalog.data.ts`) — remplace l'ancien fork `oumbra/wakfu-companion-asset`, qui n'est plus utilisé.
 - [static.ankama.com/wakfu/portal/game/item/](https://static.ankama.com/wakfu/portal/game/item/) — CDN officiel Ankama, utilisé uniquement pour les recours manuels (`wakfu-item-image-overrides.data.ts`) sur des objets absents des JSON publics. Nécessite `referrerpolicy="no-referrer"` sur l'`<img>` (protection anti-hotlink, voir gotcha ci-dessus).
-- [cdn.wakfuli.com/items/](https://cdn.wakfuli.com/items/) — CDN alternatif indexant aussi par `gfxId` (`.webp`), utilisé comme 2ᵉ source de repli dans `item-icon.component.ts`.
 - [wakfu.com/fr/forum/590-outils/416762-donnee-json](https://www.wakfu.com/fr/forum/590-outils/416762-donnee-json) — fil du forum officiel expliquant comment récupérer et interpréter les fichiers JSON de gamedata Ankama (`wakfu.cdn.ankama.com/gamedata/{version}/{type}.json`, version courante dans `gamedata/config.json`) : source des données fusionnées dans `repository/items.json` (`items.json` + `jobsItems.json`) par le skill externe `wakfu-items-sync` (voir server/README.md).
 
 ## Conventions UI transverses (réutiliser, ne pas recréer)

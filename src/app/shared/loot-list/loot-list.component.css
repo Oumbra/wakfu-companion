@@ -61,6 +61,20 @@
   font-family: monospace;
   color: var(--kama-color);
 }
+/* Badge de doute (voir LootConfidence.doubtful) : `<span>` porteur du tooltip (voir template — pas
+   directement sur <app-icon>, dont le `:host{display:contents}` n'a pas de boîte propre pour
+   `getBoundingClientRect()`), affiché inline pour s'aligner avec le reste de la ligne. Même teinte
+   ambre/or que `--dmg-light` (dégâts Lumière), déjà utilisée ailleurs comme signal d'attention (voir
+   fight-history.component.css, regroupement de donjon déplié) — cohérent avec le reste de l'app
+   plutôt qu'une nouvelle couleur dédiée ; hérite normalement jusqu'au `<svg>` interne
+   d'IconComponent malgré son `display:contents` (l'encapsulation de vue ne bloque pas l'héritage
+   CSS, seulement le ciblage par sélecteur). */
+.loot-doubt-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--dmg-light);
+  cursor: help;
+}
 
 /* `.empty-state` (base) vient de styles.css — seule la variante "small" est propre à ce contexte,
    avec un style plus discret pour la modale de fin de session (`recap-variant`) qu'en historique

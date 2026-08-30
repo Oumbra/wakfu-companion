@@ -156,7 +156,10 @@
   @if (hasMoreFor(key)) {
     <div class="history-load-more">
       @if (archive.loading()) {
-        <app-spinner [size]="22" [borderWidth]="3" />
+        <!-- Même anneau que partout ailleurs dans l'app (voir LoadingOverlayComponent/
+             SessionRecapComponent, `.spinner-ring`, styles.css) — taille réduite localement (voir
+             CSS) pour rester proportionné à ce pied de panneau étroit. -->
+        <div class="spinner-ring"></div>
       } @else {
         <div class="load-more-controls">
           <button type="button" class="load-more-btn" (click)="loadMoreFor(key)">

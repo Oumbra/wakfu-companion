@@ -25,10 +25,12 @@ export type AppIconName =
   | 'messages-square'
   | 'crossed-swords'
   | 'shopping-bag'
-  | 'arrows-exchange';
+  | 'arrows-exchange'
+  | 'scroll'
+  | 'help-circle';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-150169c7.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-38a6de23.svg';
 
 @Component({
   selector: 'app-icon',
