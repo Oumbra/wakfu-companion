@@ -176,6 +176,13 @@
       "when": 1788109917259,
       "tag": "0024_add_monster_family_picture",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788129157105,
+      "tag": "0025_thick_logan",
+      "breakpoints": true
     }
   ]
 }

@@ -141,6 +141,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       className: participant.className,
       damage: participant.damage,
       defeated: participant.defeated,
+      fled: participant.fled,
       spells: participant.spells,
       xpGained: participant.xpGained,
     }));
@@ -166,6 +167,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           className: sql`excluded.class_name`,
           damage: sql`excluded.damage`,
           defeated: sql`excluded.defeated`,
+          fled: sql`excluded.fled`,
           spells: sql`excluded.spells`,
           xpGained: sql`excluded.xp_gained`,
         },
@@ -308,6 +310,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         className: participant.className,
         damage: participant.damage,
         defeated: participant.defeated,
+        fled: participant.fled,
         spells: participant.spells,
         xpGained: participant.xpGained,
       })),

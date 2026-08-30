@@ -67,6 +67,9 @@ export interface FightParticipantPayload {
   className: string | null;
   damage: number;
   defeated: boolean;
+  /** Voir EntityDamageRow.fled/server/db/schema.ts (fightParticipants.fled) — mutuellement exclusif
+   * avec `defeated`. */
+  fled: boolean;
   spells: FightSpellPayload[];
   /** XP gagnée par ce combattant sur ce combat (0 pour les ennemis). */
   xpGained: number;

@@ -136,4 +136,13 @@
     <path d="M6 20V10a6 6 0 0112 0v10" />
     <path d="M6 20h12" />
   </symbol>
+  <!-- Statut "a fui" d'une ligne de récap combat (voir entity-damage-list, EntityDamageRow.fled) —
+       porte + flèche sortante (motif "sortie", distinct du badge KO `app-ko-icon`) pour un
+       combattant qui a disparu ("X: disparaît", jamais "est hors-combat !") plutôt que d'avoir été
+       vaincu — voir CLAUDE.md, cas des mimiques. -->
+  <symbol id="flee" viewBox="0 0 24 24">
+    <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
+  </symbol>
 </svg>

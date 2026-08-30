@@ -147,6 +147,7 @@ export class HistorySyncService {
         className: side === 'ally' ? (this.classifier.getDetectedClass(row.name) ?? null) : null,
         damage: Math.max(0, Math.round(row.total)),
         defeated: row.defeated,
+        fled: row.fled,
         // Ventilation par sort et par élément : c'est l'essentiel de la valeur
         // d'un historique de combat, et c'est aussi ce qu'une réattribution
         // manuelle peut corriger après coup (d'où l'upsert côté serveur).

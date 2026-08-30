@@ -56,6 +56,7 @@ interface FightPage {
       className: string | null;
       damage: number;
       defeated: boolean;
+      fled: boolean;
       spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
       xpGained: number | null;
     }[];
@@ -593,6 +594,7 @@ function toFightRecord(
       byTurn: [],
     })),
     defeated: participant.defeated,
+    fled: participant.fled,
     instanceIndex: participant.instanceIndex,
     instanceCount: instanceCounts.get(participant.name) ?? 1,
   }));

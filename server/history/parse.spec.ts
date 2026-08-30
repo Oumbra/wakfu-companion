@@ -71,6 +71,7 @@ describe('parseFightsBody', () => {
       className: null,
       damage: 1234,
       defeated: false,
+      fled: false,
       spells: [],
       xpGained: 0,
     });
