@@ -41,6 +41,7 @@ import {
   CatalogDungeonEntry,
   CatalogService,
   isDungeonBreach,
+  WakfuDungeonType,
 } from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import {
@@ -49,6 +50,11 @@ import {
   enemyCompositionKey,
   groupDungeonRuns,
 } from '../../core/utils/dungeon-run-grouping.util';
+import {
+  DUNGEON_TYPE_LABEL_KEY,
+  DUNGEON_TYPE_ORDER,
+  FAMILIES_SECTION_LABEL_KEY,
+} from '../../core/utils/dungeon-category.util';
 import { AuthService } from '../../core/auth/auth.service';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
@@ -56,8 +62,21 @@ import { DamageViewMode } from '../../shared/damage-view-switch/damage-view-swit
 import { EntityStatKind } from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 import { CombatDetailComponent } from '../../shared/combat-detail/combat-detail.component';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
+import { PersistenceService } from '../../core/services/persistence.service';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
+const VALID_GROUP_MODES: readonly FightGroupMode[] = ['day', 'location', 'type'];
+/** Clé `PersistenceService` du dernier mode de regroupement choisi (voir `FightGroupMode`) —
+ * préférence d'affichage locale (comme `SessionRecapComponent.GRANULARITY_STORAGE_KEY`, même
+ * mécanique), demande explicite de l'utilisateur (2026-08-30) : survit à un F5/redémarrage de
+ * l'app, aussi bien en invité que connecté (pas de vrai multi-appareil ici, voir la doc de
+ * `groupMode` — même compromis que le Récap). */
+const GROUP_MODE_STORAGE_KEY = 'wakfu-fight-history-group-mode';
+/** Clé jumelle pour l'état plié/déplié de chaque groupe (voir `collapsedGroupKeys`) — demande
+ * explicite de l'utilisateur allant plus loin que le Récap (qui referme tout à chaque changement de
+ * granularité/mode, voir CLAUDE.md) : ici, retrouver EXACTEMENT les mêmes groupes dépliés après un
+ * F5 fait partie de la demande. */
+const COLLAPSED_GROUPS_STORAGE_KEY = 'wakfu-fight-history-collapsed-groups';
 
 type HistoryFight = FightRecord & { origin: HistoryOrigin };
 
@@ -73,6 +92,24 @@ interface FightGroup {
    * "autre" du mode Type, ou famille sans image). */
   imageUrl: string | null;
   records: DungeonHistoryEntry<HistoryFight>[];
+  /** Catégorie de donjon du groupe (mode "Donjons & familles" uniquement, voir `buildTypeGroups`) —
+   * `null` pour un groupe "famille"/"autre" de ce même mode, ou pour tout groupe des modes
+   * Jour/Origine (le concept ne s'y applique pas). Sert uniquement à `fightGroupSections` pour
+   * répartir les groupes sous le bon en-tête de catégorie. */
+  dungeonType: WakfuDungeonType | null;
+}
+
+/** Section d'en-tête non cliquable regroupant les groupes "Donjons & familles" d'une même catégorie
+ * (voir `fightGroupSections`) — même principe et même ordre de catégories que
+ * `SessionRecapComponent.groupSections` (dungeon-category.util.ts, partagé), demande explicite de
+ * l'utilisateur (2026-08-30) : afficher ici EXACTEMENT le même système d'en-têtes ("Donjon 2
+ * salles", "Donjon 3 salles"... "Familles") qu'au-dessus du détail par donjon/famille de la carte
+ * Récap. N'existe QUE pour le mode "type" — les modes Jour/Origine restent une simple liste plate de
+ * groupes (voir template). */
+interface FightGroupSection {
+  key: string;
+  label: string;
+  groups: FightGroup[];
 }
 
 /**
@@ -120,6 +157,7 @@ export class FightHistoryComponent {
   protected readonly combatPanel = inject(CombatPanelService);
   protected readonly helpModal = inject(HelpModalService);
   private readonly logFileAccess = inject(LogFileAccessService);
+  private readonly persistence = inject(PersistenceService);
 
   // --- Combat en cours (ex-DamageMeterComponent, voir doc de tête) ---------------------------
 
@@ -245,12 +283,30 @@ export class FightHistoryComponent {
     );
   });
 
-  /** Regroupement (voir `FightGroupMode`) — Jour par défaut, comme toute liste de l'historique. */
-  protected readonly groupMode = signal<FightGroupMode>('day');
-  /** Clés de groupe actuellement repliées (vide par défaut, tout déplié — même convention que
-   * `PurchasesComponent`/`TradesComponent`). Un `Set` de clés composites (`mode:key`) plutôt qu'un
-   * `Set` de simples clés : changer de mode ne doit pas hériter du repli d'un autre regroupement. */
-  private readonly collapsedGroupKeys = signal<ReadonlySet<string>>(new Set());
+  /** Regroupement (voir `FightGroupMode`) — restauré depuis `PersistenceService` (voir
+   * `GROUP_MODE_STORAGE_KEY`), repli sur `'day'` si rien de persisté ou valeur corrompue. Persisté
+   * localement (pas via `UserDataService`/compte, voir CLAUDE.md) : demande explicite de
+   * l'utilisateur (2026-08-30), même compromis que `SessionRecapComponent.granularity`. */
+  protected readonly groupMode = signal<FightGroupMode>(
+    (() => {
+      const stored = this.persistence.getJson<FightGroupMode>(GROUP_MODE_STORAGE_KEY);
+      return stored && VALID_GROUP_MODES.includes(stored) ? stored : 'day';
+    })(),
+  );
+  /** Clés de groupe actuellement repliées — restauré depuis `PersistenceService` (voir
+   * `COLLAPSED_GROUPS_STORAGE_KEY`), vide si rien de persisté ou valeur corrompue. Un `Set` de clés
+   * composites (`mode:key`) plutôt qu'un `Set` de simples clés : changer de mode ne doit pas hériter
+   * du repli d'un autre regroupement. Contrairement à `SessionRecapComponent.expandedGroups` (jamais
+   * persisté, toujours réinitialisé), ici l'état déplié/replié de chaque groupe survit lui aussi à
+   * un F5 — demande explicite de l'utilisateur, 2026-08-30. */
+  private readonly collapsedGroupKeys = signal<ReadonlySet<string>>(
+    (() => {
+      const stored = this.persistence.getJson<string[]>(COLLAPSED_GROUPS_STORAGE_KEY);
+      return Array.isArray(stored)
+        ? new Set(stored.filter((key): key is string => typeof key === 'string'))
+        : new Set<string>();
+    })(),
+  );
 
   private static readonly LOCATION_ORDER: readonly HistoryOrigin[] = ['session', 'account'];
 
@@ -321,7 +377,7 @@ export class FightHistoryComponent {
       const { key, label } = this.groupKeyFor(this.representativeOf(entry), mode);
       const existing = groups.get(key);
       if (existing) existing.records.push(entry);
-      else groups.set(key, { key, label, imageUrl: null, records: [entry] });
+      else groups.set(key, { key, label, imageUrl: null, dungeonType: null, records: [entry] });
     }
     const list = [...groups.values()];
     if (mode === 'location') {
@@ -332,6 +388,43 @@ export class FightHistoryComponent {
       );
     }
     return list;
+  });
+
+  /** En-têtes de section du mode "Donjons & familles" (voir `FightGroupSection`) — vide pour les
+   * modes Jour/Origine (liste plate, voir template). Répartit les groupes déjà calculés par
+   * `fightGroups` sous le bon `WakfuDungeonType` (ordre fixe `DUNGEON_TYPE_ORDER`, partagé avec
+   * `SessionRecapComponent.groupSections`), un groupe "famille"/"autre" (`dungeonType: null`) rejoint
+   * toujours la dernière section "Familles" — jamais de re-tri interne à une section, l'ordre déjà
+   * établi par `buildTypeGroups` (categoryRank) suffit. */
+  protected readonly fightGroupSections = computed<FightGroupSection[]>(() => {
+    if (this.groupMode() !== 'type') return [];
+    const groups = this.fightGroups();
+    const byType = new Map<WakfuDungeonType, FightGroup[]>();
+    const other: FightGroup[] = [];
+    for (const group of groups) {
+      if (group.dungeonType) {
+        const bucket = byType.get(group.dungeonType);
+        if (bucket) bucket.push(group);
+        else byType.set(group.dungeonType, [group]);
+      } else {
+        other.push(group);
+      }
+    }
+    const sections: FightGroupSection[] = DUNGEON_TYPE_ORDER.filter((type) => byType.has(type)).map(
+      (type) => ({
+        key: `section:${type}`,
+        label: this.i18n.t(DUNGEON_TYPE_LABEL_KEY[type]),
+        groups: byType.get(type)!,
+      }),
+    );
+    if (other.length > 0) {
+      sections.push({
+        key: 'section:other',
+        label: this.i18n.t(FAMILIES_SECTION_LABEL_KEY),
+        groups: other,
+      });
+    }
+    return sections;
   });
 
   /** Regroupement "Type" — voir `resolveFightTypeClassification` (fight-image.util.ts) pour la
@@ -397,6 +490,7 @@ export class FightHistoryComponent {
         key: bucket.key,
         label: this.typeGroupLabel(bucket),
         imageUrl: this.typeGroupImageUrl(bucket),
+        dungeonType: bucket.dungeon?.type ?? null,
         records: bucket.records,
       }));
   }
@@ -464,6 +558,7 @@ export class FightHistoryComponent {
 
   protected setGroupMode(mode: FightGroupMode): void {
     this.groupMode.set(mode);
+    this.persistence.setJson(GROUP_MODE_STORAGE_KEY, mode);
   }
 
   protected isGroupCollapsed(groupKey: string): boolean {
@@ -475,7 +570,33 @@ export class FightHistoryComponent {
     const next = new Set(this.collapsedGroupKeys());
     if (next.has(compositeKey)) next.delete(compositeKey);
     else next.add(compositeKey);
+    this.persistCollapsedGroups(next);
+  }
+
+  /** Vrai si au moins un groupe du mode actif est déplié — pilote l'icône/tooltip du bouton
+   * "tout replier/déplier" (voir `toggleAllGroups`). */
+  protected readonly anyGroupExpanded = computed(() =>
+    this.fightGroups().some((group) => !this.isGroupCollapsed(group.key)),
+  );
+
+  /** Bouton bascule unique (voir CLAUDE.md/demande utilisateur, 2026-08-30) : replie tous les
+   * groupes du mode actif si au moins un est déplié (`anyGroupExpanded`), les déplie tous sinon —
+   * jamais un état intermédiaire (ex. certains groupes repliés, d'autres non) au clic. */
+  protected toggleAllGroups(): void {
+    const mode = this.groupMode();
+    const shouldCollapse = this.anyGroupExpanded();
+    const next = new Set(this.collapsedGroupKeys());
+    for (const group of this.fightGroups()) {
+      const compositeKey = `${mode}:${group.key}`;
+      if (shouldCollapse) next.add(compositeKey);
+      else next.delete(compositeKey);
+    }
+    this.persistCollapsedGroups(next);
+  }
+
+  private persistCollapsedGroups(next: ReadonlySet<string>): void {
     this.collapsedGroupKeys.set(next);
+    this.persistence.setJson(COLLAPSED_GROUPS_STORAGE_KEY, [...next]);
   }
 
   /** État de repli d'un collapse de donjon, indexé par `id` du combat représentatif (le plus

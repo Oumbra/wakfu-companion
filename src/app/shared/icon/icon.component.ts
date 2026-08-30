@@ -27,10 +27,12 @@ export type AppIconName =
   | 'shopping-bag'
   | 'arrows-exchange'
   | 'scroll'
-  | 'help-circle';
+  | 'help-circle'
+  | 'chevrons-collapse'
+  | 'chevrons-expand';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-38a6de23.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-7c1e4f92.svg';
 
 @Component({
   selector: 'app-icon',

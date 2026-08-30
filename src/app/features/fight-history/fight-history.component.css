@@ -17,10 +17,17 @@
    `.history-source`/`.controls-row` ailleurs dans l'historique (barre juste sous les onglets). */
 .fight-group-controls {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   padding: 6px 10px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--surface-active);
+  flex-shrink: 0;
+}
+/* Bouton "tout replier/déplier" (voir FightHistoryComponent.toggleAllGroups) — même ligne que le
+   switch de regroupement (justify-content: flex-end ci-dessus), placé avant lui. */
+.fight-group-toggle-all-btn {
   flex-shrink: 0;
 }
 .fight-group-switch {
@@ -83,6 +90,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Titre de section non cliquable au-dessus d'un paquet de groupes du mode "Donjons & familles" (voir
+   FightHistoryComponent.fightGroupSections) — style repris à l'identique de `.group-section-title`
+   dans session-recap.component.css (même système d'en-têtes, demande explicite de l'utilisateur,
+   2026-08-30), dupliqué ici plutôt que factorisé en classe globale : deux composants avec leur
+   propre feuille de style scopée, comme le reste de `.fight-group-row`/`.dungeon-row` ailleurs dans
+   l'app. */
+.fight-group-section-title {
+  padding: 6px 15px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .fight-group-count {
   margin-left: auto;
   flex-shrink: 0;
