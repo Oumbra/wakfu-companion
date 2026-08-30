@@ -121,7 +121,7 @@ export class TradesComponent {
    * sinon rien à désambiguïser, voir LootListComponent.canInteract (même règle, ItemPickerComponent
    * partagé) et CLAUDE.md (bouton "Suivre" retiré de ce menu). */
   protected canInteract(item: TradeItemRow): boolean {
-    return this.catalog.findAllWakfuItemEntriesByName(item.name).length > 1;
+    return this.catalog.hasMultipleWakfuItemEntriesByName(item.name);
   }
 
   protected openInteractMenu(
