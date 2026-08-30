@@ -1,5 +1,5 @@
 {
-  "id": "747efca0-6348-4216-8840-881954aecb84",
+  "id": "b1b55653-b2c0-4d3f-8d23-d236cfd94994",
   "prevId": "df0309b8-2eee-4d75-9e5c-53528614b0c4",
   "version": "7",
   "dialect": "postgresql",
@@ -467,6 +467,18 @@
           "type": "bigint",
           "primaryKey": false,
           "notNull": false
+        },
+        "dungeon_id": {
+          "name": "dungeon_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dungeon_run_key": {
+          "name": "dungeon_run_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -526,6 +538,27 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "fights_user_dungeon_run_key_idx": {
+          "name": "fights_user_dungeon_run_key_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dungeon_run_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -551,6 +584,19 @@
           ],
           "columnsTo": [
             "code"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fights_dungeon_id_dungeons_id_fk": {
+          "name": "fights_dungeon_id_dungeons_id_fk",
+          "tableFrom": "fights",
+          "tableTo": "dungeons",
+          "columnsFrom": [
+            "dungeon_id"
+          ],
+          "columnsTo": [
+            "id"
           ],
           "onDelete": "no action",
           "onUpdate": "no action"
@@ -853,12 +899,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "picture_url": {
-          "name": "picture_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},

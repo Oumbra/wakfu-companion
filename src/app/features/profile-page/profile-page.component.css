@@ -843,7 +843,7 @@ pire illisible sur une tuile déjà claire en rareté commune. */
 
 /* Couleur de base --rarity-color définie globalement dans styles.css (classe .rarity-xxx).
 Le pourcentage de mélange varie volontairement par rareté (échantillonné sur les bordures
-officielles cdn.wakfuli.com/rarity) — seule la couleur de base est donc factorisable ici. */
+officielles du jeu) — seule la couleur de base est donc factorisable ici. */
 .sound-item-tile[class*='rarity-'] {
   border-color: var(--rarity-color);
 }

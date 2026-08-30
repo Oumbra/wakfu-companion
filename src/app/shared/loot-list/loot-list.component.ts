@@ -1,11 +1,11 @@
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { FightRecord, LootRow, StatsStoreService } from '../../core/services/stats-store.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { lootRarityClass } from '../../core/utils/loot-sort.util';
-import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
-import { NumberFrPipe } from '../number-fr.pipe';
+import { IconComponent } from '../icon/icon.component';
+import { LocaleNumberPipe } from '../locale-number.pipe';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { ItemPickerService } from '../../core/services/item-picker.service';
@@ -14,17 +14,16 @@ import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 /**
  * Liste de lignes de butin, mutualisée entre FightHistoryComponent (section butin d'un combat,
  * repliable) et SessionRecapComponent (section butin de session, toujours dépliée) — CSS/HTML/
- * comportement des LIGNES elles-mêmes identiques à l'origine (tri déjà appliqué par l'appelant via
- * `items`, clic droit = correction d'objet homonyme, voir ItemPickerService) plus le filtrage par
- * recherche (`searchQuery`, propre à cette instance — voir `filteredItems`). L'en-tête (titre,
- * switch de tri, caret repli/dépli éventuel) reste dans chaque composant appelant : leur agencement
- * (hauteur, curseur, hover, bordure pleine/pointillée) diffère réellement entre les deux et n'a pas
- * vocation à être unifié (voir CLAUDE.md, conventions UI transverses) — seul le champ de recherche,
- * identique aux deux appelants, vit ici.
+ * comportement des LIGNES elles-mêmes identiques à l'origine (tri/recherche déjà appliqués par
+ * l'appelant via `items`, clic droit = correction d'objet homonyme, voir ItemPickerService).
+ * L'en-tête (titre, champ de recherche, switch de tri, caret repli/dépli éventuel) reste dans
+ * chaque composant appelant : leur agencement (hauteur, curseur, hover, bordure pleine/pointillée)
+ * diffère réellement entre les deux et n'a pas vocation à être unifié (voir CLAUDE.md, conventions
+ * UI transverses).
  */
 @Component({
   selector: 'app-loot-list',
-  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe, TooltipDirective],
+  imports: [ItemIconComponent, IconComponent, LocaleNumberPipe, TranslatePipe, TooltipDirective],
   templateUrl: './loot-list.component.html',
   styleUrl: './loot-list.component.css',
 })
@@ -46,42 +45,29 @@ export class LootListComponent {
    * session" (`session-recap`), qui agrège plusieurs combats et ne peut donc pas cibler une ligne
    * précise — aucune interaction n'est alors proposée (voir `canInteract`). */
   readonly fight = input<Pick<FightRecord, 'time' | 'result' | 'rows'> | null>(null);
-
-  /** Texte de recherche courant — propre à cette instance (pas remonté à l'appelant), remis à zéro
-   * implicitement à chaque nouvelle instance (combat replié/déplié à nouveau, changement de combat
-   * affiché...). */
-  protected readonly searchQuery = signal('');
-
-  /** Nom affiché tel que l'utilisateur le voit (traduit) — même expression que le template pour la
-   * ligne, réutilisée ici pour que la recherche porte sur ce qui est réellement affiché plutôt que
-   * sur le nom brut du log (pas forcément dans la langue active). */
-  protected displayName(row: LootRow): string {
-    return this.i18n.translateItemNameById(row.catalogId, this.i18n.translateItemName(row.name));
-  }
-
-  /** `items()` filtré par `searchQuery` (recherche sous-chaîne, insensible à la casse/aux accents —
-   * voir normalizeWakfuName), tri déjà appliqué par l'appelant conservé tel quel. */
-  protected readonly filteredItems = computed<readonly LootRow[]>(() => {
-    const query = normalizeWakfuName(this.searchQuery().trim());
-    if (!query) return this.items();
-    return this.items().filter((row) => normalizeWakfuName(this.displayName(row)).includes(query));
-  });
-
-  protected clearSearch(): void {
-    this.searchQuery.set('');
-  }
+  /** `false` désactive le clic droit "Interagir" (suivi + correction d'objet) sur toutes les
+   * lignes — voir SessionRecapComponent, qui n'expose volontairement aucune interaction sur son
+   * butin (carte de lecture seule). `true` par défaut : comportement inchangé pour les autres
+   * appelants (FightHistoryComponent). */
+  readonly interactive = input(true);
 
   protected rarityClass(row: LootRow): string {
     return lootRarityClass(this.catalog, row.name, row.catalogId);
   }
 
-  /** Une correction n'a de sens que (1) pour une ligne rattachée à un combat précis (voir `fight`,
-   * absent pour le butin cumulé de session) ET (2) si le référentiel Ankama connaît plusieurs
-   * objets de ce nom (sinon rien à départager, voir ItemPickerComponent.showModify) — sans ces deux
-   * conditions, le clic droit ne doit plus rien proposer du tout (voir CLAUDE.md : le bouton
-   * "Suivre" a été retiré du menu, qui ne sert donc plus qu'à cette correction). */
+  /** Une correction n'a de sens que (1) si l'appelant autorise l'interaction du tout (`interactive`,
+   * `false` pour la carte de lecture seule du récap de session), (2) pour une ligne rattachée à un
+   * combat précis (voir `fight`, absent pour le butin cumulé de session) ET (3) si le référentiel
+   * Ankama connaît plusieurs objets de ce nom (sinon rien à départager, voir
+   * ItemPickerComponent.showModify) — sans ces trois conditions, le clic droit ne doit plus rien
+   * proposer du tout (voir CLAUDE.md : le bouton "Suivre" a été retiré du menu, qui ne sert donc
+   * plus qu'à cette correction). */
   protected canInteract(row: LootRow): boolean {
-    return this.fight() !== null && this.catalog.findAllWakfuItemEntriesByName(row.name).length > 1;
+    return (
+      this.interactive() &&
+      this.fight() !== null &&
+      this.catalog.findAllWakfuItemEntriesByName(row.name).length > 1
+    );
   }
 
   protected openInteractMenu(event: MouseEvent, row: LootRow): void {

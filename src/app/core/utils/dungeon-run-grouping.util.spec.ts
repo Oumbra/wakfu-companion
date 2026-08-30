@@ -6,6 +6,10 @@ interface TestFight extends DungeonGroupableFight {
   label: string;
   bossOf: number | null; // id de donjon dont ce combat contient le boss, ou null
   hasArchi?: boolean; // combat (non-boss) contenant un archimonstre
+  /** Clé de composition d'ennemis (voir `enemyCompositionKey`) — deux combats d'une MÊME salle
+   * (une victoire et ses tentatives ratées) doivent partager la même valeur ; par défaut, une
+   * valeur unique dérivée de `label` (jamais de collision accidentelle entre combats non liés). */
+  roomKey?: string;
 }
 
 function fight(
@@ -13,9 +17,16 @@ function fight(
   label: string,
   result: 'won' | 'lost',
   bossOf: number | null,
-  hasArchi = false,
+  options: { hasArchi?: boolean; roomKey?: string } = {},
 ): TestFight {
-  return { id, label, result, bossOf, hasArchi };
+  return {
+    id,
+    label,
+    result,
+    bossOf,
+    hasArchi: options.hasArchi ?? false,
+    roomKey: options.roomKey,
+  };
 }
 
 function makeDungeon(
@@ -58,8 +69,15 @@ function hasArchiEnemy(record: TestFight): boolean {
   return record.hasArchi === true;
 }
 
+// Par défaut, une clé UNIQUE par combat (dérivée de son id) : deux combats ne partagent la même
+// composition que si le test le demande explicitement via `roomKey` — jamais de faux positif
+// accidentel entre deux fixtures non liées.
+function roomCompositionKey(record: TestFight): string {
+  return record.roomKey ?? `unique:${record.id}`;
+}
+
 function group(records: TestFight[]) {
-  return groupDungeonRuns(records, findDungeon, hasArchiEnemy);
+  return groupDungeonRuns(records, findDungeon, hasArchiEnemy, roomCompositionKey);
 }
 
 describe('groupDungeonRuns', () => {
@@ -136,7 +154,7 @@ describe('groupDungeonRuns', () => {
 
   it('ajoute une salle supplémentaire pour un donjon avec archimonstre pré-boss (hasPreBossArchi) détecté', () => {
     const boss = fight(2, 'Boss archi', 'won', DUNGEON_ARCHI.id);
-    const archi = fight(1, 'Archimonstre pré-boss', 'won', null, true);
+    const archi = fight(1, 'Archimonstre pré-boss', 'won', null, { hasArchi: true });
     const records = [boss, archi];
 
     const result = group(records);
@@ -175,7 +193,7 @@ describe('groupDungeonRuns', () => {
 
   it('archimonstre pré-boss + salles normales : 5 combats quand un des combats avant le boss en contient un', () => {
     const boss = fight(6, 'Boss Kokokolantha', 'won', DUNGEON_ARCHI.id);
-    const archi = fight(5, 'Archimonstre pré-boss', 'won', null, true);
+    const archi = fight(5, 'Archimonstre pré-boss', 'won', null, { hasArchi: true });
     const room3 = fight(4, 'Salle 3', 'won', null);
     const room2 = fight(3, 'Salle 2', 'won', null);
     const room1 = fight(2, 'Salle 1', 'won', null);
@@ -208,8 +226,8 @@ describe('groupDungeonRuns', () => {
       // (room3, room2Lost, room2Win) et perdait room1, hors fenêtre.
       const boss = fight(5, 'Boss Kokokolantha', 'won', DUNGEON_ARCHI.id);
       const room3 = fight(4, 'Salle 3', 'won', null);
-      const room2Win = fight(3, 'Salle 2 - victoire (retentée)', 'won', null);
-      const room2Lost = fight(2, 'Salle 2 - défaite', 'lost', null);
+      const room2Win = fight(3, 'Salle 2 - victoire (retentée)', 'won', null, { roomKey: 'room2' });
+      const room2Lost = fight(2, 'Salle 2 - défaite', 'lost', null, { roomKey: 'room2' });
       const room1 = fight(1, 'Salle 1', 'won', null);
       const records = [boss, room3, room2Win, room2Lost, room1];
 
@@ -221,6 +239,88 @@ describe('groupDungeonRuns', () => {
           dungeon: DUNGEON_ARCHI,
           fights: [boss, room3, room2Win, room2Lost, room1],
           representative: boss,
+        },
+      ]);
+    },
+  );
+
+  it(
+    'rattache une défaite de la salle la plus ANCIENNE (dernier créneau) précédant sa propre ' +
+      "victoire, MÊME composition d'ennemis (bug réel corrigé le 2026-08-30 : donjon TWO_ROOMS " +
+      "réel où la boucle de ramassage s'arrêtait dès la victoire de salle sans regarder plus loin " +
+      'en arrière, laissant la défaite orpheline hors du run malgré son adjacence immédiate)',
+    () => {
+      const boss = fight(3, 'Boss B', 'won', DUNGEON_B.id);
+      const room1Win = fight(2, 'Salle 1 - victoire (retentée)', 'won', null, { roomKey: 'room1' });
+      const room1Lost = fight(1, 'Salle 1 - défaite', 'lost', null, { roomKey: 'room1' });
+      const records = [boss, room1Win, room1Lost];
+
+      const result = group(records);
+
+      expect(result).toEqual([
+        {
+          kind: 'dungeonRun',
+          dungeon: DUNGEON_B,
+          fights: [boss, room1Win, room1Lost],
+          representative: boss,
+        },
+      ]);
+    },
+  );
+
+  it(
+    "NE rattache PAS une défaite dont la composition d'ennemis diffère de la victoire adjacente " +
+      "(demande explicite de l'utilisateur, en remplacement d'un garde-fou par seuil de temps : " +
+      'un vrai combat sans rapport ne doit jamais être avalé par le run, quelle que soit sa ' +
+      'proximité temporelle avec la victoire de salle)',
+    () => {
+      const boss = fight(3, 'Boss B', 'won', DUNGEON_B.id);
+      const room1Win = fight(2, 'Salle 1 - victoire', 'won', null, { roomKey: 'room1' });
+      // Défaite immédiatement adjacente, mais contre une composition d'ennemis DIFFÉRENTE (roomKey
+      // par défaut = unique) : un combat hors donjon sans rapport, jamais une tentative de salle 1.
+      const unrelatedLoss = fight(1, 'Combat sans rapport (perdu)', 'lost', null);
+      const records = [boss, room1Win, unrelatedLoss];
+
+      const result = group(records);
+
+      expect(result).toEqual([
+        {
+          kind: 'dungeonRun',
+          dungeon: DUNGEON_B,
+          fights: [boss, room1Win],
+          representative: boss,
+        },
+        { kind: 'single', record: unrelatedLoss },
+      ]);
+    },
+  );
+
+  it(
+    'ne rattache PAS une victoire antérieure (run précédent distinct) même adjacente à la salle ' +
+      "la plus ancienne d'un run suivant",
+    () => {
+      // Le run précédent (boss B) se termine par une salle 1 GAGNÉE : une victoire ne doit jamais
+      // être ramassée par le sweep de défaites (elle appartient déjà à un run antérieur distinct).
+      const boss = fight(4, 'Boss B (run 2)', 'won', DUNGEON_B.id);
+      const room1 = fight(3, 'Salle 1 (run 2)', 'won', null);
+      const previousBoss = fight(2, 'Boss B (run 1, antérieur)', 'won', DUNGEON_B.id);
+      const previousRoom1 = fight(1, 'Salle 1 (run 1, antérieur)', 'won', null);
+      const records = [boss, room1, previousBoss, previousRoom1];
+
+      const result = group(records);
+
+      expect(result).toEqual([
+        {
+          kind: 'dungeonRun',
+          dungeon: DUNGEON_B,
+          fights: [boss, room1],
+          representative: boss,
+        },
+        {
+          kind: 'dungeonRun',
+          dungeon: DUNGEON_B,
+          fights: [previousBoss, previousRoom1],
+          representative: previousBoss,
         },
       ]);
     },

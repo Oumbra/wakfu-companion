@@ -105,7 +105,13 @@
     }
   }
   @if (fightHistory().length === 0) {
-    <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
+    @if (historyLoading()) {
+      <!-- Même anneau que partout ailleurs dans l'app (voir LoadingOverlayComponent/
+           SessionRecapComponent, `.spinner-ring`, styles.css). -->
+      <div class="empty-state"><div class="spinner-ring"></div></div>
+    } @else {
+      <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
+    }
   } @else {
     @for (group of fightGroups(); track groupMode() + ':' + group.key) {
       <div class="fight-group-row" (click)="toggleGroupCollapsed(group.key)">
@@ -275,7 +281,7 @@
                   <img [src]="lootIcon" class="collapsible-icon" alt="" />
                   <span class="loot-header">{{ 'damageMeter.loot' | t }}</span>
                   @if (record.kamas > 0) {
-                    <span class="loot-kamas">{{ record.kamas | numberFr }} ₭</span>
+                    <span class="loot-kamas">{{ record.kamas | localeNumber }} ₭</span>
                   }
                   @if (record.loot.length > 0) {
                     <span class="loot-count"
@@ -283,11 +289,22 @@
                     >
                   }
                 </div>
-                @if (record.loot.length > 1 && isFightLootExpanded(record.id)) {
-                  <div
-                    class="icon-switch icon-switch-3 loot-sort-switch"
-                    (click)="$event.stopPropagation()"
-                  >
+              </div>
+              <span class="caret" [class.expanded]="isFightLootExpanded(record.id)">▸</span>
+            </div>
+            @if (isFightLootExpanded(record.id)) {
+              <!-- Recherche + switch de tri du butin, sur leur propre ligne (même principe que
+                   SessionRecapComponent, voir CLAUDE.md/son commentaire) — recherche partagée entre
+                   tous les combats affichés (voir lootSearch), tri déjà partagé de la même façon. -->
+              @if (record.loot.length > 1) {
+                <div class="loot-controls-row">
+                  <app-loot-search
+                    [value]="lootSearch()"
+                    [placeholder]="'damageMeter.lootSearchPlaceholder' | t"
+                    [clearTooltip]="'damageMeter.lootSearchClear' | t"
+                    (valueChange)="lootSearch.set($event)"
+                  />
+                  <div class="icon-switch icon-switch-3 loot-sort-switch">
                     <span
                       class="icon-switch-highlight"
                       [class.is-right]="lootSort() === 'quantity'"
@@ -321,11 +338,8 @@
                       <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
                     </button>
                   </div>
-                }
-              </div>
-              <span class="caret" [class.expanded]="isFightLootExpanded(record.id)">▸</span>
-            </div>
-            @if (isFightLootExpanded(record.id)) {
+                </div>
+              }
               <div class="loot-body">
                 <app-loot-list [items]="sortedLoot(record.loot)" [fight]="record" />
               </div>
@@ -350,7 +364,7 @@
                   >
                     <app-entity-icon [name]="row.name" side="ally" />
                     <span class="fight-xp-name">{{ row.name }}</span>
-                    <span class="fight-xp-amount">+{{ row.amount | numberFr }}</span>
+                    <span class="fight-xp-amount">+{{ row.amount | localeNumber }}</span>
                   </div>
                 }
               </div>

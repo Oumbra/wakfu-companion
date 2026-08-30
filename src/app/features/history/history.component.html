@@ -48,13 +48,9 @@
       </button>
     </div>
 
-    @if (auth.isAuthenticated() && (archive.loading() || archive.failed())) {
+    @if (auth.isAuthenticated() && archive.failed()) {
       <div class="history-source">
-        @if (archive.loading()) {
-          <span class="history-source-status">{{ 'history.source.loading' | t }}</span>
-        } @else if (archive.failed()) {
-          <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
-        }
+        <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
       </div>
     }
 
@@ -70,13 +66,7 @@
       }
     }
 
-    @if (hasMoreFor(key)) {
-      <div class="history-load-more">
-        <button type="button" (click)="loadMoreFor(key)" [disabled]="archive.loading()">
-          {{ 'history.source.loadMore' | t }}
-        </button>
-      </div>
-    }
+    <ng-container *ngTemplateOutlet="loadMoreTpl; context: { key: key }" />
   </div>
 }
 
@@ -140,13 +130,9 @@
       }
     </div>
 
-    @if (auth.isAuthenticated() && (archive.loading() || archive.failed())) {
+    @if (auth.isAuthenticated() && archive.failed()) {
       <div class="history-source">
-        @if (archive.loading()) {
-          <span class="history-source-status">{{ 'history.source.loading' | t }}</span>
-        } @else if (archive.failed()) {
-          <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
-        }
+        <span class="history-source-status error">{{ 'history.source.error' | t }}</span>
       </div>
     }
 
@@ -162,16 +148,36 @@
       }
     }
 
-    @if (hasMoreFor(groupActiveTab())) {
-      <div class="history-load-more">
-        <button
-          type="button"
-          (click)="loadMoreFor(groupActiveTab())"
-          [disabled]="archive.loading()"
-        >
-          {{ 'history.source.loadMore' | t }}
-        </button>
-      </div>
-    }
+    <ng-container *ngTemplateOutlet="loadMoreTpl; context: { key: groupActiveTab() }" />
   </div>
 }
+
+<ng-template #loadMoreTpl let-key="key">
+  @if (hasMoreFor(key)) {
+    <div class="history-load-more">
+      @if (archive.loading()) {
+        <!-- Même anneau que partout ailleurs dans l'app (voir LoadingOverlayComponent/
+             SessionRecapComponent, `.spinner-ring`, styles.css) — taille réduite localement (voir
+             CSS) pour rester proportionné à ce pied de panneau étroit. -->
+        <div class="spinner-ring"></div>
+      } @else {
+        <div class="load-more-controls">
+          <button type="button" class="load-more-btn" (click)="loadMoreFor(key)">
+            {{ 'history.source.loadMore' | t }}
+          </button>
+          <button
+            type="button"
+            class="load-more-scope-btn"
+            [appTooltip]="'history.source.loadRange' | t"
+            tooltipPosition="top"
+            (click)="openLoadMoreScopeMenu($event, key)"
+          >
+            <span class="scope-caret-icon">
+              <app-icon name="chevron-left" [size]="12" [strokeWidth]="2.5" />
+            </span>
+          </button>
+        </div>
+      }
+    </div>
+  }
+</ng-template>

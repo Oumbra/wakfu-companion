@@ -15,7 +15,7 @@
         <div class="date-group-header" (click)="toggleGroup(group.dateKey)">
           <span class="date-group-date">{{ group.dateKey }}</span>
           <div class="date-group-right">
-            <span class="date-group-total">{{ group.totalCost | numberFr }} ₭</span>
+            <span class="date-group-total">{{ group.totalCost | localeNumber }} ₭</span>
             <span class="date-group-caret" [class.expanded]="!isCollapsed(group.dateKey)">▸</span>
           </div>
         </div>
@@ -32,7 +32,7 @@
                 <span class="purchase-name">{{ 'purchases.hdvSource' | t }}</span>
                 <!-- Préfixe "+" : signale un encaissement (voir isHdvRow), contrairement au coût
                      "-" implicite des vrais achats juste en dessous, jamais préfixés. -->
-                <span class="purchase-cost">+{{ row.totalCost | numberFr }} ₭</span>
+                <span class="purchase-cost">+{{ row.totalCost | localeNumber }} ₭</span>
               </div>
             } @else {
               <div
@@ -46,8 +46,8 @@
                 <span class="purchase-name">{{
                   i18n.translateItemNameById(row.catalogId, i18n.translateItemName(row.item))
                 }}</span>
-                <span class="purchase-qty">×{{ row.quantity | numberFr }}</span>
-                <span class="purchase-cost">{{ row.totalCost | numberFr }} ₭</span>
+                <span class="purchase-qty">×{{ row.quantity | localeNumber }}</span>
+                <span class="purchase-cost">{{ row.totalCost | localeNumber }} ₭</span>
               </div>
             }
           }

@@ -33,6 +33,9 @@ let nextId = 0;
 })
 export class TooltipDirective implements OnDestroy {
   readonly appTooltip = model<string | null | undefined>();
+  /** Contenu en colonnes libellé/valeur — voir `TooltipRequest.rows`. Alternative à `appTooltip`
+   * (texte simple), pas un complément : quand fourni et non vide, prend le pas sur `appTooltip`. */
+  readonly tooltipRows = input<readonly (readonly [string, string])[] | null>(null);
   readonly tooltipPosition = input<TooltipPosition>('top');
   readonly tooltipMultiline = input(false);
   readonly tooltipOnlyIfTruncated = input(false);
@@ -79,7 +82,9 @@ export class TooltipDirective implements OnDestroy {
 
   private show(): void {
     const text = this.appTooltip();
-    if (!text || this.tooltipDisabled()) return;
+    const rows = this.tooltipRows();
+    const hasRows = !!rows && rows.length > 0;
+    if ((!text && !hasRows) || this.tooltipDisabled()) return;
     const el = this.el.nativeElement;
     if (this.tooltipOnlyIfTruncated() && el.scrollWidth <= el.clientWidth) return;
     this.visible = true;
@@ -87,7 +92,8 @@ export class TooltipDirective implements OnDestroy {
     document.addEventListener('scroll', this.onScroll, { capture: true, passive: true });
     this.tooltipService.show({
       id: this.id,
-      text,
+      text: text ?? '',
+      rows: hasRows ? rows : null,
       rect: el.getBoundingClientRect(),
       position: this.tooltipPosition(),
       multiline: this.tooltipMultiline(),

@@ -2,45 +2,6 @@
   display: contents;
 }
 
-/* Recherche par nom d'objet — même langage visuel que `.search-wrap`/`.search-input`
-   (HistoryListHeaderComponent, Achats/Échanges) : icône loupe à gauche, mais SANS le switch de tri
-   (déjà géré par `.loot-sort-switch`, propre à chaque appelant, voir CLAUDE.md) et AVEC une croix
-   d'effacement à droite, affichée seulement quand `searchQuery()` n'est pas vide. */
-.loot-search-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-  margin-bottom: 6px;
-}
-.loot-search-icon {
-  position: absolute;
-  left: 8px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-.loot-search-input {
-  flex-grow: 1;
-  min-width: 0;
-  background: var(--surface-well);
-  border: 1px solid var(--border-strong);
-  color: var(--text-color);
-  padding: 6px 30px 6px 30px;
-  border-radius: 4px;
-  font-family: inherit;
-  font-size: 0.82rem;
-}
-.loot-search-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-.loot-search-clear {
-  position: absolute;
-  right: 0;
-  border-radius: 0 4px 4px 0;
-}
-
 .loot-list {
   display: flex;
   flex-direction: column;
@@ -99,6 +60,20 @@
 .loot-qty {
   font-family: monospace;
   color: var(--kama-color);
+}
+/* Badge de doute (voir LootConfidence.doubtful) : `<span>` porteur du tooltip (voir template — pas
+   directement sur <app-icon>, dont le `:host{display:contents}` n'a pas de boîte propre pour
+   `getBoundingClientRect()`), affiché inline pour s'aligner avec le reste de la ligne. Même teinte
+   ambre/or que `--dmg-light` (dégâts Lumière), déjà utilisée ailleurs comme signal d'attention (voir
+   fight-history.component.css, regroupement de donjon déplié) — cohérent avec le reste de l'app
+   plutôt qu'une nouvelle couleur dédiée ; hérite normalement jusqu'au `<svg>` interne
+   d'IconComponent malgré son `display:contents` (l'encapsulation de vue ne bloque pas l'héritage
+   CSS, seulement le ciblage par sélecteur). */
+.loot-doubt-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--dmg-light);
+  cursor: help;
 }
 
 /* `.empty-state` (base) vient de styles.css — seule la variante "small" est propre à ce contexte,

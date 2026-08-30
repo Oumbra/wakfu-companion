@@ -1,4 +1,5 @@
 import { Component, computed, inject, OnDestroy } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FightHistoryComponent } from '../fight-history/fight-history.component';
 import { PurchasesComponent } from '../purchases/purchases.component';
 import { TradesComponent } from '../trades/trades.component';
@@ -7,8 +8,13 @@ import { HelpModalService, HelpSection } from '../../core/services/help-modal.se
 import { IconComponent } from '../../shared/icon/icon.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
-import type { HistoryEventKind } from '../../core/sync/history-event.model';
+import {
+  LOAD_MORE_SPAN_MS,
+  type HistoryEventKind,
+  type LoadMoreSpan,
+} from '../../core/sync/history-event.model';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { LoadMoreScopeMenuService } from '../../core/services/load-more-scope-menu.service';
 import { HistoryTab, NavigationService } from '../../core/services/navigation.service';
 import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import {
@@ -84,6 +90,7 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
     TranslatePipe,
     IconComponent,
     TooltipDirective,
+    NgTemplateOutlet,
   ],
   templateUrl: './history.component.html',
   styleUrl: './history.component.css',
@@ -93,6 +100,7 @@ export class HistoryComponent implements OnDestroy {
   protected readonly archive = inject(HistoryArchiveService);
   protected readonly auth = inject(AuthService);
   protected readonly layout = inject(DashboardLayoutService);
+  protected readonly loadMoreScopeMenu = inject(LoadMoreScopeMenuService);
   private readonly nav = inject(NavigationService);
 
   /** Même seuil que `.collapse-btn`/`@media (min-width: 801px)` (styles.css, dashboard.component.css) :
@@ -161,6 +169,19 @@ export class HistoryComponent implements OnDestroy {
     void (key === 'purchases'
       ? this.archive.loadMorePurchasesUntilDayComplete()
       : this.archive.loadMore(TAB_EVENT_KIND[key]));
+  }
+
+  /** Ouvre le menu "1 semaine / 1 mois / 1 an" (voir LoadMoreScopeMenuService) ancré sur le bouton
+   * cliqué — `event.currentTarget` plutôt que `event.target` : le clic peut arriver sur l'icône SVG
+   * interne du bouton, pas nécessairement sur le `<button>` lui-même. */
+  protected openLoadMoreScopeMenu(event: MouseEvent, key: DashboardHistoryKey): void {
+    this.loadMoreScopeMenu.open(event.currentTarget as HTMLElement, (span) =>
+      this.loadMoreSpanFor(key, span),
+    );
+  }
+
+  private loadMoreSpanFor(key: DashboardHistoryKey, span: LoadMoreSpan): void {
+    void this.archive.loadMoreForSpan(TAB_EVENT_KIND[key], LOAD_MORE_SPAN_MS[span]);
   }
 
   /** Placement calculé (`grid-column`/`grid-row`/`order`, voir DashboardLayoutService.gridPlan) d'une

@@ -9,11 +9,12 @@ import { CatalogService } from './core/api/catalog.service';
 import { NavigationService } from './core/services/navigation.service';
 import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
-import { SessionRecapComponent } from './features/session-recap/session-recap.component';
 import { ProfilePageComponent } from './features/profile-page/profile-page.component';
 import { LootAlertComponent } from './features/loot-alert/loot-alert.component';
 import { ClassPickerComponent } from './shared/class-picker/class-picker.component';
 import { ClassPickerService } from './core/services/class-picker.service';
+import { PeriodPickerComponent } from './shared/period-picker/period-picker.component';
+import { PeriodPickerService } from './core/services/period-picker.service';
 import { DamageReassignPickerComponent } from './shared/damage-reassign-picker/damage-reassign-picker.component';
 import {
   DamageReassignEntity,
@@ -41,6 +42,7 @@ import { OnboardingHelpMenuComponent } from './shared/onboarding-help-menu/onboa
 import { OnboardingTourService } from './core/services/onboarding-tour.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-notice.component';
+import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-more-scope-menu.component';
 
 @Component({
   selector: 'app-root',
@@ -48,10 +50,10 @@ import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-
     RouterOutlet,
     SetupComponent,
     DashboardComponent,
-    SessionRecapComponent,
     ProfilePageComponent,
     LootAlertComponent,
     ClassPickerComponent,
+    PeriodPickerComponent,
     DamageReassignPickerComponent,
     ItemPickerComponent,
     PurchaseReassignPickerComponent,
@@ -68,6 +70,7 @@ import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-
     OnboardingTourComponent,
     OnboardingHelpMenuComponent,
     AppUpdateNoticeComponent,
+    LoadMoreScopeMenuComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',
@@ -77,6 +80,7 @@ export class App implements OnInit {
   protected readonly i18n = inject(I18nService);
   protected readonly nav = inject(NavigationService);
   protected readonly classPickerService = inject(ClassPickerService);
+  protected readonly periodPickerService = inject(PeriodPickerService);
   protected readonly damageReassignService = inject(DamageReassignService);
   protected readonly itemPickerService = inject(ItemPickerService);
   protected readonly purchaseReassignService = inject(PurchaseReassignService);
@@ -144,6 +148,11 @@ export class App implements OnInit {
   protected onClassChosen(event: { className: string; gender: Gender }): void {
     this.classPickerService.request()?.onChosen(event.className, event.gender);
     this.classPickerService.close();
+  }
+
+  protected onPeriodPicked(offset: number): void {
+    this.periodPickerService.request()?.onPick(offset);
+    this.periodPickerService.close();
   }
 
   protected onDamageReassignChosen(to: DamageReassignEntity): void {
