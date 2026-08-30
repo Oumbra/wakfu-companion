@@ -15,6 +15,7 @@ import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.
 import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
 import { localDayStart } from '../utils/local-period.util';
+import { resolveLootConfidence } from '../utils/loot-confidence.util';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -576,11 +577,27 @@ function toFightRecord(
   // sourceCatalogId = itemId TEL QUE RENVOYÉ PAR LE SERVEUR pour cette ligne — plus besoin de
   // compteur d'occurrence par nom (voir StatsStoreService.findLootCorrection) : le `catalogId`
   // identifie déjà la ligne sans ambiguïté.
+  //
+  // Confiance (voir LootConfidence) recalculée ICI, pas persistée côté serveur : voir la doc de
+  // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour pourquoi (un combat déjà ancien
+  // profite ainsi d'un référentiel monsters.loot devenu plus complet depuis). Une correction
+  // manuelle déjà connue (voir ci-dessous) force 'confirmed' — l'utilisateur a lui-même tranché,
+  // jamais le contredire après coup par un badge de doute, même reconstruit à la lecture.
+  const enemyNames = entry.participants.filter((p) => p.side === 'enemy').map((p) => p.name);
   const loot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
     const correction = stats.findLootCorrection(fightKey, name, row.itemId, row.quantity);
-    if (correction !== null) anyCorrected = true;
-    return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
+    if (correction !== null) {
+      anyCorrected = true;
+      return {
+        name,
+        catalogId: correction,
+        quantity: row.quantity,
+        confidence: 'confirmed' as const,
+      };
+    }
+    const { catalogId, confidence } = resolveLootConfidence(catalog, enemyNames, name, row.itemId);
+    return { name, catalogId, quantity: row.quantity, confidence };
   });
 
   const record: FightRecord = {

@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
-import { Fight } from '../models/fight.model';
+import { Fight, LootConfidence } from '../models/fight.model';
+import { mergeLootConfidence, resolveLootConfidence } from '../utils/loot-confidence.util';
 import { CatalogService } from '../api/catalog.service';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
@@ -176,6 +177,8 @@ export interface LootRow {
    * si non résolu — voir FightLoot.catalogId, même distinction avec un éventuel id d'icône. */
   catalogId: number | null;
   quantity: number;
+  /** Voir LootConfidence (core/models/fight.model.ts). */
+  confidence: LootConfidence;
 }
 
 /** Un achat individuel (objet, quantité, coût total, horodatage) : détecté quand une perte de kamas est immédiatement suivie d'un ramassage d'objet (voir registerPurchase). */
@@ -1468,12 +1471,19 @@ export class StatsStoreService {
         for (const loot of working.fight.loots) {
           const key = loot.name.toLowerCase();
           const existing = this.sessionLootMap.get(key);
-          if (existing) existing.quantity += loot.quantity;
-          else
+          if (existing) {
+            existing.quantity += loot.quantity;
+            // Un seul badge de doute cumulé par nom : 'doubtful' l'emporte dès qu'UN SEUL des
+            // combats agrégés a un doute à faire valoir (signal à charge, jamais masqué par
+            // d'autres occurrences confirmées) ; sinon 'confirmed' l'emporte sur 'unknown' (au
+            // moins un combat a pu confirmer la provenance) — voir mergeLootConfidence.
+            existing.confidence = mergeLootConfidence(existing.confidence, loot.confidence);
+          } else
             this.sessionLootMap.set(key, {
               name: loot.name,
               catalogId: loot.catalogId,
               quantity: loot.quantity,
+              confidence: loot.confidence,
             });
         }
       }
@@ -1503,6 +1513,7 @@ export class StatsStoreService {
         name: l.name,
         catalogId: l.catalogId,
         quantity: l.quantity,
+        confidence: l.confidence,
       })),
       kamas: working.fight.kamas,
       turns: working.fight.turnCount,
@@ -1744,14 +1755,27 @@ export class StatsStoreService {
    * dont le fightId ne peut pas être connu avec certitude au moment où elle est lue. */
   private addLootToFight(working: FightWorking, item: string, quantity: number): void {
     const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
-    if (existing) existing.quantity += quantity;
-    else
-      working.fight.loots.push({
-        name: item,
-        id: this.lookupItemGfxId(item),
-        catalogId: this.catalog.findWakfuItemEntry(item)?.id ?? null,
-        quantity,
-      });
+    if (existing) {
+      existing.quantity += quantity;
+      return;
+    }
+    const defaultCatalogId = this.catalog.findWakfuItemEntry(item)?.id ?? null;
+    // `working.fight.enemies` est déjà le roster COMPLET du combat à cet instant (addLootToFight
+    // n'est appelée qu'à finalizeFight, après que tous les ennemis ont rejoint) — voir
+    // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour le détail du recoupement.
+    const { catalogId, confidence } = resolveLootConfidence(
+      this.catalog,
+      working.fight.enemies.map((e) => e.name),
+      item,
+      defaultCatalogId,
+    );
+    working.fight.loots.push({
+      name: item,
+      id: this.lookupItemGfxId(item),
+      catalogId,
+      quantity,
+      confidence,
+    });
   }
 
   /** SYNCHRONE (chemin chaud, voir CatalogService) : simple lecture de l'index déjà en mémoire, à
@@ -2455,14 +2479,29 @@ export class StatsStoreService {
     const row = this.findRowByCatalogId(record.loot, itemName, sourceCatalogId);
     if (!row) return;
     const wasFull = quantity >= row.quantity;
+    // L'utilisateur a lui-même tranché l'identité de cet objet : jamais le contredire après coup
+    // par un badge de doute (voir LootConfidence). Posé AVANT reassignRowQuantity pour qu'une
+    // ligne scindée en deux (voir sa doc, `{...row, catalogId, quantity: amount}`) hérite déjà de
+    // 'confirmed' par la copie — la ligne restante (si `row` n'est pas intégralement réattribuée)
+    // n'a, elle, pas changé d'identité et garde sa confiance d'origine.
+    row.confidence = 'confirmed';
     this.reassignRowQuantity(record.loot, row, quantity, catalogId);
+    // Ligne existante de même rareté ayant absorbé la quantité réattribuée (voir
+    // reassignRowQuantity, branche `target`) : elle aussi doit passer à 'confirmed'.
+    const target = record.loot.find(
+      (l) => l.catalogId === catalogId && l.name.toLowerCase() === itemName.toLowerCase(),
+    );
+    if (target) target.confidence = 'confirmed';
 
     // Compteur cumulé de session (toutes fusions confondues, voir sessionLootMap) : mis à jour
     // seulement pour une correction COMPLÈTE de la ligne — un compteur cumulé unique ne peut pas
     // représenter une scission partielle proprement, voir doc de sessionLoot.
     if (wasFull) {
       const sessionRow = this.sessionLootMap.get(itemName.toLowerCase());
-      if (sessionRow) sessionRow.catalogId = catalogId;
+      if (sessionRow) {
+        sessionRow.catalogId = catalogId;
+        sessionRow.confidence = 'confirmed';
+      }
       this.sessionLoot.set([...this.sessionLootMap.values()]);
     }
 

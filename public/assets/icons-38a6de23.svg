@@ -105,4 +105,13 @@
     <path d="M5 7.5h14M5 16.5h14" />
     <path d="M9 11h6M9 14h4" />
   </symbol>
+  <!-- Badge de doute sur une ligne de butin (voir loot-list.component) : objet dont la provenance
+       n'a pas pu être confirmée par recoupement avec les tables de drop des monstres du combat
+       (LootConfidence.doubtful, core/models/fight.model.ts) — point d'interrogation dans un
+       cercle, motif universellement associé à l'incertitude. -->
+  <symbol id="help-circle" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 2-2.6 2.2-2.6 3.7" />
+    <path d="M12 17.2h.01" />
+  </symbol>
 </svg>
