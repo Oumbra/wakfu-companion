@@ -124,12 +124,13 @@ interface RecapGroupRow {
   key: string;
   label: string;
   totals: PeriodGroupTotals;
-  /** URL de l'illustration officielle Ankama du donjon (voir `CatalogDungeonEntry.pictureUrl`),
-   * uniquement pour une ligne "Donjon & Famille" adossée à un VRAI donjon résolu — `null` pour une
-   * ligne famille (aucune image par famille côté catalogue, voir `CatalogMonsterFamilyEntry`) et
-   * pour toute ligne du mode "Type" (bucket fusionné, plusieurs donjons possibles derrière une
-   * seule ligne — pas d'image unique pertinente, voir `typeRows`). Le template retombe alors sur
-   * un pictogramme générique (voir `isFamilyRow`). */
+  /** URL de l'illustration d'une ligne "Donjon & Famille" — `CatalogDungeonEntry.pictureUrl` pour
+   * un VRAI donjon résolu, `CatalogMonsterFamilyEntry.pictureUrl` pour une ligne famille (`null`
+   * pour certaines familles purement thématiques, ex. "Boss Ultimes"/"Events", ou tant que
+   * `/monster-families` n'a pas fini de charger côté catalogue) ; `null` aussi pour toute ligne du
+   * mode "Type" (bucket fusionné, plusieurs donjons possibles derrière une seule ligne — pas
+   * d'image unique pertinente, voir `typeRows`). Le template retombe alors sur un pictogramme
+   * générique (voir `isFamilyRow`). */
   pictureUrl: string | null;
   /** Id Ankama de la pierre de donjon associée (voir `dungeonStoneItemIdForType`) — uniquement pour
    * une ligne du mode "Type" adossée à un `WakfuDungeonType` qui délivre une pierre (2/3/4 salles, 3
@@ -468,7 +469,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         key: `family:${f.familyId ?? 'null'}`,
         label: this.familyLabel(f.familyId),
         totals: f,
-        pictureUrl: null,
+        pictureUrl:
+          f.familyId !== null
+            ? (this.catalog.findWakfuMonsterFamilyById(f.familyId)?.pictureUrl ?? null)
+            : null,
         stoneItemId: null,
         disabled: false,
         tiles: [],

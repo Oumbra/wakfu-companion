@@ -25,6 +25,7 @@ import {
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import {
   DEFAULT_FIGHT_IMAGE_URL,
+  dungeonGroupImageUrl,
   FightImageLocalizedName,
   findDungeonForEnemies,
   resolveFightImageInfo,
@@ -36,7 +37,11 @@ import {
   nextLootSortState,
   sortLootRows,
 } from '../../core/utils/loot-sort.util';
-import { CatalogService, isDungeonBreach } from '../../core/api/catalog.service';
+import {
+  CatalogDungeonEntry,
+  CatalogService,
+  isDungeonBreach,
+} from '../../core/api/catalog.service';
 import { HistoryArchiveService, HistoryOrigin } from '../../core/sync/history-archive.service';
 import {
   dungeonStoneItemId,
@@ -61,10 +66,11 @@ interface FightGroup {
    * sert de clé de tracking et de clé de repli, jamais affiché tel quel. */
   key: string;
   label: string;
-  /** Illustration du groupe, affichée devant `label` — seulement pour un groupe "famille de
-   * monstre" du regroupement Type dont la famille a une image connue (voir
-   * `CatalogMonsterFamilyEntry.pictureUrl`, repository/monster-families.json), `null` partout
-   * ailleurs (jour/lieu, groupe "donjon"/"autre" du mode Type, ou famille sans image). */
+  /** Illustration du groupe, affichée devant `label` — pour un groupe "donjon" du regroupement Type
+   * (donjon classique, brèche ou brèche ultime, voir `dungeonGroupImageUrl`, toujours une image) OU
+   * un groupe "famille" dont la famille a une image connue (voir `CatalogMonsterFamilyEntry.
+   * pictureUrl`, repository/monster-families.json), `null` partout ailleurs (jour/lieu, groupe
+   * "autre" du mode Type, ou famille sans image). */
   imageUrl: string | null;
   records: DungeonHistoryEntry<HistoryFight>[];
 }
@@ -340,8 +346,9 @@ export class FightHistoryComponent {
       key: string;
       categoryRank: number;
       records: DungeonHistoryEntry<HistoryFight>[];
-      /** Nom du donjon/brèche (groupe "dungeon") — labellisation immédiate, un seul nom possible. */
-      dungeonNames: FightImageLocalizedName | null;
+      /** Donjon/brèche du groupe "dungeon" — labellisation ET illustration immédiates (voir
+       * `typeGroupLabel`/`typeGroupImageUrl`), un seul donjon possible. */
+      dungeon: CatalogDungeonEntry | null;
       /** Id de famille encyclopédie (groupe "famille" avec `family` connu, voir
        * `CatalogMonsterEntry.family`) — `null` pour un repli par nom (28 monstres sans famille) OU
        * un groupe qui n'est pas de type "famille". */
@@ -366,7 +373,7 @@ export class FightHistoryComponent {
           key: classification.key,
           categoryRank: classification.categoryRank,
           records: [],
-          dungeonNames: classification.kind === 'dungeon' ? classification.names : null,
+          dungeon: classification.kind === 'dungeon' ? classification.dungeon : null,
           familyId: classification.kind === 'family' ? classification.familyId : null,
           nameCounts: classification.kind === 'family' ? new Map() : null,
         };
@@ -400,11 +407,11 @@ export class FightHistoryComponent {
    * `/monster-families`, ou pour les 28 monstres sans famille encyclopédie), sinon en dernier repli
    * le nom de monstre "représentatif" le plus fréquent du groupe (voir `buildTypeGroups`). */
   private typeGroupLabel(bucket: {
-    dungeonNames: FightImageLocalizedName | null;
+    dungeon: CatalogDungeonEntry | null;
     familyId: number | null;
     nameCounts: Map<string, { names: FightImageLocalizedName; count: number }> | null;
   }): string {
-    if (bucket.dungeonNames) return bucket.dungeonNames[this.i18n.locale()];
+    if (bucket.dungeon) return bucket.dungeon[this.i18n.locale()];
     if (bucket.familyId !== null) {
       const family = this.catalog.findWakfuMonsterFamilyById(bucket.familyId);
       if (family) return family[this.i18n.locale()];
@@ -416,12 +423,17 @@ export class FightHistoryComponent {
     return best ? best.names[this.i18n.locale()] : this.i18n.t('history.group.otherType');
   }
 
-  /** Illustration d'un groupe "Type" : uniquement pour un groupe "famille" dont la famille est
-   * connue de `CatalogService` ET porte une image (voir CatalogMonsterFamilyEntry.pictureUrl,
-   * `null` pour certaines familles purement thématiques) — `null` pour un groupe "donjon"/"autre"
-   * (déjà distingué par son libellé, pas besoin d'icône) ou un repli par nom de monstre (familyId
-   * `null`, voir `typeGroupLabel`). */
-  private typeGroupImageUrl(bucket: { familyId: number | null }): string | null {
+  /** Illustration d'un groupe "Type" : toujours une image pour un groupe "donjon" (classique,
+   * brèche ou brèche ultime — voir `dungeonGroupImageUrl`) ; pour un groupe "famille", uniquement
+   * si la famille est connue de `CatalogService` ET porte une image (voir
+   * CatalogMonsterFamilyEntry.pictureUrl, `null` pour certaines familles purement thématiques) ;
+   * `null` pour le groupe "autre" ou un repli par nom de monstre (familyId `null`, voir
+   * `typeGroupLabel`). */
+  private typeGroupImageUrl(bucket: {
+    dungeon: CatalogDungeonEntry | null;
+    familyId: number | null;
+  }): string | null {
+    if (bucket.dungeon) return dungeonGroupImageUrl(bucket.dungeon);
     if (bucket.familyId === null) return null;
     return this.catalog.findWakfuMonsterFamilyById(bucket.familyId)?.pictureUrl ?? null;
   }

@@ -315,6 +315,19 @@ export function resolveFightImageInfo(
   return { url: null, tooltipSource: null, fallbackUrls: [] };
 }
 
+/** Illustration d'un groupe "donjon" du regroupement Type (voir `FightHistoryComponent.
+ * typeGroupImageUrl`) — reprend le même mapping que les priorités 0/2 de `resolveFightImageInfo`
+ * (brèche/brèche ultime -> illustration générique dédiée, `BREACH_IMAGE_URL`/
+ * `ULTIMATE_BREACH_IMAGE_URL`, plutôt que `dungeon.pictureUrl` qui vaut alors l'illustration
+ * générique de repli DEFAULT_FIGHT_IMAGE_URL côté référentiel — voir repository/dungeons.json) mais
+ * appliqué à un `CatalogDungeonEntry` déjà résolu (un seul donjon par groupe "Type", pas de
+ * re-détection depuis une liste d'ennemis). */
+export function dungeonGroupImageUrl(dungeon: CatalogDungeonEntry): string {
+  if (dungeon.type === 'ULTIMATE_BREACH') return ULTIMATE_BREACH_IMAGE_URL;
+  if (dungeon.type === 'BREACH') return BREACH_IMAGE_URL;
+  return dungeon.pictureUrl;
+}
+
 /** Repli sans métadonnée de tooltip — voir resolveFightImageInfo. */
 export function resolveFightImageUrl(
   catalog: CatalogService,
@@ -355,6 +368,12 @@ export type FightTypeClassification =
        * (illustration), le nom d'une brèche N'EST PAS masqué ici : c'est justement ce qui distingue
        * la catégorie "brèches" de celle des donjons classiques dans le regroupement par type. */
       names: FightImageLocalizedName;
+      /** Entrée donjon/brèche complète — sert à `fight-history.component.ts` (`typeGroupImageUrl`)
+       * pour résoudre l'illustration du collapse via `dungeonGroupImageUrl` sans re-détection.
+       * Toujours le même objet que `names` ci-dessus (redondant à dessein : `names` reste typé
+       * `FightImageLocalizedName` pour ne porter que ce dont un consommateur "libellé seul" a
+       * besoin). */
+      dungeon: CatalogDungeonEntry;
     }
   | {
       kind: 'family';
@@ -402,6 +421,7 @@ export function resolveFightTypeClassification(
       categoryRank: DUNGEON_TYPE_CATEGORY_RANK[dungeon.type],
       key: `dungeon:${dungeon.id}`,
       names: dungeon,
+      dungeon,
     };
   }
 
