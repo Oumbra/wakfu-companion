@@ -63,6 +63,10 @@ export interface CatalogMonsterFamilyEntry {
   en: string;
   es: string;
   pt: string;
+  /** `null` pour les familles sans illustration propre (ex. "Boss Ultimes", "Events") —
+   * champ `picture` du référentiel. Sert d'icône au groupe "famille de monstre"
+   * du regroupement "Type" de l'historique des combats, voir fight-history.component.ts. */
+  pictureUrl: string | null;
 }
 
 /** Catégorie d'un donjon, curée à la main dans le référentiel (miroir de

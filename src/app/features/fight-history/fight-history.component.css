@@ -63,6 +63,16 @@
 .fight-group-row:hover {
   background: var(--surface-raised);
 }
+/* Illustration de famille de monstre (voir FightGroup.imageUrl) — taille assortie au reste d'une
+   ligne de groupe compacte (label en 0.72rem), jamais aussi grande que `.fight-image` (48px, ligne
+   de combat individuelle) qui écraserait visuellement ce bandeau fin. */
+.fight-group-image {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
 .fight-group-label {
   font-size: 0.72rem;
   font-weight: 700;

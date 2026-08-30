@@ -37,6 +37,7 @@ const MONSTER_FAMILY_ROW = {
   en: 'Gobballs',
   es: 'Jalatós',
   pt: 'Papatudos',
+  pictureUrl: 'https://vertylo.github.io/wakassets/monstersfamily/68.png',
 };
 
 function ok<T>(data: T): ApiResult<T> {
