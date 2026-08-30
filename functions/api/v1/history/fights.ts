@@ -4,6 +4,7 @@ import { createDb } from '../../../../server/db/client';
 import { fightLoot, fightParticipants, fights } from '../../../../server/db/schema';
 import {
   dungeonFightTypeUpdateSql,
+  eventFightTypeUpdateSql,
   familyFightTypeUpdateSql,
 } from '../../../../server/history/fight-type';
 import {
@@ -175,7 +176,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // recalculée pour TOUT le lot (combats nouveaux comme déjà connus) : un combat déjà connu peut
   // être renvoyé uniquement pour son rattachement de donjon a posteriori (voir la doc de
   // `dungeonId` ci-dessus), auquel cas `fight_type` doit être recalculée avec lui dans la même
-  // requête plutôt que de rester figée à sa valeur `FAMILY_*`/`null` initiale. Nécessite les
+  // requête plutôt que de rester figée à sa valeur `FAMILY_*`/`EVENT`/`null` initiale. Nécessite les
   // participants déjà écrits (requête précédente) : la classification "hors donjon" dépend de
   // `fight_participants.monster_id`.
   const touchedFightIds = [...idByKey.values()];
@@ -186,6 +187,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     )})`;
     await db.execute(dungeonFightTypeUpdateSql(scope));
     await db.execute(familyFightTypeUpdateSql(scope));
+    await db.execute(eventFightTypeUpdateSql(scope));
   }
 
   const lootRows = parsed.value.flatMap((fight) => {
