@@ -232,6 +232,17 @@ export class CatalogService {
   private monstersById = new Map<number, CatalogMonsterEntry>();
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
+  /** Noms normalisés (voir normalizeWakfuName) partagés par au moins 2 objets distincts du
+   * référentiel — précalculé une seule fois à la (re)construction de l'index (applyIndex) pour que
+   * `hasMultipleWakfuItemEntriesByName` reste O(1). Sans cet index, un appelant appelé au fil du
+   * rendu (ex. `[appTooltip]` évalué à chaque cycle de détection de changement, pour CHAQUE ligne de
+   * butin affichée — voir LootListComponent/TradesComponent.canInteract) reproduirait à chaque tick
+   * le balayage complet de `findAllWakfuItemEntriesByName` (~19 700 objets × 4 normalisations
+   * Unicode chacun) : régression de performance réelle corrigée le 2026-08-30 (le détail d'un combat
+   * devenait quasi inutilisable — survol/scroll très lents, d'autant plus qu'il y a de butin
+   * affiché), le calcul se répétant intégralement à chaque déplacement de souris faute de `OnPush`
+   * dans l'app. */
+  private ambiguousItemNames = new Set<string>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
   private dungeonsById = new Map<number, CatalogDungeonEntry>();
   /** Toutes les entrées donjon telles que reçues (contrairement à dungeonsByBossMonsterId, pas
@@ -301,6 +312,14 @@ export class CatalogService {
           normalizeWakfuName(entry.pt) === key,
       )
       .sort((a, b) => a.id - b.id);
+  }
+
+  /** Équivalent O(1) de `findAllWakfuItemEntriesByName(name).length > 1` (voir `ambiguousItemNames`)
+   * — à utiliser partout où seule l'AMBIGUÏTÉ importe (afficher ou non une interaction de
+   * correction), jamais besoin de la liste elle-même. Réservé `findAllWakfuItemEntriesByName` aux
+   * cas qui exploitent vraiment la liste (menu de correction, résolution de confiance du butin). */
+  hasMultipleWakfuItemEntriesByName(name: string): boolean {
+    return this.ambiguousItemNames.has(normalizeWakfuName(name));
   }
 
   /** Miroir de findWakfuMonsterEntry — voir findWakfuItemEntry. */
@@ -564,6 +583,9 @@ export class CatalogService {
     const itemsById = new Map<number, CatalogItemEntry>();
     const itemsByFrName = new Map<string, CatalogItemEntry>();
     const itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
+    // Voir doc de `ambiguousItemNames` : id -> ses noms normalisés distincts, pour compter combien
+    // d'OBJETS DISTINCTS (pas d'occurrences de locale) partagent un même nom normalisé.
+    const itemIdsByName = new Map<string, Set<number>>();
     for (const tuple of payload.items) {
       const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag, categorySortOrder] =
         tuple as ItemTuple;
@@ -585,10 +607,21 @@ export class CatalogService {
         const key = normalizeWakfuName(localized);
         if (!itemsByOtherLocaleName.has(key)) itemsByOtherLocaleName.set(key, entry);
       }
+      for (const key of new Set([frKey, ...[en, es, pt].map(normalizeWakfuName)])) {
+        let ids = itemIdsByName.get(key);
+        if (!ids) {
+          ids = new Set();
+          itemIdsByName.set(key, ids);
+        }
+        ids.add(id);
+      }
     }
     this.itemsById = itemsById;
     this.itemsByFrName = itemsByFrName;
     this.itemsByOtherLocaleName = itemsByOtherLocaleName;
+    this.ambiguousItemNames = new Set(
+      [...itemIdsByName].filter(([, ids]) => ids.size > 1).map(([key]) => key),
+    );
 
     const monstersById = new Map<number, CatalogMonsterEntry>();
     const monstersByFrName = new Map<string, CatalogMonsterEntry>();

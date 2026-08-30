@@ -66,7 +66,7 @@ export class LootListComponent {
     return (
       this.interactive() &&
       this.fight() !== null &&
-      this.catalog.findAllWakfuItemEntriesByName(row.name).length > 1
+      this.catalog.hasMultipleWakfuItemEntriesByName(row.name)
     );
   }
 
