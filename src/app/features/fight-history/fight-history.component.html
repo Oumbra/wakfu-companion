@@ -105,7 +105,11 @@
     }
   }
   @if (fightHistory().length === 0) {
-    <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
+    @if (historyLoading()) {
+      <div class="empty-state"><app-spinner /></div>
+    } @else {
+      <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
+    }
   } @else {
     @for (group of fightGroups(); track groupMode() + ':' + group.key) {
       <div class="fight-group-row" (click)="toggleGroupCollapsed(group.key)">

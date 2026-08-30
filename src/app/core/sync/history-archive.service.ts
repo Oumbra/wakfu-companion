@@ -29,6 +29,11 @@ const PAGE_SIZE = 50;
  * (jamais censé être atteint en pratique, voir sa doc) plutôt qu'une vraie limite métier. */
 const MAX_DAY_COMPLETION_PAGES = 40;
 
+/** Nombre maximal de pages enchaînées par `loadMoreForSpan` — même rôle que
+ * `MAX_DAY_COMPLETION_PAGES` (garde-fou pur, jamais censé être atteint) : à `PAGE_SIZE` par page,
+ * même la portée "1 an" s'arrête bien avant sur une activité de jeu réaliste. */
+const MAX_SPAN_PAGES = 400;
+
 /** Début du jour calendaire LOCAL (minuit) contenant `timestampMs` — même découpage que
  * `I18nService.formatRelativeDay` (celui qui pilote le regroupement par jour affiché), reproduit
  * ici en pur pour ne pas faire dépendre ce service d'`I18nService`. */
@@ -323,6 +328,42 @@ export class HistoryArchiveService {
       const oldest = loaded[loaded.length - 1];
       if (!oldest || loaded.length === previousLength) break;
       if (localDayStart(oldest.fullTimestampMs) !== boundaryDay) break; // jour limite dépassé : il est désormais complet
+    }
+  }
+
+  /**
+   * Comme `loadMore(kind)`, mais enchaîne autant de pages supplémentaires que nécessaire pour
+   * couvrir au moins `spanMs` de recul depuis maintenant — voir `LoadMoreSpan`/`LOAD_MORE_SPAN_MS`
+   * (history-event.model.ts) et `LoadMoreScopeMenuComponent`, qui laisse ainsi charger "1 semaine"/
+   * "1 mois"/"1 an" d'un seul clic plutôt que de cliquer "Charger plus" un nombre de fois inconnu à
+   * l'avance. Les achats passent par `loadMorePurchasesUntilDayComplete` à chaque page enchaînée
+   * (même règle "jour complet" que le chargement normal, voir sa doc), pas par `loadMore('purchase')`
+   * directement. S'arrête dès que l'archive est épuisée (`!hasMore`) ou qu'une page n'a rien
+   * rapporté (échec réseau), même avant d'avoir couvert `spanMs`.
+   */
+  async loadMoreForSpan(kind: HistoryEventKind, spanMs: number): Promise<void> {
+    const targetTime = Date.now() - spanMs;
+    const list = this.listFor(kind);
+    for (let page = 0; page < MAX_SPAN_PAGES && this.hasMore(kind); page++) {
+      const before = list().length;
+      await (kind === 'purchase' ? this.loadMorePurchasesUntilDayComplete() : this.loadMore(kind));
+      const loaded = list();
+      if (loaded.length === before) return; // échec réseau, ou rien de plus à charger
+      const oldest = loaded[loaded.length - 1];
+      if (oldest.fullTimestampMs <= targetTime) return; // portée demandée couverte
+    }
+  }
+
+  /** Accès signal-par-type utilisé par `loadMoreForSpan` — même liste que celle mise à jour par
+   * `loadMore(kind)`/`loadMorePurchasesUntilDayComplete` pour ce `kind`. */
+  private listFor(kind: HistoryEventKind): () => readonly { fullTimestampMs: number }[] {
+    switch (kind) {
+      case 'fight':
+        return this._fights;
+      case 'purchase':
+        return this._purchases;
+      case 'trade':
+        return this._trades;
     }
   }
 

@@ -153,6 +153,20 @@ export const HISTORY_ENDPOINTS: Record<HistoryEventKind, string> = {
   trade: '/history/trades',
 };
 
+/** Portées temporelles proposées par le menu "Charger plus" (voir `LoadMoreScopeMenuComponent` /
+ * `HistoryArchiveService.loadMoreForSpan`) — un seul clic couvrant une durée choisie plutôt que de
+ * cliquer "Charger plus" un nombre de fois inconnu à l'avance pour atteindre une ancienneté donnée. */
+export type LoadMoreSpan = 'week' | 'month' | 'year';
+
+/** Approximations volontaires (30/365 jours) : il ne s'agit que de bornes de chargement, pas de
+ * calculs calendaires exacts — un mois "réel" en plus ou en moins ne change rien à l'utilité de ce
+ * raccourci. */
+export const LOAD_MORE_SPAN_MS: Record<LoadMoreSpan, number> = {
+  week: 7 * 24 * 60 * 60 * 1000,
+  month: 30 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000,
+};
+
 function normalize(value: string): string {
   return value.trim().toLowerCase();
 }

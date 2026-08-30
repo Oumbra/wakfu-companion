@@ -110,3 +110,89 @@ describe('HistoryArchiveService — fusion session/compte (mergedFights)', () =>
     expect(archive.mergedFights()).toHaveLength(1);
   });
 });
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const WEEK_MS = 7 * DAY_MS;
+
+/**
+ * Faux serveur d'échanges (`trade`, le type le plus simple à peupler — pas d'objets/loot à
+ * résoudre via le catalogue) : `TOTAL_TRADES` entrées espacées d'un jour, servies par pages de
+ * `MOCK_PAGE_SIZE` (volontairement petit et distinct du vrai `PAGE_SIZE` de production, pour que le
+ * test exerce plusieurs pages sans avoir à générer des centaines d'entrées) quel que soit le
+ * `limit` réellement demandé — seul `before` (curseur) fait varier la réponse.
+ */
+function createTradesApiMock(now: number, totalTrades: number, mockPageSize: number) {
+  const all = Array.from({ length: totalTrades }, (_, i) => ({
+    clientKey: `trade-${i}`,
+    peerName: 'Voisin',
+    selfName: 'Moi',
+    occurredAt: new Date(now - i * DAY_MS).toISOString(),
+    kamasAcquired: 0,
+    kamasGiven: 0,
+    gameServer: null,
+    acquired: [],
+    given: [],
+  }));
+  let calls = 0;
+  const api: Partial<ApiClientService> = {
+    setUnauthorizedHandler: () => undefined,
+    getJson: async <T>(path: string) => {
+      if (!path.startsWith('/history/trades')) {
+        return { ok: false, error: { kind: 'offline' } } as ApiResult<T>;
+      }
+      calls++;
+      const beforeMatch = /before=([^&]+)/.exec(path);
+      const before = beforeMatch ? decodeURIComponent(beforeMatch[1]) : null;
+      // `before` désigne ici l'`occurredAt` du DERNIER élément déjà servi (voir `nextBefore`
+      // ci-dessous) — la page suivante reprend juste APRÈS lui, jamais en le réincluant.
+      const startIndex = before === null ? 0 : all.findIndex((e) => e.occurredAt === before) + 1;
+      const page = all.slice(startIndex);
+      const entries = page.slice(0, mockPageSize);
+      const nextBefore =
+        entries.length < page.length ? entries[entries.length - 1].occurredAt : null;
+      return { ok: true, data: { entries, nextBefore } } as ApiResult<T>;
+    },
+    requestJson: async <T>() => ({ ok: true, data: undefined as T }),
+  };
+  return { api, callCount: () => calls };
+}
+
+/**
+ * `loadMoreForSpan` (menu "Charger plus" — voir LoadMoreScopeMenuComponent) : enchaîne les pages
+ * jusqu'à couvrir la portée demandée, sans tout charger d'un coup ni s'arrêter avant.
+ */
+describe('HistoryArchiveService — loadMoreForSpan', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it("charge juste assez de pages pour couvrir la portée demandée ('1 semaine')", async () => {
+    const now = Date.now();
+    const { api, callCount } = createTradesApiMock(now, 31, 5);
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const archive = TestBed.inject(HistoryArchiveService);
+
+    await archive.loadMoreForSpan('trade', WEEK_MS);
+
+    // Il faut remonter jusqu'à un événement vieux d'au moins 7 jours (index 7, le 8e) — avec des
+    // pages de 5, ça tombe au milieu de la 2e page : 2 requêtes, 10 entrées chargées au total.
+    expect(callCount()).toBe(2);
+    expect(archive.trades()).toHaveLength(10);
+    const oldest = archive.trades()[archive.trades().length - 1];
+    expect(now - oldest.fullTimestampMs).toBeGreaterThanOrEqual(WEEK_MS);
+  });
+
+  it("s'arrête à l'épuisement de l'archive plutôt que de boucler indéfiniment si la portée demandée dépasse ce qui existe", async () => {
+    const now = Date.now();
+    const { api, callCount } = createTradesApiMock(now, 12, 5);
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const archive = TestBed.inject(HistoryArchiveService);
+
+    // "1 an" alors que l'archive ne contient que 12 jours d'échanges.
+    await archive.loadMoreForSpan('trade', 365 * DAY_MS);
+
+    expect(archive.trades()).toHaveLength(12);
+    expect(archive.hasMore('trade')).toBe(false);
+    expect(callCount()).toBe(3); // ceil(12 / 5)
+  });
+});

@@ -47,6 +47,8 @@ import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { DamageViewMode } from '../../shared/damage-view-switch/damage-view-switch.component';
 import { EntityStatKind } from '../../shared/entity-stat-tabs/entity-stat-tabs.component';
 import { CombatDetailComponent } from '../../shared/combat-detail/combat-detail.component';
+import { LogFileAccessService } from '../../core/services/log-file-access.service';
+import { SpinnerComponent } from '../../shared/spinner/spinner.component';
 
 export type FightGroupMode = 'day' | 'location' | 'type';
 
@@ -86,6 +88,7 @@ interface FightGroup {
     NgTemplateOutlet,
     TooltipDirective,
     CombatDetailComponent,
+    SpinnerComponent,
   ],
   templateUrl: './fight-history.component.html',
   styleUrl: './fight-history.component.css',
@@ -103,6 +106,7 @@ export class FightHistoryComponent {
   private readonly stats = inject(StatsStoreService);
   protected readonly combatPanel = inject(CombatPanelService);
   protected readonly helpModal = inject(HelpModalService);
+  private readonly logFileAccess = inject(LogFileAccessService);
 
   // --- Combat en cours (ex-DamageMeterComponent, voir doc de tête) ---------------------------
 
@@ -183,6 +187,23 @@ export class FightHistoryComponent {
   /** Combats affichés : session en cours + archive du compte fusionnées et dédoublonnées (voir
    * HistoryArchiveService.mergedFights). */
   protected readonly fightHistory = this.archive.mergedFights;
+
+  /** Vrai tant que la liste est réellement vide ET qu'une des deux sources qui l'alimentent est
+   * encore en train de la remplir — l'interprétation initiale du fichier de log
+   * (`LogFileAccessService.initialReadPending`, voir sa doc) et/ou la première page de l'archive du
+   * compte (`HistoryArchiveService.loading`, voir `loadAll`). Sert à afficher un spinner à la place
+   * du message "aucun combat" (voir template) pendant ce court intervalle, plutôt que de laisser le
+   * panneau paraître vide sans explication — bug réel signalé (l'utilisateur n'avait aucun moyen de
+   * distinguer "aucun combat" de "pas encore fini de charger"). Volontairement gardé à `fightHistory
+   * ().length === 0` plutôt qu'inconditionnel : une reconnexion en cours de session avec un
+   * historique déjà affiché ne doit pas faire disparaître ce qui est déjà visible pour le remplacer
+   * par un spinner. */
+  protected readonly historyLoading = computed(
+    () =>
+      this.fightHistory().length === 0 &&
+      (this.logFileAccess.initialReadPending() ||
+        (this.auth.isAuthenticated() && this.archive.loading())),
+  );
 
   /** Combats de donjon (salles + tentatives de boss) regroupés en entrées de collapse — voir
    * dungeon-run-grouping.util.ts. `fightHistory()` reste trié du plus récent au plus ancien,
