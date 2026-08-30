@@ -1,6 +1,6 @@
 {
-  "id": "300b53b3-e654-4f3e-8241-51fa8363dcdd",
-  "prevId": "1692b08e-4a77-4f47-a589-302ff8e56306",
+  "id": "ee8d3277-5239-42e3-ad52-eb751d4643fe",
+  "prevId": "300b53b3-e654-4f3e-8241-51fa8363dcdd",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1032,9 +1032,32 @@
           "primaryKey": false,
           "notNull": true,
           "default": false
+        },
+        "loot": {
+          "name": "loot",
+          "type": "integer[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "monsters_loot_idx": {
+          "name": "monsters_loot_idx",
+          "columns": [
+            {
+              "expression": "loot",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
