@@ -9,7 +9,7 @@
  * différents plutôt qu'un seul (auquel cas il s'agit plutôt d'un trou du référentiel `monsters.loot`
  * pour UN monstre précis, à corriger via le skill wakfu-monsters-sync plutôt qu'ici).
  *
- * Deux familles :
+ * Familles :
  * - Havre-Gemme / Fragment de Havre-Gemme : gemmes/fragments de havre-sac, un chance de drop
  *   générique sur (quasi) tout combat. Seules les variantes NON craftables (`items.hasRecipe ===
  *   false`) sont retenues — une variante craftable (ex. "Havre-Gemme de Bonta") s'obtient par
@@ -17,6 +17,10 @@
  *   dans `fight_loot` pour cette raison n'aurait pas de sens à traiter comme "universel".
  * - Objets "événement"/pierres génériques : Plâjeton, Perle, Clef du Pâlais Mârin (lot d'un même
  *   événement, ids 20390-20392 consécutifs), Guildalogemme, Pierre de Cristal, Pierre de Diamant.
+ * - Butin de mimique : "Mimicroquettes" (déposé par un mimique quel que soit le donjon — voir
+ *   CLAUDE.md sur le traitement des mimiques). "Bave de Mimic" avait le même profil dans l'analyse
+ *   statistique (23 vs 16 donjons distincts) mais n'a pas été confirmée par l'utilisateur, donc pas
+ *   encore ajoutée ici.
  *
  * `Larme d'Ogrest` mérite une note à part : DEUX objets partagent ce nom (voir
  * CatalogService.findAllWakfuItemEntriesByName) — id 24029 (catégorie `resources`), le vrai butin
@@ -50,6 +54,8 @@ export const UNIVERSAL_LOOT_ITEM_IDS: ReadonlySet<number> = new Set([
   16942, // Guildalogemme
   9795, // Pierre de Cristal
   9800, // Pierre de Diamant
+
+  12324, // Mimicroquettes (butin de mimique, voir doc de tête)
 
   // Objets d'un même événement (ids consécutifs 20390-20392)
   20390, // Clef du Pâlais Mârin
