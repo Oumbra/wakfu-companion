@@ -61,7 +61,7 @@
                         <div
                           class="trade-item-row"
                           [class]="rarityClass(item)"
-                          [appTooltip]="'items.interactTooltip' | t"
+                          [appTooltip]="canInteract(item) ? ('items.correctTooltip' | t) : null"
                           tooltipPosition="top"
                           (contextmenu)="openInteractMenu($event, record, 'acquired', item)"
                         >
@@ -84,7 +84,7 @@
                         <div
                           class="trade-item-row"
                           [class]="rarityClass(item)"
-                          [appTooltip]="'items.interactTooltip' | t"
+                          [appTooltip]="canInteract(item) ? ('items.correctTooltip' | t) : null"
                           tooltipPosition="top"
                           (contextmenu)="openInteractMenu($event, record, 'given', item)"
                         >
