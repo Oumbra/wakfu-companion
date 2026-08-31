@@ -490,17 +490,28 @@ button.reset-btn:hover {
 
 /* Placement d'une carte du corps du tableau de bord (voir DashboardLayoutService.gridPlan) dans
    `.panels-row` : posé en style INLINE (`[style.grid-column]`/`[style.grid-row]`) depuis
-   DashboardComponent (Combat/Suivi/Chat) ET depuis le template PROPRE d'HistoryComponent
-   (`display:contents`, un ou plusieurs `.tool-panel` scindés à part, voir history.component.html)
-   — jamais une classe : une classe posée depuis le template d'HistoryComponent porterait son
+   DashboardComponent (Suivi/Chat/Récap, directement sur le tag hôte — `<app-chat-panel
+   style="grid-column:2">`, PAS sur un `.tool-panel` interne) ET depuis le template PROPRE
+   d'HistoryComponent (`display:contents`, un ou plusieurs `.tool-panel` scindés à part, voir
+   history.component.html, où c'est cette fois le `.tool-panel` lui-même qui porte le style) —
+   jamais une classe : une classe posée depuis le template d'HistoryComponent porterait son
    attribut d'encapsulation de vue à LUI, pas celui de `DashboardComponent`, qu'aucune règle scopée
    dans `dashboard.component.css` n'aurait jamais pu atteindre (bug réel rencontré avec l'ancienne
    `.grid-span2`, remplacée par ce mécanisme). Un style inline n'a pas ce problème.
    En dessous de 800px, `.panels-row` ne garde qu'UNE colonne/ligne (voir dashboard.component.css) :
    ce placement doit alors être neutralisé pour tous les panneaux, quelle que soit sa provenance —
-   GLOBALE pour la même raison que ci-dessus (le sélecteur doit traverser `<app-history>`). */
+   GLOBALE pour la même raison que ci-dessus (le sélecteur doit traverser `<app-history>`). DEUX
+   sélecteurs nécessaires, pas un seul : `.panels-row .tool-panel` couvre les panneaux
+   scindés/groupé d'HistoryComponent (grandchild) ; `.panels-row > *` couvre Suivi/Chat/Récap (leur
+   style inline vit sur le tag hôte lui-même, un enfant DIRECT de `.panels-row`, jamais atteint par
+   le premier sélecteur). Oubli réel corrigé le 2026-08-31 : en mode "mise en avant" (`bodyMode`
+   'focus', réglage par défaut), toute carte "secondaire" (Chat/Récap la plupart du temps) recevait
+   `grid-column: 2` alors que la grille mobile ne garde qu'UNE colonne explicite — la carte
+   atterrissait dans une colonne 2 implicite quasi vide, tout son contenu réel écrasé dans une
+   largeur résiduelle (retour utilisateur : carte Récap "illisible", collée au bord droit). */
 @media (max-width: 800px) {
-  .panels-row .tool-panel {
+  .panels-row .tool-panel,
+  .panels-row > * {
     grid-column: auto !important;
     grid-row: auto !important;
   }

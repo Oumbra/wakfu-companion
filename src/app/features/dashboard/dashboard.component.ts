@@ -22,26 +22,28 @@ import { shortSlotLabelKey } from '../../core/services/dashboard-body-slot-label
  * son état (scroll, filtres...) d'un onglet à l'autre.
  *
  * `tabItems`/`activeMobileTab` sont dynamiques, dérivés de `DashboardLayoutService.activeSlots`
- * (CLAUDE.md) : la personnalisation choisie sur Profil › Personnalisation (regroupement Historique,
- * cartes repliées, ordre des blocs) s'applique désormais aussi bien au placement de grille desktop
- * qu'à la liste d'onglets mobile — un onglet par carte visible (Combat/Achats/Échanges chacun
- * séparément si non regroupés, un seul onglet groupé sinon ; Récap uniquement si dépliée). Avant ce
- * changement, la barre mobile était figée à 3 onglets (Suivi/Historique/Chat) et forçait toujours un
- * panneau Historique regroupé complet, quel que soit le réglage — Combat/Achats/Échanges non
- * regroupés devenaient alors injoignables en mobile, et Récap (carte indépendante depuis son
+ * (CLAUDE.md) : le regroupement Historique choisi sur Profil › Personnalisation s'applique
+ * désormais aussi bien au placement de grille desktop qu'à la liste d'onglets mobile — un onglet par
+ * carte (Combat/Achats/Échanges chacun séparément si non regroupés, un seul onglet groupé sinon).
+ * Avant ce changement, la barre mobile était figée à 3 onglets (Suivi/Historique/Chat) et forçait
+ * toujours un panneau Historique regroupé complet, quel que soit le réglage — Combat/Achats/Échanges
+ * non regroupés devenaient alors injoignables en mobile, et Récap (carte indépendante depuis son
  * introduction) n'y était jamais accessible du tout (bug réel corrigé, voir CLAUDE.md).
  *
  * `'tracker'` (Suivi) reste un onglet fixe en tête, hors de `activeSlots` (qui l'exclut
- * délibérément, voir sa doc de tête) : toujours présent, jamais repliable.
+ * délibérément, voir sa doc de tête) : toujours présent, jamais repliable. L'ORDRE des autres
+ * onglets, en revanche, ne suit PAS `blockOrder` (personnalisable, contrairement au placement
+ * desktop) — voir `MOBILE_TAB_ORDER`, fixe.
  *
  * Desktop uniquement, Historique/Chat/Récap sont aussi repliables individuellement
  * (voir DashboardLayoutService/ChatPanelService) — une section repliée rejoint le
- * menu latéral `<app-dashboard-rail>` (voir DashboardRailComponent) plutôt que
- * de disparaître purement et simplement. Chat reste monté en permanence même
- * replié (repli géré en CSS via `.panel-collapsed`, voir dashboard.component.css) — et reste
- * TOUJOURS joignable comme onglet mobile même repliée côté desktop (voir `tabItems`) ; les autres
- * cartes du corps (Historique×N, Récap), elles, sont structurellement retirées du DOM quand
- * repliées (pas de connexion à maintenir vivante), donc aussi de la liste d'onglets mobile. */
+ * menu latéral `<app-dashboard-rail>` (voir DashboardRailComponent) plutôt que de disparaître
+ * purement et simplement. AUCUNE carte n'est cependant considérée "repliée" en mobile, quel que soit
+ * le réglage desktop persisté (voir `DashboardLayoutService.isCollapsedForRender`, utilisé par
+ * `tabItems` ci-dessous ET par `SessionRecapComponent`/`HistoryComponent`, qui rendent leur propre
+ * contenu) — repli explicite du 2026-08-31, en réaction à un retour utilisateur : replier une carte
+ * en mobile la rendrait définitivement injoignable sur cet appareil, faute de rail replié sous 800px
+ * où la retrouver. */
 @Component({
   selector: 'app-dashboard',
   imports: [
@@ -86,16 +88,38 @@ export class DashboardComponent {
     // `HelpSection` ne lui correspond (pas de bouton d'aide sur la carte elle-même).
   };
 
+  /** Ordre FIXE des onglets mobile (demande explicite de l'utilisateur, 2026-08-31) — contrairement
+   * au placement desktop, qui suit `blockOrder` (personnalisable, voir DashboardLayoutService), la
+   * barre d'onglets mobile garde toujours ce même classement, quel que soit l'ordre choisi côté
+   * desktop : la personnalisation de la grille n'a pas vocation à réorganiser un simple menu
+   * d'onglets. `'hist_group'` juste après `'tracker'` (avant les volets solo restants) : c'est la
+   * position qu'occupait "Historique" avant l'introduction des onglets dynamiques, gardée pour ne
+   * pas surprendre un utilisateur habitué. Filtré à chaque calcul (voir `tabItems`) : une clé absente
+   * de `activeSlots()` (volet regroupé ailleurs, etc.) est simplement sautée. */
+  private static readonly MOBILE_TAB_ORDER: readonly DashboardGridKey[] = [
+    'tracker',
+    'hist_group',
+    'hist_combats',
+    'hist_purchases',
+    'hist_trades',
+    'chat',
+    'recap',
+  ];
+
   /** Items passés à `<app-tab-bar>` (voir TabBarComponent) — voir doc de tête pour la dérivation
-   * dynamique. Libellés courts (`shortSlotLabelKey`, partagé avec le rail replié et Profil ›
-   * Personnalisation, voir dashboard-body-slot-label.ts) plutôt que le libellé détaillé d'une carte
-   * groupée (qui peut lister sa composition, ex. "Historique (Achats + Échanges)") — trop long pour
-   * un onglet. */
+   * dynamique et `MOBILE_TAB_ORDER` pour l'ordre. Aucun filtrage par repli (`isCollapsed`) : en
+   * mobile, une carte repliée côté desktop reste joignable (voir `DashboardLayoutService.
+   * isCollapsedForRender`, même principe pour Suivi/Chat/Récap/Historique — pas de rail replié sous
+   * 800px pour l'accueillir sinon). Libellés courts (`shortSlotLabelKey`, partagé avec le rail
+   * replié et Profil › Personnalisation, voir dashboard-body-slot-label.ts) plutôt que le libellé
+   * détaillé d'une carte groupée (qui peut lister sa composition, ex. "Historique (Achats +
+   * Échanges)") — trop long pour un onglet. */
   protected readonly tabItems = computed<TabBarItem[]>(() => {
-    const slots = this.layout
-      .activeSlots()
-      .filter((s) => s.key === 'chat' || !this.layout.isCollapsed(s.key));
-    const keys: DashboardGridKey[] = ['tracker', ...slots.map((s) => s.key)];
+    const active = new Set<DashboardGridKey>([
+      'tracker',
+      ...this.layout.activeSlots().map((s) => s.key),
+    ]);
+    const keys = DashboardComponent.MOBILE_TAB_ORDER.filter((id) => active.has(id));
     return keys.map((id) => ({
       id,
       label: id === 'tracker' ? 'tracker.header' : shortSlotLabelKey(id as DashboardBodySlotKey),
