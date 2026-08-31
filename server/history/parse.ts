@@ -61,6 +61,8 @@ export interface FightParticipantInput {
   className: string | null;
   damage: number;
   defeated: boolean;
+  /** Voir `fight_participants.fled`, server/db/schema.ts. */
+  fled: boolean;
   spells: FightSpellInput[];
   /** XP gagnée par ce combattant sur ce combat (voir `fight_participants.xpGained`). */
   xpGained: number;
@@ -377,6 +379,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
       className: typeof className === 'string' ? className.slice(0, MAX_NAME_LENGTH) : null,
       damage: damage.value ?? 0,
       defeated: entry['defeated'] === true,
+      fled: entry['fled'] === true,
       spells,
       xpGained: xpGained.value ?? 0,
     },

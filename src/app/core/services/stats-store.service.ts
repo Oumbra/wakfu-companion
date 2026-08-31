@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
-import { Fight } from '../models/fight.model';
+import { Fight, LootConfidence } from '../models/fight.model';
+import { mergeLootConfidence, resolveLootConfidence } from '../utils/loot-confidence.util';
 import { CatalogService } from '../api/catalog.service';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
@@ -128,6 +129,11 @@ export interface EntityDamageRow {
   total: number;
   spells: SpellBreakdownRow[];
   defeated: boolean;
+  /** Vrai si ce combattant s'est échappé plutôt que vaincu ("X: disparaît", voir
+   * StatsStoreService.registerFightFlee) — mutuellement exclusif avec `defeated` (jamais les deux à
+   * `true` pour la même ligne). Ne modifie ni le calcul victoire/défaite du combat, ni le suivi
+   * watchlist "ennemis vaincus" : sert uniquement à l'affichage (voir entity-damage-list). */
+  fled: boolean;
   /** Position (1-based) de cette ligne parmi les instances partageant ce nom, et nombre total
    * d'instances partageant ce nom (voir Fight.enemies/allies — plusieurs monstres, voire alliés,
    * peuvent porter le même nom). `instanceCount === 1` : une seule ligne pour ce nom, pas de
@@ -176,6 +182,8 @@ export interface LootRow {
    * si non résolu — voir FightLoot.catalogId, même distinction avec un éventuel id d'icône. */
   catalogId: number | null;
   quantity: number;
+  /** Voir LootConfidence (core/models/fight.model.ts). */
+  confidence: LootConfidence;
 }
 
 /** Un achat individuel (objet, quantité, coût total, horodatage) : détecté quand une perte de kamas est immédiatement suivie d'un ramassage d'objet (voir registerPurchase). */
@@ -329,6 +337,14 @@ interface FightWorking {
    * monstres pouvant partager un même nom). Permet de créditer le watchlist une fois par instance
    * réellement morte plutôt qu'une seule fois par nom (voir registerFightDefeat). */
   defeatedInstanceCounts: Map<string, number>;
+  /** Miroir de defeatedNames pour une fuite ("X: disparaît", voir registerFightFlee/DISAPPEAR_RE) —
+   * jamais les deux à la fois pour une même instance (une fuite et une mort sont mutuellement
+   * exclusives), mais un NOM partagé par plusieurs instances peut voir l'une fuir et l'autre mourir
+   * (voir defeatedInstanceCounts/fledInstanceCounts, comptés indépendamment et plafonnés ensemble au
+   * nombre total d'instances). */
+  fledNames: Set<string>;
+  /** Miroir de defeatedInstanceCounts pour une fuite — voir fledNames. */
+  fledInstanceCounts: Map<string, number>;
   /** fighterId déjà vus (voir FighterJoinedEntry) : une jointure répétée (doublon multi-compte, resynchronisation) ne doit pas dupliquer l'entrée dans allies/enemies. */
   fighterIdsSeen: Set<number>;
   /** File d'initiative de ce combat (ordre de jeu détecté au fil de l'eau) — voir resolveNextActor(). */
@@ -412,7 +428,14 @@ interface InitiativeSeat {
  */
 @Injectable({ providedIn: 'root' })
 export class StatsStoreService {
-  private readonly parser = new LogParser();
+  // `isKnownMonsterName` fermé sur `this.catalog` (injecté plus bas, dans le constructeur) — sans
+  // risque d'ordre d'initialisation : la fermeture n'accède à `this.catalog` qu'au moment de l'APPEL
+  // (pendant le parsing réel, bien après la fin du constructeur), jamais à la construction de
+  // `parser` lui-même. Voir LogParser.deps.isKnownMonsterName pour l'unique usage (repli
+  // d'invocation sans annonce, ne doit jamais avaler un vrai monstre catalogué).
+  private readonly parser = new LogParser({
+    isKnownMonsterName: (name) => this.catalog.isKnownWakfuMonsterName(name),
+  });
   /** Envoi de l'historique au compte (lot 8) — no-op complet en mode invité, voir HistorySyncService. */
   private readonly historySync = inject(HistorySyncService);
 
@@ -1012,6 +1035,9 @@ export class StatsStoreService {
       case 'enemy-defeated':
         this.registerFightDefeat(entry.fightId, entry.name);
         break;
+      case 'enemy-fled':
+        this.registerFightFlee(entry.fightId, entry.name);
+        break;
       case 'damage': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
         const isFightEvent =
@@ -1134,6 +1160,8 @@ export class StatsStoreService {
         armorSourceMap: new Map(),
         defeatedNames: new Set(),
         defeatedInstanceCounts: new Map(),
+        fledNames: new Set(),
+        fledInstanceCounts: new Map(),
         fighterIdsSeen: new Set(),
         initiativeSeats: [],
         initiativeCursor: 0,
@@ -1328,7 +1356,37 @@ export class StatsStoreService {
     this.registerDefeat(name);
   }
 
-  /** Vrai si toutes les instances (par nom, voir countNameInstances) de la liste donnée sont créditées comme vaincues. */
+  /**
+   * Miroir de registerFightDefeat pour une fuite ("X: disparaît", voir DISAPPEAR_RE côté
+   * LogParser) — demande explicite de l'utilisateur (2026-08-31, cas des mimiques) : un combattant
+   * qui s'échappe n'a PAS été vaincu, même si le combat se termine par une victoire de l'équipe
+   * (voir finalizeFight, dont le filet de rattrapage "tous les ennemis morts" exclut désormais les
+   * instances déjà comptées ici). `this.registerDefeat` n'est volontairement JAMAIS appelé ici,
+   * contrairement à registerFightDefeat : le suivi watchlist "ennemis vaincus" ne doit jamais être
+   * crédité pour une fuite. `ensurePresent` reste appelé pour la même raison que dans
+   * registerFightDefeat : garantir que ce combattant a bien sa propre ligne dans le récap (voir
+   * EntityDamageRow.fled), même à 0 dégât — c'est précisément le cas visé par cette fonctionnalité
+   * (un mimique qui se révèle puis fuit sans avoir échangé le moindre coup).
+   */
+  private registerFightFlee(fightId: number | null, name: string): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    const key = name.toLowerCase();
+    if (working.summonNames.has(key)) return;
+    working.fledNames.add(key);
+    this.ensurePresent(working, name);
+
+    const instanceCount = this.countNameInstances(working, key) || 1;
+    const alreadyResolved =
+      (working.fledInstanceCounts.get(key) ?? 0) + (working.defeatedInstanceCounts.get(key) ?? 0);
+    if (alreadyResolved >= instanceCount) return;
+    working.fledInstanceCounts.set(key, (working.fledInstanceCounts.get(key) ?? 0) + 1);
+  }
+
+  /** Vrai si toutes les instances (par nom, voir countNameInstances) de la liste donnée sont
+   * "résolues" (vaincues OU en fuite, voir defeatedInstanceCounts/fledInstanceCounts) — une fuite
+   * compte ici au même titre qu'une mort : elle n'a pas à faire échouer la détection de victoire de
+   * resolveFightResult, un combattant échappé n'est pas un signe de défaite de l'équipe. */
   private allInstancesDefeated(
     entities: ReadonlyArray<{ name: string }>,
     working: FightWorking,
@@ -1339,7 +1397,9 @@ export class StatsStoreService {
       perName.set(key, (perName.get(key) ?? 0) + 1);
     }
     for (const [key, count] of perName) {
-      if ((working.defeatedInstanceCounts.get(key) ?? 0) < count) return false;
+      const resolved =
+        (working.defeatedInstanceCounts.get(key) ?? 0) + (working.fledInstanceCounts.get(key) ?? 0);
+      if (resolved < count) return false;
     }
     return true;
   }
@@ -1459,8 +1519,21 @@ export class StatsStoreService {
       // le combat se termine et n'a alors pas toujours droit à sa propre ligne
       // de mise hors-combat : sans ce filet, il n'est jamais crédité dans le
       // suivi des ennemis vaincus. Un combat gagné implique que tous les
-      // ennemis ayant rejoint le combat sont morts.
+      // ennemis ayant rejoint le combat sont morts — SAUF ceux déjà comptés
+      // comme ayant fui (voir registerFightFlee/fledInstanceCounts) : une
+      // fuite ne doit jamais être requalifiée en "vaincu" sous prétexte que le
+      // reste de l'équipe a gagné (demande explicite de l'utilisateur, cas des
+      // mimiques). `countNameInstances` recalculé à chaque itération (jamais
+      // mis en cache avant la boucle) pour rester exact au fil des appels
+      // successifs à registerFightDefeat sur un même nom partagé par
+      // plusieurs instances (voir sa propre logique de plafonnement).
       for (const enemy of working.fight.enemies) {
+        const key = enemy.name.toLowerCase();
+        const totalInstances = this.countNameInstances(working, key) || 1;
+        const alreadyResolved =
+          (working.defeatedInstanceCounts.get(key) ?? 0) +
+          (working.fledInstanceCounts.get(key) ?? 0);
+        if (alreadyResolved >= totalInstances) continue;
         this.registerFightDefeat(fightId, enemy.name);
       }
       if (!excludedFromStats) {
@@ -1468,12 +1541,19 @@ export class StatsStoreService {
         for (const loot of working.fight.loots) {
           const key = loot.name.toLowerCase();
           const existing = this.sessionLootMap.get(key);
-          if (existing) existing.quantity += loot.quantity;
-          else
+          if (existing) {
+            existing.quantity += loot.quantity;
+            // Un seul badge de doute cumulé par nom : 'doubtful' l'emporte dès qu'UN SEUL des
+            // combats agrégés a un doute à faire valoir (signal à charge, jamais masqué par
+            // d'autres occurrences confirmées) ; sinon 'confirmed' l'emporte sur 'unknown' (au
+            // moins un combat a pu confirmer la provenance) — voir mergeLootConfidence.
+            existing.confidence = mergeLootConfidence(existing.confidence, loot.confidence);
+          } else
             this.sessionLootMap.set(key, {
               name: loot.name,
               catalogId: loot.catalogId,
               quantity: loot.quantity,
+              confidence: loot.confidence,
             });
         }
       }
@@ -1503,6 +1583,7 @@ export class StatsStoreService {
         name: l.name,
         catalogId: l.catalogId,
         quantity: l.quantity,
+        confidence: l.confidence,
       })),
       kamas: working.fight.kamas,
       turns: working.fight.turnCount,
@@ -1744,14 +1825,27 @@ export class StatsStoreService {
    * dont le fightId ne peut pas être connu avec certitude au moment où elle est lue. */
   private addLootToFight(working: FightWorking, item: string, quantity: number): void {
     const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
-    if (existing) existing.quantity += quantity;
-    else
-      working.fight.loots.push({
-        name: item,
-        id: this.lookupItemGfxId(item),
-        catalogId: this.catalog.findWakfuItemEntry(item)?.id ?? null,
-        quantity,
-      });
+    if (existing) {
+      existing.quantity += quantity;
+      return;
+    }
+    const defaultCatalogId = this.catalog.findWakfuItemEntry(item)?.id ?? null;
+    // `working.fight.enemies` est déjà le roster COMPLET du combat à cet instant (addLootToFight
+    // n'est appelée qu'à finalizeFight, après que tous les ennemis ont rejoint) — voir
+    // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour le détail du recoupement.
+    const { catalogId, confidence } = resolveLootConfidence(
+      this.catalog,
+      working.fight.enemies.map((e) => e.name),
+      item,
+      defaultCatalogId,
+    );
+    working.fight.loots.push({
+      name: item,
+      id: this.lookupItemGfxId(item),
+      catalogId,
+      quantity,
+      confidence,
+    });
   }
 
   /** SYNCHRONE (chemin chaud, voir CatalogService) : simple lecture de l'index déjà en mémoire, à
@@ -2090,7 +2184,9 @@ export class StatsStoreService {
     const rows: EntityDamageRow[] = [];
     for (const name of names) {
       const instanceCount = instanceCountByName.get(name) ?? 1;
-      const defeatedCount = working.defeatedInstanceCounts.get(name.toLowerCase()) ?? 0;
+      const nameKey = name.toLowerCase();
+      const defeatedCount = working.defeatedInstanceCounts.get(nameKey) ?? 0;
+      const fledCount = working.fledInstanceCounts.get(nameKey) ?? 0;
 
       for (let instanceIndex = 1; instanceIndex <= instanceCount; instanceIndex++) {
         const key = instanceCount <= 1 ? name : `${name}#${instanceIndex}`;
@@ -2101,6 +2197,10 @@ export class StatsStoreService {
           total,
           spells: spellRows,
           defeated: instanceIndex <= defeatedCount,
+          // Occupe la tranche d'indices JUSTE APRÈS les instances déjà comptées "vaincues" (même
+          // convention d'attribution approximative que `defeated` ci-dessus, faute d'identité
+          // d'instance individuelle — voir doc de EntityDamageRow.instanceIndex).
+          fled: instanceIndex > defeatedCount && instanceIndex <= defeatedCount + fledCount,
           instanceIndex,
           instanceCount,
         });
@@ -2455,14 +2555,29 @@ export class StatsStoreService {
     const row = this.findRowByCatalogId(record.loot, itemName, sourceCatalogId);
     if (!row) return;
     const wasFull = quantity >= row.quantity;
+    // L'utilisateur a lui-même tranché l'identité de cet objet : jamais le contredire après coup
+    // par un badge de doute (voir LootConfidence). Posé AVANT reassignRowQuantity pour qu'une
+    // ligne scindée en deux (voir sa doc, `{...row, catalogId, quantity: amount}`) hérite déjà de
+    // 'confirmed' par la copie — la ligne restante (si `row` n'est pas intégralement réattribuée)
+    // n'a, elle, pas changé d'identité et garde sa confiance d'origine.
+    row.confidence = 'confirmed';
     this.reassignRowQuantity(record.loot, row, quantity, catalogId);
+    // Ligne existante de même rareté ayant absorbé la quantité réattribuée (voir
+    // reassignRowQuantity, branche `target`) : elle aussi doit passer à 'confirmed'.
+    const target = record.loot.find(
+      (l) => l.catalogId === catalogId && l.name.toLowerCase() === itemName.toLowerCase(),
+    );
+    if (target) target.confidence = 'confirmed';
 
     // Compteur cumulé de session (toutes fusions confondues, voir sessionLootMap) : mis à jour
     // seulement pour une correction COMPLÈTE de la ligne — un compteur cumulé unique ne peut pas
     // représenter une scission partielle proprement, voir doc de sessionLoot.
     if (wasFull) {
       const sessionRow = this.sessionLootMap.get(itemName.toLowerCase());
-      if (sessionRow) sessionRow.catalogId = catalogId;
+      if (sessionRow) {
+        sessionRow.catalogId = catalogId;
+        sessionRow.confidence = 'confirmed';
+      }
       this.sessionLoot.set([...this.sessionLootMap.values()]);
     }
 

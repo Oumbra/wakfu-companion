@@ -1,0 +1,1 @@
+ALTER TABLE "fight_participants" ADD COLUMN "fled" boolean DEFAULT false NOT NULL;

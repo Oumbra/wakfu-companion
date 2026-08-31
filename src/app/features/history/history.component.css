@@ -78,30 +78,70 @@
   color: #e06c6c;
 }
 
+/* Pied de panneau — toujours affiché tant qu'il reste des pages à charger (voir hasMoreFor), donc
+   jamais scrollé hors de vue avec le reste de la liste. `align-items: center` en plus de
+   `justify-content: center` : le `.spinner-ring` (styles.css) affiché ici pendant un chargement
+   doit être centré horizontalement ET verticalement dans cette bande, pas seulement calé sur sa
+   ligne de base par défaut. */
 .history-load-more {
   display: flex;
+  align-items: center;
   justify-content: center;
   flex-shrink: 0;
   padding: 8px;
   border-top: 1px solid var(--surface-active);
 }
-.history-load-more button {
+/* Taille réduite localement (voir styles.css, "un appelant qui veut une taille différente peut
+   surcharger width/height/border-width") : le gabarit par défaut (48px) est trop massif pour ce
+   pied de panneau étroit, à côté d'un simple bouton. */
+.history-load-more .spinner-ring {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+}
+/* Bouton "Charger plus" + caret d'ouverture du menu de portée (voir LoadMoreScopeMenuComponent) —
+   accolés en un seul contrôle scindé plutôt que deux boutons séparés par un espace. */
+.load-more-controls {
+  display: flex;
+}
+.load-more-btn {
   padding: 4px 14px;
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-color);
   background: var(--surface-active);
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
   cursor: pointer;
 }
-.history-load-more button:hover:not(:disabled) {
+.load-more-btn:hover {
   color: var(--text-bright);
   border-color: var(--accent);
 }
-.history-load-more button:disabled {
-  opacity: 0.5;
-  cursor: default;
+.load-more-scope-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  padding: 0;
+  color: var(--text-color);
+  background: var(--surface-active);
+  border: 1px solid var(--border-strong);
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+.load-more-scope-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+/* `app-icon` (:host{display:contents}) n'a pas de boîte propre à transformer — voir CLAUDE.md,
+   gotcha IconComponent.size — d'où ce `<span>` intermédiaire qui, lui, en a une. Réutilise l'icône
+   `chevron-left` existante plutôt que d'ajouter une entrée "chevron-down" au sprite (voir
+   ICONS_SPRITE_URL) : un chevron pointant à gauche tourné de -90° pointe vers le bas. */
+.scope-caret-icon {
+  display: inline-flex;
+  transform: rotate(-90deg);
 }
 
 @media (max-width: 800px) {

@@ -12,14 +12,34 @@
       <div
         class="loot-row"
         [class]="rarityClass(item)"
-        [appTooltip]="interactive() ? ('items.interactTooltip' | t) : null"
-        [tooltipPosition]="first ? 'bottom' : 'top'"
         (contextmenu)="interactive() ? openInteractMenu($event, item) : null"
       >
         <app-item-icon [name]="item.name" [id]="item.catalogId" />
         <span class="loot-name">{{
           i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
         }}</span>
+        @if (item.confidence === 'doubtful') {
+          <!-- Tooltip posé sur ce <span>, jamais directement sur <app-icon> : son
+               :host{display:contents} n'a pas de boîte propre, getBoundingClientRect() y
+               renverrait un rectangle nul (voir TooltipDirective, positionnement par
+               getBoundingClientRect() de l'hôte). -->
+          <span class="loot-doubt-badge" [appTooltip]="'items.doubtfulLootTooltip' | t">
+            <app-icon name="help-circle" [size]="14" />
+          </span>
+        }
+        <span class="loot-fix-slot">
+          @if (canInteract(item)) {
+            <button
+              type="button"
+              class="loot-fix-btn"
+              [appTooltip]="'items.correctableTooltip' | t"
+              [tooltipPosition]="first ? 'bottom' : 'top'"
+              (click)="openInteractMenu($event, item)"
+            >
+              <app-icon name="wrench" [size]="13" [strokeWidth]="2" />
+            </button>
+          }
+        </span>
         <span class="loot-qty">×{{ item.quantity | localeNumber }}</span>
       </div>
     }

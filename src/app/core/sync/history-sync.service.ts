@@ -4,7 +4,7 @@ import { EntityClassifierService } from '../services/entity-classifier.service';
 import { GameServerService } from '../services/game-server.service';
 import type { FightRecord, PurchaseRecord, TradeRecord } from '../services/stats-store.service';
 import { findDungeonForEnemies } from '../utils/fight-image.util';
-import { groupDungeonRuns } from '../utils/dungeon-run-grouping.util';
+import { enemyCompositionKey, groupDungeonRuns } from '../utils/dungeon-run-grouping.util';
 import {
   fightSignature,
   purchaseSignature,
@@ -147,6 +147,7 @@ export class HistorySyncService {
         className: side === 'ally' ? (this.classifier.getDetectedClass(row.name) ?? null) : null,
         damage: Math.max(0, Math.round(row.total)),
         defeated: row.defeated,
+        fled: row.fled,
         // Ventilation par sort et par élément : c'est l'essentiel de la valeur
         // d'un historique de combat, et c'est aussi ce qu'une réattribution
         // manuelle peut corriger après coup (d'où l'upsert côté serveur).
@@ -207,13 +208,18 @@ export class HistorySyncService {
     );
   }
 
+  /** Noms des ennemis de `record` — factorisé pour `findDungeonFor` ci-dessous ET la clé de
+   * composition passée à `groupDungeonRuns` (voir `enemyCompositionKey`). */
+  private enemyNamesFor(record: FightRecord): string[] {
+    return record.rows
+      .filter((row) => this.classifier.classify(row.name) === 'enemy')
+      .map((row) => row.name);
+  }
+
   /** Donjon dont `record` contient LUI-MÊME le boss (`null` sinon, y compris pour une simple salle
    * — voir `findDungeonForEnemies`) — miroir de `FightHistoryComponent`, même logique d'affichage. */
   private findDungeonFor(record: FightRecord): ReturnType<typeof findDungeonForEnemies> {
-    const enemyNames = record.rows
-      .filter((row) => this.classifier.classify(row.name) === 'enemy')
-      .map((row) => row.name);
-    return findDungeonForEnemies(this.catalog, enemyNames);
+    return findDungeonForEnemies(this.catalog, this.enemyNamesFor(record));
   }
 
   /** Signature de contenu de `record`, réutilisée à la fois comme identité d'envoi (`clientKey`)
@@ -254,6 +260,7 @@ export class HistorySyncService {
       historyList,
       (r) => this.findDungeonFor(r),
       (r) => this.hasArchiEnemy(r),
+      (r) => enemyCompositionKey(this.enemyNamesFor(r)),
     );
 
     const runEntry = entries.find(

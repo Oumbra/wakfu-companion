@@ -13,3 +13,17 @@
   font-size: 0.72rem;
   font-weight: 700;
 }
+
+/* Demande explicite de l'utilisateur (2026-08-31, onglet Combats du dashboard mobile) : ce switch +
+   le stepper de tour (`app-stepper`, affiché juste après en mode 'turn') + le switch Dommage/
+   Armure/Soin doivent tenir sur UNE seule ligne (voir `.combat-info-toggle`/`.combat-switch-row`,
+   combat-detail.component.css) — rétréci ici plutôt que de forcer un empilement sur plusieurs
+   lignes. */
+@media (max-width: 800px) {
+  .damage-view-mode-switch {
+    width: 100px;
+  }
+  .damage-view-mode-switch .icon-switch-option {
+    font-size: 0.62rem;
+  }
+}

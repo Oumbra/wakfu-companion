@@ -117,6 +117,13 @@ export class TradesComponent {
     return `rarity-${getWakfuItemRarity(this.catalog, item.name, item.catalogId)}`;
   }
 
+  /** Une correction n'a de sens que si le référentiel Ankama connaît plusieurs objets de ce nom —
+   * sinon rien à désambiguïser, voir LootListComponent.canInteract (même règle, ItemPickerComponent
+   * partagé) et CLAUDE.md (bouton "Suivre" retiré de ce menu). */
+  protected canInteract(item: TradeItemRow): boolean {
+    return this.catalog.hasMultipleWakfuItemEntriesByName(item.name);
+  }
+
   protected openInteractMenu(
     event: MouseEvent,
     record: TradeRecord,
@@ -125,6 +132,7 @@ export class TradesComponent {
   ): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.canInteract(item)) return;
     // Cible la ligne par son `catalogId` ACTUEL (voir StatsStoreService.reassignTradeItem,
     // `sourceCatalogId`) plutôt que par un rang positionnel — insensible à l'ordre d'affichage.
     this.itemPicker.open({
@@ -133,8 +141,6 @@ export class TradesComponent {
       y: event.clientY,
       currentId: item.catalogId,
       quantity: item.quantity,
-      isWatched: this.stats.isWatched(item.name),
-      onFollow: () => this.stats.addWatchedItem(item.name),
       onChosen: (id, quantity) => {
         this.stats.reassignTradeItem(record, direction, item.name, item.catalogId, quantity, id);
         this.archive.reassignTradeItem(record, direction, item.name, item.catalogId, quantity, id);

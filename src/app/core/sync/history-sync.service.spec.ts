@@ -93,7 +93,10 @@ describe('HistorySyncService — court-circuit sur combat déjà archivé (Synce
     TestBed.inject(SyncedFightsRegistry).register([fight]);
     const corrected = {
       ...fight,
-      loot: [...fight.loot, { name: 'Objet corrigé', catalogId: 999, quantity: 1 }],
+      loot: [
+        ...fight.loot,
+        { name: 'Objet corrigé', catalogId: 999, quantity: 1, confidence: 'unknown' as const },
+      ],
     };
 
     const sync = TestBed.inject(HistorySyncService);
@@ -215,6 +218,7 @@ describe('HistorySyncService — rattachement de donjon', () => {
         total: 100,
         spells: [],
         defeated: result === 'won',
+        fled: false,
         instanceIndex: 1,
         instanceCount: 1,
       })),

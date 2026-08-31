@@ -15,6 +15,7 @@ import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.
 import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
 import { localDayStart } from '../utils/local-period.util';
+import { resolveLootConfidence } from '../utils/loot-confidence.util';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -29,6 +30,11 @@ const PAGE_SIZE = 50;
 /** Nombre maximal de pages enchaînées par `loadMorePurchasesUntilDayComplete` — garde-fou pur
  * (jamais censé être atteint en pratique, voir sa doc) plutôt qu'une vraie limite métier. */
 const MAX_DAY_COMPLETION_PAGES = 40;
+
+/** Nombre maximal de pages enchaînées par `loadMoreForSpan` — même rôle que
+ * `MAX_DAY_COMPLETION_PAGES` (garde-fou pur, jamais censé être atteint) : à `PAGE_SIZE` par page,
+ * même la portée "1 an" s'arrête bien avant sur une activité de jeu réaliste. */
+const MAX_SPAN_PAGES = 400;
 
 interface FightPage {
   entries: {
@@ -50,6 +56,7 @@ interface FightPage {
       className: string | null;
       damage: number;
       defeated: boolean;
+      fled: boolean;
       spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
       xpGained: number | null;
     }[];
@@ -321,6 +328,42 @@ export class HistoryArchiveService {
     }
   }
 
+  /**
+   * Comme `loadMore(kind)`, mais enchaîne autant de pages supplémentaires que nécessaire pour
+   * couvrir au moins `spanMs` de recul depuis maintenant — voir `LoadMoreSpan`/`LOAD_MORE_SPAN_MS`
+   * (history-event.model.ts) et `LoadMoreScopeMenuComponent`, qui laisse ainsi charger "1 semaine"/
+   * "1 mois"/"1 an" d'un seul clic plutôt que de cliquer "Charger plus" un nombre de fois inconnu à
+   * l'avance. Les achats passent par `loadMorePurchasesUntilDayComplete` à chaque page enchaînée
+   * (même règle "jour complet" que le chargement normal, voir sa doc), pas par `loadMore('purchase')`
+   * directement. S'arrête dès que l'archive est épuisée (`!hasMore`) ou qu'une page n'a rien
+   * rapporté (échec réseau), même avant d'avoir couvert `spanMs`.
+   */
+  async loadMoreForSpan(kind: HistoryEventKind, spanMs: number): Promise<void> {
+    const targetTime = Date.now() - spanMs;
+    const list = this.listFor(kind);
+    for (let page = 0; page < MAX_SPAN_PAGES && this.hasMore(kind); page++) {
+      const before = list().length;
+      await (kind === 'purchase' ? this.loadMorePurchasesUntilDayComplete() : this.loadMore(kind));
+      const loaded = list();
+      if (loaded.length === before) return; // échec réseau, ou rien de plus à charger
+      const oldest = loaded[loaded.length - 1];
+      if (oldest.fullTimestampMs <= targetTime) return; // portée demandée couverte
+    }
+  }
+
+  /** Accès signal-par-type utilisé par `loadMoreForSpan` — même liste que celle mise à jour par
+   * `loadMore(kind)`/`loadMorePurchasesUntilDayComplete` pour ce `kind`. */
+  private listFor(kind: HistoryEventKind): () => readonly { fullTimestampMs: number }[] {
+    switch (kind) {
+      case 'fight':
+        return this._fights;
+      case 'purchase':
+        return this._purchases;
+      case 'trade':
+        return this._trades;
+    }
+  }
+
   /** Repart de zéro (déconnexion, ou synchronisation manuelle qui vient de pousser du contenu). */
   reset(): void {
     this._fights.set([]);
@@ -551,6 +594,7 @@ function toFightRecord(
       byTurn: [],
     })),
     defeated: participant.defeated,
+    fled: participant.fled,
     instanceIndex: participant.instanceIndex,
     instanceCount: instanceCounts.get(participant.name) ?? 1,
   }));
@@ -576,11 +620,27 @@ function toFightRecord(
   // sourceCatalogId = itemId TEL QUE RENVOYÉ PAR LE SERVEUR pour cette ligne — plus besoin de
   // compteur d'occurrence par nom (voir StatsStoreService.findLootCorrection) : le `catalogId`
   // identifie déjà la ligne sans ambiguïté.
+  //
+  // Confiance (voir LootConfidence) recalculée ICI, pas persistée côté serveur : voir la doc de
+  // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour pourquoi (un combat déjà ancien
+  // profite ainsi d'un référentiel monsters.loot devenu plus complet depuis). Une correction
+  // manuelle déjà connue (voir ci-dessous) force 'confirmed' — l'utilisateur a lui-même tranché,
+  // jamais le contredire après coup par un badge de doute, même reconstruit à la lecture.
+  const enemyNames = entry.participants.filter((p) => p.side === 'enemy').map((p) => p.name);
   const loot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
     const correction = stats.findLootCorrection(fightKey, name, row.itemId, row.quantity);
-    if (correction !== null) anyCorrected = true;
-    return { name, catalogId: correction ?? row.itemId, quantity: row.quantity };
+    if (correction !== null) {
+      anyCorrected = true;
+      return {
+        name,
+        catalogId: correction,
+        quantity: row.quantity,
+        confidence: 'confirmed' as const,
+      };
+    }
+    const { catalogId, confidence } = resolveLootConfidence(catalog, enemyNames, name, row.itemId);
+    return { name, catalogId, quantity: row.quantity, confidence };
   });
 
   const record: FightRecord = {

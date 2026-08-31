@@ -227,6 +227,7 @@ function setupCatalog(): CatalogService {
         ULTIMATE_BREACH_SHARED_BOSS_DUNGEON,
       ]);
     if (path === '/monster-families') return ok([]);
+    if (path === '/monster-loot') return ok([]);
     throw new Error(`unexpected path in test: ${path}`);
   };
 

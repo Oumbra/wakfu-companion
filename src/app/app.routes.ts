@@ -97,6 +97,15 @@ export const routes: Routes = [
         data: { view: 'main', dashboardTab: 'chat' },
       },
       {
+        // Carte Récap de session (voir CLAUDE.md) — onglet mobile dédié uniquement (sans effet
+        // desktop, où elle reste une carte du corps parmi d'autres, jamais routée en tant que
+        // telle) ; même mécanique générique que `chat` ci-dessus (`pagePathFor` la résout via son
+        // repli `/${dashboardTab}`, aucun cas particulier à y ajouter).
+        path: 'recap',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'recap' },
+      },
+      {
         // Ancien onglet "Combat en cours", fusionné dans Historique › Combats (voir CLAUDE.md) —
         // redirection plutôt que suppression, pour ne pas casser un favori/lien externe antérieur.
         path: 'damage',

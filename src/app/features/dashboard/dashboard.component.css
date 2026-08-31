@@ -131,6 +131,14 @@
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: minmax(0, 1fr) !important;
   }
+  /* Suivi/Chat/Récap uniquement (`<app-tracker>`/`<app-chat-panel>`/`<app-session-recap>`, écrits
+     directement dans CE template et portant donc son attribut d'encapsulation de vue) — les
+     panneaux scindés/groupé d'`<app-history>` portent leur propre `.tab-hidden` un cran plus bas
+     dans le DOM (écrit par le template d'HistoryComponent, sous SON attribut d'encapsulation à lui),
+     qu'un sélecteur scopé ici ne peut structurellement pas atteindre même en descendant (`.panels-row
+     .tab-hidden` sans `>` ne suffit pas) : géré séparément par une règle GLOBALE, voir
+     `.panels-row .tab-hidden` dans styles.css (même piège que `.panels-row .tool-panel` juste
+     au-dessus). */
   .panels-row > .tab-hidden {
     display: none;
   }
