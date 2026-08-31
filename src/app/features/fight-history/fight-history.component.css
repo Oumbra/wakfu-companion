@@ -29,6 +29,7 @@
    switch de regroupement (justify-content: flex-end ci-dessus), placé avant lui. */
 .fight-group-toggle-all-btn {
   flex-shrink: 0;
+  height: 32px;
 }
 /* `.icon-switch`/`.icon-switch-3` (styles.css) répartissent leurs options via `flex:1` sur un
    conteneur `width:auto` (shrink-to-fit) : sans espace excédentaire à distribuer, chaque option
@@ -386,6 +387,14 @@
   font-size: 11px;
   flex-grow: 1;
   text-align: end;
+}
+/* Demande explicite de l'utilisateur (2026-08-31, onglet mobile du dashboard) : 10px au lieu de
+   11px, un peu plus de place pour le nom/badge à sa gauche sur une ligne de combat déjà serrée en
+   mobile (icône + nom + badge victoire/défaite + ceci + caret, tous sur la même ligne). */
+@media (max-width: 800px) {
+  .fight-meta {
+    font-size: 10px;
+  }
 }
 
 .caret {

@@ -7,6 +7,7 @@ import { SessionRecapComponent } from '../session-recap/session-recap.component'
 import { DashboardRailComponent } from '../dashboard-rail/dashboard-rail.component';
 import { ChatPanelService } from '../../core/services/chat-panel.service';
 import { HelpSection } from '../../core/services/help-modal.service';
+import { AuthService } from '../../core/auth/auth.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { HistoryTab, NavigationService } from '../../core/services/navigation.service';
 import {
@@ -69,6 +70,7 @@ import { shortSlotLabelKey } from '../../core/services/dashboard-body-slot-label
 export class DashboardComponent {
   protected readonly chatPanel = inject(ChatPanelService);
   protected readonly layout = inject(DashboardLayoutService);
+  private readonly auth = inject(AuthService);
   private readonly nav = inject(NavigationService);
 
   /** Alias vers `NavigationService.dashboardTab` (source unique de vérité, voir son commentaire —
@@ -98,10 +100,10 @@ export class DashboardComponent {
    * de `activeSlots()` (volet regroupé ailleurs, etc.) est simplement sautée. */
   private static readonly MOBILE_TAB_ORDER: readonly DashboardGridKey[] = [
     'tracker',
-    'hist_group',
     'hist_combats',
     'hist_purchases',
     'hist_trades',
+    'hist_group',
     'chat',
     'recap',
   ];
@@ -113,7 +115,14 @@ export class DashboardComponent {
    * 800px pour l'accueillir sinon). Libellés courts (`shortSlotLabelKey`, partagé avec le rail
    * replié et Profil › Personnalisation, voir dashboard-body-slot-label.ts) plutôt que le libellé
    * détaillé d'une carte groupée (qui peut lister sa composition, ex. "Historique (Achats +
-   * Échanges)") — trop long pour un onglet. */
+   * Échanges)") — trop long pour un onglet. Exception "Récap" : `shortSlotLabelKey('recap')` renvoie
+   * toujours la clé "opt-in" de Personnalisation ("Récap de session", pertinente pour décrire la
+   * carte dans CE contexte précis) — une fois connecté, le nom affiché partout ailleurs (carte,
+   * rail replié, Personnalisation) bascule sur "Récap" tout court (`sessionRecap.titleGeneric`, voir
+   * SessionRecapComponent/CLAUDE.md, le mot "session" n'ayant plus de sens avec le switch Jour/Mois/
+   * Année) — l'onglet mobile ET la feuille "tous les onglets" (même `label`, voir
+   * TabBarComponent.openSheet) doivent suivre la même règle plutôt que rester figés sur l'ancien nom
+   * (bug réel corrigé, retour utilisateur 2026-08-31). */
   protected readonly tabItems = computed<TabBarItem[]>(() => {
     const active = new Set<DashboardGridKey>([
       'tracker',
@@ -122,10 +131,16 @@ export class DashboardComponent {
     const keys = DashboardComponent.MOBILE_TAB_ORDER.filter((id) => active.has(id));
     return keys.map((id) => ({
       id,
-      label: id === 'tracker' ? 'tracker.header' : shortSlotLabelKey(id as DashboardBodySlotKey),
+      label: this.tabLabelKeyFor(id),
       helpSection: DashboardComponent.TAB_HELP[id],
     }));
   });
+
+  private tabLabelKeyFor(id: DashboardGridKey): string {
+    if (id === 'tracker') return 'tracker.header';
+    if (id === 'recap' && this.auth.isAuthenticated()) return 'sessionRecap.titleGeneric';
+    return shortSlotLabelKey(id as DashboardBodySlotKey);
+  }
 
   /** Onglet mobile réellement actif — `activeTab` (`DashboardTab`) ne distingue pas les volets
    * d'Historique entre eux (une seule valeur `'history'`, voir sa doc de tête) : résolu ici vers le
@@ -154,9 +169,22 @@ export class DashboardComponent {
     }
     // Toute autre clé est un volet d'Historique (solo ou groupé) — voir `activeMobileTab`.
     this.activeTab.set('history');
-    if (key !== 'hist_group') {
-      this.nav.historyTab.set(key.slice('hist_'.length) as HistoryTab);
+    if (key === 'hist_group') {
+      // Ne PAS laisser `historyTab` tel quel : s'il pointe encore sur un volet resté solo (ex.
+      // l'utilisateur vient de cliquer l'onglet "Achats", puis regroupe Combats+Échanges et clique
+      // "Historique") `activeMobileTab` le résoudrait à tort vers CE volet solo au lieu du groupe
+      // (même correspondance que `historySplitKeys().includes(...)`) — l'onglet "Historique"
+      // resterait alors bloqué sur "Achats" quoi qu'on clique dessus (bug réel corrigé, retour
+      // utilisateur 2026-08-31). Forcé sur le premier volet regroupé UNIQUEMENT si `historyTab` n'en
+      // fait pas déjà partie, pour ne pas perdre le sous-onglet choisi la dernière fois qu'on était
+      // dans ce panneau groupé.
+      const grouped = this.layout.historyGroupedKeys();
+      if (!grouped.includes(this.nav.historyTab())) {
+        this.nav.historyTab.set(grouped[0]);
+      }
+      return;
     }
+    this.nav.historyTab.set(key.slice('hist_'.length) as HistoryTab);
   }
 
   /** Ctrl+Shift+Alt+S : bascule `data-streamer` sur `<html>` (mode "streamer", ex. masquage de
