@@ -94,16 +94,16 @@ export class DashboardComponent {
    * au placement desktop, qui suit `blockOrder` (personnalisable, voir DashboardLayoutService), la
    * barre d'onglets mobile garde toujours ce même classement, quel que soit l'ordre choisi côté
    * desktop : la personnalisation de la grille n'a pas vocation à réorganiser un simple menu
-   * d'onglets. `'hist_group'` juste après `'tracker'` (avant les volets solo restants) : c'est la
-   * position qu'occupait "Historique" avant l'introduction des onglets dynamiques, gardée pour ne
-   * pas surprendre un utilisateur habitué. Filtré à chaque calcul (voir `tabItems`) : une clé absente
+   * d'onglets. `'hist_group'` juste APRÈS les volets solo (`hist_combats`/`hist_purchases`/
+   * `hist_trades`) et juste AVANT `'chat'` — demande explicite, revient sur un choix précédent
+   * ("hist_group" juste après "tracker"). Filtré à chaque calcul (voir `tabItems`) : une clé absente
    * de `activeSlots()` (volet regroupé ailleurs, etc.) est simplement sautée. */
   private static readonly MOBILE_TAB_ORDER: readonly DashboardGridKey[] = [
     'tracker',
-    'hist_group',
     'hist_combats',
     'hist_purchases',
     'hist_trades',
+    'hist_group',
     'chat',
     'recap',
   ];
