@@ -421,6 +421,38 @@ export class FightHistoryComponent {
     this.collapsedGroupKeys.set(next);
   }
 
+  /** Vrai si TOUT est actuellement replié : les groupes jour/lieu/type (`collapsedGroupKeys`,
+   * convention inversée — vide = tout déplié) ET les combats/runs de donjon (`expandedFightIds`/
+   * `expandedDungeonRunIds` — vide = tout replié). Pilote l'icône et le comportement du bouton
+   * "tout replier"/"tout déplier" de `.fight-group-controls` (voir `toggleCollapseAll`). */
+  protected readonly allSectionsCollapsed = computed<boolean>(() => {
+    const mode = this.groupMode();
+    const collapsed = this.collapsedGroupKeys();
+    const groupsCollapsed = this.fightGroups().every((group) =>
+      collapsed.has(`${mode}:${group.key}`),
+    );
+    return (
+      groupsCollapsed &&
+      this.expandedFightIds().size === 0 &&
+      this.expandedDungeonRunIds().size === 0
+    );
+  });
+
+  /** Bouton "tout replier"/"tout déplier" : replie tout (regroupements jour/lieu/type + combats/runs
+   * de donjon dépliés) dans un sens ; dans l'autre sens (tout est déjà replié), ne déplie QUE les
+   * regroupements — ne doit jamais cascade-déplier les combats (voir demande utilisateur/CLAUDE.md
+   * sur la convention "un combat démarre replié"). */
+  protected toggleCollapseAll(): void {
+    if (this.allSectionsCollapsed()) {
+      this.collapsedGroupKeys.set(new Set());
+      return;
+    }
+    const mode = this.groupMode();
+    this.collapsedGroupKeys.set(new Set(this.fightGroups().map((group) => `${mode}:${group.key}`)));
+    this.expandedFightIds.set(new Set());
+    this.expandedDungeonRunIds.set(new Set());
+  }
+
   /** État de repli d'un collapse de donjon, indexé par `id` du combat représentatif (le plus
    * récent du run) — toujours replié tant qu'il n'a pas été explicitement déplié une fois (voir
    * `expandedDungeonRunIds` ci-dessus, convention inversée par rapport à `collapsedGroupKeys`). */

@@ -1,4 +1,53 @@
 <div class="fight-group-controls">
+  @if (fightGroups().length > 0) {
+    <!-- Bascule "tout replier"/"tout déplier" : replie tout (regroupements + combats/runs de donjon
+         dépliés) dans un sens, mais ne déplie que les regroupements dans l'autre — jamais de cascade
+         sur les combats (voir `toggleCollapseAll`). -->
+    <button
+      type="button"
+      class="icon-btn plain-icon-btn collapse-all-btn"
+      [appTooltip]="
+        (allSectionsCollapsed() ? 'history.group.expandAll' : 'history.group.collapseAll') | t
+      "
+      (click)="toggleCollapseAll()"
+    >
+      @if (allSectionsCollapsed()) {
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          role="img"
+          aria-hidden="true"
+        >
+          <path d="m7 15 5 5 5-5" />
+          <path d="m7 9 5-5 5 5" />
+        </svg>
+      } @else {
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          role="img"
+          aria-hidden="true"
+        >
+          <path d="m7 20 5-5 5 5" />
+          <path d="m7 4 5 5 5-5" />
+        </svg>
+      }
+    </button>
+  }
   <!-- "Origine" (session/compte) n'a de sens qu'en mode connecté (voir constructeur du composant)
        — invité, un switch à 2 options (Jour/Type) réutilise la variante de base `.icon-switch`
        (fond glissant à 50%) plutôt que `.icon-switch-3` (33%, réservée aux 3 options). -->
