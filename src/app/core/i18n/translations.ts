@@ -99,7 +99,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Tour suivant',
     'items.interactTitle': 'Interagir',
     'items.interactTooltip': 'Clic droit pour interagir',
-    'items.correctTooltip': 'Clic droit pour corriger',
+    'items.correctableTooltip': 'Objet ambigu — clique pour corriger',
     'items.doubtfulLootTooltip':
       'Provenance non confirmée : cet objet ne fait pas partie du butin connu des monstres de ce combat.',
     'items.follow': 'Suivre',
@@ -724,7 +724,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Next turn',
     'items.interactTitle': 'Interact',
     'items.interactTooltip': 'Right-click to interact',
-    'items.correctTooltip': 'Right-click to correct',
+    'items.correctableTooltip': 'Ambiguous item — click to correct',
     'items.doubtfulLootTooltip':
       "Unconfirmed origin: this item is not part of the known loot of this fight's monsters.",
     'items.follow': 'Follow',
@@ -1339,7 +1339,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Turno siguiente',
     'items.interactTitle': 'Interactuar',
     'items.interactTooltip': 'Clic derecho para interactuar',
-    'items.correctTooltip': 'Clic derecho para corregir',
+    'items.correctableTooltip': 'Objeto ambiguo — clic para corregir',
     'items.doubtfulLootTooltip':
       'Procedencia no confirmada: este objeto no forma parte del botín conocido de los monstruos de este combate.',
     'items.follow': 'Seguir',
@@ -1961,7 +1961,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.nextTurn': 'Próximo turno',
     'items.interactTitle': 'Interagir',
     'items.interactTooltip': 'Clique com o botão direito para interagir',
-    'items.correctTooltip': 'Clique com o botão direito para corrigir',
+    'items.correctableTooltip': 'Item ambíguo — clique para corrigir',
     'items.doubtfulLootTooltip':
       'Origem não confirmada: este item não faz parte do butim conhecido dos monstros deste combate.',
     'items.follow': 'Seguir',
