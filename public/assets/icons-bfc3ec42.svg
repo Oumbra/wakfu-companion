@@ -93,4 +93,15 @@
     <path d="M3 8h15M14 4l4 4-4 4" />
     <path d="M21 16H6M10 12l-4 4 4 4" />
   </symbol>
+  <!-- Badge "objet corrigeable" sur une ligne de butin (historique de combat, voir
+       LootListComponent) : nom présent plusieurs fois dans le catalogue (homonymes de rareté
+       différente, ex. "Larme d'Ogrest") — la résolution automatique par nom seul ne peut pas les
+       départager, une correction manuelle est possible via ItemPickerService. Clé plate simple,
+       registre "réparation/ajustement" plutôt qu'édition (déjà pris par `edit`, un crayon) ou
+       recherche (une loupe suggérerait plutôt "chercher" que "corriger"). -->
+  <symbol id="wrench" viewBox="0 0 24 24">
+    <path
+      d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+    />
+  </symbol>
 </svg>

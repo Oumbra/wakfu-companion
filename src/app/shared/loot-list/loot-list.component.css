@@ -57,9 +57,45 @@
 .loot-name {
   flex-grow: 1;
 }
+/* Emplacement TOUJOURS rendu (que la ligne soit corrigeable ou non), largeur fixe = celle du
+   bouton qu'il contient — garantit que `.loot-qty` reste alignée verticalement d'une ligne à
+   l'autre plutôt que de se décaler selon la présence du badge (voir CLAUDE.md, retour utilisateur
+   explicite sur ce point). */
+.loot-fix-slot {
+  width: 18px;
+  flex: none;
+  display: flex;
+  justify-content: center;
+}
+.loot-fix-btn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.loot-fix-btn:hover,
+.loot-fix-btn:focus-visible {
+  color: var(--accent);
+  background: var(--tint-medium);
+}
+/* `min-width` en `ch` (largeur d'un caractère de la police monospace ci-dessous, donc identique
+   pour chaque chiffre) + alignement à droite : sans ça, `.loot-qty` se dimensionne à son seul
+   contenu et le bloc badge+quantité (poussé tout à droite par `.loot-name{flex-grow:1}`) se
+   contracte/dilate selon le nombre de chiffres — le badge de correction n'a alors PAS de colonne
+   stable d'une ligne à l'autre, malgré `.loot-fix-slot` à largeur fixe juste avant (retour
+   utilisateur explicite sur ce point). 7ch couvre confortablement l'immense majorité des lots
+   (jusqu'à "×999 999") ; au-delà, la ligne concernée déborde légèrement plutôt que de forcer une
+   colonne inutilement large sur toutes les autres. */
 .loot-qty {
   font-family: monospace;
   color: var(--kama-color);
+  min-width: 7ch;
+  text-align: right;
 }
 
 /* `.empty-state` (base) vient de styles.css — seule la variante "small" est propre à ce contexte,
