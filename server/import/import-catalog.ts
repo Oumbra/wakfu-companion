@@ -13,7 +13,9 @@
  * pas de diff incrémental : le volume (~46 000 lignes toutes tables
  * confondues, recettes comprises) rend un remplacement complet largement
  * assez rapide, et évite toute divergence progressive entre le référentiel
- * et la base.
+ * et la base. Exception : `dungeons`, en upsert plutôt qu'en DELETE+INSERT
+ * (voir upsertDungeonsInBatches/deleteStaleDungeons plus bas) — seule table
+ * catalogue référencée par une FK stricte depuis `fights.dungeon_id`.
  *
  * Utilise le driver neon-http (comme server/db/client.ts, voir sa
  * documentation) plutôt que neon-serverless : pas de vraies transactions
@@ -27,6 +29,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { notInArray, sql } from 'drizzle-orm';
 import { createDb } from '../db/client';
 import {
   catalogMeta,
@@ -81,6 +84,10 @@ interface RawMonsterFamily {
   en: string;
   es: string;
   pt: string;
+  // Absent pour les familles sans illustration propre (voir server/db/schema.ts) — `null` distinct
+  // de `undefined` : le champ existe dans le JSON avec la valeur `null` pour ces entrées plutôt que
+  // d'être omis (voir repository/monster-families.json).
+  picture?: string | null;
 }
 
 interface RawMonster {
@@ -97,6 +104,10 @@ interface RawMonster {
   isBoss: boolean;
   isArchi: boolean;
   isDominant?: boolean;
+  // Ids Ankama des objets droppables sur ce monstre (référentiel curé par le skill externe
+  // wakfu-monsters-sync) — toujours un tableau, potentiellement vide (~127 monstres sans loot
+  // connu au moment de l'ajout de ce champ). Voir monsters.loot, server/db/schema.ts.
+  loot?: number[];
 }
 
 interface RawDungeon {
@@ -327,6 +338,70 @@ async function insertInBatches(
   }
 }
 
+/**
+ * `dungeons` est la SEULE table catalogue référencée par une FK stricte
+ * (`fights.dungeon_id -> dungeons.id`, ajoutée lot 8 — voir schema.ts) : le
+ * schéma `db.delete(table)` puis ré-insertion, utilisé pour toutes les
+ * autres tables catalogue (voir main()), y échoue systématiquement dès qu'un
+ * seul combat de l'historique référence un donjon existant (23503 "still
+ * referenced from table fights", vécu en session le 2026-08-30 dès l'ajout
+ * de la colonne monsters.loot, sans rapport direct avec elle — le premier
+ * import lancé après que des combats en donjon aient été enregistrés).
+ * Upsert (`ON CONFLICT (id) DO UPDATE`) à la place : `dungeons.id` est
+ * l'id Ankama, stable d'un import à l'autre, donc les lignes déjà
+ * référencées par `fights` ne sont jamais supprimées, seulement mises à
+ * jour en place. `sql`excluded.colonne`` (et non une valeur JS captée hors
+ * boucle) pour que CHAQUE ligne du batch garde ses propres valeurs au
+ * conflit, pas seulement celles de la dernière ligne insérée.
+ *
+ * Un vrai donjon supprimé du référentiel (cas jamais rencontré en pratique,
+ * Ankama n'en retire pas) resterait donc en base indéfiniment avec cette
+ * seule fonction — nettoyé séparément par deleteStaleDungeons ci-dessous,
+ * qui elle protège explicitement tout donjon encore référencé par un combat.
+ */
+async function upsertDungeonsInBatches(
+  db: ReturnType<typeof createDb>,
+  rows: DungeonRow[],
+  batchSize = 500,
+): Promise<void> {
+  for (let i = 0; i < rows.length; i += batchSize) {
+    await db
+      .insert(dungeons)
+      .values(rows.slice(i, i + batchSize))
+      .onConflictDoUpdate({
+        target: dungeons.id,
+        set: {
+          fr: sql`excluded.fr`,
+          en: sql`excluded.en`,
+          es: sql`excluded.es`,
+          pt: sql`excluded.pt`,
+          level: sql`excluded.level`,
+          bracket: sql`excluded.bracket`,
+          type: sql`excluded.type`,
+          bossMonsterId: sql`excluded.boss_monster_id`,
+          monsterFamilyId: sql`excluded.monster_family_id`,
+          pictureUrl: sql`excluded.picture_url`,
+          wakassetsAvailable: sql`excluded.wakassets_available`,
+          hasPreBossArchi: sql`excluded.has_pre_boss_archi`,
+        },
+      });
+  }
+}
+
+/** Supprime les donjons présents en base mais absents du référentiel importé (vrai retrait côté
+ * Ankama) — voir upsertDungeonsInBatches ci-dessus pour pourquoi ce n'est plus un simple `DELETE
+ * FROM dungeons` inconditionnel. Si un tel donjon est encore référencé par un combat de
+ * l'historique, cette suppression échoue avec la même erreur 23503 que l'ancien code — attendu et
+ * correct dans ce cas précis (un donjon disparu du jeu mais déjà joué ne doit pas être supprimé
+ * sous le pied de son historique) plutôt que silencieusement contourné. */
+async function deleteStaleDungeons(
+  db: ReturnType<typeof createDb>,
+  keepIds: number[],
+): Promise<void> {
+  if (keepIds.length === 0) return; // jamais en pratique (référentiel toujours non vide) — garde-fou contre un DELETE sans condition.
+  await db.delete(dungeons).where(notInArray(dungeons.id, keepIds));
+}
+
 interface ItemRow {
   ankamaId: number | null;
   fr: string;
@@ -357,6 +432,7 @@ interface MonsterRow {
   isBoss: boolean;
   isArchi: boolean;
   isDominant: boolean;
+  loot: number[];
 }
 
 interface MonsterFamilyRow {
@@ -365,6 +441,7 @@ interface MonsterFamilyRow {
   en: string;
   es: string;
   pt: string;
+  pictureUrl: string | null;
 }
 
 interface ItemCategoryRow {
@@ -479,6 +556,7 @@ async function main(): Promise<void> {
     isBoss: monster.isBoss,
     isArchi: monster.isArchi,
     isDominant: monster.isDominant ?? false,
+    loot: monster.loot ?? [],
   }));
 
   const dungeonRows: DungeonRow[] = rawDungeons.map((dungeon) => ({
@@ -503,6 +581,7 @@ async function main(): Promise<void> {
     en: family.en,
     es: family.es,
     pt: family.pt,
+    pictureUrl: family.picture ?? null,
   }));
 
   const compactIndex = buildCompactIndex(itemRows, monsterRows);
@@ -520,19 +599,25 @@ async function main(): Promise<void> {
   );
 
   // items référence itemCategories (sub_category_id) : supprimé avant elle, réinséré après —
-  // même contrainte d'ordre que monsters/monsterFamilies ci-dessous.
+  // même contrainte d'ordre que monsters/monsterFamilies ci-dessous. `dungeons` n'est PAS
+  // supprimée ici (voir upsertDungeonsInBatches/deleteStaleDungeons) : seule table catalogue
+  // référencée par une FK stricte (fights.dungeon_id), un DELETE inconditionnel y échoue dès
+  // qu'un combat de l'historique référence un donjon existant.
   await db.delete(itemRecipes);
   await db.delete(items);
   await db.delete(itemCategories);
   await db.delete(monsters);
-  await db.delete(dungeons);
   await db.delete(monsterFamilies);
 
   await insertInBatches(db, itemCategories, itemCategoryRows);
   await insertInBatches(db, items, itemRows);
   await insertInBatches(db, monsterFamilies, monsterFamilyRows);
   await insertInBatches(db, monsters, monsterRows);
-  await insertInBatches(db, dungeons, dungeonRows);
+  await upsertDungeonsInBatches(db, dungeonRows);
+  await deleteStaleDungeons(
+    db,
+    dungeonRows.map((d) => d.id),
+  );
   await insertInBatches(db, itemRecipes, recipeRows);
 
   await db

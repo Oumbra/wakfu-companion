@@ -52,6 +52,70 @@ export type WakfuDungeonType =
   | 'ARCADE';
 
 /**
+ * Classification stockée d'un combat (`fights.fightType` ci-dessous) — matérialise ce que
+ * `resolveFightTypeClassification`/`findDungeonForEnemies` (client, `fight-image.util.ts`)
+ * recalculent aujourd'hui à la volée à partir des participants + du catalogue, pour permettre un
+ * `GROUP BY`/`WHERE` direct côté SQL (carte Récap, regroupements Donjon & Famille/Type de
+ * `functions/api/v1/history/stats.ts`) sans rejoindre `fight_participants`/`monsters` à chaque
+ * requête. Calculée par `server/history/fight-type.ts` (partagé entre l'ingestion live —
+ * `functions/api/v1/history/fights.ts` — et le script de rattrapage ponctuel
+ * `server/import/backfill-fight-type.ts`), jamais par le client (contrairement à `dungeonId` ci-
+ * dessous) : elle a besoin de `monsters.is_boss`/`is_archi`/`is_dominant`/`family`, déjà en base
+ * côté serveur, alors que le client ne les expose pas tous via l'index compact du catalogue.
+ *
+ * - `DUNGEON_TWO_ROOMS`/`DUNGEON_THREE_ROOMS`/`DUNGEON_FOUR_ROOMS` : le combat de BOSS (un ennemi
+ *   `is_boss`) d'un donjon de ce type — PAS les salles qui le précèdent (voir `DUNGEON_ROOM`
+ *   ci-dessous). Peu importe l'issue (gagné ou perdu, voir `fights.won`) : une tentative de boss
+ *   ratée reste ce combat de boss précis, comme `dungeonBossFightRows` dans stats.ts.
+ * - `DUNGEON_ROOM` : une salle d'un donjon `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS` PRÉCÉDANT son
+ *   boss (aucun ennemi `is_boss` dans ce combat précis) — inclut le combat d'archimonstre
+ *   supplémentaire des donjons `hasPreBossArchi` (voir `dungeons.hasPreBossArchi`), qui n'est lui
+ *   non plus jamais un `is_boss`. Volontairement générique (pas de variante par nombre de salles) :
+ *   `fights.dungeonId` porte déjà le donjon précis pour qui voudrait le nombre de salles exact.
+ * - `DUNGEON_THREE_PLAYERS`/`DUNGEON_ULTIMATE_BOSS` : donjons à un seul combat (voir
+ *   `WakfuDungeonType`) — toujours ce combat unique, jamais de salle à distinguer.
+ * - `BREACH`/`ULTIMATE_BREACH` : brèche simple/ultime identifiée (voir `findDungeonForEnemies`) —
+ *   toujours un combat unique, jamais de notion de salle.
+ * - `ARCADE` volontairement ABSENT de cette liste : aucun vrai donjon arcade n'existe en pratique
+ *   dans le jeu à ce jour (voir `session-recap.component.ts`, `typeRows`) et son type n'a par
+ *   ailleurs aucun boss référencé (`dungeons.bossMonsterId` vide pour ce type) — `dungeonId` ne
+ *   peut donc structurellement jamais pointer vers un donjon `ARCADE` avec la détection actuelle
+ *   (uniquement par boss/brèche par familles). Un combat dont le donjon résolu serait malgré tout
+ *   d'un type non couvert ici (ARCADE, ou un futur type) reste `null` plutôt qu'une valeur
+ *   inventée — voir `server/history/fight-type.ts`.
+ * - `FAMILY_{id}` : combat HORS donjon (`dungeonId` `null`) dont un ennemi a pu être résolu dans le
+ *   catalogue — `{id}` est `monsters.family` (voir `monsterFamilies`) de l'ennemi "représentatif"
+ *   du combat, même priorité que `resolveFightTypeClassification`/`familyPerFight` (stats.ts) :
+ *   boss > archimonstre > dominant > plus gros dégât. `FAMILY_NONE` si ce représentant n'appartient
+ *   à aucune famille encyclopédie (les ~28 monstres sans famille, voir CLAUDE.md). Le repli "horde
+ *   hétérogène" du client (`kind: 'other'`, plus de 4 familles distinctes sans brèche connue) n'a
+ *   PAS d'équivalent dédié ici : comme `familyPerFight` déjà côté serveur, il retombe simplement sur
+ *   la famille du participant le mieux classé — même approximation assumée, voir CLAUDE.md.
+ * - `EVENT` : combat HORS donjon dont AUCUN ennemi n'a pu être résolu dans le catalogue `monsters`
+ *   du tout (`fight_participants.monster_id` null pour toute la ligne côté ennemi, y compris un
+ *   combat sans aucun participant ennemi enregistré) — décision utilisateur du 2026-08-30, après
+ *   audit du contenu réel de ce seau sur la base de prod (155 combats) : quasi exclusivement des
+ *   monstres d'ÉVÉNEMENT temporaire (Koutoulou, Chuchotueurs, Ougiptien, Tourbillon/Tornade du
+ *   Zinit...) ou des combats environnementaux sans vrai monstre (ex. "Enigme pyramide", une
+ *   énigme). Pas jugé rentable d'étendre `repository/monsters.json` (`wakfu-monsters-sync`, réservé
+ *   aux monstres permanents) pour ces cas ponctuels — `EVENT` leur donne un seau générique visible
+ *   dans les agrégations par type plutôt qu'un `null` invisible pour toujours (voir
+ *   `server/history/fight-type.ts` pour le calcul).
+ */
+export type FightTypeCode =
+  | 'DUNGEON_TWO_ROOMS'
+  | 'DUNGEON_THREE_ROOMS'
+  | 'DUNGEON_FOUR_ROOMS'
+  | 'DUNGEON_THREE_PLAYERS'
+  | 'DUNGEON_ULTIMATE_BOSS'
+  | 'DUNGEON_ROOM'
+  | 'BREACH'
+  | 'ULTIMATE_BREACH'
+  | 'FAMILY_NONE'
+  | `FAMILY_${number}`
+  | 'EVENT';
+
+/**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très
  * peu de lignes, quasi jamais modifiée — sert de clé étrangère à tout ce qui
  * doit être ventilé par serveur (prix, futurs combats/achats côté compte).
@@ -165,6 +229,13 @@ export const monsterFamilies = pgTable('monster_families', {
   en: text('en').notNull(),
   es: text('es').notNull(),
   pt: text('pt').notNull(),
+  // `repository/monster-families.json`, champ `picture` — `null` pour les familles purement
+  // "thématiques" sans illustration propre (ex. id 3 "Boss Ultimes", id 15 "Events") : contrairement
+  // à monsters/dungeons ci-dessus (toujours renseignée), pas de garantie d'exhaustivité sur ce
+  // référentiel curé à la main. Sert à illustrer le regroupement "Type" (palier famille) de
+  // l'historique des combats plutôt que de rester sans image (voir CatalogMonsterFamilyEntry côté
+  // client, core/utils/fight-image.util.ts).
+  pictureUrl: text('picture_url'),
 });
 
 /**
@@ -174,21 +245,33 @@ export const monsterFamilies = pgTable('monster_families', {
  * (pas de FK stricte : même raison que `dungeons.bossMonsterId`, ordre
  * d'import non garanti entre les deux tables).
  */
-export const monsters = pgTable('monsters', {
-  id: integer('id').primaryKey(),
-  fr: text('fr').notNull(),
-  en: text('en').notNull(),
-  es: text('es').notNull(),
-  pt: text('pt').notNull(),
-  gfxId: text('gfx_id').notNull(), // string côté client (CatalogMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
-  family: integer('family'),
-  pictureUrl: text('picture_url').notNull(),
-  wakassetsAvailable: boolean('wakassets_available').notNull(),
-  wakfuAvailable: boolean('wakfu_available').notNull(),
-  isBoss: boolean('is_boss').notNull(),
-  isArchi: boolean('is_archi').notNull(),
-  isDominant: boolean('is_dominant').notNull().default(false),
-});
+export const monsters = pgTable(
+  'monsters',
+  {
+    id: integer('id').primaryKey(),
+    fr: text('fr').notNull(),
+    en: text('en').notNull(),
+    es: text('es').notNull(),
+    pt: text('pt').notNull(),
+    gfxId: text('gfx_id').notNull(), // string côté client (CatalogMonsterEntry.gfxId), contrairement aux objets — asymétrie du référentiel source, conservée telle quelle.
+    family: integer('family'),
+    pictureUrl: text('picture_url').notNull(),
+    wakassetsAvailable: boolean('wakassets_available').notNull(),
+    wakfuAvailable: boolean('wakfu_available').notNull(),
+    isBoss: boolean('is_boss').notNull(),
+    isArchi: boolean('is_archi').notNull(),
+    isDominant: boolean('is_dominant').notNull().default(false),
+    // Butin droppable par ce monstre (`repository/monsters.json` champ `loot`, tableau d'ids
+    // Ankama d'objets) — pas encore consommé par un endpoint/le client à ce lot, posée en
+    // prévision d'une prochaine fonctionnalité (voir demande utilisateur). Toujours un tableau
+    // (jamais `null`), tableau vide pour les ~127 monstres du référentiel actuel sans loot connu —
+    // même convention "toujours un tableau" que `dungeons.bossMonsterId`/`monsterFamilyId`.
+    // Référence `items.ankamaId` (pas de FK stricte, même raison que `family` ci-dessus : ordre
+    // d'import non garanti entre les tables).
+    loot: integer('loot').array().notNull().default([]),
+  },
+  (table) => [index('monsters_loot_idx').using('gin', table.loot)],
+);
 
 /** Donjons — `id` Ankama en clé primaire (151 donjons, tous uniques). */
 export const dungeons = pgTable(
@@ -548,6 +631,18 @@ export const fights = pgTable(
      */
     challengesPassed: integer('challenges_passed').notNull().default(0),
     challengesFailed: integer('challenges_failed').notNull().default(0),
+    /**
+     * Classification matérialisée du combat — voir `FightTypeCode` ci-dessus pour le détail des
+     * valeurs et l'ordre de priorité. Calculée côté serveur (`server/history/fight-type.ts`), à
+     * l'ingestion (`functions/api/v1/history/fights.ts`, POST) ET par le script de rattrapage
+     * `server/import/backfill-fight-type.ts` pour les combats déjà archivés avant l'ajout de cette
+     * colonne. `null` tant qu'aucun ennemi du combat n'a pu être résolu dans le catalogue (ni
+     * donjon, ni famille) — voir `FightTypeCode`. MODIFIABLE après insertion, comme `dungeonId`
+     * dont elle dépend directement : une salle qui reçoit son `dungeonId` a posteriori (voir sa
+     * doc) doit voir `fightType` recalculée dans la foulée, jamais figée à sa valeur initiale
+     * `FAMILY_*`/`null`.
+     */
+    fightType: text('fight_type').$type<FightTypeCode>(),
   },
   (table) => [
     uniqueIndex('fights_user_client_key_uq').on(table.userId, table.clientKey),
@@ -557,6 +652,9 @@ export const fights = pgTable(
     index('fights_fight_log_id_idx').on(table.fightLogId),
     // Statistiques par run de donjon (voir doc de dungeonRunKey) : « tous les combats de ce run ».
     index('fights_user_dungeon_run_key_idx').on(table.userId, table.dungeonRunKey),
+    // Regroupements/filtres par type (carte Récap, voir FightTypeCode) : « tous les combats de ce
+    // type pour ce compte ».
+    index('fights_user_fight_type_idx').on(table.userId, table.fightType),
   ],
 );
 
@@ -601,6 +699,13 @@ export const fightParticipants = pgTable(
     className: text('class_name'),
     damage: bigint('damage', { mode: 'number' }).notNull().default(0),
     defeated: boolean('defeated').notNull().default(false),
+    /** Combattant échappé plutôt que vaincu ("X: disparaît", voir StatsStoreService.
+     * registerFightFlee/CLAUDE.md) — mutuellement exclusif avec `defeated` (jamais les deux à
+     * `true`). Observé à ce jour uniquement sur les monstres "Mimic X" qui se révèlent puis fuient,
+     * mais le signal de log est générique (n'importe quel combattant pourrait l'émettre) : colonne
+     * posée sans restriction de nom. `false` par défaut pour tout participant existant avant
+     * l'ajout de cette colonne — comportement inchangé (affiché comme avant, ni vaincu ni fui). */
+    fled: boolean('fled').notNull().default(false),
     spells: jsonb('spells').notNull().default([]),
     /**
      * XP gagnée par ce combattant sur ce combat. Rattachée au participant plutôt

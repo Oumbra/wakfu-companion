@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ChatPanelService } from './chat-panel.service';
 import { UserDataService } from '../data-access/user-data.service';
+import { MediaQuerySignal } from '../utils/media-query-signal';
 
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
@@ -182,6 +183,11 @@ export class DashboardLayoutService {
   private readonly userData = inject(UserDataService);
   private readonly chatPanel = inject(ChatPanelService);
 
+  /** Même seuil que `@media (max-width: 800px)` (dashboard.component.css/styles.css) — nécessaire
+   * en TS pour `isCollapsedForRender` ci-dessous. Jamais `disconnect()` : ce service `providedIn:
+   * 'root'` vit toute la durée de l'app (comme `ChatPanelService`), pas de fuite à nettoyer. */
+  private readonly mobileQuery = new MediaQuerySignal('(max-width: 800px)');
+
   readonly menuPos = signal<DashboardMenuPos>(DEFAULT_PREFS.menuPos);
   readonly kpiPos = signal<DashboardKpiPos>(DEFAULT_PREFS.kpiPos);
   readonly bodyMode = signal<DashboardBodyMode>(DEFAULT_PREFS.bodyMode);
@@ -333,6 +339,21 @@ export class DashboardLayoutService {
     if (key === 'chat') return this.chatPanel.collapsed();
     return !!this.collapsedSections()[key];
   }
+
+  /** Comme `isCollapsed`, mais neutralisé en mobile — toujours `false` sous 800px, quel que soit le
+   * réglage desktop persisté. En mobile, une carte repliée n'a nulle part où "aller" : pas de rail
+   * replié sous ce seuil (voir `dashboard-rail.component.css`), donc pas de moyen de la rouvrir — la
+   * replier reviendrait à la rendre définitivement injoignable sur cet appareil (retour utilisateur,
+   * carte Récap absente en mobile alors que repliée par défaut côté desktop). À utiliser à la place
+   * d'`isCollapsed` partout où le résultat retire STRUCTURELLEMENT un élément du DOM en mobile
+   * (`@if`/`@for` — voir `SessionRecapComponent`/`HistoryComponent`), jamais pour les calculs
+   * purement desktop (`visibleBodySlots`/`gridPlan`/le rail lui-même), qui doivent continuer de
+   * refléter le vrai réglage. */
+  isCollapsedForRender(key: DashboardCollapsibleKey): boolean {
+    if (this.mobileQuery.matches()) return false;
+    return this.isCollapsed(key);
+  }
+
   toggleCollapsed(key: DashboardCollapsibleKey): void {
     if (key === 'chat') {
       this.chatPanel.setCollapsed(!this.chatPanel.collapsed());
@@ -356,6 +377,24 @@ export class DashboardLayoutService {
 
   // --- Dérivation partagée (corps : Historique×N / Chat) -------------------------------------
 
+  /** Volets d'historique affichés chacun dans leur propre carte — device-INDÉPENDANT (utilisé aussi
+   * bien pour le placement de grille desktop que pour les onglets mobile, voir `DashboardComponent`/
+   * `HistoryComponent` : avant l'introduction des onglets mobile dynamiques, `HistoryComponent`
+   * ignorait ce réglage sous 800px et affichait systématiquement les 3 volets regroupés — CLAUDE.md).
+   * Tous les 3 par défaut, sauf si l'utilisateur a coché AU MOINS DEUX volets à regrouper
+   * (`historyGroup`) — un seul volet coché ne regrouperait rien, il reste alors solo. */
+  readonly historySplitKeys = computed<DashboardHistoryKey[]>(() => {
+    const group = this.historyGroup();
+    const grouped = HIST_KEYS.filter((k) => group[k]);
+    return grouped.length >= 2 ? HIST_KEYS.filter((k) => !group[k]) : [...HIST_KEYS];
+  });
+  /** Complément de `historySplitKeys` : volets regroupés dans la carte `hist_group` (vide quand le
+   * regroupement n'est pas actif). */
+  readonly historyGroupedKeys = computed<DashboardHistoryKey[]>(() => {
+    const solo = new Set(this.historySplitKeys());
+    return HIST_KEYS.filter((k) => !solo.has(k));
+  });
+
   /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique. Pas de
    * carte "Combat" à part : le combat en cours vit désormais DANS `hist_combats`/`hist_group`
    * (voir CLAUDE.md/FightHistoryComponent), toujours présentes ici qu'un combat soit en cours ou
@@ -368,14 +407,12 @@ export class DashboardLayoutService {
    * demandée pour ce cas. */
   readonly activeSlots = computed<DashboardBodySlot[]>(() => {
     const slots: DashboardBodySlot[] = [];
-    const group = this.historyGroup();
-    const groupedKeys = HIST_KEYS.filter((k) => group[k]);
-    const groupingActive = groupedKeys.length >= 2;
-    const soloKeys = groupingActive ? HIST_KEYS.filter((k) => !group[k]) : HIST_KEYS;
+    const soloKeys = this.historySplitKeys();
+    const groupedKeys = this.historyGroupedKeys();
     for (const k of soloKeys) {
       slots.push({ key: `hist_${k}` as DashboardBodySlotKey, sw: k });
     }
-    if (groupingActive) slots.push({ key: 'hist_group', sw: 'history' });
+    if (groupedKeys.length > 0) slots.push({ key: 'hist_group', sw: 'history' });
     slots.push({ key: 'chat', sw: 'chat' });
     slots.push({ key: 'recap', sw: 'recap' });
 

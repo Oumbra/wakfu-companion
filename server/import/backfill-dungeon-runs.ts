@@ -37,19 +37,24 @@
  * tables `monsters`/`dungeons` déjà en base), pas via une requête sur ces tables : plus simple, et
  * même schéma de confiance que `backfill-monster-ids.ts`.
  *
- * ## Fenêtre de session (garde-fou ajouté ici, absent côté client)
+ * ## Pas de découpage par écart de temps (retiré le 2026-08-30)
  *
- * Côté client, `groupDungeonRuns` ne voit jamais qu'un seul `historyList` : celui d'UNE session de
- * fichier connectée (`resetSessionState()` le vide à chaque reconnexion, voir CLAUDE.md "principe
- * d'architecture isInitialLoad"). Ici, on rejoue l'algorithme sur la TOTALITÉ de l'historique déjà
- * synchronisé d'un compte, potentiellement des dizaines de sessions de jeu étalées sur des mois —
- * sans découpage, un combat de fin de session et le tout premier combat de la session suivante
- * pourraient se retrouver « adjacents » dans la liste triée et être regroupés à tort. Avant
- * d'appeler `groupDungeonRuns`, l'historique de chaque compte est donc d'abord découpé en segments
- * dès qu'un écart de plus de `SESSION_SEGMENT_GAP_THRESHOLD_MS` sépare deux combats consécutifs —
- * même constante et même valeur (5 min) que `StatsStoreService.accumulateSessionDuration`, déjà
- * calibrée sur un vrai fichier pour cet usage précis (voir CLAUDE.md "Durée de session").
- * `groupDungeonRuns` tourne ensuite indépendamment sur chaque segment.
+ * Une première version de ce script découpait l'historique en segments dès qu'un écart de plus de
+ * 5 min séparait deux combats consécutifs, avant d'appeler `groupDungeonRuns` sur chaque segment
+ * indépendamment — garde-fou contre le risque de fusionner à tort la fin d'une session avec le
+ * début de la suivante. Retiré (remonté par l'utilisateur sur un cas réel) : ce seuil, recyclé
+ * depuis un tout autre usage (`StatsStoreService.accumulateSessionDuration`, calibré pour décider
+ * si un écart signale une COUPURE de connexion), cassait la fusion de tentatives de boss/salle
+ * pourtant légitimement espacées de plus de 5 min (pause en plein donjon, coupure réseau, temps de
+ * discussion de groupe...) — observé jusqu'à ~20 min entre deux tentatives d'un même run réel.
+ *
+ * Remplacé par une protection basée sur le CONTENU plutôt que le temps (voir `groupDungeonRuns`,
+ * étape 3, `roomCompositionKey`) : une défaite n'est ramassée comme tentative ratée d'une salle que
+ * si sa composition d'ennemis correspond EXACTEMENT à celle de la victoire qui la referme — un
+ * combat réellement sans rapport (composition différente) n'est donc plus jamais avalé, quel que
+ * soit l'écart de temps qui le sépare de cette victoire. Le cluster de tentatives de boss (étape 1)
+ * n'avait de toute façon jamais eu besoin d'un tel seuil : il est déjà gardé par l'identité du
+ * donjon (`candidate.id === dungeon.id`), un contenu, pas un temps.
  *
  * ## Valeur de `dungeon_run_key` attribuée
  *
@@ -102,12 +107,6 @@ import { normalizeWakfuName } from '../../src/app/core/utils/wakfu-name.util';
 
 const projectRoot = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
 const REPOSITORY_DIR = path.join(projectRoot, 'repository');
-
-/** Même seuil, même raison d'être que `SESSION_SEGMENT_GAP_THRESHOLD_MS` dans
- * `stats-store.service.ts` (voir CLAUDE.md "Durée de session") : au-delà de cet écart entre deux
- * combats consécutifs d'un même compte, on considère qu'il s'agit de deux sessions de jeu
- * distinctes, jamais regroupables entre elles. */
-const SESSION_SEGMENT_GAP_THRESHOLD_MS = 5 * 60 * 1000;
 
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, horde hétérogène — miroir de
  * `DISTINCT_FAMILY_THRESHOLD` (fight-image.util.ts). */
@@ -283,6 +282,11 @@ export function hasArchiEnemy(catalog: Catalog, enemyNames: readonly string[]): 
   return enemyNames.some((name) => catalog.findMonster(name)?.isArchi === true);
 }
 
+/** Port de `enemyCompositionKey` (dungeon-run-grouping.util.ts) — voir sa doc. */
+export function enemyCompositionKey(enemyNames: readonly string[]): string {
+  return [...new Set(enemyNames)].sort().join('|');
+}
+
 function dungeonRoomCount(dungeon: DungeonEntry): number {
   return ROOM_COUNT_BY_TYPE[dungeon.type];
 }
@@ -297,6 +301,9 @@ export interface FightRow {
    * regroupement) — `null` si aucun (salle sans boss, ou combat hors donjon). */
   dungeon: DungeonEntry | null;
   archi: boolean;
+  /** Clé de composition d'ennemis (voir `enemyCompositionKey`) — utilisée à l'étape 3 de
+   * `groupDungeonRuns` pour rattacher une défaite à la salle qu'elle a ratée. */
+  roomKey: string;
 }
 
 type GroupEntry =
@@ -336,14 +343,30 @@ export function groupDungeonRuns(records: readonly FightRow[]): GroupEntry[] {
       j++;
     }
 
+    // Salles précédentes — miroir du fix 2026-08-30 de `groupDungeonRuns`
+    // (dungeon-run-grouping.util.ts, voir sa doc pour le détail) : une VICTOIRE compte pour une
+    // salle (sauf si `roomSlots` est déjà atteint : salle en trop = run antérieur distinct) ; une
+    // DÉFAITE n'est ramassée comme tentative ratée de la salle EN COURS que si sa composition
+    // d'ennemis correspond EXACTEMENT à celle de la victoire qui la referme.
     const roomSlots = dungeonRoomCount(dungeon) - 1;
     let roomsFound = 0;
-    while (roomsFound < roomSlots && j < records.length) {
+    let currentRoomKey: string | null = null;
+    while (j < records.length) {
       const candidate = records[j].dungeon;
       if (candidate) break;
-      const won = records[j].result === 'won';
-      j++;
-      if (won) roomsFound++;
+      const record = records[j];
+      if (record.result === 'won') {
+        if (roomsFound >= roomSlots) break;
+        currentRoomKey = record.roomKey;
+        roomsFound++;
+        j++;
+        continue;
+      }
+      if (currentRoomKey !== null && record.roomKey === currentRoomKey) {
+        j++;
+        continue;
+      }
+      break;
     }
 
     for (let k = i; k < j; k++) consumed[k] = true;
@@ -358,23 +381,6 @@ export function groupDungeonRuns(records: readonly FightRow[]): GroupEntry[] {
   }
 
   return entries;
-}
-
-export function splitIntoSessionSegments(rowsAscending: readonly FightRow[]): FightRow[][] {
-  const segments: FightRow[][] = [];
-  let current: FightRow[] = [];
-  for (const row of rowsAscending) {
-    if (current.length > 0) {
-      const prev = current[current.length - 1];
-      if (row.startedAt.getTime() - prev.startedAt.getTime() > SESSION_SEGMENT_GAP_THRESHOLD_MS) {
-        segments.push(current);
-        current = [];
-      }
-    }
-    current.push(row);
-  }
-  if (current.length > 0) segments.push(current);
-  return segments;
 }
 
 interface FightUpdate {
@@ -392,23 +398,21 @@ export function resolveUpdatesForUser(
 ): Map<number, FightUpdate> {
   const updates = new Map<number, FightUpdate>();
 
-  for (const segment of splitIntoSessionSegments(rowsAscending)) {
-    const descending = [...segment].reverse();
-    for (const entry of groupDungeonRuns(descending)) {
-      if (entry.kind === 'single') {
-        if (entry.record.dungeon !== null && entry.record.dungeonId === null) {
-          const key = entry.record.dungeonRunKey ?? mintRunKey(entry.record.id);
-          updates.set(entry.record.id, { dungeonId: entry.record.dungeon.id, dungeonRunKey: key });
-        }
-        continue;
+  const descending = [...rowsAscending].reverse();
+  for (const entry of groupDungeonRuns(descending)) {
+    if (entry.kind === 'single') {
+      if (entry.record.dungeon !== null && entry.record.dungeonId === null) {
+        const key = entry.record.dungeonRunKey ?? mintRunKey(entry.record.id);
+        updates.set(entry.record.id, { dungeonId: entry.record.dungeon.id, dungeonRunKey: key });
       }
+      continue;
+    }
 
-      const existingKey = entry.fights.map((f) => f.dungeonRunKey).find((k) => k !== null) ?? null;
-      const key = existingKey ?? mintRunKey(entry.representative.id);
-      for (const fight of entry.fights) {
-        if (fight.dungeonId === null) {
-          updates.set(fight.id, { dungeonId: entry.dungeon.id, dungeonRunKey: key });
-        }
+    const existingKey = entry.fights.map((f) => f.dungeonRunKey).find((k) => k !== null) ?? null;
+    const key = existingKey ?? mintRunKey(entry.representative.id);
+    for (const fight of entry.fights) {
+      if (fight.dungeonId === null) {
+        updates.set(fight.id, { dungeonId: entry.dungeon.id, dungeonRunKey: key });
       }
     }
   }
@@ -515,6 +519,7 @@ async function main(): Promise<void> {
         dungeonRunKey: row.dungeonRunKey,
         dungeon: findDungeonForEnemyNames(catalog, enemyNames),
         archi: hasArchiEnemy(catalog, enemyNames),
+        roomKey: enemyCompositionKey(enemyNames),
       };
     });
 

@@ -153,17 +153,10 @@
             [appTooltip]="'sessionRecap.detail.byGroup' | t"
             (click)="setDetailMode('byGroup')"
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M6 20V10a6 6 0 0112 0v10"></path>
-              <path d="M6 20h12"></path>
-            </svg>
+            <!-- Même icône que le pictogramme de repli des lignes "Donjon & Famille" plus bas
+                 (voir `#groupItemTpl`) et que le mode "Donjons & familles" de l'historique des
+                 combats (fight-history.component.html) — voir sprite `dungeon`. -->
+            <app-icon name="dungeon" [size]="15" [strokeWidth]="1.8" />
           </button>
           <button
             type="button"
@@ -320,27 +313,12 @@
              partagés entre les deux vues, garder les deux synchronisées si l'une change. -->
         @if (stats.sessionLoot().length > 1) {
           <div class="loot-controls-row">
-            <div class="loot-search-wrap">
-              <svg
-                class="loot-search-icon"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="11" cy="11" r="7" />
-                <path d="M21 21l-4.3-4.3" />
-              </svg>
-              <input
-                type="text"
-                class="loot-search-input"
-                [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
-                [value]="lootSearch()"
-                (input)="lootSearch.set($any($event.target).value)"
-              />
-            </div>
+            <app-loot-search
+              [value]="lootSearch()"
+              [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
+              [clearTooltip]="'damageMeter.lootSearchClear' | t"
+              (valueChange)="lootSearch.set($event)"
+            />
             <div class="icon-switch icon-switch-3 loot-sort-switch">
               <span
                 class="icon-switch-highlight"
@@ -513,27 +491,12 @@
                  Session ci-dessus — voir son commentaire. -->
             @if (period.loot.length > 1) {
               <div class="loot-controls-row">
-                <div class="loot-search-wrap">
-                  <svg
-                    class="loot-search-icon"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="M21 21l-4.3-4.3" />
-                  </svg>
-                  <input
-                    type="text"
-                    class="loot-search-input"
-                    [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
-                    [value]="lootSearch()"
-                    (input)="lootSearch.set($any($event.target).value)"
-                  />
-                </div>
+                <app-loot-search
+                  [value]="lootSearch()"
+                  [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
+                  [clearTooltip]="'damageMeter.lootSearchClear' | t"
+                  (valueChange)="lootSearch.set($event)"
+                />
                 <div class="icon-switch icon-switch-3 loot-sort-switch">
                   <span
                     class="icon-switch-highlight"
@@ -660,19 +623,9 @@
                 <path d="M8 15c0-2.5 1.8-4.5 4-4.5s4 2 4 4.5-1.8 4.5-4 4.5-4-2-4-4.5z"></path>
               </svg>
             } @else {
-              <svg
-                viewBox="0 0 24 24"
-                width="20"
-                height="20"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M6 20V10a6 6 0 0112 0v10"></path>
-                <path d="M6 20h12"></path>
-              </svg>
+              <!-- Repli générique "donjon" (aucune illustration officielle résolue) — même icône
+                   que le switch de regroupement ci-dessus, voir sprite `dungeon`. -->
+              <app-icon name="dungeon" [size]="20" [strokeWidth]="1.7" />
             }
           </div>
           <span class="dungeon-name" [appTooltip]="row.label" [tooltipOnlyIfTruncated]="true">{{
@@ -884,27 +837,12 @@
                    autres. -->
               @if (row.totals.loot.length > 1) {
                 <div class="loot-controls-row">
-                  <div class="loot-search-wrap">
-                    <svg
-                      class="loot-search-icon"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="M21 21l-4.3-4.3" />
-                    </svg>
-                    <input
-                      type="text"
-                      class="loot-search-input"
-                      [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
-                      [value]="lootSearch()"
-                      (input)="lootSearch.set($any($event.target).value)"
-                    />
-                  </div>
+                  <app-loot-search
+                    [value]="lootSearch()"
+                    [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
+                    [clearTooltip]="'damageMeter.lootSearchClear' | t"
+                    (valueChange)="lootSearch.set($event)"
+                  />
                   <div class="icon-switch icon-switch-3 loot-sort-switch">
                     <span
                       class="icon-switch-highlight"

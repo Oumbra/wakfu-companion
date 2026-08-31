@@ -105,4 +105,57 @@
     <path d="M5 7.5h14M5 16.5h14" />
     <path d="M9 11h6M9 14h4" />
   </symbol>
+  <!-- Badge de doute sur une ligne de butin (voir loot-list.component) : objet dont la provenance
+       n'a pas pu être confirmée par recoupement avec les tables de drop des monstres du combat
+       (LootConfidence.doubtful, core/models/fight.model.ts) — point d'interrogation dans un
+       cercle, motif universellement associé à l'incertitude. -->
+  <symbol id="help-circle" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 2-2.6 2.2-2.6 3.7" />
+    <path d="M12 17.2h.01" />
+  </symbol>
+  <!-- Bouton "tout replier/déplier" du regroupement de l'historique des combats (voir
+       FightHistoryComponent.toggleAllGroups) : deux chevrons qui se rapprochent du centre
+       (collapse — au moins un groupe est déplié) / s'en écartent (expand — tout est replié),
+       le même vocabulaire visuel que les icônes Lucide `chevrons-down-up`/`chevrons-up-down`. -->
+  <symbol id="chevrons-collapse" viewBox="0 0 24 24">
+    <path d="M7 4l5 5 5-5" />
+    <path d="M7 20l5-5 5 5" />
+  </symbol>
+  <symbol id="chevrons-expand" viewBox="0 0 24 24">
+    <path d="M7 9l5-5 5 5" />
+    <path d="M7 15l5 5 5-5" />
+  </symbol>
+  <!-- Regroupement Donjon & Famille (voir SessionRecapComponent.detailMode et
+       FightHistoryComponent, mode "Donjons & familles") : petite porte en arche (repère visuel
+       d'un donjon), déjà dupliqué à 3 endroits avant cette extraction (switch de Récap, switch de
+       l'historique de combats, pictogramme de repli d'une ligne "Donjon & Famille" sans
+       illustration officielle) — voir CLAUDE.md, "un pictogramme rejoint le sprite dès qu'il est
+       répété". -->
+  <symbol id="dungeon" viewBox="0 0 24 24">
+    <path d="M6 20V10a6 6 0 0112 0v10" />
+    <path d="M6 20h12" />
+  </symbol>
+  <!-- Statut "a fui" d'une ligne de récap combat (voir entity-damage-list, EntityDamageRow.fled) —
+       porte + flèche sortante (motif "sortie", distinct du badge KO `app-ko-icon`) pour un
+       combattant qui a disparu ("X: disparaît", jamais "est hors-combat !") plutôt que d'avoir été
+       vaincu — voir CLAUDE.md, cas des mimiques. -->
+  <symbol id="flee" viewBox="0 0 24 24">
+    <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
+  </symbol>
+  <!-- Badge "objet corrigeable" sur une ligne de butin (historique de combat, voir
+       LootListComponent) : nom présent plusieurs fois dans le catalogue (homonymes de rareté
+       différente, ex. "Larme d'Ogrest") — la résolution automatique par nom seul ne peut pas les
+       départager, une correction manuelle est possible via ItemPickerService. Clé plate simple,
+       registre "réparation/ajustement" plutôt qu'édition (déjà pris par `edit`, un crayon) ou
+       recherche (une loupe suggérerait plutôt "chercher" que "corriger"). Distinct du badge de
+       doute `help-circle` ci-dessus (incertitude sur la provenance) : ici, l'objet EST connu du
+       catalogue, juste ambigu entre plusieurs variantes. -->
+  <symbol id="wrench" viewBox="0 0 24 24">
+    <path
+      d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+    />
+  </symbol>
 </svg>

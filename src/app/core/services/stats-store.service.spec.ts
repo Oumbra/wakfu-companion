@@ -626,7 +626,9 @@ describe('StatsStoreService', () => {
       ]);
       const fights = stats.fightHistory();
       expect(fights).toHaveLength(1);
-      expect(fights[0].loot).toEqual([{ name: 'Laine de Bouftou', catalogId: null, quantity: 2 }]);
+      expect(fights[0].loot).toEqual([
+        { name: 'Laine de Bouftou', catalogId: null, quantity: 2, confidence: 'unknown' },
+      ]);
       expect(stats.sessionLoot().map((l) => l.name)).toEqual(['Laine de Bouftou']);
       expect(stats.purchaseHistory()).toHaveLength(1);
       expect(stats.purchaseHistory()[0].item).toBe('Pain Complet');
@@ -654,7 +656,9 @@ describe('StatsStoreService', () => {
       ]);
       const fights = stats.fightHistory();
       expect(fights).toHaveLength(1);
-      expect(fights[0].loot).toEqual([{ name: 'Laine de Bouftou', catalogId: null, quantity: 2 }]);
+      expect(fights[0].loot).toEqual([
+        { name: 'Laine de Bouftou', catalogId: null, quantity: 2, confidence: 'unknown' },
+      ]);
       expect(stats.sessionLoot().map((l) => l.name)).toEqual(['Laine de Bouftou']);
       // Seul le ramassage au prix connu (perte de kamas adjacente) devient un achat identifiable.
       expect(stats.purchaseHistory()).toHaveLength(1);

@@ -105,22 +105,59 @@
   grid-column: 3;
   justify-self: end;
 }
-/* Repli défensif sous 480px (téléphone étroit, panneau encore réduit par la mise en page mobile) :
-   la grille à 3 colonnes peut manquer de place une fois le pas-à-pas de tour affiché (mode 'turn',
-   voir DamageViewSwitchComponent) — empile plutôt que de laisser déborder. S'applique aux deux
-   variantes de ligne (combat en cours ET en-tête historique). */
-@media (max-width: 480px) {
+/* Demande explicite de l'utilisateur (2026-08-31, onglet Combats du dashboard mobile) : cette ligne
+   doit tenir sur UNE seule ligne en mobile plutôt que de s'empiler — voir aussi le rétrécissement du
+   switch Cumulé/Tour (damage-view-switch.component.css) et du switch Dommage/Armure/Soin
+   (entity-stat-tabs.component.css), qui dégagent l'essentiel de la place manquante. */
+@media (max-width: 800px) {
   .combat-switch-row,
   .combat-info-toggle {
+    gap: 6px;
+    padding: 0 8px;
+  }
+  .combat-info-toggle {
+    height: 36px;
+    font-size: 0.68rem;
+  }
+  .combat-switch-row {
+    padding: 6px 8px;
+  }
+  /* `justify-self: start` (règle de base ci-dessus) sort ce label du flux normal du grid : la boîte
+     se dimensionne à son CONTENU ("Informations de combat", bien plus large que la colonne `1fr`
+     disponible une fois les 2 switchs voisins en place) au lieu de se caler sur la largeur de sa
+     colonne — l'ellipsis (`overflow:hidden`/`text-overflow:ellipsis`, déjà posés ci-dessus) ne
+     peut alors jamais se déclencher (rien ne dépasse d'une boîte qui grandit pour tout contenir), et
+     le label déborde visuellement PAR-DESSUS `.combat-switch-center` (les items de grille ne se
+     "poussent" pas entre eux) — bug réel corrigé le 2026-08-31 (retour utilisateur, capture à
+     l'appui), invisible avant ce changement car ce label profitait soit d'une large colonne
+     desktop, soit de l'ancien empilement inconditionnel sous 480px (toute la largeur pour lui
+     seul). `stretch` (comportement par défaut du grid, désactivé par le `start` ci-dessus) force au
+     contraire la boîte à occuper exactement sa colonne, ce qui laisse enfin l'ellipsis s'appliquer. */
+  .combat-info-label {
+    justify-self: stretch;
+  }
+}
+
+/* Repli défensif sous 480px (téléphone étroit, panneau encore réduit par la mise en page mobile) —
+   UNIQUEMENT en mode 'turn' (`.turn-mode`, voir template/CombatDetailComponent.mode) : c'est le
+   pas-à-pas de tour (`app-stepper`, largeur fixe non rétrécie ici — composant partagé par de
+   nombreux autres endroits de l'app, voir CLAUDE.md) qui peut alors manquer de place sur les
+   téléphones les plus étroits, jamais le mode 'total' (par défaut) une fois les switchs déjà
+   rétrécis ci-dessus — empile plutôt que de laisser déborder. S'applique aux deux variantes de ligne
+   (combat en cours ET en-tête historique). */
+@media (max-width: 480px) {
+  .combat-switch-row.turn-mode,
+  .combat-info-toggle.turn-mode {
     grid-template-columns: 1fr;
     justify-items: center;
     height: auto;
     padding: 8px 10px;
   }
-  .combat-switch-center,
-  .combat-switch-right,
-  .combat-info-label,
-  .combat-info-end {
+  .combat-switch-row.turn-mode .combat-switch-center,
+  .combat-switch-row.turn-mode .combat-switch-right,
+  .combat-info-toggle.turn-mode .combat-info-label,
+  .combat-info-toggle.turn-mode .combat-switch-center,
+  .combat-info-toggle.turn-mode .combat-info-end {
     grid-column: 1;
     justify-self: center;
   }

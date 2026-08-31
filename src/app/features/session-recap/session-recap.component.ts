@@ -20,6 +20,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { EntityIconComponent } from '../../shared/entity-icon/entity-icon.component';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
 import { LootListComponent } from '../../shared/loot-list/loot-list.component';
+import { LootSearchComponent } from '../../shared/loot-search/loot-search.component';
 import { IconComponent } from '../../shared/icon/icon.component';
 import { DashboardLayoutService } from '../../core/services/dashboard-layout.service';
 import {
@@ -54,6 +55,11 @@ import {
   periodBounds,
 } from '../../core/utils/local-period.util';
 import { mergeGroupTotals } from '../../core/utils/period-group-merge.util';
+import {
+  DUNGEON_TYPE_LABEL_KEY,
+  DUNGEON_TYPE_ORDER,
+  FAMILIES_SECTION_LABEL_KEY,
+} from '../../core/utils/dungeon-category.util';
 import { StepperComponent } from '../../shared/stepper/stepper.component';
 import { PeriodPickerService } from '../../core/services/period-picker.service';
 import { PersistenceService } from '../../core/services/persistence.service';
@@ -85,29 +91,6 @@ const DETAIL_MODE_STORAGE_KEY = 'wakfu-recap-detail-mode';
 type DetailMode = 'cumulative' | 'byGroup' | 'byType';
 const VALID_DETAIL_MODES: readonly DetailMode[] = ['cumulative', 'byGroup', 'byType'];
 
-/** Ordre d'itération stable des 8 `WakfuDungeonType` pour le mode "Type" — voir `typeRows`. */
-const DUNGEON_TYPES: readonly WakfuDungeonType[] = [
-  'TWO_ROOMS',
-  'THREE_ROOMS',
-  'FOUR_ROOMS',
-  'THREE_PLAYERS',
-  'ULTIMATE_BOSS',
-  'BREACH',
-  'ULTIMATE_BREACH',
-  'ARCADE',
-];
-
-const DUNGEON_TYPE_KEY: Record<WakfuDungeonType, string> = {
-  TWO_ROOMS: 'sessionRecap.period.dungeonType.twoRooms',
-  THREE_ROOMS: 'sessionRecap.period.dungeonType.threeRooms',
-  FOUR_ROOMS: 'sessionRecap.period.dungeonType.fourRooms',
-  THREE_PLAYERS: 'sessionRecap.period.dungeonType.threePlayers',
-  ULTIMATE_BOSS: 'sessionRecap.period.dungeonType.ultimateBoss',
-  BREACH: 'sessionRecap.period.dungeonType.breach',
-  ULTIMATE_BREACH: 'sessionRecap.period.dungeonType.ultimateBreach',
-  ARCADE: 'sessionRecap.period.dungeonType.arcade',
-};
-
 /** Illustration de repli pour les 2 `WakfuDungeonType` sans pierre (voir `dungeonStoneItemIdForType`)
  * — voir doc de `typeRows`, remplace le pictogramme générique "porte" par une image dédiée. Les
  * autres types (avec pierre, ou "Autres"/familles) n'y figurent pas volontairement. */
@@ -123,12 +106,13 @@ interface RecapGroupRow {
   key: string;
   label: string;
   totals: PeriodGroupTotals;
-  /** URL de l'illustration officielle Ankama du donjon (voir `CatalogDungeonEntry.pictureUrl`),
-   * uniquement pour une ligne "Donjon & Famille" adossée à un VRAI donjon résolu — `null` pour une
-   * ligne famille (aucune image par famille côté catalogue, voir `CatalogMonsterFamilyEntry`) et
-   * pour toute ligne du mode "Type" (bucket fusionné, plusieurs donjons possibles derrière une
-   * seule ligne — pas d'image unique pertinente, voir `typeRows`). Le template retombe alors sur
-   * un pictogramme générique (voir `isFamilyRow`). */
+  /** URL de l'illustration d'une ligne "Donjon & Famille" — `CatalogDungeonEntry.pictureUrl` pour
+   * un VRAI donjon résolu, `CatalogMonsterFamilyEntry.pictureUrl` pour une ligne famille (`null`
+   * pour certaines familles purement thématiques, ex. "Boss Ultimes"/"Events", ou tant que
+   * `/monster-families` n'a pas fini de charger côté catalogue) ; `null` aussi pour toute ligne du
+   * mode "Type" (bucket fusionné, plusieurs donjons possibles derrière une seule ligne — pas
+   * d'image unique pertinente, voir `typeRows`). Le template retombe alors sur un pictogramme
+   * générique (voir `isFamilyRow`). */
   pictureUrl: string | null;
   /** Id Ankama de la pierre de donjon associée (voir `dungeonStoneItemIdForType`) — uniquement pour
    * une ligne du mode "Type" adossée à un `WakfuDungeonType` qui délivre une pierre (2/3/4 salles, 3
@@ -161,8 +145,9 @@ interface DungeonTile {
 }
 
 /** Section non cliquable regroupant les lignes "Donjon & Famille" d'une même catégorie (voir
- * `groupSections`) — même ordre de catégories que `typeRows`/`DUNGEON_TYPES`, "Autres" (familles +
- * donjons dont le type n'est pas résolu par le catalogue) toujours en dernier. */
+ * `groupSections`) — même ordre de catégories que `typeRows`/`DUNGEON_TYPE_ORDER` (dungeon-category.util.ts,
+ * partagé avec FightHistoryComponent), "Autres" (familles + donjons dont le type n'est pas résolu
+ * par le catalogue) toujours en dernier. */
 interface RecapGroupSection {
   key: string;
   label: string;
@@ -188,6 +173,7 @@ interface RecapGroupSection {
     EntityIconComponent,
     ItemIconComponent,
     LootListComponent,
+    LootSearchComponent,
     TooltipDirective,
     IconComponent,
     StepperComponent,
@@ -466,7 +452,10 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         key: `family:${f.familyId ?? 'null'}`,
         label: this.familyLabel(f.familyId),
         totals: f,
-        pictureUrl: null,
+        pictureUrl:
+          f.familyId !== null
+            ? (this.catalog.findWakfuMonsterFamilyById(f.familyId)?.pictureUrl ?? null)
+            : null,
         stoneItemId: null,
         disabled: false,
         tiles: [],
@@ -499,7 +488,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         other.push(row);
       }
     }
-    const sections: RecapGroupSection[] = DUNGEON_TYPES.filter((type) => byType.has(type)).map(
+    const sections: RecapGroupSection[] = DUNGEON_TYPE_ORDER.filter((type) => byType.has(type)).map(
       (type) => ({
         key: `section:${type}`,
         label: this.dungeonTypeLabel(type),
@@ -515,7 +504,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
         // contient QUE des familles hors donjon, "Familles" est donc littéralement exact ici (à la
         // différence de `typeRows`, où "Autres" fusionne tout ce qui n'est pas l'une des 8
         // catégories de donjon — un terme générique reste juste dans CE contexte-là).
-        label: this.i18n.t('sessionRecap.period.familiesSection'),
+        label: this.i18n.t(FAMILIES_SECTION_LABEL_KEY),
         rows: other,
       });
     }
@@ -541,7 +530,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    *
    * Ordre volontairement PAS trié par nombre de donjons (contrairement à `groupRows`) : ordre FIXE
    * demandé explicitement (2 salles, 3 salles, 4 salles, 3 joueurs, boss ultime, puis brèche/brèche
-   * ultime/arcade — l'ordre naturel de `DUNGEON_TYPES`), "Autres" toujours en dernier.
+   * ultime/arcade — l'ordre naturel de `DUNGEON_TYPE_ORDER`), "Autres" toujours en dernier.
    *
    * TOUJOURS les 7 catégories "réelles" de donjon (2/3/4 salles, 3 joueurs, boss ultime, brèche,
    * brèche ultime — demande explicite du 2026-08-28, ancien comportement : une catégorie sans aucun
@@ -550,8 +539,8 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * possibilités même quand la période n'en couvre qu'une partie. `ARCADE` fait exception (demande
    * explicite du 2026-08-28) : aucun vrai donjon arcade n'existe en pratique dans le jeu à ce jour,
    * une ligne désactivée à zéro n'aurait donc aucune valeur — omise comme "Autres" (familles) tant
-   * qu'aucune donnée n'y correspond, mais PAS supprimée du système (`DUNGEON_TYPES`/
-   * `DUNGEON_TYPE_KEY` la couvrent toujours : un futur vrai donjon arcade rencontré ferait
+   * qu'aucune donnée n'y correspond, mais PAS supprimée du système (`DUNGEON_TYPE_ORDER`/
+   * `DUNGEON_TYPE_LABEL_KEY` la couvrent toujours : un futur vrai donjon arcade rencontré ferait
    * réapparaître sa ligne normalement, comme n'importe quel autre type). */
   protected readonly typeRows = computed<RecapGroupRow[]>(() => {
     const period = this.historyStats.stats();
@@ -564,7 +553,9 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       if (bucket) bucket.push(dungeon);
       else buckets.set(entry.type, [dungeon]);
     }
-    const visibleTypes = DUNGEON_TYPES.filter((type) => type !== 'ARCADE' || buckets.has(type));
+    const visibleTypes = DUNGEON_TYPE_ORDER.filter(
+      (type) => type !== 'ARCADE' || buckets.has(type),
+    );
     const rows: RecapGroupRow[] = visibleTypes.map((type) => {
       const bucket = buckets.get(type);
       return {
@@ -625,10 +616,16 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * butin réel de la période) — épinglée en tête, hors du tri choisi par l'utilisateur, qui ne
    * s'applique qu'au RESTE du butin. */
   protected sortedRowLoot(row: RecapGroupRow): LootRow[] {
+    // `confidence: 'unknown'` : ce butin est agrégé côté serveur sur toute une période (jour/mois/
+    // année), potentiellement à travers de nombreux combats/donjons différents — pas de roster
+    // d'ennemis UNIQUE auquel le recouper (voir LootConfidence, core/models/fight.model.ts), à la
+    // différence du butin d'UN combat précis (StatsStoreService.addLootToFight/history-archive
+    // .service.ts#toFightRecord).
     const rows: LootRow[] = row.totals.loot.map((item) => ({
       name: resolveItemName(item.itemId, item.itemName, this.catalog, this.i18n),
       catalogId: item.itemId,
       quantity: item.quantity,
+      confidence: 'unknown',
     }));
     if (row.stoneItemId === null) {
       return sortLootRows(
@@ -644,6 +641,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       name: resolveItemName(stoneId, null, this.catalog, this.i18n),
       catalogId: stoneId,
       quantity: 0,
+      confidence: 'unknown',
     };
     // La pierre reste épinglée en tête MÊME si elle ne correspond pas à la recherche en cours —
     // repère visuel fixe du bucket "Type" (voir doc de RecapGroupRow.stoneItemId), pas un objet de
@@ -712,7 +710,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
 
   /** Libellé localisé d'un bucket du mode "Type" (voir `typeRows`) — un des 8 `WakfuDungeonType`. */
   protected dungeonTypeLabel(type: WakfuDungeonType): string {
-    return this.i18n.t(DUNGEON_TYPE_KEY[type]);
+    return this.i18n.t(DUNGEON_TYPE_LABEL_KEY[type]);
   }
 
   /** Butin de la période agrégée (voir HistoryStatsService), converti au format `LootRow` attendu
@@ -722,10 +720,13 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected sortedPeriodLoot(): LootRow[] {
     const period = this.historyStats.stats();
     if (!period) return [];
+    // `confidence: 'unknown'` — voir sortedRowLoot ci-dessus, même raison (butin agrégé sur toute
+    // une période, sans roster d'ennemis unique auquel le recouper).
     const rows: LootRow[] = period.loot.map((row) => ({
       name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
       catalogId: row.itemId,
       quantity: row.quantity,
+      confidence: 'unknown',
     }));
     return sortLootRows(
       this.catalog,

@@ -106,6 +106,21 @@
   flex-shrink: 0;
   color: var(--btn-active-red);
 }
+/* Statut "a fui" (voir EntityDamageRow.fled) : même teinte ambre/or que `--dmg-light` (dégâts
+   Lumière), déjà réutilisée ailleurs comme signal d'attention neutre — ni une réussite (vert) ni
+   un échec (rouge, réservé au KO ci-dessus) — voir loot-list.component.css pour le même choix sur
+   le badge de doute du butin. */
+.entity-row.fled-zero {
+  background-color: color-mix(in srgb, var(--dmg-light) 18%, transparent);
+}
+.fled-icon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--dmg-light);
+}
 .entity-bg-bar {
   position: absolute;
   top: 0;

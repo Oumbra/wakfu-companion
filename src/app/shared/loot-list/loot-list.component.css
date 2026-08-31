@@ -57,9 +57,60 @@
 .loot-name {
   flex-grow: 1;
 }
+/* Emplacement TOUJOURS rendu (que la ligne soit corrigeable ou non), largeur fixe = celle du
+   bouton qu'il contient — garantit que `.loot-qty` reste alignée verticalement d'une ligne à
+   l'autre plutôt que de se décaler selon la présence du badge (voir CLAUDE.md, retour utilisateur
+   explicite sur ce point). */
+.loot-fix-slot {
+  width: 18px;
+  flex: none;
+  display: flex;
+  justify-content: center;
+}
+/* Pas un bouton visuellement (retour utilisateur explicite) : fond toujours transparent, même au
+   survol/focus — seul le pictogramme lui-même change de couleur. `all: unset` retire déjà tout
+   style de bouton natif (fond, bordure...), donc rien à neutraliser en plus ici. */
+.loot-fix-btn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.loot-fix-btn:hover,
+.loot-fix-btn:focus-visible {
+  color: var(--accent);
+}
+/* `min-width` en `ch` (largeur d'un caractère de la police monospace ci-dessous, donc identique
+   pour chaque chiffre) + alignement à droite : sans ça, `.loot-qty` se dimensionne à son seul
+   contenu et le bloc badge+quantité (poussé tout à droite par `.loot-name{flex-grow:1}`) se
+   contracte/dilate selon le nombre de chiffres — le badge de correction n'a alors PAS de colonne
+   stable d'une ligne à l'autre, malgré `.loot-fix-slot` à largeur fixe juste avant (retour
+   utilisateur explicite sur ce point). 4ch (testé par l'utilisateur) couvre l'immense majorité des
+   lots ; au-delà, la ligne concernée déborde légèrement plutôt que de forcer une colonne
+   inutilement large sur toutes les autres. */
 .loot-qty {
   font-family: monospace;
   color: var(--kama-color);
+  min-width: 4ch;
+  text-align: right;
+}
+/* Badge de doute (voir LootConfidence.doubtful) : `<span>` porteur du tooltip (voir template — pas
+   directement sur <app-icon>, dont le `:host{display:contents}` n'a pas de boîte propre pour
+   `getBoundingClientRect()`), affiché inline pour s'aligner avec le reste de la ligne. Même teinte
+   ambre/or que `--dmg-light` (dégâts Lumière), déjà utilisée ailleurs comme signal d'attention (voir
+   fight-history.component.css, regroupement de donjon déplié) — cohérent avec le reste de l'app
+   plutôt qu'une nouvelle couleur dédiée ; hérite normalement jusqu'au `<svg>` interne
+   d'IconComponent malgré son `display:contents` (l'encapsulation de vue ne bloque pas l'héritage
+   CSS, seulement le ciblage par sélecteur). */
+.loot-doubt-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--dmg-light);
+  cursor: help;
 }
 
 /* `.empty-state` (base) vient de styles.css — seule la variante "small" est propre à ce contexte,
