@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { ChatPanelService } from './chat-panel.service';
 import { UserDataService } from '../data-access/user-data.service';
+import { MediaQuerySignal } from '../utils/media-query-signal';
 
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
@@ -182,6 +183,11 @@ export class DashboardLayoutService {
   private readonly userData = inject(UserDataService);
   private readonly chatPanel = inject(ChatPanelService);
 
+  /** Même seuil que `@media (max-width: 800px)` (dashboard.component.css/styles.css) — nécessaire
+   * en TS pour `isCollapsedForRender` ci-dessous. Jamais `disconnect()` : ce service `providedIn:
+   * 'root'` vit toute la durée de l'app (comme `ChatPanelService`), pas de fuite à nettoyer. */
+  private readonly mobileQuery = new MediaQuerySignal('(max-width: 800px)');
+
   readonly menuPos = signal<DashboardMenuPos>(DEFAULT_PREFS.menuPos);
   readonly kpiPos = signal<DashboardKpiPos>(DEFAULT_PREFS.kpiPos);
   readonly bodyMode = signal<DashboardBodyMode>(DEFAULT_PREFS.bodyMode);
@@ -333,6 +339,21 @@ export class DashboardLayoutService {
     if (key === 'chat') return this.chatPanel.collapsed();
     return !!this.collapsedSections()[key];
   }
+
+  /** Comme `isCollapsed`, mais neutralisé en mobile — toujours `false` sous 800px, quel que soit le
+   * réglage desktop persisté. En mobile, une carte repliée n'a nulle part où "aller" : pas de rail
+   * replié sous ce seuil (voir `dashboard-rail.component.css`), donc pas de moyen de la rouvrir — la
+   * replier reviendrait à la rendre définitivement injoignable sur cet appareil (retour utilisateur,
+   * carte Récap absente en mobile alors que repliée par défaut côté desktop). À utiliser à la place
+   * d'`isCollapsed` partout où le résultat retire STRUCTURELLEMENT un élément du DOM en mobile
+   * (`@if`/`@for` — voir `SessionRecapComponent`/`HistoryComponent`), jamais pour les calculs
+   * purement desktop (`visibleBodySlots`/`gridPlan`/le rail lui-même), qui doivent continuer de
+   * refléter le vrai réglage. */
+  isCollapsedForRender(key: DashboardCollapsibleKey): boolean {
+    if (this.mobileQuery.matches()) return false;
+    return this.isCollapsed(key);
+  }
+
   toggleCollapsed(key: DashboardCollapsibleKey): void {
     if (key === 'chat') {
       this.chatPanel.setCollapsed(!this.chatPanel.collapsed());

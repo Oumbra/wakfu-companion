@@ -71,7 +71,7 @@
   </div>
 }
 
-@if (remainingKeys().length > 0 && !layout.isCollapsed('hist_group')) {
+@if (remainingKeys().length > 0 && !layout.isCollapsedForRender('hist_group')) {
   <!-- Panneau groupé : un sous-onglet par volet non scindé (1 à 3, voir HistoryComponent.remainingKeys)
        — mêmes mécaniques `activeTab`/URL que d'habitude (voir HistoryComponent.groupActiveTab). -->
   <div

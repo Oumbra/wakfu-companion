@@ -25,7 +25,7 @@
            `'history'` seul (voir CLAUDE.md — Combat/Achats/Échanges ont chacun leur onglet mobile
            dès qu'ils ne sont pas regroupés). -->
       <app-history />
-      @if (!layout.isCollapsed('recap')) {
+      @if (!layout.isCollapsedForRender('recap')) {
         <app-session-recap
           [class.tab-hidden]="activeMobileTab() !== 'recap'"
           [style.grid-column]="layout.gridPlan()['recap'].gridColumn"

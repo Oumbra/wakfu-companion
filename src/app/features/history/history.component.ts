@@ -123,9 +123,11 @@ export class HistoryComponent {
   /** `effectiveSplitKeys` moins les volets individuellement repliés (voir `.collapse-btn`) — sans
    * ce filtre, un panneau scindé "replié" resterait quand même rendu dans `.panels-row` (placement
    * `gridColumn:'auto'` par défaut, hors du plan calculé) au lieu de disparaître pour de bon comme
-   * Combat/Chat, et rejoindre `DashboardRailComponent` (généralisé, voir sa doc de tête). */
+   * Combat/Chat, et rejoindre `DashboardRailComponent` (généralisé, voir sa doc de tête).
+   * `isCollapsedForRender` (pas `isCollapsed`) : en mobile, un volet repose replié côté desktop doit
+   * quand même rester joignable (voir sa doc de tête — pas de rail replié sous 800px). */
   protected readonly visibleSplitKeys = computed<DashboardHistoryKey[]>(() =>
-    this.effectiveSplitKeys().filter((k) => !this.layout.isCollapsed(this.slotKeyFor(k))),
+    this.effectiveSplitKeys().filter((k) => !this.layout.isCollapsedForRender(this.slotKeyFor(k))),
   );
 
   /** Alias vers `NavigationService.historyTab` (source unique de vérité, voir son commentaire —
