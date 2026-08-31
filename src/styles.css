@@ -616,6 +616,18 @@ button.icon-btn.help-icon-btn {
     border: none;
     border-radius: 0;
   }
+  /* Masquage effectif de l'onglet mobile inactif (voir dashboard.component.css, `.panels-row >
+     .tab-hidden`, qui ne couvre que Suivi/Chat/Récap) — les panneaux scindés/groupé
+     d'`<app-history>` (voir HistoryComponent, `.tool-panel` portant lui-même `.tab-hidden`, un cran
+     plus bas dans le DOM que ce que `dashboard.component.css` peut atteindre) ont besoin de la même
+     règle mais GLOBALE, pour la même raison que les deux ci-dessus (attribut d'encapsulation de vue
+     d'HistoryComponent, pas celui de DashboardComponent). Sans cette règle, `.tab-hidden` restait un
+     simple attribut de classe sans aucun effet visuel : Combat/Achats/Échanges non regroupés
+     s'affichaient tous simultanément en mobile au lieu de suivre l'onglet actif (bug réel corrigé,
+     voir CLAUDE.md). */
+  .panels-row .tab-hidden {
+    display: none;
+  }
 }
 
 .panel-body {
