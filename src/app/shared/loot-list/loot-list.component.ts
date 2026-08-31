@@ -7,6 +7,7 @@ import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { NumberFrPipe } from '../number-fr.pipe';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { IconComponent } from '../icon/icon.component';
 import { ItemPickerService } from '../../core/services/item-picker.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 
@@ -21,7 +22,7 @@ import { HistoryArchiveService } from '../../core/sync/history-archive.service';
  */
 @Component({
   selector: 'app-loot-list',
-  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe, TooltipDirective],
+  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe, TooltipDirective, IconComponent],
   templateUrl: './loot-list.component.html',
   styleUrl: './loot-list.component.css',
 })
@@ -50,6 +51,20 @@ export class LootListComponent {
     return this.stats.isWatched(name);
   }
 
+  /** Vrai si le référentiel Ankama contient plusieurs objets partageant ce nom (homonymes de
+   * rareté différente, ex. "Larme d'Ogrest") — la ligne peut alors être corrigée manuellement
+   * (voir ItemPickerService/`onChosen`). N'a de sens que dans l'historique de combat (`fight` non
+   * `null`, voir doc de `fight` ci-dessus) : le butin cumulé de session n'a pas de combat unique à
+   * cibler, la correction n'y est de toute façon jamais proposée. Sert à afficher le badge clé
+   * plate (voir template) sans obliger l'utilisateur à survoler chaque ligne pour le découvrir. */
+  protected isCorrectable(row: LootRow): boolean {
+    return this.fight() !== null && this.catalog.findAllWakfuItemEntriesByName(row.name).length > 1;
+  }
+
+  /** Ouvre le menu d'interaction (suivi + correction) — déclenché soit par un clic droit n'importe
+   * où sur la ligne (`contextmenu`), soit par un clic gauche direct sur le badge de correction
+   * (voir `isCorrectable`) quand il est affiché : mêmes coordonnées d'ouverture (`event.clientX/Y`)
+   * dans les deux cas, donc positionné près du badge cliqué plutôt que recentré sur la ligne. */
   protected openInteractMenu(event: MouseEvent, row: LootRow): void {
     event.preventDefault();
     event.stopPropagation();
