@@ -100,10 +100,10 @@ export class DashboardComponent {
    * de `activeSlots()` (volet regroupé ailleurs, etc.) est simplement sautée. */
   private static readonly MOBILE_TAB_ORDER: readonly DashboardGridKey[] = [
     'tracker',
+    'hist_group',
     'hist_combats',
     'hist_purchases',
     'hist_trades',
-    'hist_group',
     'chat',
     'recap',
   ];
