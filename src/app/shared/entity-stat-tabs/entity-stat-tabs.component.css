@@ -17,3 +17,17 @@
   height: 16px;
   object-fit: contain;
 }
+
+/* Demande explicite de l'utilisateur (2026-08-31, même contexte que damage-view-switch.component.css
+   — voir son commentaire) : icônes déjà seules (pas de libellé, voir doc de tête), juste un peu
+   moins de place réservée par option pour aider `.combat-info-toggle`/`.combat-switch-row` à tenir
+   sur une ligne. */
+@media (max-width: 800px) {
+  .entity-stat-switch {
+    width: 84px;
+  }
+  .entity-stat-switch-option img {
+    width: 14px;
+    height: 14px;
+  }
+}

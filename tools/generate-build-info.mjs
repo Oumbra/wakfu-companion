@@ -4,7 +4,7 @@
  * (package.json, voir CLAUDE.md pour la convention d'incrémentation) et
  * l'horodatage du build courant. Exécuté avant chaque build/serve (voir
  * script "generate" combiné, package.json) — affiché dans le pied de page
- * (app-footer), comme sur wakfuli.com ("Build 1.0.0 • 20 juil. 2026, 07:59").
+ * (app-footer), ex. "Build 1.0.0 • 20 juil. 2026, 07:59".
  *
  * L'horodatage est celui de CETTE exécution (npm run generate), pas celui
  * du commit ni un vrai horodatage CI — suffisant pour un repère visuel de

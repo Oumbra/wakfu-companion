@@ -54,6 +54,11 @@ export const routes: Routes = [
     redirectTo: redirectToPreferredLocale('/privacy-policy'),
   },
   {
+    path: 'terms-of-service',
+    pathMatch: 'full',
+    redirectTo: redirectToPreferredLocale('/terms-of-service'),
+  },
+  {
     path: ':lang',
     component: LocaleRouteComponent,
     canActivate: [localeGuard],
@@ -90,6 +95,15 @@ export const routes: Routes = [
         path: 'chat',
         component: RouteBridgeComponent,
         data: { view: 'main', dashboardTab: 'chat' },
+      },
+      {
+        // Carte Récap de session (voir CLAUDE.md) — onglet mobile dédié uniquement (sans effet
+        // desktop, où elle reste une carte du corps parmi d'autres, jamais routée en tant que
+        // telle) ; même mécanique générique que `chat` ci-dessus (`pagePathFor` la résout via son
+        // repli `/${dashboardTab}`, aucun cas particulier à y ajouter).
+        path: 'recap',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'recap' },
       },
       {
         // Ancien onglet "Combat en cours", fusionné dans Historique › Combats (voir CLAUDE.md) —
@@ -151,6 +165,11 @@ export const routes: Routes = [
         path: 'privacy-policy',
         component: RouteBridgeComponent,
         data: { view: 'legal', legalKind: 'privacy' },
+      },
+      {
+        path: 'terms-of-service',
+        component: RouteBridgeComponent,
+        data: { view: 'legal', legalKind: 'terms' },
       },
       { path: '**', redirectTo: '' },
     ],

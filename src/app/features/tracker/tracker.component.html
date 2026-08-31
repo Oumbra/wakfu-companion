@@ -190,7 +190,7 @@
                     (valueChange)="watchlist.setCurrentCount(entry, $event)"
                   />
                 } @else {
-                  <span class="kpi-card-value">{{ entry.count | numberFr }}</span>
+                  <span class="kpi-card-value">{{ entry.count | localeNumber }}</span>
                 }
                 <button
                   class="kpi-card-reset"

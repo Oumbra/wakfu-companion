@@ -1,0 +1,43 @@
+/* `:host` porte le rôle de `.loot-search-wrap` (voir doc de tête du composant) — même hauteur que
+   `.icon-switch` (32px, styles.css) pour s'aligner avec un switch de tri placé juste à côté sur la
+   même ligne de contrôles. */
+:host {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+}
+.loot-search-icon {
+  position: absolute;
+  left: 8px;
+  width: 12px;
+  height: 12px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.loot-search-input {
+  width: 100%;
+  height: 32px;
+  box-sizing: border-box;
+  background: var(--surface-well);
+  border: 1px solid var(--border-strong);
+  color: var(--text-color);
+  padding: 0 30px 0 26px;
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 0.78rem;
+}
+.loot-search-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* Croix d'effacement — affichée seulement quand `value()` n'est pas vide (voir template) — plaquée
+   au bord droit du champ, même hauteur que lui (32px, contrairement au gabarit `.icon-btn` par
+   défaut de 26px) pour un bord flush plutôt qu'un bouton qui flotte au milieu d'un champ plus haut. */
+.loot-search-clear {
+  position: absolute;
+  right: 0;
+  height: 32px;
+  border-radius: 0 5px 5px 0;
+}

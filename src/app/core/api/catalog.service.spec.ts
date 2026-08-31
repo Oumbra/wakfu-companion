@@ -37,6 +37,7 @@ const MONSTER_FAMILY_ROW = {
   en: 'Gobballs',
   es: 'Jalatós',
   pt: 'Papatudos',
+  pictureUrl: 'https://vertylo.github.io/wakassets/monstersfamily/68.png',
 };
 
 function ok<T>(data: T): ApiResult<T> {
@@ -54,6 +55,7 @@ function setup(options: {
   index?: ApiResult<{ items: unknown[]; monsters: unknown[] }>;
   dungeons?: ApiResult<unknown[]>;
   monsterFamilies?: ApiResult<unknown[]>;
+  monsterLoot?: ApiResult<unknown[]>;
 }) {
   const getCacheEntry = vi.fn(async (key: string) => {
     if (key === 'catalog-index') return options.cachedIndex;
@@ -67,6 +69,10 @@ function setup(options: {
     if (path === '/catalog/') return options.index ?? offline();
     if (path === '/dungeons') return options.dungeons ?? offline();
     if (path === '/monster-families') return options.monsterFamilies ?? offline();
+    // Payload secondaire (voir refreshSecondaryDatasetsOnly) : `offline()` par défaut, jamais
+    // testé explicitement par la plupart des cas ci-dessous (findMonsterLootItemIds n'est pas
+    // encore couvert par ce fichier), même statut de repli tolérant que monster-families.
+    if (path === '/monster-loot') return options.monsterLoot ?? offline();
     throw new Error(`unexpected path in test: ${path}`);
   });
 
@@ -273,6 +279,46 @@ describe('CatalogService', () => {
     expect(service.findWakfuItemEntry('Tocado Test')?.id).toBe(1234);
     expect(service.findWakfuItemEntry('Chapéu Test')?.id).toBe(1234);
     expect(service.findWakfuItemEntry('Test Headgear')?.category).toBe('equipment');
+  });
+
+  it('hasMultipleWakfuItemEntriesByName détecte les homonymes en O(1) (voir findAllWakfuItemEntriesByName)', async () => {
+    const homonymA = [
+      24029,
+      "Larme d'Ogrest",
+      "Ogrest's Tear",
+      "Lágrima d'Ogrest",
+      'Lágrima de Ogrest',
+      1,
+      4,
+      0,
+      0,
+    ];
+    const homonymB = [
+      21602,
+      "Larme d'Ogrest",
+      "Ogrest's Tear",
+      "Lágrima d'Ogrest",
+      'Lágrima de Ogrest',
+      2,
+      5,
+      0,
+      0,
+    ];
+    const { service } = setup({
+      cachedIndex: { indexHash: 'abc', items: [ITEM_TUPLE, homonymA, homonymB], monsters: [] },
+      cachedDungeons: [],
+      version: ok({ indexHash: 'abc' }),
+    });
+
+    await service.initialize();
+
+    // Deux objets distincts partagent ce nom : ambigu, comme findAllWakfuItemEntriesByName(...).length > 1.
+    expect(service.hasMultipleWakfuItemEntriesByName("Larme d'Ogrest")).toBe(true);
+    expect(service.findAllWakfuItemEntriesByName("Larme d'Ogrest").length).toBe(2);
+    // Un seul objet ("Coiffe Test") : pas d'ambiguïté.
+    expect(service.hasMultipleWakfuItemEntriesByName('Coiffe Test')).toBe(false);
+    // Nom inconnu du référentiel : pas d'ambiguïté non plus.
+    expect(service.hasMultipleWakfuItemEntriesByName('Objet Inconnu')).toBe(false);
   });
 
   it('getItemDetail/getMonsterDetail délèguent à ApiClientService et renvoient undefined en cas d’échec', async () => {

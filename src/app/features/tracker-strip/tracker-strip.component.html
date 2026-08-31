@@ -199,7 +199,7 @@
             <span class="kpi-pct">{{ watchlist.countdownPercent(entry) }}%</span>
           </span>
         } @else {
-          <span class="kpi-count-inline">{{ entry.count | numberFr }}</span>
+          <span class="kpi-count-inline">{{ entry.count | localeNumber }}</span>
         }
         <button
           class="kpi-reset"
@@ -218,7 +218,7 @@
             {{ entry.count
             }}<span class="kpi-count-badge-target">/{{ entry.countdownTarget }}</span>
           } @else {
-            {{ entry.count | numberFr }}
+            {{ entry.count | localeNumber }}
           }
         </span>
         @if (watchlist.selectMode()) {

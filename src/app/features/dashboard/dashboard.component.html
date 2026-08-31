@@ -5,7 +5,7 @@
   <div class="dashboard-main">
     <app-tab-bar
       [items]="tabItems()"
-      [activeId]="activeTab()"
+      [activeId]="activeMobileTab()"
       (activeIdChange)="selectTab($event)"
       [mobileOnly]="true"
     />
@@ -15,14 +15,26 @@
       [style.grid-template-rows]="'repeat(' + layout.panelsRowCount() + ', minmax(0, 1fr))'"
     >
       <app-tracker
-        [class.tab-hidden]="activeTab() !== 'tracker'"
+        [class.tab-hidden]="activeMobileTab() !== 'tracker'"
         [style.grid-column]="layout.gridPlan()['tracker'].gridColumn"
         [style.grid-row]="layout.gridPlan()['tracker'].gridRow"
         [style.order]="layout.gridPlan()['tracker'].order"
       />
-      <app-history [class.tab-hidden]="activeTab() !== 'history'" />
+      <!-- Pas de `[class.tab-hidden]` ici : chaque `.tool-panel` interne (scindé OU groupé, voir
+           HistoryComponent) porte désormais le sien, comparé à SA propre identité plutôt qu'à
+           `'history'` seul (voir CLAUDE.md — Combat/Achats/Échanges ont chacun leur onglet mobile
+           dès qu'ils ne sont pas regroupés). -->
+      <app-history />
+      @if (!layout.isCollapsedForRender('recap')) {
+        <app-session-recap
+          [class.tab-hidden]="activeMobileTab() !== 'recap'"
+          [style.grid-column]="layout.gridPlan()['recap'].gridColumn"
+          [style.grid-row]="layout.gridPlan()['recap'].gridRow"
+          [style.order]="layout.gridPlan()['recap'].order"
+        />
+      }
       <app-chat-panel
-        [class.tab-hidden]="activeTab() !== 'chat'"
+        [class.tab-hidden]="activeMobileTab() !== 'chat'"
         [class.panel-collapsed]="chatPanel.collapsed()"
         [style.grid-column]="layout.gridPlan()['chat'].gridColumn"
         [style.grid-row]="layout.gridPlan()['chat'].gridRow"

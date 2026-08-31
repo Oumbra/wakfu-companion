@@ -207,10 +207,26 @@ export class SyncQueueService {
   /** Envoie un lot. Renvoie `false` sur échec « réessayable » (réseau, hors-ligne, 5xx). */
   private async send(uid: string, kind: HistoryEventKind, batch: HistoryEvent[]): Promise<boolean> {
     const entries = await Promise.all(
-      batch.map(async (entry) => ({
-        clientKey: await computeClientKey(uid, entry.kind, entry.signature),
-        ...entry.payload,
-      })),
+      batch.map(async (entry) => {
+        const payload: Record<string, unknown> = { ...entry.payload };
+        // `dungeonRunSignature` (kind 'fight' uniquement, voir FightPayload) n'est qu'une signature
+        // de contenu à ce stade — jamais envoyée telle quelle : hachée ici exactement comme
+        // `clientKey` (même fonction, même formule), pour que tous les combats d'un run de donjon
+        // finissent par partager le `clientKey` de leur boss comme `dungeonRunKey`, sans aller-retour
+        // serveur. `null`/absente : le combat n'est pas (encore) rattaché à un run.
+        const dungeonRunSignature = payload['dungeonRunSignature'] as string | null | undefined;
+        if (dungeonRunSignature !== undefined) {
+          delete payload['dungeonRunSignature'];
+          payload['dungeonRunKey'] =
+            dungeonRunSignature !== null
+              ? await computeClientKey(uid, entry.kind, dungeonRunSignature)
+              : null;
+        }
+        return {
+          clientKey: await computeClientKey(uid, entry.kind, entry.signature),
+          ...payload,
+        };
+      }),
     );
 
     const result = await this.api.requestJson<{ accepted: string[]; inserted: number }>(

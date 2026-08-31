@@ -46,6 +46,20 @@ export class LogFileAccessService {
    */
   readonly newLines$ = new Subject<{ lines: string[]; isInitialLoad: boolean }>();
 
+  /**
+   * Vrai dès qu'une (re)connexion réelle démarre et jusqu'à ce que le tout premier lot du fichier
+   * (celui marqué `isInitialLoad`, voir `newLines$`) ait fini d'être interprété par
+   * `StatsStoreService.ingest` — sert uniquement à afficher un indicateur de chargement pendant
+   * l'interprétation initiale du fichier (voir `FightHistoryComponent`), le temps qu'un fichier
+   * volumineux (relu en une seule fois, synchrone) finisse de reconstruire l'historique de combats.
+   * Se résout dans `connect()` juste après le tout premier `poll()` : celui-ci n'aboutit qu'une fois
+   * `processFile` (et donc l'ingestion synchrone déclenchée par son `newLines$.next()`) entièrement
+   * terminée — pas besoin que `StatsStoreService` la repasse lui-même à `false`. Jamais mis à `true`
+   * par `simulateConnected()` (mode mobile) : aucun fichier réel n'y est jamais lu, `newLines$`
+   * n'y émettrait donc jamais rien pour la reprendre à `false`.
+   */
+  readonly initialReadPending = signal(false);
+
   private handle: FileSystemFileHandle | null = null;
   private lastOffset = 0;
   private carry = '';
@@ -237,8 +251,10 @@ export class LogFileAccessService {
     this.consecutiveTransientReadFailures = 0;
     this.errorMessage.set(null);
     this.status.set('connected');
+    this.initialReadPending.set(true);
     this.stopPolling();
     await this.poll();
+    this.initialReadPending.set(false);
     this.pollTimer = setInterval(() => void this.poll(), POLL_INTERVAL_MS);
   }
 
@@ -293,6 +309,26 @@ export class LogFileAccessService {
       this.carry = parts.pop() ?? '';
       const lines = parts.filter((line) => line.length > 0);
       if (lines.length > 0) {
+        if (isInitialLoad) {
+          // Le tout premier lot d'une (re)connexion peut représenter des dizaines de milliers de
+          // lignes : son interprétation par StatsStoreService.ingest() (déclenchée SYNCHRONEMENT par
+          // le `next()` juste en dessous) peut prendre de quelques centaines de ms à plusieurs
+          // secondes sur un fichier volumineux (voir CLAUDE.md, régression de perf sur les
+          // homonymes butin corrigée le 2026-08-30 pour le cas pathologique — mais même après ce
+          // correctif, un très gros fichier reste un calcul synchrone non négligeable). `connect()`
+          // vient de poser `initialReadPending` à `true` (voir sa doc, lue par
+          // FightHistoryComponent.historyLoading pour afficher un spinner) — sans CE yield explicite,
+          // rien ne garantit que le navigateur ait une occasion de PEINDRE ce nouvel état avant que le
+          // thread principal ne se bloque pour le calcul synchrone qui suit : les deux `await` déjà
+          // présents plus haut (`getFile()`/`arrayBuffer()`) peuvent se résoudre quasi instantanément
+          // (fichier déjà en cache OS) et n'offrent alors aucune fenêtre de peinture réelle. Un yield
+          // MACROTASK (`setTimeout`, pas microtask/`Promise.resolve()`) est nécessaire : le
+          // navigateur n'exécute son étape de rendu qu'entre deux tâches de la file, jamais entre deux
+          // microtâches — c'est ce qui garantit ici qu'au moins une frame avec le spinner visible soit
+          // peinte avant le gel. Bug réel signalé par l'utilisateur (vidéo à l'appui) : jusqu'à ~10s
+          // sans le moindre retour visuel au premier chargement d'un fichier volumineux.
+          await new Promise<void>((resolve) => setTimeout(resolve, 0));
+        }
         this.newLines$.next({ lines, isInitialLoad });
       }
     }

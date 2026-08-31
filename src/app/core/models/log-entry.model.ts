@@ -104,6 +104,16 @@ export interface EnemyDefeatedEntry {
   fightId: number | null;
 }
 
+/** Fuite d'un combattant ("X: disparaît", sans marqueur "est hors-combat !" — voir DISAPPEAR_RE,
+ * log-parser.ts) : un mimique qui se révèle peut fuir plutôt que mourir, plutôt qu'apparaître comme
+ * "vaincu" à tort (voir StatsStoreService.registerFightFlee, CLAUDE.md). */
+export interface EnemyFledEntry {
+  kind: 'enemy-fled';
+  time: string;
+  name: string;
+  fightId: number | null;
+}
+
 export interface CombatDefeatMarkerEntry {
   kind: 'combat-defeat-marker';
   time: string;
@@ -149,6 +159,10 @@ export interface ChallengeResultEntry {
   time: string;
   name: string;
   success: boolean;
+  /** Combat en cours au moment du résultat, `null` hors combat — voir loot/kama-gain pour la même
+   * convention. Comme pour ces deux-là, StatsStoreService ne s'en sert que comme signal « un combat
+   * est actif », jamais pour router directement vers ce fightId précis (voir pendingFightChallenges). */
+  fightId: number | null;
 }
 
 /**
@@ -217,6 +231,7 @@ export type LogEntry =
   | HealEntry
   | ArmorEntry
   | EnemyDefeatedEntry
+  | EnemyFledEntry
   | CombatDefeatMarkerEntry
   | CombatStartEntry
   | CombatEndEntry

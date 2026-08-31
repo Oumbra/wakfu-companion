@@ -19,6 +19,16 @@ export function dungeonRoomCount(dungeon: CatalogDungeonEntry): number {
   return ROOM_COUNT_BY_TYPE[dungeon.type];
 }
 
+/**
+ * Clé de comparaison de composition d'ennemis (voir `groupDungeonRuns`, paramètre
+ * `enemyCompositionKey`) : ensemble d'espèces DISTINCTES (pas les comptes — une même salle peut
+ * légitimement varier de quelques instances d'un essai à l'autre sans changer de nature), triées
+ * pour être insensible à l'ordre d'apparition dans le log/la requête SQL.
+ */
+export function enemyCompositionKey(enemyNames: readonly string[]): string {
+  return [...new Set(enemyNames)].sort().join('|');
+}
+
 /** Id Ankama de la pierre de donjon associée à un type (récompense de fin de run, un seul objet par
  * type — voir CLAUDE.md) — `TWO_ROOMS`/`THREE_ROOMS`/`FOUR_ROOMS`/`THREE_PLAYERS`/`ULTIMATE_BOSS`
  * uniquement, `null` pour les types sans pierre associée (brèche, arcade). */
@@ -32,6 +42,14 @@ const STONE_ITEM_ID_BY_TYPE: Readonly<Partial<Record<WakfuDungeonType, number>>>
 
 export function dungeonStoneItemId(dungeon: CatalogDungeonEntry): number | null {
   return STONE_ITEM_ID_BY_TYPE[dungeon.type] ?? null;
+}
+
+/** Miroir de `dungeonStoneItemId` à partir du seul `type` (pas besoin d'une `CatalogDungeonEntry`
+ * complète) — utilisé par le regroupement "Type" de la carte Récap (`SessionRecapComponent.
+ * typeRows`), qui fusionne tous les donjons d'un même type et n'a donc pas un donjon précis à
+ * passer. */
+export function dungeonStoneItemIdForType(type: WakfuDungeonType): number | null {
+  return STONE_ITEM_ID_BY_TYPE[type] ?? null;
 }
 
 /** Combat minimal requis pour le regroupement — `FightRecord` (stats-store.service.ts) satisfait
@@ -66,9 +84,11 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
  * permet de scanner vers l'arrière dans le temps sans avoir à re-trier quoi que ce soit.
  * `findDungeon` identifie le donjon dont un combat contient le boss (voir
  * `findDungeonForEnemies`, fight-image.util.ts) ; `hasArchiEnemy` détecte si un combat (non-boss)
- * contient un archimonstre (voir `CatalogMonsterEntry.isArchi`) — les deux sont injectés plutôt
- * qu'importés en dur pour rester une fonction pure ne dépendant d'aucun service Angular (même
- * principe que `resolveFightImageInfo`).
+ * contient un archimonstre (voir `CatalogMonsterEntry.isArchi`) ; `roomCompositionKey` renvoie la
+ * clé de composition d'ennemis du combat (voir `enemyCompositionKey` ci-dessus), utilisée à l'étape
+ * 3 pour décider si une défaite appartient à la même salle que la victoire qui la referme — les
+ * trois sont injectés plutôt qu'importés en dur pour rester une fonction pure ne dépendant d'aucun
+ * service Angular (même principe que `resolveFightImageInfo`).
  *
  * Algorithme, pour chaque combat de boss encore non consommé (parcouru du plus récent au plus
  * ancien) :
@@ -96,10 +116,26 @@ export type DungeonHistoryEntry<T extends DungeonGroupableFight> =
  *    version comptait `roomSlots` COMBATS bruts au lieu de `roomSlots` VICTOIRES, ce qui décalait
  *    la fenêtre de collecte dès qu'une salle avait été retentée et faisait perdre la salle la plus
  *    ancienne du run, hors de la fenêtre). Concrètement : on avance combat par combat, une salle
- *    n'est "comptée" (roomsFound++) que lorsqu'on rencontre une VICTOIRE ; toute défaite croisée en
- *    chemin est ramassée sans compter pour une salle à elle seule. Un combat qui inclut n'importe
- *    quel boss de donjon interrompt aussitôt ce ramassage (garde-fou : n'avale jamais la fin d'un
- *    run antérieur distinct).
+ *    n'est "comptée" (roomsFound++) que lorsqu'on rencontre une VICTOIRE ; toute DÉFAITE rencontrée
+ *    n'est ramassée comme tentative ratée de la salle EN COURS que si sa composition d'ennemis
+ *    (`enemyCompositionKey`) correspond EXACTEMENT à celle de la victoire qui la referme — sinon
+ *    c'est un combat sans rapport (résolu normalement comme hors-donjon), et la fenêtre de collecte
+ *    s'arrête ici. Un combat qui inclut n'importe quel boss de donjon interrompt aussitôt ce
+ *    ramassage (garde-fou : n'avale jamais la fin d'un run antérieur distinct), de même qu'une
+ *    VICTOIRE une fois `roomSlots` déjà atteint (salle en trop = run antérieur distinct).
+ *
+ *    Fix 2026-08-30 (remonté par l'utilisateur, cas réel : donjon `TWO_ROOMS` où la seule salle
+ *    avait été perdue une fois puis regagnée 2 min plus tard) : la version précédente s'arrêtait
+ *    dès que `roomsFound` atteignait sa cible SANS jamais regarder plus loin en arrière, laissant
+ *    orpheline (classée hors-donjon) toute défaite précédant IMMÉDIATEMENT la victoire qui la
+ *    referme — un cas fréquent pour la toute dernière salle avant le boss, celle où l'ordre
+ *    naturel place la victoire AVANT ses propres défaites antérieures dans le sens de parcours
+ *    (plus récent → plus ancien). La vérification de composition (au lieu d'un simple "toute
+ *    défaite croisée compte", l'approximation d'origine) évite en retour d'avaler à tort un combat
+ *    RÉELLEMENT sans rapport (une salle différente ou un combat hors donjon) qui se trouverait par
+ *    hasard immédiatement adjacent — demande explicite de l'utilisateur, en remplacement d'un
+ *    garde-fou par seuil de temps (rejeté : une vraie pause en plein donjon peut largement dépasser
+ *    quelques minutes sans que ce soit un problème).
  *
  * Un groupe d'un seul combat (salle manquante en tout début d'historique) redevient une entrée
  * `single` classique plutôt qu'un collapse à un seul élément.
@@ -108,6 +144,7 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
   records: readonly T[],
   findDungeon: (record: T) => CatalogDungeonEntry | null,
   hasArchiEnemy: (record: T) => boolean,
+  roomCompositionKey: (record: T) => string,
 ): DungeonHistoryEntry<T>[] {
   const entries: DungeonHistoryEntry<T>[] = [];
   const consumed = new Array<boolean>(records.length).fill(false);
@@ -154,17 +191,33 @@ export function groupDungeonRuns<T extends DungeonGroupableFight>(
       j++;
     }
 
-    // Salles précédentes (étape 3) : on avance combat par combat, et une salle n'est comptée que
-    // lorsqu'on rencontre une VICTOIRE — toute défaite croisée en chemin (salle retentée) est
-    // ramassée sans compter à elle seule, pour ne pas décaler la fenêtre de collecte.
+    // Salles précédentes (étape 3, voir doc de tête pour l'historique du fix 2026-08-30) : on
+    // avance combat par combat. Une VICTOIRE compte pour une salle (sauf si `roomSlots` est déjà
+    // atteint : une salle en trop signale la fin d'un run antérieur distinct, on s'arrête sans la
+    // consommer). Une DÉFAITE n'est ramassée comme tentative ratée de la salle EN COURS que si sa
+    // composition d'ennemis correspond EXACTEMENT à celle de la victoire qui la referme (`currentRoomKey`,
+    // mis à jour à chaque nouvelle victoire de salle) — sinon c'est un combat sans rapport, la
+    // fenêtre de collecte s'arrête ici. Un combat de boss (ce donjon ou un autre) interrompt
+    // toujours ce ramassage (garde-fou : n'avale jamais la fin d'un run antérieur distinct).
     const roomSlots = dungeonRoomCount(dungeon) - 1;
     let roomsFound = 0;
-    while (roomsFound < roomSlots && j < records.length) {
+    let currentRoomKey: string | null = null;
+    while (j < records.length) {
       const candidate = findDungeon(records[j]);
-      if (candidate) break; // combat de boss (ce donjon ou un autre) : fin d'un run antérieur.
-      const won = records[j].result === 'won';
-      j++;
-      if (won) roomsFound++;
+      if (candidate) break;
+      const record = records[j];
+      if (record.result === 'won') {
+        if (roomsFound >= roomSlots) break;
+        currentRoomKey = roomCompositionKey(record);
+        roomsFound++;
+        j++;
+        continue;
+      }
+      if (currentRoomKey !== null && roomCompositionKey(record) === currentRoomKey) {
+        j++;
+        continue;
+      }
+      break;
     }
 
     for (let k = i; k < j; k++) consumed[k] = true;
