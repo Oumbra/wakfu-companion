@@ -34,6 +34,7 @@ import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import {
   LootSort,
   lootSortTooltip as computeLootSortTooltip,
+  mergeLootRowsByIdentity,
   nextLootSortState,
   sortLootRows,
 } from '../../core/utils/loot-sort.util';
@@ -630,12 +631,14 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     if (row.stoneItemId === null) {
       return sortLootRows(
         this.catalog,
-        this.filterLootRows(rows),
+        this.filterLootRows(mergeLootRowsByIdentity(this.catalog, rows)),
         this.lootSort(),
         this.lootSortReverse(),
       );
     }
     const stoneId = row.stoneItemId;
+    // Repérée AVANT toute fusion par identité (nom+rareté) : cible par `catalogId` exact, pas de
+    // raison de fusionner un homonyme éventuel de la pierre avec la pierre elle-même.
     const existing = rows.find((r) => r.catalogId === stoneId);
     const stoneRow: LootRow = existing ?? {
       name: resolveItemName(stoneId, null, this.catalog, this.i18n),
@@ -651,7 +654,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       stoneRow,
       ...sortLootRows(
         this.catalog,
-        this.filterLootRows(rest),
+        this.filterLootRows(mergeLootRowsByIdentity(this.catalog, rest)),
         this.lootSort(),
         this.lootSortReverse(),
       ),
@@ -730,7 +733,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     }));
     return sortLootRows(
       this.catalog,
-      this.filterLootRows(rows),
+      this.filterLootRows(mergeLootRowsByIdentity(this.catalog, rows)),
       this.lootSort(),
       this.lootSortReverse(),
     );
