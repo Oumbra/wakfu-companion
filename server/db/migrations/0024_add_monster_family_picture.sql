@@ -1,0 +1,1 @@
+ALTER TABLE "monster_families" ADD COLUMN "picture_url" text;

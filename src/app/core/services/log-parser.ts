@@ -61,13 +61,31 @@ const CRITICAL_SUFFIX_RE = /^(.*) \(Critiques\)$/;
 const KO_RE = /^(.+?) est KO !$/;
 /** Diffusion générale de mise hors-combat, émise pour N'IMPORTE QUEL combattant (allié ou ennemi) — contrairement à KO_RE, réservé aux alliés. Signal principal pour détecter la mort d'un ennemi. */
 const HORS_COMBAT_RE = /^(.+?) est hors-combat !$/;
+/** Fuite d'un combattant, JAMAIS précédée d'un marqueur "est hors-combat !" pour ce même nom — signal
+ * exclusivement observé, à ce jour, sur les monstres "Mimic X" (Sucré/Runique/Domestique/Fragmenté)
+ * qui se révèlent puis fuient plutôt que de mourir (confirmé sur 3 vrais fichiers :
+ * erz-sniping/la-crête-givrée/Le Hammamamoule, voir CLAUDE.md). Générique dans le texte du log
+ * (n'importe quel combattant POURRAIT théoriquement l'émettre), donc traité comme tel plutôt que
+ * réservé aux mimiques : voir StatsStoreService.registerFightFlee. */
+const DISAPPEAR_RE = /^(.+?): disparaît$/;
 /** "X: Invoque un(e) Y"/"X: Invoque une créature du Y" — annonce une invocation sur le point de
- * rejoindre le combat. `Y` n'est PAS fiable comme nom de la créature qui rejoindra réellement (le
- * sort "Invocation" de l'Osamodas annonce une créature "du" thème invoqué, ex. "Invoque une
- * créature du Gobgob", mais le combattant qui rejoint ensuite peut porter un tout autre nom, ex.
- * "Chafer Elite" — voir CLAUDE.md) : seul le nom du lanceur (groupe 1) est exploité, voir
- * FightParseState.pendingSummonCasters/parseFighterJoin. */
-const SUMMON_ANNOUNCE_RE = /^(.+?): Invoque (?:un\(e\)|une créature du) /;
+ * rejoindre le combat. Groupe 1 = lanceur, TOUJOURS exploité. Groupe 2 = `Y`, capturé UNIQUEMENT
+ * pour la forme "un(e) Y" — cette forme s'est vérifiée fiable comme nom de la créature qui rejoint
+ * réellement (constaté sur le fichier de test dédié aux transformations, "Invoque un(e) Dark
+ * Lapino" → jointure "Dark Lapino", ET sur un vrai fichier de farm, "Cendragon: Invoque un(e)
+ * Cendragon" → jointure "Cendragon", voir plus bas). La forme "une créature du Y" reste PAS fiable
+ * (le sort "Invocation" de l'Osamodas l'annonce mais le combattant qui rejoint peut porter un tout
+ * autre nom, ex. "Chafer Elite" pour "Invoque une créature du Gobgob" — voir CLAUDE.md) : `undefined`
+ * pour cette forme, voir FightParseState.pendingSummonCasters.expectedName/parseFighterJoin (aucun
+ * filtre par nom appliqué dans ce cas, comportement historique inchangé).
+ *
+ * Ce nom sert de filtre de correspondance, PAS de source de vérité absolue : bug réel corrigé le
+ * 2026-08-31 (un mimique qui se révèle pendant qu'un monstre proche spamme "Invoque un(e) X" en
+ * rafale, ex. Cendragon qui s'auto-invoque en boucle lors d'une resynchronisation, était avalé à
+ * tort par une entrée en attente PÉRIMÉE mais toujours dans la fenêtre de `SUMMON_JOIN_WINDOW_MS` —
+ * sans corrélation par nom, la file FIFO consommait aveuglément la plus ancienne entrée quel que
+ * soit le nom du véritable nouveau venu). */
+const SUMMON_ANNOUNCE_RE = /^(.+?): Invoque (?:un\(e\) (.+?)|une créature du .+?)\s*$/;
 /** Délai maximum toléré entre une annonce "Invoque" et la jointure qu'elle corrèle — voir
  * FightParseState.pendingSummonCasters. Généreux (60x) par rapport au maximum réel observé (8ms) sur
  * le fichier de référence : marge pour la latence/l'entrelacement multi-compte, tout en restant très
@@ -135,6 +153,31 @@ const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b
  * [2026-08-20 @ 14H18min45])") — seule source fiable de la date CALENDAIRE réelle du fichier (le
  * reste du log n'expose que l'heure HH:MM:SS,mmm, voir HEADER_RE). Voir LogDateAnchorEntry. */
 const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]/;
+
+/**
+ * Extrait uniquement l'heure d'une ligne brute (et, le cas échéant, la date calendaire si cette ligne
+ * est un ancrage `CLIENT_BUILD_DATE_RE`) — SANS passer par le pipeline stateful de `LogParser`
+ * (bufferisation multi-lignes, dédoublonnage...). Fonction pure, appelée par StatsStoreService pour
+ * un pré-balayage en LECTURE SEULE d'un lot de lignes avant traitement normal (voir
+ * `primeLogDateAnchorFromBatch`) : retrouver un ancrage de date situé plus loin dans le lot que la
+ * toute première ligne, pour dater correctement les lignes qui le PRÉCÈDENT (bug réel — voir
+ * CLAUDE.md/mémoire projet : un fichier contenant déjà des combats d'une session de jeu antérieure au
+ * lancement client qui a produit la ligne d'ancrage affichait ces combats à la date système du jour
+ * de LECTURE au lieu de leur vraie date).
+ */
+export function peekLineTime(
+  rawLine: string,
+): { time: string; buildDate: { year: number; month: number; day: number } | null } | null {
+  const headerMatch = HEADER_RE.exec(rawLine.replace(/\r$/, ''));
+  if (!headerMatch) return null;
+  const [, , time, content] = headerMatch;
+  const buildMatch = CLIENT_BUILD_DATE_RE.exec(content);
+  const buildDate = buildMatch
+    ? { year: Number(buildMatch[1]), month: Number(buildMatch[2]), day: Number(buildMatch[3]) }
+    : null;
+  return { time, buildDate };
+}
+
 /**
  * "fightId=X Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight at {...}"
  * — présent pour chaque combattant de chaque combat. `obstacleId` (groupe 6, capturé mais plus
@@ -229,11 +272,11 @@ interface FightParseState {
    * invocateur, avec le nom de l'invocation comme libellé de "sort" (voir CLAUDE.md). */
   summonOwners: Map<string, string>;
   /** Casters en attente d'une invocation qui va rejoindre CE combat (FIFO, horodatée) — alimentée
-   * par SUMMON_ANNOUNCE_RE (annonce "X: Invoque ...", source la plus fiable) ET, en repli, par
-   * INVOCATION_INSTANTIATED_RE (ligne technique d'instanciation SANS annonce "Invoque" détectable,
-   * caster déduit de `lastCast` — voir CLAUDE.md, cas "Rocher" du 2026-08-24), consommée par le
-   * PROCHAIN combattant au fighterId encore jamais vu de ce combat SURVENANT DANS LES
-   * `SUMMON_JOIN_WINDOW_MS` SUIVANTS (voir seenFighterIds/parseFighterJoin,
+   * par SUMMON_ANNOUNCE_RE (annonce "X: Invoque ...", `source: 'announce'`, la plus fiable) ET, en
+   * repli, par INVOCATION_INSTANTIATED_RE (ligne technique d'instanciation SANS annonce "Invoque"
+   * détectable, `source: 'fallback'`, caster déduit de `lastCast` — voir CLAUDE.md, cas "Rocher" du
+   * 2026-08-24), consommée par le PROCHAIN combattant au fighterId encore jamais vu de ce combat
+   * SURVENANT DANS LES `SUMMON_JOIN_WINDOW_MS` SUIVANTS (voir seenFighterIds/parseFighterJoin,
    * CLAUDE.md) — un tout nouveau fighterId N'EST PAS forcément une invocation : un combat long peut
    * voir un vrai monstre/allié supplémentaire rejoindre bien plus tard (renfort de boss à plusieurs
    * phases, vague d'une brèche...), et un monstre peut LUI AUSSI invoquer (annonce "Invoque"
@@ -242,8 +285,29 @@ interface FightParseState {
    * suivant, même des dizaines de secondes/minutes plus tard (bug réel corrigé : de vrais boss d'un
    * combat ultime "invoqués" par un allié qui n'avait rien à voir). Fenêtre calibrée sur le fichier
    * réel qui a servi à ce fix : les 186 annonces "Invoque" y sont TOUJOURS suivies de leur propre
-   * jointure en 0 à 8ms (log quasi synchrone) — voir SUMMON_JOIN_WINDOW_MS. */
-  pendingSummonCasters: { caster: string; timeMs: number }[];
+   * jointure en 0 à 8ms (log quasi synchrone) — voir SUMMON_JOIN_WINDOW_MS.
+   *
+   * `source` distingue les deux origines pour parseFighterJoin : voir sa doc (bug réel corrigé le
+   * 2026-08-31 — un mimique qui se révèle déclenche EXACTEMENT la même ligne technique
+   * INVOCATION_INSTANTIATED_RE qu'une vraie invocation, sans qu'aucune annonce "Invoque" ne l'ait
+   * jamais précédé, et disparaissait donc entièrement du récap comme s'il avait été invoqué par le
+   * dernier lanceur de sort du combat, quel qu'il soit).
+   *
+   * `expectedName` (voir SUMMON_ANNOUNCE_RE) : nom attendu du prochain joueur qui consommera CETTE
+   * entrée précise, quand l'annonce le permet ("un(e) Y", fiable) — `null` sinon (forme "une
+   * créature du Y", non fiable, ET toute entrée `source: 'fallback'`, sans texte d'annonce du tout).
+   * Sert de filtre dans parseFighterJoin : une entrée dont `expectedName` ne correspond PAS au
+   * nouveau venu est IGNORÉE (laissée en file, jamais consommée par erreur) plutôt que consommée en
+   * pur FIFO — bug réel corrigé le 2026-08-31 (rafale d'auto-invocation d'un monstre, ex. "Cendragon:
+   * Invoque un(e) Cendragon" répété lors d'une resynchronisation, laissant une entrée périmée mais
+   * toujours dans la fenêtre ; un mimique sans rapport rejoignant PENDANT cette rafale se faisait
+   * avaler par cette entrée, FIFO ne vérifiant jamais que le nom correspondait). */
+  pendingSummonCasters: {
+    caster: string;
+    timeMs: number;
+    source: 'announce' | 'fallback';
+    expectedName: string | null;
+  }[];
   /** fighterId déjà vus dans CE combat (voir FightParseState.pendingSummonCasters) — distingue un
    * combattant réellement nouveau (candidat à consommer la file d'invocations en attente) d'une
    * simple resynchronisation ("[_FL_] ... join the fight" est réémis de nombreuses fois par
@@ -279,6 +343,17 @@ function createFightParseState(): FightParseState {
  * doublon — sauf le butin, où une répétition légitime est plausible (farm).
  */
 export class LogParser {
+  /**
+   * `isKnownMonsterName` : prédicat optionnel injecté par l'appelant (voir StatsStoreService, seule
+   * couche qui a accès au catalogue — LogParser reste volontairement pur/sans dépendance réseau ou
+   * catalogue) — voir parseFighterJoin pour son unique usage : distinguer un vrai monstre catalogué
+   * d'un nom d'invocation inconnu quand `INVOCATION_INSTANTIATED_RE` (repli SANS annonce "Invoque")
+   * est sur le point de l'avaler à tort. Par défaut (tests, `new LogParser()` sans argument) toujours
+   * `false` — comportement historique inchangé, aucune régression sur les ~200 tests existants qui ne
+   * couvrent pas ce cas précis.
+   */
+  constructor(private readonly deps: { isKnownMonsterName?: (name: string) => boolean } = {}) {}
+
   /** Un état d'attribution par combat actif (voir FightParseState), clé `null` = hors combat/non résolu. */
   private readonly fightStates = new Map<number | null, FightParseState>();
 
@@ -374,7 +449,12 @@ export class LogParser {
       const justAnnounced =
         !!lastPending && nowMs - lastPending.timeMs <= ANNOUNCE_TO_INSTANTIATION_WINDOW_MS;
       if (!justAnnounced && state.lastCast) {
-        state.pendingSummonCasters.push({ caster: state.lastCast.caster, timeMs: nowMs });
+        state.pendingSummonCasters.push({
+          caster: state.lastCast.caster,
+          timeMs: nowMs,
+          source: 'fallback',
+          expectedName: null,
+        });
       }
       return null;
     }
@@ -484,8 +564,31 @@ export class LogParser {
     }
     let summonedBy = state.summonOwners.get(name) ?? null;
     if (!summonedBy && isNewFighter && state.pendingSummonCasters.length > 0) {
-      summonedBy = state.pendingSummonCasters.shift()!.caster;
-      state.summonOwners.set(name, summonedBy);
+      // Cherche la plus ancienne entrée dont expectedName correspond (ou n'en a pas — voir sa doc)
+      // PLUTÔT que de dépiler aveuglément la plus ancienne (FIFO pur) : une entrée dont le nom
+      // attendu ne correspond PAS reste en file (une autre jointure la consommera peut-être plus
+      // tard) au lieu d'être imposée à ce nouveau venu sans rapport — bug réel corrigé le 2026-08-31
+      // (voir doc de SUMMON_ANNOUNCE_RE/pendingSummonCasters.expectedName).
+      const matchIndex = state.pendingSummonCasters.findIndex(
+        (p) => p.expectedName === null || p.expectedName.toLowerCase() === name.toLowerCase(),
+      );
+      if (matchIndex !== -1) {
+        const [pending] = state.pendingSummonCasters.splice(matchIndex, 1);
+        // Une entrée de source 'fallback' (voir sa doc) n'a AUCUNE preuve textuelle propre —
+        // seulement une coïncidence temporelle avec la dernière ligne technique d'instanciation,
+        // elle-même émise à l'identique pour un vrai monstre qui se révèle (ex. un mimique, voir
+        // CLAUDE.md) que pour une authentique invocation. Un nom déjà catalogué comme vrai monstre
+        // n'est donc jamais avalé par ce seul repli — sans conséquence sur le cas déjà géré par
+        // 'announce' (annonce explicite "X: Invoque..."), qui reste appliqué sans condition : c'est
+        // justement ce qui permet à une invocation de partager son nom avec un vrai monstre du même
+        // combat (ex. "Chimère veilleuse").
+        const isUnreliableFallbackOnRealMonster =
+          pending.source === 'fallback' && (this.deps.isKnownMonsterName?.(name) ?? false);
+        if (!isUnreliableFallbackOnRealMonster) {
+          summonedBy = pending.caster;
+          state.summonOwners.set(name, summonedBy);
+        }
+      }
     }
 
     let fightIds = this.nameToFightIds.get(name);
@@ -616,11 +719,23 @@ export class LogParser {
     }
     const challengeSuccess = CHALLENGE_SUCCESS_RE.exec(content);
     if (challengeSuccess) {
-      return { kind: 'challenge-result', time, name: challengeSuccess[1].trim(), success: true };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeSuccess[1].trim(),
+        success: true,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     const challengeFail = CHALLENGE_FAIL_RE.exec(content);
     if (challengeFail) {
-      return { kind: 'challenge-result', time, name: challengeFail[1].trim(), success: false };
+      return {
+        kind: 'challenge-result',
+        time,
+        name: challengeFail[1].trim(),
+        success: false,
+        fightId: this.resolveCurrentFightId(),
+      };
     }
     return null;
   }
@@ -644,13 +759,22 @@ export class LogParser {
       return { kind: 'enemy-defeated', time, name, fightId: this.resolveFightIdForName(name) };
     }
 
+    const disappear = DISAPPEAR_RE.exec(content);
+    if (disappear) {
+      const name = disappear[1].trim();
+      return { kind: 'enemy-fled', time, name, fightId: this.resolveFightIdForName(name) };
+    }
+
     const summonAnnounce = SUMMON_ANNOUNCE_RE.exec(content);
     if (summonAnnounce) {
       const caster = summonAnnounce[1].trim();
+      const expectedName = summonAnnounce[2]?.trim() ?? null;
       const fightId = this.resolveFightIdForName(caster);
       this.getFightState(fightId).pendingSummonCasters.push({
         caster,
         timeMs: this.timeToMs(time),
+        source: 'announce',
+        expectedName,
       });
       return null;
     }

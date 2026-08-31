@@ -74,30 +74,6 @@
   white-space: nowrap;
 }
 
-/* Bouton "+ Suivre" : pleine largeur, distinct visuellement des entrées de la liste ci-dessous
-   (fond plein plutôt que le cadre discret de `.item-picker-item`) — même esprit que
-   `.primary-btn` (styles.css) mais gabarit compact assorti au reste du menu. */
-.item-picker-follow-btn {
-  width: 100%;
-  padding: 6px 8px;
-  background: var(--tint-medium);
-  border: 1px solid var(--tint-strong);
-  border-radius: 5px;
-  color: var(--text-bright);
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-align: center;
-}
-.item-picker-follow-btn:hover:not(:disabled) {
-  background: var(--accent);
-  color: var(--on-accent);
-  border-color: var(--accent);
-}
-.item-picker-follow-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .item-picker-modify-row {
   display: flex;
   align-items: center;

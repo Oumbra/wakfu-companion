@@ -67,6 +67,9 @@ export interface FightParticipantPayload {
   className: string | null;
   damage: number;
   defeated: boolean;
+  /** Voir EntityDamageRow.fled/server/db/schema.ts (fightParticipants.fled) — mutuellement exclusif
+   * avec `defeated`. */
+  fled: boolean;
   spells: FightSpellPayload[];
   /** XP gagnée par ce combattant sur ce combat (0 pour les ennemis). */
   xpGained: number;
@@ -98,6 +101,27 @@ export interface FightPayload {
   xpGained: number;
   kamasGained: number | null;
   gameServer: string | null;
+  /** Id Ankama du donjon identifié pour ce combat (`null` hors donjon, ou salle dont le run n'est
+   * pas encore identifiable dans l'historique connu côté client — voir
+   * `HistorySyncService.resolveDungeonAssignment`/`dungeon-run-grouping.util.ts`). Transmis tel
+   * quel, jamais recalculé côté serveur (`fights.dungeonId`). */
+  dungeonId: number | null;
+  /**
+   * Signature de contenu (voir `fightSignature`) du combat REPRÉSENTATIF du run de donjon de ce
+   * combat (le boss, ou le combat lui-même pour un donjon à un seul combat) — PAS encore la clé
+   * finale : `SyncQueueService.send` la hache exactement comme `clientKey` (même fonction,
+   * `computeClientKey`) pour produire `fights.dungeonRunKey`, de sorte que TOUS les combats d'un
+   * même run finissent par partager le `clientKey` du combat de boss comme valeur de
+   * rattachement — sans avoir besoin d'un aller-retour serveur pour l'obtenir. `null` en miroir de
+   * `dungeonId`.
+   */
+  dungeonRunSignature: string | null;
+  /** Nombre de challenges réussis/échoués pendant ce combat (voir `fights.challengesPassed/Failed`,
+   * server/db/schema.ts) — base des statistiques long terme (par mois/année/type de combat),
+   * volontairement PAS dans `fightSignature` (règle n°2 ci-dessus) : une valeur dérivée du log,
+   * jamais révisable après coup, comme `totalDamage`/`xpGained`. */
+  challengesPassed: number;
+  challengesFailed: number;
   participants: FightParticipantPayload[];
   loot: FightLootPayload[];
 }
@@ -151,6 +175,20 @@ export const HISTORY_ENDPOINTS: Record<HistoryEventKind, string> = {
   fight: '/history/fights',
   purchase: '/history/purchases',
   trade: '/history/trades',
+};
+
+/** Portées temporelles proposées par le menu "Charger plus" (voir `LoadMoreScopeMenuComponent` /
+ * `HistoryArchiveService.loadMoreForSpan`) — un seul clic couvrant une durée choisie plutôt que de
+ * cliquer "Charger plus" un nombre de fois inconnu à l'avance pour atteindre une ancienneté donnée. */
+export type LoadMoreSpan = 'week' | 'month' | 'year';
+
+/** Approximations volontaires (30/365 jours) : il ne s'agit que de bornes de chargement, pas de
+ * calculs calendaires exacts — un mois "réel" en plus ou en moins ne change rien à l'utilité de ce
+ * raccourci. */
+export const LOAD_MORE_SPAN_MS: Record<LoadMoreSpan, number> = {
+  week: 7 * 24 * 60 * 60 * 1000,
+  month: 30 * 24 * 60 * 60 * 1000,
+  year: 365 * 24 * 60 * 60 * 1000,
 };
 
 function normalize(value: string): string {

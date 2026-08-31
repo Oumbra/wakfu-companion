@@ -10,6 +10,24 @@ export interface FightEnemy {
   id: number;
 }
 
+/**
+ * Fiabilité de la résolution d'un objet de butin par recoupement avec les tables de drop connues
+ * des monstres du combat (`monsters.loot`, voir StatsStoreService.resolveLootConfidence) :
+ * - `'confirmed'` : l'id résolu (éventuellement corrigé parmi des homonymes de rareté différente,
+ *   voir `catalogId`) figure dans le butin connu d'au moins un monstre du combat.
+ * - `'doubtful'` : au moins un monstre du combat a une table de drop connue, mais aucun homonyme de
+ *   cet objet n'y figure — l'objet ne provient probablement pas de ces monstres (autre source :
+ *   ramassage au sol, prime de challenge...). Jamais utilisé pour EXCLURE la ligne, seulement pour
+ *   signaler un doute visuel (voir loot-list.component) — le référentiel n'est pas exhaustif.
+ * - `'unknown'` : aucun monstre du combat n'a de table de drop connue à ce jour (~127 monstres sur
+ *   855, voir server/db/schema.ts) — pas assez de données pour juger, à ne surtout pas confondre
+ *   avec `'doubtful'` (qui, lui, a des données à charge). Valeur par défaut/de repli, y compris pour
+ *   tout butin resté hors combat (`fightId === null`, jamais passé par cette résolution).
+ * Une correction manuelle d'objet (ItemPickerService) force toujours `'confirmed'` : l'utilisateur a
+ * lui-même tranché, jamais le contredire après coup par un badge de doute.
+ */
+export type LootConfidence = 'confirmed' | 'doubtful' | 'unknown';
+
 /** Un objet ramassé pendant le combat : `id` est le gfxId de l'objet (référentiel `wakfu-items.data`), `0` si inconnu.
  * `catalogId` est l'id Ankama (résolution non ambiguë par id, à préférer à `name` seul — voir
  * CatalogService.findWakfuItemEntry, ambigu en cas d'homonymes de rareté différente), `null` si non
@@ -20,6 +38,7 @@ export interface FightLoot {
   id: number;
   catalogId: number | null;
   quantity: number;
+  confidence: LootConfidence;
 }
 
 /** XP gagnée par un personnage pendant le combat. */
@@ -49,6 +68,13 @@ export class Fight {
   /** Kamas gagnés pendant le combat (voir StatsStoreService.registerFightKama) — affichés dans la
    * ligne de butin (FightRecord.kamas), en plus de `loots` ci-dessus. */
   kamas = 0;
+  /** Nombre de challenges réussis/échoués annoncés pendant ce combat (voir
+   * StatsStoreService.pendingFightChallengesPassed/Failed, alimentés comme `kamas` ci-dessus).
+   * Sert de base aux statistiques long terme (fights.challengesPassed/Failed côté serveur) — pas
+   * seulement à l'affichage en session (voir StatsStoreService.challengesPassed/Failed, compteurs
+   * de session distincts, jamais remplacés par ceux-ci). */
+  challengesPassed = 0;
+  challengesFailed = 0;
 
   constructor(id: number, startDate: Date) {
     this.id = id;

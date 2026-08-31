@@ -7,8 +7,13 @@ export type AppView = 'main' | 'profile' | 'legal' | 'account';
  * s'y référer sans dépendre d'un composant `features/`. `'tracker'` est la racine (path `''`, pas
  * de segment dédié) — voir `pagePathFor`. Pas de `'damage'` : le combat en cours vit désormais dans
  * `'history'` (sous-onglet Combats, voir CLAUDE.md/FightHistoryComponent) plutôt que dans un onglet
- * dédié. */
-export type DashboardTab = 'tracker' | 'history' | 'chat';
+ * dédié. `'history'` reste une seule valeur ici même si `DashboardComponent` y distingue plusieurs
+ * onglets mobile (un par volet scindé, voir `DashboardLayoutService.historySplitKeys`) — la
+ * granularité fine est portée par `historyTab` (ci-dessous), pas par cette union. `'recap'` (carte
+ * Récap de session, voir CLAUDE.md) suit le même principe générique que `'chat'` dans `pagePathFor`
+ * (`/${dashboardTab}`, pas de cas particulier) : contrairement à Historique, une seule carte possible,
+ * pas besoin d'un sous-niveau. */
+export type DashboardTab = 'tracker' | 'history' | 'chat' | 'recap';
 
 /** Onglets du rail de la page profil (voir `ProfilePageComponent`, sur `profile`) — même raison
  * d'être ici que `DashboardTab`. `'avatar'` est la racine de `/profile` (pas de segment dédié). */
@@ -55,7 +60,7 @@ type SlideDirection = 'forward' | 'backward';
  * onglet) — même règle de racine omise pour `'combats'`. */
 export function pagePathFor(
   view: AppView,
-  legalKind: 'notice' | 'privacy' | null,
+  legalKind: 'notice' | 'privacy' | 'terms' | null,
   dashboardTab: DashboardTab | null = null,
   profileTab: ProfileTab | null = null,
   historyTab: HistoryTab | null = null,
@@ -68,7 +73,9 @@ export function pagePathFor(
     case 'account':
       return '/account';
     case 'legal':
-      return legalKind === 'privacy' ? '/privacy-policy' : '/legal-notice';
+      if (legalKind === 'privacy') return '/privacy-policy';
+      if (legalKind === 'terms') return '/terms-of-service';
+      return '/legal-notice';
     case 'main':
       if (!dashboardTab || dashboardTab === 'tracker') return '';
       if (dashboardTab === 'history') {

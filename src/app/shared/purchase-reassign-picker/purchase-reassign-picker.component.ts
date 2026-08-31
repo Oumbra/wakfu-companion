@@ -17,7 +17,7 @@ import { PurchaseRecord } from '../../core/services/stats-store.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { TranslatePipe } from '../translate.pipe';
-import { NumberFrPipe } from '../number-fr.pipe';
+import { LocaleNumberPipe } from '../locale-number.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { EscapeCloseDirective } from '../escape-close.directive';
 
@@ -32,7 +32,13 @@ import { EscapeCloseDirective } from '../escape-close.directive';
  */
 @Component({
   selector: 'app-purchase-reassign-picker',
-  imports: [ItemIconComponent, TranslatePipe, NumberFrPipe, TooltipDirective, EscapeCloseDirective],
+  imports: [
+    ItemIconComponent,
+    TranslatePipe,
+    LocaleNumberPipe,
+    TooltipDirective,
+    EscapeCloseDirective,
+  ],
   templateUrl: './purchase-reassign-picker.component.html',
   styleUrl: './purchase-reassign-picker.component.css',
 })

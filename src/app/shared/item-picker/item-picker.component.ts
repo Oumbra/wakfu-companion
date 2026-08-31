@@ -16,25 +16,18 @@ import { ItemPickerRequest } from '../../core/services/item-picker.service';
 import { wakfuRarityIconUrl } from '../../core/data/wakfu-item-rarity.data';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
 import { TranslatePipe } from '../translate.pipe';
-import { TooltipDirective } from '../tooltip/tooltip.directive';
 import { InputNumberComponent } from '../input-number/input-number.component';
 import { EscapeCloseDirective } from '../escape-close.directive';
 
 /**
- * Menu d'interaction avec un objet (suivi + correction manuelle d'homonyme, voir
- * ItemPickerService) — même principe/positionnement que ClassPickerComponent/
- * DamageReassignPickerComponent (rendu une seule fois au niveau racine, voir leur commentaire pour
- * le piège `position: fixed` niché dans un ancêtre `transform`).
+ * Menu de correction manuelle d'homonyme (voir ItemPickerService, plus de suivi/watchlist ici) —
+ * même principe/positionnement que ClassPickerComponent/DamageReassignPickerComponent (rendu une
+ * seule fois au niveau racine, voir leur commentaire pour le piège `position: fixed` niché dans un
+ * ancêtre `transform`).
  */
 @Component({
   selector: 'app-item-picker',
-  imports: [
-    ItemIconComponent,
-    TranslatePipe,
-    TooltipDirective,
-    InputNumberComponent,
-    EscapeCloseDirective,
-  ],
+  imports: [ItemIconComponent, TranslatePipe, InputNumberComponent, EscapeCloseDirective],
   templateUrl: './item-picker.component.html',
   styleUrl: './item-picker.component.css',
 })
@@ -51,12 +44,11 @@ export class ItemPickerComponent implements OnDestroy {
     return this.catalog.findAllWakfuItemEntriesByName(this.request().name);
   });
 
-  /** Section correction affichée seulement si l'appelant l'autorise (voir
-   * `ItemPickerRequest.onChosen`, absent pour le butin cumulé de session) ET qu'il existe
-   * effectivement plus d'un objet candidat pour ce nom — sinon rien à désambiguïser. */
-  protected readonly showModify = computed(
-    () => this.request().onChosen !== undefined && this.candidates().length > 1,
-  );
+  /** Section correction affichée seulement s'il existe effectivement plus d'un objet candidat pour
+   * ce nom — sinon rien à désambiguïser. Défensif : l'appelant est censé n'ouvrir ce menu que dans
+   * ce cas (voir CLAUDE.md/ItemPickerService), mais le catalogue peut en théorie se rafraîchir en
+   * arrière-plan pendant que le menu reste ouvert. */
+  protected readonly showModify = computed(() => this.candidates().length > 1);
 
   /** Quantité concernée par la correction — bornée à [1, request().quantity], remise à la valeur
    * maximale (tout le lot) à chaque nouvelle ouverture, voir l'effect ci-dessous. */
@@ -115,11 +107,6 @@ export class ItemPickerComponent implements OnDestroy {
     const max = Math.max(1, this.request().quantity);
     if (!Number.isFinite(value)) return 1;
     return Math.min(max, Math.max(1, Math.floor(value)));
-  }
-
-  protected follow(): void {
-    if (this.request().isWatched) return;
-    this.request().onFollow();
   }
 
   protected choose(entry: CatalogItemEntry): void {

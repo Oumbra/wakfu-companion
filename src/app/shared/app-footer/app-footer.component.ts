@@ -7,7 +7,8 @@ import { TranslatePipe } from '../translate.pipe';
 /**
  * Pied de page global — rendu une fois par panneau de navigation (voir AppPageComponent), donc
  * présent sur la page principale, la page profil ET la page légale. Les liens "Mentions légales" /
- * "Politique de confidentialité" ouvrent la page légale correspondante (voir
+ * "Politique de confidentialité" / "Conditions d'utilisation" ouvrent la page légale correspondante
+ * (voir
  * LegalPageService.open, qui délègue l'animation d'entrée à `NavigationService.openLegal()`) :
  * cette app n'a pas de routeur au sens propre, mais NavigationService anime correctement l'entrée
  * depuis la page principale OU la page profil (retour au bon endroit via `pop()`).

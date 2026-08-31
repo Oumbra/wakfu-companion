@@ -3,6 +3,8 @@ import { CatalogService } from '../api/catalog.service';
 import { EntityClassifierService } from '../services/entity-classifier.service';
 import { GameServerService } from '../services/game-server.service';
 import type { FightRecord, PurchaseRecord, TradeRecord } from '../services/stats-store.service';
+import { findDungeonForEnemies } from '../utils/fight-image.util';
+import { enemyCompositionKey, groupDungeonRuns } from '../utils/dungeon-run-grouping.util';
 import {
   fightSignature,
   purchaseSignature,
@@ -13,6 +15,16 @@ import {
 } from './history-event.model';
 import { SyncQueueService } from './sync-queue.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
+
+/** Rattachement de donjon résolu pour un combat — voir `HistorySyncService.resolveDungeonAssignment`. */
+interface DungeonAssignment {
+  dungeonId: number | null;
+  dungeonRunSignature: string | null;
+  /** Les AUTRES combats du même run multi-salles (vide hors run, ou donjon à un seul combat) —
+   * `recordFight` les renvoie aussi, pour propager un rattachement tout juste découvert à des
+   * salles déjà envoyées (voir `functions/api/v1/history/fights.ts`, `onConflictDoUpdate`). */
+  siblings: readonly FightRecord[];
+}
 
 /**
  * Traduit les enregistrements d'historique de `StatsStoreService` en événements
@@ -135,6 +147,7 @@ export class HistorySyncService {
         className: side === 'ally' ? (this.classifier.getDetectedClass(row.name) ?? null) : null,
         damage: Math.max(0, Math.round(row.total)),
         defeated: row.defeated,
+        fled: row.fled,
         // Ventilation par sort et par élément : c'est l'essentiel de la valeur
         // d'un historique de combat, et c'est aussi ce qu'une réattribution
         // manuelle peut corriger après coup (d'où l'upsert côté serveur).
@@ -165,9 +178,115 @@ export class HistorySyncService {
     }));
   }
 
-  recordFight(record: FightRecord): void {
+  /**
+   * `historyList` : historique de session connu au moment de l'appel, le plus RÉCENT en premier
+   * (même convention que `StatsStoreService.fightHistoryList`/`groupDungeonRuns`) — sert à resituer
+   * `record` parmi ses salles/boss de donjon éventuels. Passé explicitement plutôt qu'injecté
+   * (StatsStoreService le détient déjà à chaque site d'appel) pour garder ce service testable sans
+   * dépendre de l'ordre d'initialisation d'un store.
+   */
+  recordFight(record: FightRecord, historyList: readonly FightRecord[]): void {
     if (!this.queue.isActive()) return;
 
+    const assignment = this.resolveDungeonAssignment(record, historyList);
+    this.enqueueFight(record, assignment.dungeonId, assignment.dungeonRunSignature);
+    // Propage un rattachement de donjon tout juste découvert aux salles déjà envoyées (voir doc de
+    // DungeonAssignment) — même dungeonId/dungeonRunSignature pour tout le run, pas de recalcul :
+    // un seul niveau de propagation, jamais de récursion sur les siblings d'un sibling.
+    for (const sibling of assignment.siblings) {
+      this.enqueueFight(sibling, assignment.dungeonId, assignment.dungeonRunSignature);
+    }
+  }
+
+  /** Vrai si un archimonstre (`CatalogMonsterEntry.isArchi`) figure parmi les ennemis de `record` —
+   * miroir de `FightHistoryComponent.hasArchiEnemy`, voir `hasPreBossArchi`/`groupDungeonRuns`. */
+  private hasArchiEnemy(record: FightRecord): boolean {
+    return record.rows.some(
+      (row) =>
+        this.classifier.classify(row.name) === 'enemy' &&
+        this.catalog.findWakfuMonsterEntry(row.name)?.isArchi === true,
+    );
+  }
+
+  /** Noms des ennemis de `record` — factorisé pour `findDungeonFor` ci-dessous ET la clé de
+   * composition passée à `groupDungeonRuns` (voir `enemyCompositionKey`). */
+  private enemyNamesFor(record: FightRecord): string[] {
+    return record.rows
+      .filter((row) => this.classifier.classify(row.name) === 'enemy')
+      .map((row) => row.name);
+  }
+
+  /** Donjon dont `record` contient LUI-MÊME le boss (`null` sinon, y compris pour une simple salle
+   * — voir `findDungeonForEnemies`) — miroir de `FightHistoryComponent`, même logique d'affichage. */
+  private findDungeonFor(record: FightRecord): ReturnType<typeof findDungeonForEnemies> {
+    return findDungeonForEnemies(this.catalog, this.enemyNamesFor(record));
+  }
+
+  /** Signature de contenu de `record`, réutilisée à la fois comme identité d'envoi (`clientKey`)
+   * et, pour le combat représentatif d'un run, comme graine de `dungeonRunKey` (voir
+   * `FightPayload.dungeonRunSignature`) — c'est ce qui fait que `dungeonRunKey` d'un run finit par
+   * être exactement le `clientKey` du combat de boss. */
+  private runSignature(record: FightRecord): string {
+    return fightSignature({
+      time: record.time,
+      fightId: record.id,
+      result: record.result,
+      participants: record.rows,
+    });
+  }
+
+  /**
+   * Rattache `record` à un run de donjon au sein de `historyList`, avec le même algorithme que
+   * l'affichage (`FightHistoryComponent`, voir dungeon-run-grouping.util.ts) :
+   * 1. `record` fait partie d'un cluster multi-salles déjà résolu (`groupDungeonRuns` renvoie une
+   *    entrée `dungeonRun` le contenant) : le donjon et la signature du combat REPRÉSENTATIF
+   *    (le boss, potentiellement plus ancien que `record` lui-même si `record` est une salle) sont
+   *    partagés par tout le cluster, renvoyé en entier via `siblings`.
+   * 2. Sinon, `record` contient LUI-MÊME un boss de donjon (`findDungeonFor`) : soit un donjon à un
+   *    seul combat (`dungeonRoomCount === 1`, jamais regroupé par construction — voir
+   *    `groupDungeonRuns`), soit un cluster multi-salles collapsé faute de salles précédentes
+   *    encore visibles (garde-fou « début d'historique », même fonction). Dans les deux cas,
+   *    `record` est son propre représentant.
+   * 3. Sinon (simple salle dont le boss n'est pas encore dans `historyList`, ou combat hors
+   *    donjon) : aucun rattachement pour l'instant — `null`/`null`, à corriger plus tard (voir
+   *    `functions/api/v1/history/fights.ts`, `onConflictDoUpdate` + `COALESCE`) quand le boss du
+   *    run apparaîtra à son tour dans l'historique connu.
+   */
+  private resolveDungeonAssignment(
+    record: FightRecord,
+    historyList: readonly FightRecord[],
+  ): DungeonAssignment {
+    const entries = groupDungeonRuns(
+      historyList,
+      (r) => this.findDungeonFor(r),
+      (r) => this.hasArchiEnemy(r),
+      (r) => enemyCompositionKey(this.enemyNamesFor(r)),
+    );
+
+    const runEntry = entries.find(
+      (entry) => entry.kind === 'dungeonRun' && entry.fights.some((f) => f.id === record.id),
+    );
+    if (runEntry?.kind === 'dungeonRun') {
+      return {
+        dungeonId: runEntry.dungeon.id,
+        dungeonRunSignature: this.runSignature(runEntry.representative),
+        siblings: runEntry.fights.filter((f) => f.id !== record.id),
+      };
+    }
+
+    const own = this.findDungeonFor(record);
+    return {
+      dungeonId: own?.id ?? null,
+      dungeonRunSignature: own ? this.runSignature(record) : null,
+      siblings: [],
+    };
+  }
+
+  private enqueueFight(
+    record: FightRecord,
+    dungeonId: number | null,
+    dungeonRunSignature: string | null,
+  ): void {
     const participants = this.buildParticipants(record);
     const loot = this.buildLoot(record);
 
@@ -181,24 +300,26 @@ export class HistorySyncService {
     // participants/loot de la copie archivée : jamais silencieusement perdue par ce court-circuit.
     // `syncedFights` n'est alimenté que par ce que l'archive a déjà chargé (best-effort, voir sa
     // doc) : un combat pas encore vu ici part simplement comme avant.
-    const archived = this.syncedFights.get(record);
-    if (archived) {
-      const archivedParticipants = this.buildParticipants(archived);
-      const archivedLoot = this.buildLoot(archived);
-      if (
-        JSON.stringify(participants) === JSON.stringify(archivedParticipants) &&
-        JSON.stringify(loot) === JSON.stringify(archivedLoot)
-      ) {
-        return;
+    //
+    // Ce court-circuit ne s'applique QUE si ce combat n'apporte aucune information de donjon
+    // nouvelle (`dungeonId === null`) : sinon, il doit repartir même si participants/loot sont
+    // inchangés, pour que le serveur apprenne dungeonId/dungeonRunKey (cas d'une salle déjà connue
+    // du compte, renvoyée uniquement pour son rattachement — voir `recordFight`).
+    if (dungeonId === null) {
+      const archived = this.syncedFights.get(record);
+      if (archived) {
+        const archivedParticipants = this.buildParticipants(archived);
+        const archivedLoot = this.buildLoot(archived);
+        if (
+          JSON.stringify(participants) === JSON.stringify(archivedParticipants) &&
+          JSON.stringify(loot) === JSON.stringify(archivedLoot)
+        ) {
+          return;
+        }
       }
     }
 
-    const signature = fightSignature({
-      time: record.time,
-      fightId: record.id,
-      result: record.result,
-      participants: record.rows,
-    });
+    const signature = this.runSignature(record);
 
     this.queue.enqueue({
       id: `fight:${signature}`,
@@ -223,6 +344,10 @@ export class HistorySyncService {
         xpGained: record.xp.reduce((sum, row) => sum + row.amount, 0),
         kamasGained: record.kamas,
         gameServer: this.currentServer(),
+        dungeonId,
+        dungeonRunSignature,
+        challengesPassed: record.challengesPassed,
+        challengesFailed: record.challengesFailed,
         participants,
         loot,
       },

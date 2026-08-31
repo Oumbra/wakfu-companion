@@ -36,8 +36,10 @@
               (change)="toggleRecord(record)"
             />
             <span class="purchase-reassign-record-time">{{ timeLabel(record) }}</span>
-            <span class="purchase-reassign-record-qty">×{{ record.quantity | numberFr }}</span>
-            <span class="purchase-reassign-record-cost">{{ record.totalCost | numberFr }} ₭</span>
+            <span class="purchase-reassign-record-qty">×{{ record.quantity | localeNumber }}</span>
+            <span class="purchase-reassign-record-cost"
+              >{{ record.totalCost | localeNumber }} ₭</span
+            >
           </label>
         }
       </div>

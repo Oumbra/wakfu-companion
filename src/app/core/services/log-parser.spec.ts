@@ -144,6 +144,39 @@ describe('LogParser — multi-combat (fightId)', () => {
     });
   });
 
+  it('rattache un résultat de challenge (réussi/échoué) au combat actif via resolveCurrentFightId', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 11:58:21,848 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=111 Oumbra breed : 4 [999] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (0,0,0)}',
+      ' INFO 11:58:21,849 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=111 Larve Verte breed : 125 [-1] isControlledByAI=true obstacleId : -1 join the fight at {Point3 : (0,0,0)}',
+      ' INFO 11:58:53,611 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Séparation" est réussi.',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries[2]).toEqual({
+      kind: 'challenge-result',
+      time: '11:58:53,611',
+      name: 'Séparation',
+      success: true,
+      fightId: 111,
+    });
+  });
+
+  it('un challenge hors de tout combat actif porte fightId=null', () => {
+    const parser = new LogParser();
+    const entries = parseAll(parser, [
+      ' INFO 11:58:53,611 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Le challenge "Tsunami" a échoué.',
+    ]);
+    expect(entries).toEqual([
+      {
+        kind: 'challenge-result',
+        time: '11:58:53,611',
+        name: 'Tsunami',
+        success: false,
+        fightId: null,
+      },
+    ]);
+  });
+
   it('isole deux combats concurrents : la jointure du second ne pollue pas le premier', () => {
     const parser = new LogParser();
     const lines = [

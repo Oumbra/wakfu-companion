@@ -8,6 +8,7 @@ import { ITEM_CATEGORY_SORT_ORDER, WakfuItemCategory } from '../data/wakfu-item-
 const INDEX_CACHE_KEY = 'catalog-index';
 const DUNGEONS_CACHE_KEY = 'catalog-dungeons';
 const MONSTER_FAMILIES_CACHE_KEY = 'catalog-monster-families';
+const MONSTER_LOOT_CACHE_KEY = 'catalog-monster-loot';
 
 /** Doit rester la même table que server/catalog/compact-index.ts (RARITY_SORT_ORDER) — construite
  * une seule fois par inversion de RARITY_SORT_ORDER (déjà défini côté client) plutôt que dupliquée
@@ -63,6 +64,10 @@ export interface CatalogMonsterFamilyEntry {
   en: string;
   es: string;
   pt: string;
+  /** `null` pour les familles sans illustration propre (ex. "Boss Ultimes", "Events") —
+   * repository/monster-families.json, champ `picture`. Sert d'icône au groupe "famille de monstre"
+   * du regroupement "Type" de l'historique des combats, voir fight-history.component.ts. */
+  pictureUrl: string | null;
 }
 
 /** Catégorie d'un donjon, curée à la main dans repository/dungeons.json (miroir de
@@ -175,6 +180,10 @@ type MonsterTuple = [
   number,
 ];
 
+/** Tuple `[monsterId, itemId[]]` servi par GET /api/v1/monster-loot — voir ce fichier pour le
+ * détail du format (payload séparé de l'index compact). */
+type MonsterLootTuple = [number, number[]];
+
 /**
  * Catalogue Ankama (objets/monstres/donjons) servi par l'API distante — lot
  * 3.1, remplace les tables embarquées wakfu-{items,monsters,dungeons}.data.ts
@@ -223,19 +232,45 @@ export class CatalogService {
   private monstersById = new Map<number, CatalogMonsterEntry>();
   private monstersByFrName = new Map<string, CatalogMonsterEntry>();
   private monstersByOtherLocaleName = new Map<string, CatalogMonsterEntry>();
+  /** Toutes les entrées catalogue partageant un même nom normalisé (n'importe quelle langue), triées
+   * par id — précalculé une seule fois à la (re)construction de l'index (applyIndex) pour que
+   * `findAllWakfuItemEntriesByName`/`hasMultipleWakfuItemEntriesByName` restent O(1). Sans cet
+   * index, un appelant du CHEMIN CHAUD reproduirait à chaque appel le balayage complet de tout
+   * `itemsById` (~16 000 objets × 4 normalisations Unicode chacun) : régression de performance
+   * réelle, rencontrée à DEUX endroits distincts le 2026-08-30 — (1) `[appTooltip]` évalué à chaque
+   * cycle de détection de changement pour CHAQUE ligne de butin affichée (LootListComponent/
+   * TradesComponent.canInteract), le calcul se répétant intégralement à chaque déplacement de
+   * souris faute de `OnPush` dans l'app ; (2) `StatsStoreService.resolveLootConfidence`, appelée
+   * pour CHAQUE ligne "Vous avez ramassé" lue — ~10s de gel au premier chargement d'un fichier de
+   * taille réaliste, remonté par l'utilisateur (vidéo à l'appui), confirmé par profiling CPU réel
+   * (CDP `Profiler`) : plus de 60% des ~16 000 objets du référentiel partagent leur nom normalisé
+   * avec au moins un autre id (variantes de rareté d'un même équipement, ex. "Larme d'Ogrest" ids
+   * 24029/21602) — un simple garde-fou "cas rare, on ignore" (voir `hasMultipleWakfuItemEntriesByName`
+   * en aval de ce champ) ne suffisait donc PAS à éviter le balayage complet pour la majorité des
+   * lignes de butin réelles ; seul un vrai index O(1) le peut. */
+  private itemEntriesByName = new Map<string, CatalogItemEntry[]>();
+  /** Noms normalisés (voir normalizeWakfuName) partagés par au moins 2 objets distincts du
+   * référentiel — dérivé de `itemEntriesByName` (voir sa doc), pour que
+   * `hasMultipleWakfuItemEntriesByName` n'ait même pas besoin de récupérer/mesurer le tableau
+   * complet quand seule l'AMBIGUÏTÉ importe. */
+  private ambiguousItemNames = new Set<string>();
   private dungeonsByBossMonsterId = new Map<number, CatalogDungeonEntry>();
+  private dungeonsById = new Map<number, CatalogDungeonEntry>();
   /** Toutes les entrées donjon telles que reçues (contrairement à dungeonsByBossMonsterId, pas
    * indexée — sert uniquement à balayer les brèches, en nombre restreint, voir
    * findWakfuBreachByMonsterFamilies/findWakfuUltimateBreachByBossMonsters). */
   private dungeons: readonly CatalogDungeonEntry[] = [];
   private monsterFamiliesById = new Map<number, CatalogMonsterFamilyEntry>();
+  private monsterLootById = new Map<number, readonly number[]>();
 
   async initialize(): Promise<void> {
-    const [cachedIndex, cachedDungeons, cachedMonsterFamilies] = await Promise.all([
-      this.persistence.getCacheEntry<CachedIndexPayload>(INDEX_CACHE_KEY),
-      this.persistence.getCacheEntry<CatalogDungeonEntry[]>(DUNGEONS_CACHE_KEY),
-      this.persistence.getCacheEntry<CatalogMonsterFamilyEntry[]>(MONSTER_FAMILIES_CACHE_KEY),
-    ]);
+    const [cachedIndex, cachedDungeons, cachedMonsterFamilies, cachedMonsterLoot] =
+      await Promise.all([
+        this.persistence.getCacheEntry<CachedIndexPayload>(INDEX_CACHE_KEY),
+        this.persistence.getCacheEntry<CatalogDungeonEntry[]>(DUNGEONS_CACHE_KEY),
+        this.persistence.getCacheEntry<CatalogMonsterFamilyEntry[]>(MONSTER_FAMILIES_CACHE_KEY),
+        this.persistence.getCacheEntry<MonsterLootTuple[]>(MONSTER_LOOT_CACHE_KEY),
+      ]);
 
     if (cachedIndex && cachedDungeons) {
       this.applyIndex(cachedIndex);
@@ -245,6 +280,10 @@ export class CatalogService {
       // remplira au prochain rafraîchissement en arrière-plan ci-dessous — jamais bloquant, le
       // libellé de famille a un repli côté client (voir fight-image.util.ts) en son absence.
       if (cachedMonsterFamilies) this.applyMonsterFamilies(cachedMonsterFamilies);
+      // Même principe : absent tant que le cache n'a pas été rafraîchi depuis l'ajout de ce
+      // dataset — findMonsterLootItemIds renvoie simplement [] en son absence (repli déjà prévu
+      // par ses appelants, voir StatsStoreService.resolveLootConfidence).
+      if (cachedMonsterLoot) this.applyMonsterLoot(cachedMonsterLoot);
       this.status.set('ready');
       // Rafraîchissement en arrière-plan : ne bloque pas le démarrage, voir doc de classe.
       void this.refreshIfNeeded(cachedIndex.indexHash);
@@ -270,20 +309,21 @@ export class CatalogService {
 
   /** Toutes les entrées catalogue partageant ce nom (n'importe quelle langue), triées par id — sert
    * à la désambiguïsation manuelle d'objets homonymes de rareté différente (ex. "Larme d'Ogrest",
-   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). Balaie tout
-   * `itemsById` (pas indexé par nom pour le cas multiple) : jamais un chemin chaud, seulement appelé
-   * à l'ouverture du sélecteur de correction (voir ItemPickerService). */
+   * ids 24029/21602 : `findWakfuItemEntry` n'en renvoie qu'une seule, arbitrairement). O(1) — voir
+   * `itemEntriesByName`, précalculé à la construction de l'index : appelée aussi bien à l'ouverture
+   * du sélecteur de correction (ItemPickerService) que dans le CHEMIN CHAUD du parsing
+   * (`resolveLootConfidence`, une fois par ligne de butin lue), un balayage complet du catalogue à
+   * chaque appel n'est plus une option (voir doc de `itemEntriesByName`). */
   findAllWakfuItemEntriesByName(name: string): CatalogItemEntry[] {
-    const key = normalizeWakfuName(name);
-    return [...this.itemsById.values()]
-      .filter(
-        (entry) =>
-          normalizeWakfuName(entry.fr) === key ||
-          normalizeWakfuName(entry.en) === key ||
-          normalizeWakfuName(entry.es) === key ||
-          normalizeWakfuName(entry.pt) === key,
-      )
-      .sort((a, b) => a.id - b.id);
+    return this.itemEntriesByName.get(normalizeWakfuName(name)) ?? [];
+  }
+
+  /** Équivalent O(1) de `findAllWakfuItemEntriesByName(name).length > 1` (voir `ambiguousItemNames`)
+   * — à utiliser partout où seule l'AMBIGUÏTÉ importe (afficher ou non une interaction de
+   * correction), jamais besoin de la liste elle-même. Réservé `findAllWakfuItemEntriesByName` aux
+   * cas qui exploitent vraiment la liste (menu de correction, résolution de confiance du butin). */
+  hasMultipleWakfuItemEntriesByName(name: string): boolean {
+    return this.ambiguousItemNames.has(normalizeWakfuName(name));
   }
 
   /** Miroir de findWakfuMonsterEntry — voir findWakfuItemEntry. */
@@ -306,6 +346,14 @@ export class CatalogService {
 
   findWakfuDungeonByBossMonsterId(bossMonsterId: number): CatalogDungeonEntry | undefined {
     return this.dungeonsByBossMonsterId.get(bossMonsterId);
+  }
+
+  /** Miroir de `findWakfuItemEntryById` — résolution non ambiguë par id Ankama, utilisée par le
+   * regroupement par donjon de la carte Récap (`GET /api/v1/history/stats`, champ `dungeons[].
+   * dungeonId` — voir SessionRecapComponent) : le serveur renvoie l'id brut, jamais un nom localisé
+   * (il ne connaît pas la locale d'affichage de l'utilisateur, voir CLAUDE.md). */
+  findWakfuDungeonEntryById(id: number): CatalogDungeonEntry | undefined {
+    return this.dungeonsById.get(id);
   }
 
   /** Trouve la brèche dimensionnelle simple (`type: 'BREACH'`) dont la composition en familles de
@@ -345,6 +393,16 @@ export class CatalogService {
         dungeon.type === 'ULTIMATE_BREACH' &&
         enemyBossIds.every((bossId) => dungeon.bossMonsterId.includes(bossId)),
     );
+  }
+
+  /** Objets connus comme droppables par ce monstre (`monsters.loot`, voir server/db/schema.ts) —
+   * `[]` si le monstre est inconnu OU si sa table de drop n'est pas encore renseignée dans le
+   * référentiel (~127 monstres sur 855 à ce jour) : dans les deux cas, l'appelant (voir
+   * StatsStoreService.resolveLootConfidence) doit traiter l'absence comme "pas assez de données
+   * pour juger", jamais comme "ce monstre ne fait tomber aucun objet". SYNCHRONE, même contrainte
+   * de chemin chaud que les autres lookups catalogue. */
+  findMonsterLootItemIds(monsterId: number): readonly number[] {
+    return this.monsterLootById.get(monsterId) ?? [];
   }
 
   /** Résout `CatalogMonsterEntry.family` vers son libellé localisé — `undefined` si la famille
@@ -452,22 +510,24 @@ export class CatalogService {
       // indéfiniment (bug réel constaté sur les donjons : "Repaire des Super-Vilains" resté mal
       // typé côté client alors que la base était déjà correcte). Fire-and-forget : ne bloque pas
       // `initialize()`, les deux payloads sont petits (quelques dizaines de Ko).
-      void this.refreshDungeonsAndFamiliesOnly();
+      void this.refreshSecondaryDatasetsOnly();
       return true;
     }
 
-    const [indexResult, dungeonsResult, monsterFamiliesResult] = await Promise.all([
-      // Chemin SANS le segment "index" : Cloudflare Pages Functions traite un fichier nommé
-      // index.ts comme la route racine de son dossier (`/catalog/`), pas comme un segment
-      // littéral `/index` — une requête vers `/catalog/index` se prend une redirection 308 vers
-      // `/catalog/` (bug réel constaté en prod : la redirection cassait silencieusement le
-      // chargement du catalogue côté client). Voir functions/api/v1/catalog/index.ts.
-      this.apiClient.getJson<{ items: (number | string)[][]; monsters: (number | string)[][] }>(
-        '/catalog/',
-      ),
-      this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
-      this.apiClient.getJson<CatalogMonsterFamilyEntry[]>('/monster-families'),
-    ]);
+    const [indexResult, dungeonsResult, monsterFamiliesResult, monsterLootResult] =
+      await Promise.all([
+        // Chemin SANS le segment "index" : Cloudflare Pages Functions traite un fichier nommé
+        // index.ts comme la route racine de son dossier (`/catalog/`), pas comme un segment
+        // littéral `/index` — une requête vers `/catalog/index` se prend une redirection 308 vers
+        // `/catalog/` (bug réel constaté en prod : la redirection cassait silencieusement le
+        // chargement du catalogue côté client). Voir functions/api/v1/catalog/index.ts.
+        this.apiClient.getJson<{ items: (number | string)[][]; monsters: (number | string)[][] }>(
+          '/catalog/',
+        ),
+        this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
+        this.apiClient.getJson<CatalogMonsterFamilyEntry[]>('/monster-families'),
+        this.apiClient.getJson<MonsterLootTuple[]>('/monster-loot'),
+      ]);
     if (!indexResult.ok || !dungeonsResult.ok) {
       return cachedHash !== null;
     }
@@ -480,8 +540,10 @@ export class CatalogService {
     this.applyIndex(payload);
     this.applyDungeons(dungeonsResult.data);
     // Non bloquant pour le statut `ready` (voir doc de `findWakfuMonsterFamilyById`) : un échec
-    // réseau isolé sur ce seul payload ne doit pas dégrader le reste du catalogue.
+    // réseau isolé sur ce seul payload ne doit pas dégrader le reste du catalogue. Même principe
+    // pour monsterLootResult (voir findMonsterLootItemIds, repli [] déjà prévu par ses appelants).
     if (monsterFamiliesResult.ok) this.applyMonsterFamilies(monsterFamiliesResult.data);
+    if (monsterLootResult.ok) this.applyMonsterLoot(monsterLootResult.data);
     this.status.set('ready');
     await Promise.all([
       this.persistence.setCacheEntry(INDEX_CACHE_KEY, payload),
@@ -489,19 +551,23 @@ export class CatalogService {
       ...(monsterFamiliesResult.ok
         ? [this.persistence.setCacheEntry(MONSTER_FAMILIES_CACHE_KEY, monsterFamiliesResult.data)]
         : []),
+      ...(monsterLootResult.ok
+        ? [this.persistence.setCacheEntry(MONSTER_LOOT_CACHE_KEY, monsterLootResult.data)]
+        : []),
     ]);
     return true;
   }
 
-  /** Rafraîchit UNIQUEMENT `/dungeons` + `/monster-families`, indépendamment de `indexHash` (voir
-   * le commentaire dans `refreshIfNeeded`) — seul moyen pour un navigateur avec un catalogue déjà
-   * en cache d'apprendre une correction de donjon ou de famille qui ne s'accompagne d'aucun
-   * changement d'objet/monstre. Silencieux en cas d'échec réseau, PAYLOAD PAR PAYLOAD (le cache
-   * existant de chacun reste utilisable tel quel si l'autre échoue). */
-  private async refreshDungeonsAndFamiliesOnly(): Promise<void> {
-    const [dungeonsResult, monsterFamiliesResult] = await Promise.all([
+  /** Rafraîchit UNIQUEMENT `/dungeons` + `/monster-families` + `/monster-loot`, indépendamment de
+   * `indexHash` (voir le commentaire dans `refreshIfNeeded`) — seul moyen pour un navigateur avec
+   * un catalogue déjà en cache d'apprendre une correction de donjon/famille/table de loot qui ne
+   * s'accompagne d'aucun changement d'objet/monstre. Silencieux en cas d'échec réseau, PAYLOAD PAR
+   * PAYLOAD (le cache existant de chacun reste utilisable tel quel si un autre échoue). */
+  private async refreshSecondaryDatasetsOnly(): Promise<void> {
+    const [dungeonsResult, monsterFamiliesResult, monsterLootResult] = await Promise.all([
       this.apiClient.getJson<CatalogDungeonEntry[]>('/dungeons'),
       this.apiClient.getJson<CatalogMonsterFamilyEntry[]>('/monster-families'),
+      this.apiClient.getJson<MonsterLootTuple[]>('/monster-loot'),
     ]);
     if (dungeonsResult.ok) {
       this.applyDungeons(dungeonsResult.data);
@@ -511,12 +577,20 @@ export class CatalogService {
       this.applyMonsterFamilies(monsterFamiliesResult.data);
       await this.persistence.setCacheEntry(MONSTER_FAMILIES_CACHE_KEY, monsterFamiliesResult.data);
     }
+    if (monsterLootResult.ok) {
+      this.applyMonsterLoot(monsterLootResult.data);
+      await this.persistence.setCacheEntry(MONSTER_LOOT_CACHE_KEY, monsterLootResult.data);
+    }
   }
 
   private applyIndex(payload: CachedIndexPayload): void {
     const itemsById = new Map<number, CatalogItemEntry>();
     const itemsByFrName = new Map<string, CatalogItemEntry>();
     const itemsByOtherLocaleName = new Map<string, CatalogItemEntry>();
+    // Voir doc de `itemEntriesByName` : id -> ses noms normalisés distincts, pour ne rattacher
+    // qu'UNE fois chaque OBJET DISTINCT (pas une fois par occurrence de locale) à chaque nom qu'il
+    // partage.
+    const itemIdsByName = new Map<string, Set<number>>();
     for (const tuple of payload.items) {
       const [id, fr, en, es, pt, gfxId, raritySortOrder, hasRecipeFlag, categorySortOrder] =
         tuple as ItemTuple;
@@ -538,10 +612,27 @@ export class CatalogService {
         const key = normalizeWakfuName(localized);
         if (!itemsByOtherLocaleName.has(key)) itemsByOtherLocaleName.set(key, entry);
       }
+      for (const key of new Set([frKey, ...[en, es, pt].map(normalizeWakfuName)])) {
+        let ids = itemIdsByName.get(key);
+        if (!ids) {
+          ids = new Set();
+          itemIdsByName.set(key, ids);
+        }
+        ids.add(id);
+      }
     }
     this.itemsById = itemsById;
     this.itemsByFrName = itemsByFrName;
     this.itemsByOtherLocaleName = itemsByOtherLocaleName;
+    this.itemEntriesByName = new Map(
+      [...itemIdsByName].map(([key, ids]) => [
+        key,
+        [...ids].map((id) => itemsById.get(id)!).sort((a, b) => a.id - b.id),
+      ]),
+    );
+    this.ambiguousItemNames = new Set(
+      [...itemIdsByName].filter(([, ids]) => ids.size > 1).map(([key]) => key),
+    );
 
     const monstersById = new Map<number, CatalogMonsterEntry>();
     const monstersByFrName = new Map<string, CatalogMonsterEntry>();
@@ -600,12 +691,18 @@ export class CatalogService {
       }
     }
     this.dungeonsByBossMonsterId = byBossMonsterId;
+    this.dungeonsById = new Map(dungeons.map((dungeon) => [dungeon.id, dungeon]));
     this.dungeons = dungeons;
     this.revision.update((v) => v + 1);
   }
 
   private applyMonsterFamilies(families: CatalogMonsterFamilyEntry[]): void {
     this.monsterFamiliesById = new Map(families.map((family) => [family.id, family]));
+    this.revision.update((v) => v + 1);
+  }
+
+  private applyMonsterLoot(tuples: MonsterLootTuple[]): void {
+    this.monsterLootById = new Map(tuples);
     this.revision.update((v) => v + 1);
   }
 }

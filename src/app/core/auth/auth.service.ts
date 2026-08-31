@@ -4,6 +4,7 @@ import { UserDataService } from '../data-access/user-data.service';
 import type { UserDataKey } from '../data-access/user-data.keys';
 import { AppDataExportService } from '../services/app-data-export.service';
 import { HistoryArchiveService } from '../sync/history-archive.service';
+import { HistoryStatsService } from '../sync/history-stats.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
 /**
@@ -99,6 +100,7 @@ export class AuthService {
   private readonly userData = inject(UserDataService);
   private readonly historySync = inject(HistorySyncService);
   private readonly historyArchive = inject(HistoryArchiveService);
+  private readonly historyStats = inject(HistoryStatsService);
 
   private readonly _status = signal<AuthStatus>('unknown');
   private readonly _user = signal<AuthUser | null>(null);
@@ -452,6 +454,9 @@ export class AuthService {
     // quitter : la garder affichée serait montrer les données d'une session
     // révoquée.
     this.historyArchive.reset();
+    // Même raison que l'archive ci-dessus : l'agrégat par période affiché (switch Session/Jour/
+    // Mois/Année de la carte Récap) appartient lui aussi au compte qu'on vient de quitter.
+    this.historyStats.reset();
     // Retour au stockage purement local — les données déjà présentes sur cet
     // appareil restent intactes et utilisables (mode invité, §7 du plan).
     this.userData.deactivateRemote();

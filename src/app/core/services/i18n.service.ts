@@ -128,6 +128,43 @@ export class I18nService {
     );
   }
 
+  /** Formate "mois année" (ex. "août 2026") — libellé du stepper de navigation par mois de la
+   * carte Récap (voir `local-period.util.ts` periodBounds, `SessionRecapComponent`). */
+  formatMonth(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], {
+      month: 'long',
+      year: 'numeric',
+    }).format(new Date(ms));
+  }
+
+  /** Formate l'année seule (ex. "2026") — pendant de `formatMonth` pour le stepper de navigation
+   * par année. */
+  formatYear(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { year: 'numeric' }).format(
+      new Date(ms),
+    );
+  }
+
+  /** Nom de mois seul, abrégé (ex. "Jan") — grille des 12 cases du mini calendrier de navigation
+   * de période en granularité mois (`PeriodPickerComponent`), où l'année est déjà dans l'en-tête
+   * (voir `formatYear`) et n'a donc pas besoin d'être répétée dans chaque case. */
+  formatMonthShort(ms: number): string {
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { month: 'short' }).format(
+      new Date(ms),
+    );
+  }
+
+  /** Libellé court du jour de la semaine (ex. "lun.") pour l'en-tête de colonnes de la grille
+   * mensuelle du mini calendrier (`PeriodPickerComponent`) — `dayIndexMonFirst` : 0 = lundi … 6 =
+   * dimanche (convention ISO, alignée sur l'ordre des colonnes de la grille). Calculé sur une
+   * semaine de référence FIXE (5-11 janvier 2026, un lundi-dimanche confirmé) plutôt que dérivé
+   * d'une date réelle courante — le nom d'un jour de semaine ne dépend pas de l'année, pas besoin
+   * d'une vraie date de la période affichée pour ce seul calcul nominal. */
+  formatWeekdayShort(dayIndexMonFirst: number): string {
+    const day = new Date(2026, 0, 5 + dayIndexMonFirst);
+    return new Intl.DateTimeFormat(LOCALE_TAGS[this.locale()], { weekday: 'short' }).format(day);
+  }
+
   /** Même usage que `formatDate` (en-tête de regroupement par jour — combats/achats/échanges),
    * mais avec des termes relatifs pour les 3 derniers jours ("Aujourd'hui"/"Hier"/"Avant-hier"),
    * bien plus parlants qu'une date complète pour ce cas précis. Repli sur `formatDate` au-delà.
@@ -141,6 +178,16 @@ export class I18nService {
     if (diffDays === 1) return this.t('date.yesterday');
     if (diffDays === 2) return this.t('date.dayBeforeYesterday');
     return this.formatDate(ms);
+  }
+
+  /** Formate un nombre entier selon les conventions de la langue courante (séparateur de milliers,
+   * ex. espace insécable en français, virgule en anglais). Miroir numérique de `formatDateTime` —
+   * utilisé pour tout grand nombre affiché EN CLAIR (voir `SessionRecapComponent.bigNumberFontRem` :
+   * la notation abrégée K/M/Md a été retirée le 2026-08-28, jugée peu lisible/parlante par
+   * l'utilisateur — un grand nombre reste toujours affiché en entier, seule sa taille de police
+   * varie). */
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat(LOCALE_TAGS[this.locale()]).format(value);
   }
 
   /** Traduit un nom d'objet (butin, suivi) via le référentiel officiel Ankama
