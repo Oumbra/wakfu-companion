@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnDestroy } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FightHistoryComponent } from '../fight-history/fight-history.component';
 import { PurchasesComponent } from '../purchases/purchases.component';
@@ -16,7 +16,6 @@ import {
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { LoadMoreScopeMenuService } from '../../core/services/load-more-scope-menu.service';
 import { HistoryTab, NavigationService } from '../../core/services/navigation.service';
-import { MediaQuerySignal } from '../../core/utils/media-query-signal';
 import {
   DashboardBodySlotKey,
   DashboardGridKey,
@@ -32,8 +31,6 @@ const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
   purchases: 'purchase',
   trades: 'trade',
 };
-
-const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
 
 const SLOT_KEY: Record<DashboardHistoryKey, DashboardBodySlotKey> = {
   combats: 'hist_combats',
@@ -62,12 +59,18 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
  *
  * Regroupement piloté par `DashboardLayoutService.historyGroup` (réglable sur Profil ›
  * Personnalisation) — INVERSE de l'ancien réglage "découpage" (voir CLAUDE.md) : par défaut, les 3
- * volets sont chacun leur propre panneau (`effectiveSplitKeys`) ; cocher AU MOINS DEUX volets à
- * regrouper fait apparaître UN panneau groupé (`remainingKeys`) avec un sous-onglet par volet
- * regroupé, les volets restants (non cochés) gardant chacun leur panneau. Desktop uniquement
- * (`isDesktop`, même seuil que `.collapse-btn`) : en mobile, le regroupement n'a pas de sens dans la
- * disposition "un seul panneau à la fois" — toujours le panneau groupé complet (les 3 volets), comme
- * avant cette fonctionnalité.
+ * volets sont chacun leur propre panneau (`effectiveSplitKeys`, alias de
+ * `DashboardLayoutService.historySplitKeys`) ; cocher AU MOINS DEUX volets à regrouper fait
+ * apparaître UN panneau groupé (`remainingKeys`, alias de `historyGroupedKeys`) avec un sous-onglet
+ * par volet regroupé, les volets restants (non cochés) gardant chacun leur panneau. Device-
+ * INDÉPENDANT depuis l'introduction des onglets mobile dynamiques (voir `DashboardComponent`,
+ * CLAUDE.md) : la personnalisation choisie s'applique désormais aussi bien en desktop (panneaux
+ * côte à côte) qu'en mobile (un onglet par panneau — `[class.tab-hidden]` posé sur chaque `.tool-panel`
+ * ci-dessous compare `nav.dashboardTab()`/`nav.historyTab()` à SA propre identité, sans effet en
+ * desktop où la règle CSS correspondante est scopée à `@media (max-width: 800px)`, voir
+ * `dashboard.component.css`). Avant ce changement, un seuil `isDesktop` forçait un panneau groupé
+ * unique (les 3 volets) en mobile quel que soit le réglage — ce qui rendait Combat/Achats/Échanges
+ * injoignables dès que l'utilisateur ne les regroupait pas (bug réel corrigé, voir CLAUDE.md).
  *
  * `:host { display: contents }` (voir CSS) : chaque `.tool-panel` rendu par ce composant devient un
  * enfant direct du grid `.panels-row` de `DashboardComponent` — même principe que
@@ -95,7 +98,7 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
   templateUrl: './history.component.html',
   styleUrl: './history.component.css',
 })
-export class HistoryComponent implements OnDestroy {
+export class HistoryComponent {
   protected readonly helpModal = inject(HelpModalService);
   protected readonly archive = inject(HistoryArchiveService);
   protected readonly auth = inject(AuthService);
@@ -103,30 +106,17 @@ export class HistoryComponent implements OnDestroy {
   protected readonly loadMoreScopeMenu = inject(LoadMoreScopeMenuService);
   private readonly nav = inject(NavigationService);
 
-  /** Même seuil que `.collapse-btn`/`@media (min-width: 801px)` (styles.css, dashboard.component.css) :
-   * le découpage ne doit jamais s'appliquer en mobile, où un seul panneau Historique à la fois reste
-   * affiché quel que soit le réglage persisté (voir CLAUDE.md/DashboardComponent — un réglage choisi
-   * en desktop peut rester actif d'une session desktop précédente). */
-  private readonly isDesktop = new MediaQuerySignal('(min-width: 801px)');
+  /** Alias direct — voir `DashboardLayoutService.historySplitKeys`/`historyGroupedKeys`, calcul
+   * partagé avec `activeSlots` (desktop) et `DashboardComponent` (onglets mobile). */
+  protected readonly effectiveSplitKeys = this.layout.historySplitKeys;
+  protected readonly remainingKeys = this.layout.historyGroupedKeys;
 
-  /** Volets affichés chacun dans leur propre panneau — desktop uniquement, voir doc de tête. Tous
-   * les 3, sauf si l'utilisateur a coché au moins 2 volets à regrouper (`historyGroup`), auquel cas
-   * seuls les volets NON cochés restent solo (les cochés rejoignent le panneau groupé, voir
-   * `remainingKeys`) — même règle des "au moins 2" que `DashboardLayoutService.activeSlots`, à
-   * garder synchronisée avec elle. */
-  protected readonly effectiveSplitKeys = computed<DashboardHistoryKey[]>(() => {
-    if (!this.isDesktop.matches()) return [];
-    const group = this.layout.historyGroup();
-    const groupedKeys = HIST_KEYS.filter((k) => group[k]);
-    if (groupedKeys.length < 2) return [...HIST_KEYS];
-    return HIST_KEYS.filter((k) => !group[k]);
-  });
-  /** Volets regroupés dans le panneau commun (0 quand le regroupement n'est pas actif — dans ce cas
-   * le panneau groupé ne se rend simplement pas, voir template — sinon 2 ou 3). */
-  protected readonly remainingKeys = computed<DashboardHistoryKey[]>(() => {
-    const solo = new Set(this.effectiveSplitKeys());
-    return HIST_KEYS.filter((k) => !solo.has(k));
-  });
+  /** Section active de `main` (voir `NavigationService.dashboardTab`) — nécessaire en plus de
+   * `activeTab` (alias de `historyTab` ci-dessous) pour déterminer si UN panneau de CE composant est
+   * l'onglet mobile actif : `historyTab` seul ne suffit pas, un autre onglet de haut niveau (Suivi,
+   * Chat...) peut être actif alors que `historyTab` garde la dernière valeur choisie dans
+   * Historique. */
+  protected readonly dashboardTab = this.nav.dashboardTab;
 
   /** `effectiveSplitKeys` moins les volets individuellement repliés (voir `.collapse-btn`) — sans
    * ce filtre, un panneau scindé "replié" resterait quand même rendu dans `.panels-row` (placement
@@ -202,7 +192,21 @@ export class HistoryComponent implements OnDestroy {
     return dashboardBodySlotIcon(this.slotKeyFor(key));
   }
 
-  ngOnDestroy(): void {
-    this.isDesktop.disconnect();
+  /** Mobile uniquement (voir doc de tête) — un panneau scindé n'est l'onglet mobile actif que si
+   * `dashboardTab` vaut `'history'` ET que `historyTab` pointe précisément sur SON volet. Sans effet
+   * en desktop : la règle CSS qui donne un sens à la classe `.tab-hidden` posée grâce à ce booléen
+   * est scopée à `@media (max-width: 800px)` — GLOBALE (`.panels-row .tab-hidden` dans styles.css,
+   * pas dashboard.component.css) car ce `.tool-panel` est rendu par CE composant, sous son propre
+   * attribut d'encapsulation de vue, qu'un sélecteur scopé à `DashboardComponent` ne peut pas
+   * atteindre (voir CLAUDE.md, même piège que `.panels-row .tool-panel`/`.panel-header`). */
+  protected isSplitHidden(key: DashboardHistoryKey): boolean {
+    return this.dashboardTab() !== 'history' || this.activeTab() !== key;
+  }
+  /** Symétrique de `isSplitHidden` pour le panneau groupé : caché si `historyTab` pointe en fait sur
+   * un volet resté solo (un panneau scindé est alors affiché à sa place, voir `isSplitHidden`). */
+  protected isGroupHidden(): boolean {
+    return (
+      this.dashboardTab() !== 'history' || this.effectiveSplitKeys().includes(this.activeTab())
+    );
   }
 }
