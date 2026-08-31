@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
-import { Fight } from '../models/fight.model';
+import { Fight, LootConfidence } from '../models/fight.model';
+import { mergeLootConfidence, resolveLootConfidence } from '../utils/loot-confidence.util';
 import { CatalogService } from '../api/catalog.service';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
@@ -8,7 +9,7 @@ import { CharacterRosterService } from './character-roster.service';
 import { EntityClassifierService } from './entity-classifier.service';
 import { GameServerService } from './game-server.service';
 import { LogFileAccessService } from './log-file-access.service';
-import { LogParser } from './log-parser';
+import { LogParser, peekLineTime } from './log-parser';
 import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
@@ -25,6 +26,17 @@ export const REASSIGN_HISTORY_KEY = USER_DATA_KEYS.damageReassignments;
 export const ITEM_REASSIGN_HISTORY_KEY = USER_DATA_KEYS.itemReassignments;
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
+/** Famille encyclopédie "Extra Incarnam" (`repository/monster-families.json`, id 161 — zone
+ * d'entraînement/tutoriel, contient notamment "Sac à patates"/"Gros sac à patates", voir
+ * CLAUDE.md) dont les combats doivent rester INVISIBLES de tout total agrégé (XP/kamas/combats
+ * gagnés-perdus/butin de session) tout en restant visibles tels quels dans l'historique brut
+ * (`FightRecord`/`fightHistoryList`, jamais filtré) — demande explicite de l'utilisateur,
+ * 2026-08-28. PAR FAMILLE (id catalogue), PAS par nom brut du log : un filtre par nom français
+ * ("Sac à patates") ne matcherait jamais un client en anglais ("Mr. Punchy") ou toute autre
+ * locale — voir `isExcludedFight`, qui résout chaque ennemi via `CatalogService.
+ * findWakfuMonsterEntry` (déjà insensible à la langue d'origine du nom, voir sa doc) avant de
+ * comparer `family`. */
+const EXCLUDED_STATS_FAMILY_ID = 161;
 /** Borne haute du journal des réattributions persistées (voir reassignSpell/replayPersistedReassignments) — purement une garde-fou anti-croissance illimitée sur une très longue session, jamais atteinte en usage normal. */
 const MAX_REASSIGNMENT_HISTORY = 500;
 /** Miroir de MAX_REASSIGNMENT_HISTORY pour le journal de correction d'objet — voir reassignLootItem/reassignPurchaseItem/reassignTradeItem. */
@@ -35,6 +47,47 @@ const PURCHASE_WINDOW_MS = 2000;
  * passage de minuit plutôt qu'un simple réordonnancement multi-compte (jamais plus de quelques
  * secondes en pratique) — voir buildFullTimestampMs. */
 const DAY_ROLLOVER_THRESHOLD_MS = 12 * 60 * 60 * 1000;
+/**
+ * Écart entre deux lignes horodatées consécutives du fichier au-delà duquel la durée de session
+ * (voir sessionActiveDurationMs) considère qu'il y a EU UNE COUPURE plutôt qu'une simple accalmie de
+ * jeu — le temps passé dans cet écart n'est alors PAS ajouté au total (voir
+ * accumulateSessionDuration). PAS le même seuil que SESSION_LIVE_TICK_GRACE_MS ci-dessous (voir sa
+ * doc de tête pour la distinction) : celui-ci reste large exprès, pour ne jamais faire disparaître du
+ * temps réellement joué de l'historique déjà confirmé par une ligne suivante.
+ *
+ * Calibré sur un vrai fichier fourni par l'utilisateur contenant deux sessions de jeu distinctes dans
+ * le même wakfu.log (reconnexion ~40 min après une fermeture complète du client) : le plus grand
+ * écart normal À L'INTÉRIEUR de chacune des deux sessions n'y dépassait jamais ~51s (mesuré), très
+ * en-dessous des 5 minutes retenues ici — et l'écart RÉEL entre les deux sessions (~41 min 35s, la
+ * fermeture puis relance du client) y est très largement au-dessus, aucune valeur intermédiaire
+ * raisonnable ne change donc le résultat sur ce fichier de référence.
+ *
+ * Volontairement PAS basé sur la ligne technique "Stopping cFC..." (arrêt propre du client, présente
+ * dans le fichier de calibration) malgré sa fiabilité apparente : elle ne capture qu'une fermeture
+ * PROPRE (bouton quitter), pas un crash, une perte réseau, une mise en veille du PC, ou simplement
+ * `wakfu.exe` tué depuis le gestionnaire de tâches — un seuil générique sur l'écart entre lignes
+ * couvre tous ces cas uniformément, sans dépendre d'une chaîne de log précise que Ankama pourrait
+ * faire évoluer.
+ */
+const SESSION_SEGMENT_GAP_THRESHOLD_MS = 5 * 60 * 1000;
+/**
+ * Délai de grâce, en ms, avant que l'affichage "temps réel" de la durée de session (voir
+ * sessionLastIngestAtMs/SessionRecapComponent.updateDuration) ne se FIGE faute de nouvelle ligne —
+ * DISTINCT de SESSION_SEGMENT_GAP_THRESHOLD_MS ci-dessus, une valeur BEAUCOUP PLUS COURTE
+ * volontairement : les deux constantes répondent à des questions différentes.
+ * SESSION_SEGMENT_GAP_THRESHOLD_MS décide, une fois qu'une ligne confirme la suite, si le temps
+ * DÉJÀ ÉCOULÉ entre deux lignes comptait comme du jeu actif (large, car un vrai écart de jeu normal
+ * peut légitimement atteindre ~50s sans aucune ligne, voir sa doc de tête) — celui-ci décide combien
+ * de temps l'AFFICHAGE peut optimistement continuer à tourner AVANT qu'une telle ligne n'arrive,
+ * sans savoir encore si elle viendra. Réduit à 10s (2026-08-27, retour utilisateur après un test
+ * réel sur le fichier de calibration : l'ancien réglage, aligné sur SESSION_SEGMENT_GAP_THRESHOLD_MS
+ * ci-dessus à 5 min, laissait le chronomètre visiblement continuer à tourner jusqu'à 5 minutes après
+ * la fin de toute activité du fichier — bien trop long pour un affichage "en direct" senseé refléter
+ * l'état réel du fichier à chaque instant) : le chronomètre se fige désormais 10s après la dernière
+ * ligne lue et ne reprend QUE quand le fichier est de nouveau alimenté (prochain `ingest()`, voir
+ * sessionLastIngestAtMs) — jamais de lui-même. Exporté pour SessionRecapComponent.
+ */
+export const SESSION_LIVE_TICK_GRACE_MS = 10 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -76,6 +129,11 @@ export interface EntityDamageRow {
   total: number;
   spells: SpellBreakdownRow[];
   defeated: boolean;
+  /** Vrai si ce combattant s'est échappé plutôt que vaincu ("X: disparaît", voir
+   * StatsStoreService.registerFightFlee) — mutuellement exclusif avec `defeated` (jamais les deux à
+   * `true` pour la même ligne). Ne modifie ni le calcul victoire/défaite du combat, ni le suivi
+   * watchlist "ennemis vaincus" : sert uniquement à l'affichage (voir entity-damage-list). */
+  fled: boolean;
   /** Position (1-based) de cette ligne parmi les instances partageant ce nom, et nombre total
    * d'instances partageant ce nom (voir Fight.enemies/allies — plusieurs monstres, voire alliés,
    * peuvent porter le même nom). `instanceCount === 1` : une seule ligne pour ce nom, pas de
@@ -124,6 +182,8 @@ export interface LootRow {
    * si non résolu — voir FightLoot.catalogId, même distinction avec un éventuel id d'icône. */
   catalogId: number | null;
   quantity: number;
+  /** Voir LootConfidence (core/models/fight.model.ts). */
+  confidence: LootConfidence;
 }
 
 /** Un achat individuel (objet, quantité, coût total, horodatage) : détecté quand une perte de kamas est immédiatement suivie d'un ramassage d'objet (voir registerPurchase). */
@@ -250,6 +310,12 @@ export interface FightRecord {
   turns: number;
   durationMs: number;
   xp: XpRow[];
+  /** Nombre de challenges réussis/échoués pendant ce combat (voir Fight.challengesPassed/Failed) —
+   * base des statistiques long terme (fights.challengesPassed/Failed côté serveur, voir
+   * HistorySyncService.recordFight), pas seulement les compteurs de session déjà affichés
+   * (StatsStoreService.challengesPassed/Failed, indépendants de ce champ). */
+  challengesPassed: number;
+  challengesFailed: number;
 }
 
 /** État de travail d'un combat en cours, indexé par fightId — voir Fight (core/models/fight.model.ts). Isoler cet état par combat (plutôt qu'un unique état global) permet à plusieurs combats concurrents (multi-compte) de ne jamais se corrompre l'un l'autre. */
@@ -271,6 +337,14 @@ interface FightWorking {
    * monstres pouvant partager un même nom). Permet de créditer le watchlist une fois par instance
    * réellement morte plutôt qu'une seule fois par nom (voir registerFightDefeat). */
   defeatedInstanceCounts: Map<string, number>;
+  /** Miroir de defeatedNames pour une fuite ("X: disparaît", voir registerFightFlee/DISAPPEAR_RE) —
+   * jamais les deux à la fois pour une même instance (une fuite et une mort sont mutuellement
+   * exclusives), mais un NOM partagé par plusieurs instances peut voir l'une fuir et l'autre mourir
+   * (voir defeatedInstanceCounts/fledInstanceCounts, comptés indépendamment et plafonnés ensemble au
+   * nombre total d'instances). */
+  fledNames: Set<string>;
+  /** Miroir de defeatedInstanceCounts pour une fuite — voir fledNames. */
+  fledInstanceCounts: Map<string, number>;
   /** fighterId déjà vus (voir FighterJoinedEntry) : une jointure répétée (doublon multi-compte, resynchronisation) ne doit pas dupliquer l'entrée dans allies/enemies. */
   fighterIdsSeen: Set<number>;
   /** File d'initiative de ce combat (ordre de jeu détecté au fil de l'eau) — voir resolveNextActor(). */
@@ -354,15 +428,56 @@ interface InitiativeSeat {
  */
 @Injectable({ providedIn: 'root' })
 export class StatsStoreService {
-  private readonly parser = new LogParser();
+  // `isKnownMonsterName` fermé sur `this.catalog` (injecté plus bas, dans le constructeur) — sans
+  // risque d'ordre d'initialisation : la fermeture n'accède à `this.catalog` qu'au moment de l'APPEL
+  // (pendant le parsing réel, bien après la fin du constructeur), jamais à la construction de
+  // `parser` lui-même. Voir LogParser.deps.isKnownMonsterName pour l'unique usage (repli
+  // d'invocation sans annonce, ne doit jamais avaler un vrai monstre catalogué).
+  private readonly parser = new LogParser({
+    isKnownMonsterName: (name) => this.catalog.isKnownWakfuMonsterName(name),
+  });
   /** Envoi de l'historique au compte (lot 8) — no-op complet en mode invité, voir HistorySyncService. */
   private readonly historySync = inject(HistorySyncService);
 
-  readonly sessionStartedAt = signal<number | null>(null);
+  /** Durée active de la session, en ms — calculée à partir des horodatages du fichier lui-même
+   * (pas de l'horloge murale), en excluant tout écart ≥ SESSION_SEGMENT_GAP_THRESHOLD_MS entre deux
+   * lignes consécutives (coupure : fermeture du client, crash, veille...). Voir
+   * accumulateSessionDuration/SESSION_SEGMENT_GAP_THRESHOLD_MS pour le détail. Contrairement à
+   * l'ancien `sessionStartedAt` (retiré), ne suffit PAS seul à afficher une durée qui continue de
+   * "vivre" en temps réel pendant une partie effectivement en cours — voir sessionLastIngestAtMs,
+   * combiné côté SessionRecapComponent. */
+  readonly sessionActiveDurationMs = signal(0);
+  /** Horodatage MUR (Date.now(), pas une valeur du fichier) du dernier lot de lignes traité — sert
+   * uniquement à SessionRecapComponent pour prolonger l'affichage en temps réel entre deux lots
+   * (l'utilisateur joue "maintenant", de nouvelles lignes n'ont juste pas encore été lues), plafonné
+   * à SESSION_LIVE_TICK_GRACE_MS (bien plus court que SESSION_SEGMENT_GAP_THRESHOLD_MS ci-dessus,
+   * voir sa doc de tête pour la distinction) pour ne jamais laisser la durée grimper indéfiniment si
+   * le fichier n'est plus alimenté (client fermé, onglet resté ouvert). `null` tant qu'aucun lot n'a
+   * encore été traité pour la connexion en cours. */
+  readonly sessionLastIngestAtMs = signal<number | null>(null);
 
   readonly kamasEarned = signal(0);
   readonly kamasLost = signal(0);
   readonly netKamas = computed(() => this.kamasEarned() - this.kamasLost());
+
+  /** Ventilation de `kamasEarned`/`kamasLost` par origine — miroir SESSION de la même ventilation
+   * déjà calculée côté serveur pour un compte connecté (voir `functions/api/v1/history/stats.ts`,
+   * `PeriodStats.kamas`), ajoutée le 2026-08-28 pour que la tooltip Kamas de la vue Session (voir
+   * SessionRecapComponent.kamasTooltip) affiche le même détail que la tooltip période au lieu d'un
+   * simple "Gagné/Dépensé". Signaux dédiés plutôt que dérivés de `fightHistory` (plafonné à
+   * `MAX_FIGHT_HISTORY`, donc impropre à un total de session complet) ou de `purchaseHistory`/
+   * `tradeHistory` : incrémentés directement aux MÊMES points que `kamasEarned`/`kamasLost`
+   * (`kama-gain`/`registerPurchase`/`registerTrade` ci-dessous), donc structurellement
+   * `kamasFromCombat + kamasFromHdvSales + kamasTradesAcquired === kamasEarned` et
+   * `kamasSpentOnPurchases + kamasTradesGiven === kamasLost` (à la même approximation près que côté
+   * serveur : un kama-loss ni suivi d'un ramassage ni expliqué par un échange, cas non rencontré en
+   * pratique, ne serait imputé à aucune des deux catégories). Reset dans `resetSessionState()`
+   * (état DÉRIVÉ DU FICHIER, voir CLAUDE.md "principe d'architecture isInitialLoad"). */
+  readonly kamasFromCombat = signal(0);
+  readonly kamasFromHdvSales = signal(0);
+  readonly kamasSpentOnPurchases = signal(0);
+  readonly kamasTradesAcquired = signal(0);
+  readonly kamasTradesGiven = signal(0);
 
   readonly combatsWon = signal(0);
   readonly combatsLost = signal(0);
@@ -426,6 +541,11 @@ export class StatsStoreService {
   private currentDisplayFightId: number | null = null;
   /** Horodatage de la dernière ligne traitée : sert à calculer la durée écoulée du combat affiché. */
   private lastLineTime: string | null = null;
+  /** Horodatage complet (ms, voir buildFullTimestampMs) de la dernière ligne DU FICHIER vue par
+   * accumulateSessionDuration — PAS limité aux lignes reconnues comme LogEntry par LogParser
+   * (contrairement à lastLineTime) : une ligne purement technique (ex. "Stopping cFC...") compte
+   * quand même comme une preuve d'activité pour la durée de session, voir sa doc de tête. */
+  private lastSessionActivityMs: number | null = null;
   /** Vrai pendant le traitement du tout premier lot de lignes d'une connexion (contenu déjà présent dans le fichier) : les compteurs de suivi ne doivent pas être incrémentés pour cet historique déjà vécu. */
   private currentBatchIsInitialLoad = false;
   private nextPurchaseId = 1;
@@ -457,6 +577,14 @@ export class StatsStoreService {
    */
   private readonly pendingFightLoot: { item: string; quantity: number }[] = [];
   private pendingFightKamas = 0;
+  /** Résultats de challenge en attente d'attribution au bon fightId — même mécanisme et même
+   * raison que pendingFightLoot/pendingFightKamas ci-dessus (la ligne "Le challenge ... a
+   * échoué/réussi" ne référence ni fightId ni personnage, seule sa position TEMPORELLE, toujours
+   * immédiatement avant la fin propre du combat concerné, permet de l'attribuer correctement en
+   * multi-compte — vérifié sur fight_multi-account_twice-fight-simultaneously.log, deux challenges
+   * distincts avant la fin du même combat pendant qu'un second combat concurrent restait ouvert). */
+  private pendingFightChallengesPassed = 0;
+  private pendingFightChallengesFailed = 0;
   /** Vrai entre une ligne 'market-occupation' active=true et son pendant active=false (session
    * marchand/HDV ouverte) — voir isPurchaseLoot dans apply(). Un achat groupé (plusieurs objets
    * achetés à la suite pendant la même session) ne déduit pas systématiquement les kamas juste
@@ -745,7 +873,17 @@ export class StatsStoreService {
       // dupliqués au lieu d'être simplement reconstruits à l'identique.
       this.resetSessionState();
     }
+    // Sans ancrage déjà connu (tout début de lecture, avant la toute première ligne d'ancrage
+    // rencontrée), pré-balayer ce lot pour retrouver un ancrage situé plus loin qu'en tête et dater
+    // correctement les lignes qui le PRÉCÈDENT — voir primeLogDateAnchorFromBatch.
+    if (this.logDateAnchor === null) {
+      this.primeLogDateAnchorFromBatch(lines);
+    }
     for (const line of lines) {
+      // Basé sur la ligne BRUTE (pas sur `entry`, voir accumulateSessionDuration) : une ligne
+      // purement technique sans LogEntry associé (ex. "Stopping cFC...") compte quand même comme
+      // une preuve d'activité pour la durée de session.
+      this.accumulateSessionDuration(line);
       const entry = this.parser.parseLine(line);
       if (entry) this.apply(entry);
     }
@@ -764,6 +902,11 @@ export class StatsStoreService {
     // ci-dessus vient de reconstruire l'historique depuis zéro (voir gating isInitialLoad, CLAUDE.md),
     // sans quoi les combats concernés retrouveraient leur attribution automatique d'origine.
     if (isInitialLoad) this.replayPersistedReassignments();
+    // Horloge MURALE (pas une valeur du fichier) : "on vient de finir de lire tout ce qui était
+    // disponible, à cet instant réel" — ancrage pour l'extension "temps réel" de
+    // SessionRecapComponent entre ce lot et le prochain (voir sessionLastIngestAtMs). Posé
+    // systématiquement, même si `lines` ne contenait aucune ligne exploitable.
+    this.sessionLastIngestAtMs.set(Date.now());
     this.publish();
   }
 
@@ -775,10 +918,17 @@ export class StatsStoreService {
    * explicite et complète demandée par l'utilisateur).
    */
   private resetSessionState(): void {
-    this.sessionStartedAt.set(Date.now());
+    this.sessionActiveDurationMs.set(0);
+    this.sessionLastIngestAtMs.set(null);
+    this.lastSessionActivityMs = null;
 
     this.kamasEarned.set(0);
     this.kamasLost.set(0);
+    this.kamasFromCombat.set(0);
+    this.kamasFromHdvSales.set(0);
+    this.kamasSpentOnPurchases.set(0);
+    this.kamasTradesAcquired.set(0);
+    this.kamasTradesGiven.set(0);
     this.combatsWon.set(0);
     this.combatsLost.set(0);
     this.challengesPassed.set(0);
@@ -801,6 +951,8 @@ export class StatsStoreService {
     this.pendingHdvKamaGain = null;
     this.pendingFightLoot.length = 0;
     this.pendingFightKamas = 0;
+    this.pendingFightChallengesPassed = 0;
+    this.pendingFightChallengesFailed = 0;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
     this.logDateAnchor = null;
@@ -844,19 +996,35 @@ export class StatsStoreService {
     this.resolvePendingHdvKamaGain(entry);
 
     switch (entry.kind) {
-      case 'kama-gain':
-        this.kamasEarned.update((v) => v + entry.amount);
+      case 'kama-gain': {
+        // Voir EXCLUDED_STATS_FAMILY_ID : un gain issu d'un combat exclu ne doit alimenter AUCUN
+        // total agrégé de session — mais `pendingFightKamas` (donc `working.fight.kamas`, affiché
+        // dans le détail PROPRE à ce combat côté historique brut) reste, lui, toujours crédité
+        // normalement juste en dessous, seule la partie SESSION est exclue ici.
+        const excludedFromStats = this.isExcludedFight(entry.fightId);
+        if (!excludedFromStats) {
+          this.kamasEarned.update((v) => v + entry.amount);
+        }
         // Voir pendingFightKamas : jamais attribué directement à entry.fightId, mais mis en
         // attente jusqu'au tout prochain combat-end (quel qu'il soit).
-        if (entry.fightId !== null) this.pendingFightKamas += entry.amount;
+        if (entry.fightId !== null) {
+          this.pendingFightKamas += entry.amount;
+          if (!excludedFromStats) this.kamasFromCombat.update((v) => v + entry.amount);
+        }
         this.considerHdvKamaGain(entry);
         break;
+      }
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
         this.pendingPurchase = { amount: entry.amount, timeMs: this.timeToMs(entry.time) };
         break;
       case 'xp-gain':
-        this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
+        // Voir EXCLUDED_STATS_FAMILY_ID : `registerFightXp` (détail PROPRE à ce combat, historique
+        // brut) reste, lui, toujours alimenté normalement — seul `xpMap` (total agrégé de session)
+        // est exclu ici.
+        if (!this.isExcludedFight(entry.fightId)) {
+          this.xpMap.set(entry.character, (this.xpMap.get(entry.character) ?? 0) + entry.amount);
+        }
         this.registerFightXp(entry.fightId, entry.character, entry.amount);
         break;
       case 'combat-start':
@@ -866,6 +1034,9 @@ export class StatsStoreService {
         break;
       case 'enemy-defeated':
         this.registerFightDefeat(entry.fightId, entry.name);
+        break;
+      case 'enemy-fled':
+        this.registerFightFlee(entry.fightId, entry.name);
         break;
       case 'damage': {
         const working = entry.fightId !== null ? this.activeFights.get(entry.fightId) : undefined;
@@ -935,6 +1106,12 @@ export class StatsStoreService {
       case 'challenge-result':
         if (entry.success) this.challengesPassed.update((v) => v + 1);
         else this.challengesFailed.update((v) => v + 1);
+        // Voir pendingFightChallengesPassed/Failed : jamais attribué directement à entry.fightId,
+        // mais mis en attente jusqu'au tout prochain combat-end (même principe que pendingFightKamas).
+        if (entry.fightId !== null) {
+          if (entry.success) this.pendingFightChallengesPassed++;
+          else this.pendingFightChallengesFailed++;
+        }
         break;
       case 'chat':
         this.chatBuffer.push(entry);
@@ -983,6 +1160,8 @@ export class StatsStoreService {
         armorSourceMap: new Map(),
         defeatedNames: new Set(),
         defeatedInstanceCounts: new Map(),
+        fledNames: new Set(),
+        fledInstanceCounts: new Map(),
         fighterIdsSeen: new Set(),
         initiativeSeats: [],
         initiativeCursor: 0,
@@ -1177,7 +1356,37 @@ export class StatsStoreService {
     this.registerDefeat(name);
   }
 
-  /** Vrai si toutes les instances (par nom, voir countNameInstances) de la liste donnée sont créditées comme vaincues. */
+  /**
+   * Miroir de registerFightDefeat pour une fuite ("X: disparaît", voir DISAPPEAR_RE côté
+   * LogParser) — demande explicite de l'utilisateur (2026-08-31, cas des mimiques) : un combattant
+   * qui s'échappe n'a PAS été vaincu, même si le combat se termine par une victoire de l'équipe
+   * (voir finalizeFight, dont le filet de rattrapage "tous les ennemis morts" exclut désormais les
+   * instances déjà comptées ici). `this.registerDefeat` n'est volontairement JAMAIS appelé ici,
+   * contrairement à registerFightDefeat : le suivi watchlist "ennemis vaincus" ne doit jamais être
+   * crédité pour une fuite. `ensurePresent` reste appelé pour la même raison que dans
+   * registerFightDefeat : garantir que ce combattant a bien sa propre ligne dans le récap (voir
+   * EntityDamageRow.fled), même à 0 dégât — c'est précisément le cas visé par cette fonctionnalité
+   * (un mimique qui se révèle puis fuit sans avoir échangé le moindre coup).
+   */
+  private registerFightFlee(fightId: number | null, name: string): void {
+    const working = fightId !== null ? this.activeFights.get(fightId) : undefined;
+    if (!working) return;
+    const key = name.toLowerCase();
+    if (working.summonNames.has(key)) return;
+    working.fledNames.add(key);
+    this.ensurePresent(working, name);
+
+    const instanceCount = this.countNameInstances(working, key) || 1;
+    const alreadyResolved =
+      (working.fledInstanceCounts.get(key) ?? 0) + (working.defeatedInstanceCounts.get(key) ?? 0);
+    if (alreadyResolved >= instanceCount) return;
+    working.fledInstanceCounts.set(key, (working.fledInstanceCounts.get(key) ?? 0) + 1);
+  }
+
+  /** Vrai si toutes les instances (par nom, voir countNameInstances) de la liste donnée sont
+   * "résolues" (vaincues OU en fuite, voir defeatedInstanceCounts/fledInstanceCounts) — une fuite
+   * compte ici au même titre qu'une mort : elle n'a pas à faire échouer la détection de victoire de
+   * resolveFightResult, un combattant échappé n'est pas un signe de défaite de l'équipe. */
   private allInstancesDefeated(
     entities: ReadonlyArray<{ name: string }>,
     working: FightWorking,
@@ -1188,7 +1397,9 @@ export class StatsStoreService {
       perName.set(key, (perName.get(key) ?? 0) + 1);
     }
     for (const [key, count] of perName) {
-      if ((working.defeatedInstanceCounts.get(key) ?? 0) < count) return false;
+      const resolved =
+        (working.defeatedInstanceCounts.get(key) ?? 0) + (working.fledInstanceCounts.get(key) ?? 0);
+      if (resolved < count) return false;
     }
     return true;
   }
@@ -1235,6 +1446,23 @@ export class StatsStoreService {
     return parsedResult;
   }
 
+  /** Vrai si le combat `fightId` compte un ennemi de `EXCLUDED_STATS_FAMILY_ID` — voir sa doc. Un
+   * ennemi dont le nom n'est pas résolu par le catalogue (`findWakfuMonsterEntry` renvoie
+   * `undefined`) n'est simplement jamais concerné, plutôt que de faire échouer la vérification.
+   * `working.fight.enemies` est déjà connu au moment où ce combat crédite kamas/XP (les ennemis
+   * rejoignent en tout début de combat, avant les premières lignes de dégâts/gain), donc fiable à
+   * interroger dès l'événement plutôt que de devoir attendre `finalizeFight`. `fightId === null`
+   * (gain hors combat, ex. Hôtel de vente) n'est jamais concerné. */
+  private isExcludedFight(fightId: number | null): boolean {
+    if (fightId === null) return false;
+    const working = this.activeFights.get(fightId);
+    if (!working) return false;
+    return working.fight.enemies.some(
+      (enemy) =>
+        this.catalog.findWakfuMonsterEntry(enemy.name)?.family === EXCLUDED_STATS_FAMILY_ID,
+    );
+  }
+
   private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
     const working = this.activeFights.get(fightId);
 
@@ -1250,9 +1478,13 @@ export class StatsStoreService {
         this.addLootToFight(working, pending.item, pending.quantity);
       }
       working.fight.kamas += this.pendingFightKamas;
+      working.fight.challengesPassed += this.pendingFightChallengesPassed;
+      working.fight.challengesFailed += this.pendingFightChallengesFailed;
     }
     this.pendingFightLoot.length = 0;
     this.pendingFightKamas = 0;
+    this.pendingFightChallengesPassed = 0;
+    this.pendingFightChallengesFailed = 0;
 
     if (!working) return; // marqueur de fin dupliqué (ou reçu sans combat connu) : rien d'autre à clôturer.
 
@@ -1276,29 +1508,56 @@ export class StatsStoreService {
       return;
     }
 
+    // Voir EXCLUDED_STATS_FAMILY_ID : combatsWon/combatsLost/sessionLootMap sont des totaux DE
+    // SESSION agrégés — exclus pour ce combat précis, mais le `FightRecord` construit plus bas
+    // (poussé dans `fightHistoryList`/synchronisé) reste, lui, TOUJOURS créé normalement, avec ses
+    // propres kamas/XP/butin déjà corrects (`working.fight.*`, jamais touchés ici).
+    const excludedFromStats = this.isExcludedFight(fightId);
     const result = this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
       // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
       // le combat se termine et n'a alors pas toujours droit à sa propre ligne
       // de mise hors-combat : sans ce filet, il n'est jamais crédité dans le
       // suivi des ennemis vaincus. Un combat gagné implique que tous les
-      // ennemis ayant rejoint le combat sont morts.
+      // ennemis ayant rejoint le combat sont morts — SAUF ceux déjà comptés
+      // comme ayant fui (voir registerFightFlee/fledInstanceCounts) : une
+      // fuite ne doit jamais être requalifiée en "vaincu" sous prétexte que le
+      // reste de l'équipe a gagné (demande explicite de l'utilisateur, cas des
+      // mimiques). `countNameInstances` recalculé à chaque itération (jamais
+      // mis en cache avant la boucle) pour rester exact au fil des appels
+      // successifs à registerFightDefeat sur un même nom partagé par
+      // plusieurs instances (voir sa propre logique de plafonnement).
       for (const enemy of working.fight.enemies) {
+        const key = enemy.name.toLowerCase();
+        const totalInstances = this.countNameInstances(working, key) || 1;
+        const alreadyResolved =
+          (working.defeatedInstanceCounts.get(key) ?? 0) +
+          (working.fledInstanceCounts.get(key) ?? 0);
+        if (alreadyResolved >= totalInstances) continue;
         this.registerFightDefeat(fightId, enemy.name);
       }
-      this.combatsWon.update((v) => v + 1);
-      for (const loot of working.fight.loots) {
-        const key = loot.name.toLowerCase();
-        const existing = this.sessionLootMap.get(key);
-        if (existing) existing.quantity += loot.quantity;
-        else
-          this.sessionLootMap.set(key, {
-            name: loot.name,
-            catalogId: loot.catalogId,
-            quantity: loot.quantity,
-          });
+      if (!excludedFromStats) {
+        this.combatsWon.update((v) => v + 1);
+        for (const loot of working.fight.loots) {
+          const key = loot.name.toLowerCase();
+          const existing = this.sessionLootMap.get(key);
+          if (existing) {
+            existing.quantity += loot.quantity;
+            // Un seul badge de doute cumulé par nom : 'doubtful' l'emporte dès qu'UN SEUL des
+            // combats agrégés a un doute à faire valoir (signal à charge, jamais masqué par
+            // d'autres occurrences confirmées) ; sinon 'confirmed' l'emporte sur 'unknown' (au
+            // moins un combat a pu confirmer la provenance) — voir mergeLootConfidence.
+            existing.confidence = mergeLootConfidence(existing.confidence, loot.confidence);
+          } else
+            this.sessionLootMap.set(key, {
+              name: loot.name,
+              catalogId: loot.catalogId,
+              quantity: loot.quantity,
+              confidence: loot.confidence,
+            });
+        }
       }
-    } else {
+    } else if (!excludedFromStats) {
       this.combatsLost.update((v) => v + 1);
     }
 
@@ -1324,6 +1583,7 @@ export class StatsStoreService {
         name: l.name,
         catalogId: l.catalogId,
         quantity: l.quantity,
+        confidence: l.confidence,
       })),
       kamas: working.fight.kamas,
       turns: working.fight.turnCount,
@@ -1331,12 +1591,14 @@ export class StatsStoreService {
       xp: working.fight.exp
         .map((e) => ({ name: e.name, amount: e.quantity }))
         .sort((a, b) => b.amount - a.amount),
+      challengesPassed: working.fight.challengesPassed,
+      challengesFailed: working.fight.challengesFailed,
     };
     this.fightHistoryList.unshift(record);
     // Envoi au compte AVANT le plafonnement en mémoire : `MAX_FIGHT_HISTORY`
     // borne ce que l'appareil garde affiché, pas ce que le compte archive —
     // c'est tout l'objet de ce lot (« historique illimité »).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
     this.fightHistoryList.length = Math.min(this.fightHistoryList.length, MAX_FIGHT_HISTORY);
 
     this.activeFights.delete(fightId);
@@ -1347,13 +1609,72 @@ export class StatsStoreService {
   }
 
   /**
+   * Pré-balaie EN LECTURE SEULE (sans faire progresser l'état du parser) le lot de lignes qui va être
+   * traité, pour trouver la première ligne d'ancrage de date calendaire — pas seulement en tête du
+   * lot. Une (re)connexion relit tout le fichier depuis le début (voir CLAUDE.md) : si ce fichier
+   * contient déjà des combats d'une session de jeu ANTÉRIEURE au lancement client qui a produit la
+   * ligne d'ancrage (banner absent en tête de fichier, présent plus loin — cas vécu : un fichier
+   * concaténant plusieurs sessions, dont un relancement du client en cours de journée), le forward-only
+   * d'origine (voir buildFullTimestampMs) faisait retomber toutes les lignes PRÉCÉDANT cet ancrage sur
+   * la date système du jour de LECTURE — bug réel signalé par l'utilisateur (2026-08-26) : des combats
+   * joués le 2026-08-25, avant un relancement du client survenu plus tard le même jour, affichés à la
+   * date du jour de lecture au lieu de leur vraie date.
+   *
+   * Reconstitue la date de la toute première ligne du lot en "remontant" depuis l'ancrage trouvé plus
+   * loin, via le même mécanisme de détection de passage de minuit (recul de l'heure du jour, voir
+   * DAY_ROLLOVER_THRESHOLD_MS) que buildFullTimestampMs, mais exécuté ici sur les horodatages bruts de
+   * TOUTES les lignes du lot (pas seulement celles qui produisent un LogEntry) : ne modifie que
+   * `logDateAnchor`/`lastTimestampTimeOfDayMs`/`logDateDayOffset`, sur lesquels la boucle normale qui
+   * suit continue ensuite sans discontinuité (et re-posera de toute façon `logDateAnchor` à la valeur
+   * littérale de l'ancrage en l'atteignant, voir apply() cas 'log-date-anchor'). Ne fait rien si aucun
+   * ancrage n'est trouvé dans ce lot : le traitement normal retombe alors sur l'ancien repli (date
+   * système) jusqu'à ce qu'un ancrage soit rencontré, comme avant ce fix.
+   */
+  private primeLogDateAnchorFromBatch(lines: string[]): void {
+    let firstTimeOfDayMs: number | null = null;
+    let lastTimeOfDayMs: number | null = null;
+    let rolloversBeforeAnchor = 0;
+
+    for (const line of lines) {
+      const peeked = peekLineTime(line);
+      if (!peeked) continue;
+      const timeOfDayMs = this.timeToMs(peeked.time);
+      if (firstTimeOfDayMs === null) firstTimeOfDayMs = timeOfDayMs;
+      if (lastTimeOfDayMs !== null && timeOfDayMs < lastTimeOfDayMs - DAY_ROLLOVER_THRESHOLD_MS) {
+        rolloversBeforeAnchor++;
+      }
+      lastTimeOfDayMs = timeOfDayMs;
+
+      if (peeked.buildDate) {
+        // `Date` normalise nativement un `day` débordant en-dessous de 1 (ex. jour 0 => dernier jour
+        // du mois précédent), symétrique du repli déjà utilisé plus bas dans buildFullTimestampMs.
+        const anchorDate = new Date(
+          peeked.buildDate.year,
+          peeked.buildDate.month - 1,
+          peeked.buildDate.day - rolloversBeforeAnchor,
+        );
+        this.logDateAnchor = {
+          year: anchorDate.getFullYear(),
+          month: anchorDate.getMonth() + 1,
+          day: anchorDate.getDate(),
+        };
+        this.lastTimestampTimeOfDayMs = firstTimeOfDayMs;
+        this.logDateDayOffset = 0;
+        return;
+      }
+    }
+  }
+
+  /**
    * Le log Wakfu n'expose que l'heure (HH:MM:SS,mmm) sur chaque ligne : la date calendaire réelle
    * vient de `logDateAnchor` (voir LogDateAnchorEntry, ligne technique émise une fois au tout début
    * du fichier) — jamais de la date système de la machine qui LIT le fichier (bug réel : un combat
    * consulté un autre jour que celui où il a eu lieu, ou un fichier plus ancien rouvert plus tard,
    * affichait systématiquement la date du jour de lecture au lieu de la date réelle du combat).
    * Repli sur l'ancien comportement (date système) tant que cette ligne d'ancrage n'a pas encore été
-   * rencontrée — ne devrait arriver qu'en tout début de lecture, avant la toute première ligne utile.
+   * rencontrée (voir primeLogDateAnchorFromBatch pour le cas où un ancrage existe plus loin dans le
+   * lot en cours) — ne devrait sinon arriver qu'en tout début de lecture, avant la toute première
+   * ligne utile.
    */
   private buildFullTimestampMs(time: string): number {
     const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
@@ -1380,6 +1701,37 @@ export class StatsStoreService {
     // `Date` normalise nativement un `day` débordant (ex. 32 août => 1er septembre).
     const baseDateMs = new Date(year, month - 1, day + this.logDateDayOffset).getTime();
     return baseDateMs + timeOfDayMs;
+  }
+
+  /**
+   * Ajoute à sessionActiveDurationMs l'écart entre cette ligne et la précédente ligne DU FICHIER vue
+   * (voir lastSessionActivityMs), SAUF si cet écart atteint ou dépasse
+   * SESSION_SEGMENT_GAP_THRESHOLD_MS — un tel écart est alors traité comme une coupure (fermeture du
+   * client, crash, veille du PC...), le
+   * temps qu'il représente n'est PAS compté dans la durée de session affichée. Utilise `peekLineTime`
+   * (comme primeLogDateAnchorFromBatch) plutôt que `LogEntry`/`apply()` : une ligne purement
+   * technique sans LogEntry associé (ex. "Stopping cFC...") reste une preuve valable d'activité au
+   * même titre qu'une ligne de combat/butin/chat — s'en priver aurait pu faire paraître "coupée" une
+   * période en réalité continue (ex. un joueur qui navigue des menus sans combattre).
+   *
+   * Premier appel d'une (nouvelle) session — `lastSessionActivityMs === null`, voir
+   * resetSessionState() — : rien à ajouter (pas de ligne précédente à comparer), seulement amorcer
+   * `lastSessionActivityMs`.
+   */
+  private accumulateSessionDuration(rawLine: string): void {
+    const peeked = peekLineTime(rawLine);
+    if (!peeked) return;
+    const fullMs = this.buildFullTimestampMs(peeked.time);
+    if (this.lastSessionActivityMs !== null) {
+      const gap = fullMs - this.lastSessionActivityMs;
+      // `gap <= 0` : lignes quasi simultanées de threads distincts capturées dans un ordre
+      // légèrement différent de leur horodatage strict (vérifié sur un vrai fichier — jamais plus
+      // d'1-2ms d'écart) — rien à ajouter plutôt que de risquer de faire reculer le total.
+      if (gap > 0 && gap < SESSION_SEGMENT_GAP_THRESHOLD_MS) {
+        this.sessionActiveDurationMs.update((v) => v + gap);
+      }
+    }
+    this.lastSessionActivityMs = fullMs;
   }
 
   private timeToMs(time: string): number {
@@ -1473,14 +1825,27 @@ export class StatsStoreService {
    * dont le fightId ne peut pas être connu avec certitude au moment où elle est lue. */
   private addLootToFight(working: FightWorking, item: string, quantity: number): void {
     const existing = working.fight.loots.find((l) => l.name.toLowerCase() === item.toLowerCase());
-    if (existing) existing.quantity += quantity;
-    else
-      working.fight.loots.push({
-        name: item,
-        id: this.lookupItemGfxId(item),
-        catalogId: this.catalog.findWakfuItemEntry(item)?.id ?? null,
-        quantity,
-      });
+    if (existing) {
+      existing.quantity += quantity;
+      return;
+    }
+    const defaultCatalogId = this.catalog.findWakfuItemEntry(item)?.id ?? null;
+    // `working.fight.enemies` est déjà le roster COMPLET du combat à cet instant (addLootToFight
+    // n'est appelée qu'à finalizeFight, après que tous les ennemis ont rejoint) — voir
+    // resolveLootConfidence (core/utils/loot-confidence.util.ts) pour le détail du recoupement.
+    const { catalogId, confidence } = resolveLootConfidence(
+      this.catalog,
+      working.fight.enemies.map((e) => e.name),
+      item,
+      defaultCatalogId,
+    );
+    working.fight.loots.push({
+      name: item,
+      id: this.lookupItemGfxId(item),
+      catalogId,
+      quantity,
+      confidence,
+    });
   }
 
   /** SYNCHRONE (chemin chaud, voir CatalogService) : simple lecture de l'index déjà en mémoire, à
@@ -1493,6 +1858,13 @@ export class StatsStoreService {
 
   /** Une perte de kamas suivie de très près par un ramassage d'objet est un achat (marchand/HDV) : n'affecte ni les kamas perdus ni le butin de combat, déjà comptabilisés par ailleurs. */
   private registerPurchase(amount: number, item: string, quantity: number, time: string): void {
+    // Ventilation Hôtel de vente/Achats (voir doc de kamasFromHdvSales) — même sentinelle
+    // HDV_KAMAS_SALE_ITEM que côté serveur pour distinguer les deux dans la même table.
+    if (item === HDV_KAMAS_SALE_ITEM) {
+      this.kamasFromHdvSales.update((v) => v + amount);
+    } else {
+      this.kamasSpentOnPurchases.update((v) => v + amount);
+    }
     const record: PurchaseRecord = {
       id: this.nextPurchaseId++,
       item,
@@ -1597,6 +1969,10 @@ export class StatsStoreService {
     };
     this.tradeHistoryList.unshift(record);
     this.historySync.recordTrade(record);
+    // Ventilation Échanges (voir doc de kamasTradesAcquired/kamasTradesGiven) — source directe
+    // (kamas de CE combattant.self, pas la reconciliation kama-gain/kama-loss générique).
+    if (record.kamasAcquired > 0) this.kamasTradesAcquired.update((v) => v + record.kamasAcquired);
+    if (record.kamasGiven > 0) this.kamasTradesGiven.update((v) => v + record.kamasGiven);
   }
 
   /**
@@ -1674,7 +2050,8 @@ export class StatsStoreService {
    * n'est donc pas renvoyé.
    */
   private replayHistoryToSync(): void {
-    for (const record of this.fightHistoryList) this.historySync.recordFight(record);
+    for (const record of this.fightHistoryList)
+      this.historySync.recordFight(record, this.fightHistoryList);
     for (const record of this.purchaseHistoryList) this.historySync.recordPurchase(record);
     for (const record of this.tradeHistoryList) this.historySync.recordTrade(record);
   }
@@ -1807,7 +2184,9 @@ export class StatsStoreService {
     const rows: EntityDamageRow[] = [];
     for (const name of names) {
       const instanceCount = instanceCountByName.get(name) ?? 1;
-      const defeatedCount = working.defeatedInstanceCounts.get(name.toLowerCase()) ?? 0;
+      const nameKey = name.toLowerCase();
+      const defeatedCount = working.defeatedInstanceCounts.get(nameKey) ?? 0;
+      const fledCount = working.fledInstanceCounts.get(nameKey) ?? 0;
 
       for (let instanceIndex = 1; instanceIndex <= instanceCount; instanceIndex++) {
         const key = instanceCount <= 1 ? name : `${name}#${instanceIndex}`;
@@ -1818,6 +2197,10 @@ export class StatsStoreService {
           total,
           spells: spellRows,
           defeated: instanceIndex <= defeatedCount,
+          // Occupe la tranche d'indices JUSTE APRÈS les instances déjà comptées "vaincues" (même
+          // convention d'attribution approximative que `defeated` ci-dessus, faute d'identité
+          // d'instance individuelle — voir doc de EntityDamageRow.instanceIndex).
+          fled: instanceIndex > defeatedCount && instanceIndex <= defeatedCount + fledCount,
           instanceIndex,
           instanceCount,
         });
@@ -1901,7 +2284,7 @@ export class StatsStoreService {
     // seul le détail du combat est rafraîchi côté compte (voir
     // `fight_participants`, écrit en ON CONFLICT DO UPDATE).
     const corrected = this.fightHistoryList.find((record) => record.id === fightId);
-    if (corrected) this.historySync.recordFight(corrected);
+    if (corrected) this.historySync.recordFight(corrected, this.fightHistoryList);
   }
 
   /** Rejoue tout le journal des réattributions persistées (voir reassignSpell) — appelé après chaque
@@ -2172,14 +2555,29 @@ export class StatsStoreService {
     const row = this.findRowByCatalogId(record.loot, itemName, sourceCatalogId);
     if (!row) return;
     const wasFull = quantity >= row.quantity;
+    // L'utilisateur a lui-même tranché l'identité de cet objet : jamais le contredire après coup
+    // par un badge de doute (voir LootConfidence). Posé AVANT reassignRowQuantity pour qu'une
+    // ligne scindée en deux (voir sa doc, `{...row, catalogId, quantity: amount}`) hérite déjà de
+    // 'confirmed' par la copie — la ligne restante (si `row` n'est pas intégralement réattribuée)
+    // n'a, elle, pas changé d'identité et garde sa confiance d'origine.
+    row.confidence = 'confirmed';
     this.reassignRowQuantity(record.loot, row, quantity, catalogId);
+    // Ligne existante de même rareté ayant absorbé la quantité réattribuée (voir
+    // reassignRowQuantity, branche `target`) : elle aussi doit passer à 'confirmed'.
+    const target = record.loot.find(
+      (l) => l.catalogId === catalogId && l.name.toLowerCase() === itemName.toLowerCase(),
+    );
+    if (target) target.confidence = 'confirmed';
 
     // Compteur cumulé de session (toutes fusions confondues, voir sessionLootMap) : mis à jour
     // seulement pour une correction COMPLÈTE de la ligne — un compteur cumulé unique ne peut pas
     // représenter une scission partielle proprement, voir doc de sessionLoot.
     if (wasFull) {
       const sessionRow = this.sessionLootMap.get(itemName.toLowerCase());
-      if (sessionRow) sessionRow.catalogId = catalogId;
+      if (sessionRow) {
+        sessionRow.catalogId = catalogId;
+        sessionRow.confidence = 'confirmed';
+      }
       this.sessionLoot.set([...this.sessionLootMap.values()]);
     }
 
@@ -2189,7 +2587,7 @@ export class StatsStoreService {
     // seule(s) la/les ligne(s) `fight_loot` visée(s) sont mises à jour côté serveur
     // (ON CONFLICT DO UPDATE) — la ligne scindée éventuelle part avec le même envoi (tout le combat
     // est renvoyé d'un bloc).
-    this.historySync.recordFight(record);
+    this.historySync.recordFight(record, this.fightHistoryList);
   }
 
   private applyPurchaseReassign(

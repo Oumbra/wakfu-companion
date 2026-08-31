@@ -37,6 +37,7 @@ function setup(): { classifier: EntityClassifierService; catalog: CatalogService
     if (path === '/catalog/') return ok({ items: [], monsters: [BOSS_MONSTER] });
     if (path === '/dungeons') return ok([]);
     if (path === '/monster-families') return ok([]);
+    if (path === '/monster-loot') return ok([]);
     throw new Error(`unexpected path in test: ${path}`);
   };
 

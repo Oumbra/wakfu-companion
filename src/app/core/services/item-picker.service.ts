@@ -10,31 +10,30 @@ export interface ItemPickerRequest {
    * `null` si non résolu — sert uniquement à surligner le candidat déjà choisi (jamais cliquable,
    * voir ItemPickerComponent.isCurrent). */
   currentId: number | null;
-  /** Quantité totale de la ligne d'origine — borne haute du stepper de quantité affiché quand une
-   * correction est possible (voir `onChosen`) : la correction ne porte pas forcément sur la
-   * totalité du lot (ex. 2 des 5 objets ramassés étaient en réalité l'autre variante). */
+  /** Quantité totale de la ligne d'origine — borne haute du stepper de quantité affiché pour la
+   * correction : elle ne porte pas forcément sur la totalité du lot (ex. 2 des 5 objets ramassés
+   * étaient en réalité l'autre variante). */
   quantity: number;
-  /** Vrai si l'objet est déjà suivi (voir StatsStoreService.isWatched) — désactive le bouton
-   * "+ Suivre" du menu. Capturé à l'ouverture, comme `currentId` : pas recalculé en continu tant
-   * que le menu reste ouvert. */
-  isWatched: boolean;
-  onFollow: () => void;
-  /** Absent : aucune section de correction n'est proposée (ex. butin cumulé de session, qui
-   * n'a pas de combat unique à cibler — voir LootListComponent.fight), seul "+ Suivre" reste
-   * offert. Présent : `(id, quantity)` — `quantity` est la valeur choisie dans le stepper, jamais
-   * plus que `ItemPickerRequest.quantity` ni moins que 1. Achats (voir PurchasesComponent) : ne
-   * passe plus par ce menu générique, voir PurchaseReassignService (modale dédiée, sélection des
-   * lignes de détail plutôt qu'un stepper quantité/kamas). */
-  onChosen?: (id: number, quantity: number) => void;
+  /** `(id, quantity)` — `quantity` est la valeur choisie dans le stepper, jamais plus que
+   * `ItemPickerRequest.quantity` ni moins que 1. Toujours requis : ce menu ne propose plus QUE la
+   * correction d'homonyme (voir CLAUDE.md, bouton "Suivre" retiré) — un appelant qui n'a rien à
+   * corriger (ex. butin cumulé de session, sans combat unique à cibler, voir LootListComponent.fight)
+   * ne doit tout simplement pas ouvrir ce menu. Achats (voir PurchasesComponent) : ne passe pas par
+   * ce menu générique, voir PurchaseReassignService (modale dédiée, suivi + sélection des lignes de
+   * détail plutôt qu'un stepper quantité/kamas). */
+  onChosen: (id: number, quantity: number) => void;
 }
 
 /**
- * Point d'entrée unique pour ouvrir le menu d'interaction avec un objet (clic droit sur une ligne
- * de butin/échange — voir LootListComponent/TradesComponent ; l'historique des achats a sa propre
- * modale dédiée, voir PurchaseReassignService) : suivi (ajout à la watchlist) et, si le référentiel
- * Ankama contient plusieurs objets de ce nom (homonymes de rareté différente, ex. "Larme d'Ogrest",
- * ids 24029/21602 — la résolution automatique par nom seul via `CatalogService.findWakfuItemEntry`
- * ne peut pas les départager), correction manuelle de l'id retenu.
+ * Point d'entrée unique pour ouvrir le menu de correction manuelle d'un objet homonyme (clic droit
+ * sur une ligne de butin/échange — voir LootListComponent/TradesComponent ; l'historique des achats
+ * a sa propre modale dédiée, voir PurchaseReassignService) : quand le référentiel Ankama contient
+ * plusieurs objets de ce nom (homonymes de rareté différente, ex. "Larme d'Ogrest", ids 24029/21602
+ * — la résolution automatique par nom seul via `CatalogService.findWakfuItemEntry` ne peut pas les
+ * départager), corrige manuellement l'id retenu. Aucun suivi (watchlist) ici — voir CLAUDE.md, le
+ * bouton "+ Suivre" a été retiré de ce menu : un appelant doit s'assurer qu'un homonyme existe
+ * réellement (voir `CatalogService.findAllWakfuItemEntriesByName(name).length > 1`) avant d'ouvrir,
+ * sans quoi le menu n'aurait rien à proposer.
  *
  * Rendu une seule fois au niveau racine (`app.html`), même principe que ClassPickerService/
  * DamageReassignService : un composant niché dans un ancêtre `transform` verrait son

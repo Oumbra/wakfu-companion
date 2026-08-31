@@ -85,21 +85,74 @@ export interface FightImageInfo {
   fallbackUrls: string[];
 }
 
-/** Donjon dont un boss présent parmi `enemyNames` est le boss attitré, ou `null` (aucun boss
- * reconnu parmi les ennemis, ou boss sans donjon référencé) — première étape de
- * `resolveFightImageInfo` ci-dessous, extraite pour être réutilisée telle quelle par
- * core/utils/dungeon-run-grouping.util.ts (regroupement des combats d'un même donjon dans
- * l'historique, qui a besoin de cette détection indépendamment de la résolution d'illustration). */
+/** Donjon (au sens large : donjon classique, brèche simple ou brèche ultime) rattaché à un
+ * ensemble d'ennemis — première étape de `resolveFightImageInfo` ci-dessous, extraite pour être
+ * réutilisée telle quelle par core/utils/dungeon-run-grouping.util.ts (regroupement des combats
+ * d'un même donjon dans l'historique) ET par `HistorySyncService`/`resolveFightTypeClassification`
+ * (rattachement `dungeonId` envoyé au serveur pour la carte Récap, et bucket "Type" de
+ * l'historique) — les trois ont besoin de cette détection indépendamment de la résolution
+ * d'illustration. `null` si rien de tout ça n'est identifiable.
+ *
+ * Priorité (même ordre que `resolveFightImageInfo`, voir sa doc pour le détail) :
+ * 0. PLUSIEURS ennemis boss (`isBoss`) D'IDS DISTINCTS présents simultanément, correspondant à une
+ *    brèche ultime connue (voir `CatalogService.findWakfuUltimateBreachByBossMonsters`) -> cette
+ *    brèche ultime. Sans cette priorité, un boss partagé entre une brèche ultime ET un donjon
+ *    classique (cas réel : "Phacochemar", boss de "Donjon Vandaliénés" ET l'un des 8 boss de la
+ *    "Brèche dimensionnelle ultime de la Shukrute") se voyait à tort rattaché au donjon classique
+ *    plutôt qu'à la brèche ultime réellement en cours — bug réel corrigé le 2026-08-28 (fichier
+ *    utilisateur : `fightId` Wakfu 1680001243, un unique combat de ~38 min réunissant 7 des 8 boss
+ *    de cette brèche ultime en plusieurs vagues).
+ * 1. Un boss présent (seul, ou plusieurs mais aucune brèche ultime connue ne correspond) -> le
+ *    donjon classique dont il est le boss attitré, `null` si son id n'est référencé par aucun
+ *    donjon.
+ * 2. Aucun boss du tout, mais plus de `DISTINCT_FAMILY_THRESHOLD` familles de monstre distinctes
+ *    parmi les ennemis (horde hétérogène) -> la brèche simple (`type: 'BREACH'`) dont la
+ *    composition en familles couvre celles observées (voir
+ *    `CatalogService.findWakfuBreachByMonsterFamilies`), `null` si aucune brèche connue ne
+ *    correspond (référentiel incomplet, ou horde qui n'en est en réalité pas une) — contrairement à
+ *    `resolveFightImageInfo`, pas de repli générique possible ici : un `dungeonId` n'a pas
+ *    d'équivalent "brèche non identifiée", il reste `null` (le combat retombe alors sur un
+ *    classement par famille, voir les appelants). Bug réel corrigé le 2026-08-28 (même fichier
+ *    utilisateur : `fightId` 1680001273, horde de 9 familles distinctes couvrant exactement la
+ *    "Brèche dimensionnelle de la Shukrute" — jusque là `dungeonId` restait `null` pour ce combat,
+ *    qui finissait éclaté en lignes "famille" isolées dans la carte Récap au lieu d'une section
+ *    "Brèche" dédiée).
+ */
 export function findDungeonForEnemies(
   catalog: CatalogService,
   enemyNames: readonly string[],
 ): CatalogDungeonEntry | null {
+  const entries = enemyNames
+    .map((name) => catalog.findWakfuMonsterEntry(name))
+    .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
+
+  const bossEntries = entries.filter((entry) => entry.isBoss);
+  // Ids distincts, pas le nombre brut d'entrées `isBoss` — même garde-fou qu'en priorité 0 de
+  // resolveFightImageInfo (resynchronisation en cours de combat, voir sa doc).
+  const distinctBossIds = [...new Set(bossEntries.map((entry) => entry.id))];
+  if (distinctBossIds.length > 1) {
+    const ultimateBreach = catalog.findWakfuUltimateBreachByBossMonsters(distinctBossIds);
+    if (ultimateBreach) return ultimateBreach;
+  }
+
   for (const name of enemyNames) {
     const entry = catalog.findWakfuMonsterEntry(name);
     if (!entry?.isBoss) continue;
     const dungeon = catalog.findWakfuDungeonByBossMonsterId(entry.id);
     if (dungeon) return dungeon;
   }
+
+  if (bossEntries.length === 0) {
+    const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
+    if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
+      const enemyFamilyIds = [...distinctFamilies].filter(
+        (family): family is number => family !== NO_FAMILY_KEY,
+      );
+      const breach = catalog.findWakfuBreachByMonsterFamilies(enemyFamilyIds);
+      if (breach) return breach;
+    }
+  }
+
   return null;
 }
 
@@ -262,6 +315,19 @@ export function resolveFightImageInfo(
   return { url: null, tooltipSource: null, fallbackUrls: [] };
 }
 
+/** Illustration d'un groupe "donjon" du regroupement Type (voir `FightHistoryComponent.
+ * typeGroupImageUrl`) — reprend le même mapping que les priorités 0/2 de `resolveFightImageInfo`
+ * (brèche/brèche ultime -> illustration générique dédiée, `BREACH_IMAGE_URL`/
+ * `ULTIMATE_BREACH_IMAGE_URL`, plutôt que `dungeon.pictureUrl` qui vaut alors l'illustration
+ * générique de repli DEFAULT_FIGHT_IMAGE_URL côté référentiel — voir repository/dungeons.json) mais
+ * appliqué à un `CatalogDungeonEntry` déjà résolu (un seul donjon par groupe "Type", pas de
+ * re-détection depuis une liste d'ennemis). */
+export function dungeonGroupImageUrl(dungeon: CatalogDungeonEntry): string {
+  if (dungeon.type === 'ULTIMATE_BREACH') return ULTIMATE_BREACH_IMAGE_URL;
+  if (dungeon.type === 'BREACH') return BREACH_IMAGE_URL;
+  return dungeon.pictureUrl;
+}
+
 /** Repli sans métadonnée de tooltip — voir resolveFightImageInfo. */
 export function resolveFightImageUrl(
   catalog: CatalogService,
@@ -302,6 +368,12 @@ export type FightTypeClassification =
        * (illustration), le nom d'une brèche N'EST PAS masqué ici : c'est justement ce qui distingue
        * la catégorie "brèches" de celle des donjons classiques dans le regroupement par type. */
       names: FightImageLocalizedName;
+      /** Entrée donjon/brèche complète — sert à `fight-history.component.ts` (`typeGroupImageUrl`)
+       * pour résoudre l'illustration du collapse via `dungeonGroupImageUrl` sans re-détection.
+       * Toujours le même objet que `names` ci-dessus (redondant à dessein : `names` reste typé
+       * `FightImageLocalizedName` pour ne porter que ce dont un consommateur "libellé seul" a
+       * besoin). */
+      dungeon: CatalogDungeonEntry;
     }
   | {
       kind: 'family';
@@ -337,25 +409,30 @@ export function resolveFightTypeClassification(
   catalog: CatalogService,
   enemyNames: readonly string[],
 ): FightTypeClassification {
+  // Couvre à la fois les donjons classiques (boss unique), les brèches ultimes (plusieurs boss
+  // simultanés) et les brèches simples (horde hétérogène identifiée par ses familles) — voir la
+  // doc de `findDungeonForEnemies` pour l'ordre de priorité exact. Un seul appel en tête plutôt que
+  // de ne le tenter que si un boss est présent (bug réel corrigé le 2026-08-28, voir CLAUDE.md) :
+  // une brèche simple n'a par nature AUCUN boss, elle ne serait jamais atteinte sinon.
+  const dungeon = findDungeonForEnemies(catalog, enemyNames);
+  if (dungeon) {
+    return {
+      kind: 'dungeon',
+      categoryRank: DUNGEON_TYPE_CATEGORY_RANK[dungeon.type],
+      key: `dungeon:${dungeon.id}`,
+      names: dungeon,
+      dungeon,
+    };
+  }
+
   const entries = enemyNames
     .map((name) => catalog.findWakfuMonsterEntry(name))
     .filter((entry): entry is CatalogMonsterEntry => entry !== undefined);
 
   const bossEntry = entries.find((entry) => entry.isBoss);
-  if (bossEntry) {
-    const dungeon = findDungeonForEnemies(catalog, enemyNames);
-    if (dungeon) {
-      return {
-        kind: 'dungeon',
-        categoryRank: DUNGEON_TYPE_CATEGORY_RANK[dungeon.type],
-        key: `dungeon:${dungeon.id}`,
-        names: dungeon,
-      };
-    }
-    // Boss sans donjon référencé pour son id : traité comme un monstre classique (famille), comme
-    // resolveFightImageInfo bascule alors sur sa propre illustration.
-    return familyClassification(bossEntry);
-  }
+  // Boss sans donjon référencé pour son id : traité comme un monstre classique (famille), comme
+  // resolveFightImageInfo bascule alors sur sa propre illustration.
+  if (bossEntry) return familyClassification(bossEntry);
 
   const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
   if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {

@@ -4,25 +4,26 @@ import { I18nService } from '../../core/services/i18n.service';
 import { lootRarityClass } from '../../core/utils/loot-sort.util';
 import { CatalogService } from '../../core/api/catalog.service';
 import { ItemIconComponent } from '../item-icon/item-icon.component';
-import { NumberFrPipe } from '../number-fr.pipe';
+import { IconComponent } from '../icon/icon.component';
+import { LocaleNumberPipe } from '../locale-number.pipe';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
-import { IconComponent } from '../icon/icon.component';
 import { ItemPickerService } from '../../core/services/item-picker.service';
 import { HistoryArchiveService } from '../../core/sync/history-archive.service';
 
 /**
  * Liste de lignes de butin, mutualisée entre FightHistoryComponent (section butin d'un combat,
  * repliable) et SessionRecapComponent (section butin de session, toujours dépliée) — CSS/HTML/
- * comportement des LIGNES elles-mêmes identiques à l'origine (tri déjà appliqué par l'appelant via
- * `items`, clic droit = menu "Interagir" — suivi + correction d'objet, voir ItemPickerService).
- * L'en-tête (titre, switch de tri, caret repli/dépli éventuel) reste dans chaque composant appelant
- * : leur agencement (hauteur, curseur, hover, bordure pleine/pointillée) diffère réellement entre
- * les deux et n'a pas vocation à être unifié (voir CLAUDE.md, conventions UI transverses).
+ * comportement des LIGNES elles-mêmes identiques à l'origine (tri/recherche déjà appliqués par
+ * l'appelant via `items`, clic droit = correction d'objet homonyme, voir ItemPickerService).
+ * L'en-tête (titre, champ de recherche, switch de tri, caret repli/dépli éventuel) reste dans
+ * chaque composant appelant : leur agencement (hauteur, curseur, hover, bordure pleine/pointillée)
+ * diffère réellement entre les deux et n'a pas vocation à être unifié (voir CLAUDE.md, conventions
+ * UI transverses).
  */
 @Component({
   selector: 'app-loot-list',
-  imports: [ItemIconComponent, NumberFrPipe, TranslatePipe, TooltipDirective, IconComponent],
+  imports: [ItemIconComponent, IconComponent, LocaleNumberPipe, TranslatePipe, TooltipDirective],
   templateUrl: './loot-list.component.html',
   styleUrl: './loot-list.component.css',
 })
@@ -35,40 +36,50 @@ export class LootListComponent {
 
   readonly items = input.required<readonly LootRow[]>();
   /** Style du message "aucun butin" : `default` (historique de combat) ou `recap` (modale de fin
-   * de session, italique/plus discret) — seule différence visuelle entre les deux origines. */
+   * de session, italique/plus discret) — seule différence visuelle entre les deux origines. Sert
+   * aussi bien au cas "aucun butin du tout" qu'au cas "recherche sans résultat" (même message,
+   * même convention que PurchasesComponent/TradesComponent — pas de clé dédiée). */
   readonly emptyVariant = input<'default' | 'recap'>('default');
   /** Combat d'origine de ce butin — nécessaire pour cibler une correction manuelle d'objet (voir
    * ItemPickerService, `StatsStoreService.reassignLootItem`) : `null` pour la vue "butin cumulé de
    * session" (`session-recap`), qui agrège plusieurs combats et ne peut donc pas cibler une ligne
-   * précise — seul "+ Suivre" reste offert dans ce cas (voir ItemPickerRequest.onChosen). */
+   * précise — aucune interaction n'est alors proposée (voir `canInteract`). */
   readonly fight = input<Pick<FightRecord, 'time' | 'result' | 'rows'> | null>(null);
+  /** `false` désactive le clic droit "Interagir" (suivi + correction d'objet) sur toutes les
+   * lignes — voir SessionRecapComponent, qui n'expose volontairement aucune interaction sur son
+   * butin (carte de lecture seule). `true` par défaut : comportement inchangé pour les autres
+   * appelants (FightHistoryComponent). */
+  readonly interactive = input(true);
 
   protected rarityClass(row: LootRow): string {
     return lootRarityClass(this.catalog, row.name, row.catalogId);
   }
 
-  protected isWatched(name: string): boolean {
-    return this.stats.isWatched(name);
+  /** Une correction n'a de sens que (1) si l'appelant autorise l'interaction du tout (`interactive`,
+   * `false` pour la carte de lecture seule du récap de session), (2) pour une ligne rattachée à un
+   * combat précis (voir `fight`, absent pour le butin cumulé de session) ET (3) si le référentiel
+   * Ankama connaît plusieurs objets de ce nom (sinon rien à départager, voir
+   * ItemPickerComponent.showModify) — sans ces trois conditions, ni le badge clé plate (voir
+   * template) ni le clic droit sur la ligne ne doivent rien proposer (voir CLAUDE.md : le bouton
+   * "Suivre" a été retiré du menu, qui ne sert donc plus qu'à cette correction). Le badge évite en
+   * plus d'avoir à survoler chaque ligne pour découvrir qu'une correction est possible. */
+  protected canInteract(row: LootRow): boolean {
+    return (
+      this.interactive() &&
+      this.fight() !== null &&
+      this.catalog.hasMultipleWakfuItemEntriesByName(row.name)
+    );
   }
 
-  /** Vrai si le référentiel Ankama contient plusieurs objets partageant ce nom (homonymes de
-   * rareté différente, ex. "Larme d'Ogrest") — la ligne peut alors être corrigée manuellement
-   * (voir ItemPickerService/`onChosen`). N'a de sens que dans l'historique de combat (`fight` non
-   * `null`, voir doc de `fight` ci-dessus) : le butin cumulé de session n'a pas de combat unique à
-   * cibler, la correction n'y est de toute façon jamais proposée. Sert à afficher le badge clé
-   * plate (voir template) sans obliger l'utilisateur à survoler chaque ligne pour le découvrir. */
-  protected isCorrectable(row: LootRow): boolean {
-    return this.fight() !== null && this.catalog.findAllWakfuItemEntriesByName(row.name).length > 1;
-  }
-
-  /** Ouvre le menu d'interaction (suivi + correction) — déclenché soit par un clic droit n'importe
-   * où sur la ligne (`contextmenu`), soit par un clic gauche direct sur le badge de correction
-   * (voir `isCorrectable`) quand il est affiché : mêmes coordonnées d'ouverture (`event.clientX/Y`)
-   * dans les deux cas, donc positionné près du badge cliqué plutôt que recentré sur la ligne. */
+  /** Ouvre le menu de correction — déclenché soit par un clic droit n'importe où sur la ligne
+   * (`contextmenu`), soit par un clic gauche direct sur le badge de correction (voir
+   * `canInteract`) quand il est affiché : mêmes coordonnées d'ouverture (`event.clientX/Y`) dans
+   * les deux cas, donc positionné près du badge cliqué plutôt que recentré sur la ligne. */
   protected openInteractMenu(event: MouseEvent, row: LootRow): void {
     event.preventDefault();
     event.stopPropagation();
     const fight = this.fight();
+    if (!fight || !this.canInteract(row)) return;
     // Cible la ligne par son `catalogId` ACTUEL (voir StatsStoreService.reassignLootItem,
     // `sourceCatalogId`) plutôt que par un rang positionnel — insensible à l'ordre d'affichage
     // (`items()` peut être trié différemment de l'ordre de stockage, voir
@@ -80,14 +91,10 @@ export class LootListComponent {
       y: event.clientY,
       currentId: row.catalogId,
       quantity: row.quantity,
-      isWatched: this.isWatched(row.name),
-      onFollow: () => this.stats.addWatchedItem(row.name),
-      onChosen: fight
-        ? (id, quantity) => {
-            this.stats.reassignLootItem(fight, row.name, row.catalogId, quantity, id);
-            this.archive.reassignLootItem(fight, row.name, row.catalogId, quantity, id);
-          }
-        : undefined,
+      onChosen: (id, quantity) => {
+        this.stats.reassignLootItem(fight, row.name, row.catalogId, quantity, id);
+        this.archive.reassignLootItem(fight, row.name, row.catalogId, quantity, id);
+      },
     });
   }
 }

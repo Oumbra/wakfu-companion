@@ -11,7 +11,7 @@
 >
   <img [src]="headerIcon()" class="half-header-icon" alt="" />
   <span>{{ title() }}</span>
-  <span class="half-total">{{ total() | numberFr }}</span>
+  <span class="half-total">{{ total() | localeNumber }}</span>
   @if (collapsible()) {
     <span class="caret" [class.expanded]="sectionExpanded()">▸</span>
   }
@@ -33,6 +33,7 @@
             class="entity-row"
             [class.no-toggle]="row.total === 0"
             [class.ko-zero]="row.total === 0 && row.defeated"
+            [class.fled-zero]="row.total === 0 && row.fled"
             [appTooltip]="
               side() === 'enemy'
                 ? !isTracked(row.name)
@@ -60,6 +61,15 @@
                 <app-ko-icon />
               </span>
             }
+            @if (row.fled) {
+              <span
+                class="fled-icon"
+                [appTooltip]="'damageMeter.fledTitle' | t"
+                [tooltipPosition]="first ? 'bottom' : 'top'"
+              >
+                <app-icon name="flee" [size]="16" />
+              </span>
+            }
             <app-entity-icon [name]="row.name" [side]="side()" />
             <span class="entity-name">
               @if (row.total > 0) {
@@ -67,7 +77,7 @@
               }
               {{ displayName(row) }}
             </span>
-            <span class="entity-total">{{ row.total | numberFr }}</span>
+            <span class="entity-total">{{ row.total | localeNumber }}</span>
           </div>
           @if (row.total > 0 && isExpanded(row.name)) {
             <div class="spell-list">
@@ -83,12 +93,12 @@
                     <span class="spell-elements">
                       @for (el of spell.byElement | keyvalue; track el.key) {
                         <span class="spell-element" [class]="elementClass($any(el.key))">{{
-                          el.value | numberFr
+                          el.value | localeNumber
                         }}</span>
                       }
                     </span>
                   }
-                  <span class="spell-total">{{ spell.total | numberFr }}</span>
+                  <span class="spell-total">{{ spell.total | localeNumber }}</span>
                 </div>
               }
             </div>

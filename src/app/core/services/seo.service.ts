@@ -93,15 +93,17 @@ export class SeoService {
 
   private seoKeyFor(
     view: ReturnType<NavigationService['view']>,
-    legalKind: 'notice' | 'privacy',
-  ): 'main' | 'profile' | 'account' | 'legalNotice' | 'privacyPolicy' {
+    legalKind: 'notice' | 'privacy' | 'terms',
+  ): 'main' | 'profile' | 'account' | 'legalNotice' | 'privacyPolicy' | 'termsOfService' {
     switch (view) {
       case 'profile':
         return 'profile';
       case 'account':
         return 'account';
       case 'legal':
-        return legalKind === 'privacy' ? 'privacyPolicy' : 'legalNotice';
+        if (legalKind === 'privacy') return 'privacyPolicy';
+        if (legalKind === 'terms') return 'termsOfService';
+        return 'legalNotice';
       case 'main':
       default:
         return 'main';

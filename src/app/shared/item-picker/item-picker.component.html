@@ -15,15 +15,6 @@
     <span class="item-picker-title">{{ 'items.interactTitle' | t }}</span>
   </div>
   <div class="item-picker-list">
-    <button
-      type="button"
-      class="item-picker-follow-btn"
-      [disabled]="request().isWatched"
-      [appTooltip]="request().isWatched ? ('items.alreadyWatched' | t) : null"
-      (click)="follow()"
-    >
-      + {{ 'items.follow' | t }}
-    </button>
     @if (showModify()) {
       <div class="item-picker-modify-row">
         <span class="item-picker-modify-label">{{ 'items.modifyQuantity' | t }}</span>

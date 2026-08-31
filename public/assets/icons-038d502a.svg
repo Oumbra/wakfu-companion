@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <!-- Sprite d'icônes partagées, point d'entrée unique : shared/icon/icon.component.ts.
+       Chaque <symbol> ne porte aucun fill/stroke/stroke-width propre : ces valeurs sont
+       posées sur le <svg> appelant (voir icon.component.html) et héritent dans le contenu
+       cloné par <use>, ce qui préserve currentColor et le strokeWidth paramétrable. -->
+  <symbol id="clock" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 3" />
+  </symbol>
+  <symbol id="clock-long" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3.5 3.5" />
+  </symbol>
+  <symbol id="reset" viewBox="0 0 24 24">
+    <path d="M4 4v5h5M20 20v-5h-5" />
+    <path d="M5.6 9A8 8 0 0 1 20 12M18.4 15A8 8 0 0 1 4 12" />
+  </symbol>
+  <symbol id="check" viewBox="0 0 24 24">
+    <path d="M4 12l5 5L20 6" />
+  </symbol>
+  <symbol id="chevron-left" viewBox="0 0 24 24">
+    <path d="M15 18l-6-6 6-6" />
+  </symbol>
+  <symbol id="edit" viewBox="0 0 24 24">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+  </symbol>
+  <symbol id="volume-on" viewBox="0 0 24 24">
+    <path d="M4 9v6h4l5 4V5L8 9H4z" />
+    <path d="M16.5 8.5a5 5 0 0 1 0 7" />
+    <path d="M19 6a8.5 8.5 0 0 1 0 12" />
+  </symbol>
+  <symbol id="volume-off" viewBox="0 0 24 24">
+    <path d="M4 9v6h4l5 4V5L8 9H4z" />
+    <path d="M3 3l18 18" />
+  </symbol>
+  <!-- Switch de regroupement de l'historique des combats (voir fight-history.component) : jour /
+       localisation (session-compte) / type de combat (donjon-famille de monstres). -->
+  <symbol id="calendar" viewBox="0 0 24 24">
+    <rect x="3" y="5" width="18" height="16" rx="2" />
+    <path d="M16 3v4M8 3v4M3 10h18" />
+  </symbol>
+  <symbol id="map-pin" viewBox="0 0 24 24">
+    <path d="M12 21s7-7.58 7-12A7 7 0 0 0 5 9c0 4.42 7 12 7 12z" />
+    <circle cx="12" cy="9" r="2.5" />
+  </symbol>
+  <symbol id="swords" viewBox="0 0 24 24">
+    <path d="M4 4l16 16M20 4L4 20" />
+    <path d="M2 2l4 4M22 2l-4 4M2 22l4-4M22 22l-4-4" />
+  </symbol>
+  <!-- Switch de mode du formulaire d'ajout au suivi (KPI) : incrémental (compte librement, sans
+       limite) vs décompte (vise une quantité définie à la création) — voir
+       tracker-strip.component.html / tracker.component.html. -->
+  <symbol id="trending-up" viewBox="0 0 24 24">
+    <path d="M3 17l6-6 4 4 8-8" />
+    <path d="M15 7h6v6" />
+  </symbol>
+  <symbol id="target" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="4" />
+  </symbol>
+  <!-- Section Chat repliée dans le menu latéral (voir DashboardRailComponent) : deux bulles de
+       dialogue superposées (rectangles arrondis décalés en diagonale + une pointe sur celle du
+       premier plan), pour se distinguer de l'icône Combat (symbole `crossed-swords` ci-dessous)
+       tout en restant lisible à petite taille. -->
+  <symbol id="messages-square" viewBox="0 0 24 24">
+    <rect x="2" y="3" width="14" height="9" rx="2" />
+    <rect x="8" y="10" width="14" height="9" rx="2" />
+    <path d="M11 19l-1 3 4-3" />
+  </symbol>
+  <!-- Icône Combat (rail replié, en-tête du damage-meter) : deux épées croisées, remplace le
+       bitmap `header-combat-*.png` à ces deux endroits — un SVG se colore via `currentColor`
+       (thème, hover...), contrairement à un PNG figé. Distinct du symbole `swords` ci-dessus
+       (croix abstraite, réservé au switch de regroupement de l'historique) : ici lame + garde +
+       poignée par épée pour rester identifiable comme des épées, pas juste une croix. Le PNG
+       reste utilisé dans la section "Combats" du session-recap (voir header-icons.data.ts) :
+       entouré des autres médaillons illustrés (XP, Kamas, Défis, Butin), un trait SVG fin y
+       détonnerait — vérifié à l'écran. -->
+  <symbol id="crossed-swords" viewBox="0 0 24 24">
+    <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2" />
+    <path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2" />
+  </symbol>
+  <!-- Section Achats repliée dans le menu latéral (voir DashboardRailComponent) : sac cabas,
+       distinct de l'horloge générique (symbole `clock`, réservée à l'historique de combats et au
+       panneau groupé) et du symbole Échanges ci-dessous. -->
+  <symbol id="shopping-bag" viewBox="0 0 24 24">
+    <path d="M6 8h12l1 12.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 20.5L6 8z" />
+    <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
+  </symbol>
+  <!-- Section Échanges repliée dans le menu latéral (voir DashboardRailComponent) : deux flèches
+       opposées (haut vers la droite, bas vers la gauche), motif classique d'échange/transfert. -->
+  <symbol id="arrows-exchange" viewBox="0 0 24 24">
+    <path d="M3 8h15M14 4l4 4-4 4" />
+    <path d="M21 16H6M10 12l-4 4 4 4" />
+  </symbol>
+  <!-- Carte Récap de session repliée dans le menu latéral (voir DashboardRailComponent) + en-tête
+       de sa propre carte (voir SessionRecapComponent) : parchemin déroulé, deux extrémités
+       enroulées (barres verticales arrondies) reliées par le bord plat du haut/bas, 2 traits
+       internes évoquant du texte écrit — remplace le médaillon bitmap utilisé auparavant dans la
+       modale (session-recap-icon.data.ts, retiré), un SVG se colorant via `currentColor` là où le
+       PNG restait figé. -->
+  <symbol id="scroll" viewBox="0 0 24 24">
+    <rect x="2" y="6" width="3" height="12" rx="1.5" />
+    <rect x="19" y="6" width="3" height="12" rx="1.5" />
+    <path d="M5 7.5h14M5 16.5h14" />
+    <path d="M9 11h6M9 14h4" />
+  </symbol>
+  <!-- Badge de doute sur une ligne de butin (voir loot-list.component) : objet dont la provenance
+       n'a pas pu être confirmée par recoupement avec les tables de drop des monstres du combat
+       (LootConfidence.doubtful, core/models/fight.model.ts) — point d'interrogation dans un
+       cercle, motif universellement associé à l'incertitude. -->
+  <symbol id="help-circle" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.2 9.3a2.8 2.8 0 0 1 5.4 1c0 2-2.6 2.2-2.6 3.7" />
+    <path d="M12 17.2h.01" />
+  </symbol>
+  <!-- Bouton "tout replier/déplier" du regroupement de l'historique des combats (voir
+       FightHistoryComponent.toggleAllGroups) : deux chevrons qui se rapprochent du centre
+       (collapse — au moins un groupe est déplié) / s'en écartent (expand — tout est replié),
+       le même vocabulaire visuel que les icônes Lucide `chevrons-down-up`/`chevrons-up-down`. -->
+  <symbol id="chevrons-collapse" viewBox="0 0 24 24">
+    <path d="M7 4l5 5 5-5" />
+    <path d="M7 20l5-5 5 5" />
+  </symbol>
+  <symbol id="chevrons-expand" viewBox="0 0 24 24">
+    <path d="M7 9l5-5 5 5" />
+    <path d="M7 15l5 5 5-5" />
+  </symbol>
+  <!-- Regroupement Donjon & Famille (voir SessionRecapComponent.detailMode et
+       FightHistoryComponent, mode "Donjons & familles") : petite porte en arche (repère visuel
+       d'un donjon), déjà dupliqué à 3 endroits avant cette extraction (switch de Récap, switch de
+       l'historique de combats, pictogramme de repli d'une ligne "Donjon & Famille" sans
+       illustration officielle) — voir CLAUDE.md, "un pictogramme rejoint le sprite dès qu'il est
+       répété". -->
+  <symbol id="dungeon" viewBox="0 0 24 24">
+    <path d="M6 20V10a6 6 0 0112 0v10" />
+    <path d="M6 20h12" />
+  </symbol>
+  <!-- Statut "a fui" d'une ligne de récap combat (voir entity-damage-list, EntityDamageRow.fled) —
+       porte + flèche sortante (motif "sortie", distinct du badge KO `app-ko-icon`) pour un
+       combattant qui a disparu ("X: disparaît", jamais "est hors-combat !") plutôt que d'avoir été
+       vaincu — voir CLAUDE.md, cas des mimiques. -->
+  <symbol id="flee" viewBox="0 0 24 24">
+    <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+    <path d="M16 17l5-5-5-5" />
+    <path d="M21 12H9" />
+  </symbol>
+  <!-- Badge "objet corrigeable" sur une ligne de butin (historique de combat, voir
+       LootListComponent) : nom présent plusieurs fois dans le catalogue (homonymes de rareté
+       différente, ex. "Larme d'Ogrest") — la résolution automatique par nom seul ne peut pas les
+       départager, une correction manuelle est possible via ItemPickerService. Clé plate simple,
+       registre "réparation/ajustement" plutôt qu'édition (déjà pris par `edit`, un crayon) ou
+       recherche (une loupe suggérerait plutôt "chercher" que "corriger"). Distinct du badge de
+       doute `help-circle` ci-dessus (incertitude sur la provenance) : ici, l'objet EST connu du
+       catalogue, juste ambigu entre plusieurs variantes. -->
+  <symbol id="wrench" viewBox="0 0 24 24">
+    <path
+      d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"
+    />
+  </symbol>
+</svg>

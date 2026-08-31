@@ -1,11 +1,11 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { NavigationService } from './navigation.service';
 
-export type LegalPageKind = 'notice' | 'privacy';
+export type LegalPageKind = 'notice' | 'privacy' | 'terms';
 
 /**
- * Pilote le contenu affiché par la page légale (mentions légales + politique de confidentialité,
- * voir LegalPageComponent) : ouverte/fermée depuis les liens du footer (AppFooterComponent) via
+ * Pilote le contenu affiché par la page légale (mentions légales + politique de confidentialité +
+ * CGU, voir LegalPageComponent) : ouverte/fermée depuis les liens du footer (AppFooterComponent) via
  * NavigationService, qui gère l'animation d'entrée/sortie (voir NavigationService.openLegal/pop) —
  * ce service ne porte plus que le choix du contenu (`kind`), plus d'état ouvert/fermé séparé
  * (redondant avec `NavigationService.view() === 'legal'`).

@@ -53,7 +53,6 @@
     </div>
   </div>
 
-  <app-session-recap />
   <app-loot-alert />
 
   @if (classPickerService.request(); as req) {
@@ -63,6 +62,14 @@
       [switchModeBlocked]="req.switchModeBlocked"
       (classChosen)="onClassChosen($event)"
       (closed)="classPickerService.close()"
+    />
+  }
+
+  @if (periodPickerService.request(); as req) {
+    <app-period-picker
+      [position]="req"
+      (picked)="onPeriodPicked($event)"
+      (closed)="periodPickerService.close()"
     />
   }
 
@@ -99,4 +106,5 @@
   <app-tooltip />
   <app-loading-overlay />
   <app-update-notice />
+  <app-load-more-scope-menu />
 </div>
