@@ -67,8 +67,10 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
  * CLAUDE.md) : la personnalisation choisie s'applique désormais aussi bien en desktop (panneaux
  * côte à côte) qu'en mobile (un onglet par panneau — `[class.tab-hidden]` posé sur chaque `.tool-panel`
  * ci-dessous compare `nav.dashboardTab()`/`nav.historyTab()` à SA propre identité, sans effet en
- * desktop où la règle CSS correspondante est scopée à `@media (max-width: 800px)`, voir
- * `dashboard.component.css`). Avant ce changement, un seuil `isDesktop` forçait un panneau groupé
+ * desktop où la règle CSS correspondante est scopée à `@media (max-width: 800px)` — GLOBALE, voir
+ * `.panels-row .tab-hidden` dans styles.css, pas dashboard.component.css : ce `.tool-panel` est
+ * rendu ICI, sous l'attribut d'encapsulation de vue de CE composant, qu'un sélecteur scopé à
+ * `DashboardComponent` ne peut pas atteindre). Avant ce changement, un seuil `isDesktop` forçait un panneau groupé
  * unique (les 3 volets) en mobile quel que soit le réglage — ce qui rendait Combat/Achats/Échanges
  * injoignables dès que l'utilisateur ne les regroupait pas (bug réel corrigé, voir CLAUDE.md).
  *
