@@ -581,7 +581,11 @@ export class FightHistoryComponent {
 
   /** Bouton bascule unique (voir CLAUDE.md/demande utilisateur, 2026-08-30) : replie tous les
    * groupes du mode actif si au moins un est déplié (`anyGroupExpanded`), les déplie tous sinon —
-   * jamais un état intermédiaire (ex. certains groupes repliés, d'autres non) au clic. */
+   * jamais un état intermédiaire (ex. certains groupes repliés, d'autres non) au clic. Dans le sens
+   * "replier" uniquement, referme aussi tout combat/run de donjon actuellement déplié
+   * (`expandedFightIds`/`expandedDungeonRunIds` — demande utilisateur explicite) : dans l'autre
+   * sens, ne JAMAIS les déplier en cascade — un combat démarre toujours replié (voir leur doc plus
+   * haut/CLAUDE.md), seuls les regroupements jour/lieu/type doivent réapparaître dépliés. */
   protected toggleAllGroups(): void {
     const mode = this.groupMode();
     const shouldCollapse = this.anyGroupExpanded();
@@ -592,6 +596,10 @@ export class FightHistoryComponent {
       else next.delete(compositeKey);
     }
     this.persistCollapsedGroups(next);
+    if (shouldCollapse) {
+      this.expandedFightIds.set(new Set());
+      this.expandedDungeonRunIds.set(new Set());
+    }
   }
 
   private persistCollapsedGroups(next: ReadonlySet<string>): void {
