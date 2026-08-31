@@ -59,9 +59,10 @@ export class LootListComponent {
    * `false` pour la carte de lecture seule du récap de session), (2) pour une ligne rattachée à un
    * combat précis (voir `fight`, absent pour le butin cumulé de session) ET (3) si le référentiel
    * Ankama connaît plusieurs objets de ce nom (sinon rien à départager, voir
-   * ItemPickerComponent.showModify) — sans ces trois conditions, le clic droit ne doit plus rien
-   * proposer du tout (voir CLAUDE.md : le bouton "Suivre" a été retiré du menu, qui ne sert donc
-   * plus qu'à cette correction). */
+   * ItemPickerComponent.showModify) — sans ces trois conditions, ni le badge clé plate (voir
+   * template) ni le clic droit sur la ligne ne doivent rien proposer (voir CLAUDE.md : le bouton
+   * "Suivre" a été retiré du menu, qui ne sert donc plus qu'à cette correction). Le badge évite en
+   * plus d'avoir à survoler chaque ligne pour découvrir qu'une correction est possible. */
   protected canInteract(row: LootRow): boolean {
     return (
       this.interactive() &&
@@ -70,6 +71,10 @@ export class LootListComponent {
     );
   }
 
+  /** Ouvre le menu de correction — déclenché soit par un clic droit n'importe où sur la ligne
+   * (`contextmenu`), soit par un clic gauche direct sur le badge de correction (voir
+   * `canInteract`) quand il est affiché : mêmes coordonnées d'ouverture (`event.clientX/Y`) dans
+   * les deux cas, donc positionné près du badge cliqué plutôt que recentré sur la ligne. */
   protected openInteractMenu(event: MouseEvent, row: LootRow): void {
     event.preventDefault();
     event.stopPropagation();
