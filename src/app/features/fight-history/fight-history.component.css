@@ -17,11 +17,21 @@
    `.history-source`/`.controls-row` ailleurs dans l'historique (barre juste sous les onglets). */
 .fight-group-controls {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   padding: 6px 10px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--surface-active);
   flex-shrink: 0;
+}
+/* Bouton "tout replier"/"tout déplier" (voir toggleCollapseAll) — mêmes dimensions que
+   `.icon-btn`/`.help-icon-btn` ailleurs, juste posé sans boîte (`.plain-icon-btn`) pour rester
+   discret à côté du switch de regroupement. */
+.collapse-all-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .fight-group-switch {
   width: auto;
