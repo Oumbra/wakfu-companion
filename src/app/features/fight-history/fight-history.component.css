@@ -17,18 +17,41 @@
    `.history-source`/`.controls-row` ailleurs dans l'historique (barre juste sous les onglets). */
 .fight-group-controls {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
   padding: 6px 10px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--surface-active);
   flex-shrink: 0;
 }
+/* Bouton "tout replier/déplier" (voir FightHistoryComponent.toggleAllGroups) — même ligne que le
+   switch de regroupement (justify-content: flex-end ci-dessus), placé avant lui. */
+.fight-group-toggle-all-btn {
+  flex-shrink: 0;
+}
+/* `.icon-switch`/`.icon-switch-3` (styles.css) répartissent leurs options via `flex:1` sur un
+   conteneur `width:auto` (shrink-to-fit) : sans espace excédentaire à distribuer, chaque option
+   garde sa largeur intrinsèque (poussée par son libellé) au lieu d'un vrai tiers égal — invisible
+   tant que les libellés font une taille proche ("Jour"/"Origine"/"Type"), redevenu un vrai bug une
+   fois "Type" renommé "Donjons & familles" (bien plus long que les deux autres) : le fond glissant
+   `.icon-switch-highlight`, lui, reste calé sur un tiers MATHÉMATIQUE (`calc(100% / 3)`) du
+   conteneur — décalage visible entre le fond et le bouton réellement sélectionné (bug remonté par
+   l'utilisateur, capture d'écran à l'appui, 2026-08-30). Grille à colonnes `1fr` plutôt que flex :
+   dans un conteneur en `width:auto`, CSS Grid étend TOUTES les colonnes `1fr` à la largeur de la
+   plus large d'entre elles (contrairement à flex, qui n'a rien à distribuer sans largeur fixée en
+   amont) — donc 3 boutons réellement égaux quel que soit l'écart de longueur de leurs libellés,
+   sans figer de largeur en dur (qui casserait dans les 3 autres locales de traductions). */
 .fight-group-switch {
   width: auto;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
 }
 .fight-group-switch-option {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   padding: 0 10px;
   font-size: 0.68rem;
@@ -63,6 +86,16 @@
 .fight-group-row:hover {
   background: var(--surface-raised);
 }
+/* Illustration de famille de monstre (voir FightGroup.imageUrl) — taille assortie au reste d'une
+   ligne de groupe compacte (label en 0.72rem), jamais aussi grande que `.fight-image` (48px, ligne
+   de combat individuelle) qui écraserait visuellement ce bandeau fin. */
+.fight-group-image {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
 .fight-group-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -73,6 +106,21 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Titre de section non cliquable au-dessus d'un paquet de groupes du mode "Donjons & familles" (voir
+   FightHistoryComponent.fightGroupSections) — style repris à l'identique de `.group-section-title`
+   dans session-recap.component.css (même système d'en-têtes, demande explicite de l'utilisateur,
+   2026-08-30), dupliqué ici plutôt que factorisé en classe globale : deux composants avec leur
+   propre feuille de style scopée, comme le reste de `.fight-group-row`/`.dungeon-row` ailleurs dans
+   l'app. */
+.fight-group-section-title {
+  padding: 6px 15px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .fight-group-count {
   margin-left: auto;
   flex-shrink: 0;
@@ -363,6 +411,14 @@
 .dungeon-run-summary {
   border-left: 3px solid var(--accent);
 }
+/* Déplié : liseré recoloré (`--dmg-light`, même teinte or/ambre que les dégâts Lumière — voir
+   `.dungeon-run-fights` juste en dessous) plutôt que de garder l'accent, + fond légèrement surélevé,
+   pour rester repérable au premier coup d'œil quand plusieurs regroupements de donjon se suivent
+   dans la liste (accent seul ne distingue pas "ouvert" de "fermé"). */
+.dungeon-run.expanded .dungeon-run-summary {
+  background: var(--surface-raised);
+  border-left-color: var(--dmg-light);
+}
 /* Nom du donjon, entre son image et le badge victoire/défaite (voir CLAUDE.md — le label d'un
    regroupement doit afficher l'image ET le nom du donjon, pas seulement l'image). `min-width: 0` +
    ellipsis : peut être compressé par `.dungeon-run-meta` (flush right) sur un panneau étroit
@@ -397,7 +453,13 @@
    propre à dupliquer, voir le template qui réutilise le même `ng-template`). */
 .dungeon-run-fights {
   background: var(--surface-well);
-  border-left: 3px solid var(--accent);
+  /* Même teinte que l'en-tête déplié (voir `.dungeon-run.expanded .dungeon-run-summary` ci-dessus) —
+     ce bloc n'existe dans le DOM que quand le run est déplié (voir `@if` du template), pas besoin
+     de scoper avec `.expanded` ici. */
+  border-left: 3px solid var(--dmg-light);
+  /* Léger retrait du contenu (combats) par rapport à l'en-tête du regroupement, pour marquer la
+     hiérarchie groupe → combats. */
+  padding-left: 10px;
 }
 .dungeon-run-fights .fight-entry:last-child {
   border-bottom: none;
@@ -511,6 +573,17 @@
   font-size: 0.68rem;
   font-weight: 700;
   color: var(--kama-color);
+}
+/* Recherche (app-loot-search) + switch de tri du butin, sur leur propre ligne sous le bandeau
+   titre — même principe que SessionRecapComponent (voir CLAUDE.md/son commentaire) : sur la même
+   ligne que le titre "BUTIN", le champ de recherche finirait par chevaucher le texte du titre dès
+   que le panneau n'est pas très large. `app-loot-search` occupe l'espace restant via son propre
+   `flex:1`, le switch reste compact à droite. */
+.loot-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 15px 6px;
 }
 
 .fight-xp-row {

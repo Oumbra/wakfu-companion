@@ -71,6 +71,7 @@ describe('parseFightsBody', () => {
       className: null,
       damage: 1234,
       defeated: false,
+      fled: false,
       spells: [],
       xpGained: 0,
     });
@@ -103,9 +104,66 @@ describe('parseFightsBody', () => {
     expect(parsed).toEqual({ ok: true, value: [] });
   });
 
+  it('défaute challengesPassed/challengesFailed à 0 quand absents (0 est une vraie valeur, pas "inconnu")', () => {
+    const parsed = parseFightsBody({ entries: [fightEntry()] });
+    expect(parsed.ok && parsed.value[0].challengesPassed).toBe(0);
+    expect(parsed.ok && parsed.value[0].challengesFailed).toBe(0);
+  });
+
+  it('transporte challengesPassed/challengesFailed quand fournis', () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ challengesPassed: 2, challengesFailed: 1 })],
+    });
+    expect(parsed.ok && parsed.value[0].challengesPassed).toBe(2);
+    expect(parsed.ok && parsed.value[0].challengesFailed).toBe(1);
+  });
+
+  it('refuse un challengesPassed négatif ou non entier', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ challengesPassed: -1 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('challengesPassed'),
+    });
+    expect(parseFightsBody({ entries: [fightEntry({ challengesFailed: 1.5 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('challengesFailed'),
+    });
+  });
+
   it('accepte un combat sans serveur de jeu résolu (champ vide, jamais un repli inventé)', () => {
     const parsed = parseFightsBody({ entries: [fightEntry({ gameServer: null })] });
     expect(parsed.ok && parsed.value[0].gameServer).toBe(null);
+  });
+
+  it('accepte et transporte un rattachement de donjon (dungeonId + dungeonRunKey)', () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ dungeonId: 500, dungeonRunKey: KEY_B })],
+    });
+    expect(parsed.ok && parsed.value[0].dungeonId).toBe(500);
+    expect(parsed.ok && parsed.value[0].dungeonRunKey).toBe(KEY_B);
+  });
+
+  it('accepte un combat sans rattachement de donjon (champs absents, jamais requis)', () => {
+    const parsed = parseFightsBody({ entries: [fightEntry()] });
+    expect(parsed.ok && parsed.value[0].dungeonId).toBe(null);
+    expect(parsed.ok && parsed.value[0].dungeonRunKey).toBe(null);
+  });
+
+  it("refuse un dungeonRunKey qui n'est pas un sha256 hexadécimal", () => {
+    const parsed = parseFightsBody({
+      entries: [fightEntry({ dungeonId: 500, dungeonRunKey: 'run-1' })],
+    });
+    expect(parsed).toEqual({ ok: false, error: expect.stringContaining('dungeonRunKey') });
+  });
+
+  it('refuse un dungeonId renseigné sans dungeonRunKey (et inversement)', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ dungeonId: 500 })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('ensemble'),
+    });
+    expect(parseFightsBody({ entries: [fightEntry({ dungeonRunKey: KEY_B })] })).toEqual({
+      ok: false,
+      error: expect.stringContaining('ensemble'),
+    });
   });
 
   it("refuse un clientKey qui n'est pas un sha256 hexadécimal", () => {

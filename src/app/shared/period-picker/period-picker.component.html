@@ -1,0 +1,57 @@
+<div
+  class="period-picker-backdrop"
+  (click)="close()"
+  (contextmenu)="$event.preventDefault(); close()"
+  appEscapeClose
+  (appEscapeClose)="close()"
+></div>
+<div
+  class="period-picker"
+  #picker
+  [style.left.px]="displayPosition().left"
+  [style.top.px]="displayPosition().top"
+>
+  <div class="period-picker-header">
+    <button type="button" class="period-picker-nav-btn" (click)="prevPage()">‹</button>
+    <span class="period-picker-page-label">{{ pageLabel() }}</span>
+    <button
+      type="button"
+      class="period-picker-nav-btn"
+      [disabled]="isNextPageDisabled()"
+      (click)="nextPage()"
+    >
+      ›
+    </button>
+  </div>
+
+  @if (position().granularity === 'day') {
+    <div class="period-picker-weekdays">
+      @for (label of weekdayLabels(); track $index) {
+        <span class="period-picker-weekday">{{ label }}</span>
+      }
+    </div>
+  }
+
+  <div
+    class="period-picker-grid"
+    [class.period-picker-grid-day]="position().granularity === 'day'"
+    [class.period-picker-grid-month]="position().granularity === 'month'"
+    [class.period-picker-grid-year]="position().granularity === 'year'"
+  >
+    @for (cell of cells(); track $index) {
+      @if (cell.dateMs === null) {
+        <span class="period-picker-cell period-picker-cell-empty"></span>
+      } @else {
+        <button
+          type="button"
+          class="period-picker-cell"
+          [class.selected]="isCellSelected(cell)"
+          [disabled]="isCellDisabled(cell)"
+          (click)="pick(cell)"
+        >
+          {{ cell.label }}
+        </button>
+      }
+    }
+  </div>
+</div>
