@@ -1,5 +1,5 @@
 @if (historical()) {
-  <div class="combat-info-toggle" (click)="toggleSwitches()">
+  <div class="combat-info-toggle" [class.turn-mode]="mode() === 'turn'" (click)="toggleSwitches()">
     <span class="combat-info-label">
       <img [src]="combatIcon" class="combat-info-icon" alt="" />
       {{ 'damageMeter.combatInfo' | t }}
@@ -28,7 +28,7 @@
     </span>
   </div>
 } @else {
-  <div class="combat-switch-row">
+  <div class="combat-switch-row" [class.turn-mode]="mode() === 'turn'">
     <app-damage-view-switch
       class="combat-switch-center"
       [mode]="mode()"
