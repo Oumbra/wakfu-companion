@@ -16,12 +16,19 @@ import type {
   AuthStore,
   AuthorizationRecord,
   IdentityRecord,
+  PairingRecord,
   ProviderId,
   SessionRecord,
   UserRecord,
 } from './store';
 
 interface StoredAuthorization extends AuthorizationRecord {
+  consumedAt: Date | null;
+}
+
+interface StoredPairing extends PairingRecord {
+  sessionToken: string | null;
+  claimedAt: Date | null;
   consumedAt: Date | null;
 }
 
@@ -38,6 +45,7 @@ export function createMemoryAuthStore(): MemoryAuthStore {
   const identities = new Map<string, IdentityRecord>();
   const sessions = new Map<string, SessionRecord>();
   const rateLimits = new Map<string, number>();
+  const pairings = new Map<string, StoredPairing>(); // clé : deviceCode
   let nextUserId = 1;
 
   const identityKey = (provider: ProviderId, providerUid: string) => `${provider}:${providerUid}`;
@@ -182,6 +190,44 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       for (const key of rateLimits.keys()) {
         const windowStart = new Date(key.slice(key.lastIndexOf('@') + 1));
         if (windowStart.getTime() < before.getTime()) rateLimits.delete(key);
+      }
+    },
+
+    async createPairing(record) {
+      pairings.set(record.deviceCode, {
+        ...record,
+        sessionToken: null,
+        claimedAt: null,
+        consumedAt: null,
+      });
+    },
+
+    async claimPairing(userCode, sessionToken, now) {
+      const row = [...pairings.values()].find((p) => p.userCode === userCode);
+      if (!row) return false;
+      if (row.claimedAt !== null) return false; // déjà réclamé
+      if (row.expiresAt.getTime() <= now.getTime()) return false;
+      row.sessionToken = sessionToken;
+      row.claimedAt = now;
+      return true;
+    },
+
+    async pollPairing(deviceCode, now) {
+      const row = pairings.get(deviceCode);
+      if (!row || row.expiresAt.getTime() <= now.getTime()) return { status: 'expired' };
+      // Vérifié AVANT le statut pending/claimed : une fois consommé, `sessionToken` est effacé,
+      // donc indiscernable d'un appairage encore pending si on ne teste pas `consumedAt` en 1er.
+      if (row.consumedAt !== null) return { status: 'expired' }; // déjà consommé par un poll précédent
+      if (!row.sessionToken || !row.claimedAt) return { status: 'pending' };
+      row.consumedAt = now;
+      const token = row.sessionToken;
+      row.sessionToken = null;
+      return { status: 'claimed', token };
+    },
+
+    async purgeExpiredPairings(now) {
+      for (const [deviceCode, row] of pairings) {
+        if (row.expiresAt.getTime() < now.getTime()) pairings.delete(deviceCode);
       }
     },
   };

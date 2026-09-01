@@ -631,6 +631,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'seo.title.termsOfService': "Conditions d'utilisation — Wakfu Companion",
     'seo.description.termsOfService':
       "Conditions générales d'utilisation de Wakfu Companion : description du service, position vis-à-vis d'Ankama, garanties et responsabilité.",
+    'nativePair.title': "Connecter l'overlay",
+    'nativePair.intro':
+      "Confirme ce code pour connecter l'overlay natif à ton compte Wakfu Companion.",
+    'nativePair.confirm': 'Confirmer',
+    'nativePair.confirming': 'Connexion en cours…',
+    'nativePair.success': 'Overlay connecté ! Tu peux fermer cette page.',
+    'nativePair.errorInvalid':
+      "Ce code est invalide, expiré, ou déjà utilisé — relance l'appairage depuis l'overlay.",
+    'nativePair.errorGeneric': 'Une erreur est survenue, réessaie.',
+    'nativePair.loginPrompt': "Connecte-toi pour confirmer l'appairage.",
+    'nativePair.missingCode': "Aucun code fourni — relance l'appairage depuis l'overlay.",
   },
   en: {
     'date.today': 'Today',
@@ -1245,6 +1256,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'seo.title.termsOfService': 'Terms of Service — Wakfu Companion',
     'seo.description.termsOfService':
       'Wakfu Companion terms of service: description of the service, position regarding Ankama, warranties and liability.',
+    'nativePair.title': 'Connect the overlay',
+    'nativePair.intro':
+      'Confirm this code to connect the native overlay to your Wakfu Companion account.',
+    'nativePair.confirm': 'Confirm',
+    'nativePair.confirming': 'Connecting…',
+    'nativePair.success': 'Overlay connected! You can close this page.',
+    'nativePair.errorInvalid':
+      'This code is invalid, expired, or already used — restart pairing from the overlay.',
+    'nativePair.errorGeneric': 'Something went wrong, try again.',
+    'nativePair.loginPrompt': 'Sign in to confirm the pairing.',
+    'nativePair.missingCode': 'No code provided — restart pairing from the overlay.',
   },
   es: {
     'date.today': 'Hoy',
@@ -1867,6 +1889,18 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'seo.title.termsOfService': 'Condiciones de uso — Wakfu Companion',
     'seo.description.termsOfService':
       'Condiciones generales de uso de Wakfu Companion: descripción del servicio, posición respecto a Ankama, garantías y responsabilidad.',
+    'nativePair.title': 'Conectar el overlay',
+    'nativePair.intro':
+      'Confirma este código para conectar el overlay nativo a tu cuenta de Wakfu Companion.',
+    'nativePair.confirm': 'Confirmar',
+    'nativePair.confirming': 'Conectando…',
+    'nativePair.success': '¡Overlay conectado! Puedes cerrar esta página.',
+    'nativePair.errorInvalid':
+      'Este código es inválido, ha expirado, o ya se usó — reinicia el emparejamiento desde el overlay.',
+    'nativePair.errorGeneric': 'Ocurrió un error, inténtalo de nuevo.',
+    'nativePair.loginPrompt': 'Inicia sesión para confirmar el emparejamiento.',
+    'nativePair.missingCode':
+      'No se proporcionó ningún código — reinicia el emparejamiento desde el overlay.',
   },
   pt: {
     'date.today': 'Hoje',
@@ -2488,5 +2522,17 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'seo.title.termsOfService': 'Termos de utilização — Wakfu Companion',
     'seo.description.termsOfService':
       'Termos gerais de utilização do Wakfu Companion: descrição do serviço, posição face à Ankama, garantias e responsabilidade.',
+    'nativePair.title': 'Ligar o overlay',
+    'nativePair.intro':
+      'Confirma este código para ligar o overlay nativo à tua conta Wakfu Companion.',
+    'nativePair.confirm': 'Confirmar',
+    'nativePair.confirming': 'A ligar…',
+    'nativePair.success': 'Overlay ligado! Podes fechar esta página.',
+    'nativePair.errorInvalid':
+      'Este código é inválido, expirou, ou já foi utilizado — reinicia o emparelhamento a partir do overlay.',
+    'nativePair.errorGeneric': 'Ocorreu um erro, tenta novamente.',
+    'nativePair.loginPrompt': 'Inicia sessão para confirmar o emparelhamento.',
+    'nativePair.missingCode':
+      'Nenhum código fornecido — reinicia o emparelhamento a partir do overlay.',
   },
 };

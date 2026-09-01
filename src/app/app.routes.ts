@@ -59,6 +59,15 @@ export const routes: Routes = [
     redirectTo: redirectToPreferredLocale('/terms-of-service'),
   },
   {
+    // Écran d'appairage d'un client natif (overlay) — volontairement HORS du système i18n/
+    // NavigationService ci-dessous (pas une vue du tableau de bord, un écran ponctuel type
+    // "device flow" ouvert par l'overlay). DOIT rester avant la route générique `:lang` sous
+    // peine d'être avalée par elle (`lang: 'pair'`).
+    path: 'pair',
+    loadComponent: () =>
+      import('./features/native-pair/native-pair.component').then((m) => m.NativePairComponent),
+  },
+  {
     path: ':lang',
     component: LocaleRouteComponent,
     canActivate: [localeGuard],
