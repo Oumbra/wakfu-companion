@@ -470,6 +470,36 @@ export const oauthAuthorizations = pgTable(
 );
 
 /**
+ * Appairage d'un client natif (overlay, lot L4 du plan overlay) — device
+ * pairing : le navigateur DÉJÀ connecté associe une session au code affiché
+ * par l'overlay, qui la récupère par sondage (`docs/plan-architecture.md`
+ * §7.2 du dépôt `wakfu-companion-overlay`).
+ *
+ * `deviceCode` (secret, jamais affiché) sert de clé primaire et de jeton de
+ * sondage — c'est lui que l'overlay garde. `userCode` (court, affiché à
+ * l'utilisateur ET saisi/confirmé côté navigateur) est indexé `unique` pour
+ * la résolution côté `/claim`. `sessionToken` est un jeton de TRANSIT :
+ * posé en clair par `/claim` (le jeton final de session, comme tout jeton
+ * natif, n'est de toute façon jamais stocké autrement qu'en clair tant que
+ * l'appelant ne l'a pas récupéré — voir `oauthAuthorizations.codeVerifier`
+ * pour le même principe), effacé par le premier `/poll` qui le renvoie
+ * (`consumedAt` empêche tout second envoi). La session elle-même est créée
+ * dans `sessions` dès `/claim`, hachée comme n'importe quelle autre.
+ */
+export const nativePairings = pgTable(
+  'native_pairings',
+  {
+    deviceCode: text('device_code').primaryKey(),
+    userCode: text('user_code').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    sessionToken: text('session_token'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (table) => [index('native_pairings_expires_at_idx').on(table.expiresAt)],
+);
+
+/**
  * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
  * compte »). Implémentée en base plutôt qu'en KV/Durable Object : ces routes
  * sont rares (une poignée d'appels par connexion), le coût d'une écriture
