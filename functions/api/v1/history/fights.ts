@@ -8,6 +8,10 @@ import {
   familyFightTypeUpdateSql,
 } from '../../../../server/history/fight-type';
 import {
+  loadCatalogFromDb,
+  recomputeDungeonRunsForBatch,
+} from '../../../../server/history/dungeon-run';
+import {
   MAX_HISTORY_BATCH,
   parseFightsBody,
   parsePageQuery,
@@ -41,12 +45,16 @@ import type { Env } from '../../_types';
  * Une requête de plus, mais un rejeu répare alors n'importe quel état
  * intermédiaire — ce qui est exactement la propriété recherchée par ce lot.
  *
- * Deux `UPDATE` supplémentaires suivent l'étape 3 : calcul de `fights.fight_type` (voir
- * `server/history/fight-type.ts`) pour tout le lot, nouveaux combats comme combats déjà connus —
- * nécessaire APRÈS l'écriture des participants (la classification hors donjon dépend de
- * `fight_participants.monster_id`) et rejouée à chaque envoi (pas seulement à l'insertion) pour
- * qu'une salle recevant son `dungeonId` a posteriori (voir sa doc) voie `fight_type` recalculée
- * dans la foulée plutôt que de rester figée à sa valeur initiale.
+ * Deux traitements supplémentaires suivent l'étape 3, nécessaires APRÈS l'écriture des
+ * participants (tous deux en dépendent) et rejoués à CHAQUE envoi (pas seulement à l'insertion) :
+ *   - Regroupement de donjon multi-salles en autorité (voir `server/history/dungeon-run.ts`) — en
+ *     complément du rattachement déjà envoyé par le client, pour le cas cross-session/cross-client
+ *     qu'aucun calcul client seul ne peut voir.
+ *   - Calcul de `fights.fight_type` (voir `server/history/fight-type.ts`) pour tout le lot,
+ *     nouveaux combats comme combats déjà connus — la classification hors donjon dépend de
+ *     `fight_participants.monster_id`, et un `dungeonId` fraîchement résolu par le point
+ *     précédent doit voir `fight_type` recalculée dans la foulée plutôt que de rester figée à sa
+ *     valeur initiale.
  */
 
 /** Garde-fou de taille, en miroir de `MAX_HISTORY_BATCH` (un combat porte jusqu'à 64 participants). */
@@ -174,6 +182,47 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       });
   }
 
+  const touchedFightIds = [...idByKey.values()];
+
+  // Regroupement de donjon multi-salles en autorité (voir server/history/dungeon-run.ts) — AVANT
+  // le recalcul de `fight_type` juste en dessous, pour qu'un `dungeonId` fraîchement résolu ici
+  // alimente `fight_type` dans la même requête plutôt que d'attendre le prochain envoi. Complète
+  // (jamais ne remplace) le rattachement déjà envoyé par le client (COALESCE ci-dessus) : couvre
+  // le cas qu'aucun calcul client (web ou overlay, borné à sa session locale) ne peut voir seul.
+  if (touchedFightIds.length > 0) {
+    const enemyNamesByFightId = new Map<number, string[]>();
+    for (const row of participantRows) {
+      if (row.side !== 'enemy') continue;
+      const list = enemyNamesByFightId.get(row.fightId) ?? [];
+      list.push(row.name);
+      enemyNamesByFightId.set(row.fightId, list);
+    }
+    // État RÉEL en base après l'upsert ci-dessus (pas ce que CE lot a envoyé) : une salle déjà
+    // connue peut avoir un `dungeonId` posé par un envoi précédent (COALESCE), ou par un autre
+    // client — jamais recalculer à partir du seul payload de ce lot.
+    const touchedFightRows = await db
+      .select({
+        id: fights.id,
+        startedAt: fights.startedAt,
+        won: fights.won,
+        dungeonId: fights.dungeonId,
+        dungeonRunKey: fights.dungeonRunKey,
+      })
+      .from(fights)
+      .where(inArray(fights.id, touchedFightIds));
+
+    const catalog = await loadCatalogFromDb(db);
+    await recomputeDungeonRunsForBatch(
+      db,
+      userId,
+      catalog,
+      touchedFightRows.map((row) => ({
+        ...row,
+        enemyNames: enemyNamesByFightId.get(row.id) ?? [],
+      })),
+    );
+  }
+
   // Classification matérialisée du combat (`fight_type`, voir server/history/fight-type.ts) —
   // recalculée pour TOUT le lot (combats nouveaux comme déjà connus) : un combat déjà connu peut
   // être renvoyé uniquement pour son rattachement de donjon a posteriori (voir la doc de
@@ -181,7 +230,6 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   // requête plutôt que de rester figée à sa valeur `FAMILY_*`/`EVENT`/`null` initiale. Nécessite les
   // participants déjà écrits (requête précédente) : la classification "hors donjon" dépend de
   // `fight_participants.monster_id`.
-  const touchedFightIds = [...idByKey.values()];
   if (touchedFightIds.length > 0) {
     const scope = sql`f.id in (${sql.join(
       touchedFightIds.map((id) => sql`${id}`),
