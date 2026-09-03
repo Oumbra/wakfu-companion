@@ -120,7 +120,17 @@ export function unauthenticated(): Response {
  * ⚠ Aucun repli sur le cookie en l'absence d'en-tête : ce serait exactement
  * ce que la protection cherche à empêcher (le cookie voyage tout seul, pas
  * l'en-tête).
+ *
+ * **Exception porteur `Authorization: Bearer` (client natif)** — voir la doc de `readBearerToken` :
+ * ce chemin n'est jamais envoyé automatiquement par un navigateur, donc rien à protéger contre un
+ * site tiers. **Correctif du 2026-09-03** (retour utilisateur : overlay `wakfu-companion-overlay`,
+ * historique jamais synchronisé) : cette exception était déjà DOCUMENTÉE ci-dessus depuis
+ * l'introduction de l'appairage natif (lot L4) mais jamais câblée ici — les 3 endpoints mutatifs
+ * (`/api/v1/history/{fights,purchases,trades}`) appelaient `requireCsrf` sans condition, donc
+ * rejetaient systématiquement en 403 toute requête authentifiée par porteur, faute de
+ * `X-CSRF-Token` (que ce client ne peut de toute façon pas produire : pas de cookie `wc_csrf`).
  */
 export async function requireCsrf(request: Request, auth: AuthenticatedContext): Promise<boolean> {
+  if (request.headers.get('authorization')?.startsWith('Bearer ')) return true;
   return verifyCsrf(auth.sessionToken, request.headers.get('x-csrf-token'));
 }
