@@ -629,25 +629,35 @@ export const fights = pgTable(
     fightLogId: bigint('fight_log_id', { mode: 'number' }),
     /**
      * Donjon identifié pour ce combat (id Ankama, catalogue `dungeons`) — `null` pour un combat
-     * hors donjon (chasse libre, PvP...) ou dont le donjon n'est pas encore identifié (combat de
-     * salle synchronisé avant le combat de boss qui révèle le donjon, voir `dungeonRunKey`
-     * ci-dessous). Résolu côté client (`HistorySyncService`, même logique que l'affichage —
-     * `findDungeonForEnemies`/`groupDungeonRuns`, voir dungeon-run-grouping.util.ts), jamais
-     * recalculé côté serveur.
+     * hors donjon (chasse libre, PvP...) ou dont le donjon n'est pas encore identifié. Résolu
+     * d'abord côté client (`HistorySyncService`/`dungeon-run-grouping.util.ts` côté web,
+     * `dungeon_run.rs` côté overlay — même algorithme porté deux fois), puis **recalculé côté
+     * serveur** en autorité après chaque envoi (`server/history/dungeon-run.ts`, appelée depuis
+     * `functions/api/v1/history/fights.ts`) : les deux calculs client sont bornés à l'historique
+     * de LEUR SESSION LOCALE en cours, donc ne peuvent jamais rattacher une salle dont le boss du
+     * même run a été rejoué dans une autre session ou par l'autre client (web ↔ overlay) — le
+     * serveur, qui voit tout l'historique du compte, comble ce trou.
      *
      * Contrairement au reste de cette table (événement immuable, voir `fightLogId` ci-dessus),
-     * MODIFIABLE après insertion (`ON CONFLICT DO UPDATE`, voir functions/api/v1/history/fights.ts)
-     * : une salle envoyée avant le boss de son run est réenfilée par le client dès que celui-ci est
-     * identifié, pour recevoir sa valeur a posteriori.
+     * MODIFIABLE après insertion (client comme serveur, voir `functions/api/v1/history/fights.ts`)
+     * : une salle sans rattachement le reçoit dès que le boss du même run est identifié, par
+     * n'importe lequel des deux calculs (client à sa prochaine session, ou serveur au prochain
+     * envoi qui révèle ce boss) — jamais écrasé une fois posé (`WHERE dungeon_id IS NULL` côté
+     * serveur, `COALESCE` côté insertion pour la valeur envoyée par le client).
      */
     dungeonId: integer('dungeon_id').references(() => dungeons.id),
     /**
      * Identifiant partagé par tous les combats d'un même run de donjon (salles + boss), pour
-     * permettre un `GROUP BY` direct côté statistiques sans avoir à rejouer le regroupement client
-     * (`groupDungeonRuns`) — dérivé côté client de la signature du combat de boss du run, même
-     * mécanisme de hachage que `clientKey` (voir `client-key.util.ts`). `null` en miroir de
-     * `dungeonId` (combat hors donjon multi-salles, ou pas encore rattaché). Même règle de mise à
-     * jour a posteriori que `dungeonId` ci-dessus.
+     * permettre un `GROUP BY` direct côté statistiques sans avoir à rejouer le regroupement —
+     * dérivé côté client de la signature du combat de boss du run, même mécanisme de hachage que
+     * `clientKey` (voir `client-key.util.ts`). `null` en miroir de `dungeonId` (combat hors donjon
+     * multi-salles, ou pas encore rattaché). Même règle de mise à jour a posteriori que `dungeonId`
+     * ci-dessus — y compris le rattachement calculé côté serveur, dont la clé n'est alors PAS un
+     * vrai `sha256` mais une valeur synthétique `migrated:<id du combat représentatif>` (voir
+     * `server/history/dungeon-run.ts::mintRunKey`) quand aucun des deux clients n'a encore fourni
+     * de vraie signature pour ce run — jamais réécrite ensuite si un client la fournit plus tard
+     * (`WHERE dungeon_id IS NULL`, la clé synthétique n'est écrasée que si `dungeonId` lui-même
+     * l'est aussi, ce qui n'arrive jamais une fois posé).
      */
     dungeonRunKey: text('dungeon_run_key'),
     /**
