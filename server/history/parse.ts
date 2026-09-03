@@ -162,13 +162,43 @@ function parseText(raw: unknown, field: string): ParseResult<string> {
   return { ok: true, value: raw };
 }
 
-/** Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. */
-function parseCount(raw: unknown, field: string, optional = false): ParseResult<number | null> {
+/**
+ * Borne d'une colonne Postgres `integer` (32 bits signés) — au-delà, l'`INSERT` échoue avec
+ * `numeric field overflow`, une exception NON interceptée qui remonte en 500 générique (voir la
+ * doc de `max` ci-dessous pour l'incident réel que ça a causé).
+ */
+const PG_INT32_MAX = 2_147_483_647;
+
+/**
+ * Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. `max`, quand
+ * fourni, doit correspondre au type de la colonne Postgres réellement écrite (voir
+ * `server/db/schema.ts`) — **obligatoire pour toute colonne `integer`** (32 bits, ex.
+ * `fights.duration_ms`), inutile pour une colonne `bigint` (kamas/xp/dégâts : jusqu'à ~9,2×10¹⁸,
+ * largement au-delà de `Number.MAX_SAFE_INTEGER`, qui borne de toute façon tout `number` JS reçu).
+ *
+ * **Correctif du 2026-09-04** (retour utilisateur, overlay `wakfu-companion-overlay`) : `durationMs`
+ * n'était borné nulle part avant l'écriture en base. Un combat restauré après un redémarrage de
+ * l'overlay (`FightWorking::started_at_ms` retombant sur l'epoch faute d'horodatage persisté — voir
+ * `overlay-engine::fight_store`) produisait un `durationMs` de plusieurs dizaines d'années en
+ * millisecondes, largement au-delà de `integer` (32 bits) — l'`INSERT` levait une exception non
+ * gérée (500 générique côté Cloudflare, `error code: 1101`), qui bloquait la totalité du lot envoyé
+ * (jusqu'à 50 événements, combats/achats/échanges confondus, voir `MAX_HISTORY_BATCH`) — pas
+ * seulement le combat fautif — puisque `SyncQueue::flush_once` traite un lot en un seul `POST`.
+ */
+function parseCount(
+  raw: unknown,
+  field: string,
+  optional = false,
+  max?: number,
+): ParseResult<number | null> {
   if (raw === null || raw === undefined) {
     return optional ? { ok: true, value: null } : { ok: false, error: `${field} manquant` };
   }
   if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
     return { ok: false, error: `${field} invalide : ${String(raw)}` };
+  }
+  if (max !== undefined && raw > max) {
+    return { ok: false, error: `${field} trop grand : ${raw}` };
   }
   return { ok: true, value: raw };
 }
@@ -318,7 +348,7 @@ function parseLootRow(raw: unknown, lineIndex: number): ParseResult<FightLootInp
 
   const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'loot');
   if (!identity.ok) return identity;
-  const quantity = parseCount(entry['quantity'], 'loot.quantity');
+  const quantity = parseCount(entry['quantity'], 'loot.quantity', false, PG_INT32_MAX);
   if (!quantity.ok) return quantity;
 
   return {
@@ -396,7 +426,7 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!fightId.ok) return fightId;
       const startedAt = parseDate(entry['startedAt'], 'startedAt');
       if (!startedAt.ok) return startedAt;
-      const durationMs = parseCount(entry['durationMs'], 'durationMs', true);
+      const durationMs = parseCount(entry['durationMs'], 'durationMs', true, PG_INT32_MAX);
       if (!durationMs.ok) return durationMs;
       const turns = parseCount(entry['turns'], 'turns', true);
       if (!turns.ok) return turns;
@@ -486,7 +516,7 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
       if (!clientKey.ok) return clientKey;
       const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'purchase');
       if (!identity.ok) return identity;
-      const quantity = parseCount(entry['quantity'], 'quantity');
+      const quantity = parseCount(entry['quantity'], 'quantity', false, PG_INT32_MAX);
       if (!quantity.ok) return quantity;
       const totalCost = parseCount(entry['totalCost'], 'totalCost');
       if (!totalCost.ok) return totalCost;
@@ -550,7 +580,7 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
         }
         const identity = parseItemIdentity(item['itemId'], item['itemName'], 'items');
         if (!identity.ok) return identity;
-        const quantity = parseCount(item['quantity'], 'items.quantity');
+        const quantity = parseCount(item['quantity'], 'items.quantity', false, PG_INT32_MAX);
         if (!quantity.ok) return quantity;
 
         items.push({
