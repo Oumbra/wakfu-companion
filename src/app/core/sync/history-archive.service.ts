@@ -6,12 +6,18 @@ import {
   StatsStoreService,
   type EntityDamageRow,
   type FightRecord,
+  type PactExtractionRecord,
   type PurchaseRecord,
   type SpellBreakdownRow,
   type TradeRecord,
 } from '../services/stats-store.service';
 import { HISTORY_ENDPOINTS, type HistoryEventKind } from './history-event.model';
-import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from './history-dedup.util';
+import {
+  fightDedupKey,
+  pactExtractionDedupKey,
+  purchaseDedupKey,
+  tradeDedupKey,
+} from './history-dedup.util';
 import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
 import { localDayStart } from '../utils/local-period.util';
@@ -78,6 +84,16 @@ interface PurchasePage {
   nextBefore: string | null;
 }
 
+interface PactExtractionPage {
+  entries: {
+    clientKey: string;
+    occurredAt: string;
+    gameServer: string | null;
+    items: { itemId: number | null; itemName: string | null; quantity: number }[];
+  }[];
+  nextBefore: string | null;
+}
+
 interface TradePage {
   entries: {
     clientKey: string;
@@ -140,6 +156,7 @@ export class HistoryArchiveService {
   private readonly _fights = signal<readonly FightRecord[]>([]);
   private readonly _purchases = signal<readonly PurchaseRecord[]>([]);
   private readonly _trades = signal<readonly TradeRecord[]>([]);
+  private readonly _pactExtractions = signal<readonly PactExtractionRecord[]>([]);
   private readonly _loading = signal(false);
   private readonly _failed = signal(false);
   /** Curseur de la page suivante par type ; `null` + `loaded` = tout est chargé. */
@@ -158,6 +175,7 @@ export class HistoryArchiveService {
   readonly fights = this._fights.asReadonly();
   readonly purchases = this._purchases.asReadonly();
   readonly trades = this._trades.asReadonly();
+  readonly pactExtractions = this._pactExtractions.asReadonly();
   readonly loading = this._loading.asReadonly();
   /** Vrai quand la dernière lecture a échoué (hors ligne, serveur indisponible). */
   readonly failed = this._failed.asReadonly();
@@ -186,6 +204,15 @@ export class HistoryArchiveService {
     const sessionOnly = this.stats
       .purchaseHistory()
       .filter((record) => !accountKeys.has(purchaseDedupKey(record)));
+    return [...sessionOnly, ...account].sort((a, b) => b.fullTimestampMs - a.fullTimestampMs);
+  });
+
+  readonly mergedPactExtractions = computed<readonly PactExtractionRecord[]>(() => {
+    const account = this._pactExtractions();
+    const accountKeys = new Set(account.map(pactExtractionDedupKey));
+    const sessionOnly = this.stats
+      .pactExtractionHistory()
+      .filter((record) => !accountKeys.has(pactExtractionDedupKey(record)));
     return [...sessionOnly, ...account].sort((a, b) => b.fullTimestampMs - a.fullTimestampMs);
   });
 
@@ -222,10 +249,9 @@ export class HistoryArchiveService {
 
     const before = this.cursors.get(kind);
     const query = `?limit=${PAGE_SIZE}${before ? `&before=${encodeURIComponent(before)}` : ''}`;
-    const result = await this.api.getJson<FightPage | PurchasePage | TradePage>(
-      `${HISTORY_ENDPOINTS[kind]}${query}`,
-      { retries: 0 },
-    );
+    const result = await this.api.getJson<
+      FightPage | PurchasePage | TradePage | PactExtractionPage
+    >(`${HISTORY_ENDPOINTS[kind]}${query}`, { retries: 0 });
     this._loading.set(false);
 
     if (!result.ok) {
@@ -281,6 +307,21 @@ export class HistoryArchiveService {
           ...current,
           ...(result.data as TradePage).entries.map((entry, index) =>
             toTradeRecord(
+              entry,
+              current.length + index,
+              this.catalog,
+              this.i18n,
+              this.stats,
+              this.historySync,
+            ),
+          ),
+        ]);
+        break;
+      case 'pact':
+        this._pactExtractions.update((current) => [
+          ...current,
+          ...(result.data as PactExtractionPage).entries.map((entry, index) =>
+            toPactExtractionRecord(
               entry,
               current.length + index,
               this.catalog,
@@ -361,6 +402,8 @@ export class HistoryArchiveService {
         return this._purchases;
       case 'trade':
         return this._trades;
+      case 'pact':
+        return this._pactExtractions;
     }
   }
 
@@ -369,6 +412,7 @@ export class HistoryArchiveService {
     this._fights.set([]);
     this._purchases.set([]);
     this._trades.set([]);
+    this._pactExtractions.set([]);
     this.cursors.clear();
     this.loaded.clear();
     this._exhausted.set([]);
@@ -489,6 +533,31 @@ export class HistoryArchiveService {
       }),
     );
     if (corrected) this.historySync.recordTrade(corrected);
+  }
+
+  /** Miroir de reassignTradeItem, pour une ligne d'objet extrait d'un pacte — un seul tableau
+   * d'objets (pas de direction acquired/given, voir PactExtractionRecord). */
+  reassignPactItem(
+    pact: Pick<PactExtractionRecord, 'time' | 'items'>,
+    itemName: string,
+    sourceCatalogId: number | null,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const pactKey = pactExtractionDedupKey(pact);
+    let corrected: PactExtractionRecord | null = null;
+    this._pactExtractions.update((list) =>
+      list.map((p) => {
+        if (pactExtractionDedupKey(p) !== pactKey) return p;
+        const items = [...p.items];
+        const row = findRowByCatalogId(items, itemName, sourceCatalogId);
+        if (!row) return p;
+        splitRowInPlace(items, row, quantity, catalogId);
+        corrected = { ...p, items };
+        return corrected;
+      }),
+    );
+    if (corrected) this.historySync.recordPactExtraction(corrected);
   }
 }
 
@@ -785,5 +854,47 @@ function toTradeRecord(
     kamasGiven: entry.kamasGiven,
   };
   if (anyCorrected) historySync.recordTrade(record);
+  return record;
+}
+
+function toPactExtractionRecord(
+  entry: PactExtractionPage['entries'][number],
+  index: number,
+  catalog: CatalogService,
+  i18n: I18nService,
+  stats: StatsStoreService,
+  historySync: HistorySyncService,
+): PactExtractionRecord {
+  const time = toLogTime(entry.occurredAt);
+  const items = entry.items.map((item) => ({
+    name: resolveItemName(item.itemId, item.itemName, catalog, i18n),
+    catalogId: item.itemId,
+    quantity: item.quantity,
+  }));
+  const pactKey = pactExtractionDedupKey({ time, items });
+
+  let anyCorrected = false;
+  // sourceCatalogId = catalogId TEL QU'ENVOYÉ PAR LE SERVEUR pour cette ligne — voir
+  // toTradeRecord.applyCorrections, même principe.
+  for (const item of items) {
+    const correction = stats.findPactItemCorrection(
+      pactKey,
+      item.name,
+      item.catalogId,
+      item.quantity,
+    );
+    if (correction !== null) {
+      item.catalogId = correction;
+      anyCorrected = true;
+    }
+  }
+
+  const record: PactExtractionRecord = {
+    id: archiveId(index),
+    items,
+    time,
+    fullTimestampMs: new Date(entry.occurredAt).getTime(),
+  };
+  if (anyCorrected) historySync.recordPactExtraction(record);
   return record;
 }

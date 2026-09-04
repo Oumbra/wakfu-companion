@@ -193,6 +193,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.header': 'Échanges',
     'trades.searchPlaceholder': 'Rechercher un objet, une date ou un personnage...',
     'trades.empty': 'Aucun échange enregistré.',
+    'pacts.header': 'Pacte',
+    'pacts.searchPlaceholder': 'Rechercher un objet ou une date...',
+    'pacts.empty': 'Aucune extraction de pacte enregistrée.',
+    'pacts.emptyLoot': 'Aucun objet de pacte pour le moment.',
     'trades.acquired': 'Acquis',
     'trades.given': 'Cédés',
     'trades.kamas': 'Kamas',
@@ -284,6 +288,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.histCombats': 'Combats',
     'profile.dashboardLayout.slot.purchases': 'Achats',
     'profile.dashboardLayout.slot.trades': 'Échanges',
+    'profile.dashboardLayout.slot.pacts': 'Pacte',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.recap': 'Récap de session',
     'profile.dashboardLayout.slot.histGroupFull': 'Historique',
@@ -456,6 +461,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.trades.title': 'Historique > Échanges',
     'help.trades.body':
       "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (personnage, objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seuls les échanges de la session en cours sont visibles.\n\nClic droit sur un objet donné ou reçu : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
+    'help.pacts.title': 'Historique > Pacte',
+    'help.pacts.body':
+      "La feature « Pacte » du jeu détourne le butin de vos combats vers une dimension séparée : vos combats n'affichent alors plus aucun butin propre, les objets accumulés ne redevenant visibles qu'au moment d'une extraction manuelle en jeu.\n\nCette carte n'apparaît que si au moins une extraction a été détectée dans le fichier de log actuellement connecté. Chaque extraction garde sa propre ligne, horodatée, avec la liste complète des objets récupérés à ce moment-là — jamais fusionnée avec une autre extraction.\n\nRegroupées par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seules les extractions de la session en cours sont visibles.\n\nClic droit sur un objet extrait : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
     'help.chat.title': 'Chat',
     'help.chat.body':
       "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes recherches textuelles personnalisées (mot-clé + canal, ou tous canaux) peuvent être ajoutées : un message qui correspond est mis en surbrillance et déclenche une alerte sonore — les recherches ne masquent plus aucun message, elles se contentent de le signaler.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique.",
@@ -829,6 +837,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.header': 'Trades',
     'trades.searchPlaceholder': 'Search an item, a date or a character...',
     'trades.empty': 'No trade recorded.',
+    'pacts.header': 'Pact',
+    'pacts.searchPlaceholder': 'Search an item or a date...',
+    'pacts.empty': 'No pact extraction recorded.',
+    'pacts.emptyLoot': 'No pact items yet.',
     'trades.acquired': 'Received',
     'trades.given': 'Given',
     'trades.kamas': 'Kamas',
@@ -920,6 +932,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.histCombats': 'Combats',
     'profile.dashboardLayout.slot.purchases': 'Purchases',
     'profile.dashboardLayout.slot.trades': 'Trades',
+    'profile.dashboardLayout.slot.pacts': 'Pact',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.recap': 'Session recap',
     'profile.dashboardLayout.slot.histGroupFull': 'History',
@@ -1087,6 +1100,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.trades.title': 'History > Trades',
     'help.trades.body':
       'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (character, item or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only trades from the current session are visible.\n\nRight-click a given or received item: fix its identity if it was misidentified, and add it to tracking in one click.',
+    'help.pacts.title': 'History > Pact',
+    'help.pacts.body':
+      'The game\'s "Pact" feature diverts your combat loot into a separate dimension: your fights then show no loot of their own, items only becoming visible again once manually extracted in-game.\n\nThis card only appears once at least one extraction has been detected in the currently connected log file. Each extraction keeps its own timestamped line, with the full list of items collected at that moment — never merged with another extraction.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only extractions from the current session are visible.\n\nRight-click an extracted item: fix its identity if it was misidentified, and add it to tracking in one click.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Shows chat messages read from wakfu.log, sorted by channel (Nearby, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you display only certain channels.\n\nCustom text filters (keyword + channel, or all channels) can be added: a matching message is highlighted and triggers a sound alert — filters no longer hide any message, they only flag it.\n\nAuto-scroll stops as soon as you manually scroll back up through the history.',
@@ -1455,6 +1471,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.header': 'Intercambios',
     'trades.searchPlaceholder': 'Buscar un objeto, una fecha o un personaje...',
     'trades.empty': 'Ningún intercambio registrado.',
+    'pacts.header': 'Pacto',
+    'pacts.searchPlaceholder': 'Buscar un objeto o una fecha...',
+    'pacts.empty': 'Ninguna extracción de pacto registrada.',
+    'pacts.emptyLoot': 'Ningún objeto de pacto por ahora.',
     'trades.acquired': 'Adquiridos',
     'trades.given': 'Cedidos',
     'trades.kamas': 'Kamas',
@@ -1548,6 +1568,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.histCombats': 'Combates',
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Intercambios',
+    'profile.dashboardLayout.slot.pacts': 'Pacto',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.recap': 'Resumen de sesión',
     'profile.dashboardLayout.slot.histGroupFull': 'Historial',
@@ -1717,6 +1738,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.trades.title': 'Historial > Intercambios',
     'help.trades.body':
       'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (personaje, objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles los intercambios de la sesión actual.\n\nClic derecho en un objeto dado o recibido: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
+    'help.pacts.title': 'Historial > Pacto',
+    'help.pacts.body':
+      'La función «Pacto» del juego desvía el botín de tus combates hacia una dimensión separada: tus combates ya no muestran ningún botín propio, los objetos acumulados solo vuelven a ser visibles al extraerlos manualmente en el juego.\n\nEsta tarjeta solo aparece si se ha detectado al menos una extracción en el archivo de registro actualmente conectado. Cada extracción conserva su propia línea con fecha y hora, con la lista completa de objetos recogidos en ese momento — nunca fusionada con otra extracción.\n\nAgrupadas por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles las extracciones de la sesión actual.\n\nClic derecho en un objeto extraído: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Muestra los mensajes de chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo ciertos canales.\n\nSe pueden añadir filtros de texto personalizados (palabra clave + canal, o todos los canales): un mensaje que coincide se resalta y dispara una alerta sonora — los filtros ya no ocultan ningún mensaje, solo lo señalan.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente por el historial.',
@@ -2089,6 +2113,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'trades.header': 'Trocas',
     'trades.searchPlaceholder': 'Pesquisar um item, uma data ou um personagem...',
     'trades.empty': 'Nenhuma troca registrada.',
+    'pacts.header': 'Pacto',
+    'pacts.searchPlaceholder': 'Pesquisar um item ou uma data...',
+    'pacts.empty': 'Nenhuma extração de pacto registrada.',
+    'pacts.emptyLoot': 'Nenhum item de pacto por enquanto.',
     'trades.acquired': 'Adquiridos',
     'trades.given': 'Cedidos',
     'trades.kamas': 'Kamas',
@@ -2181,6 +2209,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.slot.histCombats': 'Combates',
     'profile.dashboardLayout.slot.purchases': 'Compras',
     'profile.dashboardLayout.slot.trades': 'Trocas',
+    'profile.dashboardLayout.slot.pacts': 'Pacto',
     'profile.dashboardLayout.slot.chat': 'Chat',
     'profile.dashboardLayout.slot.recap': 'Resumo da sessão',
     'profile.dashboardLayout.slot.histGroupFull': 'Histórico',
@@ -2350,6 +2379,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.trades.title': 'Histórico > Trocas',
     'help.trades.body':
       'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (personagem, item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as trocas da sessão atual ficam visíveis.\n\nClique com o botão direito em um item dado ou recebido: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
+    'help.pacts.title': 'Histórico > Pacto',
+    'help.pacts.body':
+      'A feature "Pacto" do jogo desvia o butim dos seus combates para uma dimensão separada: seus combates deixam então de mostrar qualquer butim próprio, os itens acumulados só voltam a ficar visíveis no momento de uma extração manual no jogo.\n\nEste cartão só aparece se pelo menos uma extração foi detectada no arquivo de log atualmente conectado. Cada extração mantém sua própria linha, com data e hora, com a lista completa dos itens coletados naquele momento — nunca fundida com outra extração.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as extrações da sessão atual ficam visíveis.\n\nClique com o botão direito em um item extraído: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
     'help.chat.title': 'Chat',
     'help.chat.body':
       'Mostra as mensagens de chat lidas no wakfu.log, organizadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir apenas alguns canais.\n\nFiltros de texto personalizados (palavra-chave + canal, ou todos os canais) podem ser adicionados: uma mensagem correspondente é destacada e dispara um alerta sonoro — os filtros não ocultam mais nenhuma mensagem, apenas a sinalizam.\n\nA rolagem automática para assim que você rola manualmente para cima no histórico.',

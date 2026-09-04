@@ -14,7 +14,12 @@ import { LootAlertService } from './loot-alert.service';
 import { PersistenceService } from './persistence.service';
 import { ProfileService } from './profile.service';
 import { HistorySyncService } from '../sync/history-sync.service';
-import { fightDedupKey, purchaseDedupKey, tradeDedupKey } from '../sync/history-dedup.util';
+import {
+  fightDedupKey,
+  pactExtractionDedupKey,
+  purchaseDedupKey,
+  tradeDedupKey,
+} from '../sync/history-dedup.util';
 
 /** @deprecated Réexportée pour les consommateurs historiques — les clés font
  * désormais autorité dans `core/data-access/user-data.keys.ts`. */
@@ -43,6 +48,16 @@ const MAX_REASSIGNMENT_HISTORY = 500;
 const MAX_ITEM_REASSIGNMENT_HISTORY = 500;
 /** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. Réutilisée telle quelle pour rapprocher un gain de kamas hors combat d'un échange conclu au même moment (voir considerHdvKamaGain) — même principe, même ordre de grandeur. */
 const PURCHASE_WINDOW_MS = 2000;
+/**
+ * Délai de grâce, en ms, prolongé à chaque ligne `interactive-walkon` (élément interactif du décor
+ * — le pacte notamment) ET à chaque ramassage qui rejoint le lot d'extraction courant, au-delà
+ * duquel la fenêtre d'extraction de pacte se ferme (voir pactWindowExpiresAtMs). Calibré sur un vrai
+ * fichier fourni par l'utilisateur (feature Pacte activée) : les écarts observés entre un WALKON et
+ * le premier ramassage qu'il corrèle vont de 30 à 80s selon les 2 lots identifiés — 3 minutes laisse
+ * une marge large, du même ordre que les autres seuils déjà calibrés ainsi dans ce fichier (voir
+ * SESSION_SEGMENT_GAP_THRESHOLD_MS).
+ */
+const PACT_EXTRACTION_WINDOW_MS = 3 * 60 * 1000;
 /** Écart (heure du jour) au-delà duquel deux horodatages consécutifs sont interprétés comme un
  * passage de minuit plutôt qu'un simple réordonnancement multi-compte (jamais plus de quelques
  * secondes en pratique) — voir buildFullTimestampMs. */
@@ -223,6 +238,17 @@ export interface TradeRecord {
   kamasGiven: number;
 }
 
+/** Une extraction de pacte (voir stats-store.service.ts, checkPactWindowExpiry/flushPendingPactBatch) :
+ * plusieurs objets ramassés en une fois, sans coût ni prix contrairement à PurchaseRecord — juste un
+ * horodatage et une liste d'objets/quantités. */
+export interface PactExtractionRecord {
+  id: number;
+  items: TradeItemRow[];
+  /** Heure brute du log — voir `PurchaseRecord.time`. */
+  time: string;
+  fullTimestampMs: number;
+}
+
 /** Une correction manuelle de réattribution enregistrée telle quelle (voir reassignSpell), persistée
  * pour être rejouée après chaque rechargement initial (voir replayPersistedReassignments) — sans
  * quoi une (re)connexion (F5, "Changer de fichier"...) reconstruit l'historique depuis zéro et perd
@@ -285,6 +311,16 @@ type PersistedItemReassignment =
       /** Voir `loot.sourceCatalogId` — même principe, `trade_items` autorise plusieurs lignes
        * homonymes non fusionnées (contrairement à `fight_loot`), il faut donc plus que
        * `tradeKey|direction|itemName` pour cibler UNE ligne précise. */
+      sourceCatalogId: number | null;
+      quantity: number;
+      catalogId: number;
+    }
+  | {
+      kind: 'pactItem';
+      pactKey: string;
+      itemName: string;
+      /** Voir `tradeItem.sourceCatalogId` — même principe, `pact_extraction_items` autorise lui
+       * aussi plusieurs lignes homonymes non fusionnées. */
       sourceCatalogId: number | null;
       quantity: number;
       catalogId: number;
@@ -508,6 +544,14 @@ export class StatsStoreService {
   readonly sessionLoot = signal<LootRow[]>([]);
   readonly purchaseHistory = signal<PurchaseRecord[]>([]);
   readonly tradeHistory = signal<TradeRecord[]>([]);
+  readonly pactExtractionHistory = signal<PactExtractionRecord[]>([]);
+  /** Butin de pacte cumulé de la session (miroir de sessionLoot, mais alimenté directement à chaque
+   * extraction plutôt qu'à chaque combat gagné — un pacte n'est jamais rattaché à un combat). */
+  readonly sessionPactItems = signal<LootRow[]>([]);
+  /** Vrai dès la première extraction de pacte détectée dans la session — pilote la visibilité de la
+   * carte Pacte en mode invité (voir DashboardLayoutService), toujours visible en mode connecté.
+   * Reset à chaque isInitialLoad (état dérivé du fichier, voir resetSessionState). */
+  readonly hasPactActivityThisSession = signal(false);
   readonly chatMessages = signal<ChatMessageEntry[]>([]);
   /** Suivi fusionné (ennemis vaincus + ressources obtenues), distingué par `kind`. */
   readonly watchlist = signal<WatchlistEntry[]>([]);
@@ -521,10 +565,13 @@ export class StatsStoreService {
   private readonly xpMap = new Map<string, number>();
   /** Accumulateur du butin de session (clé = nom en minuscule) — voir sessionLoot. */
   private readonly sessionLootMap = new Map<string, LootRow>();
+  /** Miroir de sessionLootMap pour le butin de pacte — voir sessionPactItems. */
+  private readonly sessionPactItemsMap = new Map<string, LootRow>();
   private readonly chatBuffer: ChatMessageEntry[] = [];
   private readonly fightHistoryList: FightRecord[] = [];
   private readonly purchaseHistoryList: PurchaseRecord[] = [];
   private readonly tradeHistoryList: TradeRecord[] = [];
+  private readonly pactExtractionHistoryList: PactExtractionRecord[] = [];
   /** Combats actuellement en cours, par fightId — voir FightWorking. */
   private readonly activeFights = new Map<number, FightWorking>();
   /** Journal des réattributions manuelles effectuées par l'utilisateur (voir reassignSpell),
@@ -592,6 +639,24 @@ export class StatsStoreService {
    * ramassages orphelins dans le butin de combat (cas réel : achat multiple à l'Hôtel des ventes
    * pendant un combat en cours ailleurs sur le compte). */
   private inMarketOccupation = false;
+  /** Horodatage (ms) au-delà duquel la fenêtre d'extraction de pacte courante est considérée
+   * expirée — posé/prolongé à chaque `interactive-walkon` ET à chaque ramassage qui rejoint le lot
+   * (voir PACT_EXTRACTION_WINDOW_MS, checkPactWindowExpiry). `null` = aucune fenêtre ouverte. */
+  private pactWindowExpiresAtMs: number | null = null;
+  /** Objets accumulés depuis l'ouverture de la fenêtre de pacte courante (voir
+   * pactWindowExpiresAtMs) — flushé (une ligne `PactExtractionRecord`) dès qu'un ramassage arrive
+   * après expiration, jamais forcé en fin de lot (contrairement à pendingHdvKamaGain) : une fenêtre
+   * de plusieurs minutes peut légitimement chevaucher deux lots successifs (lecture incrémentale en
+   * direct), la couper prématurément fragmenterait une seule extraction réelle en plusieurs lignes. */
+  private pendingPactBatch: {
+    items: Map<string, { quantity: number; itemNameOriginal: string }>;
+    firstTime: string;
+  } | null = null;
+  private nextPactExtractionId = 1;
+  /** Ligne "Vous avez perdu Nx X" en attente d'un ramassage immédiat (signature du cycle de
+   * démantèlement d'objet) — miroir exact de pendingPurchase, mais pour exclure du butin de combat
+   * plutôt que pour enregistrer un achat (voir isDismantleLoot dans apply()). */
+  private pendingItemLoss: { timeMs: number } | null = null;
   /** Date calendaire réelle du fichier (voir LogDateAnchorEntry), `null` tant que la ligne d'ancrage
    * n'a pas encore été rencontrée (repli sur la date système, voir buildFullTimestampMs) — reconstitue
    * un horodatage complet à partir de `time` (HH:MM:SS,mmm) sans dépendre de la date de LECTURE. */
@@ -937,10 +1002,13 @@ export class StatsStoreService {
 
     this.xpMap.clear();
     this.sessionLootMap.clear();
+    this.sessionPactItemsMap.clear();
+    this.hasPactActivityThisSession.set(false);
 
     this.fightHistoryList.length = 0;
     this.purchaseHistoryList.length = 0;
     this.tradeHistoryList.length = 0;
+    this.pactExtractionHistoryList.length = 0;
     this.activeFights.clear();
     this.currentDisplayFightId = null;
     this.selectedFightId.set(null);
@@ -955,6 +1023,13 @@ export class StatsStoreService {
     this.pendingFightChallengesFailed = 0;
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
+    // Volontairement pas de flush du lot en attente (voir sa doc de tête) : un reconnect relit le
+    // même fichier depuis le début, le même lot sera reconstruit à l'identique le moment venu, avec
+    // la même clientKey déterministe (voir pactExtractionSignature) — rien à perdre.
+    this.pactWindowExpiresAtMs = null;
+    this.pendingPactBatch = null;
+    this.nextPactExtractionId = 1;
+    this.pendingItemLoss = null;
     this.logDateAnchor = null;
     this.lastTimestampTimeOfDayMs = null;
     this.logDateDayOffset = 0;
@@ -966,6 +1041,12 @@ export class StatsStoreService {
   private apply(entry: LogEntry): void {
     this.lastLineTime = entry.time;
 
+    // Ferme (flush) une fenêtre d'extraction de pacte déjà expirée AVANT de traiter cette ligne —
+    // voir pactWindowExpiresAtMs : si CETTE ligne est celle qui dépasse l'expiration, elle n'a pas à
+    // rejoindre le lot qu'on vient de clore (elle sera réévaluée normalement juste après, comme un
+    // nouveau `interactive-walkon` le rouvrirait le cas échéant).
+    this.checkPactWindowExpiry(entry);
+
     // Une perte de kamas immédiatement suivie d'un ramassage d'objet est la
     // signature d'un achat (marchand/HDV) : on l'enregistre en plus du
     // traitement habituel de la perte/du ramassage, sans le modifier — sauf pour le
@@ -974,6 +1055,12 @@ export class StatsStoreService {
     // moment — cas réel en multi-compte : achat sur un compte pendant qu'un
     // autre est en plein combat).
     let isPurchaseLoot = false;
+    // Idem pour un ramassage rejoignant une extraction de pacte en cours (voir
+    // pactWindowExpiresAtMs) ou le cycle de démantèlement d'objet (voir pendingItemLoss) : ni l'un
+    // ni l'autre ne doit jamais compter comme du butin de combat, même si un combat est actif au
+    // même moment (même risque de rattachement erroné que pour un achat HDV).
+    let isPacteLoot = false;
+    let isDismantleLoot = false;
     if (entry.kind === 'loot') {
       const priceKnown =
         this.pendingPurchase !== null &&
@@ -987,8 +1074,18 @@ export class StatsStoreService {
       // chaque ramassage individuel — la seule fenêtre `priceKnown` ci-dessus laisserait passer ces
       // ramassages orphelins dans le butin de combat (cas réel, voir tests).
       isPurchaseLoot = priceKnown || this.inMarketOccupation;
+      if (!isPurchaseLoot && this.pactWindowExpiresAtMs !== null) {
+        isPacteLoot = true;
+        this.addToPactBatch(entry.item, entry.quantity, entry.time);
+      }
+      isDismantleLoot =
+        !isPurchaseLoot &&
+        !isPacteLoot &&
+        this.pendingItemLoss !== null &&
+        this.timeToMs(entry.time) - this.pendingItemLoss.timeMs <= PURCHASE_WINDOW_MS;
     }
     if (entry.kind !== 'kama-loss') this.pendingPurchase = null;
+    if (entry.kind !== 'item-loss') this.pendingItemLoss = null;
 
     // Un gain de kamas hors combat en attente de confirmation (voir pendingHdvKamaGain) est
     // committé comme récupération de kamas à l'Hôtel de vente dès que CETTE ligne n'est pas
@@ -1017,6 +1114,12 @@ export class StatsStoreService {
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
         this.pendingPurchase = { amount: entry.amount, timeMs: this.timeToMs(entry.time) };
+        break;
+      case 'item-loss':
+        this.pendingItemLoss = { timeMs: this.timeToMs(entry.time) };
+        break;
+      case 'interactive-walkon':
+        this.openOrExtendPactWindow(entry.time);
         break;
       case 'xp-gain':
         // Voir EXCLUDED_STATS_FAMILY_ID : `registerFightXp` (détail PROPRE à ce combat, historique
@@ -1096,10 +1199,12 @@ export class StatsStoreService {
       }
       case 'loot':
         this.registerLoot(entry.item, entry.quantity);
-        // Un objet acheté (marchand/HDV) n'est jamais du butin de combat, même si un combat est
-        // actif au même moment (fightId résolu par erreur). Voir pendingFightLoot : jamais attribué
-        // directement à entry.fightId, mais mis en attente jusqu'au tout prochain combat-end.
-        if (!isPurchaseLoot && entry.fightId !== null) {
+        // Un objet acheté (marchand/HDV), extrait d'un pacte ou issu d'un démantèlement d'objet
+        // (voir isPurchaseLoot/isPacteLoot/isDismantleLoot ci-dessus) n'est jamais du butin de
+        // combat, même si un combat est actif au même moment (fightId résolu par erreur). Voir
+        // pendingFightLoot : jamais attribué directement à entry.fightId, mais mis en attente
+        // jusqu'au tout prochain combat-end.
+        if (!isPurchaseLoot && !isPacteLoot && !isDismantleLoot && entry.fightId !== null) {
           this.pendingFightLoot.push({ item: entry.item, quantity: entry.quantity });
         }
         break;
@@ -1878,6 +1983,89 @@ export class StatsStoreService {
     this.historySync.recordPurchase(record);
   }
 
+  /** Ferme (flush) la fenêtre d'extraction de pacte courante si `entry` arrive après son
+   * expiration — voir pactWindowExpiresAtMs, appelée en tête d'apply(). */
+  private checkPactWindowExpiry(entry: LogEntry): void {
+    if (this.pactWindowExpiresAtMs === null) return;
+    if (this.timeToMs(entry.time) > this.pactWindowExpiresAtMs) {
+      this.flushPendingPactBatch();
+    }
+  }
+
+  /** Ouvre une nouvelle fenêtre d'extraction de pacte, ou prolonge celle déjà en cours (voir
+   * PACT_EXTRACTION_WINDOW_MS) — appelée par `interactive-walkon` ET par chaque ramassage qui
+   * rejoint le lot courant (addToPactBatch), pour ne pas couper un lot qui s'étale sur plus que le
+   * délai initial. */
+  private openOrExtendPactWindow(time: string): void {
+    this.pactWindowExpiresAtMs = this.timeToMs(time) + PACT_EXTRACTION_WINDOW_MS;
+  }
+
+  /** Ajoute un objet au lot d'extraction de pacte en cours (créé si besoin) — voir pendingPactBatch. */
+  private addToPactBatch(item: string, quantity: number, time: string): void {
+    if (!this.pendingPactBatch) {
+      this.pendingPactBatch = { items: new Map(), firstTime: time };
+    }
+    const key = item.toLowerCase();
+    const existing = this.pendingPactBatch.items.get(key);
+    if (existing) existing.quantity += quantity;
+    else this.pendingPactBatch.items.set(key, { quantity, itemNameOriginal: item });
+    this.openOrExtendPactWindow(time);
+  }
+
+  /** Committe le lot d'extraction de pacte en cours (voir pendingPactBatch) en un
+   * `PactExtractionRecord` — appelée dès qu'un ramassage arrive après expiration de la fenêtre (voir
+   * checkPactWindowExpiry). Jamais forcée en fin de lot (voir doc de pendingPactBatch). */
+  private flushPendingPactBatch(): void {
+    const batch = this.pendingPactBatch;
+    this.pendingPactBatch = null;
+    this.pactWindowExpiresAtMs = null;
+    if (!batch || batch.items.size === 0) return;
+    this.registerPactExtraction(batch);
+  }
+
+  /**
+   * Une extraction de pacte n'a ni prix ni combat d'origine (voir PactExtractionRecord) : juste un
+   * horodatage (celui du premier objet du lot, voir pendingPactBatch.firstTime) et une liste
+   * d'objets/quantités. `sessionPactItems`/`hasPactActivityThisSession` sont, comme `sessionLoot`,
+   * un état DÉRIVÉ DU FICHIER (voir CLAUDE.md, gating isInitialLoad) : reconstruits à l'identique à
+   * chaque isInitialLoad, jamais gonflés par une reconnexion — pas de garde
+   * `currentBatchIsInitialLoad` ici (contrairement à registerLoot, qui protège des compteurs
+   * PERSISTANTS comme la watchlist).
+   */
+  private registerPactExtraction(batch: {
+    items: Map<string, { quantity: number; itemNameOriginal: string }>;
+    firstTime: string;
+  }): void {
+    const items: TradeItemRow[] = [...batch.items.values()].map((v) => ({
+      name: v.itemNameOriginal,
+      catalogId: this.catalog.findWakfuItemEntry(v.itemNameOriginal)?.id ?? null,
+      quantity: v.quantity,
+    }));
+    const record: PactExtractionRecord = {
+      id: this.nextPactExtractionId++,
+      items,
+      time: batch.firstTime,
+      fullTimestampMs: this.buildFullTimestampMs(batch.firstTime),
+    };
+    this.pactExtractionHistoryList.unshift(record);
+    this.historySync.recordPactExtraction(record);
+
+    for (const item of items) {
+      const key = item.name.toLowerCase();
+      const existing = this.sessionPactItemsMap.get(key);
+      if (existing) existing.quantity += item.quantity;
+      else {
+        this.sessionPactItemsMap.set(key, {
+          name: item.name,
+          catalogId: item.catalogId,
+          quantity: item.quantity,
+          confidence: 'unknown',
+        });
+      }
+    }
+    this.hasPactActivityThisSession.set(true);
+  }
+
   /**
    * Un gain de kamas hors combat (`entry.fightId === null`, voir KamaGainEntry) n'est mis en
    * attente que s'il n'est pas déjà expliqué par un échange tout juste conclu (voir
@@ -2098,6 +2286,8 @@ export class StatsStoreService {
     this.sessionLoot.set([...this.sessionLootMap.values()]);
     this.purchaseHistory.set([...this.purchaseHistoryList]);
     this.tradeHistory.set([...this.tradeHistoryList]);
+    this.pactExtractionHistory.set([...this.pactExtractionHistoryList]);
+    this.sessionPactItems.set([...this.sessionPactItemsMap.values()]);
     this.chatMessages.set([...this.chatBuffer]);
   }
 
@@ -2329,6 +2519,15 @@ export class StatsStoreService {
             entry.catalogId,
           );
           break;
+        case 'pactItem':
+          this.applyPactItemReassign(
+            entry.pactKey,
+            entry.itemName,
+            entry.sourceCatalogId,
+            entry.quantity,
+            entry.catalogId,
+          );
+          break;
       }
     }
   }
@@ -2485,6 +2684,25 @@ export class StatsStoreService {
           e.kind === 'tradeItem' &&
           e.tradeKey === tradeKey &&
           e.direction === direction &&
+          e.itemName.toLowerCase() === itemName.toLowerCase() &&
+          e.sourceCatalogId === sourceCatalogId,
+      );
+    return match && match.quantity >= rowQuantity ? match.catalogId : null;
+  }
+
+  /** Miroir de findTradeItemCorrection, pour une ligne d'objet extrait d'un pacte. */
+  findPactItemCorrection(
+    pactKey: string,
+    itemName: string,
+    sourceCatalogId: number | null,
+    rowQuantity: number,
+  ): number | null {
+    const match = [...this.itemReassignmentHistory]
+      .reverse()
+      .find(
+        (e): e is Extract<PersistedItemReassignment, { kind: 'pactItem' }> =>
+          e.kind === 'pactItem' &&
+          e.pactKey === pactKey &&
           e.itemName.toLowerCase() === itemName.toLowerCase() &&
           e.sourceCatalogId === sourceCatalogId,
       );
@@ -2653,6 +2871,48 @@ export class StatsStoreService {
     this.reassignRowQuantity(record[direction], row, quantity, catalogId);
     this.tradeHistory.set([...this.tradeHistoryList]);
     this.historySync.recordTrade(record);
+  }
+
+  /** Miroir de reassignTradeItem, pour une ligne d'objet extrait d'un pacte — un seul tableau
+   * d'objets (pas de direction acquired/given, voir PactExtractionRecord). */
+  reassignPactItem(
+    pact: Pick<PactExtractionRecord, 'time' | 'items'>,
+    itemName: string,
+    sourceCatalogId: number | null,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const pactKey = pactExtractionDedupKey(pact);
+    this.applyPactItemReassign(pactKey, itemName, sourceCatalogId, quantity, catalogId);
+
+    this.itemReassignmentHistory.push({
+      kind: 'pactItem',
+      pactKey,
+      itemName,
+      sourceCatalogId,
+      quantity,
+      catalogId,
+    });
+    this.trimItemReassignmentHistory();
+    this.userData.write('itemReassignments', this.itemReassignmentHistory);
+  }
+
+  private applyPactItemReassign(
+    pactKey: string,
+    itemName: string,
+    sourceCatalogId: number | null,
+    quantity: number,
+    catalogId: number,
+  ): void {
+    const record = this.pactExtractionHistoryList.find(
+      (p) => pactExtractionDedupKey(p) === pactKey,
+    );
+    if (!record) return;
+    const row = this.findRowByCatalogId(record.items, itemName, sourceCatalogId);
+    if (!row) return;
+    this.reassignRowQuantity(record.items, row, quantity, catalogId);
+    this.pactExtractionHistory.set([...this.pactExtractionHistoryList]);
+    this.historySync.recordPactExtraction(record);
   }
 
   /** Reconstruit la clé attackerMap ("Nom" ou "Nom#i", voir InitiativeSeat) d'une instance à partir de son nom/index affiché. */

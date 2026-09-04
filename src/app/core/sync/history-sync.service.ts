@@ -2,11 +2,17 @@ import { Injectable, inject, signal } from '@angular/core';
 import { CatalogService } from '../api/catalog.service';
 import { EntityClassifierService } from '../services/entity-classifier.service';
 import { GameServerService } from '../services/game-server.service';
-import type { FightRecord, PurchaseRecord, TradeRecord } from '../services/stats-store.service';
+import type {
+  FightRecord,
+  PactExtractionRecord,
+  PurchaseRecord,
+  TradeRecord,
+} from '../services/stats-store.service';
 import { findDungeonForEnemies } from '../utils/fight-image.util';
 import { enemyCompositionKey, groupDungeonRuns } from '../utils/dungeon-run-grouping.util';
 import {
   fightSignature,
+  pactExtractionSignature,
   purchaseSignature,
   tradeSignature,
   type FightLootPayload,
@@ -374,6 +380,29 @@ export class HistorySyncService {
         totalCost: record.totalCost,
         occurredAt: new Date(record.fullTimestampMs).toISOString(),
         gameServer: this.currentServer(),
+      },
+    });
+  }
+
+  recordPactExtraction(record: PactExtractionRecord): void {
+    if (!this.queue.isActive()) return;
+
+    const signature = pactExtractionSignature({
+      time: record.time,
+      items: record.items.map((item) => ({ name: item.name, quantity: item.quantity })),
+    });
+
+    this.queue.enqueue({
+      id: `pact:${signature}`,
+      kind: 'pact',
+      signature,
+      payload: {
+        occurredAt: new Date(record.fullTimestampMs).toISOString(),
+        gameServer: this.currentServer(),
+        items: record.items.map((item) => ({
+          ...this.itemPayload(item.name, item.catalogId),
+          quantity: item.quantity,
+        })),
       },
     });
   }

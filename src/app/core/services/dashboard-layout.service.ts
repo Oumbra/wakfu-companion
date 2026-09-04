@@ -2,6 +2,8 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { ChatPanelService } from './chat-panel.service';
 import { UserDataService } from '../data-access/user-data.service';
 import { MediaQuerySignal } from '../utils/media-query-signal';
+import { AuthService } from '../auth/auth.service';
+import { StatsStoreService } from './stats-store.service';
 
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
@@ -9,7 +11,7 @@ export type DashboardBodyMode = 'equal' | 'focus';
 /** Côté où se rangent les cartes secondaires en mode "mise en avant" — la carte ciblée occupe
  * l'AUTRE côté, en pleine hauteur (voir `gridPlan`). */
 export type DashboardFocusSide = 'left' | 'right';
-export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades';
+export type DashboardHistoryKey = 'combats' | 'purchases' | 'trades' | 'pacts';
 /** Les 5 blocs "logiques" du corps, indépendamment du regroupement de l'historique (voir
  * `historyGroup`) — sert de référentiel stable pour `blockOrder` : contrairement à
  * `DashboardBodySlotKey`, dont `hist_group` apparaît/disparaît selon le regroupement, ces 5 clés
@@ -25,7 +27,13 @@ export type DashboardBlockKey = DashboardHistoryKey | 'chat' | 'recap';
  * `FightHistoryComponent`), ni ciblable en mise en avant ni repliable indépendamment. `'recap'`
  * (Récap de session) est indépendante de l'historique — jamais regroupable avec lui. */
 export type DashboardBodySlotKey =
-  'hist_combats' | 'hist_purchases' | 'hist_trades' | 'hist_group' | 'chat' | 'recap';
+  | 'hist_combats'
+  | 'hist_purchases'
+  | 'hist_trades'
+  | 'hist_pacts'
+  | 'hist_group'
+  | 'chat'
+  | 'recap';
 
 /** Section repliable individuellement — le menu et les objectifs en plus des cartes du corps (voir
  * `DashboardBodySlotKey`), car eux aussi peuvent se réduire (bande d'icônes) même si leur repli ne
@@ -86,7 +94,7 @@ export interface DashboardLayoutPrefs {
 }
 
 const DEFAULT_PREFS: DashboardLayoutPrefs = {
-  menuPos: 'left',
+  menuPos: 'top-left',
   kpiPos: 'top',
   bodyMode: 'focus',
   // 'combat' n'existe plus comme carte cible (voir DashboardBodySlotKey) — 'hist_group' n'est plus
@@ -94,10 +102,11 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   // défaut) : 'hist_combats' est un repli plus sûr, toujours l'un des 3 volets solo par défaut.
   focusTarget: 'hist_combats',
   focusSide: 'right',
-  // Achats + Échanges regroupés par défaut dans une seule carte Historique ; Combats reste solo,
-  // mis en avant (voir bodyMode/focusTarget ci-dessus).
-  historyGroup: { combats: false, purchases: true, trades: true },
-  blockOrder: ['combats', 'chat', 'purchases', 'trades', 'recap'],
+  // Achats + Échanges + Pacte regroupés par défaut dans une seule carte Historique ; Combats reste
+  // solo, mis en avant (voir bodyMode/focusTarget ci-dessus) — demande explicite de l'utilisateur,
+  // 2026-09-05.
+  historyGroup: { combats: false, purchases: true, trades: true, pacts: true },
+  blockOrder: ['combats', 'chat', 'purchases', 'trades', 'pacts', 'recap'],
   // Récap de session repliée par défaut (rejoint le rail latéral) : contrairement aux 4 autres
   // cartes, son ancien équivalent (bouton modal du header) était lui aussi entièrement opt-in —
   // l'ajouter ici visible d'emblée changerait la mise en page de tous les utilisateurs existants
@@ -105,11 +114,12 @@ const DEFAULT_PREFS: DashboardLayoutPrefs = {
   collapsedSections: { recap: true },
 };
 
-const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
+const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades', 'pacts'];
 const ALL_BLOCK_KEYS: readonly DashboardBlockKey[] = [
   'combats',
   'purchases',
   'trades',
+  'pacts',
   'chat',
   'recap',
 ];
@@ -133,13 +143,29 @@ function isValidBlockOrder(value: unknown): value is DashboardBlockKey[] {
  * ici en ajoutant `'recap'` en fin plutôt que jeté, pour préserver l'ordre déjà choisi pour les 4
  * blocs historiques. */
 const LEGACY_BLOCK_KEYS: readonly DashboardBlockKey[] = ['combats', 'purchases', 'trades', 'chat'];
+/** Un `blockOrder` stocké AVANT l'introduction de la carte Pacte (voir CLAUDE.md) contient une
+ * permutation exacte des 5 clés d'ALORS (recap déjà là, pacts pas encore) — même raison que
+ * `LEGACY_BLOCK_KEYS` ci-dessus : migré en ajoutant `'pacts'` en fin plutôt que jeté. */
+const PRE_PACTS_BLOCK_KEYS: readonly DashboardBlockKey[] = [
+  'combats',
+  'purchases',
+  'trades',
+  'chat',
+  'recap',
+];
 function migrateLegacyBlockOrder(value: unknown): DashboardBlockKey[] | null {
+  if (!Array.isArray(value)) return null;
   if (
-    Array.isArray(value) &&
+    value.length === PRE_PACTS_BLOCK_KEYS.length &&
+    PRE_PACTS_BLOCK_KEYS.every((k) => value.includes(k))
+  ) {
+    return [...(value as DashboardBlockKey[]), 'pacts'];
+  }
+  if (
     value.length === LEGACY_BLOCK_KEYS.length &&
     LEGACY_BLOCK_KEYS.every((k) => value.includes(k))
   ) {
-    return [...(value as DashboardBlockKey[]), 'recap'];
+    return [...(value as DashboardBlockKey[]), 'recap', 'pacts'];
   }
   return null;
 }
@@ -148,6 +174,7 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
   'hist_combats',
   'hist_purchases',
   'hist_trades',
+  'hist_pacts',
   'hist_group',
   'chat',
   'recap',
@@ -182,6 +209,16 @@ const ALL_GRID_KEYS: readonly DashboardGridKey[] = [
 export class DashboardLayoutService {
   private readonly userData = inject(UserDataService);
   private readonly chatPanel = inject(ChatPanelService);
+  private readonly auth = inject(AuthService);
+  private readonly stats = inject(StatsStoreService);
+
+  /** La carte Pacte n'a de sens que si un pacte a déjà été détecté dans le fichier courant (mode
+   * invité, purement dérivé de LA session, voir StatsStoreService.hasPactActivityThisSession) —
+   * toujours affichée en mode connecté (l'historique du compte peut en contenir même hors session
+   * courante, voir CLAUDE.md). Pilote `activeSlots` ci-dessous. */
+  private readonly pactCardEligible = computed(
+    () => this.auth.isAuthenticated() || this.stats.hasPactActivityThisSession(),
+  );
 
   /** Même seuil que `@media (max-width: 800px)` (dashboard.component.css/styles.css) — nécessaire
    * en TS pour `isCollapsedForRender` ci-dessous. Jamais `disconnect()` : ce service `providedIn:
@@ -385,15 +422,24 @@ export class DashboardLayoutService {
    * (`historyGroup`) — un seul volet coché ne regrouperait rien, il reste alors solo. */
   readonly historySplitKeys = computed<DashboardHistoryKey[]>(() => {
     const group = this.historyGroup();
-    const grouped = HIST_KEYS.filter((k) => group[k]);
-    return grouped.length >= 2 ? HIST_KEYS.filter((k) => !group[k]) : [...HIST_KEYS];
+    const eligible = this.eligibleHistKeys();
+    const grouped = eligible.filter((k) => group[k]);
+    return grouped.length >= 2 ? eligible.filter((k) => !group[k]) : [...eligible];
   });
   /** Complément de `historySplitKeys` : volets regroupés dans la carte `hist_group` (vide quand le
    * regroupement n'est pas actif). */
   readonly historyGroupedKeys = computed<DashboardHistoryKey[]>(() => {
     const solo = new Set(this.historySplitKeys());
-    return HIST_KEYS.filter((k) => !solo.has(k));
+    return this.eligibleHistKeys().filter((k) => !solo.has(k));
   });
+
+  /** `HIST_KEYS` moins `'pacts'` tant qu'il n'est pas éligible (voir pactCardEligible) — retiré ICI
+   * (en amont de `historySplitKeys`/`historyGroupedKeys`, dont `activeSlots` ET `HistoryComponent`
+   * dérivent tous les deux) plutôt qu'en aval sur `activeSlots` seul : une carte absente de ces deux
+   * listes ne peut apparaître nulle part, sans avoir à dupliquer le filtre côté `HistoryComponent`. */
+  private eligibleHistKeys(): readonly DashboardHistoryKey[] {
+    return this.pactCardEligible() ? HIST_KEYS : HIST_KEYS.filter((k) => k !== 'pacts');
+  }
 
   /** Cartes potentielles du corps, dans l'ordre — jamais plus de 3 liées à l'historique. Pas de
    * carte "Combat" à part : le combat en cours vit désormais DANS `hist_combats`/`hist_group`

@@ -45,7 +45,7 @@
  *    créer de doublon.
  */
 
-export type HistoryEventKind = 'fight' | 'purchase' | 'trade';
+export type HistoryEventKind = 'fight' | 'purchase' | 'trade' | 'pact';
 
 /** Charges utiles, en miroir exact de ce qu'attendent les endpoints `/api/v1/history/*`. */
 
@@ -154,7 +154,21 @@ export interface TradePayload {
   items: TradeItemPayload[];
 }
 
-export type HistoryPayload = FightPayload | PurchasePayload | TradePayload;
+/** `itemId`/`itemName` mutuellement exclusifs — voir `FightLootPayload`. Pas de coût contrairement à
+ * `PurchasePayload` : une extraction de pacte n'a pas de prix. */
+export interface PactExtractionItemPayload {
+  itemId: number | null;
+  itemName: string | null;
+  quantity: number;
+}
+
+export interface PactExtractionPayload {
+  occurredAt: string;
+  gameServer: string | null;
+  items: PactExtractionItemPayload[];
+}
+
+export type HistoryPayload = FightPayload | PurchasePayload | TradePayload | PactExtractionPayload;
 
 /** Une entrée de la file de synchronisation, telle que persistée en IndexedDB. */
 export interface HistoryEvent {
@@ -175,6 +189,7 @@ export const HISTORY_ENDPOINTS: Record<HistoryEventKind, string> = {
   fight: '/history/fights',
   purchase: '/history/purchases',
   trade: '/history/trades',
+  pact: '/history/pacts',
 };
 
 /** Portées temporelles proposées par le menu "Charger plus" (voir `LoadMoreScopeMenuComponent` /
@@ -223,6 +238,19 @@ export function purchaseSignature(input: {
   totalCost: number;
 }): string {
   return `${input.time}|${normalize(input.item)}|${input.quantity}|${input.totalCost}`;
+}
+
+/** Signature d'une extraction de pacte : les objets/quantités triés — pas de coût (voir
+ * PactExtractionPayload), contrairement à purchaseSignature. */
+export function pactExtractionSignature(input: {
+  time: string;
+  items: readonly { name: string; quantity: number }[];
+}): string {
+  const items = input.items
+    .map((item) => `${normalize(item.name)}x${item.quantity}`)
+    .sort()
+    .join(',');
+  return `${input.time}|${items}`;
 }
 
 /** Signature d'un échange : les deux personnages, les kamas, et les objets des deux côtés triés. */

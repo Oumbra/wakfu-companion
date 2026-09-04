@@ -1,6 +1,6 @@
 @if (items().length === 0) {
   <div class="empty-state small" [class.recap-variant]="emptyVariant() === 'recap'">
-    {{ 'damageMeter.noLoot' | t }}
+    {{ emptyLabelKey() | t }}
   </div>
 } @else {
   <div

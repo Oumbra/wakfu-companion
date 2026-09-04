@@ -84,6 +84,7 @@ export class DashboardComponent {
     hist_combats: 'fightHistory',
     hist_purchases: 'purchases',
     hist_trades: 'trades',
+    hist_pacts: 'pacts',
     // Pas d'entrée pour 'hist_group' : son sous-onglet (voir HistoryComponent) porte déjà son
     // propre bouton d'aide par volet regroupé, indépendant de `.panel-header` (masqué en mobile,
     // voir dashboard.component.css/styles.css). Pas d'entrée pour 'recap' non plus : aucune
@@ -103,6 +104,7 @@ export class DashboardComponent {
     'hist_combats',
     'hist_purchases',
     'hist_trades',
+    'hist_pacts',
     'hist_group',
     'chat',
     'recap',

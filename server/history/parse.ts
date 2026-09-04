@@ -39,6 +39,7 @@ const MAX_NAME_LENGTH = 200;
  */
 const MAX_PARTICIPANTS_PER_FIGHT = 128;
 const MAX_ITEMS_PER_TRADE = 128;
+const MAX_ITEMS_PER_PACT_EXTRACTION = 128;
 /** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
 const MAX_SPELLS_PER_PARTICIPANT = 64;
 const MAX_LOOT_PER_FIGHT = 128;
@@ -133,6 +134,22 @@ export interface TradeInput {
   kamasGiven: number;
   gameServer: string | null;
   items: TradeItemInput[];
+}
+
+/** `itemId`/`itemName` mutuellement exclusifs — voir `FightLootInput`. Pas de coût contrairement à
+ * `PurchaseInput` : une extraction de pacte n'a pas de prix. */
+export interface PactExtractionItemInput {
+  lineIndex: number;
+  itemId: number | null;
+  itemName: string | null;
+  quantity: number;
+}
+
+export interface PactExtractionInput {
+  clientKey: string;
+  occurredAt: Date;
+  gameServer: string | null;
+  items: PactExtractionItemInput[];
 }
 
 function asRecord(raw: unknown, label: string): ParseResult<Record<string, unknown>> {
@@ -606,6 +623,54 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
       };
     },
     (trade) => trade.clientKey,
+  );
+}
+
+export function parsePactExtractionsBody(body: unknown): ParseResult<PactExtractionInput[]> {
+  return parseBatch(
+    body,
+    (entry) => {
+      const clientKey = parseClientKey(entry['clientKey']);
+      if (!clientKey.ok) return clientKey;
+      const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
+      if (!occurredAt.ok) return occurredAt;
+      const gameServer = parseGameServer(entry['gameServer']);
+      if (!gameServer.ok) return gameServer;
+
+      const rawItems = entry['items'] ?? [];
+      if (!Array.isArray(rawItems)) return { ok: false, error: 'items invalide' };
+      if (rawItems.length > MAX_ITEMS_PER_PACT_EXTRACTION) {
+        return {
+          ok: false,
+          error: `trop d'objets extraits (max ${MAX_ITEMS_PER_PACT_EXTRACTION})`,
+        };
+      }
+      // `lineIndex` attribué ici, comme pour `TradeItemInput` — pas une donnée métier, doit rester
+      // déterministe pour le même contenu (voir sa doc).
+      const items: PactExtractionItemInput[] = [];
+      for (let i = 0; i < rawItems.length; i++) {
+        const record = asRecord(rawItems[i], 'objet extrait');
+        if (!record.ok) return record;
+        const item = record.value;
+        const identity = parseItemIdentity(item['itemId'], item['itemName'], 'items');
+        if (!identity.ok) return identity;
+        const quantity = parseCount(item['quantity'], 'items.quantity', false, PG_INT32_MAX);
+        if (!quantity.ok) return quantity;
+
+        items.push({ lineIndex: i, ...identity.value, quantity: quantity.value ?? 0 });
+      }
+
+      return {
+        ok: true,
+        value: {
+          clientKey: clientKey.value,
+          occurredAt: occurredAt.value,
+          gameServer: gameServer.value,
+          items,
+        },
+      };
+    },
+    (pact) => pact.clientKey,
   );
 }
 
