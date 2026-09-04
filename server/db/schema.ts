@@ -879,3 +879,47 @@ export const tradeItems = pgTable(
   },
   (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],
 );
+
+/**
+ * Extraction de pacte (feature "Pacte" du jeu, qui détourne le butin de combat vers une dimension
+ * séparée — voir CLAUDE.md) : plusieurs objets récupérés en une fois, détectés côté client par une
+ * ligne `Action [WALKON] ...` suivie de ramassages hors combat (voir
+ * StatsStoreService.registerPactExtraction). Pas de coût, contrairement à `purchases` — juste un
+ * horodatage et une liste d'objets/quantités, comme un `trades` à un seul "côté".
+ */
+export const pactExtractions = pgTable(
+  'pact_extractions',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    clientKey: text('client_key').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    gameServer: text('game_server').references(() => gameServers.code),
+  },
+  (table) => [
+    uniqueIndex('pact_extractions_user_client_key_uq').on(table.userId, table.clientKey),
+    index('pact_extractions_user_occurred_at_idx').on(table.userId, table.occurredAt),
+  ],
+);
+
+/** Objets d'une extraction de pacte — `itemId`/`itemName` mutuellement exclusifs, même invariant
+ * que `fightLoot`/`tradeItems`, même raison d'être corrigeable après coup (`ON CONFLICT DO UPDATE`,
+ * voir `functions/api/v1/history/pacts.ts`). */
+export const pactExtractionItems = pgTable(
+  'pact_extraction_items',
+  {
+    extractionId: bigint('extraction_id', { mode: 'number' })
+      .notNull()
+      .references(() => pactExtractions.id, { onDelete: 'cascade' }),
+    lineIndex: integer('line_index').notNull(),
+    itemId: integer('item_id'),
+    itemName: text('item_name'),
+    quantity: integer('quantity').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.extractionId, table.lineIndex] }),
+    index('pact_extraction_items_item_id_idx').on(table.itemId),
+  ],
+);

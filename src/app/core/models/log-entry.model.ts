@@ -154,6 +154,34 @@ export interface MarketOccupationEntry {
   active: boolean;
 }
 
+/**
+ * "Action [WALKON] performed on interactive element : <id>" — le joueur marche sur un élément
+ * interactif du décor, hors de toute enveloppe `[Catégorie]`. Signal générique (n'importe quel
+ * élément interactif, pas seulement le pacte) : sert à StatsStoreService à ouvrir/prolonger une
+ * fenêtre pendant laquelle tout ramassage hors combat est considéré comme une extraction de pacte
+ * plutôt que du butin de combat orphelin — voir stats-store.service.ts, PACT_EXTRACTION_WINDOW_MS.
+ * L'id lui-même n'est volontairement pas capturé (générique par nature, propre à chaque map).
+ */
+export interface InteractiveWalkonEntry {
+  kind: 'interactive-walkon';
+  time: string;
+}
+
+/**
+ * "Vous avez perdu Nx <objet> ." (distinct de KamaLossEntry, qui ne couvre que la perte de kamas).
+ * Sert uniquement de signal d'adjacence pour la détection du cycle de démantèlement d'objet ("Vous
+ * avez perdu X / Vous avez ramassé des ressources / Vous avez détruit N objet(s) et récupéré M
+ * ressources") — voir StatsStoreService.pendingItemLoss : un ramassage survenant juste après cette
+ * ligne est exclu du butin de combat, exactement comme un achat HDV (même risque de rattachement
+ * erroné à un combat concurrent encore actif en mémoire au même moment).
+ */
+export interface ItemLossEntry {
+  kind: 'item-loss';
+  time: string;
+  item: string;
+  quantity: number;
+}
+
 export interface ChallengeResultEntry {
   kind: 'challenge-result';
   time: string;
@@ -240,4 +268,6 @@ export type LogEntry =
   | FighterJoinedEntry
   | TradeCompletedEntry
   | MarketOccupationEntry
-  | LogDateAnchorEntry;
+  | LogDateAnchorEntry
+  | InteractiveWalkonEntry
+  | ItemLossEntry;

@@ -18,7 +18,7 @@ export interface DashboardLayoutSchemaSwap {
  * d'ordre interactif — ce composant reste décoratif/structurel par défaut, jamais responsable de la
  * traduction des libellés (le texte arrive déjà traduit). */
 export interface DashboardLayoutSchemaCell {
-  readonly sw: 'combats' | 'purchases' | 'trades' | 'history' | 'chat' | 'recap';
+  readonly sw: 'combats' | 'purchases' | 'trades' | 'pacts' | 'history' | 'chat' | 'recap';
   /** Dernière carte d'une répartition à nombre impair : occupe toute la largeur de sa ligne (voir
    * `DashboardLayoutPickerComponent.previewCells`, même règle que la grille réelle envisagée). */
   readonly span2?: boolean;

@@ -6,6 +6,8 @@ import {
   fightParticipants,
   fights,
   monsters,
+  pactExtractionItems,
+  pactExtractions,
   purchases,
   trades,
 } from '../../../../server/db/schema';
@@ -178,6 +180,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     familyTotalsResult,
     familyLootResult,
     familyXpResult,
+    pactRows,
   ] = await Promise.all([
     db
       .select({
@@ -382,6 +385,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       where fp.side = 'ally'
       group by ff.family, fp.name
     `),
+
+    // Extractions de pacte de la période (voir CLAUDE.md, feature "Pacte") — jamais rattaché à un
+    // combat précis (pas de jointure dungeons/families ici), même esprit que `lootRows` ci-dessus.
+    db
+      .select({
+        itemId: pactExtractionItems.itemId,
+        itemName: pactExtractionItems.itemName,
+        quantity: sql<number>`coalesce(sum(${pactExtractionItems.quantity}), 0)`,
+      })
+      .from(pactExtractionItems)
+      .innerJoin(pactExtractions, eq(pactExtractionItems.extractionId, pactExtractions.id))
+      .where(
+        and(
+          eq(pactExtractions.userId, userId),
+          gte(pactExtractions.occurredAt, since),
+          lt(pactExtractions.occurredAt, until),
+        ),
+      )
+      .groupBy(pactExtractionItems.itemId, pactExtractionItems.itemName),
   ]);
 
   const fightRow = fightTotals[0];
@@ -499,5 +521,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     })),
     dungeons: Array.from(dungeonGroups.values()),
     families: Array.from(familyGroups.values()),
+    pacts: pactRows.map((row) => ({
+      itemId: row.itemId,
+      itemName: row.itemName,
+      quantity: num(row.quantity),
+    })),
   });
 };

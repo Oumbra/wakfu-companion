@@ -359,6 +359,77 @@
           <app-loot-list [items]="sortedLoot()" emptyVariant="recap" [interactive]="false" />
         </div>
       </div>
+
+      <!-- Encadré Pacte : masqué en mode invité tant qu'aucune extraction n'a été détectée dans la
+           session (voir StatsStoreService.hasPactActivityThisSession) — voir CLAUDE.md. -->
+      @if (stats.hasPactActivityThisSession()) {
+        <div class="recap-section">
+          <div class="loot-header-row">
+            <div class="loot-header-left">
+              <app-icon name="pouch" [strokeWidth]="1.8" [size]="20" />
+              <span class="challenges-label">{{ 'pacts.header' | t }}</span>
+              @if (stats.sessionPactItems().length > 0) {
+                <span class="loot-count"
+                  >{{ stats.sessionPactItems().length | localeNumber }}
+                  {{ 'damageMeter.items' | t }}</span
+                >
+              }
+            </div>
+          </div>
+          @if (stats.sessionPactItems().length > 1) {
+            <div class="loot-controls-row">
+              <app-loot-search
+                [value]="pactSearch()"
+                [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
+                [clearTooltip]="'damageMeter.lootSearchClear' | t"
+                (valueChange)="pactSearch.set($event)"
+              />
+              <div class="icon-switch icon-switch-3 loot-sort-switch">
+                <span
+                  class="icon-switch-highlight"
+                  [class.is-right]="pactSort() === 'quantity'"
+                  [class.is-far-right]="pactSort() === 'rarity'"
+                ></span>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="pactSort() === 'name'"
+                  [appTooltip]="pactSortTooltip('name')"
+                  (click)="setPactSort('name')"
+                >
+                  Az
+                </button>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="pactSort() === 'quantity'"
+                  [appTooltip]="pactSortTooltip('quantity')"
+                  (click)="setPactSort('quantity')"
+                >
+                  Nb
+                </button>
+                <button
+                  type="button"
+                  class="icon-switch-option loot-sort-switch-option"
+                  [class.selected]="pactSort() === 'rarity'"
+                  [appTooltip]="pactSortTooltip('rarity')"
+                  (click)="setPactSort('rarity')"
+                >
+                  <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                </button>
+              </div>
+            </div>
+          }
+          <div class="loot-body">
+            <app-loot-list
+              [items]="sortedPact()"
+              emptyVariant="recap"
+              [interactive]="false"
+              emptyLabelKey="pacts.emptyLoot"
+            />
+          </div>
+        </div>
+      }
     } @else {
       @if (historyStats.loading()) {
         <!-- Même anneau que partout ailleurs dans l'app (voir LoadingOverlayComponent/
@@ -541,6 +612,76 @@
               />
             </div>
           </div>
+
+          <!-- Encadré Pacte — masqué s'il n'y a aucun objet de pacte sur la période, exactement
+               comme en mode Session (voir CLAUDE.md) : contrairement au reste du récap période
+               (toujours affiché, même vide), une section Pacte vide n'a pas de sens à montrer —
+               demande explicite de l'utilisateur, 2026-09-05. -->
+          @if (period.pacts.length > 0) {
+            <div class="recap-section">
+              <div class="loot-header-row">
+                <div class="loot-header-left">
+                  <app-icon name="pouch" [strokeWidth]="1.8" [size]="20" />
+                  <span class="challenges-label">{{ 'pacts.header' | t }}</span>
+                  <span class="loot-count"
+                    >{{ period.pacts.length | localeNumber }} {{ 'damageMeter.items' | t }}</span
+                  >
+                </div>
+              </div>
+              @if (period.pacts.length > 1) {
+                <div class="loot-controls-row">
+                  <app-loot-search
+                    [value]="pactSearch()"
+                    [placeholder]="'sessionRecap.lootSearchPlaceholder' | t"
+                    [clearTooltip]="'damageMeter.lootSearchClear' | t"
+                    (valueChange)="pactSearch.set($event)"
+                  />
+                  <div class="icon-switch icon-switch-3 loot-sort-switch">
+                    <span
+                      class="icon-switch-highlight"
+                      [class.is-right]="pactSort() === 'quantity'"
+                      [class.is-far-right]="pactSort() === 'rarity'"
+                    ></span>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="pactSort() === 'name'"
+                      [appTooltip]="pactSortTooltip('name')"
+                      (click)="setPactSort('name')"
+                    >
+                      Az
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="pactSort() === 'quantity'"
+                      [appTooltip]="pactSortTooltip('quantity')"
+                      (click)="setPactSort('quantity')"
+                    >
+                      Nb
+                    </button>
+                    <button
+                      type="button"
+                      class="icon-switch-option loot-sort-switch-option"
+                      [class.selected]="pactSort() === 'rarity'"
+                      [appTooltip]="pactSortTooltip('rarity')"
+                      (click)="setPactSort('rarity')"
+                    >
+                      <img [src]="rarityIcon" alt="" class="loot-sort-rarity-icon" />
+                    </button>
+                  </div>
+                </div>
+              }
+              <div class="loot-body">
+                <app-loot-list
+                  [items]="sortedPeriodPact()"
+                  emptyVariant="recap"
+                  [interactive]="false"
+                  emptyLabelKey="pacts.emptyLoot"
+                />
+              </div>
+            </div>
+          }
         } @else {
           <!-- Modes Donjon & Famille/Type : REMPLACE les sections XP/Challenges/Butin globales
                ci-dessus par un accordéon — voir SessionRecapComponent.activeGroupRows/groupSections.

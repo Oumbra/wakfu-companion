@@ -52,6 +52,8 @@ const CHAT_CONTENT_RE = /^(.+?) : (.*)$/;
 const KAMA_GAIN_RE = new RegExp(`^Vous avez gagné (${NUM}) kamas\\.?$`);
 const KAMA_LOSS_RE = new RegExp(`^Vous avez perdu (${NUM}) kamas\\.?$`);
 const RAMASSE_RE = new RegExp(`^Vous avez ramassé (${NUM})x (.+?)\\s*\\.?$`);
+/** Distinct de KAMA_LOSS_RE (pas de suffixe "x", jamais de "kamas" ici) — voir ItemLossEntry. */
+const ITEM_LOSS_RE = new RegExp(`^Vous avez perdu (${NUM})x (.+?)\\s*\\.?$`);
 const CHALLENGE_SUCCESS_RE = /^Le challenge "(.+?)" est réussi\.?$/;
 const CHALLENGE_FAIL_RE = /^Le challenge "(.+?)" a échoué\.?$/;
 const XP_RE = new RegExp(`^(.+?) : \\+(${NUM}) points d'XP\\.`);
@@ -149,6 +151,10 @@ const COMBAT_START_MARKER = 'CREATION DU COMBAT';
 /** Ouverture/fermeture d'une session marchand/HDV, hors de toute enveloppe `[Catégorie]` — voir MarketOccupationEntry. */
 const MARKET_OCCUPATION_START_RE = /^Lancement de l'occupation MARKET sur la board\b/;
 const MARKET_OCCUPATION_END_RE = /^On arrête l'occupation MARKET sur la board\b/;
+/** "Action [WALKON] performed on interactive element : <id>", hors de toute enveloppe `[Catégorie]`
+ * (comme MARKET_OCCUPATION_*_RE ci-dessus) — voir InteractiveWalkonEntry. L'id n'est volontairement
+ * pas capturé (générique par nature). */
+const WALKON_RE = /^Action \[WALKON\] performed on interactive element : \d+$/;
 /** Ligne technique émise une seule fois, tout au début de chaque session client ("1.92 (build -1
  * [2026-08-20 @ 14H18min45])") — seule source fiable de la date CALENDAIRE réelle du fichier (le
  * reste du log n'expose que l'heure HH:MM:SS,mmm, voir HEADER_RE). Voir LogDateAnchorEntry. */
@@ -442,6 +448,10 @@ export class LogParser {
       return { kind: 'market-occupation', time, active: false };
     }
 
+    if (WALKON_RE.test(content)) {
+      return { kind: 'interactive-walkon', time };
+    }
+
     if (INVOCATION_INSTANTIATED_RE.test(content)) {
       const state = this.getFightState(this.resolveCurrentFightId());
       const nowMs = this.timeToMs(time);
@@ -706,6 +716,15 @@ export class LogParser {
     const loss = KAMA_LOSS_RE.exec(content);
     if (loss) {
       return { kind: 'kama-loss', time, amount: parseFrenchNumber(loss[1]) };
+    }
+    const itemLoss = ITEM_LOSS_RE.exec(content);
+    if (itemLoss) {
+      return {
+        kind: 'item-loss',
+        time,
+        item: itemLoss[2].trim(),
+        quantity: parseFrenchNumber(itemLoss[1]),
+      };
     }
     const loot = RAMASSE_RE.exec(content);
     if (loot) {

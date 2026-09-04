@@ -8,6 +8,7 @@
   --lp-sw-combats: #e2586c;
   --lp-sw-purchases: #4f9fe0;
   --lp-sw-trades: #e0713f;
+  --lp-sw-pacts: #3ec9c0;
   --lp-sw-history: #a385f0;
   --lp-sw-chat: #46d67f;
   --lp-sw-recap: #c9973f;
@@ -27,6 +28,7 @@
   --lp-sw-combats: #c0364a;
   --lp-sw-purchases: #2f74b5;
   --lp-sw-trades: #c05423;
+  --lp-sw-pacts: #1f8f88;
   --lp-sw-history: #7c4fd9;
   --lp-sw-chat: #1f9d55;
   --lp-sw-recap: #a8791f;
@@ -280,6 +282,9 @@ button.dls-arrow-down {
 }
 .sw-trades {
   background: var(--lp-sw-trades);
+}
+.sw-pacts {
+  background: var(--lp-sw-pacts);
 }
 .sw-history {
   background: var(--lp-sw-history);

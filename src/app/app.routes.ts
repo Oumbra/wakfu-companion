@@ -101,6 +101,11 @@ export const routes: Routes = [
         data: { view: 'main', dashboardTab: 'history', historyTab: 'trades' },
       },
       {
+        path: 'history/pacts',
+        component: RouteBridgeComponent,
+        data: { view: 'main', dashboardTab: 'history', historyTab: 'pacts' },
+      },
+      {
         path: 'chat',
         component: RouteBridgeComponent,
         data: { view: 'main', dashboardTab: 'chat' },
