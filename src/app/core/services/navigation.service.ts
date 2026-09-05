@@ -37,7 +37,7 @@ const PROFILE_TAB_SEGMENT: Record<Exclude<ProfileTab, 'avatar'>, string> = {
  * `'history'`) — même raison d'être ici que `DashboardTab`/`ProfileTab`. `'combats'` est la racine
  * de `/history` (pas de segment dédié), mais reste aussi joignable explicitement via `/history/fights`
  * (voir `app.routes.ts`) — alias accepté en entrée, jamais généré par `pagePathFor`. */
-export type HistoryTab = 'combats' | 'purchases' | 'trades';
+export type HistoryTab = 'combats' | 'purchases' | 'trades' | 'pacts';
 
 /** Segment d'URL de chaque `HistoryTab` non-racine — `'combats'` s'appelle `fights` côté URL (mot
  * public, cohérent avec `FightHistoryComponent`/`HistoryEventKind: 'fight'`) même si l'id interne
@@ -45,6 +45,7 @@ export type HistoryTab = 'combats' | 'purchases' | 'trades';
 const HISTORY_TAB_SEGMENT: Record<Exclude<HistoryTab, 'combats'>, string> = {
   purchases: 'purchases',
   trades: 'trades',
+  pacts: 'pacts',
 };
 
 type SlideDirection = 'forward' | 'backward';

@@ -37,7 +37,7 @@ interface OptionCard<T extends string> {
   readonly isDefault?: boolean;
 }
 
-const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
+const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades', 'pacts'];
 
 /** Illustration fixe des vignettes de préréglage (menu/objectifs/corps) — indépendante du choix
  * réel de l'utilisateur, seulement là pour montrer la forme générale de chaque option (voir

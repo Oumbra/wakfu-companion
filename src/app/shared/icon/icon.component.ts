@@ -32,10 +32,11 @@ export type AppIconName =
   | 'chevrons-expand'
   | 'dungeon'
   | 'flee'
-  | 'wrench';
+  | 'wrench'
+  | 'pouch';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-038d502a.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-15ac947e.svg';
 
 @Component({
   selector: 'app-icon',

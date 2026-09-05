@@ -54,6 +54,9 @@ export interface PeriodStats {
    * (`familyId` = id `CatalogMonsterFamilyEntry`, `null` = famille inconnue/monstre non catalogué,
    * voir `functions/api/v1/history/stats.ts` pour comment cette famille est déterminée). */
   families: (PeriodGroupTotals & { familyId: number | null })[];
+  /** Extractions de pacte de la période (voir CLAUDE.md, feature "Pacte") — jamais rattachées à un
+   * combat précis, donc pas de regroupement par donjon/famille comme `loot` ci-dessus. */
+  pacts: { itemId: number | null; itemName: string | null; quantity: number }[];
 }
 
 /**

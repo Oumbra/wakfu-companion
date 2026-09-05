@@ -256,6 +256,12 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * insensible à la casse ET aux accents via `normalizeWakfuName` (voir `filterLootRows`), appliqué
    * AVANT le tri choisi. */
   protected readonly lootSearch = signal('');
+  /** Miroir de lootSort/lootSortReverse/lootSearch, pour l'encadré Pacte — signaux séparés (pas
+   * partagés avec le butin) : les deux listes sont affichées côte à côte, pas basculées l'une pour
+   * l'autre, un seul champ de recherche/switch de tri partagé filtrerait les deux à la fois. */
+  protected readonly pactSort = signal<LootSort>('name');
+  protected readonly pactSortReverse = signal(false);
+  protected readonly pactSearch = signal('');
 
   private tickInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -305,12 +311,39 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
     return computeLootSortTooltip(this.i18n, this.lootSort(), this.lootSortReverse(), mode);
   }
 
+  protected setPactSort(mode: LootSort): void {
+    const next = nextLootSortState(this.pactSort(), this.pactSortReverse(), mode);
+    this.pactSort.set(next.sort);
+    this.pactSortReverse.set(next.reverse);
+  }
+
+  protected sortedPact(): LootRow[] {
+    return sortLootRows(
+      this.catalog,
+      this.filterPactRows(this.stats.sessionPactItems()),
+      this.pactSort(),
+      this.pactSortReverse(),
+    );
+  }
+
+  protected pactSortTooltip(mode: LootSort): string {
+    return computeLootSortTooltip(this.i18n, this.pactSort(), this.pactSortReverse(), mode);
+  }
+
   /** Filtre le butin sur `lootSearch` (voir sa doc) — appliqué AVANT le tri par les 3 appelants
    * (`sortedLoot`/`sortedPeriodLoot`/`sortedRowLoot`), jamais après : un tri par rareté sur un
    * sous-ensemble filtré n'a pas besoin de connaître les objets exclus. Requête vide = aucun
    * filtrage (retourne `rows` tel quel, pas de coût de normalisation par ligne). */
   private filterLootRows(rows: readonly LootRow[]): LootRow[] {
     const query = this.lootSearch().trim();
+    if (!query) return [...rows];
+    const normalizedQuery = normalizeWakfuName(query);
+    return rows.filter((row) => normalizeWakfuName(row.name).includes(normalizedQuery));
+  }
+
+  /** Miroir de filterLootRows, pour pactSearch — voir sa doc de tête. */
+  private filterPactRows(rows: readonly LootRow[]): LootRow[] {
+    const query = this.pactSearch().trim();
     if (!query) return [...rows];
     const normalizedQuery = normalizeWakfuName(query);
     return rows.filter((row) => normalizeWakfuName(row.name).includes(normalizedQuery));
@@ -736,6 +769,27 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
       this.filterLootRows(mergeLootRowsByIdentity(this.catalog, rows)),
       this.lootSort(),
       this.lootSortReverse(),
+    );
+  }
+
+  /** Miroir de sortedPeriodLoot, pour les extractions de pacte de la période — voir
+   * HistoryStatsService.PeriodStats.pacts, jamais rattachées à un combat précis (pas de
+   * mergeLootRowsByIdentity ici : contrairement au butin de combat, un pacte n'a pas d'ambiguïté de
+   * rareté à recouper via un roster d'ennemis, `resolveItemName` seul suffit). */
+  protected sortedPeriodPact(): LootRow[] {
+    const period = this.historyStats.stats();
+    if (!period) return [];
+    const rows: LootRow[] = period.pacts.map((row) => ({
+      name: resolveItemName(row.itemId, row.itemName, this.catalog, this.i18n),
+      catalogId: row.itemId,
+      quantity: row.quantity,
+      confidence: 'unknown',
+    }));
+    return sortLootRows(
+      this.catalog,
+      this.filterPactRows(rows),
+      this.pactSort(),
+      this.pactSortReverse(),
     );
   }
 

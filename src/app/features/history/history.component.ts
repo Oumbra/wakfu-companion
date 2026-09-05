@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { FightHistoryComponent } from '../fight-history/fight-history.component';
 import { PurchasesComponent } from '../purchases/purchases.component';
 import { TradesComponent } from '../trades/trades.component';
+import { PactComponent } from '../pact/pact.component';
 import { TranslatePipe } from '../../shared/translate.pipe';
 import { HelpModalService, HelpSection } from '../../core/services/help-modal.service';
 import { IconComponent } from '../../shared/icon/icon.component';
@@ -30,26 +31,30 @@ const TAB_EVENT_KIND: Record<HistoryTab, HistoryEventKind> = {
   combats: 'fight',
   purchases: 'purchase',
   trades: 'trade',
+  pacts: 'pact',
 };
 
 const SLOT_KEY: Record<DashboardHistoryKey, DashboardBodySlotKey> = {
   combats: 'hist_combats',
   purchases: 'hist_purchases',
   trades: 'hist_trades',
+  pacts: 'hist_pacts',
 };
 const HELP_SECTION: Record<DashboardHistoryKey, HelpSection> = {
   combats: 'fightHistory',
   purchases: 'purchases',
   trades: 'trades',
+  pacts: 'pacts',
 };
 /** Clé i18n du titre d'un panneau scindé à part — 'history.splitCombatsHeader' existait déjà pour
  * Combats (voir CLAUDE.md/historique de ce fichier), réutilise directement les libellés d'onglet
- * existants pour Achats/Échanges (pas de nouvelle clé, ce sont déjà les mêmes intitulés que dans le
- * panneau groupé). */
+ * existants pour Achats/Échanges/Pacte (pas de nouvelle clé, ce sont déjà les mêmes intitulés que
+ * dans le panneau groupé). */
 const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
   combats: 'history.splitCombatsHeader',
   purchases: 'purchases.header',
   trades: 'trades.header',
+  pacts: 'pacts.header',
 };
 
 /**
@@ -92,6 +97,7 @@ const SOLO_HEADER_KEY: Record<DashboardHistoryKey, string> = {
     FightHistoryComponent,
     PurchasesComponent,
     TradesComponent,
+    PactComponent,
     TranslatePipe,
     IconComponent,
     TooltipDirective,
