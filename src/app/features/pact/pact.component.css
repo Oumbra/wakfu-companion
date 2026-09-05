@@ -1,0 +1,122 @@
+/* Plus de `.tool-panel`/`.panel-header` propre : embarqué comme contenu du sous-onglet "Pacte" de
+   HistoryComponent (voir history.component.html), qui porte déjà son propre `.tool-panel` — même
+   principe que PurchasesComponent/TradesComponent. */
+:host {
+  display: contents;
+}
+
+.panel-body {
+  padding: 0;
+}
+
+.date-group {
+  border-bottom: 1px solid var(--border);
+}
+.date-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+.date-group-header:hover {
+  background: var(--surface-raised);
+}
+.date-group-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.date-group-date {
+  font-family: monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+.date-group-count {
+  font-family: monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+.date-group-caret {
+  font-size: 0.7em;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.date-group-caret.expanded {
+  transform: rotate(90deg);
+  color: var(--accent);
+}
+
+.pact-entry {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 15px;
+}
+.pact-entry:nth-child(odd) {
+  background-color: var(--surface-well);
+}
+.pact-entry:nth-child(even) {
+  background-color: var(--row-stripe);
+}
+
+.pact-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.pact-clock {
+  flex-shrink: 0;
+  display: flex;
+  color: var(--text-muted);
+}
+.pact-item-count {
+  font-weight: 700;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pact-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* Même principe que `.loot-row`/`.trade-item-row` (dégradé de fond + bordure gauche par rareté via
+   --rarity-color, définie globalement dans styles.css, classe .rarity-xxx). */
+.pact-item-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text-color);
+  padding: 4px 8px;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+}
+.pact-item-row[class*='rarity-'] {
+  border-left-color: var(--rarity-color);
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--rarity-color) 30%, var(--surface-well)),
+    var(--surface-well) 75%
+  );
+}
+.pact-item-name {
+  flex-grow: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pact-item-qty {
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--text-color);
+  flex-shrink: 0;
+}

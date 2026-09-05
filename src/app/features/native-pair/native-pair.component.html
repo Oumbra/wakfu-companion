@@ -1,0 +1,31 @@
+<div class="pair-shell">
+  <div class="pair-card">
+    <h1>{{ 'nativePair.title' | t }}</h1>
+
+    @if (!hasCode()) {
+      <p class="pair-error">{{ 'nativePair.missingCode' | t }}</p>
+    } @else {
+      <p class="pair-intro">{{ 'nativePair.intro' | t }}</p>
+      <div class="pair-code">{{ code() }}</div>
+
+      @if (state() === 'done') {
+        <p class="pair-success">{{ 'nativePair.success' | t }}</p>
+      } @else if (!auth.isAuthenticated()) {
+        <p class="pair-login-prompt">{{ 'nativePair.loginPrompt' | t }}</p>
+        <app-auth-provider-buttons (providerChosen)="login($event)" />
+      } @else {
+        <button
+          type="button"
+          class="pair-confirm-btn"
+          [disabled]="state() === 'confirming'"
+          (click)="confirm()"
+        >
+          {{ (state() === 'confirming' ? 'nativePair.confirming' : 'nativePair.confirm') | t }}
+        </button>
+        @if (state() === 'error') {
+          <p class="pair-error">{{ 'nativePair.errorInvalid' | t }}</p>
+        }
+      }
+    }
+  </div>
+</div>

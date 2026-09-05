@@ -50,6 +50,16 @@ export interface IdentityRecord {
   linkedAt: Date;
 }
 
+/** Appairage natif en cours (voir `server/auth/pairing.ts` et `nativePairings`). */
+export interface PairingRecord {
+  deviceCode: string;
+  userCode: string;
+  expiresAt: Date;
+}
+
+export type PollPairingResult =
+  { status: 'claimed'; token: string } | { status: 'pending' | 'expired' };
+
 export interface AuthStore {
   // ── Autorisations OAuth en cours ──────────────────────────────────────
   createAuthorization(record: AuthorizationRecord): Promise<void>;
@@ -94,4 +104,21 @@ export interface AuthStore {
   /** Incrémente le compteur de la fenêtre et renvoie sa valeur APRÈS incrément. */
   bumpRateLimit(bucket: string, windowStart: Date): Promise<number>;
   purgeRateLimits(before: Date): Promise<void>;
+
+  // ── Appairage natif (overlay) ──────────────────────────────────────────
+  createPairing(record: PairingRecord): Promise<void>;
+  /**
+   * Associe un jeton de session (déjà créé par l'appelant via
+   * `createSession`) au code — **atomiquement**, uniquement si le code est
+   * connu, pas expiré et pas déjà réclamé. Renvoie `false` sinon (code
+   * inconnu/expiré/déjà utilisé), à traduire en 404 par la route.
+   */
+  claimPairing(userCode: string, sessionToken: string, now: Date): Promise<boolean>;
+  /**
+   * Renvoie le jeton et marque l'appairage consommé — **atomiquement**, une
+   * seule fois (`UPDATE ... WHERE consumed_at IS NULL ... RETURNING`) : un
+   * second `poll` du même `deviceCode` ne revoit jamais le jeton.
+   */
+  pollPairing(deviceCode: string, now: Date): Promise<PollPairingResult>;
+  purgeExpiredPairings(now: Date): Promise<void>;
 }

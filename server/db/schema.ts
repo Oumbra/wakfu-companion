@@ -470,6 +470,36 @@ export const oauthAuthorizations = pgTable(
 );
 
 /**
+ * Appairage d'un client natif (overlay, lot L4 du plan overlay) — device
+ * pairing : le navigateur DÉJÀ connecté associe une session au code affiché
+ * par l'overlay, qui la récupère par sondage (`docs/plan-architecture.md`
+ * §7.2 du dépôt `wakfu-companion-overlay`).
+ *
+ * `deviceCode` (secret, jamais affiché) sert de clé primaire et de jeton de
+ * sondage — c'est lui que l'overlay garde. `userCode` (court, affiché à
+ * l'utilisateur ET saisi/confirmé côté navigateur) est indexé `unique` pour
+ * la résolution côté `/claim`. `sessionToken` est un jeton de TRANSIT :
+ * posé en clair par `/claim` (le jeton final de session, comme tout jeton
+ * natif, n'est de toute façon jamais stocké autrement qu'en clair tant que
+ * l'appelant ne l'a pas récupéré — voir `oauthAuthorizations.codeVerifier`
+ * pour le même principe), effacé par le premier `/poll` qui le renvoie
+ * (`consumedAt` empêche tout second envoi). La session elle-même est créée
+ * dans `sessions` dès `/claim`, hachée comme n'importe quelle autre.
+ */
+export const nativePairings = pgTable(
+  'native_pairings',
+  {
+    deviceCode: text('device_code').primaryKey(),
+    userCode: text('user_code').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    sessionToken: text('session_token'),
+    claimedAt: timestamp('claimed_at', { withTimezone: true }),
+    consumedAt: timestamp('consumed_at', { withTimezone: true }),
+  },
+  (table) => [index('native_pairings_expires_at_idx').on(table.expiresAt)],
+);
+
+/**
  * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
  * compte »). Implémentée en base plutôt qu'en KV/Durable Object : ces routes
  * sont rares (une poignée d'appels par connexion), le coût d'une écriture
@@ -599,25 +629,35 @@ export const fights = pgTable(
     fightLogId: bigint('fight_log_id', { mode: 'number' }),
     /**
      * Donjon identifié pour ce combat (id Ankama, catalogue `dungeons`) — `null` pour un combat
-     * hors donjon (chasse libre, PvP...) ou dont le donjon n'est pas encore identifié (combat de
-     * salle synchronisé avant le combat de boss qui révèle le donjon, voir `dungeonRunKey`
-     * ci-dessous). Résolu côté client (`HistorySyncService`, même logique que l'affichage —
-     * `findDungeonForEnemies`/`groupDungeonRuns`, voir dungeon-run-grouping.util.ts), jamais
-     * recalculé côté serveur.
+     * hors donjon (chasse libre, PvP...) ou dont le donjon n'est pas encore identifié. Résolu
+     * d'abord côté client (`HistorySyncService`/`dungeon-run-grouping.util.ts` côté web,
+     * `dungeon_run.rs` côté overlay — même algorithme porté deux fois), puis **recalculé côté
+     * serveur** en autorité après chaque envoi (`server/history/dungeon-run.ts`, appelée depuis
+     * `functions/api/v1/history/fights.ts`) : les deux calculs client sont bornés à l'historique
+     * de LEUR SESSION LOCALE en cours, donc ne peuvent jamais rattacher une salle dont le boss du
+     * même run a été rejoué dans une autre session ou par l'autre client (web ↔ overlay) — le
+     * serveur, qui voit tout l'historique du compte, comble ce trou.
      *
      * Contrairement au reste de cette table (événement immuable, voir `fightLogId` ci-dessus),
-     * MODIFIABLE après insertion (`ON CONFLICT DO UPDATE`, voir functions/api/v1/history/fights.ts)
-     * : une salle envoyée avant le boss de son run est réenfilée par le client dès que celui-ci est
-     * identifié, pour recevoir sa valeur a posteriori.
+     * MODIFIABLE après insertion (client comme serveur, voir `functions/api/v1/history/fights.ts`)
+     * : une salle sans rattachement le reçoit dès que le boss du même run est identifié, par
+     * n'importe lequel des deux calculs (client à sa prochaine session, ou serveur au prochain
+     * envoi qui révèle ce boss) — jamais écrasé une fois posé (`WHERE dungeon_id IS NULL` côté
+     * serveur, `COALESCE` côté insertion pour la valeur envoyée par le client).
      */
     dungeonId: integer('dungeon_id').references(() => dungeons.id),
     /**
      * Identifiant partagé par tous les combats d'un même run de donjon (salles + boss), pour
-     * permettre un `GROUP BY` direct côté statistiques sans avoir à rejouer le regroupement client
-     * (`groupDungeonRuns`) — dérivé côté client de la signature du combat de boss du run, même
-     * mécanisme de hachage que `clientKey` (voir `client-key.util.ts`). `null` en miroir de
-     * `dungeonId` (combat hors donjon multi-salles, ou pas encore rattaché). Même règle de mise à
-     * jour a posteriori que `dungeonId` ci-dessus.
+     * permettre un `GROUP BY` direct côté statistiques sans avoir à rejouer le regroupement —
+     * dérivé côté client de la signature du combat de boss du run, même mécanisme de hachage que
+     * `clientKey` (voir `client-key.util.ts`). `null` en miroir de `dungeonId` (combat hors donjon
+     * multi-salles, ou pas encore rattaché). Même règle de mise à jour a posteriori que `dungeonId`
+     * ci-dessus — y compris le rattachement calculé côté serveur, dont la clé n'est alors PAS un
+     * vrai `sha256` mais une valeur synthétique `migrated:<id du combat représentatif>` (voir
+     * `server/history/dungeon-run.ts::mintRunKey`) quand aucun des deux clients n'a encore fourni
+     * de vraie signature pour ce run — jamais réécrite ensuite si un client la fournit plus tard
+     * (`WHERE dungeon_id IS NULL`, la clé synthétique n'est écrasée que si `dungeonId` lui-même
+     * l'est aussi, ce qui n'arrive jamais une fois posé).
      */
     dungeonRunKey: text('dungeon_run_key'),
     /**
@@ -838,4 +878,48 @@ export const tradeItems = pgTable(
     quantity: integer('quantity').notNull(),
   },
   (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],
+);
+
+/**
+ * Extraction de pacte (feature "Pacte" du jeu, qui détourne le butin de combat vers une dimension
+ * séparée — voir CLAUDE.md) : plusieurs objets récupérés en une fois, détectés côté client par une
+ * ligne `Action [WALKON] ...` suivie de ramassages hors combat (voir
+ * StatsStoreService.registerPactExtraction). Pas de coût, contrairement à `purchases` — juste un
+ * horodatage et une liste d'objets/quantités, comme un `trades` à un seul "côté".
+ */
+export const pactExtractions = pgTable(
+  'pact_extractions',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    clientKey: text('client_key').notNull(),
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    gameServer: text('game_server').references(() => gameServers.code),
+  },
+  (table) => [
+    uniqueIndex('pact_extractions_user_client_key_uq').on(table.userId, table.clientKey),
+    index('pact_extractions_user_occurred_at_idx').on(table.userId, table.occurredAt),
+  ],
+);
+
+/** Objets d'une extraction de pacte — `itemId`/`itemName` mutuellement exclusifs, même invariant
+ * que `fightLoot`/`tradeItems`, même raison d'être corrigeable après coup (`ON CONFLICT DO UPDATE`,
+ * voir `functions/api/v1/history/pacts.ts`). */
+export const pactExtractionItems = pgTable(
+  'pact_extraction_items',
+  {
+    extractionId: bigint('extraction_id', { mode: 'number' })
+      .notNull()
+      .references(() => pactExtractions.id, { onDelete: 'cascade' }),
+    lineIndex: integer('line_index').notNull(),
+    itemId: integer('item_id'),
+    itemName: text('item_name'),
+    quantity: integer('quantity').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.extractionId, table.lineIndex] }),
+    index('pact_extraction_items_item_id_idx').on(table.itemId),
+  ],
 );

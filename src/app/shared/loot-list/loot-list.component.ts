@@ -40,6 +40,10 @@ export class LootListComponent {
    * aussi bien au cas "aucun butin du tout" qu'au cas "recherche sans résultat" (même message,
    * même convention que PurchasesComponent/TradesComponent — pas de clé dédiée). */
   readonly emptyVariant = input<'default' | 'recap'>('default');
+  /** Clé i18n du message "liste vide" — `'damageMeter.noLoot'` par défaut (inchangé pour tous les
+   * appelants existants), surchargeable pour un autre contenu que du butin de combat (ex. la carte
+   * Pacte, `'pacts.emptyLoot'`, voir SessionRecapComponent). */
+  readonly emptyLabelKey = input('damageMeter.noLoot');
   /** Combat d'origine de ce butin — nécessaire pour cibler une correction manuelle d'objet (voir
    * ItemPickerService, `StatsStoreService.reassignLootItem`) : `null` pour la vue "butin cumulé de
    * session" (`session-recap`), qui agrège plusieurs combats et ne peut donc pas cibler une ligne

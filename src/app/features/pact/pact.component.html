@@ -1,0 +1,60 @@
+<app-history-list-header
+  [searchPlaceholder]="'pacts.searchPlaceholder' | t"
+  [searchQuery]="searchQuery()"
+  [sortOrder]="sortOrder()"
+  (searchQueryChange)="searchQuery.set($event)"
+  (sortOrderChange)="sortOrder.set($event)"
+/>
+
+<div class="panel-body">
+  @if (groups().length === 0) {
+    <div class="empty-state">{{ 'pacts.empty' | t }}</div>
+  } @else {
+    @for (group of groups(); track group.dateKey) {
+      <div class="date-group">
+        <div class="date-group-header" (click)="toggleGroup(group.dateKey)">
+          <span class="date-group-date">{{ group.dateKey }}</span>
+          <div class="date-group-right">
+            <span class="date-group-count">{{ group.records.length }}</span>
+            <span class="date-group-caret" [class.expanded]="!isCollapsed(group.dateKey)">▸</span>
+          </div>
+        </div>
+        @if (!isCollapsed(group.dateKey)) {
+          @for (record of group.records; track record.id) {
+            <div class="pact-entry">
+              <div class="pact-header">
+                <span
+                  class="pact-clock"
+                  [appTooltip]="i18n.formatDateTime(record.fullTimestampMs)"
+                  tooltipPosition="top-left"
+                >
+                  <app-icon name="clock-long" [strokeWidth]="1.8" [size]="15" />
+                </span>
+                <span class="pact-item-count"
+                  >{{ record.items.length | localeNumber }} {{ 'damageMeter.items' | t }}</span
+                >
+              </div>
+              <div class="pact-items">
+                @for (item of record.items; track item.name + '#' + $index) {
+                  <div
+                    class="pact-item-row"
+                    [class]="rarityClass(item)"
+                    [appTooltip]="canInteract(item) ? ('items.correctTooltip' | t) : null"
+                    tooltipPosition="top"
+                    (contextmenu)="openInteractMenu($event, record, item)"
+                  >
+                    <app-item-icon [name]="item.name" [id]="item.catalogId" [size]="20" />
+                    <span class="pact-item-name">{{
+                      i18n.translateItemNameById(item.catalogId, i18n.translateItemName(item.name))
+                    }}</span>
+                    <span class="pact-item-qty">×{{ item.quantity | localeNumber }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        }
+      </div>
+    }
+  }
+</div>

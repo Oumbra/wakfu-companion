@@ -19,23 +19,24 @@
  *      `wakfu.log` (rotation/purge du fichier, ou simplement fin de la session avant le boss) : le
  *      client n'a alors plus aucune occasion de renvoyer cette salle avec son rattachement.
  *
- * Ce script rejoue donc **côté serveur**, à partir de ce qui est déjà en base
- * (`fights.started_at`/`fights.won` + `fight_participants` côté ennemi), le même algorithme que le
- * client :
- *   - détection du donjon d'un combat par ses ennemis — miroir de `findDungeonForEnemies`
- *     (core/utils/fight-image.util.ts) ;
- *   - regroupement salles + boss d'un même run — miroir de `groupDungeonRuns`
- *     (core/utils/dungeon-run-grouping.util.ts).
+ * **Depuis 2026-09-03, ce rattrapage tourne aussi en SYNCHRONE** à chaque `POST
+ * /api/v1/history/fights` (voir `server/history/dungeon-run.ts::recomputeDungeonRunsForBatch`,
+ * appelée par `functions/api/v1/history/fights.ts`) — ce script reste donc surtout utile pour
+ * l'historique déjà en base AVANT ce changement (cas 1 ci-dessus) ou pour un rattrapage ponctuel
+ * après un incident. La logique elle-même (détection du donjon d'un combat par ses ennemis,
+ * regroupement salles + boss d'un même run) vit désormais dans ce module partagé — miroir de
+ * `findDungeonForEnemies`/`groupDungeonRuns` côté client (`core/utils/fight-image.util.ts`/
+ * `dungeon-run-grouping.util.ts`), réutilisée telle quelle par les deux appelants serveur (POST
+ * live et ce script) pour ne jamais diverger entre eux.
  *
- * Ports plutôt qu'imports directs de ces deux fichiers (délibéré, même choix que
- * `backfill-monster-ids.ts` pour `CatalogService.applyIndex`) : les deux dépendent de types de
- * `core/api/catalog.service.ts`, un fichier qui importe `@angular/core`/`ApiClientService`/
- * `PersistenceService` — les faire transiter par `tsx` (transpilation fichier par fichier, sans
- * vérification de types inter-fichiers) risquerait de tirer ce module Angular dans un script Node
- * pur pour un gain nul (la logique elle-même est déjà petite et pure). La lecture du référentiel se
- * fait directement depuis `repository/*.json` (même source que `import-catalog.ts`, donc que les
- * tables `monsters`/`dungeons` déjà en base), pas via une requête sur ces tables : plus simple, et
- * même schéma de confiance que `backfill-monster-ids.ts`.
+ * Seule différence entre les deux appelants : la source du catalogue donjons/monstres.
+ * `loadCatalogFromDb` (utilisée par le POST live, runtime Cloudflare Pages Functions/Workers, sans
+ * accès `fs`) lit `dungeons`/`monsters` déjà en base ; `loadCatalog` ci-dessous (ce script, Node
+ * pur via `tsx`) lit directement `repository/*.json` (même source que `import-catalog.ts`, donc
+ * que ces mêmes tables) — pas de dépendance Angular dans un cas comme dans l'autre, aucune des deux
+ * routes n'a besoin de `core/api/catalog.service.ts` (délibéré, même choix que
+ * `backfill-monster-ids.ts` pour `CatalogService.applyIndex`, qui importe `@angular/core`/
+ * `ApiClientService`/`PersistenceService`).
  *
  * ## Pas de découpage par écart de temps (retiré le 2026-08-30)
  *
@@ -100,55 +101,36 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { and, asc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { createDb } from '../db/client';
-import { fightParticipants, fights } from '../db/schema';
+import { fightParticipants, fights, type WakfuDungeonType } from '../db/schema';
 import { normalizeWakfuName } from '../../src/app/core/utils/wakfu-name.util';
+import {
+  applyDungeonRunUpdates,
+  enemyCompositionKey,
+  findDungeonForEnemyNames,
+  hasArchiEnemy,
+  resolveUpdatesForUser,
+  type Catalog,
+  type DungeonEntry,
+  type FightRow,
+} from '../history/dungeon-run';
+
+// Ré-exportés pour compatibilité (spec existant, autres consommateurs) — la logique elle-même
+// vit désormais dans `server/history/dungeon-run.ts`, partagée avec l'ingestion live
+// (`functions/api/v1/history/fights.ts`) : voir sa doc de tête pour le raisonnement complet.
+export {
+  enemyCompositionKey,
+  findDungeonForEnemyNames,
+  hasArchiEnemy,
+  resolveUpdatesForUser,
+  type Catalog,
+  type DungeonEntry,
+  type FightRow,
+};
 
 const projectRoot = path.dirname(path.dirname(path.dirname(fileURLToPath(import.meta.url))));
 const REPOSITORY_DIR = path.join(projectRoot, 'repository');
-
-/** Au-delà de ce nombre de familles distinctes parmi les ennemis, horde hétérogène — miroir de
- * `DISTINCT_FAMILY_THRESHOLD` (fight-image.util.ts). */
-const DISTINCT_FAMILY_THRESHOLD = 4;
-const NO_FAMILY_KEY = -1;
-
-type WakfuDungeonType =
-  | 'TWO_ROOMS'
-  | 'THREE_ROOMS'
-  | 'FOUR_ROOMS'
-  | 'THREE_PLAYERS'
-  | 'ULTIMATE_BOSS'
-  | 'BREACH'
-  | 'ULTIMATE_BREACH'
-  | 'ARCADE';
-
-/** Miroir de `ROOM_COUNT_BY_TYPE` (dungeon-run-grouping.util.ts). */
-const ROOM_COUNT_BY_TYPE: Readonly<Record<WakfuDungeonType, number>> = {
-  TWO_ROOMS: 2,
-  THREE_ROOMS: 3,
-  FOUR_ROOMS: 4,
-  THREE_PLAYERS: 1,
-  ULTIMATE_BOSS: 1,
-  BREACH: 1,
-  ULTIMATE_BREACH: 1,
-  ARCADE: 1,
-};
-
-export interface DungeonEntry {
-  id: number;
-  bossMonsterId: number[];
-  monsterFamilyId: number[];
-  type: WakfuDungeonType;
-  hasPreBossArchi: boolean;
-}
-
-interface MonsterEntry {
-  id: number;
-  family: number | null;
-  isBoss: boolean;
-  isArchi: boolean;
-}
 
 interface RawMonster {
   id: number;
@@ -174,14 +156,12 @@ function toIdArray(value: number | number[] | null | undefined): number[] {
   return Array.isArray(value) ? value : [value];
 }
 
-export interface Catalog {
-  findMonster(name: string): MonsterEntry | undefined;
-  dungeons: readonly DungeonEntry[];
-  dungeonsByBossMonsterId: Map<number, DungeonEntry>;
-}
-
 /** Charge repository/monsters.json + repository/dungeons.json et reconstruit les mêmes index que
- * `CatalogService.applyIndex`/`applyDungeons` — miroir de `backfill-monster-ids.ts` (voir sa doc). */
+ * `CatalogService.applyIndex`/`applyDungeons` — miroir de `backfill-monster-ids.ts` (voir sa doc).
+ * Lecture JSON plutôt que `loadCatalogFromDb` (`server/history/dungeon-run.ts`, utilisée par
+ * l'ingestion live) : ce script tourne en Node pur (`tsx`), pas dans le runtime Workers qui a
+ * motivé cette dernière — mêmes données de toute façon (repository/*.json est la source des
+ * tables `monsters`/`dungeons`, voir `import-catalog.ts`). */
 export async function loadCatalog(): Promise<Catalog> {
   const [rawMonsters, rawDungeons] = await Promise.all([
     readFile(path.join(REPOSITORY_DIR, 'monsters.json'), 'utf-8').then(
@@ -192,10 +172,16 @@ export async function loadCatalog(): Promise<Catalog> {
     ),
   ]);
 
-  const byFrName = new Map<string, MonsterEntry>();
-  const byOtherLocaleName = new Map<string, MonsterEntry>();
+  const byFrName = new Map<
+    string,
+    { id: number; family: number | null; isBoss: boolean; isArchi: boolean }
+  >();
+  const byOtherLocaleName = new Map<
+    string,
+    { id: number; family: number | null; isBoss: boolean; isArchi: boolean }
+  >();
   for (const monster of rawMonsters) {
-    const entry: MonsterEntry = {
+    const entry = {
       id: monster.id,
       family: monster.family,
       isBoss: monster.isBoss,
@@ -232,218 +218,6 @@ export async function loadCatalog(): Promise<Catalog> {
     dungeons,
     dungeonsByBossMonsterId,
   };
-}
-
-/** Port de `findDungeonForEnemies` (fight-image.util.ts) — voir sa doc pour l'ordre de priorité
- * (brèche ultime multi-boss > donjon d'un boss unique > brèche simple par familles). */
-export function findDungeonForEnemyNames(
-  catalog: Catalog,
-  enemyNames: readonly string[],
-): DungeonEntry | null {
-  const entries = enemyNames
-    .map((name) => catalog.findMonster(name))
-    .filter((entry): entry is MonsterEntry => entry !== undefined);
-
-  const bossEntries = entries.filter((entry) => entry.isBoss);
-  const distinctBossIds = [...new Set(bossEntries.map((entry) => entry.id))];
-  if (distinctBossIds.length > 1) {
-    const ultimateBreach = catalog.dungeons.find(
-      (dungeon) =>
-        dungeon.type === 'ULTIMATE_BREACH' &&
-        distinctBossIds.every((bossId) => dungeon.bossMonsterId.includes(bossId)),
-    );
-    if (ultimateBreach) return ultimateBreach;
-  }
-
-  for (const name of enemyNames) {
-    const entry = catalog.findMonster(name);
-    if (!entry?.isBoss) continue;
-    const dungeon = catalog.dungeonsByBossMonsterId.get(entry.id);
-    if (dungeon) return dungeon;
-  }
-
-  if (bossEntries.length === 0) {
-    const distinctFamilies = new Set(entries.map((entry) => entry.family ?? NO_FAMILY_KEY));
-    if (distinctFamilies.size > DISTINCT_FAMILY_THRESHOLD) {
-      const enemyFamilyIds = [...distinctFamilies].filter((family) => family !== NO_FAMILY_KEY);
-      const breach = catalog.dungeons.find(
-        (dungeon) =>
-          dungeon.type === 'BREACH' &&
-          enemyFamilyIds.every((familyId) => dungeon.monsterFamilyId.includes(familyId)),
-      );
-      if (breach) return breach;
-    }
-  }
-
-  return null;
-}
-
-export function hasArchiEnemy(catalog: Catalog, enemyNames: readonly string[]): boolean {
-  return enemyNames.some((name) => catalog.findMonster(name)?.isArchi === true);
-}
-
-/** Port de `enemyCompositionKey` (dungeon-run-grouping.util.ts) — voir sa doc. */
-export function enemyCompositionKey(enemyNames: readonly string[]): string {
-  return [...new Set(enemyNames)].sort().join('|');
-}
-
-function dungeonRoomCount(dungeon: DungeonEntry): number {
-  return ROOM_COUNT_BY_TYPE[dungeon.type];
-}
-
-export interface FightRow {
-  id: number;
-  startedAt: Date;
-  result: 'won' | 'lost';
-  dungeonId: number | null;
-  dungeonRunKey: string | null;
-  /** Donjon détecté à partir des SEULS ennemis de CE combat (mémoïsé une fois, avant le
-   * regroupement) — `null` si aucun (salle sans boss, ou combat hors donjon). */
-  dungeon: DungeonEntry | null;
-  archi: boolean;
-  /** Clé de composition d'ennemis (voir `enemyCompositionKey`) — utilisée à l'étape 3 de
-   * `groupDungeonRuns` pour rattacher une défaite à la salle qu'elle a ratée. */
-  roomKey: string;
-}
-
-type GroupEntry =
-  | { kind: 'single'; record: FightRow }
-  | { kind: 'dungeonRun'; dungeon: DungeonEntry; fights: FightRow[]; representative: FightRow };
-
-/** Port de `groupDungeonRuns` (dungeon-run-grouping.util.ts) — voir sa doc pour le détail de
- * l'algorithme. `records` doit être trié du plus RÉCENT au plus ANCIEN. */
-export function groupDungeonRuns(records: readonly FightRow[]): GroupEntry[] {
-  const entries: GroupEntry[] = [];
-  const consumed = new Array<boolean>(records.length).fill(false);
-
-  for (let i = 0; i < records.length; i++) {
-    if (consumed[i]) continue;
-
-    const dungeon = records[i].dungeon;
-    if (!dungeon) {
-      entries.push({ kind: 'single', record: records[i] });
-      consumed[i] = true;
-      continue;
-    }
-
-    if (dungeonRoomCount(dungeon) === 1) {
-      entries.push({ kind: 'single', record: records[i] });
-      consumed[i] = true;
-      continue;
-    }
-
-    let j = i + 1;
-    while (j < records.length) {
-      const candidate = records[j].dungeon;
-      if (!candidate || candidate.id !== dungeon.id || records[j].result === 'won') break;
-      j++;
-    }
-
-    if (dungeon.hasPreBossArchi && j < records.length && !records[j].dungeon && records[j].archi) {
-      j++;
-    }
-
-    // Salles précédentes — miroir du fix 2026-08-30 de `groupDungeonRuns`
-    // (dungeon-run-grouping.util.ts, voir sa doc pour le détail) : une VICTOIRE compte pour une
-    // salle (sauf si `roomSlots` est déjà atteint : salle en trop = run antérieur distinct) ; une
-    // DÉFAITE n'est ramassée comme tentative ratée de la salle EN COURS que si sa composition
-    // d'ennemis correspond EXACTEMENT à celle de la victoire qui la referme.
-    const roomSlots = dungeonRoomCount(dungeon) - 1;
-    let roomsFound = 0;
-    let currentRoomKey: string | null = null;
-    while (j < records.length) {
-      const candidate = records[j].dungeon;
-      if (candidate) break;
-      const record = records[j];
-      if (record.result === 'won') {
-        if (roomsFound >= roomSlots) break;
-        currentRoomKey = record.roomKey;
-        roomsFound++;
-        j++;
-        continue;
-      }
-      if (currentRoomKey !== null && record.roomKey === currentRoomKey) {
-        j++;
-        continue;
-      }
-      break;
-    }
-
-    for (let k = i; k < j; k++) consumed[k] = true;
-
-    const span = records.slice(i, j);
-    if (span.length <= 1) {
-      entries.push({ kind: 'single', record: records[i] });
-      continue;
-    }
-
-    entries.push({ kind: 'dungeonRun', dungeon, fights: span, representative: records[i] });
-  }
-
-  return entries;
-}
-
-interface FightUpdate {
-  dungeonId: number;
-  dungeonRunKey: string;
-}
-
-function mintRunKey(representativeFightId: number): string {
-  return `migrated:${representativeFightId}`;
-}
-
-/** Calcule les mises à jour à appliquer pour un compte, sans rien écrire. */
-export function resolveUpdatesForUser(
-  rowsAscending: readonly FightRow[],
-): Map<number, FightUpdate> {
-  const updates = new Map<number, FightUpdate>();
-
-  const descending = [...rowsAscending].reverse();
-  for (const entry of groupDungeonRuns(descending)) {
-    if (entry.kind === 'single') {
-      if (entry.record.dungeon !== null && entry.record.dungeonId === null) {
-        const key = entry.record.dungeonRunKey ?? mintRunKey(entry.record.id);
-        updates.set(entry.record.id, { dungeonId: entry.record.dungeon.id, dungeonRunKey: key });
-      }
-      continue;
-    }
-
-    const existingKey = entry.fights.map((f) => f.dungeonRunKey).find((k) => k !== null) ?? null;
-    const key = existingKey ?? mintRunKey(entry.representative.id);
-    for (const fight of entry.fights) {
-      if (fight.dungeonId === null) {
-        updates.set(fight.id, { dungeonId: entry.dungeon.id, dungeonRunKey: key });
-      }
-    }
-  }
-
-  return updates;
-}
-
-async function applyUpdates(
-  db: ReturnType<typeof createDb>,
-  userId: string,
-  updates: Map<number, FightUpdate>,
-): Promise<void> {
-  const rows = [...updates.entries()];
-  const CHUNK = 500;
-  for (let i = 0; i < rows.length; i += CHUNK) {
-    const chunk = rows.slice(i, i + CHUNK);
-    const values = sql.join(
-      chunk.map(
-        ([id, v]) => sql`(${id}::bigint, ${v.dungeonId}::integer, ${v.dungeonRunKey}::text)`,
-      ),
-      sql`, `,
-    );
-    // `f.dungeon_id is null` : même garde qu'à la lecture, jamais un combat déjà rattaché — voir
-    // doc de tête (idempotence).
-    await db.execute(sql`
-      update fights as f
-      set dungeon_id = v.dungeon_id, dungeon_run_key = v.dungeon_run_key
-      from (values ${values}) as v(id, dungeon_id, dungeon_run_key)
-      where f.id = v.id and f.user_id = ${userId} and f.dungeon_id is null
-    `);
-  }
 }
 
 async function main(): Promise<void> {
@@ -544,7 +318,7 @@ async function main(): Promise<void> {
     }
 
     if (apply) {
-      await applyUpdates(db, userId, updates);
+      await applyDungeonRunUpdates(db, userId, updates);
     }
   }
 

@@ -1,4 +1,9 @@
-import type { FightRecord, PurchaseRecord, TradeRecord } from '../services/stats-store.service';
+import type {
+  FightRecord,
+  PactExtractionRecord,
+  PurchaseRecord,
+  TradeRecord,
+} from '../services/stats-store.service';
 
 /**
  * Clés de rapprochement session/compte (lot "historique fusionné") — permettent de reconnaître
@@ -32,6 +37,18 @@ export function purchaseDedupKey(
   record: Pick<PurchaseRecord, 'time' | 'item' | 'quantity' | 'totalCost'>,
 ): string {
   return `${record.time}|${normalize(record.item)}|${record.quantity}|${record.totalCost}`;
+}
+
+/** Miroir de purchaseDedupKey/tradeDedupKey, pour une extraction de pacte — pas de coût (voir
+ * PactExtractionRecord), juste l'heure et les objets/quantités triés. */
+export function pactExtractionDedupKey(
+  record: Pick<PactExtractionRecord, 'time' | 'items'>,
+): string {
+  const items = record.items
+    .map((item) => `${normalize(item.name)}x${item.quantity}`)
+    .sort()
+    .join(',');
+  return `${record.time}|${items}`;
 }
 
 export function tradeDedupKey(

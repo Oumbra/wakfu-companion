@@ -8,6 +8,7 @@ export type HelpSection =
   | 'fightHistory'
   | 'purchases'
   | 'trades'
+  | 'pacts'
   | 'chat'
   | 'profileAlerts'
   | 'profileCharacters'

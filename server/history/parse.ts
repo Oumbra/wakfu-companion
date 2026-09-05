@@ -39,6 +39,7 @@ const MAX_NAME_LENGTH = 200;
  */
 const MAX_PARTICIPANTS_PER_FIGHT = 128;
 const MAX_ITEMS_PER_TRADE = 128;
+const MAX_ITEMS_PER_PACT_EXTRACTION = 128;
 /** Sorts distincts ventilés pour une même instance de combattant, et objets ramassés dans un même combat. */
 const MAX_SPELLS_PER_PARTICIPANT = 64;
 const MAX_LOOT_PER_FIGHT = 128;
@@ -135,6 +136,22 @@ export interface TradeInput {
   items: TradeItemInput[];
 }
 
+/** `itemId`/`itemName` mutuellement exclusifs — voir `FightLootInput`. Pas de coût contrairement à
+ * `PurchaseInput` : une extraction de pacte n'a pas de prix. */
+export interface PactExtractionItemInput {
+  lineIndex: number;
+  itemId: number | null;
+  itemName: string | null;
+  quantity: number;
+}
+
+export interface PactExtractionInput {
+  clientKey: string;
+  occurredAt: Date;
+  gameServer: string | null;
+  items: PactExtractionItemInput[];
+}
+
 function asRecord(raw: unknown, label: string): ParseResult<Record<string, unknown>> {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     return { ok: false, error: `${label} : objet attendu` };
@@ -162,13 +179,43 @@ function parseText(raw: unknown, field: string): ParseResult<string> {
   return { ok: true, value: raw };
 }
 
-/** Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. */
-function parseCount(raw: unknown, field: string, optional = false): ParseResult<number | null> {
+/**
+ * Borne d'une colonne Postgres `integer` (32 bits signés) — au-delà, l'`INSERT` échoue avec
+ * `numeric field overflow`, une exception NON interceptée qui remonte en 500 générique (voir la
+ * doc de `max` ci-dessous pour l'incident réel que ça a causé).
+ */
+const PG_INT32_MAX = 2_147_483_647;
+
+/**
+ * Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. `max`, quand
+ * fourni, doit correspondre au type de la colonne Postgres réellement écrite (voir
+ * `server/db/schema.ts`) — **obligatoire pour toute colonne `integer`** (32 bits, ex.
+ * `fights.duration_ms`), inutile pour une colonne `bigint` (kamas/xp/dégâts : jusqu'à ~9,2×10¹⁸,
+ * largement au-delà de `Number.MAX_SAFE_INTEGER`, qui borne de toute façon tout `number` JS reçu).
+ *
+ * **Correctif du 2026-09-04** (retour utilisateur, overlay `wakfu-companion-overlay`) : `durationMs`
+ * n'était borné nulle part avant l'écriture en base. Un combat restauré après un redémarrage de
+ * l'overlay (`FightWorking::started_at_ms` retombant sur l'epoch faute d'horodatage persisté — voir
+ * `overlay-engine::fight_store`) produisait un `durationMs` de plusieurs dizaines d'années en
+ * millisecondes, largement au-delà de `integer` (32 bits) — l'`INSERT` levait une exception non
+ * gérée (500 générique côté Cloudflare, `error code: 1101`), qui bloquait la totalité du lot envoyé
+ * (jusqu'à 50 événements, combats/achats/échanges confondus, voir `MAX_HISTORY_BATCH`) — pas
+ * seulement le combat fautif — puisque `SyncQueue::flush_once` traite un lot en un seul `POST`.
+ */
+function parseCount(
+  raw: unknown,
+  field: string,
+  optional = false,
+  max?: number,
+): ParseResult<number | null> {
   if (raw === null || raw === undefined) {
     return optional ? { ok: true, value: null } : { ok: false, error: `${field} manquant` };
   }
   if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
     return { ok: false, error: `${field} invalide : ${String(raw)}` };
+  }
+  if (max !== undefined && raw > max) {
+    return { ok: false, error: `${field} trop grand : ${raw}` };
   }
   return { ok: true, value: raw };
 }
@@ -318,7 +365,7 @@ function parseLootRow(raw: unknown, lineIndex: number): ParseResult<FightLootInp
 
   const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'loot');
   if (!identity.ok) return identity;
-  const quantity = parseCount(entry['quantity'], 'loot.quantity');
+  const quantity = parseCount(entry['quantity'], 'loot.quantity', false, PG_INT32_MAX);
   if (!quantity.ok) return quantity;
 
   return {
@@ -396,7 +443,7 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!fightId.ok) return fightId;
       const startedAt = parseDate(entry['startedAt'], 'startedAt');
       if (!startedAt.ok) return startedAt;
-      const durationMs = parseCount(entry['durationMs'], 'durationMs', true);
+      const durationMs = parseCount(entry['durationMs'], 'durationMs', true, PG_INT32_MAX);
       if (!durationMs.ok) return durationMs;
       const turns = parseCount(entry['turns'], 'turns', true);
       if (!turns.ok) return turns;
@@ -486,7 +533,7 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
       if (!clientKey.ok) return clientKey;
       const identity = parseItemIdentity(entry['itemId'], entry['itemName'], 'purchase');
       if (!identity.ok) return identity;
-      const quantity = parseCount(entry['quantity'], 'quantity');
+      const quantity = parseCount(entry['quantity'], 'quantity', false, PG_INT32_MAX);
       if (!quantity.ok) return quantity;
       const totalCost = parseCount(entry['totalCost'], 'totalCost');
       if (!totalCost.ok) return totalCost;
@@ -550,7 +597,7 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
         }
         const identity = parseItemIdentity(item['itemId'], item['itemName'], 'items');
         if (!identity.ok) return identity;
-        const quantity = parseCount(item['quantity'], 'items.quantity');
+        const quantity = parseCount(item['quantity'], 'items.quantity', false, PG_INT32_MAX);
         if (!quantity.ok) return quantity;
 
         items.push({
@@ -576,6 +623,54 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
       };
     },
     (trade) => trade.clientKey,
+  );
+}
+
+export function parsePactExtractionsBody(body: unknown): ParseResult<PactExtractionInput[]> {
+  return parseBatch(
+    body,
+    (entry) => {
+      const clientKey = parseClientKey(entry['clientKey']);
+      if (!clientKey.ok) return clientKey;
+      const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
+      if (!occurredAt.ok) return occurredAt;
+      const gameServer = parseGameServer(entry['gameServer']);
+      if (!gameServer.ok) return gameServer;
+
+      const rawItems = entry['items'] ?? [];
+      if (!Array.isArray(rawItems)) return { ok: false, error: 'items invalide' };
+      if (rawItems.length > MAX_ITEMS_PER_PACT_EXTRACTION) {
+        return {
+          ok: false,
+          error: `trop d'objets extraits (max ${MAX_ITEMS_PER_PACT_EXTRACTION})`,
+        };
+      }
+      // `lineIndex` attribué ici, comme pour `TradeItemInput` — pas une donnée métier, doit rester
+      // déterministe pour le même contenu (voir sa doc).
+      const items: PactExtractionItemInput[] = [];
+      for (let i = 0; i < rawItems.length; i++) {
+        const record = asRecord(rawItems[i], 'objet extrait');
+        if (!record.ok) return record;
+        const item = record.value;
+        const identity = parseItemIdentity(item['itemId'], item['itemName'], 'items');
+        if (!identity.ok) return identity;
+        const quantity = parseCount(item['quantity'], 'items.quantity', false, PG_INT32_MAX);
+        if (!quantity.ok) return quantity;
+
+        items.push({ lineIndex: i, ...identity.value, quantity: quantity.value ?? 0 });
+      }
+
+      return {
+        ok: true,
+        value: {
+          clientKey: clientKey.value,
+          occurredAt: occurredAt.value,
+          gameServer: gameServer.value,
+          items,
+        },
+      };
+    },
+    (pact) => pact.clientKey,
   );
 }
 

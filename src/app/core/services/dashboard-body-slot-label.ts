@@ -2,7 +2,7 @@ import { I18nService } from './i18n.service';
 import { DashboardBodySlotKey, DashboardHistoryKey } from './dashboard-layout.service';
 import { AppIconName } from '../../shared/icon/icon.component';
 
-const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades'];
+const HIST_KEYS: readonly DashboardHistoryKey[] = ['combats', 'purchases', 'trades', 'pacts'];
 
 /** Clé i18n du libellé d'un volet d'historique seul (pas le libellé traduit) — exportée pour
  * `DashboardLayoutPickerComponent`, qui en a besoin telle quelle pour ses 3 lignes de découpage
@@ -38,9 +38,9 @@ export function dashboardBodySlotLabel(
   if (key === 'hist_group') {
     // N'est appelé pour cette clé que quand le regroupement est actif (voir
     // `DashboardLayoutService.activeSlots`, au moins 2 volets cochés) — `grouped` a donc toujours
-    // 2 ou 3 éléments ici.
+    // entre 2 et HIST_KEYS.length éléments ici (4 depuis l'ajout de Pacte, voir CLAUDE.md).
     const grouped = HIST_KEYS.filter((k) => historyGroup[k]);
-    return grouped.length === 3
+    return grouped.length === HIST_KEYS.length
       ? i18n.t('profile.dashboardLayout.slot.histGroupFull')
       : i18n.t('profile.dashboardLayout.slot.histGroupPartial', {
           parts: grouped.map((k) => i18n.t(histLabelKey(k))).join(' + '),
@@ -76,6 +76,7 @@ export function dashboardBodySlotIcon(key: DashboardBodySlotKey): AppIconName {
   if (key === 'chat') return 'messages-square';
   if (key === 'hist_purchases') return 'shopping-bag';
   if (key === 'hist_trades') return 'arrows-exchange';
+  if (key === 'hist_pacts') return 'pouch';
   if (key === 'recap') return 'scroll';
   return 'clock';
 }
