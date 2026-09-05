@@ -111,6 +111,73 @@ describe('HistoryArchiveService — fusion session/compte (mergedFights)', () =>
   });
 });
 
+/**
+ * Régression du bug réel constaté le 2026-09-05 (remonté par l'utilisateur, comparaison
+ * claude-dev.wakfu-companion.com/overlay vs wakfu-companion.com/lecture directe du log) : un combat
+ * synchronisé par l'overlay pouvait porter plusieurs lignes `fight_loot` pour le même objet — un
+ * ramassage par ligne de log, jamais fusionné avant envoi (corrigé côté overlay le même jour, voir
+ * `overlay-engine::session::SessionState::apply`) — alors que la lecture directe du log fusionne
+ * déjà ses propres ramassages en mémoire. `HistoryArchiveService.toFightRecord` doit fusionner ces
+ * lignes à la lecture (`mergeLootRowsByIdentity`, même mécanisme que `SessionRecapComponent`) pour
+ * que les combats DÉJÀ synchronisés non fusionnés s'affichent quand même correctement, sans backfill
+ * de la base.
+ */
+describe('HistoryArchiveService — fusion du butin dupliqué (bug overlay du 2026-09-05)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('plusieurs lignes de butin du même objet dans un combat archivé sont fusionnées en une seule', async () => {
+    TestBed.configureTestingModule({});
+    const api: Partial<ApiClientService> = {
+      setUnauthorizedHandler: () => undefined,
+      getJson: async <T>(path: string) => {
+        if (!path.startsWith('/history/fights')) {
+          return { ok: false, error: { kind: 'offline' } } as ApiResult<T>;
+        }
+        return {
+          ok: true,
+          data: {
+            entries: [
+              {
+                clientKey: 'test-client-key-loot',
+                startedAt: new Date(0).toISOString(),
+                durationMs: 1000,
+                won: true,
+                turns: 1,
+                totalDamage: 0,
+                xpGained: 0,
+                kamasGained: 0,
+                gameServer: null,
+                participants: [],
+                // Trois ramassages bruts du même objet, comme les stockerait un combat synchronisé
+                // par l'overlay avant son correctif du 2026-09-05.
+                loot: [
+                  { itemId: null, itemName: 'Eclats', quantity: 48 },
+                  { itemId: null, itemName: 'Eclats', quantity: 48 },
+                  { itemId: null, itemName: 'Eclats', quantity: 48 },
+                ],
+              },
+            ],
+            nextBefore: null,
+          } as T,
+        };
+      },
+      requestJson: async <T>() => ({ ok: true, data: undefined as T }),
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+
+    const archive = TestBed.inject(HistoryArchiveService);
+    await archive.loadMore('fight');
+
+    const [fight] = archive.fights();
+    expect(fight.loot).toHaveLength(1);
+    expect(fight.loot[0].name).toBe('Eclats');
+    expect(fight.loot[0].quantity).toBe(144);
+  });
+});
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 

@@ -22,6 +22,7 @@ import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
 import { localDayStart } from '../utils/local-period.util';
 import { resolveLootConfidence } from '../utils/loot-confidence.util';
+import { mergeLootRowsByIdentity } from '../utils/loot-sort.util';
 
 /** Provenance d'une ligne fusionnée (voir `mergedFights` etc.) — `'session'` dès que l'événement
  * fait partie de la session en cours, MÊME si la ligne réellement affichée vient de la copie
@@ -696,7 +697,12 @@ function toFightRecord(
   // manuelle déjà connue (voir ci-dessous) force 'confirmed' — l'utilisateur a lui-même tranché,
   // jamais le contredire après coup par un badge de doute, même reconstruit à la lecture.
   const enemyNames = entry.participants.filter((p) => p.side === 'enemy').map((p) => p.name);
-  const loot = (entry.loot ?? []).map((row) => {
+  // Une ligne par ligne `fight_loot` brute — CE granulaire, jamais fusionné ici : `findLootCorrection`
+  // matche une correction par (fightKey, nom, sourceCatalogId) ET vérifie que la quantité corrigée
+  // couvre la quantité DE LA LIGNE SERVEUR (voir sa doc) ; fusionner avant cette résolution changerait
+  // la quantité comparée et invaliderait des corrections déjà posées sur une ligne d'origine plus
+  // petite.
+  const rawLoot = (entry.loot ?? []).map((row) => {
     const name = resolveItemName(row.itemId, row.itemName, catalog, i18n);
     const correction = stats.findLootCorrection(fightKey, name, row.itemId, row.quantity);
     if (correction !== null) {
@@ -711,6 +717,17 @@ function toFightRecord(
     const { catalogId, confidence } = resolveLootConfidence(catalog, enemyNames, name, row.itemId);
     return { name, catalogId, quantity: row.quantity, confidence };
   });
+  // Fusion d'AFFICHAGE seulement (même fonction que SessionRecapComponent, voir sa doc) : un combat
+  // synchronisé par l'overlay pouvait stocker plusieurs lignes `fight_loot` pour le même objet (un
+  // ramassage par ligne de log, jamais fusionné avant envoi — corrigé côté overlay le 2026-09-05,
+  // voir `overlay-engine::session::SessionState::apply`), tandis que la lecture directe du log par ce
+  // client fusionne déjà ses propres ramassages en mémoire (`StatsStoreService.registerLoot`/
+  // `finalizeFight`). Sans cette fusion ici, un même combat affichait un nombre de lignes de butin
+  // différent selon qu'il vient de l'archive serveur ou de la session locale — bug réel remonté par
+  // l'utilisateur (écart visible entre wakfu-companion.com alimenté par l'overlay et par la lecture du
+  // log). Les combats déjà synchronisés AVANT le correctif overlay restent stockés non fusionnés en
+  // base ; c'est cette fusion à la lecture qui les affiche correctement malgré tout, sans backfill.
+  const loot = mergeLootRowsByIdentity(catalog, rawLoot);
 
   const record: FightRecord = {
     id: archiveId(index),
