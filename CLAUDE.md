@@ -474,6 +474,51 @@ l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
      "hors-combat" répétés d'une invocation qui meurt/se retransforme ne doivent jamais alimenter la
      watchlist "ennemis vaincus").
 
+## Index « boss → donjon » : donjon classique toujours prioritaire sur une brèche
+
+Corrigé le 2026-09-13 (fichier utilisateur, Donjon Flaqueux — combat de boss affiché avec l'image
+générique de brèche, sans regroupement des salles, `dungeon_id`=170 « Brèche dimensionnelle de
+Frigost » en base pour 57 combats prod). Les 27 boss des 3 brèches ultimes (`ULTIMATE_BREACH`,
+`repository/dungeons.json`) sont TOUS aussi boss d'un donjon classique ; l'index
+`dungeonsByBossMonsterId` était construit « premier arrivé gagne » sur l'ordre BRUT des entrées —
+ordre du JSON pour le script de rattrapage, mais ordre PHYSIQUE des lignes de la table `dungeons`
+(aucun `ORDER BY`, `db.select().from(dungeons)`/`GET /api/v1/dungeons`) pour le serveur live ET le
+client : n'importe lequel de ces 27 boss pouvait retomber sur la brèche selon l'environnement (dev :
+Hammamamoule ; prod : Flaqueux, Cacterre, Smarrante, Mont Zinit, Shukrute...). Une brèche ultime ne
+se reconnaît JAMAIS par un boss seul (plusieurs boss distincts, priorité 0 de
+`findDungeonForEnemies`) — l'index par boss unique doit donc préférer le donjon classique, quel que
+soit l'ordre d'entrée : `indexDungeonsByBossMonsterId` (`core/utils/dungeon-boss-index.util.ts`),
+partagé par les 3 constructeurs d'index (client `CatalogService.applyDungeons`, serveur
+`loadCatalogFromDb`, script `backfill-dungeon-runs.ts::loadCatalog`). Ne jamais reconstruire cet
+index à la main ailleurs.
+
+- **Rattrapage en base** : `server/import/fix-breach-dungeon-ids.ts` (dry-run par défaut,
+  `--apply`) — re-résout les combats rattachés à une brèche ultime, rattache leurs salles, recalcule
+  `fight_type`. Nécessaire car aucun mécanisme existant ne corrige un `dungeon_id` déjà posé
+  (`applyDungeonRunUpdates` n'écrit que `WHERE dungeon_id IS NULL`, le POST fait `COALESCE`).
+- **2ᵉ trou découvert au passage** : dans `POST /api/v1/history/fights`, `recomputeDungeonRunsForBatch`
+  peut rattacher des salles HORS du lot courant (fenêtre de lookback, envoyées par un POST
+  antérieur), mais le recalcul de `fight_type` ne portait que sur le lot → ~155 combats prod avec
+  `dungeon_id` posé et `fight_type` encore `FAMILY_*`/`null`. La fonction renvoie maintenant les
+  ids rattachés, inclus dans le scope du recalcul ; rattrapage global via `backfill-fight-type
+  --apply` (recalcul complet, idempotent). Règle : tout code qui pose `dungeon_id` doit recalculer
+  `fight_type` pour LES MÊMES ids, jamais pour un sous-ensemble.
+
+## Alerte sonore : `play()` rejeté par la politique autoplay (toast muet)
+
+`LogFileAccessService.init()` reconnecte le fichier tout seul au chargement (handle mémorisé,
+permission déjà accordée) — aucun clic n'est jamais nécessaire, donc Chrome peut refuser
+`HTMLMediaElement.play()` (`NotAllowedError`) tant que l'utilisateur n'a pas interagi avec la page :
+toast affiché, son muet, rejet autrefois avalé (`void audio.play()`). Remonté le 2026-09-13 (« Pierre
+de vitesse » sans alerte) — le chemin applicatif (parser → `registerLoot` → `LootAlertService`) a été
+vérifié correct en navigateur sur le fichier fourni ; hors ce blocage, la seule autre cause est le
+gating `isInitialLoad` (ramassage déjà présent dans le fichier à la connexion, jamais alerté — voulu).
+`AlertSoundService` capte maintenant le rejet, expose `blockedByBrowser` (indication dans le toast,
+clé `profile.lootAlertSoundBlocked`) et rejoue le dernier son au premier `pointerdown`/`keydown`.
+Non reproductible via Playwright (`navigator.userActivation.hasBeenActive` vaut déjà `true` sur une
+page pilotée par CDP, même avec `--autoplay-policy=user-gesture-required`) : testé en stubbant
+`HTMLMediaElement.prototype.play` pour rejeter `NotAllowedError` avant le premier clic.
+
 ## Gotchas plateforme (navigateur) déjà rencontrés
 
 - **`File.size` est figé pour toujours** à la valeur captée au moment de la sélection (`<input type="file">` classique, aujourd'hui supprimé de l'app) — ne reflète JAMAIS la taille réelle sur le disque ensuite, et ne lève **aucune erreur** à la relecture (contrairement à `FileSystemFileHandle.getFile()` qui lève `NotReadableError` si le fichier a changé). C'est précisément pour cette raison que le sélecteur classique a été retiré entièrement : seule l'API File System Access (bouton = `showOpenFilePicker()`, glisser-déposer = `getAsFileSystemHandle()`) permet une vraie lecture continue.
