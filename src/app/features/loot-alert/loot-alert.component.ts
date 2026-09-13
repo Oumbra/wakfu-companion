@@ -43,7 +43,9 @@ const CONFETTI_PIECE_COUNT = 28;
 export class LootAlertComponent {
   private readonly lootAlertService = inject(LootAlertService);
   private readonly profile = inject(ProfileService);
-  private readonly alertSound = inject(AlertSoundService);
+  /** Exposé au template pour l'indication « son bloqué par le navigateur » (voir
+   * AlertSoundService.blockedByBrowser). */
+  protected readonly alertSound = inject(AlertSoundService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly visible = signal(false);

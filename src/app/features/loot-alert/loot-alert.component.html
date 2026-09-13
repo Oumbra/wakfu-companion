@@ -32,6 +32,9 @@
             × {{ quantity() }}
           }
         </span>
+        @if (alertSound.blockedByBrowser()) {
+          <span class="loot-alert-sound-blocked">{{ 'profile.lootAlertSoundBlocked' | t }}</span>
+        }
       </div>
       <button class="loot-alert-close" [appTooltip]="'profile.closeToast' | t" (click)="close()">
         ×

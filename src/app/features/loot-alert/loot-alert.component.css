@@ -85,6 +85,13 @@
   font-weight: 700;
   color: var(--text-bright);
 }
+/* Politique autoplay du navigateur : son refusé tant qu'aucun clic n'a eu lieu (voir
+   AlertSoundService) — l'utilisateur doit savoir pourquoi le toast est muet. */
+.loot-alert-sound-blocked {
+  margin-top: 2px;
+  font-size: 0.72rem;
+  color: var(--dmg-light);
+}
 
 .loot-alert-close {
   position: absolute;
