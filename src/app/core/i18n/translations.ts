@@ -342,6 +342,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOff': 'Son désactivé',
     'profile.lootAlertTitle': 'Objet obtenu !',
     'profile.closeToast': 'Fermer',
+    'profile.lootAlertSoundBlocked':
+      'Son bloqué par le navigateur : cliquez sur la page pour l’activer.',
     'profile.alertTimingLabel': "Fermeture de l'alerte",
     'profile.secondsUnit': 'sec.',
     'profile.autoCloseLabel': 'Auto',
@@ -984,6 +986,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOff': 'Sound off',
     'profile.lootAlertTitle': 'Item obtained!',
     'profile.closeToast': 'Close',
+    'profile.lootAlertSoundBlocked': 'Sound blocked by the browser: click the page to enable it.',
     'profile.alertTimingLabel': 'Alert close timing',
     'profile.secondsUnit': 'sec.',
     'profile.autoCloseLabel': 'Auto',
@@ -1622,6 +1625,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOff': 'Sonido desactivado',
     'profile.lootAlertTitle': '¡Objeto obtenido!',
     'profile.closeToast': 'Cerrar',
+    'profile.lootAlertSoundBlocked':
+      'Sonido bloqueado por el navegador: haz clic en la página para activarlo.',
     'profile.alertTimingLabel': 'Cierre de la alerta',
     'profile.secondsUnit': 'seg.',
     'profile.autoCloseLabel': 'Auto',
@@ -2263,6 +2268,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundOff': 'Som desativado',
     'profile.lootAlertTitle': 'Item obtido!',
     'profile.closeToast': 'Fechar',
+    'profile.lootAlertSoundBlocked':
+      'Som bloqueado pelo navegador: clique na página para ativá-lo.',
     'profile.alertTimingLabel': 'Fechamento do aviso',
     'profile.secondsUnit': 'seg.',
     'profile.autoCloseLabel': 'Auto',
