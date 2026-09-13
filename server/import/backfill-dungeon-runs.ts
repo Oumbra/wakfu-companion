@@ -105,6 +105,7 @@ import { and, asc, eq, inArray, isNull } from 'drizzle-orm';
 import { createDb } from '../db/client';
 import { fightParticipants, fights, type WakfuDungeonType } from '../db/schema';
 import { normalizeWakfuName } from '../../src/app/core/utils/wakfu-name.util';
+import { indexDungeonsByBossMonsterId } from '../../src/app/core/utils/dungeon-boss-index.util';
 import {
   applyDungeonRunUpdates,
   enemyCompositionKey,
@@ -203,20 +204,13 @@ export async function loadCatalog(): Promise<Catalog> {
     hasPreBossArchi: dungeon.has_pre_boss_archi ?? false,
   }));
 
-  const dungeonsByBossMonsterId = new Map<number, DungeonEntry>();
-  for (const dungeon of dungeons) {
-    for (const bossMonsterId of dungeon.bossMonsterId) {
-      if (!dungeonsByBossMonsterId.has(bossMonsterId)) {
-        dungeonsByBossMonsterId.set(bossMonsterId, dungeon);
-      }
-    }
-  }
-
   return {
     findMonster: (name) =>
       byFrName.get(normalizeWakfuName(name)) ?? byOtherLocaleName.get(normalizeWakfuName(name)),
     dungeons,
-    dungeonsByBossMonsterId,
+    // Donjon classique prioritaire sur une brèche pour un même boss — voir
+    // indexDungeonsByBossMonsterId (partagé avec `loadCatalogFromDb` et le client).
+    dungeonsByBossMonsterId: indexDungeonsByBossMonsterId(dungeons),
   };
 }
 

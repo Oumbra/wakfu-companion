@@ -2,6 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { ApiClientService } from './api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 import { normalizeWakfuName } from '../utils/wakfu-name.util';
+import { indexDungeonsByBossMonsterId } from '../utils/dungeon-boss-index.util';
 import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
 import { ITEM_CATEGORY_SORT_ORDER, WakfuItemCategory } from '../data/wakfu-item-category.data';
 
@@ -682,15 +683,10 @@ export class CatalogService {
       monsterFamilyId: Array.isArray(dungeon.monsterFamilyId) ? dungeon.monsterFamilyId : [],
     }));
 
-    const byBossMonsterId = new Map<number, CatalogDungeonEntry>();
-    for (const dungeon of dungeons) {
-      for (const bossMonsterId of dungeon.bossMonsterId) {
-        if (!byBossMonsterId.has(bossMonsterId)) {
-          byBossMonsterId.set(bossMonsterId, dungeon);
-        }
-      }
-    }
-    this.dungeonsByBossMonsterId = byBossMonsterId;
+    // Donjon classique prioritaire sur une brèche pour un même boss, quel que soit l'ordre des
+    // lignes renvoyées par `/dungeons` (aucun `ORDER BY` côté serveur) — voir
+    // indexDungeonsByBossMonsterId, partagé avec le serveur.
+    this.dungeonsByBossMonsterId = indexDungeonsByBossMonsterId(dungeons);
     this.dungeonsById = new Map(dungeons.map((dungeon) => [dungeon.id, dungeon]));
     this.dungeons = dungeons;
     this.revision.update((v) => v + 1);

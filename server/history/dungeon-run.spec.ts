@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   enemyCompositionKey,
+  findDungeonForEnemyNames,
   groupDungeonRuns,
   mintRunKey,
   resolveUpdatesForUser,
+  type Catalog,
   type DungeonEntry,
   type FightRow,
+  type MonsterEntry,
 } from './dungeon-run';
+import { indexDungeonsByBossMonsterId } from '../../src/app/core/utils/dungeon-boss-index.util';
 
 /**
  * Cas repris de `src/app/core/utils/dungeon-run-grouping.util.spec.ts` (même algorithme, même
@@ -216,5 +220,44 @@ describe('enemyCompositionKey', () => {
   it('ignore ordre et doublons', () => {
     expect(enemyCompositionKey(['B', 'A', 'B'])).toBe(enemyCompositionKey(['A', 'B']));
     expect(enemyCompositionKey(['A', 'B'])).not.toBe(enemyCompositionKey(['A', 'C']));
+  });
+});
+
+describe('findDungeonForEnemyNames — boss partagé entre donjon classique et brèche ultime', () => {
+  const FLAQUEUX: DungeonEntry = makeDungeon({ id: 142, type: 'TWO_ROOMS', bossMonsterId: [4720] });
+  const CACTERRE: DungeonEntry = makeDungeon({ id: 83, type: 'TWO_ROOMS', bossMonsterId: [2972] });
+  const FRIGOST_ULTIMATE: DungeonEntry = makeDungeon({
+    id: 170,
+    type: 'ULTIMATE_BREACH',
+    bossMonsterId: [2464, 2972, 4720],
+  });
+  const MONSTERS = new Map<string, MonsterEntry>([
+    ['flaque royale', { id: 4720, family: 12, isBoss: true, isArchi: false }],
+    ['chef flaqueux', { id: 4717, family: 12, isBoss: false, isArchi: false }],
+    ['cacterre boss', { id: 2972, family: 107, isBoss: true, isArchi: false }],
+  ]);
+
+  function catalogInOrder(dungeons: DungeonEntry[]): Catalog {
+    return {
+      findMonster: (name) => MONSTERS.get(name.toLowerCase()),
+      dungeons,
+      // Même construction que `loadCatalogFromDb`/`backfill-dungeon-runs.ts::loadCatalog`.
+      dungeonsByBossMonsterId: indexDungeonsByBossMonsterId(dungeons),
+    };
+  }
+
+  it('rattache un boss seul à son donjon classique même si la brèche ultime le précède', () => {
+    // Bug réel corrigé le 2026-09-13 : `db.select().from(dungeons)` (sans ORDER BY) pouvait
+    // renvoyer la brèche ultime avant le donjon classique — 57 combats en prod rattachés à
+    // « Brèche dimensionnelle de Frigost » avec un seul boss (Flaque Royale seule, etc.).
+    const catalog = catalogInOrder([FRIGOST_ULTIMATE, FLAQUEUX, CACTERRE]);
+
+    expect(findDungeonForEnemyNames(catalog, ['Chef Flaqueux', 'Flaque Royale'])?.id).toBe(142);
+  });
+
+  it('résout toujours la brèche ultime quand PLUSIEURS de ses boss sont présents', () => {
+    const catalog = catalogInOrder([FLAQUEUX, CACTERRE, FRIGOST_ULTIMATE]);
+
+    expect(findDungeonForEnemyNames(catalog, ['Flaque Royale', 'Cacterre Boss'])?.id).toBe(170);
   });
 });

@@ -417,5 +417,23 @@ describe('CatalogService', () => {
 
       expect(service.findWakfuUltimateBreachByBossMonsters([])).toBeUndefined();
     });
+
+    it('rattache un boss seul à son donjon classique même si la brèche ultime le liste AVANT lui', async () => {
+      // Bug réel corrigé le 2026-09-13 (Donjon Flaqueux) : « premier arrivé gagne » sur l'ordre
+      // brut de `/dungeons` (sans ORDER BY) faisait résoudre la brèche ultime pour un boss seul.
+      const ULTIMATE_BREACH_FIRST = { ...ULTIMATE_BREACH_A, bossMonsterId: [42, 901, 902] };
+      const { service } = setup({
+        cachedIndex: undefined,
+        cachedDungeons: undefined,
+        version: ok({ indexHash: 'v1' }),
+        index: ok({ items: [], monsters: [] }),
+        dungeons: ok([ULTIMATE_BREACH_FIRST, DUNGEON_ROW]),
+      });
+      await service.initialize();
+
+      expect(service.findWakfuDungeonByBossMonsterId(42)?.id).toBe(7);
+      // Un boss qu'AUCUN donjon classique ne réclame retombe bien sur la brèche (repli).
+      expect(service.findWakfuDungeonByBossMonsterId(901)?.id).toBe(22);
+    });
   });
 });

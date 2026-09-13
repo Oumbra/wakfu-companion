@@ -2,6 +2,7 @@ import { and, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { dungeons, fightParticipants, fights, monsters, type WakfuDungeonType } from '../db/schema';
 import { normalizeWakfuName } from '../../src/app/core/utils/wakfu-name.util';
+import { indexDungeonsByBossMonsterId } from '../../src/app/core/utils/dungeon-boss-index.util';
 
 /**
  * Regroupement de combats de donjon multi-salles (`fights.dungeonId`/`dungeonRunKey`) — **côté
@@ -59,7 +60,7 @@ export interface DungeonEntry {
   hasPreBossArchi: boolean;
 }
 
-interface MonsterEntry {
+export interface MonsterEntry {
   id: number;
   family: number | null;
   isBoss: boolean;
@@ -125,20 +126,14 @@ export async function loadCatalogFromDb(db: Db): Promise<Catalog> {
     hasPreBossArchi: dungeon.hasPreBossArchi,
   }));
 
-  const dungeonsByBossMonsterId = new Map<number, DungeonEntry>();
-  for (const dungeon of dungeonEntries) {
-    for (const bossMonsterId of dungeon.bossMonsterId) {
-      if (!dungeonsByBossMonsterId.has(bossMonsterId)) {
-        dungeonsByBossMonsterId.set(bossMonsterId, dungeon);
-      }
-    }
-  }
-
   return {
     findMonster: (name) =>
       byFrName.get(normalizeWakfuName(name)) ?? byOtherLocaleName.get(normalizeWakfuName(name)),
     dungeons: dungeonEntries,
-    dungeonsByBossMonsterId,
+    // Donjon classique prioritaire sur une brèche pour un même boss — `db.select()` sans `ORDER BY`
+    // renvoie les lignes dans un ordre physique arbitraire, voir indexDungeonsByBossMonsterId
+    // (partagé avec le client et le script de rattrapage).
+    dungeonsByBossMonsterId: indexDungeonsByBossMonsterId(dungeonEntries),
   };
 }
 
@@ -373,6 +368,14 @@ export async function applyDungeonRunUpdates(
  * Sinon : charge une fenêtre BORNÉE (`LOOKBACK_FIGHTS` derniers combats du compte,
  * `fights_user_started_at_idx` déjà indexé) + leurs participants ennemis, fusionne avec le lot
  * courant, rejoue `groupDungeonRuns`/`resolveUpdatesForUser` dessus, écrit le delta.
+ *
+ * Renvoie les ids des combats dont `dungeon_id` vient d'être posé — y compris ceux de la fenêtre de
+ * lookback, HORS du lot courant (salles envoyées lors d'un POST antérieur, rattachées seulement
+ * maintenant que leur boss arrive) : l'appelant DOIT les inclure dans son recalcul de `fight_type`
+ * (`dungeonFightTypeUpdateSql`), qui dépend directement de `dungeon_id`. Bug réel corrigé le
+ * 2026-09-13 : le recalcul ne portait que sur le lot courant, une salle rattachée a posteriori
+ * gardait donc à vie son `fight_type` `FAMILY_*` initial avec un `dungeon_id` pourtant posé
+ * (~155 combats en prod dans cet état, rattrapés par `backfill-fight-type.ts`).
  */
 export async function recomputeDungeonRunsForBatch(
   db: Db,
@@ -386,7 +389,7 @@ export async function recomputeDungeonRunsForBatch(
     dungeonRunKey: string | null;
     enemyNames: readonly string[];
   }[],
-): Promise<void> {
+): Promise<number[]> {
   const toFightRow = (row: {
     id: number;
     startedAt: Date;
@@ -410,7 +413,7 @@ export async function recomputeDungeonRunsForBatch(
 
   const touchedRows = touchedFights.map(toFightRow);
   const revealsDungeon = touchedRows.some((row) => row.dungeon !== null);
-  if (!revealsDungeon) return;
+  if (!revealsDungeon) return [];
 
   const lookbackRows = await db
     .select({
@@ -464,6 +467,7 @@ export async function recomputeDungeonRunsForBatch(
   );
 
   const updates = resolveUpdatesForUser(allRowsAscending);
-  if (updates.size === 0) return;
+  if (updates.size === 0) return [];
   await applyDungeonRunUpdates(db, userId, updates);
+  return [...updates.keys()];
 }
