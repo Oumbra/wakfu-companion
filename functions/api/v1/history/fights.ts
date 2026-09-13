@@ -212,7 +212,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       .where(inArray(fights.id, touchedFightIds));
 
     const catalog = await loadCatalogFromDb(db);
-    await recomputeDungeonRunsForBatch(
+    const attachedFightIds = await recomputeDungeonRunsForBatch(
       db,
       userId,
       catalog,
@@ -221,6 +221,11 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         enemyNames: enemyNamesByFightId.get(row.id) ?? [],
       })),
     );
+    // Une salle d'un POST antérieur rattachée seulement maintenant (fenêtre de lookback) doit voir
+    // son `fight_type` recalculé avec le lot — voir la doc de `recomputeDungeonRunsForBatch`.
+    for (const id of attachedFightIds) {
+      if (!touchedFightIds.includes(id)) touchedFightIds.push(id);
+    }
   }
 
   // Classification matérialisée du combat (`fight_type`, voir server/history/fight-type.ts) —
