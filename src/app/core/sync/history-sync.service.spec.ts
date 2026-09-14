@@ -6,7 +6,7 @@ import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { CatalogService } from '../api/catalog.service';
 import { LogFileAccessService } from '../services/log-file-access.service';
 import { PersistenceService } from '../services/persistence.service';
-import { FightRecord, StatsStoreService } from '../services/stats-store.service';
+import { EntityDamageRow, FightRecord, StatsStoreService } from '../services/stats-store.service';
 import { computeClientKey } from './client-key.util';
 import { fightSignature } from './history-event.model';
 import { HistorySyncService } from './history-sync.service';
@@ -253,6 +253,51 @@ describe('HistorySyncService — rattachement de donjon', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]['dungeonId']).toBe(DUNGEON_SOLO_ID);
     expect(sent[0]['dungeonRunKey']).toMatch(/^[0-9a-f]{64}$/);
+  });
+
+  it("transmet le soin et l'armure donnés, rattachés au bon participant", async () => {
+    const sentBatches: unknown[][] = [];
+    configureApiWithCatalog(sentBatches);
+    await initializeCatalog();
+
+    // Soin et armure vivent dans DEUX listes séparées du `FightRecord` (voir
+    // StatsStoreService.finalizeFight) : ce test vérifie qu'elles rejoignent bien le participant de
+    // même instance, sans créer de ligne supplémentaire (ce qui casserait `fightDedupKey`).
+    const fight = fightRecord(1, '10:00:00,000', 'won', ['Gobelin']);
+    const healer: EntityDamageRow = {
+      name: 'Gobelin',
+      total: 640,
+      spells: [{ spell: 'Mot Curatif', total: 640, byElement: { Eau: 640 }, byTurn: [] }],
+      defeated: true,
+      fled: false,
+      instanceIndex: 1,
+      instanceCount: 1,
+    };
+    const shield: EntityDamageRow = {
+      ...healer,
+      total: 9460,
+      spells: [
+        { spell: 'Armure Incandescente', total: 9460, byElement: { Inconnu: 9460 }, byTurn: [] },
+      ],
+    };
+    const record: FightRecord = { ...fight, healRows: [healer], armorRows: [shield] };
+
+    const sync = TestBed.inject(HistorySyncService);
+    await sync.enable('utilisateur-de-test');
+    sync.recordFight(record, [record]);
+    await sync.flush();
+
+    const sent = sentBatches.flat() as Array<Record<string, unknown>>;
+    const participants = sent[0]['participants'] as Array<Record<string, unknown>>;
+    expect(participants).toHaveLength(1);
+    expect(participants[0]['heal']).toBe(640);
+    expect(participants[0]['armor']).toBe(9460);
+    expect(participants[0]['healSpells']).toEqual([
+      { spell: 'Mot Curatif', total: 640, byElement: { Eau: 640 } },
+    ]);
+    expect(participants[0]['armorSpells']).toEqual([
+      { spell: 'Armure Incandescente', total: 9460, byElement: { Inconnu: 9460 } },
+    ]);
   });
 
   it("n'envoie aucun rattachement pour une salle dont le boss n'est pas encore dans l'historique connu", async () => {

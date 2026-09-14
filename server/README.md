@@ -889,10 +889,20 @@ honnête (on sait d'où viennent les lignes) et l'archive étant un sur-ensemble
 l'utilisateur n'a rien à recouper.
 
 Un combat archivé porte tout ce que la vue de session en montre : participants,
-dégâts, ventilation par sort et par élément, butin, et XP par personnage. Une
-seule différence subsiste, et elle ne vient pas du schéma : les kamas ne sont pas
-rattachés au combat, parce que le log ne les y relie jamais (voir
-`KamaGainEntry`, sans `fightId`).
+dégâts, ventilation par sort et par élément, **soin et armure donnés** (avec
+leur propre ventilation par sort — colonnes `heal`/`armor`/`heal_spells`/
+`armor_spells`, migration `0028`, 2026-09-14 : les trois onglets
+Dommage/Armure/Soin sont servis par l'archive comme par la session), butin, et XP
+par personnage. Une seule différence subsiste, et elle ne vient pas du schéma :
+les kamas ne sont pas rattachés au combat, parce que le log ne les y relie jamais
+(voir `KamaGainEntry`, sans `fightId`).
+
+Les deux clients envoient ces colonnes : le web (`HistorySyncService.
+buildParticipants`, qui rattache les lignes de `healRows`/`armorRows` au
+participant de même instance — jamais un participant de plus, la liste sert de
+clé de déduplication) et l'overlay Rust (`build_fight_sync_event`). Un client
+plus ancien qui ne les envoie pas reste accepté : `parse.ts` les fait défaut à
+`0`/`[]`.
 
 ### Vérification effectuée / restant à faire
 

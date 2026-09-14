@@ -151,6 +151,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       defeated: participant.defeated,
       fled: participant.fled,
       spells: participant.spells,
+      heal: participant.heal,
+      armor: participant.armor,
+      healSpells: participant.healSpells,
+      armorSpells: participant.armorSpells,
       xpGained: participant.xpGained,
     }));
   });
@@ -177,6 +181,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
           defeated: sql`excluded.defeated`,
           fled: sql`excluded.fled`,
           spells: sql`excluded.spells`,
+          heal: sql`excluded.heal`,
+          armor: sql`excluded.armor`,
+          healSpells: sql`excluded.heal_spells`,
+          armorSpells: sql`excluded.armor_spells`,
           xpGained: sql`excluded.xp_gained`,
         },
       });
@@ -365,6 +373,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         defeated: participant.defeated,
         fled: participant.fled,
         spells: participant.spells,
+        heal: participant.heal,
+        armor: participant.armor,
+        healSpells: participant.healSpells,
+        armorSpells: participant.armorSpells,
         xpGained: participant.xpGained,
       })),
       loot: (lootByFight.get(row.id) ?? []).map((line) => ({
