@@ -65,6 +65,13 @@ interface FightPage {
       defeated: boolean;
       fled: boolean;
       spells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
+      /** Soin produit et armure DONNÉE (voir `fight_participants.heal`/`armor`) — `null` pour un
+       * combat archivé avant le 2026-09-14, ou envoyé par un client qui ne les transmettait pas
+       * encore : ces combats-là n'ont tout simplement pas d'onglet Armure/Soin à montrer. */
+      heal: number | null;
+      armor: number | null;
+      healSpells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
+      armorSpells: { spell: string; total: number; byElement: Record<string, number> }[] | null;
       xpGained: number | null;
     }[];
     loot: { itemId: number | null; itemName: string | null; quantity: number }[];
@@ -135,10 +142,15 @@ interface TradePage {
  * ## Ce que l'archive contient
  *
  * Tout ce que la vue de session affiche d'un combat terminé : participants,
- * dégâts, **ventilation par sort et par élément** (`fight_participants.spells`)
- * et **butin** (`fight_loot`). Ces deux dernières informations ne figuraient pas
- * au schéma du §6 du plan ; elles y ont été ajoutées parce que sans elles un
- * combat archivé perdait l'essentiel de son intérêt.
+ * dégâts, **ventilation par sort et par élément** (`fight_participants.spells`),
+ * **soin et armure donnés** avec leur propre ventilation
+ * (`fight_participants.heal`/`armor`/`heal_spells`/`armor_spells`, depuis le
+ * 2026-09-14 — les trois onglets Dommage/Armure/Soin sont donc désormais servis
+ * par l'archive comme par la session) et **butin** (`fight_loot`). Rien de tout
+ * cela ne figurait au schéma du §6 du plan ; ces informations y ont été ajoutées
+ * parce que sans elles un combat archivé perdait l'essentiel de son intérêt.
+ * Réserve : un combat archivé AVANT cette date n'a ni soin ni armure — rien ne
+ * peut les reconstruire après coup, le log est passé.
  *
  * Deux différences subsistent avec la vue de session, faute de données
  * archivées correspondantes : l'XP est un total de combat et non une
@@ -651,23 +663,52 @@ function toFightRecord(
     instanceCounts.set(participant.name, (instanceCounts.get(participant.name) ?? 0) + 1);
   }
 
-  const rows: EntityDamageRow[] = entry.participants.map((participant) => ({
-    name: participant.name,
-    total: participant.damage,
-    spells: (participant.spells ?? []).map((spell) => ({
+  // Le serveur ne stocke pas de ventilation par tour (voir SpellBreakdownRow.byTurn) : un combat
+  // reconstruit depuis l'archive du compte n'a donc jamais de détail par tour, seule la session en
+  // cours (et l'historique local qui en dérive) le connaît.
+  const toSpellRows = (
+    spells: { spell: string; total: number; byElement: Record<string, number> }[] | null,
+  ): SpellBreakdownRow[] =>
+    (spells ?? []).map((spell) => ({
       spell: spell.spell,
       total: spell.total,
       byElement: spell.byElement as SpellBreakdownRow['byElement'],
-      // Le serveur ne stocke pas de ventilation par tour (voir SpellBreakdownRow.byTurn) : un
-      // combat reconstruit depuis l'archive du compte n'a donc jamais de détail par tour, seule la
-      // session en cours (et l'historique local qui en dérive) le connaît.
       byTurn: [],
-    })),
-    defeated: participant.defeated,
-    fled: participant.fled,
-    instanceIndex: participant.instanceIndex,
-    instanceCount: instanceCounts.get(participant.name) ?? 1,
-  }));
+    }));
+
+  /** Une ligne par participant pour l'une des trois grandeurs — même forme pour les trois, seul le
+   * total et la ventilation changent (voir EntityStatTabsComponent : Dommage/Armure/Soin). */
+  const buildRows = (
+    total: (p: FightPage['entries'][number]['participants'][number]) => number,
+    spellsOf: (
+      p: FightPage['entries'][number]['participants'][number],
+    ) => { spell: string; total: number; byElement: Record<string, number> }[] | null,
+  ): EntityDamageRow[] =>
+    entry.participants.map((participant) => ({
+      name: participant.name,
+      total: total(participant),
+      spells: toSpellRows(spellsOf(participant)),
+      defeated: participant.defeated,
+      fled: participant.fled,
+      instanceIndex: participant.instanceIndex,
+      instanceCount: instanceCounts.get(participant.name) ?? 1,
+    }));
+
+  const rows: EntityDamageRow[] = buildRows(
+    (p) => p.damage,
+    (p) => p.spells,
+  );
+  // Soin/armure : seules les lignes NON NULLES sont gardées — contrairement aux dégâts, où une
+  // ligne à zéro a du sens (le combattant a bien participé), une liste pleine de zéros ferait
+  // passer un combat archivé sans détail de soin pour un combat où personne n'a soigné.
+  const healRows = buildRows(
+    (p) => p.heal ?? 0,
+    (p) => p.healSpells,
+  ).filter((row) => row.total > 0 || row.spells.length > 0);
+  const armorRows = buildRows(
+    (p) => p.armor ?? 0,
+    (p) => p.armorSpells,
+  ).filter((row) => row.total > 0 || row.spells.length > 0);
 
   // `FightRecord.time` est par construction l'heure de FIN du combat (voir
   // StatsStoreService.finalizeFight : `record.time = time` où `time` est l'argument de fin,
@@ -735,11 +776,12 @@ function toFightRecord(
     fullTimestampMs: new Date(entry.startedAt).getTime(),
     result,
     rows: sortedRows,
-    // Le serveur ne stocke pas le détail du soin/de l'armure donnés (voir CLAUDE.md, onglets
-    // Dommage/Armure/Soin) : un combat reconstruit depuis l'archive du compte n'a donc jamais ces
-    // lignes, seule la session en cours (et l'historique local qui en dérive) les connaît.
-    healRows: [],
-    armorRows: [],
+    // Depuis le 2026-09-14, le serveur stocke aussi le soin et l'armure donnés (voir
+    // `fight_participants.heal`/`armor`) : un combat rechargé depuis l'archive retrouve donc ses
+    // onglets Armure/Soin, au lieu des listes vides d'avant. Un combat archivé PLUS TÔT les a
+    // toujours vides — rien ne peut les reconstruire après coup, le log est passé.
+    healRows: healRows.sort((a, b) => b.total - a.total),
+    armorRows: armorRows.sort((a, b) => b.total - a.total),
     loot,
     kamas: entry.kamasGained ?? 0,
     turns: entry.turns ?? 0,

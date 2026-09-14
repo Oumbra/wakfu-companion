@@ -737,6 +737,31 @@ export const fightParticipants = pgTable(
     fled: boolean('fled').notNull().default(false),
     spells: jsonb('spells').notNull().default([]),
     /**
+     * Soin produit et armure DONNÉE par ce combattant sur ce combat — mêmes unités que `damage`,
+     * même provenance (les trois grandeurs sortent des mêmes lignes de log, voir `LogParser`
+     * `resolveEffectTail`), et depuis le 2026-09-14 les trois sont envoyées ensemble par les deux
+     * clients : le web (`HistorySyncService.buildParticipants`, qui les prenait déjà dans
+     * `healRows`/`armorRows` sans jamais les transmettre) et l'overlay Rust
+     * (`build_fight_sync_event`).
+     *
+     * Une armure REÇUE ou PERDUE n'entre jamais ici : seul le don est suivi, en amont, par le
+     * parseur lui-même.
+     *
+     * `0` par défaut, comme `xpGained` : tout combat archivé avant ces colonnes reste lisible et
+     * s'affiche simplement sans détail de soin/armure.
+     */
+    heal: bigint('heal', { mode: 'number' }).notNull().default(0),
+    armor: bigint('armor', { mode: 'number' }).notNull().default(0),
+    /**
+     * Ventilation par sort du soin et de l'armure — même forme que `spells` ci-dessus
+     * (`[{ spell, total, byElement }]`) et même raison d'être en `jsonb` : c'est ce qui permet à un
+     * combat rechargé depuis l'archive d'afficher le détail « quel sort a soigné quoi », que la
+     * session locale connaît déjà. `byElement` d'une ligne d'armure ne porte que la clé `Inconnu` :
+     * une ligne « X: N Armure » ne cite jamais d'élément, contrairement à une ligne PV.
+     */
+    healSpells: jsonb('heal_spells').notNull().default([]),
+    armorSpells: jsonb('armor_spells').notNull().default([]),
+    /**
      * XP gagnée par ce combattant sur ce combat. Rattachée au participant plutôt
      * qu'à une table `fight_xp` dédiée : le log nomme le bénéficiaire d'un gain
      * d'XP exactement comme le combattant qui a rejoint le combat (vérifié sur
