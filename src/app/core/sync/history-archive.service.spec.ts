@@ -178,6 +178,95 @@ describe('HistoryArchiveService — fusion du butin dupliqué (bug overlay du 20
   });
 });
 
+/**
+ * Régression du bug réel remonté par l'utilisateur le 2026-09-15 (captures comparant le même
+ * combat affiché depuis la lecture directe du log et depuis l'archive alimentée par l'overlay) :
+ * `toFightRecord` ne gardait, pour le soin et l'armure, que les lignes non nulles — alors que la
+ * copie de session du même combat porte TOUJOURS une ligne par participant, à zéro comprise (voir
+ * `StatsStoreService.finalizeFight`). Basculer Dégâts → Soin → Armure faisait donc apparaître et
+ * disparaître des combattants selon la provenance du combat affiché.
+ */
+describe('HistoryArchiveService — roster complet sur les trois grandeurs', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  it('un participant sans soin ni armure garde une ligne à zéro, comme pour les dégâts', async () => {
+    const participant = (
+      name: string,
+      side: 'ally' | 'enemy',
+      damage: number,
+      heal: number,
+      armor: number,
+    ) => ({
+      side,
+      name,
+      monsterId: null,
+      instanceIndex: 1,
+      className: null,
+      damage,
+      defeated: false,
+      fled: false,
+      spells: [],
+      heal,
+      armor,
+      healSpells: [],
+      armorSpells: [],
+      xpGained: 0,
+    });
+    const api: Partial<ApiClientService> = {
+      setUnauthorizedHandler: () => undefined,
+      getJson: async <T>(path: string) => {
+        if (!path.startsWith('/history/fights')) {
+          return { ok: false, error: { kind: 'offline' } } as ApiResult<T>;
+        }
+        return {
+          ok: true,
+          data: {
+            entries: [
+              {
+                clientKey: 'test-client-key-roster',
+                startedAt: new Date(0).toISOString(),
+                durationMs: 1000,
+                won: true,
+                turns: 1,
+                totalDamage: 110,
+                xpGained: 0,
+                kamasGained: 0,
+                gameServer: null,
+                participants: [
+                  // Un soigneur, un allié qui n'a fait que taper, et un ennemi inerte : les deux
+                  // derniers ne doivent pas s'évaporer des onglets Soin/Armure.
+                  participant('Anonyme-Huppermage2', 'ally', 100, 6038, 7041),
+                  participant('Oumbra', 'ally', 10, 0, 0),
+                  participant('Sac à patates', 'enemy', 0, 0, 0),
+                ],
+                loot: [],
+              },
+            ],
+            nextBefore: null,
+          } as T,
+        };
+      },
+      requestJson: async <T>() => ({ ok: true, data: undefined as T }),
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+
+    const archive = TestBed.inject(HistoryArchiveService);
+    await archive.loadMore('fight');
+
+    const [fight] = archive.fights();
+    const names = (rows: readonly { name: string }[]) => rows.map((row) => row.name).sort();
+    expect(names(fight.healRows)).toEqual(names(fight.rows));
+    expect(names(fight.armorRows)).toEqual(names(fight.rows));
+    expect(fight.healRows.find((row) => row.name === 'Oumbra')?.total).toBe(0);
+    expect(fight.armorRows.find((row) => row.name === 'Sac à patates')?.total).toBe(0);
+    // Les lignes non nulles restent en tête (tri par total décroissant, inchangé).
+    expect(fight.healRows[0].name).toBe('Anonyme-Huppermage2');
+  });
+});
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 

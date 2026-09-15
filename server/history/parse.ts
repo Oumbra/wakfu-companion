@@ -65,6 +65,14 @@ export interface FightParticipantInput {
   /** Voir `fight_participants.fled`, server/db/schema.ts. */
   fled: boolean;
   spells: FightSpellInput[];
+  /** Soin produit et armure DONNÉE par ce combattant (voir `fight_participants.heal`/`armor`) —
+   * `0` quand le client ne les envoie pas, ce qui reste le cas de toute version antérieure au
+   * 2026-09-14 : leur absence n'invalide jamais un lot. */
+  heal: number;
+  armor: number;
+  /** Ventilation par sort de ces deux grandeurs — même forme et mêmes bornes que `spells`. */
+  healSpells: FightSpellInput[];
+  armorSpells: FightSpellInput[];
   /** XP gagnée par ce combattant sur ce combat (voir `fight_participants.xpGained`). */
   xpGained: number;
 }
@@ -331,31 +339,54 @@ function parseBatch<T>(
  * une future extension du jeu ne doit pas faire rejeter tout un historique. Les
  * valeurs, elles, sont bornées comme partout ailleurs.
  */
-function parseSpell(raw: unknown): ParseResult<FightSpellInput> {
+function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput> {
   const record = asRecord(raw, 'sort');
   if (!record.ok) return record;
   const entry = record.value;
 
-  const spell = parseText(entry['spell'], 'spells.spell');
+  const spell = parseText(entry['spell'], `${field}.spell`);
   if (!spell.ok) return spell;
-  const total = parseCount(entry['total'] ?? 0, 'spells.total');
+  const total = parseCount(entry['total'] ?? 0, `${field}.total`);
   if (!total.ok) return total;
 
   const rawByElement = entry['byElement'] ?? {};
   if (typeof rawByElement !== 'object' || rawByElement === null || Array.isArray(rawByElement)) {
-    return { ok: false, error: 'spells.byElement invalide' };
+    return { ok: false, error: `${field}.byElement invalide` };
   }
   const byElement: Record<string, number> = {};
   for (const [element, amount] of Object.entries(rawByElement as Record<string, unknown>)) {
     if (element.length === 0 || element.length > MAX_NAME_LENGTH) {
-      return { ok: false, error: 'spells.byElement : élément invalide' };
+      return { ok: false, error: `${field}.byElement : élément invalide` };
     }
-    const parsed = parseCount(amount, `spells.byElement.${element}`);
+    const parsed = parseCount(amount, `${field}.byElement.${element}`);
     if (!parsed.ok) return parsed;
     byElement[element] = parsed.value ?? 0;
   }
 
   return { ok: true, value: { spell: spell.value, total: total.value ?? 0, byElement } };
+}
+
+/** Une des trois ventilations par sort d'un participant (dégâts, soin, armure) — mêmes règles pour
+ * les trois : bornée en nombre d'entrées, jamais deux fois le même sort (le client agrège déjà, un
+ * doublon signalerait une ventilation incohérente, pas deux lancers distincts). */
+function parseSpellList(raw: unknown, field: string): ParseResult<FightSpellInput[]> {
+  const rawSpells = raw ?? [];
+  if (!Array.isArray(rawSpells)) return { ok: false, error: `participant.${field} invalide` };
+  if (rawSpells.length > MAX_SPELLS_PER_PARTICIPANT) {
+    return { ok: false, error: `trop de sorts (max ${MAX_SPELLS_PER_PARTICIPANT})` };
+  }
+  const spells: FightSpellInput[] = [];
+  const seen = new Set<string>();
+  for (const rawSpell of rawSpells) {
+    const parsed = parseSpell(rawSpell, field);
+    if (!parsed.ok) return parsed;
+    if (seen.has(parsed.value.spell)) {
+      return { ok: false, error: `sort en double : ${parsed.value.spell}` };
+    }
+    seen.add(parsed.value.spell);
+    spells.push(parsed.value);
+  }
+  return { ok: true, value: spells };
 }
 
 function parseLootRow(raw: unknown, lineIndex: number): ParseResult<FightLootInput> {
@@ -390,6 +421,12 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   if (!instanceIndex.ok) return instanceIndex;
   const damage = parseCount(entry['damage'] ?? 0, 'participant.damage');
   if (!damage.ok) return damage;
+  // `?? 0` : un client antérieur au 2026-09-14 n'envoie ni l'un ni l'autre — son lot reste valide,
+  // il s'archive simplement sans détail de soin/armure.
+  const heal = parseCount(entry['heal'] ?? 0, 'participant.heal');
+  if (!heal.ok) return heal;
+  const armor = parseCount(entry['armor'] ?? 0, 'participant.armor');
+  if (!armor.ok) return armor;
   const xpGained = parseCount(entry['xpGained'] ?? 0, 'participant.xpGained');
   if (!xpGained.ok) return xpGained;
   const className = entry['className'];
@@ -397,24 +434,12 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
     return { ok: false, error: 'participant.className invalide' };
   }
 
-  const rawSpells = entry['spells'] ?? [];
-  if (!Array.isArray(rawSpells)) return { ok: false, error: 'participant.spells invalide' };
-  if (rawSpells.length > MAX_SPELLS_PER_PARTICIPANT) {
-    return { ok: false, error: `trop de sorts (max ${MAX_SPELLS_PER_PARTICIPANT})` };
-  }
-  const spells: FightSpellInput[] = [];
-  const seenSpells = new Set<string>();
-  for (const rawSpell of rawSpells) {
-    const parsed = parseSpell(rawSpell);
-    if (!parsed.ok) return parsed;
-    // Le client agrège déjà les dégâts par sort : deux entrées du même nom
-    // signaleraient une ventilation incohérente, pas deux lancers distincts.
-    if (seenSpells.has(parsed.value.spell)) {
-      return { ok: false, error: `sort en double : ${parsed.value.spell}` };
-    }
-    seenSpells.add(parsed.value.spell);
-    spells.push(parsed.value);
-  }
+  const spells = parseSpellList(entry['spells'], 'spells');
+  if (!spells.ok) return spells;
+  const healSpells = parseSpellList(entry['healSpells'], 'healSpells');
+  if (!healSpells.ok) return healSpells;
+  const armorSpells = parseSpellList(entry['armorSpells'], 'armorSpells');
+  if (!armorSpells.ok) return armorSpells;
 
   return {
     ok: true,
@@ -427,7 +452,11 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
       damage: damage.value ?? 0,
       defeated: entry['defeated'] === true,
       fled: entry['fled'] === true,
-      spells,
+      spells: spells.value,
+      heal: heal.value ?? 0,
+      armor: armor.value ?? 0,
+      healSpells: healSpells.value,
+      armorSpells: armorSpells.value,
       xpGained: xpGained.value ?? 0,
     },
   };
