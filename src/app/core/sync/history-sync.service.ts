@@ -3,9 +3,11 @@ import { CatalogService } from '../api/catalog.service';
 import { EntityClassifierService } from '../services/entity-classifier.service';
 import { GameServerService } from '../services/game-server.service';
 import type {
+  EntityDamageRow,
   FightRecord,
   PactExtractionRecord,
   PurchaseRecord,
+  SpellBreakdownRow,
   TradeRecord,
 } from '../services/stats-store.service';
 import { findDungeonForEnemies } from '../utils/fight-image.util';
@@ -17,6 +19,7 @@ import {
   tradeSignature,
   type FightLootPayload,
   type FightParticipantPayload,
+  type FightSpellPayload,
   type TradeItemPayload,
 } from './history-event.model';
 import { SyncQueueService } from './sync-queue.service';
@@ -140,9 +143,21 @@ export class HistorySyncService {
     // au participant. Un même nom ne peut pas recevoir deux gains distincts
     // dans un même combat (registerFightXp les cumule déjà).
     const xpByName = new Map(record.xp.map((row) => [row.name, row.amount]));
+    // Soin et armure donnés : deux listes SÉPARÉES côté store (`healRows`/`armorRows`, voir
+    // StatsStoreService.finalizeFight), rattachées ici au participant de même instance. Jamais de
+    // participant CRÉÉ depuis ces listes, même pour un soigneur pur : `record.rows` porte déjà
+    // toute personne ayant rejoint le combat (`buildEntityDamageRows` part de
+    // `Fight.allies`/`enemies`, pas des seuls attaquants), et la liste des participants sert de
+    // clé de déduplication entre session et archive (`fightDedupKey`) — y ajouter une ligne
+    // ferait diverger les deux copies du même combat.
+    const healByInstance = HistorySyncService.indexRowsByInstance(record.healRows);
+    const armorByInstance = HistorySyncService.indexRowsByInstance(record.armorRows);
 
     return record.rows.map((row) => {
       const side = this.classifier.classify(row.name);
+      const instanceKey = `${row.name}#${row.instanceIndex}`;
+      const healRow = healByInstance.get(instanceKey);
+      const armorRow = armorByInstance.get(instanceKey);
       return {
         side,
         name: row.name,
@@ -162,18 +177,37 @@ export class HistorySyncService {
         // nombre d'instances. Le cas ne concerne en pratique que des monstres,
         // qui n'en gagnent jamais.
         xpGained: row.instanceIndex === 1 ? (xpByName.get(row.name) ?? 0) : 0,
-        spells: row.spells.map((spell) => ({
-          spell: spell.spell,
-          total: Math.max(0, Math.round(spell.total)),
-          byElement: Object.fromEntries(
-            Object.entries(spell.byElement).map(([element, amount]) => [
-              element,
-              Math.max(0, Math.round(amount ?? 0)),
-            ]),
-          ),
-        })),
+        spells: HistorySyncService.spellPayload(row.spells),
+        heal: Math.max(0, Math.round(healRow?.total ?? 0)),
+        armor: Math.max(0, Math.round(armorRow?.total ?? 0)),
+        healSpells: HistorySyncService.spellPayload(healRow?.spells ?? []),
+        armorSpells: HistorySyncService.spellPayload(armorRow?.spells ?? []),
       };
     });
+  }
+
+  /** Clé d'instance d'une ligne — même paire (nom, instanceIndex) que celle qui identifie un
+   * participant côté serveur (clé primaire de `fight_participants`). */
+  private static indexRowsByInstance(
+    rows: readonly EntityDamageRow[],
+  ): Map<string, EntityDamageRow> {
+    return new Map(rows.map((row) => [`${row.name}#${row.instanceIndex}`, row]));
+  }
+
+  /** Ventilation par sort telle que le serveur l'attend — arrondie et jamais négative, pour les
+   * trois grandeurs (dégâts, soin, armure), dont c'est exactement la même forme. `byTurn` n'est
+   * volontairement pas transmis (le serveur ne le stocke pas, voir HistoryArchiveService). */
+  private static spellPayload(spells: readonly SpellBreakdownRow[]): FightSpellPayload[] {
+    return spells.map((spell) => ({
+      spell: spell.spell,
+      total: Math.max(0, Math.round(spell.total)),
+      byElement: Object.fromEntries(
+        Object.entries(spell.byElement).map(([element, amount]) => [
+          element,
+          Math.max(0, Math.round(amount ?? 0)),
+        ]),
+      ),
+    }));
   }
 
   /** Miroir de buildParticipants, pour le butin — même raison d'être factorisé. */

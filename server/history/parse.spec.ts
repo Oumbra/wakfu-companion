@@ -73,8 +73,78 @@ describe('parseFightsBody', () => {
       defeated: false,
       fled: false,
       spells: [],
+      heal: 0,
+      armor: 0,
+      healSpells: [],
+      armorSpells: [],
       xpGained: 0,
     });
+  });
+
+  it("transporte le soin et l'armure donnés, ventilés par sort", () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [
+            {
+              side: 'ally',
+              name: 'Fayto',
+              instanceIndex: 1,
+              damage: 0,
+              heal: 640,
+              armor: 9460,
+              healSpells: [{ spell: 'Mot Curatif', total: 640, byElement: { Eau: 640 } }],
+              armorSpells: [
+                { spell: 'Armure Incandescente', total: 9460, byElement: { Inconnu: 9460 } },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const participant = parsed.value[0].participants[0];
+    expect(participant.heal).toBe(640);
+    expect(participant.armor).toBe(9460);
+    expect(participant.healSpells).toEqual([
+      { spell: 'Mot Curatif', total: 640, byElement: { Eau: 640 } },
+    ]);
+    expect(participant.armorSpells).toEqual([
+      { spell: 'Armure Incandescente', total: 9460, byElement: { Inconnu: 9460 } },
+    ]);
+  });
+
+  it('refuse un soin négatif comme il refuse un dégât négatif', () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [{ side: 'ally', name: 'Fayto', instanceIndex: 1, heal: -1 }],
+        }),
+      ],
+    });
+    expect(parsed.ok).toBe(false);
+  });
+
+  it("refuse deux fois le même sort dans la ventilation d'armure", () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [
+            {
+              side: 'ally',
+              name: 'Fayto',
+              instanceIndex: 1,
+              armorSpells: [
+                { spell: 'Bouclier', total: 10, byElement: { Inconnu: 10 } },
+                { spell: 'Bouclier', total: 5, byElement: { Inconnu: 5 } },
+              ],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(parsed.ok).toBe(false);
   });
 
   it('accepte et transporte un monsterId résolu côté ennemi', () => {

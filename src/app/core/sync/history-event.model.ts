@@ -71,6 +71,17 @@ export interface FightParticipantPayload {
    * avec `defeated`. */
   fled: boolean;
   spells: FightSpellPayload[];
+  /** Soin produit et armure DONNÉE par ce combattant sur ce combat — les deux autres grandeurs du
+   * sélecteur Dommage/Armure/Soin (voir EntityStatTabsComponent), suivies depuis toujours en
+   * session (`StatsStoreService.healSourceMap`/`armorSourceMap`) mais transmises seulement depuis
+   * le 2026-09-14 : un combat rechargé depuis l'archive du compte les retrouve maintenant, au lieu
+   * de n'afficher que les dégâts. Voir `fight_participants.heal`/`armor` (server/db/schema.ts). */
+  heal: number;
+  armor: number;
+  /** Ventilation par sort de ces deux grandeurs, même forme que `spells` — c'est elle qui permet à
+   * un combat archivé d'ouvrir le détail « quel sort a soigné/blindé, et pour combien ». */
+  healSpells: FightSpellPayload[];
+  armorSpells: FightSpellPayload[];
   /** XP gagnée par ce combattant sur ce combat (0 pour les ennemis). */
   xpGained: number;
 }
