@@ -698,17 +698,26 @@ function toFightRecord(
     (p) => p.damage,
     (p) => p.spells,
   );
-  // Soin/armure : seules les lignes NON NULLES sont gardées — contrairement aux dégâts, où une
-  // ligne à zéro a du sens (le combattant a bien participé), une liste pleine de zéros ferait
-  // passer un combat archivé sans détail de soin pour un combat où personne n'a soigné.
+  // Soin/armure : UNE LIGNE PAR PARTICIPANT, exactement comme les dégâts ci-dessus — y compris à
+  // zéro. Ne jamais filtrer les lignes nulles ici (ce que faisait la première version de ces deux
+  // listes, pour qu'un combat archivé sans détail de soin n'affiche pas une colonne de zéros) :
+  // la copie de session du même combat, elle, les garde toujours (`StatsStoreService.
+  // finalizeFight` construit les trois listes depuis le MÊME roster, voir `buildEntityDamageRows`),
+  // si bien qu'un combattant sans soin disparaissait de la liste dès que le combat venait de
+  // l'archive — bug réel remonté par l'utilisateur : basculer Dégâts → Soin → Armure faisait
+  // apparaître et disparaître des combattants selon la provenance du combat. Un combat archivé
+  // avant `fight_participants.heal`/`armor` (migration 0028) affiche donc désormais, lui aussi,
+  // tout son roster à zéro : indistinguable en base d'un combat où personne n'a soigné (colonnes
+  // `NOT NULL DEFAULT 0`), et c'est le moindre mal devant un roster qui change d'un onglet à
+  // l'autre.
   const healRows = buildRows(
     (p) => p.heal ?? 0,
     (p) => p.healSpells,
-  ).filter((row) => row.total > 0 || row.spells.length > 0);
+  );
   const armorRows = buildRows(
     (p) => p.armor ?? 0,
     (p) => p.armorSpells,
-  ).filter((row) => row.total > 0 || row.spells.length > 0);
+  );
 
   // `FightRecord.time` est par construction l'heure de FIN du combat (voir
   // StatsStoreService.finalizeFight : `record.time = time` où `time` est l'argument de fin,
@@ -778,8 +787,9 @@ function toFightRecord(
     rows: sortedRows,
     // Depuis le 2026-09-14, le serveur stocke aussi le soin et l'armure donnés (voir
     // `fight_participants.heal`/`armor`) : un combat rechargé depuis l'archive retrouve donc ses
-    // onglets Armure/Soin, au lieu des listes vides d'avant. Un combat archivé PLUS TÔT les a
-    // toujours vides — rien ne peut les reconstruire après coup, le log est passé.
+    // onglets Armure/Soin, au lieu des listes vides d'avant. Un combat archivé PLUS TÔT affiche
+    // son roster complet à zéro — rien ne peut reconstruire ces deux grandeurs après coup, le log
+    // est passé.
     healRows: healRows.sort((a, b) => b.total - a.total),
     armorRows: armorRows.sort((a, b) => b.total - a.total),
     loot,
