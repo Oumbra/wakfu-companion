@@ -111,6 +111,49 @@ describe('LogParser — session marchand/HDV (market-occupation)', () => {
       { kind: 'market-occupation', time: '00:29:37,899', active: false },
     ]);
   });
+
+  it('reconnaît l\'annulation côté serveur ("On annule ...") comme une fermeture de session', () => {
+    // Ligne réelle (fichier utilisateur du 2026-09-15) : sans cette forme, la session restait
+    // ouverte et tout le butin des combats suivants était rejeté comme achat HDV.
+    const parser = new LogParser();
+    const lines = [
+      " INFO 19:32:20,462 [AWT-EventQueue-0] (bmI:41) - Lancement de l'occupation MARKET sur la board [bDk id=31570]{Point3 : (-21, -92, 3)}",
+      " INFO 19:34:07,063 [AWT-EventQueue-0] (bmI:63) - On annule l'occupation MARKET sur la board [bDk id=31570]{Point3 : (-21, -92, 3)} (fromServer=true, sendMessage=false)",
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries).toEqual([
+      { kind: 'market-occupation', time: '19:32:20,462', active: true },
+      { kind: 'market-occupation', time: '19:34:07,063', active: false },
+    ]);
+  });
+});
+
+describe('LogParser — cycle de vie du client (client-lifecycle)', () => {
+  it('émet shutdown/startup pour "Stopping cFC..."/"Starting cFC..." et oublie un combat clôturé de force', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 22:05:00,743 [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=7 Sac à patates breed : 2335 [-17] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ' INFO 22:07:02,698 [AWT-EventQueue-0] (cFw:35) - Stopping cFC...',
+      ' INFO 22:09:40,417 [AWT-EventQueue-0] (cFw:27) - Starting cFC...',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries.slice(1)).toEqual([
+      { kind: 'client-lifecycle', time: '22:07:02,698', event: 'shutdown' },
+      { kind: 'client-lifecycle', time: '22:09:40,417', event: 'startup' },
+    ]);
+    // Tant que le combat 7 est connu, une ligne sans nom lui est routée par repli (seul combat actif).
+    expect(
+      parseAll(parser, [
+        ' INFO 22:10:00,000 [T] (a:1) - [Information (jeu)] Vous avez gagné 10 kamas.',
+      ]),
+    ).toEqual([{ kind: 'kama-gain', time: '22:10:00,000', amount: 10, fightId: 7 }]);
+    parser.closeFight(7);
+    expect(
+      parseAll(parser, [
+        ' INFO 22:10:01,000 [T] (a:1) - [Information (jeu)] Vous avez gagné 10 kamas.',
+      ]),
+    ).toEqual([{ kind: 'kama-gain', time: '22:10:01,000', amount: 10, fightId: null }]);
+  });
 });
 
 describe('LogParser — multi-combat (fightId)', () => {

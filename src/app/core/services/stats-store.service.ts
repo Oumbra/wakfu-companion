@@ -1,7 +1,8 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { ChatMessageEntry, DamageElement, DamageEntry, LogEntry } from '../models/log-entry.model';
-import { Fight, LootConfidence } from '../models/fight.model';
+import { Fight, FightResult, LootConfidence } from '../models/fight.model';
 import { mergeLootConfidence, resolveLootConfidence } from '../utils/loot-confidence.util';
+import { toLogTime } from '../utils/log-time.util';
 import { CatalogService } from '../api/catalog.service';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
@@ -103,6 +104,27 @@ const SESSION_SEGMENT_GAP_THRESHOLD_MS = 5 * 60 * 1000;
  * sessionLastIngestAtMs) — jamais de lui-même. Exporté pour SessionRecapComponent.
  */
 export const SESSION_LIVE_TICK_GRACE_MS = 10 * 1000;
+/**
+ * Un combat encore actif quand le client Wakfu s'arrête/redémarre (voir ClientLifecycleEntry)
+ * n'aura jamais de `[FIGHT] End fight` : il devient CANDIDAT à l'interruption (voir
+ * interruptionCandidates) et est clôturé en `'interrupted'` (voir FightResult) dès que l'une de ces
+ * conditions est remplie — sauf s'il a été réhabilité entre-temps :
+ *  - une ligne du fichier survient au moins `INTERRUPTED_FIGHT_FILE_GRACE_MS` (temps FICHIER)
+ *    après le marqueur — relecture d'un historique ;
+ *  - un NOUVEAU combat démarre (première jointure `[_FL_]` d'un fightId inconnu) ;
+ *  - en direct, `INTERRUPTED_FIGHT_LIVE_GRACE_MS` (horloge MURALE) s'écoulent après le dernier lot
+ *    reçu sans qu'aucune ligne ne l'ait réhabilité — le client fermé n'écrit plus rien, aucune
+ *    ligne « 5 min plus tard » ne viendra jamais déclencher la première condition.
+ * Le délai (et non une clôture immédiate) existe pour le multi-compte : plusieurs clients écrivent
+ * dans le MÊME wakfu.log, l'arrêt de l'un (lignes "Stopping cFC...") ne termine pas le combat de
+ * l'autre — un candidat est RÉHABILITÉ dès qu'une ligne prouve qu'il continue (jointure de son
+ * fightId, ou dégât/soin/armure/sort/mise hors-combat d'un de SES combattants — jamais une ligne
+ * sans nom simplement routée vers lui par repli, voir LogParser.resolveCurrentFightId). Calibration
+ * : le plus long silence intra-combat mesuré sur deux vrais fichiers (dont tests/wakfu.log) est de
+ * 60s, très en-dessous des deux délais retenus.
+ */
+const INTERRUPTED_FIGHT_FILE_GRACE_MS = SESSION_SEGMENT_GAP_THRESHOLD_MS;
+export const INTERRUPTED_FIGHT_LIVE_GRACE_MS = 2 * 60 * 1000;
 
 /** Nom d'objet sentinelle (jamais un vrai nom d'objet du catalogue, `catalogId` toujours `null`
  * pour ces entrées) désignant une récupération de kamas à l'Hôtel de vente dans l'historique des
@@ -331,7 +353,7 @@ export interface FightRecord {
   time: string;
   /** Horodatage complet (epoch ms) du combat, prêt à formater selon la langue courante (le log Wakfu n'expose que l'heure, complétée par la date système). */
   fullTimestampMs: number;
-  result: 'won' | 'lost';
+  result: FightResult;
   rows: EntityDamageRow[];
   /** Miroir de `rows` pour le soin/l'armure donnés (voir onglets Dommage/Armure/Soin, CLAUDE.md) —
    * toujours vide pour un combat reconstruit depuis l'archive du compte (voir
@@ -624,6 +646,13 @@ export class StatsStoreService {
    */
   private readonly pendingFightLoot: { item: string; quantity: number }[] = [];
   private pendingFightKamas = 0;
+  /** Combats actifs au moment d'un arrêt/lancement du client (voir INTERRUPTED_FIGHT_FILE_GRACE_MS
+   * pour tout le mécanisme) : fightId → horodatage complet (ms) du marqueur, qui servira d'heure de
+   * fin au combat s'il est effectivement clôturé. */
+  private readonly interruptionCandidates = new Map<number, number>();
+  /** Timer mural de clôture des candidats (voir INTERRUPTED_FIGHT_LIVE_GRACE_MS), réarmé à chaque
+   * lot reçu, `null` quand aucun candidat n'est en attente. */
+  private interruptionSweepTimer: ReturnType<typeof setTimeout> | null = null;
   /** Résultats de challenge en attente d'attribution au bon fightId — même mécanisme et même
    * raison que pendingFightLoot/pendingFightKamas ci-dessus (la ligne "Le challenge ... a
    * échoué/réussi" ne référence ni fightId ni personnage, seule sa position TEMPORELLE, toujours
@@ -951,6 +980,12 @@ export class StatsStoreService {
       this.accumulateSessionDuration(line);
       const entry = this.parser.parseLine(line);
       if (entry) this.apply(entry);
+      // Sur la ligne BRUTE aussi (comme la durée de session juste au-dessus) : une ligne technique
+      // sans LogEntry compte comme preuve que le fichier a avancé de 5 min sans le candidat. APRÈS
+      // apply() : LogParser ne livre une ligne qu'à l'arrivée de la SUIVANTE (bufferisation
+      // multi-lignes, voir flush()), le marqueur "Stopping cFC..." n'est donc appliqué qu'ici, au
+      // passage de la ligne d'après — qui peut déjà être celle qui doit clôturer le candidat.
+      this.sweepInterruptionCandidatesByFileTime();
     }
     // La toute dernière ligne d'un lot peut être le début d'un enregistrement
     // multi-lignes encore en attente (voir LogParser) : la traiter tout de
@@ -972,6 +1007,7 @@ export class StatsStoreService {
     // SessionRecapComponent entre ce lot et le prochain (voir sessionLastIngestAtMs). Posé
     // systématiquement, même si `lines` ne contenait aucune ligne exploitable.
     this.sessionLastIngestAtMs.set(Date.now());
+    this.scheduleInterruptionSweep();
     this.publish();
   }
 
@@ -1021,6 +1057,8 @@ export class StatsStoreService {
     this.pendingFightKamas = 0;
     this.pendingFightChallengesPassed = 0;
     this.pendingFightChallengesFailed = 0;
+    this.interruptionCandidates.clear();
+    this.clearInterruptionSweep();
     this.lastTradeCompletedAtMs = null;
     this.inMarketOccupation = false;
     // Volontairement pas de flush du lot en attente (voir sa doc de tête) : un reconnect relit le
@@ -1091,6 +1129,8 @@ export class StatsStoreService {
     // committé comme récupération de kamas à l'Hôtel de vente dès que CETTE ligne n'est pas
     // l'échange qui l'expliquerait — avant de traiter la ligne courante elle-même.
     this.resolvePendingHdvKamaGain(entry);
+
+    this.reconcileInterruptionCandidates(entry);
 
     switch (entry.kind) {
       case 'kama-gain': {
@@ -1247,6 +1287,23 @@ export class StatsStoreService {
       case 'market-occupation':
         this.inMarketOccupation = entry.active;
         break;
+      case 'client-lifecycle': {
+        // Voir INTERRUPTED_FIGHT_FILE_GRACE_MS : rien n'est clôturé ici, seulement marqué. Un
+        // combat déjà candidat garde son premier horodatage (heure de fin la plus plausible).
+        const atMs = this.buildFullTimestampMs(entry.time);
+        for (const fightId of this.activeFights.keys()) {
+          if (!this.interruptionCandidates.has(fightId)) {
+            this.interruptionCandidates.set(fightId, atMs);
+          }
+        }
+        // Une session marchand/HDV ne survit jamais à l'arrêt du client, et un client qui démarre
+        // n'en a aucune d'ouverte : sans ce reset, un "Lancement de l'occupation MARKET" suivi
+        // d'une fermeture du jeu laissait `inMarketOccupation` armé jusqu'au prochain "On arrête"
+        // — potentiellement le lendemain (cas réel observé, fichier utilisateur du 2026-09-15),
+        // tout le butin des combats intermédiaires étant alors rejeté comme achat HDV.
+        this.inMarketOccupation = false;
+        break;
+      }
       case 'log-date-anchor':
         this.logDateAnchor = { year: entry.year, month: entry.month, day: entry.day };
         this.lastTimestampTimeOfDayMs = this.timeToMs(entry.time);
@@ -1568,8 +1625,22 @@ export class StatsStoreService {
     );
   }
 
-  private finalizeFight(fightId: number, time: string, parsedResult: 'won' | 'lost'): void {
+  /**
+   * `endMs` : horodatage complet de fin déjà connu (combat interrompu, voir closeInterruptedFight)
+   * — à passer OBLIGATOIREMENT dans ce cas plutôt que de laisser buildFullTimestampMs le recalculer
+   * depuis `time` : cette dernière fait progresser l'état de détection de passage de minuit
+   * (`lastTimestampTimeOfDayMs`), et une heure « du passé » (marqueur d'arrêt d'il y a plusieurs
+   * heures, voire la veille) réinjectée hors ordre chronologique y déclencherait un faux passage de
+   * minuit, décalant d'un jour tous les horodatages suivants.
+   */
+  private finalizeFight(
+    fightId: number,
+    time: string,
+    parsedResult: FightResult,
+    endMs: number | null = null,
+  ): void {
     const working = this.activeFights.get(fightId);
+    this.interruptionCandidates.delete(fightId);
 
     // Voir pendingFightLoot/pendingFightKamas : LE combat qui se termine ici est, par construction,
     // toujours celui auquel tout butin/kamas mis en attente depuis le dernier combat-end appartient
@@ -1618,7 +1689,13 @@ export class StatsStoreService {
     // (poussé dans `fightHistoryList`/synchronisé) reste, lui, TOUJOURS créé normalement, avec ses
     // propres kamas/XP/butin déjà corrects (`working.fight.*`, jamais touchés ici).
     const excludedFromStats = this.isExcludedFight(fightId);
-    const result = this.resolveFightResult(parsedResult, working);
+    // Un combat interrompu (voir FightResult) n'a pas d'issue à résoudre : aucun signal de fin n'a
+    // jamais été émis, les replis de resolveFightResult (XP versée, ennemis tous vaincus...) n'y
+    // ont pas de sens.
+    const result =
+      parsedResult === 'interrupted'
+        ? 'interrupted'
+        : this.resolveFightResult(parsedResult, working);
     if (result === 'won') {
       // Le dernier ennemi d'un combat (souvent le boss) meurt en même temps que
       // le combat se termine et n'a alors pas toujours droit à sa propre ligne
@@ -1662,11 +1739,11 @@ export class StatsStoreService {
             });
         }
       }
-    } else if (!excludedFromStats) {
+    } else if (result === 'lost' && !excludedFromStats) {
       this.combatsLost.update((v) => v + 1);
     }
 
-    working.fight.endDate = new Date(this.buildFullTimestampMs(time));
+    working.fight.endDate = new Date(endMs ?? this.buildFullTimestampMs(time));
     // Filtre de bruit d'affichage (voir FightWorking.damagedNames/computeInertEnemyNoiseNames) :
     // appliqué UNIQUEMENT à la finalisation, jamais au suivi EN COURS (damageByAttacker()/...,
     // voir plus bas dans ce fichier) — un ennemi qui vient de rejoindre n'a simplement pas encore
@@ -1710,6 +1787,102 @@ export class StatsStoreService {
     if (this.currentDisplayFightId === fightId) {
       const remaining = [...this.activeFights.keys()];
       this.currentDisplayFightId = remaining.length > 0 ? remaining[remaining.length - 1] : null;
+    }
+  }
+
+  /**
+   * Voir INTERRUPTED_FIGHT_FILE_GRACE_MS. Appelée pour CHAQUE LogEntry avant son traitement :
+   *  - réhabilite un candidat dont une ligne prouve qu'il continue (autre client multi-compte
+   *    encore dedans) — uniquement sur des lignes rattachées par IDENTITÉ (fightId explicite de la
+   *    jointure, ou nom d'un combattant ayant réellement rejoint CE combat), jamais sur une ligne
+   *    sans nom que LogParser.resolveCurrentFightId route vers lui par simple repli « seul combat
+   *    actif » (butin, gain de kamas, tour...) : c'est précisément ce repli qui rattachait à tort
+   *    des gains hors combat au combat fantôme ;
+   *  - clôture TOUS les candidats restants dès qu'un nouveau combat démarre (première jointure
+   *    d'un fightId encore inconnu) : le monde a continué sans eux.
+   */
+  private reconcileInterruptionCandidates(entry: LogEntry): void {
+    if (this.interruptionCandidates.size === 0) return;
+    if (entry.kind === 'fighter-joined') {
+      if (this.interruptionCandidates.has(entry.fightId)) {
+        this.interruptionCandidates.delete(entry.fightId);
+      } else if (!this.activeFights.has(entry.fightId)) {
+        this.closeInterruptionCandidates();
+      }
+      return;
+    }
+    let fightId: number | null = null;
+    let names: string[] = [];
+    switch (entry.kind) {
+      case 'damage':
+      case 'heal':
+      case 'armor':
+        fightId = entry.fightId;
+        names = [entry.attacker, entry.target];
+        break;
+      case 'spell-cast':
+        fightId = entry.fightId;
+        names = [entry.caster];
+        break;
+      case 'enemy-defeated':
+      case 'enemy-fled':
+        fightId = entry.fightId;
+        names = [entry.name];
+        break;
+      default:
+        return;
+    }
+    if (fightId === null || !this.interruptionCandidates.has(fightId)) return;
+    const working = this.activeFights.get(fightId);
+    if (working && names.some((name) => this.isRosterMember(working, name))) {
+      this.interruptionCandidates.delete(fightId);
+    }
+  }
+
+  /** Voir INTERRUPTED_FIGHT_FILE_GRACE_MS (1ʳᵉ condition) — basé sur `lastSessionActivityMs`, déjà
+   * mis à jour pour la ligne brute courante par accumulateSessionDuration. */
+  private sweepInterruptionCandidatesByFileTime(): void {
+    if (this.interruptionCandidates.size === 0 || this.lastSessionActivityMs === null) return;
+    const nowMs = this.lastSessionActivityMs;
+    for (const [fightId, atMs] of [...this.interruptionCandidates]) {
+      if (nowMs - atMs >= INTERRUPTED_FIGHT_FILE_GRACE_MS)
+        this.closeInterruptedFight(fightId, atMs);
+    }
+  }
+
+  private closeInterruptionCandidates(): void {
+    for (const [fightId, atMs] of [...this.interruptionCandidates]) {
+      this.closeInterruptedFight(fightId, atMs);
+    }
+  }
+
+  /** Clôture effective d'un candidat (voir FightResult 'interrupted') : le parser doit oublier le
+   * combat en même temps que le store (voir LogParser.closeFight), sinon il continuerait à lui
+   * router les lignes sans nom. L'heure de fin retenue est celle du marqueur d'arrêt du client, pas
+   * celle de la ligne qui déclenche la clôture (potentiellement des heures plus tard). */
+  private closeInterruptedFight(fightId: number, atMs: number): void {
+    this.interruptionCandidates.delete(fightId);
+    this.parser.closeFight(fightId);
+    this.finalizeFight(fightId, toLogTime(atMs), 'interrupted', atMs);
+  }
+
+  /** Voir INTERRUPTED_FIGHT_LIVE_GRACE_MS (3ᵉ condition) : réarmé à chaque lot. */
+  private scheduleInterruptionSweep(): void {
+    this.clearInterruptionSweep();
+    if (this.interruptionCandidates.size === 0) return;
+    this.interruptionSweepTimer = setTimeout(() => {
+      this.interruptionSweepTimer = null;
+      if (this.interruptionCandidates.size === 0) return;
+      this.closeInterruptionCandidates();
+      this.classifier.commit();
+      this.publish();
+    }, INTERRUPTED_FIGHT_LIVE_GRACE_MS);
+  }
+
+  private clearInterruptionSweep(): void {
+    if (this.interruptionSweepTimer !== null) {
+      clearTimeout(this.interruptionSweepTimer);
+      this.interruptionSweepTimer = null;
     }
   }
 

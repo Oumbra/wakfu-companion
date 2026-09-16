@@ -20,7 +20,9 @@ import {
 } from './history-dedup.util';
 import { HistorySyncService } from './history-sync.service';
 import { SyncedFightsRegistry } from './synced-fights-registry.service';
+import type { FightResult } from '../models/fight.model';
 import { localDayStart } from '../utils/local-period.util';
+import { toLogTime } from '../utils/log-time.util';
 import { resolveLootConfidence } from '../utils/loot-confidence.util';
 import { mergeLootRowsByIdentity } from '../utils/loot-sort.util';
 
@@ -623,17 +625,6 @@ function archiveId(index: number): number {
   return -1 - index;
 }
 
-/** Heure locale au format du log (`HH:MM:SS,mmm`), reconstruite depuis l'horodatage archivé. */
-function toLogTime(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '00:00:00,000';
-  const pad = (value: number, size = 2): string => value.toString().padStart(size, '0');
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())},${pad(
-    date.getMilliseconds(),
-    3,
-  )}`;
-}
-
 /** Nom affichable/canonique d'une ligne d'archive : `itemName` s'il est présent (objet non résolu
  * par le catalogue, seule source de vérité restante), sinon reconstruit en FRANÇAIS depuis
  * `itemId` (jamais la locale d'affichage — ce nom sert aussi d'identité pour le suivi/les alertes
@@ -729,7 +720,10 @@ function toFightRecord(
   // tout combat déjà archivé s'affichait EN PLUS de sa copie de session au lieu de la remplacer).
   const durationMs = entry.durationMs ?? 0;
   const time = toLogTime(new Date(new Date(entry.startedAt).getTime() + durationMs).toISOString());
-  const result = entry.won === false ? 'lost' : 'won';
+  // `won === null` : combat interrompu (client fermé en plein combat, voir FightResult) — jamais
+  // requalifié en victoire par défaut, l'archive doit refléter exactement ce que la session a vu.
+  const result: FightResult =
+    entry.won === true ? 'won' : entry.won === false ? 'lost' : 'interrupted';
   const sortedRows = rows.sort((a, b) => b.total - a.total);
   // Calculable dès maintenant (ne dépend que de time/result/participants, jamais du butin) — sert à
   // consulter une éventuelle correction manuelle déjà connue (voir ItemPickerService/
