@@ -1,16 +1,8 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { fightLoot, fightParticipants, fights } from '../../../../server/db/schema';
-import {
-  dungeonFightTypeUpdateSql,
-  eventFightTypeUpdateSql,
-  familyFightTypeUpdateSql,
-} from '../../../../server/history/fight-type';
-import {
-  loadCatalogFromDb,
-  recomputeDungeonRunsForBatch,
-} from '../../../../server/history/dungeon-run';
+import { ingestFights } from '../../../../server/history/ingest';
 import {
   MAX_HISTORY_BATCH,
   parseFightsBody,
@@ -22,39 +14,12 @@ import type { Env } from '../../_types';
 /**
  * Historique de combats du compte (lot 8, prompt 8.1).
  *
- * - `POST` — ingestion **idempotente** par lots (voir plus bas).
+ * - `POST` — ingestion **idempotente** par lots : tout le travail d'écriture (séquence en trois
+ *   temps sans transaction, regroupement de donjon, `fight_type`) vit dans
+ *   `server/history/ingest.ts::ingestFights`, partagé avec le script de rejeu de support — ce
+ *   handler ne fait que l'authentification, la validation du corps et la réponse HTTP.
  * - `GET`  — lecture paginée par curseur (`?limit=&before=`), la plus récente
  *   d'abord.
- *
- * ## Pourquoi trois requêtes SQL et non deux
- *
- * Le driver `neon-http` n'offre pas de transaction interactive (voir
- * server/db/client.ts) : le combat et ses participants ne peuvent pas être
- * écrits « tout ou rien ». La séquence naïve — insérer les combats en
- * récupérant les `id` des seules lignes nouvelles (`RETURNING`), puis insérer
- * leurs participants — a un défaut : si la seconde requête échoue, le combat
- * reste en base **sans** ses participants, et un rejeu ne le réparerait jamais
- * (son `clientKey` est désormais en conflit, donc plus rien n'est renvoyé).
- *
- * D'où la séquence retenue :
- *   1. `INSERT ... ON CONFLICT DO NOTHING` sur `fights` ;
- *   2. `SELECT id, client_key` pour **tout** le lot (nouvelles lignes comme
- *      lignes déjà connues) ;
- *   3. `INSERT ... ON CONFLICT DO NOTHING` sur `fight_participants`.
- *
- * Une requête de plus, mais un rejeu répare alors n'importe quel état
- * intermédiaire — ce qui est exactement la propriété recherchée par ce lot.
- *
- * Deux traitements supplémentaires suivent l'étape 3, nécessaires APRÈS l'écriture des
- * participants (tous deux en dépendent) et rejoués à CHAQUE envoi (pas seulement à l'insertion) :
- *   - Regroupement de donjon multi-salles en autorité (voir `server/history/dungeon-run.ts`) — en
- *     complément du rattachement déjà envoyé par le client, pour le cas cross-session/cross-client
- *     qu'aucun calcul client seul ne peut voir.
- *   - Calcul de `fights.fight_type` (voir `server/history/fight-type.ts`) pour tout le lot,
- *     nouveaux combats comme combats déjà connus — la classification hors donjon dépend de
- *     `fight_participants.monster_id`, et un `dungeonId` fraîchement résolu par le point
- *     précédent doit voir `fight_type` recalculée dans la foulée plutôt que de rester figée à sa
- *     valeur initiale.
  */
 
 /** Garde-fou de taille, en miroir de `MAX_HISTORY_BATCH` (un combat porte jusqu'à 64 participants). */
@@ -80,212 +45,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
 
   const db = createDb(context.env.DATABASE_URL);
-  const userId = auth.user.id;
-
-  const insertedRows = await db
-    .insert(fights)
-    .values(
-      parsed.value.map((fight) => ({
-        userId,
-        clientKey: fight.clientKey,
-        fightLogId: fight.fightId,
-        startedAt: fight.startedAt,
-        durationMs: fight.durationMs,
-        won: fight.won,
-        turns: fight.turns,
-        totalDamage: fight.totalDamage,
-        xpGained: fight.xpGained,
-        kamasGained: fight.kamasGained,
-        gameServer: fight.gameServer,
-        dungeonId: fight.dungeonId,
-        dungeonRunKey: fight.dungeonRunKey,
-        challengesPassed: fight.challengesPassed,
-        challengesFailed: fight.challengesFailed,
-      })),
-    )
-    // Le cœur de l'idempotence : rejouer le même log ne réécrit rien. Seule
-    // exception, `dungeonId`/`dungeonRunKey` : le combat de boss qui révèle le
-    // donjon d'un run arrive toujours APRÈS ses salles dans le log, donc une
-    // salle synchronisée avant lui n'a encore aucune valeur à envoyer — le
-    // client la renvoie une fois le run identifié (voir HistorySyncService),
-    // et c'est cette mise à jour ciblée que `onConflictDoUpdate` capture. Le
-    // reste de la ligne (dégâts, tours, xp...) reste immuable : une mise à
-    // jour plus large rouvrirait la porte aux écrasements par une
-    // reconstruction partielle (fichier de log tronqué, rotation...).
-    // `COALESCE` protège aussi ces deux colonnes d'un écrasement par un envoi
-    // qui n'aurait — faute d'historique complet en mémoire côté client à ce
-    // moment-là (voir sa doc) — pas su recalculer le rattachement : `null` ne
-    // remplace jamais une valeur déjà connue.
-    .onConflictDoUpdate({
-      target: [fights.userId, fights.clientKey],
-      set: {
-        dungeonId: sql`coalesce(excluded.dungeon_id, ${fights.dungeonId})`,
-        dungeonRunKey: sql`coalesce(excluded.dungeon_run_key, ${fights.dungeonRunKey})`,
-      },
-    })
-    // `xmax = 0` : idiome Postgres distinguant une ligne réellement insérée
-    // (nouvelle) d'une ligne existante seulement touchée par l'`onConflictDoUpdate`
-    // ci-dessus — sans ça, `inserted` compterait à tort tout combat déjà connu
-    // renvoyé uniquement pour son rattachement de donjon.
-    .returning({ clientKey: fights.clientKey, isNew: sql<boolean>`(xmax = 0)` });
-  const inserted = insertedRows.filter((row) => row.isNew);
-
-  const keys = parsed.value.map((fight) => fight.clientKey);
-  const stored = await db
-    .select({ id: fights.id, clientKey: fights.clientKey })
-    .from(fights)
-    .where(and(eq(fights.userId, userId), inArray(fights.clientKey, keys)));
-  const idByKey = new Map(stored.map((row) => [row.clientKey, row.id]));
-
-  const participantRows = parsed.value.flatMap((fight) => {
-    const fightId = idByKey.get(fight.clientKey);
-    if (fightId === undefined) return [];
-    return fight.participants.map((participant) => ({
-      fightId,
-      side: participant.side,
-      name: participant.name,
-      monsterId: participant.monsterId,
-      instanceIndex: participant.instanceIndex,
-      className: participant.className,
-      damage: participant.damage,
-      defeated: participant.defeated,
-      fled: participant.fled,
-      spells: participant.spells,
-      heal: participant.heal,
-      armor: participant.armor,
-      healSpells: participant.healSpells,
-      armorSpells: participant.armorSpells,
-      xpGained: participant.xpGained,
-    }));
-  });
-
-  if (participantRows.length > 0) {
-    await db
-      .insert(fightParticipants)
-      .values(participantRows)
-      // Seule table de l'historique écrite en `DO UPDATE` : une réattribution
-      // manuelle de dégâts (`reassignSpell` côté client) renvoie le combat avec
-      // sa ventilation corrigée, et c'est cette correction-là qui doit prendre.
-      // Le combat parent, lui, reste immuable (`DO NOTHING` plus haut).
-      .onConflictDoUpdate({
-        target: [
-          fightParticipants.fightId,
-          fightParticipants.side,
-          fightParticipants.name,
-          fightParticipants.instanceIndex,
-        ],
-        set: {
-          monsterId: sql`excluded.monster_id`,
-          className: sql`excluded.class_name`,
-          damage: sql`excluded.damage`,
-          defeated: sql`excluded.defeated`,
-          fled: sql`excluded.fled`,
-          spells: sql`excluded.spells`,
-          heal: sql`excluded.heal`,
-          armor: sql`excluded.armor`,
-          healSpells: sql`excluded.heal_spells`,
-          armorSpells: sql`excluded.armor_spells`,
-          xpGained: sql`excluded.xp_gained`,
-        },
-      });
-  }
-
-  const touchedFightIds = [...idByKey.values()];
-
-  // Regroupement de donjon multi-salles en autorité (voir server/history/dungeon-run.ts) — AVANT
-  // le recalcul de `fight_type` juste en dessous, pour qu'un `dungeonId` fraîchement résolu ici
-  // alimente `fight_type` dans la même requête plutôt que d'attendre le prochain envoi. Complète
-  // (jamais ne remplace) le rattachement déjà envoyé par le client (COALESCE ci-dessus) : couvre
-  // le cas qu'aucun calcul client (web ou overlay, borné à sa session locale) ne peut voir seul.
-  if (touchedFightIds.length > 0) {
-    const enemyNamesByFightId = new Map<number, string[]>();
-    for (const row of participantRows) {
-      if (row.side !== 'enemy') continue;
-      const list = enemyNamesByFightId.get(row.fightId) ?? [];
-      list.push(row.name);
-      enemyNamesByFightId.set(row.fightId, list);
-    }
-    // État RÉEL en base après l'upsert ci-dessus (pas ce que CE lot a envoyé) : une salle déjà
-    // connue peut avoir un `dungeonId` posé par un envoi précédent (COALESCE), ou par un autre
-    // client — jamais recalculer à partir du seul payload de ce lot.
-    const touchedFightRows = await db
-      .select({
-        id: fights.id,
-        startedAt: fights.startedAt,
-        won: fights.won,
-        dungeonId: fights.dungeonId,
-        dungeonRunKey: fights.dungeonRunKey,
-      })
-      .from(fights)
-      .where(inArray(fights.id, touchedFightIds));
-
-    const catalog = await loadCatalogFromDb(db);
-    const attachedFightIds = await recomputeDungeonRunsForBatch(
-      db,
-      userId,
-      catalog,
-      touchedFightRows.map((row) => ({
-        ...row,
-        enemyNames: enemyNamesByFightId.get(row.id) ?? [],
-      })),
-    );
-    // Une salle d'un POST antérieur rattachée seulement maintenant (fenêtre de lookback) doit voir
-    // son `fight_type` recalculé avec le lot — voir la doc de `recomputeDungeonRunsForBatch`.
-    for (const id of attachedFightIds) {
-      if (!touchedFightIds.includes(id)) touchedFightIds.push(id);
-    }
-  }
-
-  // Classification matérialisée du combat (`fight_type`, voir server/history/fight-type.ts) —
-  // recalculée pour TOUT le lot (combats nouveaux comme déjà connus) : un combat déjà connu peut
-  // être renvoyé uniquement pour son rattachement de donjon a posteriori (voir la doc de
-  // `dungeonId` ci-dessus), auquel cas `fight_type` doit être recalculée avec lui dans la même
-  // requête plutôt que de rester figée à sa valeur `FAMILY_*`/`EVENT`/`null` initiale. Nécessite les
-  // participants déjà écrits (requête précédente) : la classification "hors donjon" dépend de
-  // `fight_participants.monster_id`.
-  if (touchedFightIds.length > 0) {
-    const scope = sql`f.id in (${sql.join(
-      touchedFightIds.map((id) => sql`${id}`),
-      sql`, `,
-    )})`;
-    await db.execute(dungeonFightTypeUpdateSql(scope));
-    await db.execute(familyFightTypeUpdateSql(scope));
-    await db.execute(eventFightTypeUpdateSql(scope));
-  }
-
-  const lootRows = parsed.value.flatMap((fight) => {
-    const fightId = idByKey.get(fight.clientKey);
-    if (fightId === undefined) return [];
-    return fight.loot.map((row) => ({
-      fightId,
-      lineIndex: row.lineIndex,
-      itemId: row.itemId,
-      itemName: row.itemName,
-      quantity: row.quantity,
-    }));
-  });
-
-  if (lootRows.length > 0) {
-    // Le CONTENU du butin d'un combat terminé ne bouge plus, mais son IDENTIFICATION, si (correction
-    // manuelle d'objet homonyme, voir ItemPickerService côté client) : `DO UPDATE` sur `item_id`/
-    // `item_name` plutôt que `DO NOTHING`, une relecture du même log réécrivant de toute façon les
-    // mêmes valeurs en l'absence de correction.
-    await db
-      .insert(fightLoot)
-      .values(lootRows)
-      .onConflictDoUpdate({
-        target: [fightLoot.fightId, fightLoot.lineIndex],
-        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
-      });
-  }
-
-  return json({
-    // Toutes les clés du lot sont « acceptées » : celles déjà connues du compte
-    // le sont tout autant que les nouvelles, et c'est ce que la file cliente
-    // attend pour retirer l'entrée de sa file — un doublon n'est pas un échec.
-    accepted: keys,
-    inserted: inserted.length,
-  });
+  return json(await ingestFights(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

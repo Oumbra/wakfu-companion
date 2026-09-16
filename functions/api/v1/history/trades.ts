@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { tradeItems, trades } from '../../../../server/db/schema';
 import {
@@ -7,6 +7,7 @@ import {
   parsePageQuery,
   parseTradesBody,
 } from '../../../../server/history/parse';
+import { ingestTrades } from '../../../../server/history/ingest';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -17,7 +18,7 @@ import type { Env } from '../../_types';
  * `insert` des lignes filles) et pour la même raison : faute de transaction
  * avec le driver `neon-http`, seule une écriture des filles indépendante de la
  * question « le parent vient-il d'être créé ? » se répare toute seule au rejeu.
- * Voir functions/api/v1/history/fights.ts pour le détail.
+ * Voir `server/history/ingest.ts` (`ingestFights`/`ingestTrades`) pour le détail.
  *
  * Le nom du partenaire d'échange est une donnée de tiers ; il est conservé
  * parce qu'il est indissociable de l'événement lui-même (un échange sans
@@ -47,58 +48,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
 
   const db = createDb(context.env.DATABASE_URL);
-  const userId = auth.user.id;
-
-  const inserted = await db
-    .insert(trades)
-    .values(
-      parsed.value.map((trade) => ({
-        userId,
-        clientKey: trade.clientKey,
-        peerName: trade.peerName,
-        selfName: trade.selfName,
-        occurredAt: trade.occurredAt,
-        kamasAcquired: trade.kamasAcquired,
-        kamasGiven: trade.kamasGiven,
-        gameServer: trade.gameServer,
-      })),
-    )
-    .onConflictDoNothing({ target: [trades.userId, trades.clientKey] })
-    .returning({ clientKey: trades.clientKey });
-
-  const keys = parsed.value.map((trade) => trade.clientKey);
-  const stored = await db
-    .select({ id: trades.id, clientKey: trades.clientKey })
-    .from(trades)
-    .where(and(eq(trades.userId, userId), inArray(trades.clientKey, keys)));
-  const idByKey = new Map(stored.map((row) => [row.clientKey, row.id]));
-
-  const itemRows = parsed.value.flatMap((trade) => {
-    const tradeId = idByKey.get(trade.clientKey);
-    if (tradeId === undefined) return [];
-    return trade.items.map((item) => ({
-      tradeId,
-      direction: item.direction,
-      lineIndex: item.lineIndex,
-      itemId: item.itemId,
-      itemName: item.itemName,
-      quantity: item.quantity,
-    }));
-  });
-
-  if (itemRows.length > 0) {
-    // `DO UPDATE` plutôt que `DO NOTHING` — voir functions/api/v1/history/purchases.ts (même raison :
-    // correction manuelle d'objet homonyme, voir ItemPickerService côté client).
-    await db
-      .insert(tradeItems)
-      .values(itemRows)
-      .onConflictDoUpdate({
-        target: [tradeItems.tradeId, tradeItems.direction, tradeItems.lineIndex],
-        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
-      });
-  }
-
-  return json({ accepted: keys, inserted: inserted.length });
+  return json(await ingestTrades(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

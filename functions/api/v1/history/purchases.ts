@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { purchases } from '../../../../server/db/schema';
 import {
@@ -7,18 +7,14 @@ import {
   parsePageQuery,
   parsePurchasesBody,
 } from '../../../../server/history/parse';
+import { ingestPurchases } from '../../../../server/history/ingest';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
 /**
- * Historique d'achats du compte (lot 8, prompt 8.1). Une seule table, donc pas
- * de séquence en trois temps comme pour les combats : un `INSERT ... ON
- * CONFLICT DO NOTHING` suffit à rendre l'ingestion idempotente.
- *
- * `gameServer` vient de `GameServerService` côté client (lot 7) — et reste
- * vide quand aucun serveur n'a pu être déduit : l'achat part quand même
- * (prompt 8.1 point 4). Aucun rapport avec le monitoring de prix (lot 4), dont
- * la source est un scan de l'hôtel des ventes, jamais les achats des joueurs.
+ * Historique d'achats du compte (lot 8, prompt 8.1). L'écriture idempotente vit dans
+ * `server/history/ingest.ts::ingestPurchases` (voir sa doc) — ce handler ne fait que
+ * l'authentification, la validation du corps et la réponse HTTP.
  */
 
 const MAX_PAYLOAD_BYTES = 512 * 1024;
@@ -43,35 +39,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
 
   const db = createDb(context.env.DATABASE_URL);
-  const inserted = await db
-    .insert(purchases)
-    .values(
-      parsed.value.map((purchase) => ({
-        userId: auth.user.id,
-        clientKey: purchase.clientKey,
-        itemId: purchase.itemId,
-        itemName: purchase.itemName,
-        quantity: purchase.quantity,
-        totalCost: purchase.totalCost,
-        occurredAt: purchase.occurredAt,
-        gameServer: purchase.gameServer,
-      })),
-    )
-    // `DO UPDATE` plutôt que `DO NOTHING` : un achat déjà connu peut revenir avec une identification
-    // d'objet corrigée (voir ItemPickerService côté client, homonymes de rareté différente) — le
-    // reste de l'achat, lui, ne bouge jamais après coup (mêmes valeurs de toute façon en l'absence
-    // de correction). `inserted.length` compte donc désormais les lignes insérées OU mises à jour,
-    // pas seulement les nouvelles (champ purement informatif, non consommé côté client).
-    .onConflictDoUpdate({
-      target: [purchases.userId, purchases.clientKey],
-      set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
-    })
-    .returning({ clientKey: purchases.clientKey });
-
-  return json({
-    accepted: parsed.value.map((purchase) => purchase.clientKey),
-    inserted: inserted.length,
-  });
+  return json(await ingestPurchases(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

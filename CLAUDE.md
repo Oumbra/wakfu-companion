@@ -572,6 +572,17 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
      réel : plus aucun combat actif, mannequin clôturé à 22:07:02 (durée 2 min, bonne date),
      1 800 000 kamas dans les ventes HDV, combat Dark Wapin à 0 kama, compteurs gagnés/perdus
      inchangés (39/14), les 17 combats retrouvant 20 à 27 objets de butin chacun.
+   - **Rattrapage en prod de l'historique du compte concerné** (même jour) : `fights` est immuable
+     après insertion (`ON CONFLICT DO NOTHING`), une relecture du fichier par le client corrigé
+     n'aurait jamais réparé les lignes existantes → `server/import/replay-user-history.ts` (voir
+     sa doc de tête et `server/README.md`) : capture en Chrome des corps `POST /history/*` que le
+     client corrigé produit pour ce fichier (`HistorySyncService.enable(uid réel)` +
+     `queue.api.requestJson` remplacé par un collecteur — mêmes `clientKey` que le vrai client,
+     donc idempotent avec ses envois futurs), suppression des combats du fichier par
+     `fight_log_id` bornée par `--since`, rejeu via `server/history/ingest.ts`. Toujours lire le
+     dry-run (diff par combat) avant `--apply` : c'est lui qui a révélé qu'un combat coupé en tête
+     de fichier n'était pas rejoué (exclu de la suppression) et qu'une ancienne copie prod classait
+     à tort une défaite en victoire.
 
 ## Gotchas plateforme (navigateur) déjà rencontrés
 
