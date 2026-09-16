@@ -811,13 +811,26 @@ participants ne peuvent pas être écrits « tout ou rien ». La séquence naïv
 combat **sans** participants — et un rejeu ne le réparerait jamais, son
 `clientKey` étant désormais en conflit.
 
-D'où la séquence retenue (`functions/api/v1/history/fights.ts`, idem pour les
-échanges) : `INSERT ... ON CONFLICT DO NOTHING` → `SELECT id, client_key` sur
-**tout** le lot → `INSERT ... ON CONFLICT DO NOTHING` sur les filles. Une
-requête de plus, mais un rejeu répare alors n'importe quel état intermédiaire —
-ce qui est précisément la propriété recherchée. C'est aussi ce qui évite d'avoir
-à passer à `neon-serverless` (WebSocket), envisagé plus haut dans ce document
-pour ce lot.
+D'où la séquence retenue (`server/history/ingest.ts`, `ingestFights` — idem pour
+les échanges et les pactes) : `INSERT ... ON CONFLICT DO NOTHING` → `SELECT id,
+client_key` sur **tout** le lot → `INSERT ... ON CONFLICT DO NOTHING` sur les
+filles. Une requête de plus, mais un rejeu répare alors n'importe quel état
+intermédiaire — ce qui est précisément la propriété recherchée. C'est aussi ce
+qui évite d'avoir à passer à `neon-serverless` (WebSocket), envisagé plus haut
+dans ce document pour ce lot.
+
+Toute l'écriture vit dans `server/history/ingest.ts` (une fonction par table
+d'historique), **pas dans les handlers** `functions/api/v1/history/*.ts`, qui ne
+font plus que authentification + validation + réponse HTTP (depuis le
+2026-09-16) : le script de support `server/import/replay-user-history.ts`
+rejoue ces mêmes fonctions hors requête HTTP pour un compte donné — voir sa doc
+de tête pour la marche à suivre complète (capture en navigateur des corps de
+requête avec l'`uid` réel du compte, suppression ciblée par `fight_log_id`,
+dry-run avec diff colonne par colonne avant `--apply`). Premier usage réel :
+l'historique du 15/09 d'un utilisateur archivé sans butin (session HDV jamais
+refermée, voir CLAUDE.md « Combats interrompus... ») — `fights` étant immuable
+après insertion, un simple rejeu par son client n'aurait jamais corrigé ses
+lignes existantes.
 
 ### Endpoints
 
