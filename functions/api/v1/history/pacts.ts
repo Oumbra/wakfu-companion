@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { pactExtractionItems, pactExtractions } from '../../../../server/db/schema';
 import {
@@ -7,6 +7,7 @@ import {
   parsePactExtractionsBody,
   parsePageQuery,
 } from '../../../../server/history/parse';
+import { ingestPactExtractions } from '../../../../server/history/ingest';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -15,8 +16,8 @@ import type { Env } from '../../_types';
  * échanges (`insert` → `select` → `insert` des lignes filles) et pour la même raison : faute de
  * transaction avec le driver `neon-http`, seule une écriture des filles indépendante de la question
  * « le parent vient-il d'être créé ? » se répare toute seule au rejeu. Voir
- * functions/api/v1/history/fights.ts pour le détail, functions/api/v1/history/trades.ts pour le
- * gabarit le plus proche (une extraction de pacte n'a qu'un seul "côté", contrairement à un échange).
+ * `server/history/ingest.ts` pour le détail (`ingestTrades` est le gabarit le plus proche : une
+ * extraction de pacte n'a qu'un seul "côté", contrairement à un échange).
  */
 
 const MAX_PAYLOAD_BYTES = 1024 * 1024;
@@ -41,53 +42,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
 
   const db = createDb(context.env.DATABASE_URL);
-  const userId = auth.user.id;
-
-  const inserted = await db
-    .insert(pactExtractions)
-    .values(
-      parsed.value.map((pact) => ({
-        userId,
-        clientKey: pact.clientKey,
-        occurredAt: pact.occurredAt,
-        gameServer: pact.gameServer,
-      })),
-    )
-    .onConflictDoNothing({ target: [pactExtractions.userId, pactExtractions.clientKey] })
-    .returning({ clientKey: pactExtractions.clientKey });
-
-  const keys = parsed.value.map((pact) => pact.clientKey);
-  const stored = await db
-    .select({ id: pactExtractions.id, clientKey: pactExtractions.clientKey })
-    .from(pactExtractions)
-    .where(and(eq(pactExtractions.userId, userId), inArray(pactExtractions.clientKey, keys)));
-  const idByKey = new Map(stored.map((row) => [row.clientKey, row.id]));
-
-  const itemRows = parsed.value.flatMap((pact) => {
-    const extractionId = idByKey.get(pact.clientKey);
-    if (extractionId === undefined) return [];
-    return pact.items.map((item) => ({
-      extractionId,
-      lineIndex: item.lineIndex,
-      itemId: item.itemId,
-      itemName: item.itemName,
-      quantity: item.quantity,
-    }));
-  });
-
-  if (itemRows.length > 0) {
-    // `DO UPDATE` plutôt que `DO NOTHING` — voir functions/api/v1/history/purchases.ts (même
-    // raison : correction manuelle d'objet homonyme, voir PactReassignService côté client).
-    await db
-      .insert(pactExtractionItems)
-      .values(itemRows)
-      .onConflictDoUpdate({
-        target: [pactExtractionItems.extractionId, pactExtractionItems.lineIndex],
-        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
-      });
-  }
-
-  return json({ accepted: keys, inserted: inserted.length });
+  return json(await ingestPactExtractions(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
