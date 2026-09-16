@@ -343,6 +343,12 @@
   color: var(--btn-active-red);
   border: 1px solid var(--btn-active-red);
 }
+/* Combat interrompu (client fermé en plein combat, voir FightResult) : ni vert ni rouge, neutre. */
+.fight-badge.interrupted {
+  background: rgba(128, 128, 128, 0.14);
+  color: var(--text-muted);
+  border: 1px solid var(--text-muted);
+}
 /* Le tooltip (`TooltipDirective`) est porté par ce wrapper `<span>`, pas par
    l'`<img>` elle-même : historiquement nécessaire car `<img>` est un élément
    remplacé sans pseudo-élément `::after` (l'ancien système CSS générique n'y

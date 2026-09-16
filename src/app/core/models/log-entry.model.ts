@@ -125,6 +125,23 @@ export interface CombatStartEntry {
   time: string;
 }
 
+/**
+ * Cycle de vie du client Wakfu lui-même, hors de toute enveloppe `[Catégorie]` : "Stopping cFC..."
+ * (`'shutdown'`, fermeture propre du client — précédée de "Sending DisconnectionMessage to
+ * Servers. Reason : {UI Closed}") ou "Starting cFC..." (`'startup'`, nouveau lancement — seul
+ * signal disponible après un crash/kill du client, qui n'écrit jamais de "Stopping"). Un combat
+ * encore actif à cet instant n'aura JAMAIS son `[FIGHT] End fight` (cas réel : entraînement sur
+ * mannequin quitté en fermant le jeu, combat resté « en cours » indéfiniment dans l'app) — voir
+ * StatsStoreService.interruptionCandidates pour le traitement, volontairement différé : plusieurs
+ * clients (multi-compte) écrivent dans le MÊME wakfu.log, l'arrêt de l'un ne termine pas le
+ * combat de l'autre.
+ */
+export interface ClientLifecycleEntry {
+  kind: 'client-lifecycle';
+  time: string;
+  event: 'shutdown' | 'startup';
+}
+
 export interface CombatEndEntry {
   kind: 'combat-end';
   time: string;
@@ -262,6 +279,7 @@ export type LogEntry =
   | EnemyFledEntry
   | CombatDefeatMarkerEntry
   | CombatStartEntry
+  | ClientLifecycleEntry
   | CombatEndEntry
   | LootEntry
   | ChallengeResultEntry

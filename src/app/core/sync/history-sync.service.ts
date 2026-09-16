@@ -373,7 +373,8 @@ export class HistorySyncService {
         fightId: record.id > 0 ? record.id : null,
         startedAt: new Date(record.fullTimestampMs).toISOString(),
         durationMs: record.durationMs,
-        won: record.result === 'won',
+        // `null` = combat interrompu (voir FightResult) : ni gagné ni perdu, la colonne est nullable.
+        won: record.result === 'won' ? true : record.result === 'lost' ? false : null,
         turns: record.turns,
         // Dégâts de l'équipe du joueur : la somme des lignes classées alliées.
         // Additionner les deux camps donnerait un total sans signification (les

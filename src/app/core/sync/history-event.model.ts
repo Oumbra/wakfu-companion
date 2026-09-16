@@ -1,3 +1,5 @@
+import type { FightResult } from '../models/fight.model';
+
 /**
  * Événements d'historique envoyés au compte (lot 8, prompt 8.1) et, surtout,
  * **leur signature de contenu** — la pièce la plus délicate de tout ce lot.
@@ -106,7 +108,9 @@ export interface FightPayload {
   fightId: number | null;
   startedAt: string;
   durationMs: number | null;
-  won: boolean;
+  /** `null` = combat interrompu (voir FightResult), ni victoire ni défaite — accepté tel quel par
+   * le serveur (`parseFlag`, colonne `fights.won` nullable), ignoré des compteurs gagnés/perdus. */
+  won: boolean | null;
   turns: number;
   totalDamage: number;
   xpGained: number;
@@ -231,7 +235,7 @@ function normalize(value: string): string {
 export function fightSignature(input: {
   time: string;
   fightId: number;
-  result: 'won' | 'lost';
+  result: FightResult;
   participants: readonly { name: string; instanceIndex: number }[];
 }): string {
   const participants = input.participants

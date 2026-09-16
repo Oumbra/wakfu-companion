@@ -71,6 +71,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.noFight': 'Aucun combat détecté pour le moment.',
     'damageMeter.won': 'Victoire',
     'damageMeter.lost': 'Défaite',
+    'damageMeter.interrupted': 'Interrompu',
+    'damageMeter.interruptedHint':
+      "Le jeu a été fermé pendant ce combat : aucune fin de combat n'a été enregistrée (ni victoire, ni défaite).",
     'damageMeter.breach': 'Brèche',
     'damageMeter.ultimateBreach': 'Brèche ultime',
     'damageMeter.combatTab': 'Combat {{n}}',
@@ -717,6 +720,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.noFight': 'No fight detected yet.',
     'damageMeter.won': 'Victory',
     'damageMeter.lost': 'Defeat',
+    'damageMeter.interrupted': 'Interrupted',
+    'damageMeter.interruptedHint':
+      'The game was closed during this fight: no end of fight was recorded (neither a win nor a loss).',
     'damageMeter.breach': 'Breach',
     'damageMeter.ultimateBreach': 'Ultimate breach',
     'damageMeter.combatTab': 'Fight {{n}}',
@@ -1352,6 +1358,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.noFight': 'Ningún combate detectado por el momento.',
     'damageMeter.won': 'Victoria',
     'damageMeter.lost': 'Derrota',
+    'damageMeter.interrupted': 'Interrumpido',
+    'damageMeter.interruptedHint':
+      'El juego se cerró durante este combate: no se registró ningún final de combate (ni victoria ni derrota).',
     'damageMeter.breach': 'Brecha',
     'damageMeter.ultimateBreach': 'Brecha última',
     'damageMeter.combatTab': 'Combate {{n}}',
@@ -1996,6 +2005,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'damageMeter.noFight': 'Nenhum combate detectado por enquanto.',
     'damageMeter.won': 'Vitória',
     'damageMeter.lost': 'Derrota',
+    'damageMeter.interrupted': 'Interrompido',
+    'damageMeter.interruptedHint':
+      'O jogo foi fechado durante este combate: nenhum fim de combate foi registrado (nem vitória, nem derrota).',
     'damageMeter.breach': 'Brecha',
     'damageMeter.ultimateBreach': 'Brecha máxima',
     'damageMeter.combatTab': 'Combate {{n}}',
