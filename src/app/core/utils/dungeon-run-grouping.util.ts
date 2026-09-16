@@ -1,4 +1,5 @@
 import { CatalogDungeonEntry, WakfuDungeonType } from '../api/catalog.service';
+import type { FightResult } from '../models/fight.model';
 
 /** Nombre de salles précédant le boss (boss compris) pour un clear "propre" d'un donjon, déduit de
  * son `type` (voir CatalogDungeonEntry) — remplace l'ancien `roomCount` curé séparément. Seuls
@@ -57,7 +58,9 @@ export function dungeonStoneItemIdForType(type: WakfuDungeonType): number | null
  * dépendance circulaire entre ce fichier et le store. */
 export interface DungeonGroupableFight {
   id: number;
-  result: 'won' | 'lost';
+  /** Un combat `'interrupted'` (voir FightResult) se comporte ici comme une défaite : il ne
+   * termine jamais un run, mais n'empêche pas d'en regrouper les salles déjà jouées. */
+  result: FightResult;
 }
 
 export type DungeonHistoryEntry<T extends DungeonGroupableFight> =

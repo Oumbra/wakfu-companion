@@ -279,8 +279,20 @@
         class="fight-badge"
         [class.won]="record.result === 'won'"
         [class.lost]="record.result === 'lost'"
+        [class.interrupted]="record.result === 'interrupted'"
+        [appTooltip]="record.result === 'interrupted' ? ('damageMeter.interruptedHint' | t) : null"
       >
-        {{ record.result === 'won' ? ('damageMeter.won' | t) : ('damageMeter.lost' | t) }}
+        @switch (record.result) {
+          @case ('won') {
+            {{ 'damageMeter.won' | t }}
+          }
+          @case ('lost') {
+            {{ 'damageMeter.lost' | t }}
+          }
+          @default {
+            {{ 'damageMeter.interrupted' | t }}
+          }
+        }
       </span>
       <span class="fight-meta">
         {{ record.turns }} {{ 'damageMeter.turns' | t }} ({{ formatDuration(record.durationMs) }})

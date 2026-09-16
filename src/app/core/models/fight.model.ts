@@ -1,3 +1,14 @@
+/**
+ * Issue d'un combat terminé :
+ * - `'won'`/`'lost'` : fin propre (`[FIGHT] End fight with id X`), résultat résolu par
+ *   StatsStoreService.resolveFightResult.
+ * - `'interrupted'` : aucun `End fight` n'a jamais été émis — le client Wakfu a été fermé (ou a
+ *   crashé) en plein combat, cas typique de l'entraînement sur mannequin quitté en fermant le jeu
+ *   (voir StatsStoreService.interruptionCandidates). Ni victoire ni défaite : jamais compté dans
+ *   `combatsWon`/`combatsLost`, envoyé au compte avec `won: null` (colonne déjà nullable).
+ */
+export type FightResult = 'won' | 'lost' | 'interrupted';
+
 /** Un allié ayant rejoint le combat (`isControlledByAI=false`) : `breed` identifie sa classe. */
 export interface FightAlly {
   name: string;

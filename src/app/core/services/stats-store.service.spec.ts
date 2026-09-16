@@ -2,7 +2,11 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HDV_KAMAS_SALE_ITEM, StatsStoreService } from './stats-store.service';
+import {
+  HDV_KAMAS_SALE_ITEM,
+  INTERRUPTED_FIGHT_LIVE_GRACE_MS,
+  StatsStoreService,
+} from './stats-store.service';
 import { LogFileAccessService } from './log-file-access.service';
 import { CharacterRosterService } from './character-roster.service';
 import { LootAlertService } from './loot-alert.service';
@@ -774,6 +778,152 @@ describe('StatsStoreService', () => {
 
       expect(stats.fightHistory()).toHaveLength(0);
       expect(stats.damageByAttacker().length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Combats interrompus : client fermé en plein combat (FightResult 'interrupted', voir INTERRUPTED_FIGHT_FILE_GRACE_MS)", () => {
+    // Séquence réelle (fichier utilisateur du 2026-09-15) : entraînement sur mannequin quitté en
+    // fermant le jeu — aucun "[FIGHT] End fight" n'est jamais émis pour ce combat.
+    const DUMMY_FIGHT = [
+      ' INFO 22:05:00,742 [T] (aXI:47) - CREATION DU COMBAT',
+      ' INFO 22:05:00,743 [T] (faw:1405) - [_FL_] fightId=1552079664 Sac à patates breed : 2335 [-17] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+      ' INFO 22:05:00,747 [T] (faw:1405) - [_FL_] fightId=1552079664 Erz-Fortune breed : 3 [10923258] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      ' INFO 22:06:22,226 [T] (aPV:174) - [Information (combat)] Erz-Fortune lance le sort Météore',
+      ' INFO 22:06:22,227 [T] (aPV:174) - [Information (combat)] Sac à patates: -303 PV (Feu)',
+    ];
+    const SHUTDOWN = [
+      ' INFO 22:07:02,697 [T] (aVv:664) - Sending DisconnectionMessage to Servers. Reason : {UI Closed}',
+      ' INFO 22:07:02,698 [T] (cFw:35) - Stopping cFC...',
+    ];
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("clôture en 'interrompu' un combat sans fin dès qu'une ligne survient 5 min après l'arrêt du client, sans le compter gagné ni perdu", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ...DUMMY_FIGHT,
+        ...SHUTDOWN,
+        // Autre client (multi-compte) qui continue d'écrire dans le même fichier, sans rapport
+        // avec ce combat : simple preuve que le fichier a avancé.
+        ' INFO 22:45:20,017 [T] (chP:397) - on quitte le monde 1134',
+      ]);
+      expect(stats.activeFightIds()).toEqual([]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].result).toBe('interrupted');
+      // Heure de fin = celle de l'arrêt du client, pas celle de la ligne qui a déclenché la clôture.
+      expect(fights[0].time).toBe('22:07:02,698');
+      // Début = première jointure [_FL_] (22:05:00,743), fin = marqueur d'arrêt (22:07:02,698).
+      expect(fights[0].durationMs).toBe(
+        new Date(0, 0, 1, 22, 7, 2, 698).getTime() - new Date(0, 0, 1, 22, 5, 0, 743).getTime(),
+      );
+      expect(stats.combatsWon()).toBe(0);
+      expect(stats.combatsLost()).toBe(0);
+    });
+
+    it('ne rattache plus un gain de kamas hors combat au combat fantôme une fois celui-ci clôturé (cas réel : vente HDV de 1 800 000 kamas créditée au combat suivant)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ...DUMMY_FIGHT,
+        ...SHUTDOWN,
+        ' INFO 22:45:20,017 [T] (chP:397) - on quitte le monde 1134',
+        " INFO 23:30:17,551 [T] (bmI:41) - Lancement de l'occupation MARKET sur la board [bDk id=31570]{P}",
+        ' INFO 23:31:05,825 [T] (aPV:174) - [Information (jeu)] Vous avez gagné 1 800 000 kamas.',
+        " INFO 23:31:06,399 [T] (bmI:77) - On arrête l'occupation MARKET sur la board [bDk id=31570]{P}",
+        // Combat suivant, normal : ne doit PAS hériter des 1 800 000 kamas.
+        ' INFO 23:42:44,410 [T] (faw:1405) - [_FL_] fightId=1552082422 Dark Wapin breed : 5527 [-18] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 23:42:44,425 [T] (faw:1405) - [_FL_] fightId=1552082422 Petite Ronce breed : 10 [11148032] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 23:42:50,000 [T] (aPV:174) - [Information (jeu)] Vous avez gagné 239 kamas.',
+        ' INFO 23:42:59,863 [T] (aWF:91) - [FIGHT] End fight with id 1552082422',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights.map((f) => f.result)).toEqual(['won', 'interrupted']);
+      expect(fights[0].kamas).toBe(239);
+      expect(stats.kamasFromCombat()).toBe(239);
+      expect(stats.kamasFromHdvSales()).toBe(1_800_000);
+    });
+
+    it("clôture les candidats dès qu'un NOUVEAU combat démarre, même moins de 5 min après l'arrêt", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ...DUMMY_FIGHT,
+        ...SHUTDOWN,
+        ' INFO 22:09:39,845 [T] (cFw:27) - Starting cFC...',
+        ' INFO 22:10:44,410 [T] (faw:1405) - [_FL_] fightId=2 Dark Wapin breed : 5527 [-18] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 22:10:44,425 [T] (faw:1405) - [_FL_] fightId=2 Petite Ronce breed : 10 [11148032] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+      ]);
+      expect(stats.activeFightIds()).toEqual([2]);
+      expect(stats.fightHistory().map((f) => f.result)).toEqual(['interrupted']);
+    });
+
+    it("RÉHABILITE un candidat dont un combattant agit encore ensuite (multi-compte : l'autre client est toujours dans ce combat), qui se termine alors normalement", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ...DUMMY_FIGHT,
+        ...SHUTDOWN,
+        // Le combat continue, vu par l'autre client : lignes nommées de SES combattants.
+        ' INFO 22:07:30,000 [T] (aPV:174) - [Information (combat)] Erz-Fortune lance le sort Météore',
+        ' INFO 22:07:31,000 [T] (aPV:174) - [Information (combat)] Sac à patates: -500 PV (Feu)',
+        ' INFO 22:20:00,000 [T] (chP:397) - on quitte le monde 1134',
+        ' INFO 22:21:00,000 [T] (aPV:174) - [Information (combat)] Sac à patates est hors-combat !',
+        ' INFO 22:21:01,000 [T] (aWF:91) - [FIGHT] End fight with id 1552079664',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].result).toBe('won');
+      expect(fights[0].rows.find((r) => r.name === 'Erz-Fortune')?.total).toBe(803);
+    });
+
+    it('ne réhabilite JAMAIS sur une ligne sans nom routée vers le candidat par simple repli « seul combat actif » (butin, kamas)', () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        ...DUMMY_FIGHT,
+        ...SHUTDOWN,
+        ' INFO 22:08:00,000 [T] (aPV:174) - [Information (jeu)] Vous avez ramassé 1x Pierre .',
+        ' INFO 22:08:01,000 [T] (aPV:174) - [Information (jeu)] Vous avez gagné 10 kamas.',
+        ' INFO 22:13:00,000 [T] (chP:397) - on quitte le monde 1134',
+      ]);
+      expect(stats.activeFightIds()).toEqual([]);
+      expect(stats.fightHistory().map((f) => f.result)).toEqual(['interrupted']);
+    });
+
+    it("en direct, clôture les candidats restants après INTERRUPTED_FIGHT_LIVE_GRACE_MS sans nouvelle ligne (le client fermé n'écrit plus rien)", () => {
+      vi.useFakeTimers();
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, DUMMY_FIGHT);
+      feedMore(access, SHUTDOWN);
+      expect(stats.activeFightIds()).toEqual([1552079664]);
+
+      vi.advanceTimersByTime(INTERRUPTED_FIGHT_LIVE_GRACE_MS - 1);
+      expect(stats.activeFightIds()).toEqual([1552079664]);
+      vi.advanceTimersByTime(1);
+      expect(stats.activeFightIds()).toEqual([]);
+      expect(stats.fightHistory().map((f) => f.result)).toEqual(['interrupted']);
+    });
+
+    it("réinitialise la session marchand/HDV à l'arrêt du client : un « Lancement de l'occupation MARKET » jamais refermé avant la fermeture du jeu ne doit plus exclure le butin des combats de la session suivante", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        " INFO 23:03:04,458 [T] (bmI:41) - Lancement de l'occupation MARKET sur la board [bDk id=31513]{P}",
+        ' INFO 23:11:00,771 [T] (cFw:35) - Stopping cFC...',
+        ' INFO 09:28:28,590 [T] (cFw:27) - Starting cFC...',
+        ' INFO 09:42:44,410 [T] (faw:1405) - [_FL_] fightId=2 Dark Wapin breed : 5527 [-18] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 09:42:44,425 [T] (faw:1405) - [_FL_] fightId=2 Petite Ronce breed : 10 [11148032] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 09:42:50,000 [T] (aPV:174) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou .',
+        ' INFO 09:42:59,863 [T] (aWF:91) - [FIGHT] End fight with id 2',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].loot.map((l) => l.name)).toEqual(['Laine de Bouftou']);
     });
   });
 
