@@ -519,6 +519,60 @@ Non reproductible via Playwright (`navigator.userActivation.hasBeenActive` vaut 
 page pilotée par CDP, même avec `--autoplay-policy=user-gesture-required`) : testé en stubbant
 `HTMLMediaElement.prototype.play` pour rejeter `NotAllowedError` avant le premier clic.
 
+## Combats interrompus (client fermé en plein combat) et session HDV jamais refermée
+
+Corrigé le 2026-09-16 (fichier utilisateur du 15/09 : « tous les combats d'hier sans butin » + un
+entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes indépendantes :
+
+1. **`On annule l'occupation MARKET ... (fromServer=true, ...)`** — variante de fermeture de session
+   HDV (interruption côté serveur : le joueur s'éloigne de la board/entre en combat) que
+   `MARKET_OCCUPATION_END_RE` ne reconnaissait pas (seulement `On arrête`). `inMarketOccupation`
+   restait armé 1h30, et TOUT le butin des 17 combats intermédiaires était rejeté comme achat HDV
+   (`isPurchaseLoot`). L'utilisateur voyait « tous » ses combats sans butin parce que l'historique
+   est plafonné à `MAX_FIGHT_HISTORY` (30) : les combats plus anciens, corrects, n'étaient plus
+   affichés. Le flag est aussi remis à `false` sur tout `client-lifecycle` (voir ci-dessous) — un
+   `Lancement de l'occupation MARKET` suivi d'une fermeture du jeu le laissait armé jusqu'au
+   lendemain.
+2. **Un combat actif à la fermeture du client n'a JAMAIS de `[FIGHT] End fight`** (`Stopping cFC...`,
+   `Sending DisconnectionMessage ... {UI Closed}`) — cas typique du mannequin quitté en fermant le
+   jeu (quitter par « abandonner » émet bien le `End fight`). Le combat fantôme restait le « seul
+   combat actif » : `LogParser.resolveCurrentFightId` lui routait toute ligne sans nom, dont une
+   vente HDV de 1 800 000 kamas le lendemain, créditée via `pendingFightKamas` au combat SUIVANT
+   (Dark Wapin) et absente du total HDV (famille mannequin exclue des agrégats).
+   - Architecture : `LogParser` émet `client-lifecycle` (`shutdown` = `Stopping cFC...`, `startup`
+     = `Starting cFC...`, seul signal après un crash). `StatsStoreService` ne clôture RIEN sur le
+     coup : les combats actifs deviennent `interruptionCandidates`, clôturés en résultat
+     **`'interrupted'`** (`FightResult`, `fight.model.ts`) par la 1ʳᵉ de ces conditions — ligne du
+     fichier ≥ 5 min après le marqueur (`INTERRUPTED_FIGHT_FILE_GRACE_MS` =
+     `SESSION_SEGMENT_GAP_THRESHOLD_MS`, relecture d'historique), première jointure d'un NOUVEAU
+     fightId, ou 2 min d'horloge murale après le dernier lot (`INTERRUPTED_FIGHT_LIVE_GRACE_MS`,
+     direct : le client fermé n'écrit plus rien, aucune ligne « 5 min plus tard » ne viendra).
+   - **Pourquoi différé et pas immédiat** : plusieurs clients (multi-compte) écrivent dans le MÊME
+     `wakfu.log` (vérifié sur ce fichier : un client fermé à 22:07 pendant que l'autre continue ; on
+     y voit même une ligne tronquée par l'entrelacement des écritures et des horodatages qui
+     reculent de 10 min). Un candidat est **réhabilité** dès qu'une ligne prouve qu'il continue —
+     UNIQUEMENT par identité (jointure `_FL_` de son fightId, ou dégât/soin/armure/sort/hors-combat
+     d'un combattant de `memberNames`), JAMAIS par une ligne sans nom routée vers lui par le repli
+     « seul combat actif » (butin, kamas, tour) : c'est ce repli qu'on cherche justement à
+     neutraliser. Calibration : plus long silence intra-combat mesuré sur deux vrais fichiers = 60s.
+   - `closeInterruptedFight` appelle `LogParser.closeFight(id)` (le parser doit oublier le combat en
+     même temps que le store) et passe l'horodatage complet de fin (`endMs`, heure du marqueur) à
+     `finalizeFight` plutôt qu'une heure `HH:MM:SS` : `buildFullTimestampMs` fait progresser la
+     détection de passage de minuit, une heure « du passé » réinjectée hors ordre y déclencherait un
+     faux passage de minuit décalant d'un jour tous les horodatages suivants.
+   - Piège rencontré : `LogParser.parseLine` ne livre une ligne qu'à l'arrivée de la SUIVANTE
+     (bufferisation multi-lignes) — le balayage par temps fichier doit donc tourner APRÈS `apply()`
+     dans la boucle d'`ingest()`, sinon le marqueur d'arrêt n'est appliqué qu'après le balayage de
+     la ligne qui aurait dû clôturer.
+   - `'interrupted'` : jamais compté gagné/perdu, badge gris « Interrompu » avec tooltip
+     (`damageMeter.interrupted*`), envoyé au compte avec `won: null` (colonne déjà nullable, aucune
+     migration ; le serveur l'ignore des compteurs `won = true/false` et `HistoryArchiveService`
+     le relit tel quel — plus jamais requalifié en victoire par défaut).
+   - Vérifié en navigateur (Chrome réel via `playwright-core`, MCP figé sur Firefox) sur le fichier
+     réel : plus aucun combat actif, mannequin clôturé à 22:07:02 (durée 2 min, bonne date),
+     1 800 000 kamas dans les ventes HDV, combat Dark Wapin à 0 kama, compteurs gagnés/perdus
+     inchangés (39/14), les 17 combats retrouvant 20 à 27 objets de butin chacun.
+
 ## Gotchas plateforme (navigateur) déjà rencontrés
 
 - **`File.size` est figé pour toujours** à la valeur captée au moment de la sélection (`<input type="file">` classique, aujourd'hui supprimé de l'app) — ne reflète JAMAIS la taille réelle sur le disque ensuite, et ne lève **aucune erreur** à la relecture (contrairement à `FileSystemFileHandle.getFile()` qui lève `NotReadableError` si le fichier a changé). C'est précisément pour cette raison que le sélecteur classique a été retiré entièrement : seule l'API File System Access (bouton = `showOpenFilePicker()`, glisser-déposer = `getAsFileSystemHandle()`) permet une vraie lecture continue.
