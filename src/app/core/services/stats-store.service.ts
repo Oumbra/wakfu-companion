@@ -190,9 +190,21 @@ export interface XpRow {
 export type WatchlistKind = 'enemy' | 'item';
 
 /** 'up' (défaut, comportement historique) : `count` part de 0 et s'incrémente à chaque
- * occurrence. 'down' : `count` part de `countdownTarget` et décompte vers 0 à chaque occurrence —
- * déclenche l'alerte (son + toast + confettis, voir LootAlertService) au moment où il atteint 0. */
-export type WatchlistCounterMode = 'up' | 'down';
+ * occurrence, sans borne. 'down' : `count` part de `countdownTarget` et décompte vers 0 à chaque
+ * occurrence — déclenche l'alerte (son + toast + confettis, voir LootAlertService) au moment où il
+ * atteint 0. 'goal' (objectif, ajouté le 2026-09-17) : l'inverse du décompte — `count` part de 0
+ * et MONTE vers `countdownTarget`, borné à cette cible, et l'alerte se déclenche au moment où il
+ * l'atteint. Les deux modes à cible partagent le même champ `countdownTarget` (nom historique,
+ * persisté tel quel dans le JSON du compte et lu par l'overlay Rust — le renommer casserait les
+ * deux) : seule la lecture du compteur change, « ce qu'il reste » en décompte, « ce qui est fait »
+ * en objectif. */
+export type WatchlistCounterMode = 'up' | 'down' | 'goal';
+
+/** Vrai pour les deux modes qui visent une cible ('down' et 'goal') — c'est ce test, et non
+ * `mode === 'down'`, qu'un affichage « courant/cible » ou un bornage à la cible doit faire. */
+export function hasWatchlistTarget(mode: WatchlistCounterMode): boolean {
+  return mode === 'down' || mode === 'goal';
+}
 
 /** Entrée de suivi générique : ennemi vaincu ou ressource/objet obtenu, distingués par `kind`. */
 export interface WatchlistEntry {
@@ -200,8 +212,9 @@ export interface WatchlistEntry {
   count: number;
   kind: WatchlistKind;
   mode: WatchlistCounterMode;
-  /** Valeur de départ du décompte en mode 'down' (ignorée en mode 'up') — aussi la valeur
-   * restaurée par resetWatchedCount() dans ce mode. */
+  /** Cible des modes 'down' et 'goal' (ignorée en mode 'up') : valeur de départ du décompte,
+   * aussi restaurée par resetWatchedCount() en 'down' ; valeur d'arrivée (et borne haute du
+   * compteur) en 'goal'. Nom historique conservé, voir WatchlistCounterMode. */
   countdownTarget: number;
   /** Id Ankama de l'objet/monstre, capturé à l'ajout (voir WakfuSearchResult.id, résolu sans
    * ambiguïté par l'autocomplétion) — résolution non ambiguë de l'icône affichée en cas
@@ -778,7 +791,8 @@ export class StatsStoreService {
   }
 
   private loadDefaultAddMode(): WatchlistCounterMode {
-    return this.userData.read<WatchlistCounterMode>('watchlistAddMode') === 'down' ? 'down' : 'up';
+    const stored = this.userData.read<WatchlistCounterMode>('watchlistAddMode');
+    return stored === 'down' || stored === 'goal' ? stored : 'up';
   }
 
   /** Mémorise le mode choisi (voir `defaultAddMode`) comme valeur de départ des prochains
@@ -855,7 +869,7 @@ export class StatsStoreService {
     this.userData.write('watchlist', updated);
   }
 
-  /** Remet le compteur d'une seule entrée suivie à sa valeur de départ (0 en mode 'up',
+  /** Remet le compteur d'une seule entrée suivie à sa valeur de départ (0 en mode 'up' et 'goal',
    * `countdownTarget` en mode 'down') — sans la retirer de la liste. */
   resetWatchedCount(name: string, catalogId?: number | null): void {
     const updated = this.watchlist().map((w) =>
@@ -865,7 +879,7 @@ export class StatsStoreService {
     this.userData.write('watchlist', updated);
   }
 
-  /** Bascule le mode de comptage d'une entrée suivie ('up' <-> 'down') et réinitialise son
+  /** Bascule le mode de comptage d'une entrée suivie ('up'/'down'/'goal') et réinitialise son
    * compteur à la valeur de départ correspondante — voir WatchlistCounterMode. */
   setWatchlistMode(name: string, mode: WatchlistCounterMode, catalogId?: number | null): void {
     const updated = this.watchlist().map((w) => {
@@ -877,29 +891,31 @@ export class StatsStoreService {
     this.userData.write('watchlist', updated);
   }
 
-  /** Change la valeur de départ (cible) du décompte d'une entrée suivie et réinitialise aussitôt
-   * son compteur courant sur cette nouvelle valeur — réservée à la CRÉATION du KPI (voir
+  /** Change la cible d'une entrée suivie (valeur de départ en décompte, valeur d'arrivée en
+   * objectif) et réinitialise aussitôt son compteur courant à la valeur de départ du mode
+   * (`startingCount` : la cible en 'down', 0 en 'goal') — réservée à la CRÉATION du KPI (voir
    * WatchlistTileController.add()) : la cible est ensuite figée (comme le mode), au même titre
    * que la suppression/recréation est le seul moyen de la changer. Pour éditer le compteur courant
    * après coup sans toucher la cible, voir setWatchlistCurrentCount. */
   setWatchlistCountdownTarget(name: string, target: number, catalogId?: number | null): void {
     const clamped = Math.max(0, Math.floor(Number.isFinite(target) ? target : 0));
-    const updated = this.watchlist().map((w) =>
-      this.matchesWatched(w, name, catalogId)
-        ? { ...w, countdownTarget: clamped, count: clamped }
-        : w,
-    );
+    const updated = this.watchlist().map((w) => {
+      if (!this.matchesWatched(w, name, catalogId)) return w;
+      const next = { ...w, countdownTarget: clamped };
+      return { ...next, count: this.startingCount(next) };
+    });
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
   }
 
-  /** Édite la valeur ACTUELLE d'une entrée en mode décompte, sans toucher à sa cible — contrairement
-   * à setWatchlistCountdownTarget (réservée à la création). Bornée à [0, countdownTarget] : le
-   * compteur d'un décompte ne représente jamais plus que le nombre restant fixé au départ. Sans
-   * effet sur une entrée en mode 'up' (rien à éditer manuellement dans ce mode, voir resetWatchedCount). */
+  /** Édite la valeur ACTUELLE d'une entrée en mode décompte ou objectif, sans toucher à sa cible —
+   * contrairement à setWatchlistCountdownTarget (réservée à la création). Bornée à
+   * [0, countdownTarget] : le compteur ne représente jamais plus que la cible fixée au départ (le
+   * restant en décompte, le fait en objectif). Sans effet sur une entrée en mode 'up' (rien à
+   * éditer manuellement dans ce mode, voir resetWatchedCount). */
   setWatchlistCurrentCount(name: string, count: number, catalogId?: number | null): void {
     const updated = this.watchlist().map((w) => {
-      if (!this.matchesWatched(w, name, catalogId) || w.mode !== 'down') return w;
+      if (!this.matchesWatched(w, name, catalogId) || !hasWatchlistTarget(w.mode)) return w;
       const clamped = Math.max(
         0,
         Math.min(w.countdownTarget, Math.floor(Number.isFinite(count) ? count : 0)),
@@ -910,19 +926,21 @@ export class StatsStoreService {
     this.userData.write('watchlist', updated);
   }
 
-  /** Ajoute `amount` à LA FOIS à la cible et à la valeur actuelle d'une entrée décompte déjà
-   * suivie — à la différence de setWatchlistCountdownTarget (qui remplace la cible et repart d'un
-   * décompte plein), ceci CUMULE un nouveau besoin sur un décompte déjà entamé sans perdre
-   * l'avancement déjà comptabilisé (ex. RecipeQuantityModalComponent, confirmer une 2e recette qui
-   * redemande un objet déjà suivi : le besoin s'additionne). Sans effet si l'entrée n'existe pas
-   * encore ou n'est pas en mode 'down' — l'appelant doit vérifier via findWatchedEntry et créer
-   * l'entrée lui-même le cas échéant (voir confirm() de RecipeQuantityModalComponent). */
+  /** Ajoute `amount` à la cible d'une entrée à cible déjà suivie (et, en décompte, à sa valeur
+   * actuelle — le restant grandit d'autant ; en objectif le compteur mesure le fait, il ne bouge
+   * pas) — à la différence de setWatchlistCountdownTarget (qui remplace la cible et repart du
+   * départ), ceci CUMULE un nouveau besoin sur un suivi déjà entamé sans perdre l'avancement déjà
+   * comptabilisé (ex. RecipeQuantityModalComponent, confirmer une 2e recette qui redemande un
+   * objet déjà suivi : le besoin s'additionne). Sans effet si l'entrée n'existe pas encore ou est
+   * en mode 'up' — l'appelant doit vérifier via findWatchedEntry et créer l'entrée lui-même le cas
+   * échéant (voir confirm() de RecipeQuantityModalComponent). */
   increaseWatchlistCountdownTarget(name: string, amount: number, catalogId?: number | null): void {
     const delta = Math.max(0, Math.floor(Number.isFinite(amount) ? amount : 0));
     if (delta === 0) return;
     const updated = this.watchlist().map((w) => {
-      if (!this.matchesWatched(w, name, catalogId) || w.mode !== 'down') return w;
-      return { ...w, countdownTarget: w.countdownTarget + delta, count: w.count + delta };
+      if (!this.matchesWatched(w, name, catalogId) || !hasWatchlistTarget(w.mode)) return w;
+      const count = w.mode === 'down' ? w.count + delta : w.count;
+      return { ...w, countdownTarget: w.countdownTarget + delta, count };
     });
     this.watchlist.set(updated);
     this.userData.write('watchlist', updated);
@@ -2366,7 +2384,10 @@ export class StatsStoreService {
    * 'down' : décrémente vers 0 et déclenche l'alerte de suivi (son + toast + confettis, voir
    * LootAlertService/LootAlertComponent) exactement au moment où le compteur atteint 0 — jamais en
    * dessous (une entrée déjà à 0 en 'down' n'alerte plus tant qu'elle n'a pas été remontée via
-   * resetWatchedCount/setWatchlistCountdownTarget).
+   * resetWatchedCount/setWatchlistCountdownTarget). En mode 'goal' : le miroir exact — incrémente
+   * vers la cible, borné à celle-ci, et alerte (reason 'goal') au moment précis où elle est
+   * atteinte, jamais une deuxième fois tant que le compteur n'est pas redescendu (reset ou édition
+   * manuelle).
    *
    * Applique le changement à TOUTES les entrées partageant ce nom, pas seulement la première
    * trouvée : le log ne référence un ramassage/une mise KO que par nom, jamais par id (voir
@@ -2393,6 +2414,16 @@ export class StatsStoreService {
           this.lootAlert.trigger(entry.name, 0, {
             kind: entry.kind,
             reason: 'countdown',
+            id: entry.catalogId,
+          });
+        }
+      } else if (entry.mode === 'goal') {
+        const next = Math.min(entry.countdownTarget, entry.count + by);
+        updated[idx] = { ...entry, count: next };
+        if (entry.count < entry.countdownTarget && next === entry.countdownTarget) {
+          this.lootAlert.trigger(entry.name, next, {
+            kind: entry.kind,
+            reason: 'goal',
             id: entry.catalogId,
           });
         }

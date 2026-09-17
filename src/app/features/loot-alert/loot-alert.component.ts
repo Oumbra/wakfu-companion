@@ -1,5 +1,5 @@
-import { Component, effect, inject, signal } from '@angular/core';
-import { LootAlertService } from '../../core/services/loot-alert.service';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { LootAlertReason, LootAlertService } from '../../core/services/loot-alert.service';
 import { ProfileService } from '../../core/services/profile.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ItemIconComponent } from '../../shared/item-icon/item-icon.component';
@@ -53,8 +53,20 @@ export class LootAlertComponent {
   protected readonly itemId = signal<number | null>(null);
   protected readonly quantity = signal(1);
   protected readonly kind = signal<'item' | 'enemy'>('item');
-  protected readonly reason = signal<'loot' | 'countdown'>('loot');
+  protected readonly reason = signal<LootAlertReason>('loot');
   protected readonly confetti = signal<ConfettiPiece[]>([]);
+  /** Titre de la carte selon le motif : « Compteur épuisé ! » pour un décompte à 0, « Objectif
+   * atteint ! » pour un objectif, « Objet obtenu ! » pour un ramassage. */
+  protected readonly titleKey = computed(() => {
+    switch (this.reason()) {
+      case 'countdown':
+        return 'tracker.countdownAlertTitle';
+      case 'goal':
+        return 'tracker.goalAlertTitle';
+      default:
+        return 'profile.lootAlertTitle';
+    }
+  });
 
   private hideTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -71,7 +83,7 @@ export class LootAlertComponent {
     id: number | null,
     quantity: number,
     kind: 'item' | 'enemy',
-    reason: 'loot' | 'countdown',
+    reason: LootAlertReason,
   ): void {
     this.itemName.set(name);
     this.itemId.set(id);
@@ -80,7 +92,9 @@ export class LootAlertComponent {
     this.reason.set(reason);
     this.confetti.set(this.buildConfetti());
     this.visible.set(true);
-    if (reason === 'countdown') this.alertSound.playCountdown();
+    // Décompte à 0 et objectif atteint partagent le même son : les deux disent « le suivi est
+    // arrivé au bout », seul le titre de la carte les distingue (voir template).
+    if (reason === 'countdown' || reason === 'goal') this.alertSound.playCountdown();
     else this.alertSound.playLoot();
     if (this.hideTimer !== null) clearTimeout(this.hideTimer);
     this.hideTimer = null;

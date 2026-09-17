@@ -1,5 +1,6 @@
 import { computed, signal } from '@angular/core';
 import {
+  hasWatchlistTarget,
   StatsStoreService,
   WatchlistCounterMode,
   WatchlistEntry,
@@ -47,10 +48,10 @@ export class WatchlistTileController {
   ) {
     this.addMode.set(this.stats.defaultAddMode());
   }
-  /** Cible du décompte choisie au moment de la création (mode 'down' uniquement, voir
-   * `app-input-number` dans tracker/tracker-strip) — un KPI décompte n'a plus AUCUN moyen de
-   * changer sa cible une fois créé (voir setWatchlistCountdownTarget) : elle doit donc être fixée
-   * ICI, avant l'ajout, au même titre que le mode. Réinitialisée avec `addMode` (voir
+  /** Cible choisie au moment de la création (modes 'down' et 'goal', voir `app-input-number`
+   * dans tracker/tracker-strip) — un KPI à cible n'a plus AUCUN moyen de changer sa cible une
+   * fois créé (voir setWatchlistCountdownTarget) : elle doit donc être fixée ICI, avant l'ajout,
+   * au même titre que le mode. Réinitialisée avec `addMode` (voir
    * `resetAddForm`). Bornée à [1, 9999] par `app-input-number` lui-même (min/max) — pas de clamp
    * ici, seul `add()` re-sécurise la valeur réellement utilisée. */
   readonly addTarget = signal<number>(1);
@@ -144,20 +145,27 @@ export class WatchlistTileController {
     this.stats.resetWatchedCount(entry.name, entry.catalogId);
   }
 
-  /** Édition directe de la valeur ACTUELLE du décompte (mode 'down') — la cible, elle, ne se
+  /** Vrai pour une entrée à cible (décompte ou objectif) : c'est elle qui affiche la fraction
+   * « courant/cible », le pourcentage et le champ éditable — voir les deux templates. */
+  hasTarget(entry: WatchlistEntry): boolean {
+    return hasWatchlistTarget(entry.mode);
+  }
+
+  /** Édition directe de la valeur ACTUELLE d'un décompte ou d'un objectif — la cible, elle, ne se
    * modifie plus après la création (voir addTarget/add()). Bornage [0, countdownTarget] délégué à
    * `app-input-number` (min/max) plutôt que recalculé ici. */
   setCurrentCount(entry: WatchlistEntry, value: number): void {
     this.stats.setWatchlistCurrentCount(entry.name, value, entry.catalogId);
   }
 
-  /** Pourcentage d'avancement d'un décompte : part de 0% (cible tout juste choisie) à 100% (0
-   * restant). Toujours 0 pour une cible nulle (entrée pas encore configurée) — évite une division
-   * par zéro plutôt qu'un NaN affiché. */
+  /** Pourcentage d'avancement d'un suivi à cible : part de 0% (cible tout juste choisie) à 100%
+   * (0 restant en décompte, cible atteinte en objectif — les deux modes lisent le compteur dans un
+   * sens opposé, le pourcentage, lui, dit la même chose). Toujours 0 pour une cible nulle (entrée
+   * pas encore configurée) — évite une division par zéro plutôt qu'un NaN affiché. */
   countdownPercent(entry: WatchlistEntry): number {
-    return entry.countdownTarget > 0
-      ? Math.round(((entry.countdownTarget - entry.count) / entry.countdownTarget) * 100)
-      : 0;
+    if (entry.countdownTarget <= 0) return 0;
+    const done = entry.mode === 'goal' ? entry.count : entry.countdownTarget - entry.count;
+    return Math.round((done / entry.countdownTarget) * 100);
   }
 
   /** Vrai quand le badge compact (`.kpi-count-badge`/`.kpi-card-count-badge`) affiche au moins 6
@@ -169,10 +177,9 @@ export class WatchlistTileController {
    * delà du seuil (voir `.is-long`). */
   isLongCount(entry: WatchlistEntry, count: number = 6): boolean {
     const digitCount = (n: number) => Math.abs(Math.trunc(n)).toString().length;
-    const total =
-      entry.mode === 'down'
-        ? digitCount(entry.count) + digitCount(entry.countdownTarget) + 1
-        : digitCount(entry.count);
+    const total = hasWatchlistTarget(entry.mode)
+      ? digitCount(entry.count) + digitCount(entry.countdownTarget) + 1
+      : digitCount(entry.count);
     return total >= count;
   }
 
@@ -192,15 +199,16 @@ export class WatchlistTileController {
     this.addTarget.set(this.addTarget() + value * symbole);
   }
 
-  /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte, la cible) choisis
-   * dans le formulaire d'ajout — logique partagée entre la bande desktop et la grille mobile.
-   * Cible bornée à 1 minimum ici (jamais pendant la saisie, voir addTarget) : un décompte à cible
-   * 0 afficherait un pourcentage toujours à 0 (countdownPercent) sans jamais pouvoir avancer. */
+  /** Crée le KPI choisi dans l'autocomplétion, avec le mode (et en décompte/objectif, la cible)
+   * choisis dans le formulaire d'ajout — logique partagée entre la bande desktop et la grille
+   * mobile. Cible bornée à 1 minimum ici (jamais pendant la saisie, voir addTarget) : une cible 0
+   * afficherait un pourcentage toujours à 0 (countdownPercent) sans jamais pouvoir avancer. */
   add(result: WakfuSearchResult): void {
     if (result.kind === 'enemy') this.stats.addWatchedEnemy(result.name, result.id);
     else this.stats.addWatchedItem(result.name, result.id);
-    if (this.addMode() === 'down') {
-      this.stats.setWatchlistMode(result.name, 'down', result.id);
+    const mode = this.addMode();
+    if (hasWatchlistTarget(mode)) {
+      this.stats.setWatchlistMode(result.name, mode, result.id);
       const target = Math.floor(this.addTarget());
       this.stats.setWatchlistCountdownTarget(
         result.name,
