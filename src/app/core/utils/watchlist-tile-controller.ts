@@ -10,6 +10,7 @@ import { ConfirmDeleteService } from '../services/confirm-delete.service';
 import { CatalogService } from '../api/catalog.service';
 import { getWakfuItemRarity } from '../data/wakfu-item-rarity.data';
 import { WakfuSearchResult } from '../services/wakfu-search.service';
+import { AppIconName } from '../../shared/icon/icon.component';
 
 /** Identifie une entrée de watchlist de façon unique, y compris quand deux entrées partagent le
  * même nom (catalogue avec homonymes, ex. les deux "Larme d'Ogrest") — utilisé pour tout ce qui
@@ -188,8 +189,17 @@ export class WatchlistTileController {
    * la tuile n'est pas ouverte (plus de barre de progression, jugée trop lourde pour 58px). */
   countdownProgressTooltip(entry: WatchlistEntry): string {
     return this.i18n.t('tracker.countdownProgressTooltip', {
+      mode: this.i18n.t(entry.mode === 'goal' ? 'tracker.goalMode' : 'tracker.countDownMode'),
       percent: this.countdownPercent(entry),
     });
+  }
+
+  /** Icône du mode d'un suivi à cible — la même que dans le switch d'ajout (cible pour le
+   * décompte, drapeau pour l'objectif), reprise dans le badge replié et devant le pourcentage :
+   * « 2/5 » se lit « il en reste 2 » ou « j'en ai 2 », l'icône tranche sans survol. Non colorée
+   * (décision du 2026-09-17) : la forme suffit, la palette du badge ne change pas. */
+  modeIcon(entry: WatchlistEntry): AppIconName {
+    return entry.mode === 'goal' ? 'goal-flag' : 'target';
   }
 
   /** Sélectionne une quantité toute faite (voir `targetPresets`) — remplace intégralement la

@@ -248,6 +248,15 @@ app-input-number.tracker-target-input {
   font-size: 0.72rem;
   font-style: italic;
 }
+/* Icône du mode devant le pourcentage — même rôle et même réglage que dans la bande desktop
+   (voir `modeIcon` et `.kpi-count-badge.is-fraction` de `tracker-strip.component.css`) : non
+   colorée, dans le gris du pourcentage, espacée par le conteneur puisque l'hôte d'`app-icon` est
+   `display: contents`. */
+.kpi-card-pct {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
 
 .kpi-card-value-row {
   display: flex;

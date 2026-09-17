@@ -676,6 +676,20 @@ app-input-number.kpi-countdown-current-input {
   color: var(--text-muted);
   font-size: 10px;
 }
+/* Icône du mode (cible = décompte, drapeau = objectif, voir `modeIcon`) devant la fraction du
+   badge replié et devant le pourcentage de la tuile dépliée : la même fraction se lit dans les
+   deux sens, l'icône tranche sans survol. Dans la couleur du texte qu'elle précède, jamais une
+   couleur propre au mode (décision du 2026-09-17). L'espacement se règle sur le CONTENEUR
+   (`inline-flex` + `gap`), pas sur `app-icon` : son hôte est `display: contents`, une marge posée
+   dessus n'a aucun effet, et le `<svg>` interne est hors de portée de ce fichier (voir
+   `IconComponent`). `align-items: baseline` garde le nombre et la cible « /5 » (10px) alignés
+   comme en flux de texte, et pose l'icône sur la même ligne de base. */
+.kpi-count-badge.is-fraction,
+.kpi.expanded .kpi-pct {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
+}
 /* Au-delà de 6 chiffres affichés (voir `isLongCount`), le décalage `right:-7px` fait déborder le
    badge bien au-delà de la tuile 58px — trop large pour rester lisible (le texte le plus à gauche,
    ex. la valeur actuelle d'un "3800/10800", sort du cadre visible). Retiré au-delà du seuil : le

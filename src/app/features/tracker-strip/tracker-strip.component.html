@@ -222,7 +222,14 @@
             <span class="kpi-target-static" [appTooltip]="'tracker.countdownTargetLocked' | t">{{
               entry.countdownTarget
             }}</span>
-            <span class="kpi-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+            <span class="kpi-pct"
+              ><app-icon
+                class="kpi-mode-icon"
+                [name]="watchlist.modeIcon(entry)"
+                [size]="11"
+                [strokeWidth]="2.4"
+              />{{ watchlist.countdownPercent(entry) }}%</span
+            >
           </span>
         } @else {
           <span class="kpi-count-inline">{{ entry.count | localeNumber }}</span>
@@ -241,7 +248,12 @@
           [class.is-long]="watchlist.isLongCount(entry)"
         >
           @if (watchlist.hasTarget(entry)) {
-            {{ entry.count
+            <app-icon
+              class="kpi-mode-icon"
+              [name]="watchlist.modeIcon(entry)"
+              [size]="9"
+              [strokeWidth]="2.4"
+            />{{ entry.count
             }}<span class="kpi-count-badge-target">/{{ entry.countdownTarget }}</span>
           } @else {
             {{ entry.count | localeNumber }}
