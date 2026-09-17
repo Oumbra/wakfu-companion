@@ -199,7 +199,14 @@
                   {{ watchlist.displayName(entry) }}
                 </span>
                 @if (watchlist.hasTarget(entry)) {
-                  <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+                  <span class="kpi-card-pct"
+                    ><app-icon
+                      class="kpi-mode-icon"
+                      [name]="watchlist.modeIcon(entry)"
+                      [size]="11"
+                      [strokeWidth]="2.4"
+                    />{{ watchlist.countdownPercent(entry) }}%</span
+                  >
                 }
               </div>
 
