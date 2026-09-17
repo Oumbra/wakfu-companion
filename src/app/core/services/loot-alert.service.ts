@@ -1,5 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 
+export type LootAlertReason = 'loot' | 'countdown' | 'goal';
+
 export interface LootAlertEvent {
   name: string;
   quantity: number;
@@ -7,16 +9,17 @@ export interface LootAlertEvent {
    * WatchlistKind (StatsStoreService), réutilisé tel quel pour l'alerte de décompte. */
   kind: 'item' | 'enemy';
   /** 'loot' (défaut) : ramassage d'un objet suivi (son activé, voir ProfileService). 'countdown' :
-   * un compteur de suivi (objet ou monstre) vient d'atteindre 0 — voir StatsStoreService.incrementWatched. */
-  reason: 'loot' | 'countdown';
+   * un compteur de suivi (objet ou monstre) vient d'atteindre 0. 'goal' : un compteur de suivi en
+   * mode objectif vient d'atteindre sa cible — voir StatsStoreService.incrementWatched. */
+  reason: LootAlertReason;
   /** Id Ankama de l'objet/monstre, quand connu (voir WatchlistEntry.catalogId/SoundItemEntry.catalogId)
    * — résolution non ambiguë de l'icône affichée en cas d'homonymes. `null` si jamais capturé. */
   id: number | null;
 }
 
 /**
- * Relaie un évènement d'alerte (ramassage d'objet suivi avec son activé, ou
- * compteur de suivi tombé à zéro) depuis StatsStoreService vers
+ * Relaie un évènement d'alerte (ramassage d'objet suivi avec son activé,
+ * compteur de suivi tombé à zéro ou objectif atteint) depuis StatsStoreService vers
  * LootAlertComponent (affichage toast + confettis + son), sans coupler les
  * deux — un nouvel objet literal à chaque trigger() garantit que le signal
  * notifie même deux déclenchements successifs du même nom.
@@ -28,7 +31,7 @@ export class LootAlertService {
   trigger(
     name: string,
     quantity: number,
-    options?: { kind?: 'item' | 'enemy'; reason?: 'loot' | 'countdown'; id?: number | null },
+    options?: { kind?: 'item' | 'enemy'; reason?: LootAlertReason; id?: number | null },
   ): void {
     this.current.set({
       name,

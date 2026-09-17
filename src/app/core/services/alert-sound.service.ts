@@ -36,7 +36,7 @@ export class AlertSoundService {
     this.play(CHAT_FILTER_ALERT_SOUND_DATA_URI);
   }
 
-  /** Un compteur de suivi en mode décompte vient d'atteindre 0. */
+  /** Un compteur de suivi est arrivé au bout : décompte à 0, ou objectif atteint (même son). */
   playCountdown(): void {
     this.play(COUNTDOWN_ALERT_SOUND_DATA_URI);
   }

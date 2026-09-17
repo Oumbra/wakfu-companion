@@ -38,8 +38,8 @@
   align-items: center;
   gap: 8px;
 }
-/* Rangée dédiée à la cible du décompte (visible uniquement quand le mode 'down' est sélectionné,
-   voir template) : un panneau mobile peut être aussi étroit qu'un téléphone en portrait, les puces
+/* Rangée dédiée à la cible du décompte/objectif (visible uniquement quand un mode à cible est
+   sélectionné, voir template) : un panneau mobile peut être aussi étroit qu'un téléphone en portrait, les puces
    de quantités (`.kpi-target-presets`) + le stepper n'ont pas la place de tenir sur la même ligne
    que la recherche sans écraser cette dernière — une 2e rangée pleine largeur reste lisible quelle
    que soit la largeur de l'écran, contrairement à la bande desktop (une seule ligne possible, voir
@@ -51,11 +51,14 @@
   flex-wrap: wrap;
 }
 
-/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait,
-   le mode étant figé une fois le KPI créé (contrairement à la bande desktop, la carte mobile n'a
-   plus de badge de repère : la présence de `.kpi-card-pct`/`.kpi-card-target-row` suffit à
-   signaler un décompte, voir maquette fournie par l'utilisateur). Largeur `auto` (contenu = icône +
-   libellé en toutes lettres) : le mode se lit désormais sans survol, voir CLAUDE.md.  */
+/* Switch incrémental/décompte/objectif déterminant le mode du KPI créé — seul endroit où ce choix
+   se fait, le mode étant figé une fois le KPI créé (contrairement à la bande desktop, la carte
+   mobile n'a plus de badge de repère : la présence de `.kpi-card-pct`/`.kpi-card-target-row`
+   suffit à signaler un suivi à cible, voir maquette fournie par l'utilisateur). Largeur `auto`
+   (contenu = icône + libellé en toutes lettres) : le mode se lit désormais sans survol, voir
+   CLAUDE.md. Options rétrécies de 85 à 76px avec la 3ᵉ option (2026-09-17) : un téléphone en
+   portrait doit encore laisser un champ de recherche tapable avant le focus (qui compacte les
+   options en icône seule) — le libellé se tronque avec tooltip, comme avant. */
 .tracker-add-mode-switch {
   width: auto;
   flex-shrink: 0;
@@ -69,7 +72,7 @@
   font-size: 0.66rem;
   font-weight: 700;
   white-space: nowrap;
-  width: 85px;
+  width: 76px;
   transition: width 0.2s ease;
 }
 .icon-switch-option.compact {

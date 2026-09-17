@@ -59,6 +59,10 @@
     <circle cx="12" cy="12" r="8" />
     <circle cx="12" cy="12" r="4" />
   </symbol>
+  <symbol id="goal-flag" viewBox="0 0 24 24">
+    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+    <path d="M4 22v-7" />
+  </symbol>
   <!-- Section Chat repliée dans le menu latéral (voir DashboardRailComponent) : deux bulles de
        dialogue superposées (rectangles arrondis décalés en diagonale + une pointe sur celle du
        premier plan), pour se distinguer de l'icône Combat (symbole `crossed-swords` ci-dessous)
