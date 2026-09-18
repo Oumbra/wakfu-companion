@@ -112,11 +112,17 @@ jobs:
       # du 2026-08-06). La prod (master) reste sur GitHub Pages pendant la
       # migration (voir docs/plan-migration-serveur.md) — seule la preview
       # est avancée sur la cible finale, functions/api/ compris.
+      # cloudflare/pages-action@v1 (déprécié depuis 2024) a disparu de GitHub
+      # le 2026-09-18 (« Unable to resolve action `cloudflare/pages-action`,
+      # not found » dès l'étape « Set up job ») : remplacé par
+      # cloudflare/wrangler-action, qui réutilise le wrangler du package.json.
+      # --branch explicite : main = branche de production du projet Pages,
+      # toute autre = déploiement preview. gitHubToken conserve la création
+      # des GitHub Deployments (permission deployments: write ci-dessus).
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: wakfu-companion
-          directory: dist/wakfu-companion/browser
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist/wakfu-companion/browser --project-name=wakfu-companion --branch=${{ github.ref_name }} --commit-dirty=true
