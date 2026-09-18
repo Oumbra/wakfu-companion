@@ -157,6 +157,10 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       return true;
     },
 
+    async deleteSession(idHash) {
+      return sessions.delete(idHash);
+    },
+
     async revokeAllSessions(userId, now, exceptIdHash) {
       let revoked = 0;
       for (const session of sessions.values()) {
