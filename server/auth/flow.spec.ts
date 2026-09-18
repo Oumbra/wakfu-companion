@@ -225,6 +225,30 @@ describe('resolveSession', () => {
     expect(await resolveSession(store, session.token, NOW)).toBeNull();
   });
 
+  /**
+   * Effacement demandé par un client natif — `DELETE /api/v1/auth/native/session`, constat C5 de
+   * l'analyse RGPD de l'overlay. La ligne disparaît (contrairement à la révocation, qui la garde
+   * avec son `revoked_at`), et le jeton est aussi inutilisable qu'un jeton inconnu.
+   */
+  it('refuse une session effacée, et l’effacement ne laisse pas de ligne', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const session = await openSession(store, user.id, { now: NOW, userAgent: 'overlay' });
+
+    expect(await resolveSession(store, session.token, NOW)).not.toBeNull();
+
+    expect(await store.deleteSession(session.idHash)).toBe(true);
+
+    expect(await resolveSession(store, session.token, NOW)).toBeNull();
+    expect(await store.findSession(session.idHash)).toBeNull();
+    // Rejouer l'appel ne fabrique pas d'erreur : la route rend `deleted: false`.
+    expect(await store.deleteSession(session.idHash)).toBe(false);
+    // Les autres sessions du compte ne sont pas touchées.
+    const autre = await openSession(store, user.id, { now: NOW, userAgent: null });
+    expect(await store.deleteSession(session.idHash)).toBe(false);
+    expect(await resolveSession(store, autre.token, NOW)).not.toBeNull();
+  });
+
   it('refuse une session expirée et un jeton inconnu', async () => {
     const store = createMemoryAuthStore();
     const user = await store.createUser({ email: null, displayName: null });

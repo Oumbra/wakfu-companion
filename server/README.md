@@ -111,6 +111,14 @@ DATABASE_URL=... npm run db:migrate
   `DELETE /api/v1/auth/sessions[?id=…]` — révoque une session précise, ou
   toutes.
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
+- `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
+  session** : porteur `Authorization: Bearer` obligatoire (jamais un cookie —
+  un navigateur l'enverrait tout seul), la ligne de `sessions` est SUPPRIMÉE
+  et non pas seulement marquée révoquée, et les appairages natifs périmés
+  sont purgés au passage. Appelée par l'overlay à chaque déconnexion et par
+  son bouton « Supprimer les données locales » (RGPD art. 17, constat C5 de
+  `docs/analyse-rgpd.md` du dépôt `wakfu-companion-overlay`) : sans elle, un
+  jeton effacé de la machine restait valide en base.
 
 Les endpoints `/api/v1/prices/*` (lot 4) ont été déplacés le 2026-08-18 vers
 le projet **wakfu-companion-price** (dépôt séparé, même base Neon — voir son

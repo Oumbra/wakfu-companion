@@ -167,6 +167,14 @@ export function createDbAuthStore(db: Db): AuthStore {
       return rows.length > 0;
     },
 
+    async deleteSession(idHash) {
+      const rows = await db
+        .delete(sessions)
+        .where(eq(sessions.id, idHash))
+        .returning({ id: sessions.id });
+      return rows.length > 0;
+    },
+
     async revokeAllSessions(userId, now, exceptIdHash) {
       const conditions = [eq(sessions.userId, userId), isNull(sessions.revokedAt)];
       if (exceptIdHash) conditions.push(sql`${sessions.id} <> ${exceptIdHash}`);

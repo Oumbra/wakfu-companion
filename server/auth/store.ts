@@ -96,6 +96,20 @@ export interface AuthStore {
   findSession(idHash: string): Promise<SessionRecord | null>;
   touchSession(idHash: string, patch: { lastUsedAt: Date; expiresAt: Date }): Promise<void>;
   revokeSession(idHash: string, now: Date): Promise<boolean>;
+  /**
+   * **Efface** la ligne de session, au lieu de la marquer révoquée — droit à l'effacement
+   * (RGPD art. 17) exercé depuis un client natif, voir
+   * `functions/api/v1/auth/native/session.ts`.
+   *
+   * Une session révoquée reste en base (`revoked_at`), ce qui est le bon défaut : elle documente
+   * qu'un appareil a été déconnecté, et `resolveSession` la refuse de toute façon. Mais quand
+   * l'utilisateur demande l'effacement de ce que l'overlay a laissé, cette trace-là — son
+   * `user_id`, ses horodatages, son `user_agent` — fait partie de ce qui doit partir. Le jeton
+   * devient inutilisable dans les deux cas : inconnu et révoqué donnent le même 401.
+   *
+   * `false` si la ligne n'existait pas (jeton déjà effacé, appel rejoué).
+   */
+  deleteSession(idHash: string): Promise<boolean>;
   /** Révoque toutes les sessions actives d'un compte, sauf éventuellement une. */
   revokeAllSessions(userId: string, now: Date, exceptIdHash?: string): Promise<number>;
   listSessions(userId: string, now: Date): Promise<SessionRecord[]>;
