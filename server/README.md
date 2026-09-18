@@ -99,6 +99,15 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
   compact — volume négligeable), pour `findWakfuDungeonByBossMonsterId`
   côté client (lot 3.1).
+- `GET /api/v1/icons/{folder}/{gfxId}.png` — **relais d'icônes `wakassets`
+  pour l'overlay de bureau** (2026-09-19, constat C10 de `docs/analyse-rgpd.md`
+  du dépôt `wakfu-companion-overlay`) : `folder` parmi `items`, `monsters`,
+  `monsterIllustrations`, `rarities`, `itemTypes`, `spells`, fichier
+  `<nombre>.png` — tout le reste est un 400. Public, sans authentification.
+  Réponse mise en cache à la périphérie (`caches.default`, une semaine pour
+  une icône, une heure pour un 404 amont), aucun en-tête amont recopié. Le
+  site, lui, charge toujours ses images directement dans le navigateur.
+  Logique pure dans `server/icons/proxy.ts` (testée).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
 - `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
