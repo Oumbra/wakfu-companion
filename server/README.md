@@ -161,23 +161,19 @@ README.md) ; ne plus les chercher ici, ni dans `functions/api/v1/`.
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
+### Le référentiel est un fichier local, pas un fetch
 
-Contrairement à ce que le prompt 2.2 envisageait initialement, le script
-d'import (`server/import/import-catalog.ts`) **ne lit pas**
-disponibilité d'image sur les CDN tiers, identification de la rareté "old")
-ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
-dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
-exécutés **manuellement** par le mainteneur (le référentiel Ankama change
-très rarement). Réimplémenter cette transformation ici aurait dupliqué une
-logique en partie manuelle (voir le commentaire de `normalizeRarity` dans
-`server/import/import-catalog.ts` sur l'identification des objets "old",
-seule implémentation restante depuis la suppression des tables embarquées
-côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
+Le script d'import (`server/import/import-catalog.ts`) lit un référentiel
+JSON local, hors dépôt (dossier ignoré par git), que le mainteneur met à
+jour lui-même, très rarement. Le script ne contient aucune logique de
+constitution de ce référentiel — seulement sa transformation vers les
+tables (voir le commentaire de `normalizeRarity` sur l'identification des
+objets "old", seule implémentation restante depuis la suppression des tables
+embarquées côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
 
-Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
-`.github/workflows/import-catalog.yml` se déclenche sur tout push modifiant
-suit donc directement les mises à jour du référentiel committé, sans
-polling.
+Conséquence sur le déclenchement : **pas de cron, pas de workflow** — l'import
+se lance à la main (`npm run main:catalog:import` / `dev:catalog:import`)
+quand le référentiel a changé.
 
 ### Script d'import
 
@@ -187,6 +183,7 @@ remplacement complet des tables `items`/`monsters`/`dungeons`/`item_recipes`
 diff incrémental. Réutilise scrupuleusement les règles déjà établies côté
 client (exclusion des objets de rareté "old"), et dédoublonne les objets par
 `(fr, rareté, gfxId)` avant insertion (`dedupeItemRows`, cas apparu en volume
+le 2026-08-13 après un élargissement des sources du référentiel :
 283 groupes de vrais doublons, même objet mais ankamaId différent) — pas de
 déduplication par ankamaId seul, qui reste non fiable comme clé (voir le
 commentaire de `server/db/schema.ts` sur la clé primaire synthétique
