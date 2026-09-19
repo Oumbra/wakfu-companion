@@ -94,7 +94,9 @@ jobs:
           push_secret GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
           push_secret GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
           push_secret PUBLIC_BASE_URL "$PUBLIC_BASE_URL_PREVIEW"
+          push_secret RATE_LIMIT_SALT "$RATE_LIMIT_SALT"
         env:
+          RATE_LIMIT_SALT: ${{ secrets.RATE_LIMIT_SALT_PREVIEW }}
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID_PREVIEW }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET_PREVIEW }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID_PREVIEW }}

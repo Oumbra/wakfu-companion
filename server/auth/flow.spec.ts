@@ -24,7 +24,7 @@ import {
 } from './flow';
 import { createMemoryAuthStore } from './memory-store';
 import type { OAuthProfile } from './providers';
-import { CALLBACK_RULE, checkRateLimit } from './rate-limit';
+import { CALLBACK_RULE, checkRateLimit, clientIpKey } from './rate-limit';
 import type { AuthStore, ProviderId } from './store';
 
 const NOW = new Date('2026-08-10T12:00:00Z');
@@ -512,5 +512,43 @@ describe('limitation de débit', () => {
 
     const nextWindow = new Date(NOW.getTime() + CALLBACK_RULE.windowMs);
     expect((await checkRateLimit(store, bucket, CALLBACK_RULE, nextWindow)).allowed).toBe(true);
+  });
+});
+
+/**
+ * Minimisation (RGPD art. 5.1.c, écart 4.4 de docs/analyse-rgpd.md) : la clé de
+ * comptage dérivée de l'adresse IP ne doit jamais la laisser lire ni retrouver
+ * sans le secret serveur.
+ */
+describe('clientIpKey', () => {
+  function requestFrom(ip: string): Request {
+    return new Request('https://example.test/api/v1/auth/discord/start', {
+      headers: { 'cf-connecting-ip': ip },
+    });
+  }
+
+  it("ne contient jamais l'adresse en clair et reste stable pour une même adresse", async () => {
+    const env = { RATE_LIMIT_SALT: 'sel-de-test' };
+    const key = await clientIpKey(requestFrom('203.0.113.7'), env);
+    expect(key).toMatch(/^[0-9a-f]{16}$/);
+    expect(key).not.toContain('203.0.113.7');
+    expect(await clientIpKey(requestFrom('203.0.113.7'), env)).toBe(key);
+    expect(await clientIpKey(requestFrom('203.0.113.8'), env)).not.toBe(key);
+  });
+
+  it('dépend du secret : sans lui, la table ne permet pas de retrouver une adresse', async () => {
+    const request = requestFrom('203.0.113.7');
+    const salted = await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-A' });
+    expect(await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-B' })).not.toBe(salted);
+    // Repli sur DATABASE_URL quand aucun sel dédié n'est posé : jamais un hachage non salé.
+    expect(await clientIpKey(request, { DATABASE_URL: 'postgres://x' })).not.toBe(
+      await clientIpKey(request, { DATABASE_URL: 'postgres://y' }),
+    );
+  });
+
+  it("vaut 'unknown' haché quand Cloudflare ne transmet pas l'adresse", async () => {
+    const env = { RATE_LIMIT_SALT: 'sel' };
+    const key = await clientIpKey(new Request('https://example.test/'), env);
+    expect(key).toMatch(/^[0-9a-f]{16}$/);
   });
 });

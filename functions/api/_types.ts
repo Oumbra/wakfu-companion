@@ -15,4 +15,8 @@ export interface Env {
    * l'URL de redirection OAuth — qui doit être déclarée à l'identique chez Discord/Google, donc
    * jamais déduite de l'URL de déploiement (variable par preview). Repli : origine de la requête. */
   PUBLIC_BASE_URL?: string;
+  /** Secret de pseudonymisation des adresses IP dans `auth_rate_limits` (voir
+   * `server/auth/rate-limit.ts::clientIpKey`). Optionnel : à défaut, `DATABASE_URL` sert de
+   * matière à clé — poser un secret dédié reste préférable (rotation indépendante). */
+  RATE_LIMIT_SALT?: string;
 }

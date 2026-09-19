@@ -509,7 +509,8 @@ export const nativePairings = pgTable(
  * Postgres y est négligeable, et ça évite d'ajouter un binding Cloudflare
  * supplémentaire au projet Pages.
  *
- * `bucket` = `"{portée}:{clé}"` (ex. `start:ip:1.2.3.4`, `callback:user:<uuid>`),
+ * `bucket` = `"{portée}:{clé}"` (ex. `auth:start:ip:<hmac tronqué>`, `auth:callback:user:<uuid>`
+ * — jamais l'adresse IP en clair, voir `clientIpKey` dans server/auth/rate-limit.ts),
  * `windowStart` = début de la fenêtre glissante arrondie. Une ligne par
  * fenêtre : les anciennes sont purgées opportunistement (voir
  * server/auth/rate-limit.ts).

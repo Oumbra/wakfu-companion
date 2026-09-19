@@ -1,7 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
 import { purgeDeadSessions } from '../../../../server/auth/flow';
-import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../server/auth/rate-limit';
+import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -55,7 +55,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const now = new Date();
   const limit = await checkRateLimit(
     auth.store,
-    `auth:session:ip:${clientIp(context.request)}`,
+    `auth:session:ip:${await clientIpKey(context.request, context.env)}`,
     SESSION_RULE,
     now,
   );
