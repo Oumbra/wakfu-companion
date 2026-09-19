@@ -2,10 +2,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService, AuthSessionInfo } from '../../../core/auth/auth.service';
 import { AppDataExportService } from '../../../core/services/app-data-export.service';
 import { ConfirmDeleteService } from '../../../core/services/confirm-delete.service';
+import { PersistenceService } from '../../../core/services/persistence.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { NavigationService } from '../../../core/services/navigation.service';
 import { AppPageComponent } from '../../../shared/app-page/app-page.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
+import { SwitchComponent } from '../../../shared/switch/switch.component';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
@@ -23,7 +25,7 @@ import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [AppPageComponent, TranslatePipe, TooltipDirective],
+  imports: [AppPageComponent, TranslatePipe, TooltipDirective, SwitchComponent],
   templateUrl: './account-page.component.html',
   styleUrl: './account-page.component.css',
 })
@@ -32,6 +34,7 @@ export class AccountPageComponent implements OnInit {
   private readonly nav = inject(NavigationService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
+  private readonly persistence = inject(PersistenceService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly sessions = signal<readonly AuthSessionInfo[]>([]);
@@ -79,12 +82,45 @@ export class AccountPageComponent implements OnInit {
     this.sessions.set([]);
   }
 
+  /**
+   * « Effacer aussi les données de cet appareil » à la suppression du compte (RGPD art. 17,
+   * écart 4.9 de `docs/analyse-rgpd.md`) — décoché par défaut : le mode invité reste pleinement
+   * utilisable après la suppression, et effacer d'office les données locales de quelqu'un qui n'a
+   * demandé que la suppression de son compte serait une destruction surprise. Coché, c'est le
+   * pendant du bouton « Supprimer les données locales » de l'overlay.
+   */
+  protected readonly wipeLocalOnDelete = signal(false);
+
   /** Suppression irréversible : confirmée par la même popover que les autres actions destructives. */
   protected confirmDeleteAccount(event: Event): void {
     const button = event.currentTarget as HTMLElement;
     this.confirmDelete.open(button, this.i18n.t('auth.account.deleteConfirm'), () => {
-      void this.auth.deleteAccount();
+      void this.deleteAccount();
     });
+  }
+
+  /**
+   * Mode invité : « Supprimer les données de cet appareil » — la seule façon, dans l'application,
+   * d'effacer réellement TOUT le stockage local (le « Réinitialiser » de l'en-tête ne remet à zéro
+   * que la session de statistiques : kamas, combats, compteurs — jamais le profil, le roster ni
+   * les filtres de chat). Promis par la politique de confidentialité (§5 et §6), pendant du bouton
+   * de l'overlay.
+   */
+  protected confirmWipeLocal(event: Event): void {
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('auth.account.wipeLocalConfirm'), () => {
+      void this.persistence.wipeLocalData().then(() => window.location.reload());
+    });
+  }
+
+  private async deleteAccount(): Promise<void> {
+    const deleted = await this.auth.deleteAccount();
+    if (!deleted || !this.wipeLocalOnDelete()) return;
+    // Après le retour en mode invité (`becomeGuest`, déjà fait par `deleteAccount`), plus rien ne
+    // synchronise : on peut vider le disque, puis repartir de zéro — même mécanique que l'import
+    // d'un fichier de configurations (`ProfilePageComponent.onImportFileSelected`).
+    await this.persistence.wipeLocalData();
+    window.location.reload();
   }
 
   /**
