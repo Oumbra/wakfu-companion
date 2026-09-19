@@ -48,12 +48,12 @@ devancé la documentation.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                                     |
-| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                              |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                            |
-| 🟡 Modéré                | 5      | IP en clair en base (4.4) · information au point de collecte (4.7) · en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) |
-| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                          |
+| Gravité                  | Nombre | Nature                                                                                                                                                                                    |
+| ------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                             |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                           |
+| 🟡 Modéré                | 4      | information au point de collecte (4.7) · en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) résolu |
+| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                         |
 
 Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -85,7 +85,7 @@ Conforme, et correctement décrit au point 1.1 de la politique.
 | `sessions`                                   | SHA-256 du jeton, `user_agent`, dates d'émission/usage/expiration/révocation         | Intérêt légitime (art. 6.1.f)                             | 30 j après expiration/révocation ✅ (§4.5) |
 | `oauth_authorizations`                       | `state`, `code_verifier` PKCE, `redirect_to`                                         | Contrat / sécurité                                        | Purgée à chaque callback ✅                |
 | `native_pairings`                            | `device_code`, `user_code`, jeton de session en transit                              | Contrat                                                   | Purgée à l'expiration ✅                   |
-| `auth_rate_limits`                           | **adresse IP en clair** dans `bucket`, fenêtre, compteur                             | Intérêt légitime                                          | Purge opportuniste (§4.4)                  |
+| `auth_rate_limits`                           | HMAC tronqué de l'adresse IP dans `bucket` (§4.4), fenêtre, compteur                 | Intérêt légitime                                          | Purge opportuniste (§4.4)                  |
 | `user_settings`                              | 11 clés de configuration en `jsonb`                                                  | Contrat                                                   | Vie du compte                              |
 | `fights`, `fight_participants`, `fight_loot` | combats, **noms des alliés (joueurs tiers)**, classe, dégâts, soins, sorts, butin    | Contrat (6.1.b) + intérêt légitime (6.1.f) pour les tiers | Vie du compte                              |
 | `purchases`, `trades`, `trade_items`         | achats, échanges, **nom du partenaire d'échange**                                    | Idem                                                      | Vie du compte                              |
@@ -266,7 +266,7 @@ bien déclaré dans la section « Hébergement ». Le seul flux résiduel vers G
 de mise à jour de l'overlay de bureau — exactement ce que décrit le point 4 de la politique, dont la
 formulation devient donc exacte sans retouche.
 
-### 🟡 4.4 — Adresse IP stockée en clair en base
+### ✅ 4.4 — Adresse IP stockée en clair en base — **résolu le 2026-09-19**
 
 **Articles concernés** : 5.1.c (minimisation), 13 (information), 32 (sécurité).
 
@@ -287,10 +287,17 @@ qu'au **premier** appel d'une nouvelle fenêtre. Sans trafic, les lignes subsist
 `bucket` — le comptage fonctionne à l'identique, la donnée devient pseudonymisée ; et ajouter une
 ligne au point 1.2 (finalité anti-abus, intérêt légitime, fenêtre de 10 minutes).
 
-> **État au 2026-09-19.** Volet _déclaration_ résolu par `1651a41` : le comptage par IP est décrit
-> aux points 1, 1.2 (traitement, fenêtre de 10 minutes, « jamais rattachée à votre compte »), 1.3
-> (intérêt légitime) et 5 (durée). Volet _minimisation_ (hachage) : voir la note de résolution
-> en fin de section si elle est présente, sinon toujours ouvert.
+> **Résolution.** Volet _déclaration_ par `1651a41` : le comptage par IP est décrit aux points 1,
+> 1.2 (traitement, fenêtre de 10 minutes, « jamais rattachée à votre compte »), 1.3 (intérêt
+> légitime) et 5 (durée). Volet _minimisation_ le même jour (`efc004c`) : `clientIpKey`
+> (`server/auth/rate-limit.ts`) remplace `clientIp` sur les 7 routes concernées et n'écrit dans
+> `auth_rate_limits.bucket` qu'un `HMAC-SHA256(ip, secret)` tronqué à 64 bits — jamais l'adresse.
+> Secret : `RATE_LIMIT_SALT` (nouveau secret optionnel, poussé par les deux workflows de
+> déploiement, documenté dans `server/README.md`) ; à défaut, `DATABASE_URL` sert de matière à
+> clé pour que le repli ne soit jamais un SHA-256 non salé, inversible en secondes sur l'espace
+> IPv4. Couvert par `flow.spec.ts` (`clientIpKey` : stable, sans l'IP, dépendant du secret). La
+> purge reste opportuniste (première requête d'une nouvelle fenêtre) : acceptable maintenant que
+> la ligne résiduelle ne porte plus de donnée personnelle. Constat d'origine ci-dessous.
 
 ### ✅ 4.5 — Les sessions expirées ne sont jamais supprimées — **résolu le 2026-09-19**
 
@@ -431,7 +438,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | #     | Action                                                                                                                                       | Écart | Effort |
 | ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
 | 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4 | 4.6   | Faible |
-| 6     | Hacher l'IP dans `auth_rate_limits` (~~+ déclarer le traitement anti-abus~~ — fait, `1651a41`)                                               | 4.4   | Faible |
+| ~~6~~ | ~~Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus~~ — **fait** (`1651a41` puis `efc004c`, 2026-09-19)                 | 4.4   | —      |
 | ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                             | 4.5   | —      |
 | 8     | Lien vers CGU + politique sous les boutons de connexion                                                                                      | 4.7   | Minime |
 | 9     | Ajouter `public/_headers` (CSP en report-only d'abord)                                                                                       | 4.8   | Faible |
@@ -492,7 +499,7 @@ production, une fois les points 2, 6, 8, 9 et 14 traités.
 - **Finalité** : prévenir les abus des routes d'authentification, permettre la reconnaissance et la
   révocation des appareils connectés (navigateurs et overlays appairés).
 - **Base légale** : intérêt légitime (art. 6.1.f).
-- **Catégories de données** : adresse IP (cf. 4.4), user-agent, dates de session.
+- **Catégories de données** : condensé HMAC de l'adresse IP (cf. 4.4), user-agent, dates de session.
 - **Durée** : 10 minutes pour les compteurs anti-abus ; **à borner** pour les sessions (cf. 4.5).
 
 ### Hors registre — mode invité
