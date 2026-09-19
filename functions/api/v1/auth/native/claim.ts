@@ -1,6 +1,10 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { claimPairing } from '../../../../../server/auth/pairing';
-import { PAIR_CLAIM_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
+import {
+  PAIR_CLAIM_RULE,
+  checkRateLimit,
+  clientIpKey,
+} from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../../_auth';
 import type { Env } from '../../../_types';
 
@@ -18,7 +22,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const limit = await checkRateLimit(
     auth.store,
-    `auth:native-claim:ip:${clientIp(context.request)}`,
+    `auth:native-claim:ip:${await clientIpKey(context.request, context.env)}`,
     PAIR_CLAIM_RULE,
     new Date(),
   );

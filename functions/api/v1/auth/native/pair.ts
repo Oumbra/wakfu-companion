@@ -1,6 +1,6 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { startPairing } from '../../../../../server/auth/pairing';
-import { PAIR_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
+import { PAIR_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authStore, json, jsonError, publicBaseUrl } from '../../../_auth';
 import type { Env } from '../../../_types';
 
@@ -15,7 +15,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
   const limit = await checkRateLimit(
     store,
-    `auth:native-pair:ip:${clientIp(context.request)}`,
+    `auth:native-pair:ip:${await clientIpKey(context.request, context.env)}`,
     PAIR_RULE,
     now,
   );

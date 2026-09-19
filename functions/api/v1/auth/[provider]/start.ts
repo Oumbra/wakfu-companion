@@ -2,7 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { oauthStateCookie } from '../../../../../server/auth/cookies';
 import { startAuthorization } from '../../../../../server/auth/flow';
 import { buildAuthorizeUrl, isProviderId, redirectUri } from '../../../../../server/auth/providers';
-import { START_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
+import { START_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authStore, jsonError, providerCredentials, publicBaseUrl } from '../../../_auth';
 import type { Env } from '../../../_types';
 
@@ -28,7 +28,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const limit = await checkRateLimit(
     store,
-    `auth:start:ip:${clientIp(context.request)}`,
+    `auth:start:ip:${await clientIpKey(context.request, context.env)}`,
     START_RULE,
     now,
   );

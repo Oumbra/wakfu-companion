@@ -1,7 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { purgeDeadSessions } from '../../../../../server/auth/flow';
 import { rotateNativeSession } from '../../../../../server/auth/pairing';
-import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
+import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, unauthenticated } from '../../../_auth';
 import type { AuthenticatedContext } from '../../../_auth';
 import type { Env } from '../../../_types';
@@ -86,7 +86,7 @@ async function authenticateBearer(
 
   const limit = await checkRateLimit(
     auth.store,
-    `auth:session:ip:${clientIp(context.request)}`,
+    `auth:session:ip:${await clientIpKey(context.request, context.env)}`,
     SESSION_RULE,
     now,
   );

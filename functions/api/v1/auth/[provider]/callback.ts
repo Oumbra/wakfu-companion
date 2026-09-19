@@ -10,7 +10,7 @@ import {
 import { sha256Hex } from '../../../../../server/auth/crypto';
 import { completeAuthorization } from '../../../../../server/auth/flow';
 import { fetchOAuthProfile, isProviderId, redirectUri } from '../../../../../server/auth/providers';
-import { CALLBACK_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
+import { CALLBACK_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authStore, jsonError, providerCredentials, publicBaseUrl } from '../../../_auth';
 import type { Env } from '../../../_types';
 
@@ -57,7 +57,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   const limit = await checkRateLimit(
     store,
-    `auth:callback:ip:${clientIp(context.request)}`,
+    `auth:callback:ip:${await clientIpKey(context.request, context.env)}`,
     CALLBACK_RULE,
     now,
   );
