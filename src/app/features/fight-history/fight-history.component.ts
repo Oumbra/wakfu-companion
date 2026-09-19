@@ -442,7 +442,7 @@ export class FightHistoryComponent {
       /** Donjon/brèche du groupe "dungeon" — labellisation ET illustration immédiates (voir
        * `typeGroupLabel`/`typeGroupImageUrl`), un seul donjon possible. */
       dungeon: CatalogDungeonEntry | null;
-      /** Id de famille encyclopédie (groupe "famille" avec `family` connu, voir
+      /** Id de famille de monstres (groupe "famille" avec `family` connu, voir
        * `CatalogMonsterEntry.family`) — `null` pour un repli par nom (28 monstres sans famille) OU
        * un groupe qui n'est pas de type "famille". */
       familyId: number | null;
@@ -498,7 +498,7 @@ export class FightHistoryComponent {
   /** Libellé d'un groupe "Type" : nom de donjon/brèche tel quel, sinon (groupe "famille") le VRAI
    * nom de famille localisé si `CatalogService` le connaît déjà (voir
    * `findWakfuMonsterFamilyById` — absent seulement si le cache n'a pas encore fini de charger
-   * `/monster-families`, ou pour les 28 monstres sans famille encyclopédie), sinon en dernier repli
+   * `/monster-families`, ou pour les 28 monstres sans famille de monstres), sinon en dernier repli
    * le nom de monstre "représentatif" le plus fréquent du groupe (voir `buildTypeGroups`). */
   private typeGroupLabel(bucket: {
     dungeon: CatalogDungeonEntry | null;

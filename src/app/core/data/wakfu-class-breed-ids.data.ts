@@ -4,8 +4,7 @@
  * (voir `LogParser.parseFighterJoin`) → clé de classe interne (voir
  * `class-names.data.ts`/`class-icons.data.ts`).
  *
- * Relevé sur l'encyclopédie officielle Ankama (id de classe standard,
- * indépendant de toute langue). N'est déterministe QUE pour un combattant
+ * Id de classe Ankama standard (indépendant de toute langue). N'est déterministe QUE pour un combattant
  * confirmé allié (`isControlledByAI=false`, voir `EntityClassifierService`) :
  * un monstre peut porter un breed numériquement identique à un id de classe
  * joueur (ex. "Bouftou" = breed 1, collision avec Féca) sans rapport avec sa

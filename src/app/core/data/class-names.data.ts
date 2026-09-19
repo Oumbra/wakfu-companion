@@ -5,12 +5,7 @@ import { AppLocale } from '../services/i18n.service';
  * (`class-icons.data.ts`, proche de l'anglais) par simple capitalisation : plusieurs classes ont un
  * nom radicalement différent selon la langue (ex. `zobal` = "Masqueraider" en anglais, `rogue` =
  * "Tymador" en espagnol/"Ladino" en portugais, `foggernaut` = "Steamer" en français/espagnol/
- * portugais). Relevé manuellement le 2026-08-15 sur l'encyclopédie officielle Ankama (une page par
- * langue, chemin différent selon la locale) :
- * - fr: https://www.wakfu.com/fr/mmorpg/encyclopedie/classes
- * - en: https://www.wakfu.com/en/mmorpg/encyclopedia/classes
- * - es: https://www.wakfu.com/es/mmorpg/enciclopedia/clases
- * - pt: https://www.wakfu.com/pt/mmorpg/enciclopedia/classes
+ * portugais). Noms officiels de chaque langue, relevés manuellement le 2026-08-15.
  * À réviser si Ankama renomme une classe dans une de ces langues.
  */
 export const CLASS_NAMES: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = {

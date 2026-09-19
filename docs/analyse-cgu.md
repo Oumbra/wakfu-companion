@@ -43,11 +43,11 @@ Les écarts sont ailleurs, et de trois natures :
    textes cachés utilisant les noms et marques d'Ankama sans autorisation écrite ». Le `<head>`
    de `src/index.html` contient précisément une balise `meta name="keywords"` composée de 14
    variantes de « wakfu ». C'est le seul point où le code contredit **littéralement** une clause.
-2. **Provenance des données et images** — le code décrit lui-même le référentiel de
-   monstres/familles/donjons comme venant de l'encyclopédie officielle (« familles
-   encyclopédie », « source scrapée » dans `server/db/schema.ts`) et attend des champs — tables
-   de butin par monstre, drapeaux boss/archimonstre/dominant — qu'aucun export officiel ne
-   fournit ; l'art. 13.5 couvre cette collecte par son opposition TDM (« TDM-RESERVATION: 1 »).
+2. **Provenance des données et images** — le dépôt ne documente pas l'origine du référentiel de
+   monstres/familles/donjons, mais attend des champs — tables de butin par monstre, drapeaux
+   boss/archimonstre/dominant — qu'aucun export officiel ne fournit et dont la seule source
+   publique est l'encyclopédie du site officiel ; l'art. 13.5 couvre cette collecte par son
+   opposition TDM (« TDM-RESERVATION: 1 »).
    L'outil de collecte et les fichiers produits ne sont pas dans le dépôt ; le dépôt en importe,
    stocke et sert le résultat. Par ailleurs des illustrations Ankama
    sont copiées dans `public/assets/`, et des images `static.ankama.com` sont chargées en
@@ -89,7 +89,7 @@ Le risque concret est de nature **propriété intellectuelle** (demande de retra
 | Données envoyées au serveur Wakfu Companion (compte optionnel) | `server/history/ingest.ts`, `server/db/schema.ts` | Combats (résultat, durée, donjon, participants **avec pseudos de tiers**, classe, dégâts/soins, ventilation par sort en `jsonb`, butin), achats, échanges, pactes, réglages. **Aucun message de chat** côté serveur (vérifié : aucune occurrence dans `server/history/` ni `functions/api/v1/history/`). |
 | Monétisation | tout le dépôt | **Aucune** (aucune trace de paiement, don, publicité, abonnement). CGU de l'app : « application web gratuite, développée à titre personnel et non lucratif ». |
 | Images du jeu | voir § 3.7 | CDN communautaire `vertylo.github.io/wakassets` (principal), `static.ankama.com` (recours + galeries d'avatars), planches copiées dans `public/assets/classes|avatars|ui`, relais serveur `/api/v1/icons/*` pour l'overlay. |
-| Référentiel de jeu servi par l'API | `functions/api/v1/catalog/`, `items/[id]`, `monsters/[id]`, `monster-loot`, `monster-families`, `dungeons` | Public, sans authentification, `cache-control: public`. Source : `repository/*.json` (gitignoré — non examiné), chargé en base par `server/import/import-catalog.ts`, dont les types `RawItem`/`RawMonster`/`RawDungeon`/`RawMonsterFamily`/`RawCategory`/`RawRecipe` décrivent le contenu attendu. Objets/recettes : JSON gamedata officiels fusionnés (`server/README.md`). Monstres/familles/donjons/sous-catégories : encyclopédie officielle d'après les commentaires du code (voir § 3.6). |
+| Référentiel de jeu servi par l'API | `functions/api/v1/catalog/`, `items/[id]`, `monsters/[id]`, `monster-loot`, `monster-families`, `dungeons` | Public, sans authentification, `cache-control: public`. Source : `repository/*.json` (gitignoré — non examiné), chargé en base par `server/import/import-catalog.ts`, dont les types `RawItem`/`RawMonster`/`RawDungeon`/`RawMonsterFamily`/`RawCategory`/`RawRecipe` décrivent le contenu attendu. Objets/recettes : JSON gamedata officiels fusionnés (`server/README.md`). Monstres/familles/donjons/sous-catégories : aucune source documentée dans le dépôt (voir § 3.6). |
 
 ---
 
@@ -197,12 +197,12 @@ constituent donc des actes de contrefaçon sauf obtention d'un accord spécifiqu
 
 **Ce que le dépôt permet d'établir.** Ni l'outil qui produit `repository/*.json` ni ces fichiers
 eux-mêmes ne sont dans le dépôt (`server/README.md` : transformation « réalisée hors du dépôt,
-manuellement, par le mainteneur » ; `/repository` gitignoré). La provenance se lit néanmoins dans
-le code suivi par git :
+manuellement, par le mainteneur » ; `/repository` gitignoré), et aucun commentaire n'en nomme la
+source. La provenance se déduit néanmoins du code suivi par git :
 
 | Indice | Où | Ce qu'il montre |
 | --- | --- | --- |
-| Le code nomme sa source : « Familles encyclopédie des monstres », « arbre de filtre "Types" de l'encyclopédie officielle », « ce libellé n'existant qu'en français **à la source scrapée** », « pas de famille encyclopédie (28 monstres sur 851) » | `server/db/schema.ts` l. 90, 136-142, 215 ; `core/api/catalog.service.ts` l. 48-57 ; `server/catalog/compact-index.ts` l. 82 ; `fight-image.util.ts` | Le dépôt qualifie lui-même la source des familles et des sous-catégories d'« encyclopédie » et de « scrapée ». |
+| Aucune source documentée : `server/README.md` décrit la construction des référentiels comme « réalisée hors du dépôt, manuellement », sans dire d'où viennent monstres, familles, donjons et butins ; les commentaires parlent de « famille de monstres », « référentiel curé hors de ce dépôt » | `server/README.md` l. 166-186, `server/db/schema.ts`, `server/import/import-catalog.ts` | Le dépôt ne revendique aucune source officielle pour ces données — contrairement aux objets/recettes, explicitement rattachés aux JSON gamedata. |
 | Type d'entrée `RawMonster` : `loot?: number[]` (« ids Ankama des objets droppables sur ce monstre »), `isBoss`, `isArchi`, `isDominant`, `family`, `wakfu_available`, `picture_url` | `server/import/import-catalog.ts` l. 93-112 | **Aucun gamedata public ne décrit les monstres ni leurs butins** (le fil officiel ne liste que objets, recettes, états, actions…). Tables de butin et statuts boss/archi/dominant n'existent, côté Ankama, que sur les fiches de l'encyclopédie `wakfu.com`. Un drapeau `wakfu_available` suppose d'avoir sondé le CDN Ankama pour chaque entrée. |
 | Volumes documentés dans les commentaires : 851 monstres, « ~728 monstres avec du loot connu, ~17,6 objets en moyenne (jusqu'à 99) », 10 890 objets ; image monstre « déductible du gfxId » sur `static.ankama.com/wakfu/portal/game/monster/42/` « vérifié 851/851 » | `functions/api/v1/monster-loot.ts`, `server/catalog/compact-index.ts` l. 75-91, `fight-image.util.ts` l. 22-37 | Une couverture quasi exhaustive du bestiaire, alignée sur les identifiants d'images de l'encyclopédie (`/portal/`) : un traitement de masse, pas une consultation ponctuelle. |
 | Endpoints qui redistribuent ces données | `functions/api/v1/monsters/[id].ts`, `monster-families.ts`, `monster-loot.ts`, `dungeons.ts`, `catalog/*` | Publics, sans authentification, `cache-control: public`. |
@@ -210,7 +210,7 @@ le code suivi par git :
 
 Ce dépôt est donc le **destinataire et le diffuseur** de données extraites de l'encyclopédie.
 Que la collecte ait été automatisée (ce que la couverture — 851 fiches × 4 locales, ~728 tables de
-butin — rend très probable, et que le mot « scrapée » suggère) ou manuelle ne change pas la
+butin — rend très probable) ou manuelle ne change pas la
 qualification de l'usage aval : 13.5 interdit le « moissonnage » et 13.2 la « reproduction,
 extraction, distribution » des données liées aux Jeux, quelle que soit la technique.
 

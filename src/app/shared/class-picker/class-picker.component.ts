@@ -87,7 +87,7 @@ export class ClassPickerComponent implements OnDestroy {
 
   /** 'icons' : grille compacte d'icônes carrées (comportement historique, adapté à un menu
    * contextuel rapide). 'portraits' : grille de portraits "grand format" Ankama (planche
-   * `class-portraits.data.ts`, encyclopédie officielle — bien plus détaillée que les icônes) pour
+   * `class-portraits.data.ts` — bien plus détaillée que les icônes) pour
    * un choix "posé" comme la création d'un personnage — voir `app-character-add-form`. */
   protected readonly mode = signal<ClassPickerMode>('icons');
 

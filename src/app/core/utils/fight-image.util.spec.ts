@@ -42,7 +42,7 @@ const NORMAL_B = [111, 'Ennemi Normal B', 'en', 'es', 'pt', '900111', 21, 0, 0, 
 // Même famille (20) que NORMAL_A mais nom distinct — sert à vérifier que resolveFightTypeClassification
 // regroupe bien par famille plutôt que par nom (voir describe ci-dessous).
 const NORMAL_A_VARIANT = [112, 'Ennemi Normal A Variant', 'en', 'es', 'pt', '900112', 20, 0, 0, 0];
-// Deux monstres SANS famille encyclopédie (family: null, comme 28 monstres du référentiel réel) —
+// Deux monstres SANS famille de monstres (family: null, comme 28 monstres du référentiel réel) —
 // doivent former deux groupes DISTINCTS (repli par nom, un seul membre chacun).
 const NO_FAMILY_A = [113, 'Sans Famille A', 'en', 'es', 'pt', '900113', -1, 0, 0, 0];
 const NO_FAMILY_B = [114, 'Sans Famille B', 'en', 'es', 'pt', '900114', -1, 0, 0, 0];
@@ -512,7 +512,7 @@ describe('resolveFightTypeClassification (regroupement "Type" de l’historique)
     expect(b).toMatchObject({ familyId: 20 });
   });
 
-  it('deux monstres SANS famille encyclopédie -> groupes distincts (repli par nom, un seul membre chacun), familyId null', async () => {
+  it('deux monstres SANS famille de monstres -> groupes distincts (repli par nom, un seul membre chacun), familyId null', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 

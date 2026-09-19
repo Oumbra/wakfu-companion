@@ -121,7 +121,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
 
   // Miroir de EXCLUDED_STATS_FAMILY_ID (src/app/core/services/stats-store.service.ts) — server/
   // ne dépend jamais de src/, dupliqué comme HDV_KAMAS_SALE_ITEM (voir server/history/stats-query.ts).
-  // Famille encyclopédie "Extra Incarnam" (repository/monster-families.json, id 161 — zone
+  // Famille de monstres "Extra Incarnam" (repository/monster-families.json, id 161 — zone
   // d'entraînement/tutoriel, contient "Sac à patates"/"Gros sac à patates"/etc., voir CLAUDE.md).
   // PAR FAMILLE (jointure `monsters`), PAS par nom brut du log : un filtre par nom français ne
   // matcherait jamais un client dans une autre langue (ex. "Mr. Punchy" en anglais pour le même

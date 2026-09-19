@@ -80,7 +80,7 @@ export interface CompactIndexMonsterInput {
  * monstres : nécessaires à resolveFightImageInfo (fight-image.util.ts,
  * illustration d'un combat dans l'historique) pour rester synchrone. `family`
  * encodé en `-1` quand `null` (28 monstres sur 851 — pas de famille
- * encyclopédie). Impact mesuré sur le référentiel actuel (mêmes règles
+ * connue). Impact mesuré sur le référentiel actuel (mêmes règles
  * d'extraction que server/import/import-catalog.ts, gzip niveau 9) :
  * +7 559 octets bruts / +1 301 octets gzip pour les 851 monstres — négligeable
  * par rapport au total (voir server/README.md pour la mesure v2 de référence).

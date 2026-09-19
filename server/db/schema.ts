@@ -87,7 +87,7 @@ export type WakfuDungeonType =
  *   catalogue — `{id}` est `monsters.family` (voir `monsterFamilies`) de l'ennemi "représentatif"
  *   du combat, même priorité que `resolveFightTypeClassification`/`familyPerFight` (stats.ts) :
  *   boss > archimonstre > dominant > plus gros dégât. `FAMILY_NONE` si ce représentant n'appartient
- *   à aucune famille encyclopédie (les ~28 monstres sans famille, voir CLAUDE.md). Le repli "horde
+ *   à aucune famille de monstres (les ~28 monstres sans famille, voir CLAUDE.md). Le repli "horde
  *   hétérogène" du client (`kind: 'other'`, plus de 4 familles distinctes sans brèche connue) n'a
  *   PAS d'équivalent dédié ici : comme `familyPerFight` déjà côté serveur, il retombe simplement sur
  *   la famille du participant le mieux classé — même approximation assumée, voir CLAUDE.md.
@@ -133,13 +133,13 @@ export const gameServers = pgTable('game_servers', {
 });
 
 /**
- * Sous-catégories fines d'objet (arbre de filtre "Types" de l'encyclopédie officielle — Casques,
+ * Sous-catégories fines d'objet (Casques,
  * Anneaux, Récoltes du Forestier, Costumes... voir ITEM_SUBCATEGORY_CATALOG dans
  * server/import/import-catalog.ts pour le regroupement vers la catégorie large
  * `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte répété sur
  * chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous, y compris pour
  * `en`/`es`/`pt` depuis que `repository/categories.json` fournit les 4 locales (avant : `fr`
- * seul, ce libellé n'existant qu'en français à la source scrapée). `id` vient directement de
+ * seul). `id` vient directement de
  * `repository/categories.json` (id stable côté référentiel, plus réattribué arbitrairement à
  * chaque import comme avant) : la table est entièrement remplacée à chaque exécution, mais avec
  * les mêmes id d'un import à l'autre.
@@ -212,7 +212,7 @@ export const itemRecipes = pgTable(
 );
 
 /**
- * Familles encyclopédie des monstres (`repository/monster-families.json` —
+ * Familles de monstres (`repository/monster-families.json` —
  * ~150 lignes, référentiel curé à la main comme le reste, voir
  * server/import/import-catalog.ts). Ajoutée pour donner un vrai libellé
  * localisé au regroupement "Type" de l'historique des combats (palier

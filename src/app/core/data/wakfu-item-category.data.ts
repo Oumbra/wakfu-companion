@@ -5,7 +5,7 @@
  *
  * Calculée à l'import (voir server/import/import-catalog.ts, ITEM_SUBCATEGORY_CATALOG) à partir
  * de la sous-catégorie fine de chaque objet (`category` dans repository/items.json — texte
- * français issu de l'arbre de filtre "Types" de l'encyclopédie officielle, stocké côté serveur
+ * français, stocké côté serveur
  * dans la table `item_categories`, voir server/db/schema.ts et ITEM_SUBCATEGORY_CATALOG dans
  * server/import/import-catalog.ts pour la table de référence des ~45 libellés connus, regroupée
  * depuis les captures fournies par l'utilisateur : equipement_1/2.png, ressources.png,
@@ -52,8 +52,7 @@ export const ITEM_CATEGORY_SORT_ORDER: Readonly<Record<WakfuItemCategory, number
 };
 
 /** Numéro d'icône `itemTypes` Ankama (voir wakassets/itemTypes/{n}.png, même CDN que les icônes
- * d'objets/monstres/raretés) représentant la catégorie dans l'arbre de filtre "Types" de
- * l'encyclopédie officielle. */
+ * d'objets/monstres/raretés) représentant la catégorie. */
 const ITEM_CATEGORY_ICON_NUMBER: Readonly<Record<WakfuItemCategory, number>> = {
   equipment: 109,
   resources: 226,

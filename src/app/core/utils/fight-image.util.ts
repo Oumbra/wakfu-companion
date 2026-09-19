@@ -53,7 +53,7 @@ function monsterPictureFallbacks(gfxId: string): string[] {
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, le combat est considéré comme une horde hétérogène (pas un donjon/archi/dominant précis) — voir resolveFightImageUrl. */
 const DISTINCT_FAMILY_THRESHOLD = 4;
 
-/** Regroupe les monstres sans famille encyclopédie (`family: null`) dans un même repli, plutôt que de les compter comme autant de familles distinctes qu'il y a de monstres sans famille. */
+/** Regroupe les monstres sans famille de monstres (`family: null`) dans un même repli, plutôt que de les compter comme autant de familles distinctes qu'il y a de monstres sans famille. */
 const NO_FAMILY_KEY = 'none';
 
 /** Nom localisé (4 langues, déjà présentes sur les entrées donjon/monstre) de l'entité
@@ -378,11 +378,11 @@ export type FightTypeClassification =
   | {
       kind: 'family';
       categoryRank: number;
-      /** Id de famille encyclopédie (voir `CatalogMonsterEntry.family`), ou nom de monstre normalisé
+      /** Id de famille de monstres (voir `CatalogMonsterEntry.family`), ou nom de monstre normalisé
        * en repli pour les 28 monstres sans famille (voir CLAUDE.md) — chacun forme alors sa propre
        * "famille" à un seul membre, comme avant ce correctif. */
       key: string;
-      /** Id de famille encyclopédie (`CatalogMonsterEntry.family`), `null` pour le repli par nom
+      /** Id de famille de monstres (`CatalogMonsterEntry.family`), `null` pour le repli par nom
        * (28 monstres sans famille, voir `key` ci-dessus). Permet à l'appelant de résoudre le VRAI
        * nom de famille via `CatalogService.findWakfuMonsterFamilyById` — préférable à
        * `candidateNames` ci-dessous, qui reste nécessaire en repli (id `null`, ou nom de famille pas

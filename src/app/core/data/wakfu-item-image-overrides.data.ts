@@ -4,9 +4,7 @@
  * items.json) — voir core/api/catalog.service.ts (catalogue servi par
  * l'API distante). Ce sont typiquement des objets
  * spéciaux (trophées de combat, jetons de monstre...) non exposés dans les
- * fichiers JSON publics. URLs trouvées manuellement sur l'encyclopédie
- * officielle (https://www.wakfu.com/fr/mmorpg/encyclopedie/), consultée en
- * particulier sur la fiche du monstre El Pochito.
+ * fichiers JSON publics. URLs relevées manuellement sur le CDN Ankama.
  *
  * static.ankama.com bloque ces URLs si la requête porte un en-tête Referer
  * d'un domaine tiers (protection anti-hotlink) : `<img>` doit être chargée
