@@ -31,17 +31,29 @@ La conformité n'est donc pas à construire. Ce qui reste tient en un défaut te
 cloisonnement, une fonction réglementaire incomplète, et quelques omissions ponctuelles où le code a
 devancé la documentation.
 
-> **Mise à jour du 2026-09-19** — l'écart 4.3 (hébergeur du front de production non déclaré) est
-> **résolu** : l'ancien déploiement GitHub Pages, qui ne servait plus que de portail vers la version
-> Cloudflare, a été décommissionné et le domaine canonique est passé à `https://wakfu-companion.com`.
-> Le tableau ci-dessous reflète cet état.
+> **Mises à jour du 2026-09-19** (ce document est tenu à jour au fil des correctifs ; l'état de
+> chaque écart est indiqué dans son titre) :
+>
+> - 4.3 (hébergeur du front non déclaré) **résolu** : GitHub Pages décommissionné, domaine canonique
+>   `https://wakfu-companion.com`.
+> - 4.5 (sessions jamais purgées) **résolu** par `433960a` (`purgeDeadSessions`, 30 jours après la
+>   fin de session), politique §5 à jour.
+> - 4.2 (export) : le volet **documentaire** est résolu par `168cd01` — la politique ne promet plus
+>   que ce que le bouton fait réellement, le reste est fourni sur demande écrite sous un mois
+>   (art. 12.3). L'endpoint d'export serveur reste souhaitable, plus obligatoire.
+> - 4.4 (IP en clair) : le volet **déclaration** est résolu par `1651a41` (points 1, 1.2, 1.3 et 5) ;
+>   le volet **minimisation** (hachage) restait ouvert, traité ensuite (voir 4.4).
+> - 4.6 : les extractions de pacte sont désormais citées (`1651a41`) ; les deux autres omissions
+>   restent ouvertes.
+> - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
+>   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                                 |
-| ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur                                                                                                                                |
-| 🟠 Majeur                | 1      | Export RGPD incomplet (l'hébergeur non déclaré, 4.3, est résolu depuis le 2026-09-19)                                                                                                  |
-| 🟡 Modéré                | 6      | IP en clair en base · sessions jamais purgées · information au point de collecte · en-têtes de sécurité · rémanence locale après suppression · omissions résiduelles dans la politique |
-| ⚪ Mineur / documentaire | 6      | Registre art. 30, DPA, procédure de violation, DPIA, âge, adresse de contact                                                                                                           |
+| Gravité                  | Nombre | Nature                                                                                                                                                                                     |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                              |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                            |
+| 🟡 Modéré                | 5      | IP en clair en base (4.4) · information au point de collecte (4.7) · en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) |
+| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                          |
 
 Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -66,18 +78,18 @@ Conforme, et correctement décrit au point 1.1 de la politique.
 
 ### 2.2 Mode connecté (compte optionnel, OAuth Discord/Google)
 
-| Table                                        | Données                                                                              | Base légale déclarée                                      | Durée réelle en base                 |
-| -------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------------ |
-| `users`                                      | e-mail vérifié, nom affiché, serveur de jeu par défaut, `created_at`, `last_seen_at` | Contrat (art. 6.1.b)                                      | Vie du compte                        |
-| `user_identities`                            | fournisseur, `provider_uid`, e-mail, `linked_at`                                     | Contrat                                                   | Vie du compte                        |
-| `sessions`                                   | SHA-256 du jeton, `user_agent`, dates d'émission/usage/expiration/révocation         | Intérêt légitime (art. 6.1.f)                             | **Illimitée** — jamais purgée (§4.5) |
-| `oauth_authorizations`                       | `state`, `code_verifier` PKCE, `redirect_to`                                         | Contrat / sécurité                                        | Purgée à chaque callback ✅          |
-| `native_pairings`                            | `device_code`, `user_code`, jeton de session en transit                              | Contrat                                                   | Purgée à l'expiration ✅             |
-| `auth_rate_limits`                           | **adresse IP en clair** dans `bucket`, fenêtre, compteur                             | Intérêt légitime                                          | Purge opportuniste (§4.4)            |
-| `user_settings`                              | 11 clés de configuration en `jsonb`                                                  | Contrat                                                   | Vie du compte                        |
-| `fights`, `fight_participants`, `fight_loot` | combats, **noms des alliés (joueurs tiers)**, classe, dégâts, soins, sorts, butin    | Contrat (6.1.b) + intérêt légitime (6.1.f) pour les tiers | Vie du compte                        |
-| `purchases`, `trades`, `trade_items`         | achats, échanges, **nom du partenaire d'échange**                                    | Idem                                                      | Vie du compte                        |
-| `pact_extractions`, `pact_extraction_items`  | extractions de pacte                                                                 | Contrat                                                   | Vie du compte                        |
+| Table                                        | Données                                                                              | Base légale déclarée                                      | Durée réelle en base                       |
+| -------------------------------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------------------- | ------------------------------------------ |
+| `users`                                      | e-mail vérifié, nom affiché, serveur de jeu par défaut, `created_at`, `last_seen_at` | Contrat (art. 6.1.b)                                      | Vie du compte                              |
+| `user_identities`                            | fournisseur, `provider_uid`, e-mail, `linked_at`                                     | Contrat                                                   | Vie du compte                              |
+| `sessions`                                   | SHA-256 du jeton, `user_agent`, dates d'émission/usage/expiration/révocation         | Intérêt légitime (art. 6.1.f)                             | 30 j après expiration/révocation ✅ (§4.5) |
+| `oauth_authorizations`                       | `state`, `code_verifier` PKCE, `redirect_to`                                         | Contrat / sécurité                                        | Purgée à chaque callback ✅                |
+| `native_pairings`                            | `device_code`, `user_code`, jeton de session en transit                              | Contrat                                                   | Purgée à l'expiration ✅                   |
+| `auth_rate_limits`                           | **adresse IP en clair** dans `bucket`, fenêtre, compteur                             | Intérêt légitime                                          | Purge opportuniste (§4.4)                  |
+| `user_settings`                              | 11 clés de configuration en `jsonb`                                                  | Contrat                                                   | Vie du compte                              |
+| `fights`, `fight_participants`, `fight_loot` | combats, **noms des alliés (joueurs tiers)**, classe, dégâts, soins, sorts, butin    | Contrat (6.1.b) + intérêt légitime (6.1.f) pour les tiers | Vie du compte                              |
+| `purchases`, `trades`, `trade_items`         | achats, échanges, **nom du partenaire d'échange**                                    | Idem                                                      | Vie du compte                              |
+| `pact_extractions`, `pact_extraction_items`  | extractions de pacte                                                                 | Contrat                                                   | Vie du compte                              |
 
 Toutes les tables rattachées à `users` portent `ON DELETE CASCADE` : la suppression de compte
 (`functions/api/v1/auth/account.ts`) est **réellement effective**, sans marquage logique ni
@@ -179,9 +191,20 @@ l'historique que l'utilisateur venait de faire effacer.
 (`getSyncQueue(uid)`), et purger le magasin dans `deactivate()` — ou au minimum lors d'une suppression
 de compte.
 
-### 🟠 4.2 — L'export « RGPD » ne contient pas les données du compte
+### 🟠 4.2 — L'export « RGPD » ne contient pas les données du compte — **volet documentaire résolu le 2026-09-19**
 
 **Articles concernés** : 15 (droit d'accès), 20 (portabilité), 12 (transparence).
+
+> **Résolution partielle (`168cd01`).** Le point 6 de la politique (4 locales) ne présente plus le
+> bouton « Exporter » que pour ce qu'il fait réellement (données de configuration) et renvoie, pour
+> l'identité, les sessions et l'historique serveur, à une demande écrite à
+> `contact@wakfu-companion.com`, honorée « dans le délai d'un mois prévu par le RGPD ». L'écart
+> entre promesse et code est clos ; l'endpoint d'export décrit ci-dessous reste une amélioration
+> souhaitable (elle rend le droit exerçable en un clic et évite une extraction manuelle), plus une
+> obligation. Tant qu'il n'existe pas, il faut être en mesure de produire cet export à la main
+> (requêtes SQL par `user_id` sur les tables listées) dans le mois.
+>
+> Constat d'origine ci-dessous, conservé pour mémoire.
 
 `src/app/features/auth/account-page/account-page.component.ts:92` appelle
 `AppDataExportService.buildExport()`, qui (`app-data-export.service.ts:40`) se contente de relire les
@@ -252,9 +275,21 @@ qu'au **premier** appel d'une nouvelle fenêtre. Sans trafic, les lignes subsist
 `bucket` — le comptage fonctionne à l'identique, la donnée devient pseudonymisée ; et ajouter une
 ligne au point 1.2 (finalité anti-abus, intérêt légitime, fenêtre de 10 minutes).
 
-### 🟡 4.5 — Les sessions expirées ne sont jamais supprimées
+> **État au 2026-09-19.** Volet _déclaration_ résolu par `1651a41` : le comptage par IP est décrit
+> aux points 1, 1.2 (traitement, fenêtre de 10 minutes, « jamais rattachée à votre compte »), 1.3
+> (intérêt légitime) et 5 (durée). Volet _minimisation_ (hachage) : voir la note de résolution
+> en fin de section si elle est présente, sinon toujours ouvert.
+
+### ✅ 4.5 — Les sessions expirées ne sont jamais supprimées — **résolu le 2026-09-19**
 
 **Article concerné** : 5.1.e (limitation de la conservation).
+
+> **Résolution (`433960a`).** `AuthStore.purgeDeadSessions(before)` efface toute session expirée
+> ou révoquée **30 jours après sa fin** (`DEAD_SESSION_RETENTION_MS`, `server/auth/flow.ts`), sans
+> cron : appelée à la connexion OAuth, à l'appairage et à la rotation natifs, sur `GET`/`DELETE
+/api/v1/auth/sessions`, sur `DELETE /api/v1/auth/native/session` et au rafraîchissement
+> quotidien de l'expiration glissante (seul déclencheur pour un compte dont seul l'overlay tourne).
+> Politique §5 mise à jour (4 langues). Constat d'origine ci-dessous, conservé pour mémoire.
 
 `server/auth/store.ts` déclare `purgeExpiredAuthorizations`, `purgeRateLimits` et
 `purgeExpiredPairings` — mais **aucune purge de `sessions`**. Les lignes expirées ou révoquées, qui
@@ -275,17 +310,20 @@ autres purges (Cloudflare Pages n'offrant pas de Cron Trigger).
 **Articles concernés** : 12, 13 (information à jour et complète).
 
 Le texte du 19 septembre 2026 couvre désormais l'overlay et les pseudonymes de tiers. Trois écarts
-subsistent, tous de complétude :
+subsistaient, tous de complétude ; le premier est résolu :
 
-1. **Extractions de pacte** — les tables `pact_extractions` / `pact_extraction_items` existent depuis
-   le 5 septembre. La politique énumère « votre historique de combats, achats et échanges » : les
-   extractions forment une quatrième catégorie, absente du texte (recherche sur « pacte » et
-   « extraction » : aucune occurrence).
+1. ✅ **Extractions de pacte** — résolu par `1651a41` (points 1.2 et 6). Constat d'origine : les
+   tables `pact_extractions` / `pact_extraction_items` existent depuis le 5 septembre, et la
+   politique énumérait « votre historique de combats, achats et échanges » sans cette quatrième
+   catégorie. Reste à vérifier, dans le dépôt de l'overlay, si le point 1.4 (ce que l'overlay
+   envoie) doit aussi les citer.
 2. **Données de configuration synchronisées** — le point 1.2 cite « profil, personnages, liste de
-   suivi, filtres de recherche du chat », soit 4 des **11 clés** réellement envoyées
-   (`server/settings/keys.ts`). Manquent notamment `damageReassignments` et `itemReassignments`, qui
-   contiennent des **noms de personnages**, ainsi que `watchlistAddMode`, `chatActiveChannels`,
-   `combatPanelCollapsed`, `chatPanelCollapsed` et `dashboardLayout` (voir annexe 7.2).
+   suivi, filtres de recherche du chat, préférences d'affichage » (« préférences d'affichage »
+   ajouté par `1651a41`, ce qui couvre `combatPanelCollapsed`, `chatPanelCollapsed`,
+   `dashboardLayout`, `watchlistAddMode` et `chatActiveChannels`). Manquent toujours
+   `damageReassignments` et `itemReassignments`, qui contiennent des **noms de personnages** (voir
+   annexe 7.2) — c'est le point qui compte, les préférences d'affichage n'ayant aucune portée
+   personnelle.
 3. **Asymétrie site / overlay sur les participants de combat** — le point 1.4 décrit précisément ce
    que l'overlay envoie (« avec le nom, la classe et les dégâts, soins et sorts de chaque participant,
    alliés compris, donc potentiellement d'autres joueurs »), tandis que le point 1.2, qui décrit le
@@ -354,7 +392,7 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 
 | Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | ------------------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Registre des traitements** (art. 30)     | Absent         | L'exemption des organismes de moins de 250 personnes ne s'applique pas : le traitement n'est ni occasionnel, ni limité. Une page suffit — ébauche au §6.                                                                                                                                                                                                                                                                                  |
+| **Registre des traitements** (art. 30)     | ✅ Rédigé      | Rédigé le 2026-09-19 avec la note de mise en balance des intérêts (pseudonymes de tiers, point 1.3) — documents internes du responsable de traitement, conservés **hors dépôt** (voir §8). L'ébauche du §6 en reste la base.                                                                                                                                                                                                              |
 | **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                                                                                                                 |
 | **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                                                                                                                    |
 | **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                                                                                                             |
@@ -369,34 +407,43 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 ### Priorité 1 — à traiter en premier
 
-| #     | Action                                                                                                                                        | Écart | Effort |
-| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| 1     | Vérifier que `contact@wakfu-companion.com` est réellement relevée ; sinon la remplacer partout                                                | 4.10  | Minime |
-| 2     | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte                                                       | 4.1   | Moyen  |
-| 3     | Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »                                                                        | 4.2   | Moyen  |
-| ~~4~~ | ~~Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)~~ — **fait** : GitHub Pages décommissionné le 2026-09-19 | 4.3   | —      |
+| #     | Action                                                                                                                                                             | Écart | Effort |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------ |
+| 1     | Vérifier que `contact@wakfu-companion.com` est réellement relevée ; sinon la remplacer partout                                                                     | 4.10  | Minime |
+| 2     | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte                                                                            | 4.1   | Moyen  |
+| ~~3~~ | ~~Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »~~ — rétrogradé en #17 : la politique ne promet plus que ce que le bouton fait (`168cd01`) | 4.2   | —      |
+| ~~4~~ | ~~Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)~~ — **fait** : GitHub Pages décommissionné le 2026-09-19                      | 4.3   | —      |
 
 ### Priorité 2 — à planifier
 
-| #   | Action                                                                                       | Écart | Effort |
-| --- | -------------------------------------------------------------------------------------------- | ----- | ------ |
-| 5   | Compléter la politique : extractions de pacte, 11 clés synchronisées, alignement 1.2 sur 1.4 | 4.6   | Faible |
-| 6   | Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus                       | 4.4   | Faible |
-| 7   | Ajouter `purgeExpiredSessions()`                                                             | 4.5   | Faible |
-| 8   | Lien vers CGU + politique sous les boutons de connexion                                      | 4.7   | Minime |
-| 9   | Ajouter `public/_headers` (CSP en report-only d'abord)                                       | 4.8   | Faible |
+| #     | Action                                                                                                                                       | Écart | Effort |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4 | 4.6   | Faible |
+| 6     | Hacher l'IP dans `auth_rate_limits` (~~+ déclarer le traitement anti-abus~~ — fait, `1651a41`)                                               | 4.4   | Faible |
+| ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                             | 4.5   | —      |
+| 8     | Lien vers CGU + politique sous les boutons de connexion                                                                                      | 4.7   | Minime |
+| 9     | Ajouter `public/_headers` (CSP en report-only d'abord)                                                                                       | 4.8   | Faible |
 
 ### Priorité 3 — documentaire et amélioration continue
 
-| #   | Action                                                                                                                   | Écart | Effort |
-| --- | ------------------------------------------------------------------------------------------------------------------------ | ----- | ------ |
-| 10  | Rédiger le registre des traitements (art. 30)                                                                            | 4.10  | Faible |
-| 11  | Archiver les DPA des trois sous-traitants                                                                                | 4.10  | Minime |
-| 12  | Écrire la procédure de violation de données                                                                              | 4.10  | Faible |
-| 13  | Consigner l'analyse d'absence d'AIPD                                                                                     | 4.10  | Minime |
-| 14  | Proposer l'effacement local à la suppression de compte, comme le fait l'overlay                                          | 4.9   | Faible |
-| 15  | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux » | 4.6   | Minime |
-| 16  | Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4                                  | —     | Moyen  |
+| #      | Action                                                                                                                    | Écart | Effort |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                               | 4.10  | —      |
+| 11     | Archiver les DPA des trois sous-traitants                                                                                 | 4.10  | Minime |
+| 12     | Écrire la procédure de violation de données                                                                               | 4.10  | Faible |
+| 13     | Consigner l'analyse d'absence d'AIPD                                                                                      | 4.10  | Minime |
+| 14     | Proposer l'effacement local à la suppression de compte, comme le fait l'overlay                                           | 4.9   | Faible |
+| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »  | 4.6   | Minime |
+| ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8) | —     | —      |
+| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté  | 4.2   | Moyen  |
+| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                      | —     | Minime |
+
+### Préalable à toute mise en production
+
+**Fusionner `claude/dev` → `main`** (§8, P0) : tant que ce n'est pas fait, la production sert une
+politique datée du 26 août sans un mot sur l'overlay, et un binaire de Release ≥ 0.70 de l'overlay
+ne fonctionne pas contre elle (icônes, écriture partielle du profil, déconnexion). Une seule mise en
+production, une fois les points 2, 6, 8, 9 et 14 traités.
 
 ---
 
@@ -497,3 +544,50 @@ Recherches exhaustives menées : traceurs et scripts tiers (aucun), `console.*` 
 **Non vérifié** (hors portée d'une analyse de code) : le code de l'overlay de bureau (dépôt distinct),
 le comportement réel en production, la configuration effective du projet Cloudflare Pages et de la
 base Neon, les DPA signés, et l'existence effective de la boîte de contact.
+
+---
+
+## 8. Reliquat côté site et API issu de l'analyse menée depuis l'overlay
+
+Reliquat de l'analyse RGPD menée depuis l'overlay ([`analyse-rgpd.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-rgpd.md)
+du dépôt `Oumbra/wakfu-companion-overlay`) pour ce dépôt (site web et API Cloudflare Pages),
+établi le 2026-09-18, déplacé ici le 2026-09-19 (`docs/analyse-rgpd-site.md`) puis fusionné dans
+ce document le même jour. Les autres volets, restés là-bas :
+[`analyse-rgpd-overlay.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-rgpd-overlay.md) et
+[`analyse-rgpd-mainteneur.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-rgpd-mainteneur.md).
+Les références `C2`…`C11` renvoient aux constats de l'analyse overlay.
+
+L'overlay ne peut être conforme seul : plusieurs de ses corrections supposent un pendant côté
+service, d'où ce reliquat.
+
+| Prio            | Tâche                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Constat                  |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| **P0**          | **Fusionner `claude/dev` → `main`** : c'est la seule tâche qui bloque encore. Au 2026-09-19 (soir), `claude/dev` a une trentaine de commits d'avance sur `origin/main` (fusion vérifiée sans conflit), dont `DELETE /api/v1/auth/native/session` (`58988ff`), les textes juridiques (`3ba4684`, `a9587a9`, `8e3fdd8`, `50adcf8`, `a5204e1`, `acf4a20`, `168cd01`, `1651a41`), la réparation du déploiement (`80d38fe`, `wrangler-action`), le **relais d'icônes** `GET /api/v1/icons/{folder}/{gfxId}.png` (`a51ee02`, constat C10), l'**écriture partielle** de `PATCH /api/v1/settings` (`c2f3fdb`, constat C9), l'**effacement des sessions mortes** et la **rotation du jeton natif** (`433960a`, voir ci-dessous), le décommissionnement de GitHub Pages (`b6476bd`) et l'analyse RGPD du code du site (`60ccfaa`, ce document) — sans lui, un binaire de Release à partir de 0.70 n'affiche plus aucune icône d'objet, de monstre ni de sort (repli sur l'icône générique). Tant que ce n'est pas fusionné, la prod sert une politique datée du 26 août sans un mot sur l'overlay, et un binaire de Release reçoit un 404 à la déconnexion — la purge locale aboutit (best-effort), mais la ligne de session reste en base                                                                                                                                                                                                                                                                                                                                                                            | C4, C5                   |
+| ~~P1~~          | ✅ **Politique de confidentialité** — section « 1.4 Overlay de bureau » dans les quatre langues, datée du 18 septembre 2026 (`3ba4684` sur `claude/dev`, 2026-09-18), avec renvois depuis les sections 1, 1.3, 2, 4, 5 et 6. Contenu demandé : lecture de `wakfu.log` seul ; envoi au compte des combats **avec le nom des participants**, achats, échanges, personnages, alertes, recherches ; lecture optionnelle de la fenêtre de jeu (bande basse, jamais conservée, décochée par défaut) ; entrées synthétiques limitées à deux commandes de chat ; journal local 14 j / 16 Mio ; destinataires tiers **GitHub** (vérification de mise à jour) et **`vertylo.github.io`** (icônes — plus d'actualité depuis le relais de l'API, politique réécrite le 2026-09-19, `a5204e1`) ; données locales et bouton d'effacement ; session native supprimée à la déconnexion. Relue contre le code de l'overlay le 2026-09-18 : combats en cours effacés à la fin du combat ou au-delà de 24 h (`fight_store::MAX_FIGHT_AGE`), périmètre de la déconnexion (`local_data::Scope::OnDisconnect` : combats, compteurs, gabarits, journaux), bouton « Supprimer les données locales » aussi sur l'écran de connexion (`panels/login.rs`), vérification GitHub sans identifiant ni version (`update/manifest.rs`, agent `ureq` sans en-tête maison) — tout concorde. Seule imprécision, sans enjeu : le plafond de 16 Mio/jour du journal n'est pas cité. **Point restant** : le point 1.4 ne cite pas les extractions de pacte — à vérifier dans le dépôt de l'overlay si celui-ci les envoie (`POST /history/pacts`) | C2, C3, C4, C6, C10, C11 |
+| ~~P1~~          | ✅ **Tiers rencontrés en combat / échange** (option A du 2026-09-18, noms conservés en clair) : la politique dit désormais que les combats partent avec le nom de chaque participant et les échanges avec celui du partenaire (1.4), la durée (« tant que le compte existe », §5) et l'adresse d'opposition (§6) y étaient déjà. ✅ Base _intérêt légitime_ (art. 6.1.f) et mise en balance énoncées en section 1.3, avec l'adresse de retrait d'un pseudonyme (`50adcf8`, 2026-09-18). ✅ Note interne de mise en balance rédigée le 2026-09-19 (document du responsable de traitement, hors dépôt)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | C3                       |
+| ~~P1~~          | ✅ **CGU du site** réécrites (`a9587a9`, 2026-09-18) : l'overlay entre dans l'objet, la section 2 décrit ses deux fonctions optionnelles (frappe simulée, lecture de fenêtre) et reformule la position vis-à-vis des CGU d'Ankama en cohérence avec [`analyse-cgu.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-cgu.md) de l'overlay. Mentions légales complétées au passage (`8e3fdd8`) : éléments du jeu embarqués dans le binaire                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | C2                       |
+| ~~P2~~ → ~~P3~~ | ✅ **Jeton natif** : vérifié dans le code le 2026-09-18 — même durée que le cookie web, 30 jours glissants (`server/auth/pairing.ts:70` crée la session avec `SESSION_TTL_MS`, et `flow.ts::resolveSession` prolonge le porteur `Bearer` exactement comme le cookie). Dit dans la politique depuis le 2026-09-19 (`acf4a20` sur `claude/dev`, quatre langues) : la section 5 attribue désormais les « 30 jours glissants, prolongés à chaque utilisation » au cookie du site ET au jeton de l'overlay, et la section 1.4 renvoie au point 5 pour la durée du jeton                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | C5                       |
+| ~~P3~~          | ✅ **Fusion côté serveur** (`c2f3fdb` sur `claude/dev`, 2026-09-19) : une entrée de `PATCH /api/v1/settings` peut porter `patch` à la place de `value` pour `profile` (fusion superficielle champ par champ) et `roster` (`{ accounts: [{ id, …champs }], removedIds }`, fusion par `id`, champs inconnus préservés — voir `server/settings/patch.ts` et `server/README.md`, lot 6). Compare-and-set sur l'horodatage lu, course perdue renvoyée en rejet. Le site web n'envoie plus que l'écart avec la version connue du compte (`RemoteUserDataRepository.acked`). ✅ **Côté overlay aussi** (2026-09-19) : `profile_patch_entry` envoie `patch: { soundItems, alertDurationSeconds, alertManualClose }` et le roster part en correctif (comptes modifiés ou créés + `removedIds`, `Roster::patch_against`) ; `extra` (`flatten`) et `profile_raw` retirés. **Conséquence pour la fusion** : un overlay livré avec ce changement contre une prod sans `c2f3fdb` reçoit 400 « valeur manquante » à chaque validation d'alertes ou de personnages — la fusion `claude/dev` → `main` précède la prochaine Release                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | C9                       |
+| ~~P2~~          | ✅ **Sessions mortes effacées** (`433960a` sur `claude/dev`, 2026-09-19, limitation de la conservation art. 5.1.e) : une ligne de `sessions` expirée ou révoquée restait en base pour toujours (`user_id`, `user_agent`, horodatages) alors qu'elle n'ouvrait plus rien et n'était plus listée. `AuthStore.purgeDeadSessions` l'efface **30 jours après sa fin** (`DEAD_SESSION_RETENTION_MS`, `server/auth/flow.ts`), sans cron : à la connexion OAuth, à l'appairage et à la rotation natifs, sur `GET`/`DELETE /api/v1/auth/sessions`, sur `DELETE /api/v1/auth/native/session` et au rafraîchissement quotidien de l'expiration glissante (seul déclencheur pour un compte dont seul l'overlay tourne). Politique §5 mise à jour (quatre langues). Même constat que 4.5 ci-dessus, trouvé indépendamment en relisant `server/auth/db-store.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | §7 (sessions)            |
+| ~~P3~~          | ✅ **Rotation du jeton natif, côté serveur** (`433960a`, 2026-09-19) : `POST /api/v1/auth/native/session` (porteur `Bearer`, corps vide) répond `{ token, issuedAt, expiresAt, previousTokenValidUntil }` — jeton neuf de 30 jours glissants pour le même compte et le même appareil ; l'ancienne session est **remplacée** (`sessions.superseded_at`, migration `0029`) et son expiration ramenée à **5 min** : encore acceptée le temps que l'overlay persiste le nouveau jeton et que ses requêtes en vol aboutissent (un 401 côté overlay vaut « jeton refusé », donc déconnexion et purge — à ne jamais provoquer pour une course), plus jamais prolongée, plus listée dans « Mon compte », emportée par « déconnecter tous mes appareils ». Une rotation depuis un jeton déjà remplacé mais en grâce est admise (plantage entre la réponse et l'écriture au trousseau). Politique §1.4 : « l'overlay peut le renouveler de lui-même ». ✅ **Côté overlay aussi** (2026-09-19, `background::rotate_token_if_due`) : appelée au démarrage quand le jeton a plus de 7 jours (ou date inconnue), avant l'activation de la file d'envoi ; nouveau jeton au trousseau avant bascule ; un échec conserve l'ancien jeton, jamais une déconnexion. Contre une prod sans `433960a`, la route répond 404/405 et l'overlay garde simplement son jeton                                                                                                                                                                                                                                                             | C5                       |
+
+### 8.1 Hors périmètre de l'analyse overlay, listé pour ne pas l'oublier
+
+État vérifié dans le code et la politique du site le 2026-09-19 :
+
+- ✅ **Suppression de compte** : `DELETE /api/v1/auth/account`, suppression réelle en cascade
+  (identités, sessions, configuration, historique).
+- ✅ **Sessions actives et révocation** : `GET`/`DELETE /api/v1/auth/sessions`, page « Mon compte » ;
+  sessions mortes effacées 30 jours après leur fin (voir le tableau) ; rotation du jeton natif
+  côté serveur et appelée par l'overlay (2026-09-19).
+- ✅ **Sous-traitants** nommés (mentions légales §2, politique §4) : Cloudflare, Inc. (hébergement),
+  Databricks, Inc. / Neon (PostgreSQL, serveurs dans l'UE), Discord et Google (connexion), GitHub
+  (mises à jour de l'overlay).
+- ✅ **Mentions légales** publiées, étendues à l'overlay (`8e3fdd8`).
+- ⚠ **Durée de conservation de l'historique** : la politique annonce « tant que le compte
+  existe, aucune suppression automatique après inactivité ». Conforme si c'est assumé ; une purge
+  après N mois d'inactivité serait une décision du responsable de traitement, pas un correctif
+  (plan d'action #18).
+- ✅ **Registre des traitements (art. 30)** et note de mise en balance (C3) : rédigés le
+  2026-09-19, documents internes du mainteneur conservés hors dépôt (voir
+  [`analyse-rgpd-mainteneur.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-rgpd-mainteneur.md)).
