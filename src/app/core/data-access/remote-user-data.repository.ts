@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { ApiClientService } from '../api/api-client.service';
 import { LocalUserDataRepository } from './local-user-data.repository';
+import { buildUserDataPatch, isMergeableUserDataKey } from './user-data-patch.util';
 import { USER_DATA_KEY_LIST, type UserDataKey } from './user-data.keys';
 import type { UserDataRepository } from './user-data.repository';
 
@@ -12,9 +13,15 @@ export type SyncState = 'idle' | 'pending' | 'syncing' | 'error';
 
 /** Réponse de `PATCH /api/v1/settings` (voir functions/api/v1/settings.ts). */
 interface PatchResponse {
-  applied: { key: UserDataKey; updatedAt: string }[];
+  /** `value` n'est renseignée que pour une écriture partielle : la valeur entière fusionnée. */
+  applied: { key: UserDataKey; updatedAt: string; value?: unknown }[];
   rejected: { key: UserDataKey; remoteUpdatedAt: string; value: unknown }[];
 }
+
+/** Une entrée du corps de `PATCH` : valeur entière, ou correctif partiel (clés fusionnables). */
+type PatchEntry =
+  | { key: UserDataKey; value: unknown; updatedAt: string }
+  | { key: UserDataKey; patch: unknown; updatedAt: string };
 
 /** Réponse de `GET /api/v1/settings`. */
 interface SettingsResponse {
@@ -41,6 +48,15 @@ interface SettingsResponse {
  *
  * Aucune écriture n'est jamais perdue faute de réseau : elle est déjà en
  * `localStorage`, et le champ reste marqué en attente jusqu'à un envoi réussi.
+ *
+ * ## Écritures partielles
+ *
+ * Pour `profile` et `roster` (voir `user-data-patch.util.ts`), l'envoi ne
+ * porte que la différence avec la dernière version que le serveur détient
+ * (`acked`, tenue à jour à chaque réponse du compte) — un réglage d'alerte ne
+ * fait plus voyager le pseudo et l'avatar. Sans version connue du serveur
+ * (première synchronisation, après `reset()`), la valeur entière part comme
+ * avant.
  */
 @Injectable({ providedIn: 'root' })
 export class RemoteUserDataRepository implements UserDataRepository {
@@ -58,6 +74,13 @@ export class RemoteUserDataRepository implements UserDataRepository {
   readonly lastSyncedAt = this._lastSyncedAt.asReadonly();
 
   private readonly pendingKeys = new Set<UserDataKey>();
+  /**
+   * Dernière valeur de chaque champ que le serveur détient, telle que cet
+   * appareil l'a vue (reçue au `pull()`, renvoyée par un rejet, ou confirmée
+   * par un envoi appliqué). Base de calcul des écritures partielles ; un champ
+   * absent d'ici repart en valeur entière.
+   */
+  private readonly acked = new Map<UserDataKey, unknown>();
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
   private inFlight: Promise<void> | null = null;
 
@@ -110,10 +133,14 @@ export class RemoteUserDataRepository implements UserDataRepository {
 
       if (!hasRemote) {
         // Champ jamais envoyé au compte : le pousser s'il existe localement.
+        this.acked.delete(key);
         if (this.local.read(key) !== undefined) this.pendingKeys.add(key);
         continue;
       }
       if (localDate && localDate.getTime() > remoteDate.getTime()) {
+        // La version du compte est connue même si la locale l'emporte : c'est
+        // par rapport à elle que l'envoi qui suit sera réduit au strict écart.
+        this.acked.set(key, remoteData[key]);
         this.pendingKeys.add(key);
         continue;
       }
@@ -143,6 +170,7 @@ export class RemoteUserDataRepository implements UserDataRepository {
   reset(): void {
     this.cancelScheduledFlush();
     this.pendingKeys.clear();
+    this.acked.clear();
     this._pending.set([]);
     this._state.set('idle');
     this._lastSyncedAt.set(null);
@@ -155,15 +183,33 @@ export class RemoteUserDataRepository implements UserDataRepository {
     }
 
     const keys = [...this.pendingKeys];
-    const entries = keys
-      .map((key) => ({
-        key,
-        value: this.local.read(key),
-        updatedAt: (this.local.updatedAt(key) ?? new Date()).toISOString(),
-      }))
+    const entries: PatchEntry[] = [];
+    /** Valeur locale entière derrière chaque entrée envoyée — future `acked` si appliquée. */
+    const sentValues = new Map<UserDataKey, unknown>();
+    for (const key of keys) {
+      const value = this.local.read(key);
       // Un champ effacé entre la mise en attente et l'envoi n'a rien à dire au
       // serveur : le format n'a pas de « supprimer », seulement des valeurs.
-      .filter((entry) => entry.value !== undefined);
+      if (value === undefined) continue;
+      const updatedAt = (this.local.updatedAt(key) ?? new Date()).toISOString();
+      if (isMergeableUserDataKey(key) && this.acked.has(key)) {
+        const plan = buildUserDataPatch(key, this.acked.get(key), value);
+        // Identique à la version du compte : rien à envoyer, le champ sort de
+        // l'attente sans requête (une écriture locale qui n'a rien changé).
+        if (plan.kind === 'none') {
+          this.pendingKeys.delete(key);
+          continue;
+        }
+        if (plan.kind === 'patch') {
+          entries.push({ key, patch: plan.patch, updatedAt });
+          sentValues.set(key, value);
+          continue;
+        }
+      }
+      entries.push({ key, value, updatedAt });
+      sentValues.set(key, value);
+    }
+    this._pending.set([...this.pendingKeys]);
 
     if (entries.length === 0) {
       this.pendingKeys.clear();
@@ -187,6 +233,15 @@ export class RemoteUserDataRepository implements UserDataRepository {
 
     for (const key of entries.map((entry) => entry.key)) this.pendingKeys.delete(key);
     this._pending.set([...this.pendingKeys]);
+
+    // Le serveur détient désormais ce qu'on lui a envoyé — ou, pour une
+    // écriture partielle, la valeur fusionnée qu'il renvoie.
+    for (const entry of result.data?.applied ?? []) {
+      this.acked.set(
+        entry.key,
+        entry.value !== undefined ? entry.value : sentValues.get(entry.key),
+      );
+    }
 
     const rejected = result.data?.rejected ?? [];
     const changed: UserDataKey[] = [];
@@ -213,6 +268,7 @@ export class RemoteUserDataRepository implements UserDataRepository {
     this.local.writeAt(key, value, updatedAt);
     // Le champ vient d'être aligné sur le compte : plus rien à lui envoyer.
     this.pendingKeys.delete(key);
+    this.acked.set(key, value);
     return before !== JSON.stringify(value);
   }
 

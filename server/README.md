@@ -507,6 +507,55 @@ l'arbitrage cherche à empêcher.
 Les clés refusées repartent au client **avec la valeur conservée**, qui
 s'aligne dessus sans second aller-retour.
 
+### Écritures partielles (`patch`) pour `profile` et `roster`
+
+Ajouté le 2026-09-19 (analyse RGPD de l'overlay, constat C9 — minimisation des
+données) : une entrée du `PATCH` peut porter `patch` à la place de `value`
+(`{ key, patch, updatedAt }`, exactement l'un des deux). Le serveur fusionne le
+correctif dans la valeur en compte et écrit la valeur entière résultante — la
+table ne connaît toujours que des valeurs entières, aucune migration. Avant,
+un réglage d'alerte fait depuis l'overlay renvoyait le profil entier (pseudo,
+avatar, mode d'affichage) que l'overlay ne connaît pas et n'a pas à
+transmettre ; idem pour un personnage ajouté à un compte du roster.
+
+`server/settings/patch.ts` (pur, `patch.spec.ts`) fixe la sémantique, propre à
+chaque clé — les autres clés (listes plates, booléens) sont refusées en 400,
+il n'y a pas de sous-clé qui ait un sens :
+
+| Clé       | Correctif                                                  | Fusion                                                                                                                                                                       |
+| --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile` | objet de champs, non vide                                  | Superficielle : chaque champ cité remplace le sien en bloc (`soundItems` est une liste, remplacée entière), les autres restent.                                              |
+| `roster`  | `{ accounts?: [{ id, ...champs }], removedIds?: [ids] }`   | Par `id` : chaque compte cité est fusionné superficiellement dans le compte de même `id` (créé en fin de liste sinon), `removedIds` retire ; comptes et champs non cités intacts. |
+
+Un correctif **ne sait pas supprimer un champ** (`null` est une valeur légitime,
+`gameServer`/`avatarIndex`) ni réordonner les comptes : le client envoie alors
+la valeur entière, comme avant.
+
+**Garde-fou SQL plus strict que pour un remplacement.** La valeur fusionnée est
+calculée en JS à partir de celle lue par le `SELECT` ; le `setWhere` de
+l'upsert n'est donc pas `updated_at < excluded.updated_at` mais
+`updated_at = <horodatage lu>` (compare-and-set à la milliseconde près, `date_trunc` — un `Date` JS
+n'a pas la précision microseconde de `timestamptz` ; `false` si la ligne n'existait
+pas à la lecture). Sinon une écriture concurrente d'un autre appareil, même
+plus ancienne que la nôtre, serait écrasée par une fusion calculée sans elle.
+Une course perdue (`.returning()` vide) est relue et renvoyée comme un rejet
+ordinaire, avec la version fraîche. Un upsert par clé fusionnable (deux au
+plus), le compare-and-set étant propre à chaque ligne.
+
+La réponse renvoie, pour une fusion appliquée seulement, `applied[].value` : la
+valeur entière résultante, que le client ne connaît pas puisqu'il n'a envoyé
+qu'un écart.
+
+**Côté client web** (`core/data-access/user-data-patch.util.ts`,
+`RemoteUserDataRepository.acked`) : le dépôt distant retient la dernière version
+de chaque champ que le serveur détient (reçue au `pull()`, renvoyée par un
+rejet, confirmée par un envoi appliqué) et n'envoie que l'écart
+(`buildUserDataPatch` : `none` → aucune requête, `patch` → correctif, `full` →
+valeur entière quand l'écart n'est pas exprimable). Les deux clés fusionnables
+y sont dupliquées (`MERGEABLE_USER_DATA_KEYS`), `src/` n'important jamais
+`server/`. L'overlay de bureau (dépôt séparé) reste libre d'adopter le format
+ou de continuer à envoyer la valeur entière : les deux formes coexistent.
+
 ### Liste blanche de clés
 
 `server/settings/keys.ts` énumère les six clés acceptées, en miroir exact de

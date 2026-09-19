@@ -4,6 +4,7 @@ import { createDb } from '../../../server/db/client';
 import { userSettings } from '../../../server/db/schema';
 import { isSyncedSettingKey } from '../../../server/settings/keys';
 import { parsePatchBody, resolveWrites } from '../../../server/settings/merge';
+import { applySettingPatch } from '../../../server/settings/patch';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../_auth';
 import type { Env } from '../_types';
 
@@ -65,7 +66,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
  *
  * Corps : `{ entries: [{ key, value, updatedAt }] }`. Un lot d'une seule
  * entrée EST l'écriture par clé : pas de route `/settings/{key}` séparée (voir
- * server/README.md, lot 6).
+ * server/README.md, lot 6). Pour `profile` et `roster`, une entrée peut porter
+ * `patch` à la place de `value` : écriture partielle, fusionnée côté serveur
+ * (voir server/settings/patch.ts) — le client n'envoie que ce qu'il modifie.
  *
  * Réponse : les clés appliquées, et pour chaque clé refusée la version du
  * compte (valeur + horodatage) — le client s'aligne dessus immédiatement,
@@ -99,13 +102,20 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
     .where(and(eq(userSettings.userId, auth.user.id), inArray(userSettings.key, keys)));
 
   const remoteUpdatedAt = new Map(existing.map((row) => [row.key, row.updatedAt]));
+  const remoteValues = new Map(existing.map((row) => [row.key, row.value]));
   const { accepted, rejected } = resolveWrites(parsed.value, remoteUpdatedAt);
 
-  if (accepted.length > 0) {
+  const applied: { key: string; updatedAt: string; value?: unknown }[] = [];
+  const rejectedOut: { key: string; remoteUpdatedAt: string; value: unknown }[] = rejected.map(
+    (entry) => ({ ...entry, value: remoteValues.get(entry.key) ?? null }),
+  );
+
+  const replaces = accepted.filter((write) => write.mode === 'replace');
+  if (replaces.length > 0) {
     await db
       .insert(userSettings)
       .values(
-        accepted.map((write) => ({
+        replaces.map((write) => ({
           userId: auth.user.id,
           key: write.key,
           value: write.value,
@@ -122,16 +132,62 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
         // exactement ce que l'arbitrage cherche à empêcher.
         setWhere: sql`${userSettings.updatedAt} < excluded.updated_at`,
       });
+    for (const write of replaces) {
+      applied.push({ key: write.key, updatedAt: write.updatedAt.toISOString() });
+    }
   }
 
-  const rejectedValues = new Map(existing.map((row) => [row.key, row.value]));
-  return json({
-    applied: accepted.map((write) => ({
+  // Écritures partielles (`patch`, voir server/settings/patch.ts) : la valeur
+  // fusionnée est calculée à partir de celle lue par le SELECT ci-dessus, donc
+  // le garde-fou SQL doit être plus strict que pour un remplacement — non pas
+  // « plus récent que ce qu'il y a en base », mais « la base n'a pas bougé
+  // depuis ma lecture » (compare-and-set sur l'horodatage lu). Sinon une
+  // écriture concurrente d'un autre appareil, même plus ancienne que la nôtre,
+  // serait silencieusement écrasée par une fusion calculée sans elle. Une
+  // course perdue est renvoyée comme un rejet ordinaire, avec la version
+  // fraîche : le client s'aligne et réappliquera son correctif s'il y tient.
+  // Une requête par clé fusionnable (deux au plus), pas de lot : le
+  // compare-and-set est propre à chaque ligne.
+  for (const write of accepted) {
+    if (write.mode !== 'merge') continue;
+    const readAt = remoteUpdatedAt.get(write.key);
+    const value = applySettingPatch(write.patch, remoteValues.get(write.key));
+    const written = await db
+      .insert(userSettings)
+      .values({ userId: auth.user.id, key: write.key, value, updatedAt: write.updatedAt })
+      .onConflictDoUpdate({
+        target: [userSettings.userId, userSettings.key],
+        set: { value: sql`excluded.value`, updatedAt: sql`excluded.updated_at` },
+        // Ligne absente à la lecture : toute ligne trouvée au conflit a été
+        // créée entre-temps par un autre appareil, la fusion est périmée.
+        // Comparaison à la milliseconde près : `readAt` est un `Date` JS (ms),
+        // `timestamptz` va jusqu'à la microseconde — une égalité stricte
+        // échouerait pour toujours sur une ligne à précision plus fine, et le
+        // client perdrait alors chaque réglage en se réalignant sur le rejet.
+        setWhere: readAt
+          ? sql`date_trunc('milliseconds', ${userSettings.updatedAt}) = ${readAt.toISOString()}::timestamptz`
+          : sql`false`,
+      })
+      .returning({ key: userSettings.key });
+    if (written.length > 0) {
+      applied.push({ key: write.key, updatedAt: write.updatedAt.toISOString(), value });
+      continue;
+    }
+    const [fresh] = await db
+      .select()
+      .from(userSettings)
+      .where(and(eq(userSettings.userId, auth.user.id), eq(userSettings.key, write.key)));
+    rejectedOut.push({
       key: write.key,
-      updatedAt: write.updatedAt.toISOString(),
-    })),
-    rejected: rejected.map((entry) => ({ ...entry, value: rejectedValues.get(entry.key) ?? null })),
-  });
+      remoteUpdatedAt: (fresh?.updatedAt ?? new Date()).toISOString(),
+      value: fresh?.value ?? null,
+    });
+  }
+
+  // `applied[].value` n'est renseigné que pour une fusion : c'est la valeur
+  // entière résultante, que le client ne connaît pas puisqu'il n'a envoyé
+  // qu'un correctif. Pour un remplacement, il l'a déjà.
+  return json({ applied, rejected: rejectedOut });
 };
 
 /**

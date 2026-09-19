@@ -4,7 +4,12 @@ import { MAX_CLOCK_SKEW_MS, parsePatchBody, resolveWrites, type SettingWrite } f
 const NOW = new Date('2026-08-10T12:00:00.000Z');
 
 function write(key: string, updatedAt: string, value: unknown = { a: 1 }): SettingWrite {
-  return { key: key as SettingWrite['key'], value, updatedAt: new Date(updatedAt) };
+  return {
+    key: key as SettingWrite['key'],
+    mode: 'replace',
+    value,
+    updatedAt: new Date(updatedAt),
+  };
 }
 
 describe('parsePatchBody', () => {
@@ -82,6 +87,69 @@ describe('parsePatchBody', () => {
     expect(parsePatchBody({}, NOW).ok).toBe(false);
     expect(parsePatchBody(null, NOW).ok).toBe(false);
     expect(parsePatchBody({ entries: {} }, NOW).ok).toBe(false);
+  });
+
+  describe('écriture partielle (patch)', () => {
+    it('accepte un correctif sur une clé fusionnable, typé en mode merge', () => {
+      const result = parsePatchBody(
+        {
+          entries: [
+            { key: 'profile', patch: { alertManualClose: true }, updatedAt: NOW.toISOString() },
+            {
+              key: 'roster',
+              patch: { accounts: [{ id: 'a1', gameServer: 'pandora' }] },
+              updatedAt: NOW.toISOString(),
+            },
+          ],
+        },
+        NOW,
+      );
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.value.map((w) => w.mode)).toEqual(['merge', 'merge']);
+      expect(result.value[0]).toMatchObject({
+        key: 'profile',
+        patch: { key: 'profile', fields: { alertManualClose: true } },
+      });
+    });
+
+    it('garde le mode replace pour une valeur entière', () => {
+      const result = parsePatchBody(
+        { entries: [{ key: 'profile', value: { pseudo: 'x' }, updatedAt: NOW.toISOString() }] },
+        NOW,
+      );
+      expect(result.ok && result.value[0].mode).toBe('replace');
+    });
+
+    it('refuse un correctif sur une clé non fusionnable', () => {
+      const result = parsePatchBody(
+        { entries: [{ key: 'watchlist', patch: { a: 1 }, updatedAt: NOW.toISOString() }] },
+        NOW,
+      );
+      expect(result).toEqual({ ok: false, error: 'clé non fusionnable : watchlist' });
+    });
+
+    it('refuse "value" et "patch" sur la même entrée', () => {
+      const result = parsePatchBody(
+        { entries: [{ key: 'profile', value: {}, patch: { a: 1 }, updatedAt: NOW.toISOString() }] },
+        NOW,
+      );
+      expect(result.ok).toBe(false);
+    });
+
+    it('refuse un correctif mal formé (remonte l’erreur de parseSettingPatch)', () => {
+      const result = parsePatchBody(
+        {
+          entries: [
+            { key: 'roster', patch: { accounts: [{ label: 'x' }] }, updatedAt: NOW.toISOString() },
+          ],
+        },
+        NOW,
+      );
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(result.error).toContain('compte sans "id"');
+    });
   });
 });
 
