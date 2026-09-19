@@ -499,6 +499,29 @@ compte, le cookie de session, le fait que le chat n'est jamais transmis,
 l'hébergement (Cloudflare + Neon) et les droits RGPD (export, suppression
 réelle). Obligation annoncée au §7 du plan.
 
+#### Portée réelle du bouton « Exporter » (droit d'accès)
+
+Précisé le 2026-09-19. Le bouton « Exporter » de la page « Mon compte » appelle
+`AppDataExportService.buildExport()`, qui relit **uniquement** les 11 clés de
+`USER_DATA_KEYS` (profil, watchlist, réattributions, roster, chat, disposition
+du tableau de bord) : c'est un export de **configuration**, pas un export RGPD
+complet. Rien côté serveur n'en sort — ni `users` (e-mail vérifié, nom
+affiché), ni `userIdentities`, ni `sessions`, ni l'historique
+(`fights`/`fightParticipants`/`fightLoot`/`purchases`/`trades`/`tradeItems`/
+`pactExtractions`) — et **aucun endpoint d'export n'existe** dans
+`functions/api/v1/`.
+
+Le point 6 de `privacy.notice.body` affirmait pourtant, dans les 4 locales, que
+ce bouton satisfaisait le droit d'accès (art. 15) et la portabilité (art. 20)
+« en un clic ». Écart corrigé côté texte : il décrit maintenant ce que le
+bouton télécharge réellement et renvoie à `contact@wakfu-companion.com`, sous
+un mois (art. 12.3), pour les données de compte.
+
+Le jour où un endpoint d'export serveur est ajouté (`GET /api/v1/auth/export`,
+protégé par la session, renvoyant identité + sessions + historique complet),
+fusionner sa réponse dans `exportData()` **et** rétablir la promesse « en un
+clic » dans les 4 locales — les deux ensemble, jamais l'un sans l'autre.
+
 ## Configuration utilisateur synchronisée (lot 6, prompt 6.1)
 
 Objectif du lot : ne plus perdre ses données en vidant son navigateur, et les
@@ -745,7 +768,8 @@ la valeur voyage dans une charge utile déjà synchronisée.
 
 La liste des serveurs, elle, est mise en cache dans une clé locale **hors**
 `USER_DATA_KEYS` : ce n'est pas une donnée utilisateur mais une copie d'une
-table serveur, elle n'a rien à faire dans le compte ni dans l'export RGPD.
+table serveur, elle n'a rien à faire dans le compte ni dans l'export de
+données.
 
 ### Hors ligne
 
