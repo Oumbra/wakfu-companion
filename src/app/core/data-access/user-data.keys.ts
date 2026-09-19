@@ -36,6 +36,6 @@ export const USER_DATA_KEY_LIST = Object.keys(USER_DATA_KEYS) as readonly UserDa
  * n'est possible : on ne saurait pas si la valeur locale est plus récente que
  * celle du compte. Volontairement **hors** de `USER_DATA_KEYS` — c'est une
  * métadonnée de synchronisation propre à cet appareil, elle n'a rien à faire
- * dans le compte ni dans l'export de données.
+ * dans le compte ni dans l'export de configurations.
  */
 export const USER_DATA_META_KEY = 'wakfu-user-data-meta';

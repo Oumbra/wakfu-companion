@@ -500,7 +500,7 @@ réelle). Obligation annoncée au §7 du plan.
 Précisé le 2026-09-19. Le bouton « Exporter » de la page « Mon compte » appelle
 `AppDataExportService.buildExport()`, qui relit **uniquement** les 11 clés de
 `USER_DATA_KEYS` (profil, watchlist, réattributions, roster, chat, disposition
-du tableau de bord) : c'est un export de **configuration**, pas un export RGPD
+du tableau de bord) : c'est un export de **configurations**, pas un export RGPD
 complet. Rien côté serveur n'en sort — ni `users` (e-mail vérifié, nom
 affiché), ni `userIdentities`, ni `sessions`, ni l'historique
 (`fights`/`fightParticipants`/`fightLoot`/`purchases`/`trades`/`tradeItems`/
@@ -765,7 +765,7 @@ la valeur voyage dans une charge utile déjà synchronisée.
 La liste des serveurs, elle, est mise en cache dans une clé locale **hors**
 `USER_DATA_KEYS` : ce n'est pas une donnée utilisateur mais une copie d'une
 table serveur, elle n'a rien à faire dans le compte ni dans l'export de
-données.
+configurations.
 
 ### Hors ligne
 
