@@ -24,6 +24,22 @@ interface RemoteState {
   updatedAtByKey: Record<string, string>;
 }
 
+type Obj = Record<string, unknown>;
+
+/** Réduction de `applySettingPatch` (server/settings/patch.ts) pour le faux serveur. */
+function mergePatch(key: string, stored: unknown, patch: unknown): unknown {
+  if (key === 'profile') return { ...((stored as Obj | undefined) ?? {}), ...(patch as Obj) };
+  const { accounts = [], removedIds = [] } = patch as { accounts?: Obj[]; removedIds?: string[] };
+  const kept = ((stored as Obj[] | undefined) ?? [])
+    .filter((account) => !removedIds.includes(account['id'] as string))
+    .map((account) => {
+      const update = accounts.find((entry) => entry['id'] === account['id']);
+      return update ? { ...account, ...update } : account;
+    });
+  const known = new Set(kept.map((account) => account['id']));
+  return [...kept, ...accounts.filter((entry) => !known.has(entry['id']))];
+}
+
 function setup(remote: RemoteState = { data: {}, updatedAtByKey: {} }) {
   const getJson = vi.fn(async (path: string) => {
     if (path === '/settings') return ok(remote);
@@ -40,7 +56,7 @@ function setup(remote: RemoteState = { data: {}, updatedAtByKey: {} }) {
       const applied: unknown[] = [];
       const rejected: unknown[] = [];
       for (const raw of options.body?.entries ?? []) {
-        const entry = raw as { key: string; value: unknown; updatedAt: string };
+        const entry = raw as { key: string; value?: unknown; patch?: unknown; updatedAt: string };
         const current = remote.updatedAtByKey[entry.key];
         if (current && new Date(current) >= new Date(entry.updatedAt)) {
           rejected.push({
@@ -48,6 +64,15 @@ function setup(remote: RemoteState = { data: {}, updatedAtByKey: {} }) {
             remoteUpdatedAt: current,
             value: remote.data[entry.key],
           });
+          continue;
+        }
+        if (entry.patch !== undefined) {
+          // Écriture partielle (server/settings/patch.ts) : fusion superficielle
+          // du profil, fusion par `id` du roster.
+          const merged = mergePatch(entry.key, remote.data[entry.key], entry.patch);
+          remote.data[entry.key] = merged;
+          remote.updatedAtByKey[entry.key] = entry.updatedAt;
+          applied.push({ key: entry.key, updatedAt: entry.updatedAt, value: merged });
           continue;
         }
         remote.data[entry.key] = entry.value;
@@ -221,6 +246,86 @@ describe('UserDataService', () => {
       }[];
       expect(entries).toHaveLength(1);
       expect(entries[0].value).toEqual([{ name: 'a', count: 3 }]);
+    });
+
+    it('n’envoie que les champs modifiés du profil une fois la version du compte connue', async () => {
+      const profile = { pseudo: 'Oumbra', avatarIndex: 3, alertManualClose: false };
+      const { service, requestJson, remote } = setup({
+        data: { profile },
+        updatedAtByKey: { profile: '2026-08-10T10:00:00.000Z' },
+      });
+      await service.activateRemote();
+      requestJson.mockClear();
+
+      service.write('profile', { ...profile, alertManualClose: true });
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      expect(requestJson).toHaveBeenCalledTimes(1);
+      const entries = (requestJson.mock.calls[0][1].body?.entries ?? []) as Obj[];
+      // Ni pseudo ni avatar dans la requête : seul le réglage d'alerte voyage.
+      expect(entries).toEqual([
+        { key: 'profile', patch: { alertManualClose: true }, updatedAt: expect.any(String) },
+      ]);
+      expect(remote.data['profile']).toEqual({ ...profile, alertManualClose: true });
+    });
+
+    it('n’envoie que le compte du roster modifié, et les suppressions par identifiant', async () => {
+      const roster = [
+        { id: 'main', label: '', characters: [] },
+        { id: 'alt', label: 'Alt', characters: [] },
+      ];
+      const { service, requestJson, remote } = setup({
+        data: { roster },
+        updatedAtByKey: { roster: '2026-08-10T10:00:00.000Z' },
+      });
+      await service.activateRemote();
+      requestJson.mockClear();
+
+      service.write('roster', [{ ...roster[0], gameServer: 'pandora' }]);
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      const entries = (requestJson.mock.calls[0][1].body?.entries ?? []) as Obj[];
+      expect(entries[0]['patch']).toEqual({
+        accounts: [{ id: 'main', gameServer: 'pandora' }],
+        removedIds: ['alt'],
+      });
+      expect(remote.data['roster']).toEqual([{ ...roster[0], gameServer: 'pandora' }]);
+    });
+
+    it('envoie la valeur entière tant que la version du compte est inconnue', async () => {
+      const { service, requestJson } = setup();
+      await service.activateRemote();
+      requestJson.mockClear();
+
+      service.write('profile', { pseudo: 'Nouveau', alertManualClose: true });
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      const entries = (requestJson.mock.calls[0][1].body?.entries ?? []) as Obj[];
+      expect(entries[0]['value']).toEqual({ pseudo: 'Nouveau', alertManualClose: true });
+      expect(entries[0]['patch']).toBeUndefined();
+
+      // La version du compte est maintenant connue : l'écriture suivante est partielle.
+      requestJson.mockClear();
+      service.write('profile', { pseudo: 'Nouveau', alertManualClose: false });
+      await vi.advanceTimersByTimeAsync(2_000);
+      const next = (requestJson.mock.calls[0][1].body?.entries ?? []) as Obj[];
+      expect(next[0]['patch']).toEqual({ alertManualClose: false });
+    });
+
+    it('ne fait aucune requête quand l’écriture locale ne change rien pour le compte', async () => {
+      const profile = { pseudo: 'Oumbra', alertManualClose: false };
+      const { service, requestJson } = setup({
+        data: { profile },
+        updatedAtByKey: { profile: '2026-08-10T10:00:00.000Z' },
+      });
+      await service.activateRemote();
+      requestJson.mockClear();
+
+      service.write('profile', { ...profile });
+      await vi.advanceTimersByTimeAsync(2_000);
+
+      expect(requestJson).not.toHaveBeenCalled();
+      expect(service.pendingKeys()).toEqual([]);
     });
 
     it('applique la version du compte quand le serveur refuse une écriture périmée', async () => {
