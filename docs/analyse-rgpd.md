@@ -42,18 +42,18 @@ devancé la documentation.
 >   que ce que le bouton fait réellement, le reste est fourni sur demande écrite sous un mois
 >   (art. 12.3). L'endpoint d'export serveur reste souhaitable, plus obligatoire.
 > - 4.4 (IP en clair) : le volet **déclaration** est résolu par `1651a41` (points 1, 1.2, 1.3 et 5) ;
->   le volet **minimisation** (hachage) restait ouvert, traité ensuite (voir 4.4).
+>   le volet **minimisation** (hachage) par `efc004c` — résolu (voir 4.4).
 > - 4.6 : les extractions de pacte sont désormais citées (`1651a41`) ; les deux autres omissions
 >   restent ouvertes.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                                    |
-| ------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                             |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                           |
-| 🟡 Modéré                | 4      | information au point de collecte (4.7) · en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) résolu |
-| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                         |
+| Gravité                  | Nombre | Nature                                                                                                                                                                       |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                              |
+| 🟡 Modéré                | 3      | en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) et point de collecte (4.7) résolus |
+| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                            |
 
 Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -355,9 +355,18 @@ règle « toute nouvelle table rattachée à `users` ou toute nouvelle clé sync
 relecture des documents légaux » — à inscrire dans `CLAUDE.md` au même titre que le gating
 `isInitialLoad`.
 
-### 🟡 4.7 — Aucune information au point de collecte
+### ✅ 4.7 — Aucune information au point de collecte — **résolu le 2026-09-19**
 
 **Article concerné** : 13.1 (information au moment de la collecte).
+
+> **Résolution.** `AuthProviderButtonsComponent` (`shared/auth-provider-buttons/`) porte désormais,
+> sous les boutons Discord/Google, la mention « En vous connectant, vous acceptez les
+> [conditions d'utilisation] et la [politique de confidentialité] » (clés `auth.login.consent*`,
+> 4 locales), dont les deux liens ouvrent `LegalPageService.open('terms' | 'privacy')`. Placée
+> dans le composant partagé plutôt que chez chaque appelant, elle couvre les **trois** écrans de
+> connexion (page profil, « passer cette étape » mobile de la page setup, appairage de l'overlay)
+> sans qu'aucun puisse l'omettre. Vérifié en Chrome (`playwright-core`) sur les trois écrans, dans
+> les 4 langues, clic sur le lien → `/fr/privacy-policy`. Constat d'origine ci-dessous.
 
 L'écran de connexion (`auth.login.intro`, `auth.login.guestNote`,
 `shared/auth-provider-buttons/`) explique le bénéfice de la connexion et rappelle qu'elle est
@@ -440,7 +449,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4 | 4.6   | Faible |
 | ~~6~~ | ~~Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus~~ — **fait** (`1651a41` puis `efc004c`, 2026-09-19)                 | 4.4   | —      |
 | ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                             | 4.5   | —      |
-| 8     | Lien vers CGU + politique sous les boutons de connexion                                                                                      | 4.7   | Minime |
+| ~~8~~ | ~~Lien vers CGU + politique sous les boutons de connexion~~ — **fait** le 2026-09-19                                                         | 4.7   | —      |
 | 9     | Ajouter `public/_headers` (CSP en report-only d'abord)                                                                                       | 4.8   | Faible |
 
 ### Priorité 3 — documentaire et amélioration continue

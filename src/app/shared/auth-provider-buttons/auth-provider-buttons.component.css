@@ -50,6 +50,34 @@
   border-color: #dadce0;
   color: #3c4043;
 }
+/* Mention d'acceptation des textes légaux sous les boutons (voir le composant) : discrète, mais
+lisible — ce n'est pas une note de bas de page, c'est l'information due au point de collecte. */
+.provider-consent {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+/* Un `<button>` (pas un `<a>` : ouvre une vue interne, pas une URL) rendu comme un lien en ligne —
+la règle globale `button` de styles.css (display: flex, hauteur fixe, padding, fond) doit être
+neutralisée point par point, sinon chaque lien casse la phrase sur sa propre ligne. */
+.provider-consent-link {
+  display: inline;
+  height: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--text-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.provider-consent-link:hover {
+  color: var(--accent);
+}
+
 /* Desktop : boutons Discord/Google côte à côte, même largeur — plus de place qu'en mobile pour un
 rendu plus soigné qu'un simple empilement plein-largeur (même seuil que profile-page.component.css). */
 @media (min-width: 801px) {
