@@ -10,8 +10,8 @@ import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
  * Page compte (lot 5, prompt 5.2) : identité, fournisseurs liés, sessions
- * actives avec révocation, export RGPD, suppression du compte, et l'écran de
- * migration des données locales à la première connexion.
+ * actives avec révocation, export des données de configuration, suppression du
+ * compte, et l'écran de migration des données locales à la première connexion.
  *
  * C'est aussi la page d'atterrissage après un retour OAuth réussi — voir
  * `App.ngOnInit` : c'est là que se prend, le cas échéant, la décision
@@ -87,7 +87,17 @@ export class AccountPageComponent implements OnInit {
     });
   }
 
-  /** Export RGPD — même charge utile que l'export du profil (AppDataExportService). */
+  /**
+   * Export des données de configuration — même charge utile que l'export du profil
+   * (`AppDataExportService`, soit les 11 clés de `USER_DATA_KEYS`).
+   *
+   * Ce n'est **pas** un export RGPD complet, et la politique de confidentialité ne
+   * le présente pas comme tel (point 6, « Vos droits ») : l'identité, les sessions
+   * et l'historique de combats/achats/échanges vivent uniquement côté serveur et
+   * n'ont aujourd'hui aucun point de sortie — le droit d'accès s'exerce pour eux
+   * par courriel. Si un endpoint d'export serveur est ajouté un jour, fusionner sa
+   * réponse ici ET rétablir la promesse « en un clic » dans les 4 locales.
+   */
   protected exportData(): void {
     const payload = this.dataExport.buildExport();
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
