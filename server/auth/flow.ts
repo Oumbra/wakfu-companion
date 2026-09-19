@@ -113,7 +113,7 @@ export async function completeAuthorization(
     fetchProfile: (codeVerifier: string) => Promise<OAuthProfile | null>;
     now: Date;
     userAgent: string | null;
-    /** Session courante éventuelle, révoquée à la connexion (rotation, §7). */
+    /** Session courante éventuelle, révoquée à la connexion (rotation). */
     currentSessionIdHash?: string | null;
   },
 ): Promise<{ ok: true; result: CompletedAuthorization } | { ok: false; error: CompleteError }> {
@@ -160,7 +160,7 @@ export async function completeAuthorization(
  * Résolution du compte, dans cet ordre :
  * 1. identité `(provider, provider_uid)` déjà connue → ce compte ;
  * 2. sinon, e-mail **vérifié** déjà porté par un compte → l'identité est
- *    rattachée à ce compte (**fusion**, §7 du plan : Discord et Google
+ *    rattachée à ce compte (**fusion** : Discord et Google
  *    vérifient tous deux l'adresse, ce qui rend le rattachement automatique
  *    sûr et évite un écran de liaison manuelle) ;
  * 3. sinon → nouveau compte.
@@ -285,7 +285,7 @@ export interface ResolvedSession {
  * Résout la session portée par un jeton de cookie. Renvoie `null` si le jeton
  * est inconnu, **révoqué** ou expiré — jamais une erreur : l'appelant retombe
  * simplement en mode invité (le mode invité doit rester pleinement
- * fonctionnel, §7).
+ * fonctionnel).
  *
  * Applique l'expiration glissante de 30 jours, mais seulement quand il reste
  * moins de 29 jours (voir SESSION_REFRESH_THRESHOLD_MS) — et jamais à une
@@ -321,9 +321,8 @@ export async function resolveSession(
 
 /**
  * Vérifie le jeton CSRF double-submit d'une requête mutative. `SameSite=Lax`
- * couvre déjà l'essentiel ; ce contrôle est la seconde barrière exigée par le
- * §7 du plan sur les routes sensibles (déconnexion, révocation, suppression
- * de compte).
+ * couvre déjà l'essentiel ; ce contrôle est la seconde barrière posée sur les
+ * routes sensibles (déconnexion, révocation, suppression de compte).
  */
 export async function verifyCsrf(
   sessionToken: string,

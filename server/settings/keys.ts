@@ -9,8 +9,8 @@
  * Doit rester **strictement identique** à `USER_DATA_KEYS` côté client
  * (`src/app/core/data-access/user-data.keys.ts`), qui reprend lui-même les
  * champs d'`AppDataExportService.buildExport()` : c'est le même format de
- * charge utile de bout en bout, comme prévu au §11 du plan (« réutilisé tel
- * quel plutôt qu'un format de transport supplémentaire à maintenir »).
+ * charge utile de bout en bout : réutilisé tel quel plutôt qu'un format de
+ * transport supplémentaire à maintenir.
  */
 export const SYNCED_SETTING_KEYS = [
   'profile',

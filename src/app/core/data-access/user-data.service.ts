@@ -12,8 +12,8 @@ export type ExternalChangeListener = () => void;
  * service — et lui seul — que consomment `ProfileService`,
  * `StatsStoreService`, `CharacterRosterService` et le panneau de chat.
  *
- * Le §4 du plan exige « jamais de `if (connecté)` dispersés dans les
- * composants » : le mode actif est décidé ici, à un seul endroit, et
+ * Règle structurante : jamais de `if (connecté)` dispersés dans les
+ * composants. Le mode actif est décidé ici, à un seul endroit, et
  * l'appelant ne voit qu'un `read`/`write` synchrone identique dans les deux
  * cas. La bascule elle-même est déclenchée par `AuthService` — le seul service
  * qui a une raison légitime de connaître l'état de connexion.

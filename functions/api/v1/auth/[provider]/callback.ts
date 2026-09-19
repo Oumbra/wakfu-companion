@@ -74,7 +74,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const code = url.searchParams.get('code');
   if (!code) return fail('missing_code');
 
-  // Rotation à la connexion (§7) : une session déjà ouverte dans ce navigateur
+  // Rotation à la connexion : une session déjà ouverte dans ce navigateur
   // est révoquée au profit de la nouvelle, plutôt que laissée active en
   // parallèle.
   const previousToken = readCookie(context.request, SESSION_COOKIE);

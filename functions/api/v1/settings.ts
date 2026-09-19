@@ -26,8 +26,8 @@ import type { Env } from '../_types';
  *   arbitrage : écraser est justement ce qui est demandé.
  *
  * Le format de charge utile est celui d'`AppDataExportService.buildExport()`
- * côté client — réutilisé tel quel comme prévu au §11 du plan, plutôt qu'un
- * format de transport supplémentaire à maintenir en double.
+ * côté client — réutilisé tel quel, plutôt qu'un format de transport
+ * supplémentaire à maintenir en double.
  */
 
 /** Taille maximale acceptée pour l'ensemble de la configuration (garde-fou anti-abus). */

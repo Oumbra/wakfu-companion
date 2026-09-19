@@ -1,6 +1,7 @@
 /**
  * Fournisseurs OAuth 2.0 supportés (lot 5, prompt 5.1) : Discord et Google,
- * et rien d'autre — aucun mot de passe n'est géré en propre (§7 du plan).
+ * et rien d'autre — aucun mot de passe n'est géré en propre : l'identité vient
+ * exclusivement du fournisseur, qui vérifie l'adresse à notre place.
  *
  * Tout l'échange de code se fait **côté serveur** : le `client_secret` ne
  * transite jamais par le navigateur. Le flux utilise `state` (anti-CSRF) et
@@ -29,7 +30,7 @@ export interface OAuthProfile {
   /**
    * E-mail **vérifié** par le fournisseur, ou `null`. Un e-mail non vérifié
    * est volontairement traité comme absent : c'est lui qui déclenche la
-   * fusion de comptes (§7), une adresse non vérifiée permettrait de
+   * fusion de comptes, et une adresse non vérifiée permettrait de
    * s'approprier le compte d'un tiers.
    */
   email: string | null;

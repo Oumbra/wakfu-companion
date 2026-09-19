@@ -3,12 +3,6 @@
 Ce document couvre la mise en route pratique et les décisions d'architecture
 réellement mises en œuvre.
 
-Les renvois « §N du plan », ici comme dans les commentaires de `server/` et de
-`src/app/core/`, désignent le plan de migration serveur — document de travail
-qui n'est pas conservé au dépôt, la migration étant terminée. Chaque décision
-qu'il portait est résumée sur place, à l'endroit qui la met en œuvre : ces
-renvois ne sont qu'une trace d'origine, jamais une lecture nécessaire.
-
 ## Architecture
 
 - **Front + API dans le même projet Cloudflare Pages** (pas de Worker
@@ -56,7 +50,7 @@ variables → Actions`) sur `oumbra/wakfu-companion` :
 Secrets/variables supplémentaires du **lot 5** (authentification), tous
 **optionnels** : tant qu'ils sont absents, `/api/v1/auth/{provider}/*` répond
 `503 fournisseur non configuré` et l'application reste pleinement utilisable
-en mode invité (§7 du plan). Le workflow de déploiement les pousse seulement
+en mode invité. Le workflow de déploiement les pousse seulement
 s'ils sont définis, jamais en échec sinon.
 
 | Secret / variable                                              | Description                                                                                                                                                                                                                                         |
@@ -390,7 +384,7 @@ les quatre exigences du prompt — `state` invalide, code rejoué, session
 révoquée, fusion sur e-mail — plus redirection ouverte, CSRF, rotation,
 expiration glissante et limitation de débit.
 
-### Trois écarts par rapport au schéma du §6 du plan
+### Trois écarts par rapport au schéma d'origine
 
 1. **`sessions.id` n'est pas le jeton, mais son SHA-256.** Le jeton opaque
    (256 bits) ne vit que dans le cookie `httpOnly`. Une fuite en lecture de la
@@ -493,7 +487,7 @@ données, aucun compte utilisateur » — faux dès ce lot. Réécrite pour couv
 les deux modes d'utilisation, les données réellement conservées avec un
 compte, le cookie de session, le fait que le chat n'est jamais transmis,
 l'hébergement (Cloudflare + Neon) et les droits RGPD (export, suppression
-réelle). Obligation annoncée au §7 du plan.
+réelle).
 
 #### Portée réelle du bouton « Exporter » (droit d'accès)
 
@@ -680,8 +674,7 @@ bouts :
 constructeur pour initialiser des signaux, et la watchlist est réécrite en
 plein chemin chaud de parsing. La copie `localStorage` reste donc la source de
 vérité immédiate dans les deux modes ; le compte est une **réplication**, pas
-un chemin de lecture. Même raisonnement que pour `findWakfuItemEntry` (§4,
-point de vigilance n°3 du plan).
+un chemin de lecture. Même raisonnement que pour `findWakfuItemEntry`.
 
 **Le seul `if (connecté)` vit dans `AuthService`**, qui déclenche
 `activateRemote()` / `deactivateRemote()`. Aucun composant ne connaît l'état de
@@ -882,14 +875,14 @@ dans `src/app/core/sync/history-event.model.ts`) :
    pas pour autant un journal figé : la clé identifie le **combat**, son détail
    se rafraîchit (voir « Ce qui est immuable, ce qui se rafraîchit » plus bas).
 
-### Six écarts par rapport au schéma du §6 du plan
+### Six écarts par rapport au schéma d'origine
 
 1. **`game_server` sur les trois tables**, pas seulement `purchases` : c'est ce
    pour quoi le lot 7 existe (« taguer l'historique personnel — combats, achats,
    échanges — par serveur »). Toujours nullable : un événement sans serveur
    résolu part quand même, le champ reste vide (prompt 8.1 point 4).
 2. **`fight_participants` porte un `instance_index`** dans sa clé primaire. La
-   PK `(fight_id, name, side)` du plan entre en collision dès que deux
+   PK `(fight_id, name, side)` d'origine entre en collision dès que deux
    combattants du même camp partagent un nom — courant, et tout un mécanisme
    client y est consacré (`InitiativeSeat`, `countNameInstances`). Sans lui, un
    combat contre trois Bouftous perdrait deux lignes sur trois.

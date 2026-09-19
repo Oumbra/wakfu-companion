@@ -14,7 +14,7 @@ export function toBase64Url(bytes: Uint8Array): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-/** Jeton opaque aléatoire. 32 octets = 256 bits d'entropie, exigence du §7 du plan. */
+/** Jeton opaque aléatoire. 32 octets = 256 bits d'entropie, minimum retenu. */
 export function randomToken(byteLength = 32): string {
   const bytes = new Uint8Array(byteLength);
   crypto.getRandomValues(bytes);
