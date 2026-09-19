@@ -1,6 +1,8 @@
 # Analyse de conformité aux CGU Ankama / WAKFU — Wakfu Companion
 
-> **Version analysée** : 1.138.0 (commit `433960a`, 2026-09-19) · **Date de l'analyse** : 19 septembre 2026
+> **Version analysée** : 1.138.0 (commit `ab869c0`, 2026-09-19) · **Date de l'analyse** : 19 septembre 2026
+> (seconde passe, même jour : l'analyse ne retient que ce qui est **suivi par git et poussé** —
+> aucun constat ne repose sur un outil externe ni sur un fichier ignoré du dépôt).
 > **Textes de référence** (récupérés le jour même sur les sites officiels, Chrome piloté) :
 >
 > - **CGU Ankama** — <https://www.wakfu.com/fr/cgu>, « Dernière mise à jour : Août 2025 » ;
@@ -14,11 +16,14 @@
 > **Périmètre** : `src/` (client Angular), `functions/api/v1/` (Pages Functions), `server/`
 > (schéma, import, relais d'icônes), `public/` (assets, SEO), textes légaux embarqués
 > (`legal.notice.body`, `terms.notice.body`, `footer.copyright` dans `core/i18n/translations.ts`).
+> **Exclus** : tout ce que `.gitignore` écarte — en particulier le dossier `repository/`
+> (`/repository`, l. 56) et son contenu, qui ne sont donc **ni lus ni comptés** ici ; ce que le
+> dépôt en dit se limite aux types attendus par `server/import/import-catalog.ts` et aux
+> commentaires du code.
 > **Hors périmètre, mais cités car ils alimentent ce dépôt** : l'**overlay de bureau**
 > (`Oumbra/wakfu-companion-overlay`), le projet **prix HDV** (`wakfu-companion-price`, tables
-> déplacées le 2026-08-18) et les **skills de synchronisation** du dépôt privé
-> `wakfu-companion-private-skills` (`wakfu-monsters-sync`, `wakfu-hdv-memory-scan`,
-> `wakfu-memory-scan`, `wakfu-spells-sync`, `wakfu-monster-spells-sync`, `wakfu-items-sync`).
+> déplacées le 2026-08-18) et l'outillage de constitution des référentiels `repository/*.json`,
+> qui vit hors de ce dépôt et **n'est pas auditable d'ici**.
 > **Nature** : audit de code, article par article — ce document n'est pas un avis juridique.
 
 ---
@@ -38,32 +43,35 @@ Les écarts sont ailleurs, et de trois natures :
    textes cachés utilisant les noms et marques d'Ankama sans autorisation écrite ». Le `<head>`
    de `src/index.html` contient précisément une balise `meta name="keywords"` composée de 14
    variantes de « wakfu ». C'est le seul point où le code contredit **littéralement** une clause.
-2. **Provenance des données et images** — le référentiel de monstres/familles/donjons est issu
-   d'un *scraping* de l'encyclopédie officielle (opposition TDM de l'art. 13.5, exprimée
-   « TDM-RESERVATION: 1 »), des illustrations Ankama sont copiées dans `public/assets/`, et des
-   images `static.ankama.com` sont chargées en contournant délibérément la protection anti-hotlink
-   (`referrerpolicy="no-referrer"`). Le catalogue dérivé des JSON officiels (licence 2019 :
-   « personnelle, non cessible, pas de sous-licence ») est servi par une API publique, sans
-   authentification ni restriction d'origine.
+2. **Provenance des données et images** — le code décrit lui-même le référentiel de
+   monstres/familles/donjons comme venant de l'encyclopédie officielle (« familles
+   encyclopédie », « source scrapée » dans `server/db/schema.ts`) et attend des champs — tables
+   de butin par monstre, drapeaux boss/archimonstre/dominant — qu'aucun export officiel ne
+   fournit ; l'art. 13.5 couvre cette collecte par son opposition TDM (« TDM-RESERVATION: 1 »).
+   L'outil de collecte et les fichiers produits ne sont pas dans le dépôt ; le dépôt en importe,
+   stocke et sert le résultat. Par ailleurs des illustrations Ankama
+   sont copiées dans `public/assets/`, et des images `static.ankama.com` sont chargées en
+   contournant délibérément la protection anti-hotlink (`referrerpolicy="no-referrer"`). Le
+   catalogue dérivé des JSON officiels (licence 2019 : « personnelle, non cessible, pas de
+   sous-licence ») est servi par une API publique, sans authentification ni restriction
+   d'origine.
 3. **Périphérie de l'écosystème** — l'overlay (frappe clavier simulée dans le chat du jeu, lecture
-   de l'image de la fenêtre, assets du jeu embarqués) et les skills de lecture mémoire du client
-   Java (heap dump `jcmd`, clic automatisé dans l'HDV) touchent directement les art. 5.2.1, 5.2.5
-   et la règle « programme tiers » (bannissement définitif dans la grille des sanctions). Ils sont
-   hors de ce dépôt, mais leurs produits (référentiels, prix) y transitent, et les CGU de l'app
-   les décrivent — ils font partie de ce qu'un utilisateur ou Ankama jugerait.
+   de l'image de la fenêtre, assets du jeu embarqués) touche directement l'art. 5.2.5 et la règle
+   « programme tiers » (bannissement définitif dans la grille des sanctions). Il est hors de ce
+   dépôt, mais ce dépôt lui sert de backend et les CGU de l'app le décrivent — il fait partie de
+   ce qu'un utilisateur ou Ankama jugerait.
 
 | Gravité | Nb | Points |
 | --- | --- | --- |
 | 🔴 Contradiction littérale | 1 | Meta-tags « wakfu » (art. 13.3) |
-| 🟠 Risque réel, tolérance à obtenir | 4 | Scraping encyclopédie (13.5) · assets Ankama copiés/relayés (13.1-13.2) · contournement anti-hotlink (5.2.5) · lecture mémoire & automatisation dans l'écosystème (5.2.1/5.2.5, règles « triche ») |
+| 🟠 Risque réel, tolérance à obtenir | 4 | Référentiel monstres/butin issu de l'encyclopédie (13.5) · assets Ankama copiés/relayés (13.1-13.2) · contournement anti-hotlink (5.2.5) · frappe simulée et assets embarqués de l'overlay (5.2.5, 13.1) |
 | 🟡 Modéré / à cadrer | 4 | API catalogue publique vs licence JSON non cessible · mention légale JSON inexacte (« Ankama Games » ≠ « Ankama Studio ») · nom « Wakfu Companion » + domaine `wakfu-companion.com` (13.3) · données de partie stockées côté serveur (13.1) |
 | ⚪ Mineur / documentaire | 3 | Avatars fan-art hotlinkés · réutilisation de données du site Nexus-Hub · absence de demande d'autorisation « site de fans » (5.3.3) |
 
 Rien de tout cela ne relève de la triche, du bot ou de l'atteinte aux serveurs : les sanctions
 « bannissement définitif » de la grille WAKFU visent des pratiques que ce code ne met pas en œuvre.
 Le risque concret est de nature **propriété intellectuelle** (demande de retrait, art. 13.4
-« toute utilisation non conforme met fin à la licence »), pas de nature « compte de jeu » — sauf
-pour la lecture mémoire, seul point qui expose potentiellement le *compte du développeur*.
+« toute utilisation non conforme met fin à la licence »), pas de nature « compte de jeu ».
 
 ---
 
@@ -74,14 +82,14 @@ pour la lecture mémoire, seul point qui expose potentiellement le *compte du d�
 | Comportement | Où | Constat |
 | --- | --- | --- |
 | Lecture de `wakfu.log` | `core/services/log-file-access.service.ts` | File System Access API, `queryPermission({ mode: 'read' })` / `requestPermission({ mode: 'read' })`. **Aucun `createWritable`** dans `src/`. Le fichier n'est jamais téléversé (parsing 100 % local). |
-| Connexion aux serveurs Ankama | `src/`, `functions/`, `server/` | **Aucune.** Les seules URL `ankama.com` du code client sont des `src` d'`<img>` (`static.ankama.com`) et un lien sortant vers la page avatar du compte Ankama. Aucun appel à `wakfu.cdn.ankama.com` au runtime (les JSON sont téléchargés hors ligne par un skill, puis importés en base). |
+| Connexion aux serveurs Ankama | `src/`, `functions/`, `server/` | **Aucune.** Les seules URL `ankama.com` du code client sont des `src` d'`<img>` (`static.ankama.com`) et un lien sortant vers la page avatar du compte Ankama. Aucun appel à `wakfu.cdn.ankama.com` au runtime (les JSON sont téléchargés hors ligne, hors dépôt, puis importés en base). |
 | Modification du client / de ses fichiers | — | **Aucune.** |
 | Automatisation, frappe, clic, injection | `src/` | **Aucune** dans l'app web. |
 | Interception réseau (packet sniffing, proxy, tunnel) | — | **Aucune.** Le log est un fichier écrit volontairement par le client, pas une capture de protocole. |
 | Données envoyées au serveur Wakfu Companion (compte optionnel) | `server/history/ingest.ts`, `server/db/schema.ts` | Combats (résultat, durée, donjon, participants **avec pseudos de tiers**, classe, dégâts/soins, ventilation par sort en `jsonb`, butin), achats, échanges, pactes, réglages. **Aucun message de chat** côté serveur (vérifié : aucune occurrence dans `server/history/` ni `functions/api/v1/history/`). |
 | Monétisation | tout le dépôt | **Aucune** (aucune trace de paiement, don, publicité, abonnement). CGU de l'app : « application web gratuite, développée à titre personnel et non lucratif ». |
-| Images du jeu | voir § 3.6 | CDN communautaire `vertylo.github.io/wakassets` (principal), `static.ankama.com` (recours + galeries d'avatars), planches copiées dans `public/assets/classes|avatars|ui`, relais serveur `/api/v1/icons/*` pour l'overlay. |
-| Référentiel de jeu servi par l'API | `functions/api/v1/catalog/`, `items/[id]`, `monsters/[id]`, `monster-loot`, `monster-families`, `dungeons` | Public, sans authentification, `cache-control: public`. Source : `repository/*.json` (gitignoré), importé par `server/import/import-catalog.ts`. |
+| Images du jeu | voir § 3.7 | CDN communautaire `vertylo.github.io/wakassets` (principal), `static.ankama.com` (recours + galeries d'avatars), planches copiées dans `public/assets/classes|avatars|ui`, relais serveur `/api/v1/icons/*` pour l'overlay. |
+| Référentiel de jeu servi par l'API | `functions/api/v1/catalog/`, `items/[id]`, `monsters/[id]`, `monster-loot`, `monster-families`, `dungeons` | Public, sans authentification, `cache-control: public`. Source : `repository/*.json` (gitignoré — non examiné), chargé en base par `server/import/import-catalog.ts`, dont les types `RawItem`/`RawMonster`/`RawDungeon`/`RawMonsterFamily`/`RawCategory`/`RawRecipe` décrivent le contenu attendu. Objets/recettes : JSON gamedata officiels fusionnés (`server/README.md`). Monstres/familles/donjons/sous-catégories : encyclopédie officielle d'après les commentaires du code (voir § 3.6). |
 
 ---
 
@@ -179,7 +187,7 @@ WAKFU » (v1, 2019-03-11). Ce que le code en fait :
 | § 2 « respecter sans délai toute demande de la Société de retirer tout contenu » | `legal.notice.body` § 3 : « Tout contenu appartenant à Ankama est retiré sur simple demande ». | ✅ |
 | § 4 « modifications [...] cesser d'utiliser les Données et supprimer toute publication » | Rien à faire aujourd'hui ; la version 2019 est toujours celle liée du fil officiel (dernière mise à jour du fil : 1ᵉʳ octobre 2025). | ✅ |
 
-### 3.6 Fouille de textes et de données — scraping de l'encyclopédie (art. 13.5) : 🟠
+### 3.6 Fouille de textes et de données — référentiel issu de l'encyclopédie (art. 13.5) : 🟠
 
 Texte : *« Ankama s'oppose à toutes opérations de moissonnage et de fouille de textes et de données
 au sens de l'article L. 122-5-3 du CPI. Cette opposition couvre l'ensemble du Site [...] Toutes
@@ -187,29 +195,44 @@ opérations de moissonnage [...] y compris par des dispositifs de collecte autom
 constituent donc des actes de contrefaçon sauf obtention d'un accord spécifique. »* Signal machine :
 `TDM-RESERVATION: 1`.
 
-Contrairement aux objets et recettes (JSON officiels, licence dédiée), **aucun gamedata public
-n'existe pour les monstres, familles et donjons** : `repository/monsters.json`,
-`monster-families.json` et `dungeons.json` sont construits par le skill `wakfu-monsters-sync` en
-scrapant l'encyclopédie `wakfu.com` (4 locales × ~36 pages de liste + fiches), via un navigateur
-piloté — précisément un « dispositif de collecte automatisée ». Ce dépôt en est le destinataire :
-`server/import/import-catalog.ts` charge ces fichiers en base, et `functions/api/v1/monsters/[id]`,
-`monster-families`, `monster-loot`, `dungeons` les servent publiquement (`monsters.loot`, tables de
-butin, viennent aussi de l'encyclopédie).
+**Ce que le dépôt permet d'établir.** Ni l'outil qui produit `repository/*.json` ni ces fichiers
+eux-mêmes ne sont dans le dépôt (`server/README.md` : transformation « réalisée hors du dépôt,
+manuellement, par le mainteneur » ; `/repository` gitignoré). La provenance se lit néanmoins dans
+le code suivi par git :
+
+| Indice | Où | Ce qu'il montre |
+| --- | --- | --- |
+| Le code nomme sa source : « Familles encyclopédie des monstres », « arbre de filtre "Types" de l'encyclopédie officielle », « ce libellé n'existant qu'en français **à la source scrapée** », « pas de famille encyclopédie (28 monstres sur 851) » | `server/db/schema.ts` l. 90, 136-142, 215 ; `core/api/catalog.service.ts` l. 48-57 ; `server/catalog/compact-index.ts` l. 82 ; `fight-image.util.ts` | Le dépôt qualifie lui-même la source des familles et des sous-catégories d'« encyclopédie » et de « scrapée ». |
+| Type d'entrée `RawMonster` : `loot?: number[]` (« ids Ankama des objets droppables sur ce monstre »), `isBoss`, `isArchi`, `isDominant`, `family`, `wakfu_available`, `picture_url` | `server/import/import-catalog.ts` l. 93-112 | **Aucun gamedata public ne décrit les monstres ni leurs butins** (le fil officiel ne liste que objets, recettes, états, actions…). Tables de butin et statuts boss/archi/dominant n'existent, côté Ankama, que sur les fiches de l'encyclopédie `wakfu.com`. Un drapeau `wakfu_available` suppose d'avoir sondé le CDN Ankama pour chaque entrée. |
+| Volumes documentés dans les commentaires : 851 monstres, « ~728 monstres avec du loot connu, ~17,6 objets en moyenne (jusqu'à 99) », 10 890 objets ; image monstre « déductible du gfxId » sur `static.ankama.com/wakfu/portal/game/monster/42/` « vérifié 851/851 » | `functions/api/v1/monster-loot.ts`, `server/catalog/compact-index.ts` l. 75-91, `fight-image.util.ts` l. 22-37 | Une couverture quasi exhaustive du bestiaire, alignée sur les identifiants d'images de l'encyclopédie (`/portal/`) : un traitement de masse, pas une consultation ponctuelle. |
+| Endpoints qui redistribuent ces données | `functions/api/v1/monsters/[id].ts`, `monster-families.ts`, `monster-loot.ts`, `dungeons.ts`, `catalog/*` | Publics, sans authentification, `cache-control: public`. |
+| Traçabilité : `server/README.md` parle de « fichiers déjà committés » et d'un workflow `.github/workflows/import-catalog.yml` déclenché sur `repository/**` — le dossier est gitignoré et ce workflow n'existe pas | `server/README.md` l. 166-186, `.gitignore` l. 56, `.github/workflows/` | Les référentiels ne transitent jamais par git et l'import est manuel : leur constitution est intraçable depuis le dépôt (ni date, ni méthode, ni volume de requêtes). |
+
+Ce dépôt est donc le **destinataire et le diffuseur** de données extraites de l'encyclopédie.
+Que la collecte ait été automatisée (ce que la couverture — 851 fiches × 4 locales, ~728 tables de
+butin — rend très probable, et que le mot « scrapée » suggère) ou manuelle ne change pas la
+qualification de l'usage aval : 13.5 interdit le « moissonnage » et 13.2 la « reproduction,
+extraction, distribution » des données liées aux Jeux, quelle que soit la technique.
 
 Nuances :
 
 - La *fouille* interdite par L. 122-5-3 vise la reproduction à des fins d'analyse ; ici, les données
-  extraites sont des **faits** (nom d'un monstre, sa famille, son niveau) — non protégeables par le
-  droit d'auteur en tant que tels — mais leur collecte *systématique et substantielle* relève aussi
-  du **droit sui generis des bases de données** (L. 341-1 CPI), que 13.2 invoque (« toutes données
-  liées aux Jeux [...] appartiennent à Ankama »).
+  extraites sont des **faits** (nom d'un monstre, sa famille, ce qu'il peut laisser tomber) — non
+  protégeables par le droit d'auteur en tant que tels — mais leur collecte *systématique et
+  substantielle* relève aussi du **droit sui generis des bases de données** (L. 341-1 CPI), que 13.2
+  invoque (« toutes données liées aux Jeux [...] appartiennent à Ankama »).
 - Le site de référence Nexus-Hub et la quasi-totalité des fan-sites Wakfu font la même chose ;
   Ankama l'a toléré et a même ouvert les JSON *en réponse* à cette demande (« Face à la demande
   grandissante… »). La tolérance est réelle mais discrétionnaire.
 - La demande la plus naturelle est de solliciter, via le fil « Le coin des développeurs », un
   export `monsters.json` officiel — ce qui ferait tomber ce point entier sous la licence 2019.
+- Point de traçabilité, indépendant de la conformité : rien dans le dépôt ne date ni ne décrit la
+  constitution de ces fichiers, et le dépôt public ne les contient pas. En cas de demande d'Ankama
+  (ou simplement de mise à jour), il faudrait pouvoir dire d'où vient chaque champ — voir
+  recommandation 7.
 
-Le scraping vit hors de ce dépôt ; **la dépendance à son produit est dans ce dépôt**. Statut 🟠.
+**La méthode de collecte est hors de portée de cet audit ; la dépendance à son produit, sa mise en
+base et sa redistribution publique sont dans ce dépôt.** Statut 🟠.
 
 ### 3.7 Images et illustrations (art. 13.1, 13.2, 5.2.5) : 🟠 / 🟡
 
@@ -221,7 +244,7 @@ l'autorisation préalable et écrite d'Ankama »* ; 13.2 : *« copier, reproduir
 | Icônes d'objets/monstres/types/raretés via `vertylo.github.io/wakassets` | `shared/item-icon`, `shared/entity-icon`, `wakfu-item-category.data.ts`, `rarity-icon.data.ts` | Hotlink vers un dépôt communautaire tiers qui redistribue lui-même des assets Ankama (sans licence Ankama connue). Le risque juridique premier est porté par ce dépôt ; l'app en dépend. `legal.notice.body` § 3 le déclare. | 🟡 |
 | Relais serveur `/api/v1/icons/{folder}/{file}` | `functions/api/v1/icons/[folder]/[file].ts`, `server/icons/proxy.ts` | Nos serveurs **redistribuent** (cache 24 h, `access-control-allow-origin: *`) les icônes wakassets pour l'overlay — motivé par le RGPD (IP non transmise à GitHub). Du point de vue de 13.2, l'app passe de « lien » à « reproduction et distribution » d'œuvres Ankama, ouvertement à quiconque. | 🟠 |
 | Planches copiées dans `public/assets/classes/` (36 portraits m/f), `public/assets/avatars/` (planche 2 × 18 depuis `static.ankama.com/web-test/{id}.png`), `public/assets/ui/header-*.png`, `breach-*.png`, `rarity-base` | `class-icons.data.ts`, `class-portraits.data.ts`, `header-icons.data.ts`, `breach-icon.data.ts` | Reproduction d'illustrations Ankama (portraits de classe, avatars officiels) et d'éléments d'UI du site de référence, hébergés et distribués par nous. Usage illustratif, non commercial, déclaré dans les mentions légales — mais sans autorisation écrite, ce que 13.1 exige. C'est la situation classique du fan-site ; le risque est une demande de retrait, pas une sanction de compte. | 🟠 |
-| `static.ankama.com` en recours (`wakfu-item-image-overrides.data.ts`, `fight-image.util.ts` monstres `/portal/game/monster/42/`) avec `referrerpolicy="no-referrer"` | `shared/item-icon/item-icon.component.ts` | Le `Referer` est supprimé **parce que** le CDN bloque le hotlink depuis un domaine tiers (documenté dans `CLAUDE.md` : « protection anti-hotlink »). C'est un contournement délibéré d'une mesure technique de contrôle d'accès. 5.2.5 vise formellement les mesures protégeant « les Jeux ou les Clients », pas le CDN du site — la clause ne s'applique donc pas à la lettre — mais l'intention documentée du contournement pèserait dans toute discussion avec Ankama. | 🟠 |
+| `static.ankama.com` en recours (`wakfu-item-image-overrides.data.ts`, `fight-image.util.ts` monstres `/portal/game/monster/42/`, avatars `/web-test/`) avec `referrerpolicy="no-referrer"` — 13 balises `<img>` dans 11 fichiers (`item-icon`, `entity-icon`, `fight-history`, `session-recap`, `purchases`, `profile`, `profile-page`, `entity-stat-tabs`, `theme-switch`) | `shared/item-icon/item-icon.component.ts` et al. | Le `Referer` est supprimé **parce que** le CDN bloque le hotlink depuis un domaine tiers (documenté dans `CLAUDE.md` et dans `wakfu-item-image-overrides.data.ts` : « static.ankama.com bloque ces URLs si la requête porte un en-tête Referer »). C'est un contournement délibéré d'une mesure technique de contrôle d'accès, généralisé par copie à des balises qui n'en ont pas besoin (icônes wakassets de `entity-stat-tabs`/`theme-switch`, où il ne sert qu'à ne pas transmettre l'URL de la page à GitHub). 5.2.5 vise formellement les mesures protégeant « les Jeux ou les Clients », pas le CDN du site — la clause ne s'applique donc pas à la lettre — mais l'intention documentée du contournement pèserait dans toute discussion avec Ankama. | 🟠 |
 | Galeries d'avatars fan-art `static.ankama.com/web-test/{1101-1133, 203852-…}` | `avatar-fanart-galleries.data.ts`, page profil | Hotlink d'illustrations que des artistes tiers ont fournies à Ankama pour les avatars de compte ; leurs droits sont concédés à Ankama pour *ce* service, pas pour des sites tiers. Faible volume, usage identique à celui du compte Ankama ; libellé « merci à eux » dans l'app. | ⚪ |
 | Données extraites du dépôt Nexus-Hub (`wakfu-class-spells.data.ts`, `wakfu-ally-summons.data.ts`, anciennes tables de noms/familles) | `core/data/` | Sans rapport avec les CGU Ankama ; dépend de la licence du dépôt Nexus-Hub (à vérifier, non documentée dans ce dépôt). | ⚪ |
 
@@ -244,12 +267,11 @@ littéralement une transcription/ré-exploitation de ces éléments, extraite du
   dans les CGU de l'app (le § 3 « référentiel de données de jeu tenu par nos soins » ne couvre que
   le catalogue, pas l'historique).
 
-### 3.9 Écosystème hors dépôt — overlay et lecture mémoire : 🟠
+### 3.9 Écosystème hors dépôt — overlay : 🟠
 
-Ces composants ne sont pas dans ce dépôt, mais (a) ce dépôt leur fournit leur backend
+L'overlay n'est pas dans ce dépôt, mais (a) ce dépôt lui fournit son backend
 (`native_pairings`, `/api/v1/auth/native/*`, relais d'icônes, catalogue), (b) les CGU embarquées
-de l'app les décrivent et engagent l'éditeur à leur sujet, (c) leurs sorties alimentent les
-référentiels de ce dépôt.
+de l'app le décrivent et engagent l'éditeur à son sujet.
 
 **Overlay de bureau** (`wakfu-companion-overlay`, MIT), tel que décrit dans `terms.notice.body`
 § 2 :
@@ -270,20 +292,6 @@ référentiels de ce dépôt.
 - « ne se connecte jamais aux serveurs d'Ankama, ne lit pas la mémoire du client, ne modifie aucun
   de ses fichiers » — conforme, à condition que le code du dépôt overlay le confirme (non audité
   ici, même réserve que `docs/analyse-rgpd.md`).
-
-**Skills de lecture mémoire** (`wakfu-hdv-memory-scan`, `wakfu-memory-scan`, `wakfu-spells-sync`,
-`wakfu-monster-spells-sync`) : heap dump du client Java (`jcmd GC.heap_dump`), format mémoire
-« reverse-engineé » (le mot est dans le skill), clic automatisé « page suivante » dans l'HDV avec
-mouvement de souris lissé. Le skill lui-même porte l'avertissement « probablement hors CGU
-Ankama ». Au regard des textes : 5.2.1 (reverse engineering du Client), 5.2.5 (auto-clic,
-programme non autorisé s'exécutant avec le jeu), règles WAKFU « programme tiers [...] quel qu'en
-soit l'usage » → **bannissement définitif** dans la grille. Usage personnel, non distribué,
-fréquence faible (un scan quotidien) — la probabilité de détection est faible, la qualification
-contractuelle ne l'est pas. Ce sont les *seuls* comportements de l'écosystème qui exposent un
-compte de jeu (celui qui exécute le scan). Les référentiels qui en sortent (`spells.json`,
-`monster-spells.json`, prix HDV) ne transitent **pas** par ce dépôt (aucune table `spells`, tables
-de prix déplacées vers `wakfu-companion-price`) — ils vont directement à l'overlay et au projet
-prix. 🟠 pour l'écosystème, sans écart *dans* ce dépôt.
 
 ### 3.10 Multi-compte, serveurs monocomptes : ✅ neutre
 
@@ -320,14 +328,13 @@ multiple : c'est le client qui écrit plusieurs sessions dans le même `wakfu.lo
 | --- | --- | --- | --- | --- |
 | 1 | **Supprimer `<meta name="keywords">`** (aucun bénéfice SEO, contradiction littérale). Reformuler les « alias » de `llms.txt` en description (« souvent recherché comme tracker ou damage meter pour Wakfu ») plutôt qu'en noms de produit. | `src/index.html`, `public/llms.txt` | 13.3 | Trivial |
 | 2 | **Corriger la mention de licence JSON** : « WAKFU MMORPG : © 2012-{année} Ankama Studio. Tous droits réservés. » (formulation imposée), avec l'année calculée (`new Date().getFullYear()`) plutôt que codée dans 4 locales. Conserver la phrase de non-affiliation à la suite. | `translations.ts` (`footer.copyright` ×4), `app-footer.component` | Licence § 1 | Faible |
-| 3 | **Demander à Ankama** (fil « Le coin des développeurs » ou Support, art. 11) : (a) la tolérance « site de fans » de 5.3.3 pour Wakfu Companion, nom et domaine compris ; (b) un export gamedata officiel pour monstres/familles/donjons — ce qui éteindrait le point 13.5. Archiver la réponse dans `docs/`. | — | 5.3.3, 13.3, 13.5 | Faible, délai externe |
+| 3 | **Demander à Ankama** (fil « Le coin des développeurs » ou Support, art. 11) : (a) la tolérance « site de fans » de 5.3.3 pour Wakfu Companion, nom et domaine compris ; (b) un export gamedata officiel pour monstres/familles/donjons/butins (ou, à défaut, un accord écrit sur l'usage des fiches de l'encyclopédie) — ce qui éteindrait le point 13.5. Archiver la réponse dans `docs/`. | — | 5.3.3, 13.3, 13.5 | Faible, délai externe |
 | 4 | **Cadrer l'API catalogue** : soit restreindre l'origine (`Origin`/`Referer` du site et de l'overlay, ou clé d'app), soit assumer la redistribution et le dire dans les mentions légales avec la mention Ankama Studio *sur les réponses* (en-tête `X-Attribution` ou champ JSON). Le § 2 de la licence interdit la sous-licence ; une API ouverte en est une de fait. | `functions/api/v1/catalog/*`, `items/[id]`, `monsters/[id]`, `monster-*`, `dungeons` | Licence § 1-2, 13.2 | Moyen |
-| 5 | **Retirer `referrerpolicy="no-referrer"` sur les images `static.ankama.com`** et remplacer les 2 recours (`wakfu-item-image-overrides.data.ts`) + l'image de repli monstre par des assets wakassets ou des icônes génériques ; garder le hotlink Ankama uniquement là où il fonctionne sans contournement (galeries d'avatars, si elles passent avec Referer). | `item-icon.component.ts`, `wakfu-item-image-overrides.data.ts`, `fight-image.util.ts` | 5.2.5 (esprit), 13.1 | Faible |
+| 5 | **Retirer `referrerpolicy="no-referrer"` sur les images `static.ankama.com`** et remplacer les 2 recours (`wakfu-item-image-overrides.data.ts`) + l'image de repli monstre par des assets wakassets ou des icônes génériques ; garder le hotlink Ankama uniquement là où il fonctionne sans contournement (galeries d'avatars, si elles passent avec Referer). Retirer aussi l'attribut des balises qui ne pointent que vers wakassets (`entity-stat-tabs`, `theme-switch`…), pour qu'il ne subsiste que là où il est réellement justifié et assumé. | `item-icon.component.ts`, `entity-icon.component.ts`, `wakfu-item-image-overrides.data.ts`, `fight-image.util.ts`, 7 templates `features/*` et `shared/*` | 5.2.5 (esprit), 13.1 | Faible |
 | 6 | **Compléter les CGU de l'app** (§ 3) : l'historique de combats et les profils de personnages synchronisés au compte sont une reproduction d'informations dont Ankama revendique la propriété (13.1) ; ajouter le renvoi à la licence JSON pour le référentiel, et une phrase sur l'origine encyclopédique des monstres. | `translations.ts` (`terms.notice.body` ×4) | 13.1, licence | Faible |
-| 7 | **Inventorier et sourcer chaque asset copié dans `public/assets/`** (classes, avatars, ui, breach) dans un `public/assets/SOURCES.md` : origine, date, transformation ; préférer les versions wakassets déjà hotlinkées pour tout ce qui en dispose, afin que « nos serveurs » ne distribuent que ce qui n'existe pas ailleurs. Vérifier la licence du dépôt Nexus-Hub pour les données `core/data/*` qui en viennent. | `public/assets/`, `core/data/` | 13.1-13.2 | Moyen |
+| 7 | **Inventorier et sourcer chaque asset copié dans `public/assets/`** (classes, avatars, ui, breach) dans un `public/assets/SOURCES.md` : origine, date, transformation ; préférer les versions wakassets déjà hotlinkées pour tout ce qui en dispose, afin que « nos serveurs » ne distribuent que ce qui n'existe pas ailleurs. Vérifier la licence du dépôt Nexus-Hub pour les données `core/data/*` qui en viennent. **Documenter de même la provenance des `repository/*.json`** (dans `server/README.md` ou un `docs/repository-sources.md`, puisque le dossier est gitignoré) : pour chaque fichier, source (gamedata `items.json`/`jobsItems.json` vs fiches de l'encyclopédie), champs concernés, date de la dernière extraction — et corriger `server/README.md` (« fichiers déjà committés », workflow `import-catalog.yml` : ni l'un ni l'autre n'existent dans le dépôt). | `public/assets/`, `core/data/`, `server/README.md` | 13.1-13.2, 13.5 | Moyen |
 | 8 | **Relais d'icônes** : borner l'usage à l'overlay (vérifier `User-Agent`/en-tête d'appairage plutôt que `access-control-allow-origin: *`), pour ne pas devenir un CDN public d'assets Ankama. | `server/icons/proxy.ts` | 13.2 | Faible |
 | 9 | **Overlay** (autre dépôt) : documenter dans son README, à côté de la licence MIT, que les fonctions de frappe simulée sont « hors lecture passive » au sens des CGU Ankama ; envisager de les livrer désactivées par défaut, comme la notification de tour. | `wakfu-companion-overlay` | 5.2.5 | Faible |
-| 10 | **Lecture mémoire** (skills privés) : ne jamais l'intégrer, la documenter ni la promouvoir depuis ce dépôt ou l'app (6.8 interdit aussi d'en faire la *promotion*) ; la mention « probablement hors CGU » dans les skills est correcte — le compte de jeu utilisé pour les scans est le seul exposé. | — | 5.2.1, 5.2.5, règles « triche » | — |
 
 ---
 

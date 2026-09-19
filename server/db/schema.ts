@@ -97,7 +97,7 @@ export type WakfuDungeonType =
  *   audit du contenu réel de ce seau sur la base de prod (155 combats) : quasi exclusivement des
  *   monstres d'ÉVÉNEMENT temporaire (Koutoulou, Chuchotueurs, Ougiptien, Tourbillon/Tornade du
  *   Zinit...) ou des combats environnementaux sans vrai monstre (ex. "Enigme pyramide", une
- *   énigme). Pas jugé rentable d'étendre `repository/monsters.json` (`wakfu-monsters-sync`, réservé
+ *   énigme). Pas jugé rentable d'étendre `repository/monsters.json` (réservé
  *   aux monstres permanents) pour ces cas ponctuels — `EVENT` leur donne un seau générique visible
  *   dans les agrégations par type plutôt qu'un `null` invisible pour toujours (voir
  *   `server/history/fight-type.ts` pour le calcul).
@@ -155,8 +155,8 @@ export const itemCategories = pgTable('item_categories', {
 /**
  * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
  * server/import/import-catalog.ts pour l'import et server/README.md pour
- * l'origine des données (repository/*.json, régénérés à la main via les
- * skills externes wakfu-items-sync/wakfu-monsters-sync, PAS un fetch direct
+ * l'origine des données (repository/*.json, régénérés à la main hors
+ * de ce dépôt, PAS un fetch direct
  * de wakfu.cdn.ankama.com depuis ce dépôt).
  *
  * Clé primaire synthétique (`pk`, bigserial) plutôt que l'id Ankama : ~142

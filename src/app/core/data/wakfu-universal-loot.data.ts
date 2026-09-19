@@ -7,7 +7,7 @@
  * `server/import/analyze-universal-loot.ts`, `npm run main:analyze:universal-loot`) : signal retenu
  * pour juger de l'universalité d'un objet marqué "doute" = apparition dans de nombreux donjons
  * différents plutôt qu'un seul (auquel cas il s'agit plutôt d'un trou du référentiel `monsters.loot`
- * pour UN monstre précis, à corriger via le skill wakfu-monsters-sync plutôt qu'ici).
+ * pour UN monstre précis, à corriger dans `repository/monsters.json` plutôt qu'ici).
  *
  * Familles :
  * - Havre-Gemme / Fragment de Havre-Gemme : gemmes/fragments de havre-sac, un chance de drop

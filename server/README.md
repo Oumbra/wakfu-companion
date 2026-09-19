@@ -169,10 +169,8 @@ d'import (`server/import/import-catalog.ts`) **ne lit pas**
 `repository/*.json`. Raison : la transformation brut Ankama → JSON curé
 (fusion `items.json`/`jobsItems.json`, résolution des noms, vérification de
 disponibilité d'image sur les CDN tiers, identification de la rareté "old")
-ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
-externes** (`wakfu-items-sync`, `wakfu-monsters-sync`), publiés dans un
-dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
-exécutés **manuellement** par le mainteneur (le référentiel Ankama change
+ne fait partie d'aucun script de ce dépôt — elle est réalisée **hors du
+dépôt**, manuellement, par le mainteneur (le référentiel Ankama change
 très rarement). Réimplémenter cette transformation ici aurait dupliqué une
 logique en partie manuelle (voir le commentaire de `normalizeRarity` dans
 `server/import/import-catalog.ts` sur l'identification des objets "old",
@@ -194,7 +192,7 @@ remplacement complet des tables `items`/`monsters`/`dungeons`/`item_recipes`
 diff incrémental. Réutilise scrupuleusement les règles déjà établies côté
 client (exclusion des objets de rareté "old"), et dédoublonne les objets par
 `(fr, rareté, gfxId)` avant insertion (`dedupeItemRows`, cas apparu en volume
-le 2026-08-13 après un élargissement des sources du skill wakfu-items-sync :
+le 2026-08-13 après un élargissement des sources du référentiel :
 283 groupes de vrais doublons, même objet mais ankamaId différent) — pas de
 déduplication par ankamaId seul, qui reste non fiable comme clé (voir le
 commentaire de `server/db/schema.ts` sur la clé primaire synthétique
