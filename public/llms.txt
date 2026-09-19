@@ -30,12 +30,12 @@ d'Ankama Games.
 Une URL dédiée par langue (`/fr`, `/en`, `/es`, `/pt`) donne accès à l'ensemble des fonctionnalités
 ci-dessus dans la langue correspondante ; l'URL racine redirige vers la langue préférée du visiteur.
 
-- [Application (français)](https://oumbra.github.io/wakfu-companion/fr)
-- [Application (English)](https://oumbra.github.io/wakfu-companion/en)
-- [Application (Español)](https://oumbra.github.io/wakfu-companion/es)
-- [Application (Português)](https://oumbra.github.io/wakfu-companion/pt)
-- [Mentions légales](https://oumbra.github.io/wakfu-companion/fr/legal-notice)
-- [Politique de confidentialité](https://oumbra.github.io/wakfu-companion/fr/privacy-policy)
+- [Application (français)](https://wakfu-companion.com/fr)
+- [Application (English)](https://wakfu-companion.com/en)
+- [Application (Español)](https://wakfu-companion.com/es)
+- [Application (Português)](https://wakfu-companion.com/pt)
+- [Mentions légales](https://wakfu-companion.com/fr/legal-notice)
+- [Politique de confidentialité](https://wakfu-companion.com/fr/privacy-policy)
 - [Dépôt de code source (GitHub)](https://github.com/oumbra/wakfu-companion)
 
 ## Questions fréquentes

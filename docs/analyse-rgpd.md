@@ -28,13 +28,18 @@ des pseudonymes de tiers** dans l'historique (point 1.3), avec mise en balance d
 de retrait explicite — c'est le point le plus délicat du dossier, et il est correctement traité.
 
 La conformité n'est donc pas à construire. Ce qui reste tient en un défaut technique de
-cloisonnement, deux fonctions réglementaires incomplètes, et quelques omissions ponctuelles où le
-code a devancé la documentation.
+cloisonnement, une fonction réglementaire incomplète, et quelques omissions ponctuelles où le code a
+devancé la documentation.
+
+> **Mise à jour du 2026-09-19** — l'écart 4.3 (hébergeur du front de production non déclaré) est
+> **résolu** : l'ancien déploiement GitHub Pages, qui ne servait plus que de portail vers la version
+> Cloudflare, a été décommissionné et le domaine canonique est passé à `https://wakfu-companion.com`.
+> Le tableau ci-dessous reflète cet état.
 
 | Gravité                  | Nombre | Nature                                                                                                                                                                                 |
 | ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur                                                                                                                                |
-| 🟠 Majeur                | 2      | Export RGPD incomplet · hébergeur du front de production non déclaré                                                                                                                   |
+| 🟠 Majeur                | 1      | Export RGPD incomplet (l'hébergeur non déclaré, 4.3, est résolu depuis le 2026-09-19)                                                                                                  |
 | 🟡 Modéré                | 6      | IP en clair en base · sessions jamais purgées · information au point de collecte · en-têtes de sécurité · rémanence locale après suppression · omissions résiduelles dans la politique |
 | ⚪ Mineur / documentaire | 6      | Registre art. 30, DPA, procédure de violation, DPIA, âge, adresse de contact                                                                                                           |
 
@@ -204,33 +209,27 @@ au droit à la portabilité. L'écart entre la promesse et le code est direct.
 bouton lorsque l'utilisateur est connecté (en fusionnant avec l'export local). Le format JSON existant
 satisfait l'article 20 (« structuré, couramment utilisé et lisible par machine »).
 
-### 🟠 4.3 — L'hébergeur du front de production n'est pas déclaré
+### ✅ 4.3 — L'hébergeur du front de production n'est pas déclaré — **résolu le 2026-09-19**
 
 **Articles concernés** : 13.1.e/f (destinataires et transferts), 28 (sous-traitants).
 
-La section « Hébergement » déclare deux prestataires : **Cloudflare, Inc.** et **Databricks, Inc.**
-(Neon). Or la production publique est servie par **GitHub Pages** :
+**Constat d'origine.** La section « Hébergement » déclarait deux prestataires — **Cloudflare, Inc.**
+et **Databricks, Inc.** (Neon) — alors que la production publique était servie par **GitHub Pages**
+(`deploy-master.yml`, branche `master`, `https://oumbra.github.io/wakfu-companion`, valeur reprise
+dans `seo.service.ts`, `src/index.html`, `robots.txt`, `sitemap.xml` et `llms.txt`). GitHub, Inc.
+(groupe Microsoft, États-Unis) recevait donc l'adresse IP et le user-agent de **tout** visiteur du
+site, y compris en mode invité, sans être cité comme hébergeur — la mise à jour du 19 septembre ne
+mentionnait GitHub qu'au titre de la vérification de mise à jour de l'overlay.
 
-- `.github/workflows/deploy-master.yml` — « Deploy production (GitHub Pages) », branche `master`,
-  `actions/deploy-pages@v4`, `--base-href /wakfu-companion/` ;
-- `src/app/core/services/seo.service.ts:15` — `SITE_ORIGIN = 'https://oumbra.github.io/wakfu-companion'`,
-  valeur reprise à l'identique dans `src/index.html`, `public/robots.txt`, `public/sitemap.xml` et
-  `public/llms.txt`.
+**Résolution.** Des deux correctifs proposés, c'est le second qui a été retenu : l'ancien
+déploiement GitHub Pages a été **décommissionné**. Il ne servait plus que de portail vers la version
+Cloudflare. Le workflow `deploy-master.yml` et les branches `master`/`gh-pages` ont été supprimés, et
+le domaine canonique est passé à `https://wakfu-companion.com` dans les cinq emplacements.
 
-GitHub, Inc. (groupe Microsoft, États-Unis) reçoit donc l'adresse IP et le user-agent de **tout**
-visiteur du site, y compris en mode invité — là où la politique affirme que, sans compte, seuls « nos
-hébergeurs » journalisent ces informations, en ne citant que Cloudflare.
-
-La mise à jour du 19 septembre mentionne bien GitHub, mais **uniquement** au titre de la vérification
-de mise à jour de l'overlay (« GitHub, Inc., société américaine, ne reçoit de l'overlay de bureau que
-votre adresse IP ») — formulation qui, en l'état, sous-entend que c'est le seul flux vers GitHub,
-alors que c'est aussi l'hébergeur du site lui-même. Ni « GitHub Pages » ni `oumbra.github.io`
-n'apparaissent dans le texte.
-
-**Correctif proposé** : selon l'échéance réelle de la bascule décrite dans `CLAUDE.md`, soit ajouter
-GitHub, Inc. à la section « Hébergement » et compléter la phrase du point 4 (GitHub est couvert par le
-Data Privacy Framework via Microsoft), soit finaliser le passage sur Cloudflare et mettre à jour d'un
-coup les cinq emplacements du domaine canonique.
+La production comme la preview sont désormais servies **uniquement par Cloudflare Pages**, qui est
+bien déclaré dans la section « Hébergement ». Le seul flux résiduel vers GitHub est la vérification
+de mise à jour de l'overlay de bureau — exactement ce que décrit le point 4 de la politique, dont la
+formulation devient donc exacte sans retouche.
 
 ### 🟡 4.4 — Adresse IP stockée en clair en base
 
@@ -353,14 +352,14 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 
 ### ⚪ 4.10 — Obligations documentaires absentes
 
-| Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                                                        |
-| ------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Registre des traitements** (art. 30)     | Absent         | L'exemption des organismes de moins de 250 personnes ne s'applique pas : le traitement n'est ni occasionnel, ni limité. Une page suffit — ébauche au §6.                                                                                                                                                                                                                           |
-| **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                                                          |
-| **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                                                             |
-| **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                                                      |
-| **Vérification de l'âge**                  | Absente        | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                                                             |
-| **Adresse de contact**                     | À vérifier     | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3 — sur un domaine qui n'est pas celui de la production (`oumbra.github.io`). Si cette boîte n'est pas relevée, aucun droit n'est exerçable (art. 12.2/12.3 : réponse sous un mois). **À confirmer avant tout correctif de code.** |
+| Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Registre des traitements** (art. 30)     | Absent         | L'exemption des organismes de moins de 250 personnes ne s'applique pas : le traitement n'est ni occasionnel, ni limité. Une page suffit — ébauche au §6.                                                                                                                                                                                                                                                                                  |
+| **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                                                                                                                 |
+| **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                                                                                                                    |
+| **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                                                                                                             |
+| **Vérification de l'âge**                  | Absente        | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                                                                                                                    |
+| **Adresse de contact**                     | À vérifier     | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — reste à confirmer que la boîte est **réellement relevée** : sans cela, aucun droit n'est exerçable (art. 12.2/12.3 : réponse sous un mois). **À confirmer avant tout correctif de code.** |
 
 ---
 
@@ -370,12 +369,12 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 ### Priorité 1 — à traiter en premier
 
-| #   | Action                                                                                         | Écart | Effort |
-| --- | ---------------------------------------------------------------------------------------------- | ----- | ------ |
-| 1   | Vérifier que `contact@wakfu-companion.com` est réellement relevée ; sinon la remplacer partout | 4.10  | Minime |
-| 2   | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte        | 4.1   | Moyen  |
-| 3   | Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »                         | 4.2   | Moyen  |
-| 4   | Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)             | 4.3   | Minime |
+| #     | Action                                                                                                                                        | Écart | Effort |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| 1     | Vérifier que `contact@wakfu-companion.com` est réellement relevée ; sinon la remplacer partout                                                | 4.10  | Minime |
+| 2     | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte                                                       | 4.1   | Moyen  |
+| 3     | Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »                                                                        | 4.2   | Moyen  |
+| ~~4~~ | ~~Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)~~ — **fait** : GitHub Pages décommissionné le 2026-09-19 | 4.3   | —      |
 
 ### Priorité 2 — à planifier
 
@@ -420,9 +419,9 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 - **Catégories de données** : e-mail vérifié, nom affiché, identifiant du fournisseur OAuth, réglages
   applicatifs, historique de combats/achats/échanges/extractions, noms de personnages (utilisateur et
   tiers).
-- **Destinataires** : Cloudflare, Inc. (hébergement API) ; Databricks, Inc. / Neon (base, serveurs
-  UE) ; GitHub, Inc. (hébergement du front de production, cf. 4.3).
-- **Transferts hors UE** : États-Unis — Data Privacy Framework (Cloudflare, Google, Discord, GitHub),
+- **Destinataires** : Cloudflare, Inc. (hébergement du site **et** de l'API) ; Databricks, Inc. /
+  Neon (base, serveurs UE).
+- **Transferts hors UE** : États-Unis — Data Privacy Framework (Cloudflare, Google, Discord),
   clauses contractuelles types (Databricks).
 - **Durée** : vie du compte ; effacement immédiat et en cascade à la suppression.
 - **Mesures de sécurité** : OAuth sans mot de passe, jeton de session haché SHA-256, cookies
@@ -448,15 +447,15 @@ l'utilisateur, qui en conserve le contrôle exclusif.
 
 ### 7.1 Sous-traitants et destinataires
 
-| Entité                             | Rôle                                                                               | Localisation            | Encadrement du transfert          | Déclaré ?                      |
-| ---------------------------------- | ---------------------------------------------------------------------------------- | ----------------------- | --------------------------------- | ------------------------------ |
-| Cloudflare, Inc.                   | Hébergement API + preview (et bascule du front à venir)                            | US / edge mondial       | Data Privacy Framework            | ✅                             |
-| Databricks, Inc. (Neon)            | Base PostgreSQL                                                                    | Serveurs UE, société US | Clauses contractuelles types      | ✅                             |
-| GitHub, Inc. (Microsoft)           | Hébergement du front de production **et** vérification de mise à jour de l'overlay | US                      | DPF (via Microsoft)               | ⚠️ **partiellement — cf. 4.3** |
-| Discord, Inc.                      | Fournisseur OAuth                                                                  | US                      | Data Privacy Framework            | ✅                             |
-| Google LLC                         | Fournisseur OAuth                                                                  | US                      | Data Privacy Framework            | ✅                             |
-| `static.ankama.com` (Ankama Games) | Icônes d'objets (site uniquement)                                                  | FR                      | — (requête directe du navigateur) | ✅                             |
-| `vertylo.github.io` (wakassets)    | Icônes (site : direct ; overlay : relayé par nos serveurs)                         | US (GitHub Pages)       | —                                 | ✅                             |
+| Entité                             | Rôle                                                                                                                      | Localisation            | Encadrement du transfert          | Déclaré ? |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------- | --------- |
+| Cloudflare, Inc.                   | Hébergement API + preview (et bascule du front à venir)                                                                   | US / edge mondial       | Data Privacy Framework            | ✅        |
+| Databricks, Inc. (Neon)            | Base PostgreSQL                                                                                                           | Serveurs UE, société US | Clauses contractuelles types      | ✅        |
+| GitHub, Inc. (Microsoft)           | Vérification de mise à jour de l'overlay de bureau (l'hébergement du front est passé à Cloudflare le 2026-09-19, cf. 4.3) | US                      | DPF (via Microsoft)               | ✅        |
+| Discord, Inc.                      | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
+| Google LLC                         | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
+| `static.ankama.com` (Ankama Games) | Icônes d'objets (site uniquement)                                                                                         | FR                      | — (requête directe du navigateur) | ✅        |
+| `vertylo.github.io` (wakassets)    | Icônes (site : direct ; overlay : relayé par nos serveurs)                                                                | US (GitHub Pages)       | —                                 | ✅        |
 
 Les deux derniers ne sont pas des sous-traitants pour le site : le navigateur les contacte
 directement, ils reçoivent l'IP du visiteur comme pour n'importe quelle image chargée sur le web. La

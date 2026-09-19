@@ -1,14 +1,13 @@
 # Wakfu Companion — robots.txt
 #
-# Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
-# docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, sitemap.xml, llms.txt,
-# core/services/seo.service.ts) le jour où la prod bascule sur Cloudflare/domaine personnalisé.
+# Domaine canonique en dur ci-dessous (Cloudflare Pages, domaine personnalisé). À METTRE À JOUR
+# (avec src/index.html, sitemap.xml, llms.txt, core/services/seo.service.ts) le jour où le domaine
+# change — un grep sur `wakfu-companion.com` retrouve les 5 endroits.
 #
 # Politique volontairement permissive : cette application est un outil communautaire gratuit sans
 # contenu utilisateur sensible indexable (le tracker/l'historique ne sont jamais servis en HTML côté
 # serveur, voir CLAUDE.md — architecture n°2, tout est reconstruit client-side depuis wakfu.log local).
-# Seule /api/ est exclue (endpoints de données, jamais des pages ; n'existe de toute façon que sur le
-# déploiement Cloudflare, pas sur GH Pages — inoffensif de le lister ici dans tous les cas).
+# Seule /api/ est exclue (endpoints de données servis par les Pages Functions, jamais des pages).
 
 User-agent: *
 Disallow: /api/
@@ -62,4 +61,4 @@ Allow: /
 User-agent: meta-externalagent
 Allow: /
 
-Sitemap: https://oumbra.github.io/wakfu-companion/sitemap.xml
+Sitemap: https://wakfu-companion.com/sitemap.xml
