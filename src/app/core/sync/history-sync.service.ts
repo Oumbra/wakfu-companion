@@ -100,6 +100,12 @@ export class HistorySyncService {
     this.queue.deactivate();
   }
 
+  /** Suppression de compte : comme `disable()`, plus l'effacement de la file sur le disque (voir `SyncQueueService.purge`). */
+  async purge(): Promise<void> {
+    this.enabled.set(false);
+    await this.queue.purge();
+  }
+
   /** Envoie immédiatement ce qui est en attente (bouton « Synchroniser maintenant »). */
   flush(): Promise<void> {
     return this.queue.flush();

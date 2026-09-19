@@ -159,9 +159,21 @@ aucune occurrence de `gtag`, `analytics`, `plausible`, `matomo`, `sentry`, `goog
 
 ## 4. Écarts constatés
 
-### 🔴 4.1 — Fuite d'historique entre comptes via la file de synchronisation locale
+### ✅ 4.1 — Fuite d'historique entre comptes via la file de synchronisation locale — **résolu le 2026-09-19**
 
 **Articles concernés** : 5.1.f (intégrité et confidentialité), 32 (sécurité), 5.1.d (exactitude).
+
+> **Résolution.** Chaque entrée de la file porte désormais l'`uid` du compte auquel elle est
+> destinée (`HistoryEvent.uid`, estampillé par `SyncQueueService.enqueue`). `activate(uid)` ne
+> recharge que les entrées de ce compte et **efface du disque** toutes les autres — y compris les
+> entrées antérieures à ce champ, dont le propriétaire est inconnu (sans perte : l'historique local
+> est intact et sera remis en file à la prochaine lecture du fichier). Une déconnexion volontaire
+> laisse toujours la file sur le disque (elle repart à la reconnexion du même compte) ; la
+> suppression de compte appelle `HistorySyncService.purge()` → `SyncQueueService.purge()`, qui
+> efface du disque tout ce qui était destiné au compte supprimé avant le retour en mode invité.
+> Couvert par `sync-queue.service.spec.ts` (5 cas : entrée héritée d'un autre compte jamais
+> envoyée et effacée, entrée sans `uid` effacée, reconnexion du même compte, estampille, purge
+> ciblée). Constat d'origine ci-dessous, conservé pour mémoire.
 
 La file d'envoi persistante n'est **pas cloisonnée par utilisateur**, à aucun étage :
 
