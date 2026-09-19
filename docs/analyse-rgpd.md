@@ -48,12 +48,12 @@ devancé la documentation.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                             |
-| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                      |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                    |
-| 🟡 Modéré                | 2      | rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) point de collecte (4.7) et en-têtes (4.8, CSP en Report-Only) résolus |
-| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                  |
+| Gravité                  | Nombre | Nature                                                                                                                                                         |
+| ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                  |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                |
+| 🟡 Modéré                | 1      | omissions résiduelles dans la politique (4.6) — IP en clair (4.4) point de collecte (4.7) en-têtes (4.8, CSP en Report-Only) et rémanence locale (4.9) résolus |
+| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                              |
 
 Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -412,9 +412,25 @@ justifier le cookie `HttpOnly`. Le cookie `wc_csrf`, lui, est lisible en JS par 
 `Content-Security-Policy-Report-Only` le temps de valider qu'elle ne casse ni les CDN d'images ni le
 service worker.
 
-### 🟡 4.9 — Rémanence des données locales après déconnexion ou suppression de compte
+### ✅ 4.9 — Rémanence des données locales après déconnexion ou suppression de compte — **résolu le 2026-09-19**
 
 **Articles concernés** : 17 (effacement), 5.1.f.
+
+> **Résolution.** `PersistenceService.wipeLocalData()` efface `localStorage` et supprime la base
+> IndexedDB entière (handle du fichier, cache, file), suivi d'un `location.reload()`. Exposé à
+> deux endroits de la page « Mon compte » : (1) connecté, un interrupteur « Effacer aussi les
+> données de cet appareil » à côté de « Supprimer mon compte », **décoché par défaut** (le mode
+> invité reste utilisable après la suppression ; effacer d'office serait une destruction
+> surprise) ; (2) invité, un bouton « Supprimer les données de cet appareil », confirmé par la
+> popover habituelle. Le constat d'origine supposait que le « Réinitialiser » de l'en-tête
+> suffisait : faux, `resetStats()` ne remet à zéro que la session de statistiques, jamais le
+> profil, le roster ni les filtres de chat — la politique (§5 et §6, 4 locales) le présentait
+> pourtant comme le moyen d'effacer les données locales, formulation **corrigée** au profit du
+> nouveau bouton. Vérifié en Chrome (`DELETE /auth/account` intercepté) : suppression avec
+> l'option → profil, filtres de chat et entrées IndexedDB disparus après rechargement ; sans
+> l'option → tout conservé ; bouton invité → même effacement. La déconnexion volontaire, elle,
+> laisse toujours les données locales intactes (choix assumé, c'est le mode invité). Constat
+> d'origine ci-dessous.
 
 `AuthService.becomeGuest()` remet l'application en mode local sans rien effacer : les données
 rapatriées depuis le compte (profil, roster, watchlist, filtres de chat, et donc pseudos de tiers)
@@ -468,25 +484,27 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 ### Priorité 3 — documentaire et amélioration continue
 
-| #      | Action                                                                                                                    | Écart | Effort |
-| ------ | ------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                               | 4.10  | —      |
-| 11     | Archiver les DPA des trois sous-traitants                                                                                 | 4.10  | Minime |
-| 12     | Écrire la procédure de violation de données                                                                               | 4.10  | Faible |
-| 13     | Consigner l'analyse d'absence d'AIPD                                                                                      | 4.10  | Minime |
-| 14     | Proposer l'effacement local à la suppression de compte, comme le fait l'overlay                                           | 4.9   | Faible |
-| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »  | 4.6   | Minime |
-| ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8) | —     | —      |
-| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté  | 4.2   | Moyen  |
-| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                      | —     | Minime |
-| 19     | Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth sur la preview                           | 4.8   | Minime |
+| #      | Action                                                                                                                                                   | Écart | Effort |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                                                              | 4.10  | —      |
+| 11     | Archiver les DPA des trois sous-traitants                                                                                                                | 4.10  | Minime |
+| 12     | Écrire la procédure de violation de données                                                                                                              | 4.10  | Faible |
+| 13     | Consigner l'analyse d'absence d'AIPD                                                                                                                     | 4.10  | Minime |
+| ~~14~~ | ~~Proposer l'effacement local à la suppression de compte, comme le fait l'overlay~~ — **fait** le 2026-09-19 (+ bouton invité, politique §5/§6 corrigée) | 4.9   | —      |
+| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                 | 4.6   | Minime |
+| ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                | —     | —      |
+| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                 | 4.2   | Moyen  |
+| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                                                     | —     | Minime |
+| 19     | Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth sur la preview                                                          | 4.8   | Minime |
 
 ### Préalable à toute mise en production
 
 **Fusionner `claude/dev` → `main`** (§8, P0) : tant que ce n'est pas fait, la production sert une
 politique datée du 26 août sans un mot sur l'overlay, et un binaire de Release ≥ 0.70 de l'overlay
-ne fonctionne pas contre elle (icônes, écriture partielle du profil, déconnexion). Une seule mise en
-production, une fois les points 2, 6, 8, 9 et 14 traités.
+ne fonctionne pas contre elle (icônes, écriture partielle du profil, déconnexion). Les points 2, 6,
+8, 9 et 14 sont traités (2026-09-19) : plus rien côté code ne s'oppose à la mise en production ;
+restent le point 1 (boîte de contact) et le point 5 (politique, réattributions) à trancher avant ou
+juste après.
 
 ---
 

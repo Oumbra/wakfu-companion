@@ -211,6 +211,14 @@
               {{ 'auth.account.delete' | t }}
             </button>
           </div>
+          <label class="account-switch-row">
+            <span>{{ 'auth.account.deleteLocalToo' | t }}</span>
+            <app-switch
+              [checked]="wipeLocalOnDelete()"
+              [disabled]="auth.busy()"
+              (checkedChange)="wipeLocalOnDelete.set($event)"
+            />
+          </label>
           <p class="account-hint">{{ 'auth.account.deleteHint' | t }}</p>
         </div>
       </section>
@@ -224,7 +232,11 @@
             <button type="button" class="account-btn primary" (click)="openLogin()">
               {{ 'auth.account.loginAction' | t }}
             </button>
+            <button type="button" class="account-btn danger" (click)="confirmWipeLocal($event)">
+              {{ 'auth.account.wipeLocal' | t }}
+            </button>
           </div>
+          <p class="account-hint">{{ 'auth.account.wipeLocalHint' | t }}</p>
         </div>
       </section>
     }
