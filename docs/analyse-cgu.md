@@ -43,6 +43,7 @@ Les écarts sont ailleurs, et de trois natures :
    textes cachés utilisant les noms et marques d'Ankama sans autorisation écrite ». Le `<head>`
    de `src/index.html` contient précisément une balise `meta name="keywords"` composée de 14
    variantes de « wakfu ». C'est le seul point où le code contredit **littéralement** une clause.
+   *Corrigé le 19 septembre 2026 (recommandation 1) : balise supprimée, `llms.txt` reformulé.*
 2. **Provenance des données et images** — le dépôt ne documente pas l'origine du référentiel de
    monstres/familles/donjons, mais attend des champs — tables de butin par monstre, drapeaux
    boss/archimonstre/dominant — qu'aucun export officiel ne fournit et dont la seule source
@@ -326,7 +327,7 @@ multiple : c'est le client qui écrit plusieurs sessions dans le même `wakfu.lo
 
 | # | Action | Fichiers | Clause | Effort |
 | --- | --- | --- | --- | --- |
-| 1 | **Supprimer `<meta name="keywords">`** (aucun bénéfice SEO, contradiction littérale). Reformuler les « alias » de `llms.txt` en description (« souvent recherché comme tracker ou damage meter pour Wakfu ») plutôt qu'en noms de produit. | `src/index.html`, `public/llms.txt` | 13.3 | Trivial |
+| 1 | **Supprimer `<meta name="keywords">`** (aucun bénéfice SEO, contradiction littérale). Reformuler les « alias » de `llms.txt` en description (« souvent recherché comme tracker ou damage meter pour Wakfu ») plutôt qu'en noms de produit. | `src/index.html`, `public/llms.txt` | 13.3 | Trivial — **fait le 2026-09-19** |
 | 2 | **Corriger la mention de licence JSON** : « WAKFU MMORPG : © 2012-{année} Ankama Studio. Tous droits réservés. » (formulation imposée), avec l'année calculée (`new Date().getFullYear()`) plutôt que codée dans 4 locales. Conserver la phrase de non-affiliation à la suite. | `translations.ts` (`footer.copyright` ×4), `app-footer.component` | Licence § 1 | Faible |
 | 3 | **Demander à Ankama** (fil « Le coin des développeurs » ou Support, art. 11) : (a) la tolérance « site de fans » de 5.3.3 pour Wakfu Companion, nom et domaine compris ; (b) un export gamedata officiel pour monstres/familles/donjons/butins (ou, à défaut, un accord écrit sur l'usage des fiches de l'encyclopédie) — ce qui éteindrait le point 13.5. Archiver la réponse dans `docs/`. | — | 5.3.3, 13.3, 13.5 | Faible, délai externe |
 | 4 | **Cadrer l'API catalogue** : soit restreindre l'origine (`Origin`/`Referer` du site et de l'overlay, ou clé d'app), soit assumer la redistribution et le dire dans les mentions légales avec la mention Ankama Studio *sur les réponses* (en-tête `X-Attribution` ou champ JSON). Le § 2 de la licence interdit la sous-licence ; une API ouverte en est une de fait. | `functions/api/v1/catalog/*`, `items/[id]`, `monsters/[id]`, `monster-*`, `dungeons` | Licence § 1-2, 13.2 | Moyen |
