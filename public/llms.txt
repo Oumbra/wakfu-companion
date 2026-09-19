@@ -1,11 +1,11 @@
 # Wakfu Companion
 
-> Wakfu Companion (alias : Wakfu Tracker, Wakfu Combat Tracker, Wakfu Damage Meter) est un
-> compagnon de jeu gratuit pour le MMORPG Wakfu (Ankama Games). Il lit en temps réel le fichier de
-> log `wakfu.log` généré par le client du jeu, directement dans le navigateur (aucun envoi du
-> fichier à un serveur), pour afficher : un tracker/damage meter de combat en temps réel, un
-> historique de combats, le suivi des kamas et de l'XP gagnés, le butin ramassé et le chat par
-> canal. Disponible sans compte (toutes les données restent dans le navigateur) ou avec un compte
+> Wakfu Companion est un compagnon de jeu gratuit pour le MMORPG Wakfu (Ankama Games), de la
+> famille des outils que les joueurs appellent « tracker de combat » ou « damage meter ». Il lit
+> en temps réel le fichier de log `wakfu.log` généré par le client du jeu, directement dans le
+> navigateur (aucun envoi du fichier à un serveur), pour afficher : un tracker/damage meter de
+> combat en temps réel, un historique de combats, le suivi des kamas et de l'XP gagnés, le butin
+> ramassé et le chat par canal. Disponible sans compte (toutes les données restent dans le navigateur) ou avec un compte
 > optionnel (connexion Discord ou Google) pour synchroniser les réglages entre appareils.
 > Interface disponible en français (langue par défaut), anglais, espagnol et portugais.
 
