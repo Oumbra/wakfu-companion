@@ -14,8 +14,15 @@ permissions:
   contents: read
   deployments: write
 
+# Groupe de concurrence PROPRE au déploiement de production — jamais le même que
+# celui de `deploy-preview.yml`. Un groupe est un espace de noms à l'échelle du
+# DÉPÔT, pas du workflow : partager `preview-deploy` entre les deux sérialisait
+# prod et preview (l'une attendait l'autre sans raison), et surtout GitHub ne
+# garde qu'UN SEUL run en attente par groupe — un push sur `claude/dev` pendant
+# qu'un déploiement tournait pouvait donc annuler silencieusement le
+# déploiement de production qui patientait derrière.
 concurrency:
-  group: preview-deploy
+  group: main-deploy
   cancel-in-progress: false
 
 jobs:

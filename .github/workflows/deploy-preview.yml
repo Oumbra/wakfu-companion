@@ -14,6 +14,8 @@ permissions:
   contents: read
   deployments: write
 
+# Groupe propre à la preview (voir le commentaire de `deploy-main.yml` : ne
+# jamais partager ce groupe avec la production).
 concurrency:
   group: preview-deploy
   cancel-in-progress: false
