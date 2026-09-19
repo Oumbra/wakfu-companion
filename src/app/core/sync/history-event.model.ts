@@ -189,6 +189,14 @@ export type HistoryPayload = FightPayload | PurchasePayload | TradePayload | Pac
 export interface HistoryEvent {
   /** `${kind}:${signature}` — clé primaire du magasin, donc dédoublonnage naturel dans la file elle-même. */
   id: string;
+  /**
+   * Compte auquel l'événement est destiné (`AuthUser.id` au moment de la mise en file). La file
+   * IndexedDB est partagée par tous les comptes qui se connectent sur ce navigateur : sans ce champ,
+   * une entrée laissée par A (déconnexion avec un lot en attente) repartait sous le compte de B à sa
+   * connexion suivante, re-signée avec son `uid` — voir `SyncQueueService.activate`, qui ne recharge
+   * que les entrées du compte courant et efface les autres.
+   */
+  uid: string;
   kind: HistoryEventKind;
   /** Signature de contenu (voir en-tête) — sert aussi à reconnaître localement un événement déjà archivé. */
   signature: string;

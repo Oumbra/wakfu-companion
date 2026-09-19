@@ -207,6 +207,11 @@ export class AuthService {
     });
     this._busy.set(false);
     if (!result.ok) return false;
+    // Le compte n'existe plus : la file d'historique en attente sur ce disque
+    // ne doit jamais repartir (une reconnexion réenverrait ce que l'utilisateur
+    // vient de faire effacer) — purgée avant le retour en mode invité, qui ne
+    // fait que désactiver la file.
+    await this.historySync.purge();
     this.becomeGuest();
     return true;
   }
