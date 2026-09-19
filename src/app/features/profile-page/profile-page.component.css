@@ -482,8 +482,8 @@ permet pas de prévisualiser une palette avant de l'activer). */
 /* Aperçu avant/après (voir `colorblindSwatches()`) : une vignette par élément réellement affecté
 par le profil sélectionné, pour que le choix se fasse d'un coup d'œil plutôt qu'en allant
 chercher chaque écran concerné (victoire/défaite, canaux de chat, rareté d'objet...). Grille
-responsive (voir CLAUDE.md, idée d'aération §2) plutôt qu'une liste empilée : profite de la
-largeur du panneau, désormais bien plus large qu'avant le rail (voir `.profile-field`). */
+responsive plutôt qu'une liste empilée : profite de la largeur du panneau, désormais bien plus
+large qu'avant le rail (voir `.profile-field`). */
 .colorblind-swatches {
   margin-top: 10px;
   display: grid;
@@ -721,8 +721,8 @@ on passe en colonne et on réduit le nombre de colonnes de la grille. */
   }
 }
 
-/* Sous-titre générique au-dessus d'un groupe de contrôles (voir CLAUDE.md, idée d'aération §4) —
-ex. "Objets suivis" au-dessus de la recherche/grille d'alertes. */
+/* Sous-titre générique au-dessus d'un groupe de contrôles — ex. "Objets suivis" au-dessus de la
+recherche/grille d'alertes. */
 .subheading {
   margin: 4px 0 2px;
   font-size: 0.72rem;
@@ -776,9 +776,9 @@ champ de recherche : appuie le côté "ajouter" de l'action, avec le glyphe + en
   overflow-x: hidden;
   padding: 2px;
 }
-/* Légère élévation au survol (voir CLAUDE.md, idées d'aération §4/§5) — signale que les tuiles
-sont cliquables, plus « vivant » qu'un simple fond plat. Commun aux tuiles d'objet suivi
-(Alertes) et de personnage (Personnages, vue grille) : même composant visuel dans les deux cas. */
+/* Légère élévation au survol — signale que les tuiles sont cliquables, plus « vivant » qu'un
+simple fond plat. Commun aux tuiles d'objet suivi (Alertes) et de personnage (Personnages, vue
+grille) : même composant visuel dans les deux cas. */
 .sound-item-tile,
 .roster-character-tile {
   position: relative;
@@ -1117,15 +1117,15 @@ donc sa hauteur réelle est toujours connue, y compris avant la toute première 
   object-fit: contain;
   flex-shrink: 0;
 }
-/* Classe sous le nom, vue grille uniquement (voir CLAUDE.md, idée d'aération §5) — plus lisible
-qu'un simple nom seul, déjà connue via `char.className` (pas besoin de traduction, voir
-class-picker : ces libellés ne sont jamais passés au pipe `t`). */
+/* Classe sous le nom, vue grille uniquement — plus lisible qu'un simple nom seul, déjà connue
+via `char.className` (pas besoin de traduction, voir class-picker : ces libellés ne sont jamais
+passés au pipe `t`). */
 .roster-character-class {
   font-size: 0.68rem;
   color: var(--text-muted);
 }
-/* État vide (voir CLAUDE.md, idée d'aération §5) : un compte sans personnage n'affichait rien
-sous le formulaire d'ajout — invite accueillante plutôt qu'un silence. */
+/* État vide : un compte sans personnage n'affichait rien sous le formulaire d'ajout — invite
+accueillante plutôt qu'un silence. */
 .roster-empty-state {
   display: flex;
   flex-direction: column;
