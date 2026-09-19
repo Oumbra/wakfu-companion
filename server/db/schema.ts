@@ -424,6 +424,10 @@ export const sessions = pgTable(
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }).notNull().defaultNow(),
     userAgent: text('user_agent'),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    // Remplacée par une session plus récente (rotation du jeton natif, voir
+    // server/auth/pairing.ts) : encore acceptée jusqu'à `expires_at`, ramené
+    // à quelques minutes, mais plus jamais prolongée ni listée.
+    supersededAt: timestamp('superseded_at', { withTimezone: true }),
   },
   (table) => [index('sessions_user_id_idx').on(table.userId)],
 );

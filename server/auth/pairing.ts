@@ -14,14 +14,28 @@
  *    appairage natif s'ajoute à côté des sessions navigateur, il ne les
  *    remplace pas) au `userCode`.
  * 3. `pollPairing` — l'overlay récupère le jeton une seule fois.
+ *
+ * Puis, pendant la vie de la session : `rotateNativeSession` — l'overlay
+ * échange son jeton contre un neuf (voir la doc de la fonction).
  */
 
 import { randomToken, sha256Hex } from './crypto';
 import { SESSION_TTL_MS } from './cookies';
-import type { AuthStore, PollPairingResult, UserRecord } from './store';
+import { purgeDeadSessions } from './flow';
+import type { AuthStore, PollPairingResult, SessionRecord, UserRecord } from './store';
 
 /** 10 min, comme `OAUTH_STATE_TTL_MS` — assez pour ouvrir le navigateur et confirmer. */
 export const PAIRING_TTL_MS = 10 * 60 * 1000;
+
+/**
+ * Grâce laissée à l'ancien jeton après une rotation. L'overlay a plusieurs
+ * fils qui parlent au serveur en même temps (file d'envoi, icônes, compteurs) :
+ * couper l'ancien jeton à l'instant où le nouveau est émis ferait 401 sur les
+ * requêtes déjà parties, et un 401 côté overlay signifie « jeton refusé », donc
+ * déconnexion ET purge locale — pour une simple course. Cinq minutes couvrent
+ * largement le temps de persister le nouveau jeton et de drainer l'ancien.
+ */
+export const NATIVE_SESSION_ROTATION_GRACE_MS = 5 * 60 * 1000;
 
 /** Alphabet Crockford (sans I/O/U/0/1, ambigus à la lecture/saisie manuelle). */
 const USER_CODE_ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'.replace(/[01IOU]/g, '');
@@ -71,10 +85,83 @@ export async function claimPairing(
     lastUsedAt: params.now,
     userAgent: 'native-overlay',
     revokedAt: null,
+    supersededAt: null,
   });
   const claimed = await store.claimPairing(params.userCode, token, params.now);
   if (!claimed) return null;
+  // Un appareil qui s'appaire est une bonne occasion de ménage (voir flow.ts).
+  await purgeDeadSessions(store, params.now);
   return { token };
+}
+
+export interface RotatedNativeSession {
+  /** Nouveau jeton porteur, à persister AVANT d'abandonner l'ancien. */
+  token: string;
+  issuedAt: Date;
+  expiresAt: Date;
+  /** Jusqu'à quand l'ancien jeton reste accepté (fin de grâce). */
+  previousTokenValidUntil: Date;
+}
+
+/**
+ * Rotation du jeton natif (constat C5 de `docs/analyse-rgpd.md` du dépôt
+ * `wakfu-companion-overlay`, « reste ouvert : la rotation ») : l'overlay
+ * présente son jeton courant et en reçoit un neuf, valable 30 jours
+ * glissants comme le premier. Un jeton de longue durée qui ne change jamais
+ * est une cible qui ne bouge pas ; borner la fenêtre d'utilité d'une copie
+ * (fichier de repli lu par un autre programme, sauvegarde du trousseau) sans
+ * demander à l'utilisateur de se réappairer, c'est exactement ce que fait une
+ * rotation périodique — c'est l'overlay qui choisit le rythme.
+ *
+ * L'ancienne session n'est ni révoquée ni effacée sur-le-champ : elle est
+ * **remplacée** (`supersededAt`) et son expiration ramenée à la fin de grâce
+ * (`NATIVE_SESSION_ROTATION_GRACE_MS`). Pendant la grâce, elle est acceptée
+ * mais plus jamais prolongée (`resolveSession`), n'apparaît plus dans
+ * « Mon compte » (la nouvelle la représente, même appareil), et reste
+ * révocable par « déconnecter tous mes appareils ». Passée la grâce, elle
+ * expire comme n'importe quelle session et sera effacée par le ménage.
+ *
+ * Rotation depuis une session déjà remplacée (encore dans sa grâce) : admise.
+ * C'est le cas d'un overlay qui a planté entre la réponse et l'écriture du
+ * nouveau jeton au trousseau — au redémarrage, il n'a que l'ancien ; le lui
+ * refuser le condamnerait à un réappairage complet pour une fenêtre de
+ * quelques millisecondes. La session neuve devenue orpheline expire d'elle-
+ * même. Le cas contraire (session inconnue, révoquée, expirée) rend `null` :
+ * l'appelant répond 401, comme pour tout jeton refusé.
+ *
+ * Le `userAgent` est recopié de l'ancienne session : c'est le libellé que
+ * « Mon compte » affiche, l'appareil n'a pas changé.
+ */
+export async function rotateNativeSession(
+  store: AuthStore,
+  params: { current: SessionRecord; now: Date },
+): Promise<RotatedNativeSession> {
+  const { current, now } = params;
+  const token = randomToken();
+  const idHash = await sha256Hex(token);
+  const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
+  // La nouvelle session d'abord, l'ancienne ensuite : si la seconde écriture
+  // échoue, l'ancienne reste simplement entière — jamais un utilisateur sans
+  // aucun jeton valide.
+  await store.createSession({
+    idHash,
+    userId: current.userId,
+    issuedAt: now,
+    expiresAt,
+    lastUsedAt: now,
+    userAgent: current.userAgent,
+    revokedAt: null,
+    supersededAt: null,
+  });
+  const previousTokenValidUntil = new Date(
+    Math.min(current.expiresAt.getTime(), now.getTime() + NATIVE_SESSION_ROTATION_GRACE_MS),
+  );
+  await store.supersedeSession(current.idHash, {
+    supersededAt: current.supersededAt ?? now,
+    expiresAt: previousTokenValidUntil,
+  });
+  await purgeDeadSessions(store, now);
+  return { token, issuedAt: now, expiresAt, previousTokenValidUntil };
 }
 
 export function pollPairing(

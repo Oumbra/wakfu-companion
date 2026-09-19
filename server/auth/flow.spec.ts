@@ -16,6 +16,7 @@ import {
   completeAuthorization,
   deriveCsrfToken,
   openSession,
+  purgeDeadSessions,
   resolveSession,
   sanitizeRedirectTo,
   startAuthorization,
@@ -293,6 +294,88 @@ describe('resolveSession', () => {
 
     expect(second.ok).toBe(true);
     expect(await resolveSession(store, first.result.token, NOW)).toBeNull();
+  });
+});
+
+/**
+ * Limitation de la conservation (RGPD art. 5.1.e) : une session expirée ou
+ * révoquée n'a plus d'usage passé un délai — sa ligne (`user_id`, `user_agent`,
+ * horodatages) doit partir, sans cron, à l'occasion des appels existants.
+ */
+describe('purgeDeadSessions', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  async function seed() {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const live = await openSession(store, user.id, { now: NOW, userAgent: 'vivante' });
+    // Expirée il y a 31 jours (ouverte il y a 61 jours, jamais prolongée).
+    const longExpired = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 61 * DAY),
+      userAgent: 'expirée depuis longtemps',
+    });
+    // Expirée hier seulement.
+    const freshlyExpired = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 31 * DAY),
+      userAgent: 'expirée hier',
+    });
+    // Révoquée il y a 31 jours, mais pas encore expirée (elle courait jusqu'à J+29).
+    const longRevoked = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 1 * DAY),
+      userAgent: 'révoquée depuis longtemps',
+    });
+    await store.revokeSession(longRevoked.idHash, new Date(NOW.getTime() - 31 * DAY));
+    // Révoquée hier.
+    const freshlyRevoked = await openSession(store, user.id, {
+      now: NOW,
+      userAgent: 'révoquée hier',
+    });
+    await store.revokeSession(freshlyRevoked.idHash, new Date(NOW.getTime() - 1 * DAY));
+    return { store, live, longExpired, freshlyExpired, longRevoked, freshlyRevoked };
+  }
+
+  it('efface ce qui est mort depuis plus de 30 jours, et rien d’autre', async () => {
+    const { store, live, longExpired, freshlyExpired, longRevoked, freshlyRevoked } = await seed();
+
+    expect(await purgeDeadSessions(store, NOW)).toBe(2);
+
+    expect(await store.findSession(longExpired.idHash)).toBeNull();
+    expect(await store.findSession(longRevoked.idHash)).toBeNull();
+    expect(await store.findSession(live.idHash)).not.toBeNull();
+    expect(await store.findSession(freshlyExpired.idHash)).not.toBeNull();
+    expect(await store.findSession(freshlyRevoked.idHash)).not.toBeNull();
+    expect(await resolveSession(store, live.token, NOW)).not.toBeNull();
+  });
+
+  it('rattrape le reste 30 jours plus tard, et ne touche jamais une session vivante', async () => {
+    const { store, live } = await seed();
+    await purgeDeadSessions(store, NOW);
+
+    const later = new Date(NOW.getTime() + 31 * DAY);
+    // La session vivante a expiré entre-temps (jamais prolongée), mais depuis un jour seulement.
+    expect(await purgeDeadSessions(store, later)).toBe(2);
+    expect(await store.findSession(live.idHash)).not.toBeNull();
+    expect(store.sessions.size).toBe(1);
+  });
+
+  it('est déclenchée par la connexion et par le rafraîchissement glissant', async () => {
+    const { store, longExpired } = await seed();
+    expect(await store.findSession(longExpired.idHash)).not.toBeNull();
+
+    const logged = await login(store);
+    expect(logged.ok).toBe(true);
+    expect(await store.findSession(longExpired.idHash)).toBeNull();
+
+    // Une seconde ligne morte, puis un simple usage de session deux jours plus
+    // tard : c'est le rafraîchissement quotidien qui fait le ménage.
+    const dead = await openSession(store, 'user-x', {
+      now: new Date(NOW.getTime() - 61 * DAY),
+      userAgent: null,
+    });
+    if (!logged.ok) return;
+    const later = new Date(NOW.getTime() + 2 * DAY);
+    expect(await resolveSession(store, logged.result.token, later)).not.toBeNull();
+    expect(await store.findSession(dead.idHash)).toBeNull();
   });
 });
 

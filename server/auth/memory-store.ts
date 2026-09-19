@@ -161,6 +161,13 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       return sessions.delete(idHash);
     },
 
+    async supersedeSession(idHash, patch) {
+      const session = sessions.get(idHash);
+      if (!session) return;
+      session.supersededAt = patch.supersededAt;
+      session.expiresAt = patch.expiresAt;
+    },
+
     async revokeAllSessions(userId, now, exceptIdHash) {
       let revoked = 0;
       for (const session of sessions.values()) {
@@ -178,9 +185,23 @@ export function createMemoryAuthStore(): MemoryAuthStore {
           (session) =>
             session.userId === userId &&
             session.revokedAt === null &&
+            session.supersededAt === null &&
             session.expiresAt.getTime() > now.getTime(),
         )
         .map((session) => ({ ...session }));
+    },
+
+    async purgeDeadSessions(before) {
+      let purged = 0;
+      for (const [key, session] of sessions) {
+        const expiredBefore = session.expiresAt.getTime() < before.getTime();
+        const revokedBefore =
+          session.revokedAt !== null && session.revokedAt.getTime() < before.getTime();
+        if (!expiredBefore && !revokedBefore) continue;
+        sessions.delete(key);
+        purged++;
+      }
+      return purged;
     },
 
     async bumpRateLimit(bucket, windowStart) {

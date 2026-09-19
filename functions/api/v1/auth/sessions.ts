@@ -1,5 +1,6 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
+import { purgeDeadSessions } from '../../../../server/auth/flow';
 import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
@@ -11,12 +12,18 @@ import type { Env } from '../../_types';
  * n'existe que dans le cookie du navigateur concerné) : il sert uniquement à
  * désigner une session à révoquer depuis la page compte. Connaître cette
  * empreinte ne permet donc pas d'usurper la session.
+ *
+ * Consulter ses appareils est le moment naturel du ménage des sessions mortes
+ * depuis plus de 30 jours (`purgeDeadSessions`, flow.ts) : l'utilisateur
+ * regarde ce qui est actif, on efface ce qui ne l'est plus depuis longtemps.
  */
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
 
-  const sessions = await auth.store.listSessions(auth.user.id, new Date());
+  const now = new Date();
+  await purgeDeadSessions(auth.store, now);
+  const sessions = await auth.store.listSessions(auth.user.id, now);
   return json({
     sessions: sessions
       .map((session) => ({

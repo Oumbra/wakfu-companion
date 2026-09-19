@@ -5,7 +5,7 @@ import { createDb } from '../../server/db/client';
 import { createDbAuthStore } from '../../server/auth/db-store';
 import { SESSION_COOKIE, clearedAuthCookies, readCookie } from '../../server/auth/cookies';
 import { resolveSession, verifyCsrf } from '../../server/auth/flow';
-import type { AuthStore, ProviderId, UserRecord } from '../../server/auth/store';
+import type { AuthStore, ProviderId, SessionRecord, UserRecord } from '../../server/auth/store';
 import type { ProviderCredentials } from '../../server/auth/providers';
 import type { Env } from './_types';
 
@@ -62,6 +62,8 @@ export interface AuthenticatedContext {
   user: UserRecord;
   sessionIdHash: string;
   sessionToken: string;
+  /** Ligne de session telle que résolue (déjà lue : pas de second SELECT pour qui en a besoin). */
+  session: SessionRecord;
 }
 
 /**
@@ -99,6 +101,7 @@ export async function authenticate(
     user: resolved.user,
     sessionIdHash: resolved.session.idHash,
     sessionToken: token,
+    session: resolved.session,
   };
 }
 

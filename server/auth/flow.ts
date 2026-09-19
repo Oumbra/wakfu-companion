@@ -22,6 +22,28 @@ import type { AuthStore, ProviderId, SessionRecord, UserRecord } from './store';
  */
 const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Délai au bout duquel une session **morte** (expirée ou révoquée) est effacée
+ * de la table — limitation de la conservation (RGPD art. 5.1.e). Ces lignes
+ * n'ouvrent plus rien (`resolveSession` les refuse) et n'apparaissent plus
+ * dans « Mon compte » ; on les garde le temps de pouvoir relire un incident
+ * (« cet appareil s'était déconnecté quand ? »), pas au-delà. Annoncé dans la
+ * politique de confidentialité (section 5) : ne pas changer l'un sans l'autre.
+ */
+export const DEAD_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Ménage opportuniste des sessions mortes — Cloudflare Pages n'a pas de Cron
+ * Trigger (voir server/README.md), donc, comme pour les autorisations OAuth
+ * et les appairages, on le fait à l'occasion d'appels qui touchent déjà à la
+ * table : connexion, appairage natif, rotation, consultation des appareils,
+ * et le rafraîchissement quotidien de l'expiration glissante (seul déclencheur
+ * pour un compte qui ne se reconnecte jamais mais dont l'overlay tourne).
+ */
+export function purgeDeadSessions(store: AuthStore, now: Date): Promise<number> {
+  return store.purgeDeadSessions(new Date(now.getTime() - DEAD_SESSION_RETENTION_MS));
+}
+
 export interface StartedAuthorization {
   state: string;
   codeChallenge: string;
@@ -119,6 +141,7 @@ export async function completeAuthorization(
   // Purge opportuniste : Cloudflare Pages n'offre pas de Cron Trigger (voir
   // server/README.md), et ces lignes n'ont plus aucune valeur passé leur date.
   await store.purgeExpiredAuthorizations(params.now);
+  await purgeDeadSessions(store, params.now);
 
   return {
     ok: true,
@@ -244,6 +267,7 @@ export async function openSession(
     lastUsedAt: options.now,
     userAgent: options.userAgent,
     revokedAt: null,
+    supersededAt: null,
   });
   return { token, csrfToken: await deriveCsrfToken(token), idHash, expiresAt };
 }
@@ -264,7 +288,9 @@ export interface ResolvedSession {
  * fonctionnel, §7).
  *
  * Applique l'expiration glissante de 30 jours, mais seulement quand il reste
- * moins de 29 jours (voir SESSION_REFRESH_THRESHOLD_MS).
+ * moins de 29 jours (voir SESSION_REFRESH_THRESHOLD_MS) — et jamais à une
+ * session remplacée par rotation (`supersededAt`) : sa courte grâce doit
+ * s'écouler, un usage pendant la grâce ne la ressuscite pas pour 30 jours.
  */
 export async function resolveSession(
   store: AuthStore,
@@ -282,9 +308,11 @@ export async function resolveSession(
   if (!user) return null;
 
   const remaining = session.expiresAt.getTime() - now.getTime();
-  if (remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
+  if (session.supersededAt === null && remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
     const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     await store.touchSession(idHash, { lastUsedAt: now, expiresAt });
+    // Au plus une fois par jour et par session : le bon rythme pour le ménage.
+    await purgeDeadSessions(store, now);
     return { session: { ...session, lastUsedAt: now, expiresAt }, user };
   }
 

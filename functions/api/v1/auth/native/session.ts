@@ -1,10 +1,28 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { purgeDeadSessions } from '../../../../../server/auth/flow';
+import { rotateNativeSession } from '../../../../../server/auth/pairing';
 import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, unauthenticated } from '../../../_auth';
+import type { AuthenticatedContext } from '../../../_auth';
 import type { Env } from '../../../_types';
 
 /**
- * DELETE /api/v1/auth/native/session — **le client natif efface sa session côté serveur**
+ * Session du client natif (overlay) : `POST` la renouvelle, `DELETE` l'efface. Les deux verbes
+ * exigent le porteur `Authorization: Bearer` (voir « Porteur obligatoire » plus bas) et
+ * s'appliquent à la session qui porte la requête — il n'y a rien à désigner.
+ *
+ * ## POST /api/v1/auth/native/session — rotation du jeton
+ *
+ * Réponse `{ token, issuedAt, expiresAt, previousTokenValidUntil }` : un jeton neuf de 30 jours
+ * glissants, et la date jusqu'à laquelle l'ancien reste accepté
+ * (`NATIVE_SESSION_ROTATION_GRACE_MS` après l'appel). L'overlay persiste le nouveau jeton PUIS
+ * bascule ; les requêtes déjà parties avec l'ancien aboutissent. Toute la sémantique (session
+ * remplacée, grâce non prolongeable, cas du plantage entre réponse et écriture) est dans
+ * `server/auth/pairing.ts::rotateNativeSession`. Le rythme est laissé à l'overlay : le serveur ne
+ * force jamais une rotation, un jeton non renouvelé reste simplement un jeton de 30 jours
+ * glissants comme avant.
+ *
+ * ## DELETE /api/v1/auth/native/session — **le client natif efface sa session côté serveur**
  * (demande utilisateur du 2026-09-18, constat C5 de `docs/analyse-rgpd.md` du dépôt
  * `wakfu-companion-overlay`).
  *
@@ -48,8 +66,17 @@ import type { Env } from '../../../_types';
  * Réponse `{ deleted: true|false }` — `false` quand la ligne n'existait plus (appel rejoué, session
  * déjà effacée). Jamais une erreur : côté overlay, l'appel est best-effort, il précède un
  * effacement local qui a lieu de toute façon.
+ *
+ * Le ménage des sessions mortes depuis plus de 30 jours (`purgeDeadSessions`, flow.ts) est fait
+ * aux deux verbes, pour la même raison que les appairages : pas de cron, on profite des appels
+ * qui touchent déjà à la table.
  */
-export const onRequestDelete: PagesFunction<Env> = async (context) => {
+
+/** Porteur obligatoire + authentification + limitation de débit, communs aux deux verbes. */
+async function authenticateBearer(
+  context: Parameters<PagesFunction<Env>>[0],
+  now: Date,
+): Promise<AuthenticatedContext | Response> {
   if (!context.request.headers.get('authorization')?.startsWith('Bearer ')) {
     return jsonError('porteur Authorization requis', 401);
   }
@@ -57,7 +84,6 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
 
-  const now = new Date();
   const limit = await checkRateLimit(
     auth.store,
     `auth:session:ip:${clientIp(context.request)}`,
@@ -67,9 +93,32 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   if (!limit.allowed) {
     return jsonError('trop de requêtes', 429, { 'retry-after': String(limit.retryAfterSeconds) });
   }
+  return auth;
+}
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  const now = new Date();
+  const auth = await authenticateBearer(context, now);
+  if (auth instanceof Response) return auth;
+
+  const rotated = await rotateNativeSession(auth.store, { current: auth.session, now });
+
+  return json({
+    token: rotated.token,
+    issuedAt: rotated.issuedAt.toISOString(),
+    expiresAt: rotated.expiresAt.toISOString(),
+    previousTokenValidUntil: rotated.previousTokenValidUntil.toISOString(),
+  });
+};
+
+export const onRequestDelete: PagesFunction<Env> = async (context) => {
+  const now = new Date();
+  const auth = await authenticateBearer(context, now);
+  if (auth instanceof Response) return auth;
 
   const deleted = await auth.store.deleteSession(auth.sessionIdHash);
   await auth.store.purgeExpiredPairings(now);
+  await purgeDeadSessions(auth.store, now);
 
   return json({ deleted });
 };
