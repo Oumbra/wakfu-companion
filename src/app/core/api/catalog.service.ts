@@ -45,7 +45,7 @@ export interface CatalogMonsterEntry {
   es: string;
   pt: string;
   gfxId: string;
-  /**
+  /** `null` si le monstre n'a pas de famille de monstres (28 monstres sur 851). Référence
    * `CatalogMonsterFamilyEntry.id` (voir findWakfuMonsterFamilyById), jamais résolue ici même : le
    * nom de famille se lit dans une table séparée, pas dupliqué sur chaque monstre. */
   family: number | null;
@@ -54,7 +54,7 @@ export interface CatalogMonsterEntry {
   isDominant: boolean;
 }
 
-/**
+/** Famille d'un monstre (~150 lignes dans le référentiel) — sert
  * uniquement à donner un libellé localisé au palier "famille de monstre" du regroupement "Type" de
  * l'historique des combats (voir resolveFightTypeClassification, core/utils/fight-image.util.ts) ;
  * pas utilisée dans le chemin chaud de parsing (contrairement à CatalogMonsterEntry), chargée et

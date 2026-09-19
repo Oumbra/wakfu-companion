@@ -3,7 +3,7 @@ import { Gender } from './class-icons.data';
 /**
  * Portraits de classe "grand format" (2 sexes x 18 classes) — planche `class-avatars-sheet-*.png`,
  * 2 colonnes (0 = féminin, 1 = masculin) x 18 lignes, une seule image par sexe (pas de variante
- * mate pré-rendue, contrairement à l'ancienne planche `class-portraits-v2-*.png` sourcée depuis
+ * mate pré-rendue, contrairement à l'ancienne planche `class-portraits-v2-*.png` — voir git log). Sources : `static.ankama.com/web-test/{id}.png`
  * (icônes de sélection d'avatar du jeu, fournies directement par identifiant numérique plutôt que
  * cadrées à la main comme la planche précédente), assemblées en une seule planche 2026-08-15.
  *

@@ -32,7 +32,7 @@ export const REASSIGN_HISTORY_KEY = USER_DATA_KEYS.damageReassignments;
 export const ITEM_REASSIGN_HISTORY_KEY = USER_DATA_KEYS.itemReassignments;
 const MAX_CHAT_MESSAGES = 2000;
 const MAX_FIGHT_HISTORY = 30;
-/**
+/** Famille de monstres "Extra Incarnam" (id 161 dans le référentiel — zone
  * d'entraînement/tutoriel, contient notamment "Sac à patates"/"Gros sac à patates", voir
  * CLAUDE.md) dont les combats doivent rester INVISIBLES de tout total agrégé (XP/kamas/combats
  * gagnés-perdus/butin de session) tout en restant visibles tels quels dans l'historique brut
