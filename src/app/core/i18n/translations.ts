@@ -549,6 +549,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
+    'auth.login.consent': 'En vous connectant, vous acceptez les {{terms}} et la {{privacy}}.',
+    'auth.login.consentTerms': "conditions d'utilisation",
+    'auth.login.consentPrivacy': 'politique de confidentialité',
     'auth.login.guestNote':
       "La connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.",
 
@@ -1195,6 +1198,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
+    'auth.login.consent': 'By signing in, you accept the {{terms}} and the {{privacy}}.',
+    'auth.login.consentTerms': 'terms of use',
+    'auth.login.consentPrivacy': 'privacy policy',
     'auth.login.guestNote':
       'Signing in is optional: without an account the app works exactly the same way and all your data stays in this browser.',
 
@@ -1841,6 +1847,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
+    'auth.login.consent': 'Al iniciar sesión, aceptas las {{terms}} y la {{privacy}}.',
+    'auth.login.consentTerms': 'condiciones de uso',
+    'auth.login.consentPrivacy': 'política de privacidad',
     'auth.login.guestNote':
       'Iniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.',
 
@@ -2490,6 +2499,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.',
     'auth.login.discord': 'Discord',
     'auth.login.google': 'Google',
+    'auth.login.consent': 'Ao iniciar sessão, aceita as {{terms}} e a {{privacy}}.',
+    'auth.login.consentTerms': 'condições de utilização',
+    'auth.login.consentPrivacy': 'política de privacidade',
     'auth.login.guestNote':
       'Iniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.',
 
