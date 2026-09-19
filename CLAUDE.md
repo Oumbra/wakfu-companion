@@ -617,25 +617,23 @@ de l'app (fr/en/es/pt).
 - **Domaine canonique en dur, à plusieurs endroits.** L'app n'a pas de rendu serveur (SPA pure, voir
   plus haut) : `src/index.html`, `public/robots.txt`, `public/sitemap.xml`, `public/llms.txt` et
   `core/services/seo.service.ts` (constante `SITE_ORIGIN`) contiennent chacun l'URL canonique de prod
-  (`https://oumbra.github.io/wakfu-companion`, GitHub Pages — hébergement de prod actuel) codée en
-  dur, faute de templating au build sur `public/` (et pour `seo.service.ts`, par cohérence avec les
-  fichiers statiques plutôt que déduite de `location.origin` — voir raison juste après). **Le jour où
-  la prod bascule sur Cloudflare/un domaine personnalisé (voir `docs/plan-migration-serveur.md`),
-  mettre à jour les 5 endroits ensemble** — un grep sur `oumbra.github.io/wakfu-companion` les
-  retrouve tous. Ce même domaine figure aussi en canonical/`og:url`/`hreflang` sur les déploiements de
-  preview (`*.pages.dev`) : volontaire, ça dit aux moteurs de ne pas indexer la preview séparément
-  (doublon de la prod) sans avoir besoin de config par environnement.
-  - **GitHub Pages vs Cloudflare Pages, un état transitoire à garder en tête.** La prod (branche
-    `master`) reste sur GitHub Pages (`--base-href /wakfu-companion/`, voir `deploy-main.yml`), sans
-    fallback SPA côté serveur : un accès direct à une URL de page (`/fr/profile`, `/en`...) y répond
-    404 aujourd'hui, seule `/` (qui redirige côté client une fois le JS chargé) fonctionne vraiment
-    en lien direct. La preview (branche `claude/dev`, déployée automatiquement sur Cloudflare Pages —
-    voir `deploy-preview.yml`, base href racine) a bien `public/_redirects` (`/* /index.html 200`),
-    donc toutes les URLs de page y répondent 200 en lien direct, y compris `/fr/profile`. Le sitemap
-    liste les 4 accueils par langue (`/fr`, `/en`, `/es`, `/pt`) en ciblant néanmoins toujours le
-    domaine GH Pages canonique (voir point ci-dessus) — cohérent avec le reste du fichier, pas une
-    incohérence à corriger : la bascule finale sur Cloudflare changera ce domaine partout d'un coup,
-    pas seulement dans le sitemap.
+  (`https://wakfu-companion.com`) codée en dur, faute de templating au build sur `public/` (et pour
+  `seo.service.ts`, par cohérence avec les fichiers statiques plutôt que déduite de
+  `location.origin` — voir raison juste après). **Le jour où le domaine change, mettre à jour les 5
+  endroits ensemble** — un grep sur `wakfu-companion.com` les retrouve tous. Ce même domaine figure
+  aussi en canonical/`og:url`/`hreflang` sur les déploiements de preview (`claude-dev.`,
+  `*.pages.dev`) : volontaire, ça dit aux moteurs de ne pas indexer la preview séparément (doublon de
+  la prod) sans avoir besoin de config par environnement.
+  - **Une seule cible de déploiement : Cloudflare Pages.** Prod = branche `main`
+    (`deploy-main.yml`), preview = branche `claude/dev` (`deploy-preview.yml`), les deux servies à la
+    racine de leur domaine (aucun `--base-href` custom, `<base href="/">` de `src/index.html`
+    inchangé au build) avec `public/_redirects` (`/* /index.html 200`) : toutes les URLs de page
+    répondent 200 en lien direct, y compris `/fr/profile`. L'ancien déploiement GitHub Pages (branche
+    `master`, `deploy-master.yml`, `https://oumbra.github.io/wakfu-companion`) a été **décommissionné
+    le 2026-09-19** — il ne servait plus que de portail vers cette version, n'avait pas de fallback
+    SPA (404 sur tout lien direct autre que `/`) et imposait le sous-dossier `--base-href
+    /wakfu-companion/`. Ne pas le réintroduire : le workflow, les branches `master` et `gh-pages` ont
+    été supprimés.
 - **Deux couches de meta/title distinctes, à ne pas confondre.** (1) Le `<head>` statique de
   `src/index.html` (meta description, Open Graph, Twitter Card, JSON-LD `WebApplication` +
   `FAQPage`, bloc `<noscript>` multilingue, alternates `hreflang` statiques — voir point suivant) est

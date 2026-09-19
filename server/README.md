@@ -62,8 +62,8 @@ s'ils sont définis, jamais en échec sinon.
 `DATABASE_URL`/`DATABASE_URL_PREVIEW` sont aussi transmis comme variable
 d'environnement chiffrée du projet Cloudflare Pages (poussé à chaque
 déploiement via `wrangler pages secret put`, voir
-`.github/workflows/deploy-preview.yml` — `deploy-main.yml`, encore sur
-GitHub Pages, ne les utilise pas pour l'instant) : c'est ce qui les rend
+`.github/workflows/deploy-main.yml` pour la production et
+`deploy-preview.yml` pour la preview) : c'est ce qui les rend
 disponibles dans `context.env.DATABASE_URL` côté Pages Functions.
 
 ## Migrations
