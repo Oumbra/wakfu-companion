@@ -67,6 +67,11 @@
                 }
               ],
               "outputHashing": "all",
+              "optimization": {
+                "scripts": true,
+                "fonts": true,
+                "styles": { "minify": true, "inlineCritical": false }
+              },
               "serviceWorker": "ngsw-config.json"
             },
             "development": {

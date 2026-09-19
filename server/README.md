@@ -332,6 +332,40 @@ IndexedDB + service worker actif : `CatalogService.status()` passe
 directement à `ready` sans requête réseau, aucun badge « catalogue
 indisponible » affiché).
 
+## En-têtes de sécurité HTTP (`public/_headers`) et CSP
+
+Posés par Cloudflare Pages sur toutes les réponses (RGPD art. 32, écart 4.8 de
+`docs/analyse-rgpd.md`, 2026-09-19) : `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`Permissions-Policy`, `Strict-Transport-Security` (1 an, sans
+`includeSubDomains` ni `preload` : décision à prendre à part, elle engage tout
+sous-domaine futur), et une **CSP en `Report-Only`** — inventaire des origines
+et justification de chaque directive en commentaire dans le fichier lui-même.
+
+- **`ng serve` n'applique jamais `_headers`.** Pour vérifier en local :
+  `npm run build` puis `npx wrangler pages dev dist/wakfu-companion/browser
+--port 8790 --compatibility-date 2026-08-07 --compatibility-flags nodejs_compat`
+  (le même `wrangler pages dev` que `npm run functions:dev`, pointé sur le
+  build au lieu de `public/`), puis lire les en-têtes (`curl -D -`) et écouter
+  l'événement `securitypolicyviolation` dans la page (ou la console : les
+  violations Report-Only s'y affichent en « [Report Only] Refused to... »).
+- **Deux incompatibilités CSP corrigées à cette occasion**, à ne pas
+  réintroduire : (1) le script anti-flash du thème de `src/index.html` était
+  inline → déplacé dans `public/theme-init.js` (`script-src 'self'`, pas de
+  hash à maintenir : le build réécrit le script inline, un hash calculé sur la
+  source ne correspondrait pas) ; (2) l'option `inlineCritical` du CLI Angular
+  (activée par défaut avec `optimization: true`) injecte
+  `<link ... onload="this.media='all'">`, un gestionnaire d'événement inline
+  refusé par `script-src` — désactivée dans `angular.json`
+  (`optimization.styles.inlineCritical: false`, incompatibilité documentée par
+  Angular). Vérifié en Chrome sur le build : zéro violation (dashboard, page
+  d'appairage, pages légales, icônes `vertylo.github.io`, son d'alerte,
+  service worker, `/api/v1/auth/me`).
+- **Passer en mode bloquant** (`Content-Security-Policy`, même valeur) une
+  fois la preview validée en conditions réelles, en particulier le retour
+  OAuth Discord/Google (navigation complète, donc hors CSP de la page, mais à
+  confirmer) — c'est le seul chemin que ce sandbox ne peut pas exercer.
+
 ## Piège PWA : le service worker interceptait `/api/**`
 
 `navigationUrls` par défaut d'Angular (`/**` sauf les URLs comportant une

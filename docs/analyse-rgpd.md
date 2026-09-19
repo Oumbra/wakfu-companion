@@ -48,12 +48,12 @@ devancé la documentation.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                       |
-| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                              |
-| 🟡 Modéré                | 3      | en-têtes de sécurité (4.8) · rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) et point de collecte (4.7) résolus |
-| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                            |
+| Gravité                  | Nombre | Nature                                                                                                                                                                             |
+| ------------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                                      |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                    |
+| 🟡 Modéré                | 2      | rémanence locale après suppression (4.9) · omissions résiduelles dans la politique (4.6) — IP en clair (4.4) point de collecte (4.7) et en-têtes (4.8, CSP en Report-Only) résolus |
+| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                                                  |
 
 Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -379,9 +379,23 @@ acceptez les [CGU] et la [politique de confidentialité] », branchée sur deux
 `LegalPageService.open(...)`. Faible coût, et cela rend les CGU réellement opposables (elles affirment
 déjà « En utilisant l'application, vous acceptez les présentes CGU »).
 
-### 🟡 4.8 — Aucun en-tête de sécurité HTTP
+### ✅ 4.8 — Aucun en-tête de sécurité HTTP — **résolu le 2026-09-19** (CSP en Report-Only)
 
 **Article concerné** : 32 (sécurité du traitement).
+
+> **Résolution.** `public/_headers` pose `X-Content-Type-Options: nosniff`, `X-Frame-Options:
+DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`,
+> `Strict-Transport-Security` (1 an) et une CSP en **`Content-Security-Policy-Report-Only`**
+> (`default-src 'self'`, images autorisées depuis `vertylo.github.io` et `static.ankama.com`,
+> `style-src 'unsafe-inline'` imposé par Angular, `frame-ancestors 'none'`, `object-src 'none'`).
+> Deux incompatibilités levées pour que la CSP soit tenable : le script inline anti-flash du thème
+> déplacé dans `public/theme-init.js`, et `inlineCritical` désactivé dans `angular.json` (le CLI
+> injectait un `onload=` inline). Vérifié en Chrome sur le build servi par `wrangler pages dev`
+> (seul moyen d'appliquer `_headers` en local, méthode dans `server/README.md`) : en-têtes
+> présents, **zéro violation** sur dashboard, appairage, pages légales, icônes tierces, son
+> d'alerte, service worker et API. Reste à faire, hors sandbox : valider le retour OAuth sur la
+> preview puis passer la CSP en mode bloquant (même valeur, en-tête renommé). Constat d'origine
+> ci-dessous.
 
 `public/` contient `_redirects` mais **pas de `_headers`** : le déploiement Cloudflare Pages ne pose
 donc ni `Content-Security-Policy`, ni `X-Content-Type-Options`, ni `Referrer-Policy`, ni
@@ -444,13 +458,13 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 ### Priorité 2 — à planifier
 
-| #     | Action                                                                                                                                       | Écart | Effort |
-| ----- | -------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4 | 4.6   | Faible |
-| ~~6~~ | ~~Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus~~ — **fait** (`1651a41` puis `efc004c`, 2026-09-19)                 | 4.4   | —      |
-| ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                             | 4.5   | —      |
-| ~~8~~ | ~~Lien vers CGU + politique sous les boutons de connexion~~ — **fait** le 2026-09-19                                                         | 4.7   | —      |
-| 9     | Ajouter `public/_headers` (CSP en report-only d'abord)                                                                                       | 4.8   | Faible |
+| #     | Action                                                                                                                                                        | Écart | Effort |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4                  | 4.6   | Faible |
+| ~~6~~ | ~~Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus~~ — **fait** (`1651a41` puis `efc004c`, 2026-09-19)                                  | 4.4   | —      |
+| ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                                              | 4.5   | —      |
+| ~~8~~ | ~~Lien vers CGU + politique sous les boutons de connexion~~ — **fait** le 2026-09-19                                                                          | 4.7   | —      |
+| ~~9~~ | ~~Ajouter `public/_headers` (CSP en report-only d'abord)~~ — **fait** le 2026-09-19 ; reste le passage en mode bloquant après validation sur la preview (#19) | 4.8   | —      |
 
 ### Priorité 3 — documentaire et amélioration continue
 
@@ -465,6 +479,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8) | —     | —      |
 | 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté  | 4.2   | Moyen  |
 | 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                      | —     | Minime |
+| 19     | Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth sur la preview                           | 4.8   | Minime |
 
 ### Préalable à toute mise en production
 
