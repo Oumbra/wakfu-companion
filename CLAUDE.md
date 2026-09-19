@@ -8,7 +8,7 @@ Ne jamais demander d'autorisation avant d'exécuter une commande Bash/Shell/Pyth
 
 # Wakfu Companion — contexte projet
 
-Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagnon de jeu en temps réel qui lit le fichier `wakfu.log` du MMORPG Wakfu (parsing de logs, suivi de dégâts, historique de combats, butin, chat, alertes sonores). Deux cibles de build : dev servi (`npm start`) et build web classique (`npm run build`), déployée en application web servie. **Le mode standalone `file://` (fichier HTML autonome) a été retiré** dans le cadre d'une migration vers un serveur distant (voir `docs/plan-migration-serveur.md`) — les contraintes qu'il imposait (tout embarqué, aucune dépendance externe) ne s'appliquent plus.
+Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagnon de jeu en temps réel qui lit le fichier `wakfu.log` du MMORPG Wakfu (parsing de logs, suivi de dégâts, historique de combats, butin, chat, alertes sonores). Deux cibles de build : dev servi (`npm start`) et build web classique (`npm run build`), déployée en application web servie. **Le mode standalone `file://` (fichier HTML autonome) a été retiré** dans le cadre d'une migration vers un serveur distant — les contraintes qu'il imposait (tout embarqué, aucune dépendance externe) ne s'appliquent plus.
 
 ## Git Commit Guidelines
 

@@ -7,7 +7,7 @@ on:
   # Déclenchement manuel via l'API (dispatch direct), indépendant de la
   # livraison webhook des push — utile pendant l'incident GitHub Actions du
   # 2026-08-06 (webhooks throttled), qui empêchait tout run de démarrer même
-  # sur un push tout neuf. Voir docs/plan-migration-serveur.md.
+  # sur un push tout neuf.
   workflow_dispatch:
 
 permissions:

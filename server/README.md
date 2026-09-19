@@ -1,7 +1,13 @@
 # Serveur — Cloudflare Pages Functions + Neon
 
-Voir `docs/plan-migration-serveur.md` (§4, §6, §9) pour le contexte complet.
-Ce document couvre uniquement la mise en route pratique.
+Ce document couvre la mise en route pratique et les décisions d'architecture
+réellement mises en œuvre.
+
+Les renvois « §N du plan », ici comme dans les commentaires de `server/` et de
+`src/app/core/`, désignent le plan de migration serveur — document de travail
+qui n'est pas conservé au dépôt, la migration étant terminée. Chaque décision
+qu'il portait est résumée sur place, à l'endroit qui la met en œuvre : ces
+renvois ne sont qu'une trace d'origine, jamais une lecture nécessaire.
 
 ## Architecture
 
@@ -355,9 +361,8 @@ l'état du déploiement.
 
 ## Authentification (lot 5, prompt 5.1)
 
-Voir `docs/plan-migration-serveur.md` §7 pour le cadre (OAuth uniquement,
-cookie opaque, mode invité intact). Cette section documente ce qui a été
-réellement implémenté et les écarts assumés.
+Cadre retenu : OAuth uniquement, cookie opaque, mode invité intact. Cette
+section documente ce qui a été réellement implémenté et les écarts assumés.
 
 ### Ce qui n'existe pas, volontairement
 
@@ -516,8 +521,8 @@ clic » dans les 4 locales — les deux ensemble, jamais l'un sans l'autre.
 ## Configuration utilisateur synchronisée (lot 6, prompt 6.1)
 
 Objectif du lot : ne plus perdre ses données en vidant son navigateur, et les
-retrouver d'un appareil à l'autre. Voir `docs/plan-migration-serveur.md` §4
-(« deux modes de données utilisateur ») et §11.
+retrouver d'un appareil à l'autre — les « deux modes de données utilisateur » :
+invité (local seul) et connecté (remonté sur le compte).
 
 ### Aucune migration de base
 
