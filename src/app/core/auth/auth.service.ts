@@ -8,9 +8,8 @@ import { HistoryStatsService } from '../sync/history-stats.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
 /**
- * État de session côté client (lot 5, prompt 5.2) — voir
- * docs/plan-migration-serveur.md §7 et server/README.md pour le versant
- * serveur.
+ * État de session côté client (lot 5, prompt 5.2) — voir server/README.md
+ * pour le versant serveur.
  *
  * Principe directeur, non négociable : **la connexion est optionnelle**.
  * `'guest'` n'est pas un état d'erreur mais le mode par défaut, dans lequel

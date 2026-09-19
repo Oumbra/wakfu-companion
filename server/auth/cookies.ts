@@ -1,6 +1,6 @@
 /**
- * Cookies d'authentification (lot 5, prompt 5.1) — voir
- * docs/plan-migration-serveur.md §7.
+ * Cookies d'authentification (lot 5, prompt 5.1) — voir server/README.md,
+ * section « Authentification ».
  *
  * Trois cookies, aucun ne contient de donnée métier :
  * - `wc_session` : jeton de session OPAQUE (256 bits), `httpOnly` + `Secure` +

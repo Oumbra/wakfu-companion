@@ -124,7 +124,7 @@ export type FightTypeCode =
  * traduit pas les noms de serveurs dans ses 4 locales fr/en/es/pt), donc pas
  * besoin d'une colonne par locale ici — contrairement à l'avertissement du
  * prompt 2.1 sur les « locales attendues par serveur », qui ne s'applique pas
- * au schéma minimal retenu (code/label/is_active, voir docs/plan-migration-serveur.md §6).
+ * au schéma minimal retenu ici (code/label/is_active).
  */
 export const gameServers = pgTable('game_servers', {
   code: text('code').primaryKey(), // 'pandora' | 'rubilax' | 'ogrest'
@@ -345,7 +345,7 @@ export const catalogMeta = pgTable('catalog_meta', {
 // items/game_servers).
 
 /**
- * Authentification (lot 5, prompt 5.1) — voir docs/plan-migration-serveur.md §7.
+ * Authentification (lot 5, prompt 5.1) — voir server/README.md.
  *
  * Aucun mot de passe n'est géré en propre (pas de `password_hash`, pas de
  * réinitialisation, pas de vérification d'e-mail) : l'identité vient

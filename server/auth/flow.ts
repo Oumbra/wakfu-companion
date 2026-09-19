@@ -6,8 +6,8 @@
  * invalide rejeté, code réutilisé rejeté, session révoquée refusée, fusion
  * sur e-mail identique.
  *
- * Voir docs/plan-migration-serveur.md §7 pour les décisions structurantes
- * (OAuth uniquement, cookie opaque, sessions en base, mode invité intact).
+ * Décisions structurantes de ce flux : OAuth uniquement, cookie opaque,
+ * sessions en base, mode invité intact (voir server/README.md).
  */
 
 import { pkceChallenge, randomToken, sha256Hex, timingSafeEqual } from './crypto';
