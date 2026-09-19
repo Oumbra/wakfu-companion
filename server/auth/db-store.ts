@@ -129,8 +129,8 @@ export function createDbAuthStore(db: Db): AuthStore {
     },
 
     async deleteUser(userId) {
-      // Les identités et sessions partent en cascade (ON DELETE CASCADE, §7 :
-      // « suppression du compte avec effet réel »).
+      // Les identités et sessions partent en cascade (ON DELETE CASCADE) : la
+      // suppression d'un compte doit avoir un effet réel.
       await db.delete(users).where(eq(users.id, userId));
     },
 

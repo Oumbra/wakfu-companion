@@ -350,9 +350,9 @@ export const catalogMeta = pgTable('catalog_meta', {
  * Aucun mot de passe n'est géré en propre (pas de `password_hash`, pas de
  * réinitialisation, pas de vérification d'e-mail) : l'identité vient
  * exclusivement d'un fournisseur OAuth (Discord ou Google), qui vérifie
- * l'adresse à notre place. Décision actée §7 du plan, motivée aussi par la
- * limite de 10 ms de CPU par requête du plan gratuit Cloudflare — un hachage
- * de mot de passe correct n'y tient pas.
+ * l'adresse à notre place. Décision motivée aussi par la limite de 10 ms de
+ * CPU par requête du plan gratuit Cloudflare — un hachage de mot de passe
+ * correct n'y tient pas.
  *
  * Rappel structurant : la connexion est OPTIONNELLE. Aucune des tables
  * ci-dessus (catalogue, prix) ne référence `users` ; le mode invité continue
@@ -391,9 +391,8 @@ export const users = pgTable(
 /**
  * Identités OAuth rattachées à un compte. Un même utilisateur peut se
  * connecter par Discord ET par Google : la fusion se fait automatiquement sur
- * e-mail vérifié identique (voir server/auth/flow.ts et §7 du plan — les deux
- * fournisseurs vérifient l'adresse, ce qui rend ce rattachement sûr sans
- * étape manuelle).
+ * e-mail vérifié identique (voir server/auth/flow.ts — les deux fournisseurs
+ * vérifient l'adresse, ce qui rend ce rattachement sûr sans étape manuelle).
  */
 export const userIdentities = pgTable(
   'user_identities',
@@ -414,14 +413,14 @@ export const userIdentities = pgTable(
 
 /**
  * Sessions serveur (révocation immédiate possible, contrairement à un JWT
- * autoporteur — §7 du plan).
+ * autoporteur).
  *
  * ⚠ `id` n'est PAS le jeton envoyé au navigateur : c'est son empreinte
  * SHA-256 (hex). Le jeton opaque (256 bits d'aléa) ne vit que dans le cookie
  * `httpOnly` du client ; une fuite en lecture de cette table ne permet donc
- * pas d'usurper une session. C'est le seul écart avec le schéma du §6 du
- * plan, qui décrivait `id` comme « identifiant opaque » — même colonne, même
- * type, une couche de hachage en plus.
+ * pas d'usurper une session. C'est le seul écart avec le schéma d'origine,
+ * qui décrivait `id` comme « identifiant opaque » — même colonne, même type,
+ * une couche de hachage en plus.
  */
 export const sessions = pgTable(
   'sessions',
@@ -504,9 +503,9 @@ export const nativePairings = pgTable(
 );
 
 /**
- * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
- * compte »). Implémentée en base plutôt qu'en KV/Durable Object : ces routes
- * sont rares (une poignée d'appels par connexion), le coût d'une écriture
+ * Limitation de débit des routes `/auth/*`, par IP et par compte. Implémentée
+ * en base plutôt qu'en KV/Durable Object : ces routes sont rares (une poignée
+ * d'appels par connexion), le coût d'une écriture
  * Postgres y est négligeable, et ça évite d'ajouter un binding Cloudflare
  * supplémentaire au projet Pages.
  *
@@ -526,9 +525,9 @@ export const authRateLimits = pgTable(
 );
 
 /**
- * Configuration utilisateur (lot 6 dans le phasage du plan §12) — une ligne
- * par clé, reprenant exactement `EXPORT_KEYS` d'`AppDataExportService` côté
- * client (`profile`, `watchlist`, `roster`, ...), comme prévu au §6.
+ * Configuration utilisateur (lot 6) — une ligne par clé, reprenant exactement
+ * `EXPORT_KEYS` d'`AppDataExportService` côté client (`profile`, `watchlist`,
+ * `roster`, ...).
  *
  * Créée par anticipation au lot 5 (le parcours de migration des données
  * locales du prompt 5.2 n'aurait été qu'une maquette sans stockage), puis
@@ -542,7 +541,7 @@ export const authRateLimits = pgTable(
  *
  * Le contenu du chat n'y figure pas plus que dans `AppDataExportService` :
  * seuls les *filtres* et *canaux actifs* sont des préférences — les messages
- * eux-mêmes ne quittent jamais la machine du joueur (§7, RGPD : ils
+ * eux-mêmes ne quittent jamais la machine du joueur (RGPD : ils
  * appartiennent à des tiers qui n'ont rien demandé).
  */
 export const userSettings = pgTable(
@@ -577,21 +576,22 @@ export const userSettings = pgTable(
  * rendent l'ingestion idempotente : rejouer dix fois le même log n'écrit
  * qu'une ligne.
  *
- * ## Écarts assumés par rapport au §6 du plan
+ * ## Écarts assumés par rapport au schéma d'origine
  *
  * 1. **`gameServer` sur les trois tables**, pas seulement `purchases` : le lot
  *    7 a été fait pour « taguer l'historique personnel (combats, achats,
- *    échanges) par serveur de jeu », le §6 ne le portait que sur les achats.
- *    Toujours nullable — aucun serveur résolu n'empêche jamais l'envoi (prompt
- *    8.1 point 4), la colonne reste simplement vide.
+ *    échanges) par serveur de jeu », le schéma d'origine ne le portait que sur
+ *    les achats. Toujours nullable — aucun serveur résolu n'empêche jamais
+ *    l'envoi (prompt 8.1 point 4), la colonne reste simplement vide.
  * 2. **`fight_participants` porte un `instanceIndex`** dans sa clé primaire :
- *    la PK `(fight_id, name, side)` du plan entre en collision dès que deux
+ *    la PK `(fight_id, name, side)` d'origine entre en collision dès que deux
  *    combattants du même camp partagent un nom, ce qui est courant (voir
  *    `countNameInstances`/`InitiativeSeat` côté client, tout un mécanisme y est
  *    consacré). Sans lui, un combat contre 3 Bouftous perdrait 2 lignes sur 3.
  * 3. **`trade_items` porte un `lineIndex`** et une vraie clé primaire, là où le
- *    §6 laissait la table sans contrainte : c'est ce qui permet de réinsérer
- *    les lignes filles en `ON CONFLICT DO NOTHING` sans jamais les dupliquer
+ *    schéma d'origine laissait la table sans contrainte : c'est ce qui permet
+ *    de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans jamais
+ *    les dupliquer
  *    (voir functions/api/v1/history/trades.ts — le driver `neon-http` n'offre
  *    pas de transaction, les filles sont donc écrites en une requête séparée
  *    de leur parent et doivent être idempotentes elles aussi).
@@ -600,7 +600,7 @@ export const userSettings = pgTable(
  *
  * Le contenu du chat (prompt 8.1 point 5) : aucune table ci-dessous ne le
  * référence, et `SYNCED_HISTORY_KINDS` côté client ne l'inclut pas. Les
- * messages appartiennent à des tiers qui n'ont rien demandé (§7 du plan).
+ * messages appartiennent à des tiers qui n'ont rien demandé.
  */
 export const fights = pgTable(
   'fights',
@@ -845,7 +845,7 @@ export const fightLoot = pgTable(
  * corrigeable après coup (`ON CONFLICT DO UPDATE`, voir `functions/api/v1/history/purchases.ts`).
  *
  * **Aucun rapport avec le monitoring de prix (lot 4)** : celui-ci vient d'un
- * scan de l'hôtel des ventes, jamais des achats des joueurs (§8 du plan).
+ * scan de l'hôtel des ventes, jamais des achats des joueurs.
  */
 export const purchases = pgTable(
   'purchases',

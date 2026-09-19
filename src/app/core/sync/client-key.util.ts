@@ -1,8 +1,8 @@
 import type { HistoryEventKind } from './history-event.model';
 
 /**
- * Clé déterministe d'un événement d'historique (lot 8, prompt 8.1 — « le point
- * technique le plus important de toute la migration », §11 du plan) :
+ * Clé déterministe d'un événement d'historique (lot 8, prompt 8.1 — le point
+ * technique le plus important de toute la migration) :
  *
  * ```
  * client_key = sha256(uid + type + heure du log + signature du contenu)

@@ -9,8 +9,7 @@ import type { Env } from '../../_types';
  *
  * La révocation est côté serveur (table `sessions`), pas seulement un
  * effacement de cookie : un jeton volé avant la déconnexion cesse d'être
- * utilisable — c'est précisément ce qu'un JWT autoporteur ne permettrait pas
- * (§7 du plan).
+ * utilisable — c'est précisément ce qu'un JWT autoporteur ne permettrait pas.
  */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);

@@ -23,9 +23,8 @@ function isAppDataExport(value: unknown): value is AppDataExport {
  *
  * Les champs exportés sont exactement ceux du dépôt de données utilisateur
  * (`USER_DATA_KEYS`, lot 6) : c'est le même jeu de clés que celui synchronisé
- * avec le compte, et c'est voulu — le §11 du plan prévoit explicitement de
- * réutiliser ce format d'export comme format de synchronisation plutôt que
- * d'en maintenir un second.
+ * avec le compte, et c'est voulu : ce format d'export sert aussi de format de
+ * synchronisation, plutôt que d'en maintenir un second.
  *
  * L'import passe désormais par `UserDataService` plutôt que d'écrire
  * `localStorage` en direct : en mode connecté, les données importées doivent

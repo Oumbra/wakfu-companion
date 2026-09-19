@@ -24,7 +24,7 @@ export const SESSION_COOKIE = 'wc_session';
 export const CSRF_COOKIE = 'wc_csrf';
 export const OAUTH_STATE_COOKIE = 'wc_oauth_state';
 
-export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours, expiration glissante (§7)
+export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 jours, expiration glissante
 export const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 
 const AUTH_PATH = '/api/v1/auth';

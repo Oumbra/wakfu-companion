@@ -149,7 +149,7 @@ interface TradePage {
  * (`fight_participants.heal`/`armor`/`heal_spells`/`armor_spells`, depuis le
  * 2026-09-14 — les trois onglets Dommage/Armure/Soin sont donc désormais servis
  * par l'archive comme par la session) et **butin** (`fight_loot`). Rien de tout
- * cela ne figurait au schéma du §6 du plan ; ces informations y ont été ajoutées
+ * cela ne figurait au schéma d'origine ; ces informations y ont été ajoutées
  * parce que sans elles un combat archivé perdait l'essentiel de son intérêt.
  * Réserve : un combat archivé AVANT cette date n'a ni soin ni armure — rien ne
  * peut les reconstruire après coup, le log est passé.

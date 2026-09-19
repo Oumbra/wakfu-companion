@@ -1,6 +1,5 @@
 /**
- * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
- * compte »).
+ * Limitation de débit des routes `/auth/*`, par IP et par compte.
  *
  * Fenêtres fixes plutôt que glissantes : une ligne `(bucket, window_start)`
  * incrémentée par upsert, ce qui tient en une seule requête SQL — important

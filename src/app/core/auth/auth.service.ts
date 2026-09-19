@@ -19,8 +19,8 @@ import { HistorySyncService } from '../sync/history-sync.service';
  * `'guest'`.
  *
  * Le jeton de session n'est JAMAIS manipulé ici : il vit dans un cookie
- * `httpOnly` invisible du JavaScript (§7). Ce service ne connaît que l'état
- * dérivé des réponses de l'API.
+ * `httpOnly` invisible du JavaScript. Ce service ne connaît que l'état dérivé
+ * des réponses de l'API.
  */
 
 export type AuthStatus = 'unknown' | 'guest' | 'authenticated';
@@ -457,7 +457,7 @@ export class AuthService {
     // Mois/Année de la carte Récap) appartient lui aussi au compte qu'on vient de quitter.
     this.historyStats.reset();
     // Retour au stockage purement local — les données déjà présentes sur cet
-    // appareil restent intactes et utilisables (mode invité, §7 du plan).
+    // appareil restent intactes et utilisables (mode invité).
     this.userData.deactivateRemote();
   }
 }

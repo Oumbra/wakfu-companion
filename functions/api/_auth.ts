@@ -85,7 +85,7 @@ function readBearerToken(request: Request): string | null {
  * Résout la session du cookie (navigateur) ou du porteur `Authorization: Bearer` (client natif).
  * Renvoie `null` si l'appelant n'est pas connecté (jeton absent, inconnu, expiré ou révoqué) — à
  * traduire en 401 par l'appelant, jamais en erreur serveur : côté client, un 401 fait simplement
- * basculer en mode invité (§7 du plan).
+ * basculer en mode invité.
  */
 export async function authenticate(
   request: Request,
@@ -113,7 +113,7 @@ export function unauthenticated(): Response {
 }
 
 /**
- * Contrôle CSRF double-submit sur les routes mutatives (§7 du plan) :
+ * Contrôle CSRF double-submit sur les routes mutatives :
  * l'en-tête `X-CSRF-Token` doit correspondre au jeton dérivé de la session,
  * que le client récupère dans le cookie `wc_csrf` — seul un script de la même
  * origine peut le lire, là où le cookie de session, lui, serait envoyé
