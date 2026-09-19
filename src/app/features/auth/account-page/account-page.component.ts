@@ -10,8 +10,8 @@ import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
  * Page compte (lot 5, prompt 5.2) : identité, fournisseurs liés, sessions
- * actives avec révocation, export des données de configuration, suppression du
- * compte, et l'écran de migration des données locales à la première connexion.
+ * actives avec révocation, export de configurations, suppression du compte, et
+ * l'écran de migration des données locales à la première connexion.
  *
  * C'est aussi la page d'atterrissage après un retour OAuth réussi — voir
  * `App.ngOnInit` : c'est là que se prend, le cas échéant, la décision
@@ -88,7 +88,7 @@ export class AccountPageComponent implements OnInit {
   }
 
   /**
-   * Export des données de configuration — même charge utile que l'export du profil
+   * Export de configurations — même charge utile que l'export du profil
    * (`AppDataExportService`, soit les 11 clés de `USER_DATA_KEYS`).
    *
    * Ce n'est **pas** un export RGPD complet, et la politique de confidentialité ne
