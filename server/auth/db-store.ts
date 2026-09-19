@@ -12,7 +12,7 @@
  * concurrentes.
  */
 
-import { and, eq, gt, isNull, lt, sql } from 'drizzle-orm';
+import { and, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import {
   authRateLimits,
@@ -143,6 +143,7 @@ export function createDbAuthStore(db: Db): AuthStore {
         lastUsedAt: record.lastUsedAt,
         userAgent: record.userAgent,
         revokedAt: record.revokedAt,
+        supersededAt: record.supersededAt,
       });
     },
 
@@ -175,7 +176,17 @@ export function createDbAuthStore(db: Db): AuthStore {
       return rows.length > 0;
     },
 
+    async supersedeSession(idHash, patch) {
+      await db
+        .update(sessions)
+        .set({ supersededAt: patch.supersededAt, expiresAt: patch.expiresAt })
+        .where(eq(sessions.id, idHash));
+    },
+
     async revokeAllSessions(userId, now, exceptIdHash) {
+      // Une session remplacée (rotation) encore dans sa grâce est révoquée
+      // comme les autres : « déconnecter tous mes appareils » ne doit laisser
+      // aucun jeton valide derrière lui.
       const conditions = [eq(sessions.userId, userId), isNull(sessions.revokedAt)];
       if (exceptIdHash) conditions.push(sql`${sessions.id} <> ${exceptIdHash}`);
       const rows = await db
@@ -191,9 +202,24 @@ export function createDbAuthStore(db: Db): AuthStore {
         .select()
         .from(sessions)
         .where(
-          and(eq(sessions.userId, userId), isNull(sessions.revokedAt), gt(sessions.expiresAt, now)),
+          and(
+            eq(sessions.userId, userId),
+            isNull(sessions.revokedAt),
+            isNull(sessions.supersededAt),
+            gt(sessions.expiresAt, now),
+          ),
         );
       return rows.map(toSession);
+    },
+
+    async purgeDeadSessions(before) {
+      // `revoked_at IS NULL` rend la seconde comparaison nulle, donc fausse :
+      // une session vivante n'est jamais touchée par cette branche.
+      const rows = await db
+        .delete(sessions)
+        .where(or(lt(sessions.expiresAt, before), lt(sessions.revokedAt, before)))
+        .returning({ id: sessions.id });
+      return rows.length;
     },
 
     async bumpRateLimit(bucket, windowStart) {
@@ -290,5 +316,6 @@ function toSession(row: typeof sessions.$inferSelect): SessionRecord {
     lastUsedAt: row.lastUsedAt,
     userAgent: row.userAgent,
     revokedAt: row.revokedAt,
+    supersededAt: row.supersededAt,
   };
 }

@@ -118,7 +118,16 @@ DATABASE_URL=... npm run db:migrate
 - `POST /api/v1/auth/logout` — révoque la session courante.
 - `GET /api/v1/auth/sessions` — sessions actives ;
   `DELETE /api/v1/auth/sessions[?id=…]` — révoque une session précise, ou
-  toutes.
+  toutes. Une session **morte** (expirée, ou révoquée) n'est plus listée et
+  sa ligne est **effacée 30 jours après** (`DEAD_SESSION_RETENTION_MS`,
+  `server/auth/flow.ts::purgeDeadSessions` — limitation de la conservation,
+  RGPD art. 5.1.e, 2026-09-19). Pas de cron sur Pages : le ménage se fait à
+  l'occasion des appels qui touchent déjà à la table (connexion OAuth,
+  appairage et rotation natifs, `GET`/`DELETE` ci-dessus, et le
+  rafraîchissement quotidien de l'expiration glissante dans `resolveSession`,
+  seul déclencheur pour un compte qui ne se reconnecte jamais mais dont
+  l'overlay tourne). Le délai est annoncé dans la politique de confidentialité
+  (section 5) : ne pas changer l'un sans l'autre.
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
 - `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
   session** : porteur `Authorization: Bearer` obligatoire (jamais un cookie —
@@ -128,6 +137,23 @@ DATABASE_URL=... npm run db:migrate
   son bouton « Supprimer les données locales » (RGPD art. 17, constat C5 de
   `docs/analyse-rgpd.md` du dépôt `wakfu-companion-overlay`) : sans elle, un
   jeton effacé de la machine restait valide en base.
+- `POST /api/v1/auth/native/session` — **rotation du jeton natif**
+  (2026-09-19, même constat C5, « reste ouvert : la rotation ») : même porteur
+  obligatoire, corps vide, réponse `{ token, issuedAt, expiresAt,
+  previousTokenValidUntil }`. Un jeton neuf de 30 jours glissants est émis
+  pour le même compte et le même appareil ; l'ancienne session est
+  **remplacée** (`sessions.superseded_at`, migration `0029`) et son expiration
+  ramenée à 5 min (`NATIVE_SESSION_ROTATION_GRACE_MS`) : encore acceptée le
+  temps que l'overlay persiste le nouveau jeton et que ses requêtes déjà
+  parties aboutissent (un 401 côté overlay vaut « jeton refusé », donc
+  déconnexion et purge locale — à ne jamais provoquer pour une course), mais
+  plus jamais prolongée par l'expiration glissante, plus listée dans « Mon
+  compte » (la nouvelle la représente), et toujours emportée par « déconnecter
+  tous mes appareils ». Une rotation depuis un jeton déjà remplacé mais encore
+  en grâce est admise (overlay planté entre la réponse et l'écriture au
+  trousseau). Le rythme est laissé à l'overlay : le serveur ne force rien, un
+  jeton jamais renouvelé reste un jeton de 30 jours glissants. Logique pure
+  dans `server/auth/pairing.ts::rotateNativeSession` (testée).
 
 Les endpoints `/api/v1/prices/*` (lot 4) ont été déplacés le 2026-08-18 vers
 le projet **wakfu-companion-price** (dépôt séparé, même base Neon — voir son

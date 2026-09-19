@@ -34,6 +34,14 @@ export interface SessionRecord {
   lastUsedAt: Date;
   userAgent: string | null;
   revokedAt: Date | null;
+  /**
+   * Remplacée par une session plus récente (rotation du jeton natif, voir
+   * `server/auth/pairing.ts::rotateNativeSession`). Encore acceptée jusqu'à
+   * `expiresAt` — ramené à une courte grâce au moment de la rotation — mais
+   * plus jamais prolongée par l'expiration glissante ni listée parmi les
+   * sessions actives : la nouvelle session la représente.
+   */
+  supersededAt: Date | null;
 }
 
 export interface UserRecord {
@@ -110,9 +118,26 @@ export interface AuthStore {
    * `false` si la ligne n'existait pas (jeton déjà effacé, appel rejoué).
    */
   deleteSession(idHash: string): Promise<boolean>;
+  /**
+   * Marque la session comme remplacée (rotation du jeton natif) : pose
+   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie. Sans
+   * effet si la ligne n'existe pas.
+   */
+  supersedeSession(idHash: string, patch: { supersededAt: Date; expiresAt: Date }): Promise<void>;
   /** Révoque toutes les sessions actives d'un compte, sauf éventuellement une. */
   revokeAllSessions(userId: string, now: Date, exceptIdHash?: string): Promise<number>;
+  /** Sessions actives d'un compte : ni révoquées, ni expirées, ni remplacées. */
   listSessions(userId: string, now: Date): Promise<SessionRecord[]>;
+  /**
+   * **Efface** les sessions mortes depuis longtemps : expirées avant `before`
+   * ou révoquées avant `before` — limitation de la conservation (RGPD
+   * art. 5.1.e). Une session révoquée garde sa ligne un temps (elle documente
+   * qu'un appareil a été déconnecté, utile pour comprendre un incident), pas
+   * pour toujours : `resolveSession` la refuse de toute façon, et elle
+   * n'apparaît plus dans « Mon compte ». Renvoie le nombre de lignes effacées.
+   * Le délai est fixé par l'appelant (`DEAD_SESSION_RETENTION_MS`, flow.ts).
+   */
+  purgeDeadSessions(before: Date): Promise<number>;
 
   // ── Limitation de débit ───────────────────────────────────────────────
   /** Incrémente le compteur de la fenêtre et renvoie sa valeur APRÈS incrément. */
