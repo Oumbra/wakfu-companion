@@ -48,16 +48,18 @@ devancé la documentation.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                         |
-| ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 🔴 Critique              | 1      | Fuite d'historique entre comptes sur un même navigateur (4.1)                                                                                                  |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                |
-| 🟡 Modéré                | 1      | omissions résiduelles dans la politique (4.6) — IP en clair (4.4) point de collecte (4.7) en-têtes (4.8, CSP en Report-Only) et rémanence locale (4.9) résolus |
-| ⚪ Mineur / documentaire | 4      | DPA, procédure de violation, DPIA, adresse de contact (le registre art. 30 et la note de mise en balance sont rédigés, voir 4.10)                              |
+| Gravité                  | Nombre | Nature                                                                                                                                                                   |
+| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                         |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                          |
+| 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP encore en Report-Only —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
+| ⚪ Mineur / documentaire | 3      | DPA, procédure de violation, note d'absence d'AIPD (le registre art. 30 et la note de mise en balance sont rédigés, l'adresse de contact est confirmée — voir 4.10)      |
 
-Aucun écart ne relève d'une collecte abusive ou dissimulée : tous sont soit des **omissions
+Aucun écart ne relevait d'une collecte abusive ou dissimulée : tous étaient soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
-critique — un **bug de cloisonnement** dans la file de synchronisation.
+critique — un **bug de cloisonnement** dans la file de synchronisation. **Au 2026-09-19 (soir),
+tous les écarts de code sont résolus** ; restent trois documents internes à rédiger (4.10), le
+passage de la CSP en mode bloquant après validation sur la preview, et la mise en production.
 
 ---
 
@@ -324,9 +326,17 @@ complet, conservé sans finalité active.
 expirées ou révoquées depuis plus de 30 jours, appelée selon le même schéma opportuniste que les
 autres purges (Cloudflare Pages n'offrant pas de Cron Trigger).
 
-### 🟡 4.6 — Omissions résiduelles dans la politique
+### ✅ 4.6 — Omissions résiduelles dans la politique — **résolu le 2026-09-19**
 
 **Articles concernés** : 12, 13 (information à jour et complète).
+
+> **Résolution.** Les trois omissions sont comblées (4 locales) : extractions de pacte
+> (`1651a41`) ; réattributions de dégâts/objets — citées au point 1.2 dans l'énumération des
+> données de configuration, avec la mention explicite qu'elles portent le nom du personnage
+> concerné (« qui peut être celui d'un autre joueur »), ajoutées au point 1.3 (base légale des
+> pseudonymes de tiers) et à la liste de l'export au point 6 ; participants de combat — le point
+> 1.2 reprend désormais la formulation du point 1.4 (« nom, classe, dégâts, soins et sorts de
+> chaque participant, alliés compris »). Constat d'origine ci-dessous.
 
 Le texte du 19 septembre 2026 couvre désormais l'overlay et les pseudonymes de tiers. Trois écarts
 subsistaient, tous de complétude ; le premier est résolu :
@@ -448,14 +458,14 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 
 ### ⚪ 4.10 — Obligations documentaires absentes
 
-| Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Registre des traitements** (art. 30)     | ✅ Rédigé      | Rédigé le 2026-09-19 avec la note de mise en balance des intérêts (pseudonymes de tiers, point 1.3) — documents internes du responsable de traitement, conservés **hors dépôt** (voir §8). L'ébauche du §6 en reste la base.                                                                                                                                                                                                              |
-| **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                                                                                                                 |
-| **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                                                                                                                    |
-| **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                                                                                                             |
-| **Vérification de l'âge**                  | Absente        | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                                                                                                                    |
-| **Adresse de contact**                     | À vérifier     | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — reste à confirmer que la boîte est **réellement relevée** : sans cela, aucun droit n'est exerçable (art. 12.2/12.3 : réponse sous un mois). **À confirmer avant tout correctif de code.** |
+| Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Registre des traitements** (art. 30)     | ✅ Rédigé      | Rédigé le 2026-09-19 avec la note de mise en balance des intérêts (pseudonymes de tiers, point 1.3) — documents internes du responsable de traitement, conservés **hors dépôt** (voir §8). L'ébauche du §6 en reste la base.                                                                                                                         |
+| **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                            |
+| **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                               |
+| **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                        |
+| **Vérification de l'âge**                  | Absente        | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                               |
+| **Adresse de contact**                     | ✅ Confirmée   | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — boîte **confirmée relevée par le mainteneur** le 2026-09-19 (art. 12.2/12.3 : réponse sous un mois). |
 
 ---
 
@@ -467,7 +477,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 | #     | Action                                                                                                                                                             | Écart | Effort |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------ |
-| 1     | Vérifier que `contact@wakfu-companion.com` est réellement relevée ; sinon la remplacer partout                                                                     | 4.10  | Minime |
+| ~~1~~ | ~~Vérifier que `contact@wakfu-companion.com` est réellement relevée~~ — **confirmé** par le mainteneur le 2026-09-19                                               | 4.10  | —      |
 | 2     | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte                                                                            | 4.1   | Moyen  |
 | ~~3~~ | ~~Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »~~ — rétrogradé en #17 : la politique ne promet plus que ce que le bouton fait (`168cd01`) | 4.2   | —      |
 | ~~4~~ | ~~Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)~~ — **fait** : GitHub Pages décommissionné le 2026-09-19                      | 4.3   | —      |
@@ -476,7 +486,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 | #     | Action                                                                                                                                                        | Écart | Effort |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| 5     | Compléter la politique : ~~extractions de pacte~~ (fait, `1651a41`), réattributions de dégâts/objets (noms de tiers), alignement 1.2 sur 1.4                  | 4.6   | Faible |
+| ~~5~~ | ~~Compléter la politique : extractions de pacte, réattributions de dégâts/objets, alignement 1.2 sur 1.4~~ — **fait** le 2026-09-19                           | 4.6   | —      |
 | ~~6~~ | ~~Hacher l'IP dans `auth_rate_limits` + déclarer le traitement anti-abus~~ — **fait** (`1651a41` puis `efc004c`, 2026-09-19)                                  | 4.4   | —      |
 | ~~7~~ | ~~Ajouter `purgeExpiredSessions()`~~ — **fait** : `purgeDeadSessions`, `433960a`                                                                              | 4.5   | —      |
 | ~~8~~ | ~~Lien vers CGU + politique sous les boutons de connexion~~ — **fait** le 2026-09-19                                                                          | 4.7   | —      |
@@ -503,8 +513,8 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 politique datée du 26 août sans un mot sur l'overlay, et un binaire de Release ≥ 0.70 de l'overlay
 ne fonctionne pas contre elle (icônes, écriture partielle du profil, déconnexion). Les points 2, 6,
 8, 9 et 14 sont traités (2026-09-19) : plus rien côté code ne s'oppose à la mise en production ;
-restent le point 1 (boîte de contact) et le point 5 (politique, réattributions) à trancher avant ou
-juste après.
+le point 1 (boîte de contact) est confirmé par le mainteneur le 2026-09-19 et le point 5 est fait le
+même jour.
 
 ---
 
@@ -513,7 +523,7 @@ juste après.
 À compléter et à conserver hors du dépôt public si l'adresse du responsable de traitement y figure.
 
 **Responsable de traitement** : Oumbra, développeur indépendant — projet personnel non lucratif.
-**Contact** : `contact@wakfu-companion.com` (à confirmer, cf. 4.10).
+**Contact** : `contact@wakfu-companion.com` (boîte relevée par le mainteneur, confirmé le 2026-09-19).
 **Délégué à la protection des données** : non désigné (non requis, art. 37).
 
 ### Traitement n°1 — Compte utilisateur et synchronisation
@@ -579,8 +589,8 @@ Source de vérité : `src/app/core/data-access/user-data.keys.ts` ↔ `server/se
 | `profile`              | Profil du joueur                | Non                          | ✅                        |
 | `watchlist`            | Liste de suivi (objets/ennemis) | Non                          | ✅                        |
 | `watchlistAddMode`     | Préférence d'ajout              | Non                          | ❌                        |
-| `damageReassignments`  | Réattributions de dégâts        | **Oui**                      | ❌                        |
-| `itemReassignments`    | Réattributions d'objets         | **Oui**                      | ❌                        |
+| `damageReassignments`  | Réattributions de dégâts        | **Oui**                      | ✅ (2026-09-19)           |
+| `itemReassignments`    | Réattributions d'objets         | **Oui**                      | ✅ (2026-09-19)           |
 | `roster`               | Comptes et personnages déclarés | Non                          | ✅                        |
 | `chatActiveChannels`   | Canaux de chat actifs           | Non                          | ❌                        |
 | `chatFilters`          | Filtres de recherche du chat    | **Oui**                      | ✅                        |
@@ -588,7 +598,7 @@ Source de vérité : `src/app/core/data-access/user-data.keys.ts` ↔ `server/se
 | `chatPanelCollapsed`   | Préférence d'affichage          | Non                          | ❌                        |
 | `dashboardLayout`      | Disposition du tableau de bord  | Non                          | ❌                        |
 
-Cf. 4.6 : deux des trois clés pouvant contenir un pseudonyme de tiers ne sont pas citées.
+Les préférences d'affichage (`watchlistAddMode`, `chatActiveChannels`, `*PanelCollapsed`, `dashboardLayout`) sont couvertes par la mention « préférences d'affichage » ; les trois clés pouvant contenir un pseudonyme de tiers sont citées nommément (cf. 4.6).
 
 ### 7.3 Méthode de vérification
 
