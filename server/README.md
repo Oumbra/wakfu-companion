@@ -527,6 +527,42 @@ protégé par la session, renvoyant identité + sessions + historique complet),
 fusionner sa réponse dans `exportData()` **et** rétablir la promesse « en un
 clic » dans les 4 locales — les deux ensemble, jamais l'un sans l'autre.
 
+#### Relecture complète des textes légaux (2026-09-19)
+
+Les 3 textes (`legal.notice.body`, `privacy.notice.body`, `terms.notice.body`,
+4 locales chacun) ont été repassés affirmation par affirmation contre le code.
+Corrigé en plus de l'export :
+
+- **Comptage anti-abus par adresse IP.** `server/auth/rate-limit.ts` écrit
+  l'IP EN CLAIR dans `auth_rate_limits.bucket` (`auth:callback:ip:{ip}`,
+  fenêtre de 10 min, purge opportuniste) sur toutes les routes `/auth/*`. La
+  politique n'en disait rien et affirmait même qu'aucune donnée personnelle
+  n'était conservée par nous hors journaux d'hébergeur. Désormais décrit aux
+  points 1, 1.2 (traitement), 1.3 (intérêt légitime) et 5 (durée).
+- **Extractions de pacte.** `pactExtractions`/`pactExtractionItems` sont bien
+  alimentées par le SITE (`POST /api/v1/history/pacts`, voir
+  `HistorySyncService`), mais l'historique décrit s'arrêtait aux « combats,
+  achats et échanges ». Ajoutées aux points 1.2 et 6. **Le point 1.4
+  (énumération de ce que l'overlay envoie) ne les mentionne toujours pas** :
+  à vérifier dans le dépôt de l'overlay, hors périmètre de ce dépôt-ci.
+- **Trois cookies, pas un.** `wc_session`, `wc_csrf` (tous deux
+  `SESSION_TTL_MS`) et `wc_oauth_state` (10 min) — la politique n'en décrivait
+  qu'un seul.
+- **Configuration synchronisée automatiquement**, pas « que vous choisissez
+  explicitement de sauvegarder » : une fois connecté, `UserDataService` route
+  tout `write` vers le compte sans geste par donnée.
+- **Date des CGU** restée au 18 septembre alors que leur §5 changeait.
+
+Vérifié conforme sans changement : hébergement Cloudflare + Neon (GitHub Pages
+décommissionné, plus aucune mention), session de 30 jours glissants
+(`SESSION_TTL_MS`) et purge des sessions mortes à 30 jours
+(`DEAD_SESSION_RETENTION_MS`), suppression de compte immédiate en cascade
+(`DELETE /api/v1/auth/account`), icônes du SITE chargées en direct depuis
+`vertylo.github.io`/`static.ankama.com` (le relais `/api/v1/icons` ne sert que
+l'overlay), contenu du chat jamais transmis (`SYNCED_SETTING_KEYS` ne porte que
+canaux et filtres), historique plafonné en invité (`MAX_FIGHT_HISTORY`) et
+illimité en compte.
+
 ## Configuration utilisateur synchronisée (lot 6, prompt 6.1)
 
 Objectif du lot : ne plus perdre ses données en vidant son navigateur, et les
