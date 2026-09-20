@@ -7,13 +7,13 @@ import {
 } from '../api/catalog.service';
 import { normalizeWakfuName } from './wakfu-name.util';
 import { BREACH_IMAGE_URL, ULTIMATE_BREACH_IMAGE_URL } from '../data/breach-icon.data';
+import { wakassetsIconUrl } from './wakassets-url.util';
 
 /** Illustration générique wakassets, utilisée en repli erreur réseau (voir onFightImageError dans
  * fight-history.component.ts) quand même les replis wakassets d'un monstre échouent. Depuis le
  * 2026-08-24, n'est PLUS utilisée pour le cas "horde hétérogène" (voir BREACH_IMAGE_URL ci-dessous,
  * plus précis). */
-export const DEFAULT_FIGHT_IMAGE_URL =
-  'https://vertylo.github.io/wakassets/bossIllustrations/default.png';
+export const DEFAULT_FIGHT_IMAGE_URL = wakassetsIconUrl('bossIllustrations', 'default.png');
 
 /**
  * Illustration officielle Ankama d'un monstre (utilisée pour l'illustration de combat, PAS pour
@@ -45,8 +45,8 @@ function monsterPictureUrl(gfxId: string): string {
  */
 function monsterPictureFallbacks(gfxId: string): string[] {
   return [
-    `https://vertylo.github.io/wakassets/monsters/${gfxId}.png`,
-    `https://vertylo.github.io/wakassets/monsterIllustrations/${gfxId}.png`,
+    wakassetsIconUrl('monsters', `${gfxId}.png`),
+    wakassetsIconUrl('monsterIllustrations', `${gfxId}.png`),
   ];
 }
 

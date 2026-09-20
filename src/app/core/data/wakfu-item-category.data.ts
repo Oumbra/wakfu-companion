@@ -1,3 +1,4 @@
+import { wakassetsIconUrl } from '../utils/wakassets-url.util';
 /**
  * Catégorie large d'un objet (filtre par icône dans l'autocomplétion, voir
  * shared/wakfu-autocomplete), lue depuis le catalogue distant (même principe que
@@ -64,24 +65,23 @@ const ITEM_CATEGORY_ICON_NUMBER: Readonly<Record<WakfuItemCategory, number>> = {
   misc: 385,
 };
 
-/** URL de l'icône de catégorie (wakassets, même CDN que wakfuRarityIconUrl). */
+/** URL de l'icône de catégorie (wakassets via notre relais, même source que wakfuRarityIconUrl). */
 export function wakfuItemCategoryIconUrl(category: WakfuItemCategory): string {
-  return `https://vertylo.github.io/wakassets/itemTypes/${ITEM_CATEGORY_ICON_NUMBER[category]}.png`;
+  return wakassetsIconUrl('itemTypes', `${ITEM_CATEGORY_ICON_NUMBER[category]}.png`);
 }
 
 /** Icône de catégorie "Monstres" (filtre par `kind === 'enemy'`, pas une vraie WakfuItemCategory —
  * voir doc de tête de fichier) — même CDN, id fourni par l'utilisateur à partir de l'arbre de
  * filtre officiel. */
-export const WAKFU_MONSTER_CATEGORY_ICON_URL =
-  'https://vertylo.github.io/wakassets/itemTypes/282.png';
+export const WAKFU_MONSTER_CATEGORY_ICON_URL = wakassetsIconUrl('itemTypes', '282.png');
 
 /** Icône du filtre "Tout" (réinitialise le filtre par catégorie actif, voir
  * WakfuAutocompleteComponent.toggleCategoryFilter) — même CDN, id -1 (icône générique "tous
  * types" de l'arbre de filtre officiel). */
-export const WAKFU_ALL_CATEGORY_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/-1.png';
+export const WAKFU_ALL_CATEGORY_ICON_URL = wakassetsIconUrl('itemTypes', '-1.png');
 
 /** Icône d'une récupération de kamas à l'Hôtel de vente dans l'historique des achats (voir
  * StatsStoreService.HDV_KAMAS_SALE_ITEM/PurchasesComponent) — même CDN, id fourni par
  * l'utilisateur. Pas une vraie WakfuItemCategory (aucun objet réel n'y correspond), même principe
  * que WAKFU_MONSTER_CATEGORY_ICON_URL ci-dessus. */
-export const WAKFU_HDV_KAMAS_ICON_URL = 'https://vertylo.github.io/wakassets/itemTypes/614.png';
+export const WAKFU_HDV_KAMAS_ICON_URL = wakassetsIconUrl('itemTypes', '614.png');

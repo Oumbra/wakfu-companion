@@ -470,8 +470,8 @@ describe('resolveFightImageInfo (fallbackUrls, bug réel corrigé le 2026-08-24 
     const info = resolveFightImageInfo(catalog, ['Ennemi Normal A', 'Ennemi Normal B']);
 
     expect(info.fallbackUrls).toEqual([
-      'https://vertylo.github.io/wakassets/monsters/900110.png',
-      'https://vertylo.github.io/wakassets/monsterIllustrations/900110.png',
+      '/api/v1/icons/monsters/900110.png',
+      '/api/v1/icons/monsterIllustrations/900110.png',
     ]);
   });
 

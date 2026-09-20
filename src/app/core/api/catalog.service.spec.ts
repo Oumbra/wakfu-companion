@@ -39,6 +39,12 @@ const MONSTER_FAMILY_ROW = {
   pt: 'Papatudos',
   pictureUrl: 'https://vertylo.github.io/wakassets/monstersfamily/68.png',
 };
+/** Ce que le service expose pour MONSTER_FAMILY_ROW : `pictureUrl` réécrite vers notre relais
+ * d'icônes (voir applyMonsterFamilies / wakassets-url.util.ts), le reste inchangé. */
+const MONSTER_FAMILY_ENTRY = {
+  ...MONSTER_FAMILY_ROW,
+  pictureUrl: '/api/v1/icons/monstersfamily/68.png',
+};
 
 function ok<T>(data: T): ApiResult<T> {
   return { ok: true, data };
@@ -161,7 +167,7 @@ describe('CatalogService', () => {
     await Promise.resolve();
 
     expect(getJson).toHaveBeenCalledWith('/monster-families');
-    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ROW);
+    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ENTRY);
     expect(setCacheEntry).toHaveBeenCalledWith('catalog-monster-families', [MONSTER_FAMILY_ROW]);
   });
 
@@ -212,7 +218,7 @@ describe('CatalogService', () => {
     expect(service.findWakfuItemEntryById(1234)?.fr).toBe('Coiffe Test');
     expect(service.findWakfuMonsterEntry('Gobball')?.id).toBe(42); // nom EN
     expect(service.findWakfuDungeonByBossMonsterId(42)?.id).toBe(7);
-    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ROW);
+    expect(service.findWakfuMonsterFamilyById(1)).toEqual(MONSTER_FAMILY_ENTRY);
   });
 
   it('un échec réseau isolé sur /monster-families ne dégrade pas le reste du catalogue (status ready quand même)', async () => {

@@ -100,14 +100,21 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
   compact — volume négligeable), pour `findWakfuDungeonByBossMonsterId`
   côté client (lot 3.1).
-- `GET /api/v1/icons/{folder}/{gfxId}.png` — **relais d'icônes `wakassets`
-  pour l'overlay de bureau** (2026-09-19, constat C10 de `docs/analyse-rgpd.md`
-  du dépôt `wakfu-companion-overlay`) : `folder` parmi `items`, `monsters`,
-  `monsterIllustrations`, `rarities`, `itemTypes`, `spells`, fichier
-  `<nombre>.png` — tout le reste est un 400. Public, sans authentification.
-  Réponse mise en cache à la périphérie (`caches.default`, une semaine pour
-  une icône, une heure pour un 404 amont), aucun en-tête amont recopié. Le
-  site, lui, charge toujours ses images directement dans le navigateur.
+- `GET /api/v1/icons/{folder}/{file}.png` — **relais d'icônes `wakassets`**
+  pour l'overlay de bureau (2026-09-19, constat C10 de `docs/analyse-rgpd.md`
+  du dépôt `wakfu-companion-overlay`) **et pour le site** (2026-09-20 : plus
+  aucune image `vertylo.github.io` chargée directement par le navigateur —
+  helper unique `src/app/core/utils/wakassets-url.util.ts`, `pictureUrl` des
+  donjons/familles réécrites à l'ingestion dans `CatalogService`, origine
+  retirée d'`img-src` dans `public/_headers`) : `folder` parmi `items`,
+  `monsters`, `monsterIllustrations`, `bossIllustrations`, `monstersfamily`,
+  `rarities`, `itemTypes`, `spells`, `icons`, `aptitudes` ; fichier
+  `<nombre>.png` (négatif accepté : `itemTypes/-1.png`) ou `<mot court en
+  minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
+  Public, sans authentification. Réponse mise en cache à la périphérie
+  (`caches.default`, une semaine pour une icône, une heure pour un 404
+  amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
+  l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
   Logique pure dans `server/icons/proxy.ts` (testée).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.

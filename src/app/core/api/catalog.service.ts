@@ -5,6 +5,7 @@ import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { indexDungeonsByBossMonsterId } from '../utils/dungeon-boss-index.util';
 import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
 import { ITEM_CATEGORY_SORT_ORDER, WakfuItemCategory } from '../data/wakfu-item-category.data';
+import { proxyWakassetsUrl } from '../utils/wakassets-url.util';
 
 const INDEX_CACHE_KEY = 'catalog-index';
 const DUNGEONS_CACHE_KEY = 'catalog-dungeons';
@@ -677,10 +678,14 @@ export class CatalogService {
     // les donjons), l'app entière restant inutilisable. Normaliser ici plutôt que de faire confiance
     // aveuglément au typage TypeScript (qui n'est qu'une promesse de compilation, pas une garantie
     // runtime sur des données réseau).
+    // `pictureUrl` arrive telle que stockée en base (origine
+    // `vertylo.github.io`) : réécrite ici vers notre relais, une fois pour toutes, plutôt qu'à
+    // chaque `<img>` consommateur (fight-history, session-recap...) — voir wakassets-url.util.ts.
     const dungeons = rawDungeons.map((dungeon) => ({
       ...dungeon,
       bossMonsterId: Array.isArray(dungeon.bossMonsterId) ? dungeon.bossMonsterId : [],
       monsterFamilyId: Array.isArray(dungeon.monsterFamilyId) ? dungeon.monsterFamilyId : [],
+      pictureUrl: proxyWakassetsUrl(dungeon.pictureUrl),
     }));
 
     // Donjon classique prioritaire sur une brèche pour un même boss, quel que soit l'ordre des
@@ -692,7 +697,12 @@ export class CatalogService {
     this.revision.update((v) => v + 1);
   }
 
-  private applyMonsterFamilies(families: CatalogMonsterFamilyEntry[]): void {
+  private applyMonsterFamilies(rawFamilies: CatalogMonsterFamilyEntry[]): void {
+    // Même réécriture de `pictureUrl` vers notre relais que dans applyDungeons.
+    const families = rawFamilies.map((family) => ({
+      ...family,
+      pictureUrl: proxyWakassetsUrl(family.pictureUrl),
+    }));
     this.monsterFamiliesById = new Map(families.map((family) => [family.id, family]));
     this.revision.update((v) => v + 1);
   }

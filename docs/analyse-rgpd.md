@@ -398,7 +398,8 @@ DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`,
 > `Strict-Transport-Security` (1 an) et une CSP **bloquante** (`Content-Security-Policy`, posée en
 > `Report-Only` le 2026-09-19 puis activée le 2026-09-20 après validation en conditions réelles —
 > connexion OAuth Discord, CDN d'images, sons, service worker, appairage — sans aucune violation)
-> (`default-src 'self'`, images autorisées depuis `vertylo.github.io` et `static.ankama.com`,
+> (`default-src 'self'`, images autorisées depuis `static.ankama.com` — `vertylo.github.io` retiré le
+> 2026-09-20, les icônes wakassets passant désormais par `/api/v1/icons` —,
 > `style-src 'unsafe-inline'` imposé par Angular, `frame-ancestors 'none'`, `object-src 'none'`).
 > Deux incompatibilités levées pour que la CSP soit tenable : le script inline anti-flash du thème
 > déplacé dans `public/theme-init.js`, et `inlineCritical` désactivé dans `angular.json` (le CLI
@@ -575,7 +576,7 @@ l'utilisateur, qui en conserve le contrôle exclusif.
 | Discord, Inc.                      | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
 | Google LLC                         | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
 | `static.ankama.com` (Ankama Games) | Icônes d'objets (site uniquement)                                                                                         | FR                      | — (requête directe du navigateur) | ✅        |
-| `vertylo.github.io` (wakassets)    | Icônes (site : direct ; overlay : relayé par nos serveurs)                                                                | US (GitHub Pages)       | —                                 | ✅        |
+| `vertylo.github.io` (wakassets)    | Icônes — relayées par nos serveurs pour le site (depuis le 2026-09-20) comme pour l'overlay ; GitHub ne voit que l'IP de Cloudflare | US (GitHub Pages)       | —                                 | ✅        |
 
 Les deux derniers ne sont pas des sous-traitants pour le site : le navigateur les contacte
 directement, ils reçoivent l'IP du visiteur comme pour n'importe quelle image chargée sur le web. La

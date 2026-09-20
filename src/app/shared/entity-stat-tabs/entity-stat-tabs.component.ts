@@ -1,14 +1,15 @@
 import { Component, input, output } from '@angular/core';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { wakassetsIconUrl } from '../../core/utils/wakassets-url.util';
 
 export type EntityStatKind = 'damage' | 'armor' | 'heal';
 
-/** Icônes wakassets (voir CLAUDE.md) des 3 statistiques suivies par entité. */
+/** Icônes wakassets (voir CLAUDE.md), via notre relais, des 3 statistiques suivies par entité. */
 const STAT_ICON_URLS: Record<EntityStatKind, string> = {
-  damage: 'https://vertylo.github.io/wakassets/icons/di.png',
-  armor: 'https://vertylo.github.io/wakassets/aptitudes/234.png',
-  heal: 'https://vertylo.github.io/wakassets/aptitudes/12.png',
+  damage: wakassetsIconUrl('icons', 'di.png'),
+  armor: wakassetsIconUrl('aptitudes', '234.png'),
+  heal: wakassetsIconUrl('aptitudes', '12.png'),
 };
 
 const STAT_LABEL_KEYS: Record<EntityStatKind, string> = {

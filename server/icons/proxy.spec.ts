@@ -14,11 +14,33 @@ describe('relais d’icônes wakassets', () => {
     );
   });
 
-  it('refuse tout ce qui n’est pas <dossier connu>/<nombre>.png', () => {
+  it('accepte les dossiers et noms non numériques que le site utilise', () => {
+    expect(upstreamUrl({ folder: 'bossIllustrations', file: 'default.png' })).toBe(
+      'https://vertylo.github.io/wakassets/bossIllustrations/default.png',
+    );
+    expect(upstreamUrl({ folder: 'monstersfamily', file: '68.png' })).toBe(
+      'https://vertylo.github.io/wakassets/monstersfamily/68.png',
+    );
+    expect(upstreamUrl({ folder: 'icons', file: 'di.png' })).toBe(
+      'https://vertylo.github.io/wakassets/icons/di.png',
+    );
+    expect(upstreamUrl({ folder: 'aptitudes', file: '234.png' })).toBe(
+      'https://vertylo.github.io/wakassets/aptitudes/234.png',
+    );
+    expect(upstreamUrl({ folder: 'itemTypes', file: '-1.png' })).toBe(
+      'https://vertylo.github.io/wakassets/itemTypes/-1.png',
+    );
+  });
+
+  it('refuse tout ce qui n’est pas <dossier connu>/<nombre ou mot court>.png', () => {
     expect(upstreamUrl({ folder: 'autre', file: '1.png' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '1.jpg' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '../1.png' })).toBeNull();
-    expect(upstreamUrl({ folder: 'items', file: 'abc.png' })).toBeNull();
+    expect(upstreamUrl({ folder: 'items', file: '..png' })).toBeNull();
+    expect(upstreamUrl({ folder: 'items', file: 'Abc.png' })).toBeNull();
+    expect(upstreamUrl({ folder: 'items', file: 'a-b.png' })).toBeNull();
+    expect(upstreamUrl({ folder: 'items', file: '--1.png' })).toBeNull();
+    expect(upstreamUrl({ folder: 'items', file: 'abcdefghijklmnopq.png' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '' })).toBeNull();
     expect(upstreamUrl({ folder: '', file: '1.png' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '1.png?x=1' })).toBeNull();
