@@ -330,8 +330,9 @@ Posés par Cloudflare Pages sur toutes les réponses (RGPD art. 32, écart 4.8 d
 `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`,
 `Permissions-Policy`, `Strict-Transport-Security` (1 an, sans
 `includeSubDomains` ni `preload` : décision à prendre à part, elle engage tout
-sous-domaine futur), et une **CSP en `Report-Only`** — inventaire des origines
-et justification de chaque directive en commentaire dans le fichier lui-même.
+sous-domaine futur), et une **CSP bloquante** (`Content-Security-Policy`, en
+`Report-Only` du 2026-09-19 au 2026-09-20) — inventaire des origines et
+justification de chaque directive en commentaire dans le fichier lui-même.
 
 - **`ng serve` n'applique jamais `_headers`.** Pour vérifier en local :
   `npm run build` puis `npx wrangler pages dev dist/wakfu-companion/browser
@@ -339,7 +340,21 @@ et justification de chaque directive en commentaire dans le fichier lui-même.
   (le même `wrangler pages dev` que `npm run functions:dev`, pointé sur le
   build au lieu de `public/`), puis lire les en-têtes (`curl -D -`) et écouter
   l'événement `securitypolicyviolation` dans la page (ou la console : les
-  violations Report-Only s'y affichent en « [Report Only] Refused to... »).
+  violations s'y affichent en « Refused to... »).
+- **Validation avant passage en mode bloquant (2026-09-20)** : servir le build
+  sur le port 4200 (celui de `PUBLIC_BASE_URL` dans `.dev.vars`, pour que le
+  retour OAuth Discord aboutisse en local), ajouter temporairement `report-uri
+  http://localhost:4299/csp` à la copie `dist/.../_headers` (jamais à
+  `public/_headers`) et écouter ce port avec un mini serveur HTTP qui journalise
+  chaque POST : contrairement à un écouteur `securitypolicyviolation` posé après
+  coup, ça capte aussi les violations de la phase de chargement et des pages de
+  retour OAuth. Les messages « [Report Only] Refused… » de la console Chrome
+  sont émis par le navigateur lui-même et invisibles à une extension/un outil
+  qui ne lit que l'API `console` — ne pas s'y fier pour conclure « aucune
+  violation ». Résultat : 0 rapport sur 96 requêtes (accueil avec fichier
+  reconnecté, profil, son d'alerte, compte, déconnexion, OAuth Discord complet,
+  `/pair`, chat, historique). Google non exercé (pas d'identifiants locaux),
+  chemin structurellement identique (navigation complète vers `/api/v1/auth/*`).
 - **Deux incompatibilités CSP corrigées à cette occasion**, à ne pas
   réintroduire : (1) le script anti-flash du thème de `src/index.html` était
   inline → déplacé dans `public/theme-init.js` (`script-src 'self'`, pas de

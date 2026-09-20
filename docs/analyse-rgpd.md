@@ -52,7 +52,7 @@ devancé la documentation.
 | ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                         |
 | 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                          |
-| 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP encore en Report-Only —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
+| 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP bloquante depuis le 2026-09-20 —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
 | ⚪ Mineur / documentaire | 3      | DPA, procédure de violation, note d'absence d'AIPD (le registre art. 30 et la note de mise en balance sont rédigés, l'adresse de contact est confirmée — voir 4.10)      |
 
 Aucun écart ne relevait d'une collecte abusive ou dissimulée : tous étaient soit des **omissions
@@ -389,13 +389,15 @@ acceptez les [CGU] et la [politique de confidentialité] », branchée sur deux
 `LegalPageService.open(...)`. Faible coût, et cela rend les CGU réellement opposables (elles affirment
 déjà « En utilisant l'application, vous acceptez les présentes CGU »).
 
-### ✅ 4.8 — Aucun en-tête de sécurité HTTP — **résolu le 2026-09-19** (CSP en Report-Only)
+### ✅ 4.8 — Aucun en-tête de sécurité HTTP — **résolu le 2026-09-19**, CSP bloquante le 2026-09-20
 
 **Article concerné** : 32 (sécurité du traitement).
 
 > **Résolution.** `public/_headers` pose `X-Content-Type-Options: nosniff`, `X-Frame-Options:
 DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy`,
-> `Strict-Transport-Security` (1 an) et une CSP en **`Content-Security-Policy-Report-Only`**
+> `Strict-Transport-Security` (1 an) et une CSP **bloquante** (`Content-Security-Policy`, posée en
+> `Report-Only` le 2026-09-19 puis activée le 2026-09-20 après validation en conditions réelles —
+> connexion OAuth Discord, CDN d'images, sons, service worker, appairage — sans aucune violation)
 > (`default-src 'self'`, images autorisées depuis `vertylo.github.io` et `static.ankama.com`,
 > `style-src 'unsafe-inline'` imposé par Angular, `frame-ancestors 'none'`, `object-src 'none'`).
 > Deux incompatibilités levées pour que la CSP soit tenable : le script inline anti-flash du thème
@@ -505,7 +507,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                | —     | —      |
 | 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                 | 4.2   | Moyen  |
 | 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                                                     | —     | Minime |
-| 19     | Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth sur la preview                                                          | 4.8   | Minime |
+| ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 
 ### Préalable à toute mise en production
 

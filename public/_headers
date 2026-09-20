@@ -3,10 +3,12 @@
 # Non appliqués par `ng serve` : à vérifier avec `wrangler pages dev dist/wakfu-companion/browser`
 # (ou sur la preview claude/dev) — méthode décrite dans server/README.md.
 #
-# La CSP est d'abord posée en Report-Only : elle ne bloque rien, mais chaque violation apparaît
-# dans la console du navigateur (« [Report Only] Refused to ... »). À passer en
-# `Content-Security-Policy` (même valeur) une fois validée sur la preview en conditions réelles
-# (connexion OAuth, icônes, sons d'alerte, service worker, page d'appairage de l'overlay).
+# CSP en mode BLOQUANT depuis le 2026-09-20 (d'abord posée en `Report-Only` le 2026-09-19, puis
+# validée en Chrome réel sur le build servi par `wrangler pages dev` avec un `report-uri` temporaire :
+# connexion OAuth Discord complète, icônes, sons d'alerte, service worker, page d'appairage de
+# l'overlay — zéro violation). Toute nouvelle origine externe dans le code DOIT être ajoutée ici,
+# sinon la ressource est silencieusement bloquée (repasser temporairement en
+# `Content-Security-Policy-Report-Only` pour diagnostiquer, voir server/README.md).
 #
 # Inventaire des origines externes, à tenir à jour avec le code (un `grep -rhoE "https?://[^/'\"]+"
 # src/app` les retrouve) :
@@ -23,4 +25,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://vertylo.github.io https://static.ankama.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://vertylo.github.io https://static.ankama.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
