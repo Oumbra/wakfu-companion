@@ -1,6 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
-import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../server/auth/rate-limit';
+import { runRetentionPurges } from '../../../../server/auth/flow';
+import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -11,12 +12,19 @@ import type { Env } from '../../_types';
  * n'existe que dans le cookie du navigateur concerné) : il sert uniquement à
  * désigner une session à révoquer depuis la page compte. Connaître cette
  * empreinte ne permet donc pas d'usurper la session.
+ *
+ * Consulter ses appareils est le moment naturel du ménage de conservation
+ * (sessions mortes depuis plus de 30 jours, comptes inactifs depuis 12 mois —
+ * `runRetentionPurges`, flow.ts) : l'utilisateur regarde ce qui est actif, on
+ * efface ce qui ne l'est plus depuis longtemps.
  */
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
 
-  const sessions = await auth.store.listSessions(auth.user.id, new Date());
+  const now = new Date();
+  await runRetentionPurges(auth.store, now);
+  const sessions = await auth.store.listSessions(auth.user.id, now);
   return json({
     sessions: sessions
       .map((session) => ({
@@ -48,7 +56,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const now = new Date();
   const limit = await checkRateLimit(
     auth.store,
-    `auth:session:ip:${clientIp(context.request)}`,
+    `auth:session:ip:${await clientIpKey(context.request, context.env)}`,
     SESSION_RULE,
     now,
   );

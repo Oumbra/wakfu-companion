@@ -5,7 +5,7 @@ import { AppLocale } from '../services/i18n.service';
  * (`class-icons.data.ts`, proche de l'anglais) par simple capitalisation : plusieurs classes ont un
  * nom radicalement différent selon la langue (ex. `zobal` = "Masqueraider" en anglais, `rogue` =
  * "Tymador" en espagnol/"Ladino" en portugais, `foggernaut` = "Steamer" en français/espagnol/
- * langue, chemin différent selon la locale) :
+ * portugais). Noms officiels de chaque langue, relevés manuellement le 2026-08-15.
  * À réviser si Ankama renomme une classe dans une de ces langues.
  */
 export const CLASS_NAMES: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = {

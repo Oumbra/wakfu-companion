@@ -42,6 +42,18 @@ export type SyncQueueState = 'idle' | 'pending' | 'syncing' | 'error';
  * La file n'est active qu'en mode connecté (`activate(uid)` par `AuthService`).
  * En mode invité rien n'est mis en file : c'est la définition même de ce mode —
  * aucune donnée ne quitte l'appareil.
+ *
+ * **Cloisonnée par compte.** Le magasin IndexedDB est unique pour le navigateur,
+ * mais chaque entrée porte l'`uid` du compte auquel elle est destinée :
+ * `activate(uid)` ne recharge que celles de ce compte et efface les autres du
+ * disque. Sans cela, un lot laissé en attente par A (déconnexion pendant le
+ * délai de regroupement, coupure réseau) repartait sous le compte de B à sa
+ * connexion suivante sur le même navigateur — re-signé avec l'`uid` de B, donc
+ * accepté par le serveur comme un historique légitime de B (écart 4.1 de
+ * `docs/analyse-rgpd.md`). Une déconnexion volontaire laisse la file sur le
+ * disque (elle repart à la reconnexion du MÊME compte) ; une suppression de
+ * compte la purge (`purge()`), sinon une reconnexion réenverrait l'historique
+ * que l'utilisateur vient de faire effacer.
  */
 @Injectable({ providedIn: 'root' })
 export class SyncQueueService {
@@ -94,8 +106,16 @@ export class SyncQueueService {
 
     try {
       const stored = await this.persistence.getSyncQueue<HistoryEvent>();
-      for (const entry of stored)
-        if (!this.entries.has(entry.id)) this.entries.set(entry.id, entry);
+      const foreign: string[] = [];
+      for (const entry of stored) {
+        // Une entrée d'un autre compte — ou d'avant l'ajout de `uid`, dont le
+        // propriétaire est donc inconnu — ne doit JAMAIS partir sous ce compte.
+        // L'effacer ne perd rien : l'historique local est intact et sera remis
+        // en file par HistorySyncService à la prochaine lecture du fichier.
+        if (entry.uid !== uid) foreign.push(entry.id);
+        else if (!this.entries.has(entry.id)) this.entries.set(entry.id, entry);
+      }
+      await this.persistence.deleteSyncQueueEntries(foreign);
     } catch {
       // Une file illisible (IndexedDB indisponible, navigation privée) ne doit
       // jamais empêcher l'application de fonctionner : on repart d'une file
@@ -106,7 +126,11 @@ export class SyncQueueService {
     await this.flush();
   }
 
-  /** Retour au mode invité : la file cesse d'être alimentée et vidée, mais son contenu reste sur le disque. */
+  /**
+   * Retour au mode invité : la file cesse d'être alimentée et vidée, mais son
+   * contenu reste sur le disque — il ne repartira qu'à la reconnexion du même
+   * compte (voir `activate`).
+   */
   deactivate(): void {
     this.uid = null;
     this.cancelTimers();
@@ -115,6 +139,27 @@ export class SyncQueueService {
     this._pendingCount.set(0);
     this._state.set('idle');
     this._lastSyncedAt.set(null);
+  }
+
+  /**
+   * Suppression de compte : désactive la file ET efface du disque tout ce qui
+   * était destiné à ce compte. Rien ne doit pouvoir repartir vers un compte que
+   * l'utilisateur vient de faire effacer (droit à l'effacement, art. 17).
+   */
+  async purge(): Promise<void> {
+    const uid = this.uid;
+    const ids = new Set(this.entries.keys());
+    this.deactivate();
+    if (uid === null) return;
+    try {
+      // Le disque peut contenir des entrées de ce compte absentes de la mémoire
+      // (file d'une session précédente jamais rechargée) : on le relit.
+      for (const entry of await this.persistence.getSyncQueue<HistoryEvent>())
+        if (entry.uid === uid) ids.add(entry.id);
+      await this.persistence.deleteSyncQueueEntries([...ids]);
+    } catch {
+      // IndexedDB indisponible : il n'y avait alors rien de persisté à effacer.
+    }
   }
 
   /** Vrai quand la file accepte des événements (mode connecté). */
@@ -127,8 +172,9 @@ export class SyncQueueService {
    * appelé depuis le chemin d'ingestion du log, potentiellement des centaines de
    * fois d'affilée lors de la relecture initiale d'un gros fichier.
    */
-  enqueue(event: Omit<HistoryEvent, 'queuedAt' | 'attempts'>): void {
-    if (this.uid === null) return;
+  enqueue(event: Omit<HistoryEvent, 'uid' | 'queuedAt' | 'attempts'>): void {
+    const uid = this.uid;
+    if (uid === null) return;
 
     const existing = this.entries.get(event.id);
     if (existing) {
@@ -145,7 +191,7 @@ export class SyncQueueService {
       return;
     }
 
-    const entry: HistoryEvent = { ...event, queuedAt: Date.now(), attempts: 0 };
+    const entry: HistoryEvent = { ...event, uid, queuedAt: Date.now(), attempts: 0 };
     this.entries.set(entry.id, entry);
     this.unpersisted.set(entry.id, entry);
     this._pendingCount.set(this.entries.size);

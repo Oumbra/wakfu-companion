@@ -47,17 +47,12 @@ export function detectPreferredLocale(persistence: PersistenceService): AppLocal
  * `LocaleRouteComponent` n'ait eu la main, l'un et l'autre étant construits à des moments différents
  * de l'amorçage du Router) recalcule un chemin depuis cette valeur périmée et détourne la navigation
  * en cours vers `/en` au lieu de `/fr` — bug réel observé en vérification navigateur avant ce correctif.
- * Retire le `<base href>` (voir `--base-href` de `deploy-main.yml`, GitHub Pages sous
- * `/wakfu-companion/`) avant de lire le premier segment.
+ * L'app est servie à la racine de son domaine sur tous les déploiements (`<base href="/">`, voir
+ * `src/index.html`), le premier segment du chemin est donc directement la langue.
  */
 function localeFromCurrentUrl(): AppLocale | null {
-  if (typeof location === 'undefined' || typeof document === 'undefined') return null;
-  const baseHref = document.querySelector('base')?.getAttribute('href') ?? '/';
-  let path = location.pathname;
-  if (baseHref !== '/' && path.startsWith(baseHref)) {
-    path = path.slice(baseHref.length);
-  }
-  const firstSegment = path.split('/').filter(Boolean)[0] as AppLocale | undefined;
+  if (typeof location === 'undefined') return null;
+  const firstSegment = location.pathname.split('/').filter(Boolean)[0] as AppLocale | undefined;
   return firstSegment && SUPPORTED_LOCALES.includes(firstSegment) ? firstSegment : null;
 }
 

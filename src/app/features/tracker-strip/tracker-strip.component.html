@@ -3,14 +3,15 @@
     class="kpi-add"
     [class.expanded]="addOpen()"
     [class.can-bulk-delete]="watchlist.canBulkDelete()"
-    [class.with-target]="addOpen() && watchlist.addMode() === 'down'"
+    [class.with-target]="addOpen() && watchlist.addMode() !== 'up'"
   >
     @if (addOpen()) {
       <div class="kpi-add-form">
-        <div class="icon-switch kpi-add-mode-switch">
+        <div class="icon-switch icon-switch-3 kpi-add-mode-switch">
           <span
             class="icon-switch-highlight"
             [class.is-right]="watchlist.addMode() === 'down'"
+            [class.is-far-right]="watchlist.addMode() === 'goal'"
           ></span>
           <button
             type="button"
@@ -52,6 +53,26 @@
               >{{ 'tracker.countDownMode' | t }}</span
             >
           </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [appTooltip]="
+              autocomplete.focused() || switchCompact() ? ('tracker.goalMode' | t) : null
+            "
+            tooltipPosition="top-left"
+            [class.compact]="autocomplete.focused() || switchCompact()"
+            [class.selected]="watchlist.addMode() === 'goal'"
+            (click)="setAddMode($event, 'goal')"
+          >
+            <app-icon name="goal-flag" [size]="13" [strokeWidth]="2.2" />
+            <span
+              class="icon-switch-option-label"
+              [appTooltip]="'tracker.goalMode' | t"
+              tooltipPosition="top-left"
+              [tooltipOnlyIfTruncated]="true"
+              >{{ 'tracker.goalMode' | t }}</span
+            >
+          </button>
         </div>
         <app-wakfu-autocomplete
           #autocomplete
@@ -69,7 +90,7 @@
           ×
         </button>
       </div>
-      @if (watchlist.addMode() === 'down') {
+      @if (watchlist.addMode() !== 'up') {
         <div class="kpi-target-wrapper">
           <div class="kpi-target-presets">
             @for (preset of watchlist.targetPresets; track preset) {
@@ -90,7 +111,12 @@
             [max]="9999"
             [prevTooltip]="'tracker.countdownTargetDecrease' | t"
             [nextTooltip]="'tracker.countdownTargetIncrease' | t"
-            [fieldTooltip]="'tracker.countdownTargetHint' | t"
+            [fieldTooltip]="
+              (watchlist.addMode() === 'goal'
+                ? 'tracker.goalTargetHint'
+                : 'tracker.countdownTargetHint'
+              ) | t
+            "
             (valueChange)="watchlist.addTarget.set($event)"
           />
         </div>
@@ -153,7 +179,7 @@
         [class.is-selected]="watchlist.selectMode() && watchlist.isSelected(entry)"
         [attr.draggable]="!watchlist.selectMode()"
         [appTooltip]="
-          entry.mode === 'down' && activeKey() !== entryKey(entry)
+          watchlist.hasTarget(entry) && activeKey() !== entryKey(entry)
             ? watchlist.countdownProgressTooltip(entry)
             : null
         "
@@ -181,7 +207,7 @@
             >{{ watchlist.displayName(entry) }}</span
           >
         </span>
-        @if (entry.mode === 'down') {
+        @if (watchlist.hasTarget(entry)) {
           <span class="kpi-count-inline is-countdown">
             <app-input-number
               class="kpi-countdown-current-input"
@@ -196,7 +222,14 @@
             <span class="kpi-target-static" [appTooltip]="'tracker.countdownTargetLocked' | t">{{
               entry.countdownTarget
             }}</span>
-            <span class="kpi-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+            <span class="kpi-pct"
+              ><app-icon
+                class="kpi-mode-icon"
+                [name]="watchlist.modeIcon(entry)"
+                [size]="11"
+                [strokeWidth]="2.4"
+              />{{ watchlist.countdownPercent(entry) }}%</span
+            >
           </span>
         } @else {
           <span class="kpi-count-inline">{{ entry.count | localeNumber }}</span>
@@ -211,11 +244,16 @@
         </button>
         <span
           class="kpi-count-badge"
-          [class.is-fraction]="entry.mode === 'down'"
+          [class.is-fraction]="watchlist.hasTarget(entry)"
           [class.is-long]="watchlist.isLongCount(entry)"
         >
-          @if (entry.mode === 'down') {
-            {{ entry.count
+          @if (watchlist.hasTarget(entry)) {
+            <app-icon
+              class="kpi-mode-icon"
+              [name]="watchlist.modeIcon(entry)"
+              [size]="9"
+              [strokeWidth]="2.4"
+            />{{ entry.count
             }}<span class="kpi-count-badge-target">/{{ entry.countdownTarget }}</span>
           } @else {
             {{ entry.count | localeNumber }}

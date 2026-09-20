@@ -1,9 +1,8 @@
 /**
  * Recours manuel (nom FR, minuscule -> URL d'image directe) pour les objets
- * items.json) — voir core/api/catalog.service.ts (catalogue servi par
- * l'API distante). Ce sont typiquement des objets
- * spéciaux (trophées de combat, jetons de monstre...) non exposés dans les
- * particulier sur la fiche du monstre El Pochito.
+ * absents du catalogue — voir core/api/catalog.service.ts (catalogue servi par
+ * l'API distante). Ce sont typiquement des objets spéciaux (trophées de
+ * combat, jetons de monstre...). URLs relevées manuellement.
  *
  * static.ankama.com bloque ces URLs si la requête porte un en-tête Referer
  * d'un domaine tiers (protection anti-hotlink) : `<img>` doit être chargée

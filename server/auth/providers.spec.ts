@@ -1,8 +1,8 @@
 /**
  * Tests des adaptateurs de fournisseurs OAuth (lot 5, prompt 5.1) : le point
  * sensible est la normalisation du profil — un e-mail NON vérifié doit
- * ressortir à `null`, sans quoi il déclencherait une fusion de comptes (§7 du
- * plan) sur une adresse que le fournisseur n'a pas validée.
+ * ressortir à `null`, sans quoi il déclencherait une fusion de comptes sur une
+ * adresse que le fournisseur n'a pas validée.
  *
  * `fetch` est simulé : aucun appel réseau réel.
  */

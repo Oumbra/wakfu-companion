@@ -40,3 +40,15 @@
     <span>{{ 'auth.login.google' | t }}</span>
   </button>
 </div>
+
+<p class="provider-consent">
+  @for (part of consentParts(); track $index) {
+    @if (part.link) {
+      <button type="button" class="provider-consent-link" (click)="legalPage.open(part.link)">
+        {{ (part.link === 'terms' ? 'auth.login.consentTerms' : 'auth.login.consentPrivacy') | t }}
+      </button>
+    } @else {
+      <span>{{ part.text }}</span>
+    }
+  }
+</p>

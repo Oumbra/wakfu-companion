@@ -13,7 +13,8 @@ export interface GameServer {
 /**
  * Cache local de la liste. Volontairement **hors** des données synchronisées
  * (`USER_DATA_KEYS`) : ce n'est pas une donnée utilisateur mais une copie d'une
- * table serveur, qui n'a rien à faire ni dans le compte ni dans l'export RGPD.
+ * table serveur, qui n'a rien à faire ni dans le compte ni dans l'export de
+ * configurations.
  */
 const SERVERS_CACHE_KEY = 'wakfu-game-servers';
 

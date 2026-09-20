@@ -7,10 +7,9 @@
          (`styles.css`, `main.js`...) par rapport au chemin COURANT, pas à la racine du site — sur un
          chemin à un seul segment (`/profile`, comme avant cette fonctionnalité) ça donnait par
          hasard la bonne URL (`/styles.css`), mais sur un chemin à deux segments (`/fr/profile`) ça
-         résout en `/fr/styles.css`, une 404 qui casse le chargement de toute l'app. `ng build
-         --base-href /wakfu-companion/` (voir deploy-main.yml, GitHub Pages) réécrit cette balise à la
-         volée pour la prod ; le build preview Cloudflare (deploy-preview.yml, servi à la racine de
-         son domaine) et le serveur de dev gardent celle-ci telle quelle. -->
+         résout en `/fr/styles.css`, une 404 qui casse le chargement de toute l'app. Tous les
+         déploiements (prod et preview Cloudflare Pages) comme le serveur de dev servent l'app à la
+         racine de leur domaine : cette balise n'est jamais réécrite au build. -->
     <base href="/" />
     <title>Wakfu Companion — Tracker de combat, historique et suivi en temps réel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -18,11 +17,11 @@
     <meta name="theme-color" content="#00d2ff" />
 
     <!-- ═══════════════════════ SEO / référencement (moteurs classiques + IA) ═══════════════════════
-         Domaine canonique en dur ci-dessous (GH Pages, hébergement de prod actuel — voir
-         docs/plan-migration-serveur.md) : À METTRE À JOUR PARTOUT (ce fichier, public/robots.txt,
-         public/sitemap.xml, public/llms.txt, core/services/seo.service.ts) le jour où la prod bascule
-         sur Cloudflare/domaine personnalisé. Volontairement en dur (canonical/og:url identiques sur
-         TOUTES les URLs de déploiement, y compris les previews *.pages.dev) : ça dit explicitement
+         Domaine canonique en dur ci-dessous (Cloudflare Pages, domaine personnalisé) : À METTRE À
+         JOUR PARTOUT (ce fichier, public/robots.txt, public/sitemap.xml, public/llms.txt,
+         core/services/seo.service.ts) le jour où le domaine change — un grep sur
+         `wakfu-companion.com` retrouve les 5 endroits. Volontairement en dur (canonical/og:url
+         identiques sur TOUTES les URLs de déploiement, previews comprises) : ça dit explicitement
          aux moteurs "n'indexe pas cette URL séparément, c'est un doublon de la prod" — technique
          standard pour un environnement de preview/staging, sans avoir besoin de config par
          environnement.
@@ -41,28 +40,24 @@
          pour les moteurs qui exécutent le JS (Google, Bing) : canonical/alternates mis à jour selon
          la locale ACTIVE (voir son commentaire) — cette même URL statique de repli fait office de
          valeur par défaut avant que le JS ne s'exécute. -->
-    <link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
-    <link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
-    <link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
-    <link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
-    <link rel="alternate" hreflang="x-default" href="https://oumbra.github.io/wakfu-companion/fr" />
+    <link rel="alternate" hreflang="fr" href="https://wakfu-companion.com/fr" />
+    <link rel="alternate" hreflang="en" href="https://wakfu-companion.com/en" />
+    <link rel="alternate" hreflang="es" href="https://wakfu-companion.com/es" />
+    <link rel="alternate" hreflang="pt" href="https://wakfu-companion.com/pt" />
+    <link rel="alternate" hreflang="x-default" href="https://wakfu-companion.com/fr" />
     <meta
       name="description"
       content="Wakfu Companion est le compagnon de jeu gratuit pour Wakfu : tracker de combat (damage meter) en temps réel, historique de combats, suivi des kamas, de l'XP, du butin et du chat, à partir de votre wakfu.log. Disponible en français, anglais, espagnol et portugais."
     />
-    <meta
-      name="keywords"
-      content="wakfu tracker, wakfu companion, wakfu historique de combats, wakfu damage meter, wakfu combat tracker, suivi de combat wakfu, wakfu log parser, wakfu fight history, wakfu combat history, rastreador de combate wakfu, wakfu historial de combates, wakfu tracker de daño, rastreador de dano wakfu, wakfu histórico de combates"
-    />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="Oumbra" />
     <meta http-equiv="content-language" content="fr, en, es, pt" />
-    <link rel="canonical" href="https://oumbra.github.io/wakfu-companion/" />
+    <link rel="canonical" href="https://wakfu-companion.com/" />
 
     <!-- Open Graph (partage Discord/Facebook/LinkedIn...) -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Wakfu Companion" />
-    <meta property="og:url" content="https://oumbra.github.io/wakfu-companion/" />
+    <meta property="og:url" content="https://wakfu-companion.com/" />
     <meta
       property="og:title"
       content="Wakfu Companion — Tracker de combat, historique et suivi en temps réel"
@@ -71,7 +66,7 @@
       property="og:description"
       content="Compagnon de jeu gratuit pour Wakfu : tracker de combat en temps réel, historique de combats, kamas, XP, butin et chat. Français, anglais, espagnol, portugais."
     />
-    <meta property="og:image" content="https://oumbra.github.io/wakfu-companion/logo-purple.png" />
+    <meta property="og:image" content="https://wakfu-companion.com/logo-purple.png" />
     <meta property="og:image:alt" content="Logo Wakfu Companion" />
     <meta property="og:locale" content="fr_FR" />
     <meta property="og:locale:alternate" content="en_GB" />
@@ -88,7 +83,7 @@
       name="twitter:description"
       content="Compagnon de jeu gratuit pour Wakfu : tracker de combat en temps réel, historique de combats, kamas, XP, butin et chat."
     />
-    <meta name="twitter:image" content="https://oumbra.github.io/wakfu-companion/logo-purple.png" />
+    <meta name="twitter:image" content="https://wakfu-companion.com/logo-purple.png" />
 
     <!-- JSON-LD : décrit l'application aux moteurs de recherche ET aux agents/assistants IA
          (ChatGPT, Perplexity, Claude...) qui privilégient les données structurées pour répondre
@@ -107,7 +102,7 @@
           "Wakfu Historial de combates",
           "Wakfu Histórico de combates"
         ],
-        "url": "https://oumbra.github.io/wakfu-companion/",
+        "url": "https://wakfu-companion.com/",
         "description": "Compagnon de jeu gratuit pour Wakfu : tracker de combat (damage meter) en temps réel, historique de combats, suivi des kamas, de l'XP, du butin et du chat, à partir du fichier wakfu.log lu localement dans le navigateur.",
         "applicationCategory": "GameApplication",
         "operatingSystem": "Web (Chrome, Edge)",
@@ -119,7 +114,7 @@
           "price": "0",
           "priceCurrency": "EUR"
         },
-        "image": "https://oumbra.github.io/wakfu-companion/logo-purple.png",
+        "image": "https://wakfu-companion.com/logo-purple.png",
         "author": {
           "@type": "Person",
           "name": "Oumbra"
@@ -190,23 +185,12 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <!-- Pose data-theme AVANT le premier rendu (voir ThemeService, même clé/logique de détection) :
          sans ça, un visiteur en thème système clair verrait un flash du thème sombre par défaut le
-         temps qu'Angular démarre et instancie le service. -->
-    <script>
-      (function () {
-        try {
-          var stored = JSON.parse(localStorage.getItem('wakfu-theme') || 'null');
-          var theme =
-            stored === 'dark' || stored === 'light'
-              ? stored
-              : window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-                ? 'light'
-                : 'dark';
-          document.documentElement.dataset.theme = theme;
-        } catch (e) {
-          /* localStorage indisponible (mode privé strict...) : reste sur le thème sombre par défaut. */
-        }
-      })();
-    </script>
+         temps qu'Angular démarre et instancie le service. Fichier externe (public/theme-init.js,
+         chargé de façon bloquante ici, dans le <head>, précisément pour s'exécuter avant le premier
+         rendu) plutôt qu'un script inline : la CSP (public/_headers, `script-src 'self'`) n'autorise
+         aucun script inline, et un hash CSP dépendrait de la réécriture exacte du script par le
+         build — cassé silencieusement à la moindre retouche. -->
+    <script src="theme-init.js"></script>
   </head>
   <body>
     <app-root></app-root>

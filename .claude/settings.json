@@ -40,5 +40,44 @@
       "Bash(rm -f /tmp/claude-*)",
       "Bash(cat *)"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'command -v rtk >/dev/null 2>&1 || echo \"rtk absent de cette session : les commandes shell tournent en natif (cf. CLAUDE.md, section rtk). Cloud : installer rtk via le setup script de l environnement.\"'"
+          },
+          {
+            "type": "command",
+            "command": "sh -c 'grep -q \"\\\"caveman@caveman\\\"\" \"${CLAUDE_CONFIG_DIR:-$HOME/.claude}/plugins/installed_plugins.json\" 2>/dev/null || echo \"plugin caveman absent de cette session : appliquer la skill par la section Caveman de CLAUDE.md. Cloud : installer le plugin via le setup script de l environnement.\"'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh -c 'command -v rtk >/dev/null 2>&1 && exec rtk hook claude; cat >/dev/null'"
+          }
+        ]
+      }
+    ]
+  },
+  "extraKnownMarketplaces": {
+    "caveman": {
+      "source": {
+        "source": "github",
+        "repo": "JuliusBrussee/caveman"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "caveman@caveman": true
   }
 }

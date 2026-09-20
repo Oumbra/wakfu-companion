@@ -369,12 +369,15 @@
 .kpi-add.expanded {
   /* Largeur mesurée en Playwright pour loger le switch étiqueté (voir `.kpi-add-mode-switch`) sans
      réduire d'autant la largeur utile du champ de recherche — plus large que l'ancien switch
-     icônes-seules (34px) puisque le mode se lit désormais en toutes lettres, sans survol. */
-  width: 400px;
+     icônes-seules (34px) puisque le mode se lit désormais en toutes lettres, sans survol. Élargie
+     de 400 à 500px avec la 3ᵉ option « Objectif » (2026-09-17) : trois options de 110px + le
+     bouton fermer ne laissaient plus que ~20px au champ de recherche tant qu'il n'a pas le focus
+     (les options ne se compactent qu'à cet instant, voir `.compact`). */
+  width: 500px;
   gap: 6px;
   flex-direction: column;
 }
-/* Le mode décompte ajoute les puces de quantités courantes (`.kpi-target-presets`) ET le stepper
+/* Les modes décompte et objectif ajoutent les puces de quantités courantes (`.kpi-target-presets`) ET le stepper
    manuel (`app-input-number.kpi-add-target-input`) à la suite du switch — largeur mesurée en
    Playwright (contenu exact des contrôles + marge confortable pour le champ de recherche, qui
    absorbe tout le reste). */
@@ -391,8 +394,8 @@
   color: var(--panel-header-bg);
   border-color: var(--text-color);
 }
-/* Switch incrémental/décompte déterminant le mode du KPI créé — seul endroit où ce choix se fait
-   encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. Largeur
+/* Switch incrémental/décompte/objectif déterminant le mode du KPI créé — seul endroit où ce choix
+   se fait encore : le mode est figé une fois le KPI créé, sans repère visuel dédié sur la tuile. Largeur
    des options gérée individuellement par `.icon-switch-option` (icône + libellé en toutes lettres,
    clés déjà traduites dans les 4 locales, voir CLAUDE.md), qui se compacte en icône seule une fois
    la recherche focus (`.compact`) pour laisser la place au champ. */
@@ -672,6 +675,20 @@ app-input-number.kpi-countdown-current-input {
 .kpi-count-badge-target {
   color: var(--text-muted);
   font-size: 10px;
+}
+/* Icône du mode (cible = décompte, drapeau = objectif, voir `modeIcon`) devant la fraction du
+   badge replié et devant le pourcentage de la tuile dépliée : la même fraction se lit dans les
+   deux sens, l'icône tranche sans survol. Dans la couleur du texte qu'elle précède, jamais une
+   couleur propre au mode (décision du 2026-09-17). L'espacement se règle sur le CONTENEUR
+   (`inline-flex` + `gap`), pas sur `app-icon` : son hôte est `display: contents`, une marge posée
+   dessus n'a aucun effet, et le `<svg>` interne est hors de portée de ce fichier (voir
+   `IconComponent`). `align-items: baseline` garde le nombre et la cible « /5 » (10px) alignés
+   comme en flux de texte, et pose l'icône sur la même ligne de base. */
+.kpi-count-badge.is-fraction,
+.kpi.expanded .kpi-pct {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 3px;
 }
 /* Au-delà de 6 chiffres affichés (voir `isLongCount`), le décalage `right:-7px` fait déborder le
    badge bien au-delà de la tuile 58px — trop large pour rester lisible (le texte le plus à gauche,

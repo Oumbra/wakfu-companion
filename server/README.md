@@ -1,7 +1,7 @@
 # Serveur — Cloudflare Pages Functions + Neon
 
-Voir `docs/plan-migration-serveur.md` (§4, §6, §9) pour le contexte complet.
-Ce document couvre uniquement la mise en route pratique.
+Ce document couvre la mise en route pratique et les décisions d'architecture
+réellement mises en œuvre.
 
 ## Architecture
 
@@ -40,30 +40,31 @@ Voir `server/db/client.ts` pour l'implémentation.
 À ajouter comme **secrets GitHub Actions** (`Settings → Secrets and
 variables → Actions`) sur `oumbra/wakfu-companion` :
 
-| Secret                        | Description                                                                                                                                                                                                                                                                                                                                                  |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `CLOUDFLARE_API_TOKEN`        | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                                                                                                                                                                                                      |
-| `CLOUDFLARE_ACCOUNT_ID`       | Déjà en place.                                                                                                                                                                                                                                                                                                                                               |
-| `DATABASE_URL`                | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                                                                                                                                                                                                  |
-| `DATABASE_URL_PREVIEW`        | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_.                                                                                                                                                                           |
+| Secret                  | Description                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                            |
+| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place.                                                                                                                                                                     |
+| `DATABASE_URL`          | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                        |
+| `DATABASE_URL_PREVIEW`  | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_. |
 
 Secrets/variables supplémentaires du **lot 5** (authentification), tous
 **optionnels** : tant qu'ils sont absents, `/api/v1/auth/{provider}/*` répond
 `503 fournisseur non configuré` et l'application reste pleinement utilisable
-en mode invité (§7 du plan). Le workflow de déploiement les pousse seulement
+en mode invité. Le workflow de déploiement les pousse seulement
 s'ils sont définis, jamais en échec sinon.
 
-| Secret / variable                                              | Description                                                                                                                                                                                                                                         |
-| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DISCORD_CLIENT_ID_PREVIEW` / `DISCORD_CLIENT_SECRET_PREVIEW`  | Application Discord (_Developer Portal → Applications → OAuth2_). Redirect URI à déclarer : `<PUBLIC_BASE_URL>/api/v1/auth/discord/callback`.                                                                                                       |
-| `GOOGLE_CLIENT_ID_PREVIEW` / `GOOGLE_CLIENT_SECRET_PREVIEW`    | Identifiants OAuth 2.0 Google (_Google Cloud Console → API et services → Identifiants_). Redirect URI : `<PUBLIC_BASE_URL>/api/v1/auth/google/callback`.                                                                                            |
-| `PUBLIC_BASE_URL_PREVIEW` (**variable** GitHub, pas un secret) | Origine publique stable de la preview, ex. `https://wakfu-companion.pages.dev`. Indispensable : une preview Cloudflare a aussi une URL **par déploiement** (`<hash>.wakfu-companion.pages.dev`), qui ne peut pas être déclarée chez le fournisseur. |
+| Secret / variable                                              | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DISCORD_CLIENT_ID_PREVIEW` / `DISCORD_CLIENT_SECRET_PREVIEW`  | Application Discord (_Developer Portal → Applications → OAuth2_). Redirect URI à déclarer : `<PUBLIC_BASE_URL>/api/v1/auth/discord/callback`.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `GOOGLE_CLIENT_ID_PREVIEW` / `GOOGLE_CLIENT_SECRET_PREVIEW`    | Identifiants OAuth 2.0 Google (_Google Cloud Console → API et services → Identifiants_). Redirect URI : `<PUBLIC_BASE_URL>/api/v1/auth/google/callback`.                                                                                                                                                                                                                                                                                                                                                                                            |
+| `PUBLIC_BASE_URL_PREVIEW` (**variable** GitHub, pas un secret) | Origine publique stable de la preview, ex. `https://wakfu-companion.pages.dev`. Indispensable : une preview Cloudflare a aussi une URL **par déploiement** (`<hash>.wakfu-companion.pages.dev`), qui ne peut pas être déclarée chez le fournisseur.                                                                                                                                                                                                                                                                                                 |
+| `RATE_LIMIT_SALT` / `RATE_LIMIT_SALT_PREVIEW`                  | Secret de pseudonymisation des adresses IP dans `auth_rate_limits` (`clientIpKey`, `server/auth/rate-limit.ts` — HMAC-SHA256 tronqué, jamais l'IP en clair ; RGPD art. 5.1.c, écart 4.4 de `docs/analyse-rgpd.md`). Une chaîne aléatoire quelconque (ex. `openssl rand -hex 32`). Optionnel : à défaut, `DATABASE_URL` sert de matière à clé, pour que le repli ne soit jamais un hachage non salé — un secret dédié reste préférable (rotation indépendante de la base). Le changer remet simplement les compteurs à zéro sur la fenêtre en cours. |
 
 `DATABASE_URL`/`DATABASE_URL_PREVIEW` sont aussi transmis comme variable
 d'environnement chiffrée du projet Cloudflare Pages (poussé à chaque
 déploiement via `wrangler pages secret put`, voir
-`.github/workflows/deploy-preview.yml` — `deploy-main.yml`, encore sur
-GitHub Pages, ne les utilise pas pour l'instant) : c'est ce qui les rend
+`.github/workflows/deploy-main.yml` pour la production et
+`deploy-preview.yml` pour la preview) : c'est ce qui les rend
 disponibles dans `context.env.DATABASE_URL` côté Pages Functions.
 
 ## Migrations
@@ -99,6 +100,22 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
   compact — volume négligeable), pour `findWakfuDungeonByBossMonsterId`
   côté client (lot 3.1).
+- `GET /api/v1/icons/{folder}/{file}.png` — **relais d'icônes `wakassets`**
+  pour l'overlay de bureau (2026-09-19, constat C10 de `docs/analyse-rgpd.md`
+  du dépôt `wakfu-companion-overlay`) **et pour le site** (2026-09-20 : plus
+  aucune image `vertylo.github.io` chargée directement par le navigateur —
+  helper unique `src/app/core/utils/wakassets-url.util.ts`, `pictureUrl` des
+  donjons/familles réécrites à l'ingestion dans `CatalogService`, origine
+  retirée d'`img-src` dans `public/_headers`) : `folder` parmi `items`,
+  `monsters`, `monsterIllustrations`, `bossIllustrations`, `monstersfamily`,
+  `rarities`, `itemTypes`, `spells`, `icons`, `aptitudes` ; fichier
+  `<nombre>.png` (négatif accepté : `itemTypes/-1.png`) ou `<mot court en
+  minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
+  Public, sans authentification. Réponse mise en cache à la périphérie
+  (`caches.default`, une semaine pour une icône, une heure pour un 404
+  amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
+  l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
+  Logique pure dans `server/icons/proxy.ts` (testée).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
 - `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
@@ -109,8 +126,66 @@ DATABASE_URL=... npm run db:migrate
 - `POST /api/v1/auth/logout` — révoque la session courante.
 - `GET /api/v1/auth/sessions` — sessions actives ;
   `DELETE /api/v1/auth/sessions[?id=…]` — révoque une session précise, ou
-  toutes.
+  toutes. Une session **morte** (expirée, ou révoquée) n'est plus listée et
+  sa ligne est **effacée 30 jours après** (`DEAD_SESSION_RETENTION_MS`,
+  `server/auth/flow.ts::purgeDeadSessions` — limitation de la conservation,
+  RGPD art. 5.1.e, 2026-09-19). Pas de cron sur Pages : le ménage se fait à
+  l'occasion des appels qui touchent déjà à la table (connexion OAuth,
+  appairage et rotation natifs, `GET`/`DELETE` ci-dessus, et le
+  rafraîchissement quotidien de l'expiration glissante dans `resolveSession`,
+  seul déclencheur pour un compte qui ne se reconnecte jamais mais dont
+  l'overlay tourne). Le délai est annoncé dans la politique de confidentialité
+  (section 5) : ne pas changer l'un sans l'autre.
+  - Même mécanisme, un cran au-dessus, pour les **comptes inactifs** : un compte
+    sans activité authentifiée depuis **12 mois** (`users.last_seen_at`, posé à
+    la connexion OAuth et par le rafraîchissement quotidien de `resolveSession`,
+    donc tenu vivant par un overlay qui tourne) est effacé en cascade
+    (`INACTIVE_ACCOUNT_RETENTION_MS`, `purgeInactiveAccounts`, décision du
+    responsable de traitement du 2026-09-20, politique §5). Les deux purges sont
+    regroupées dans `runRetentionPurges`, toujours appelée APRÈS que l'activité
+    du compte courant a été marquée — un compte ne peut pas être purgé par sa
+    propre requête de retour. La migration `0030` a remis `last_seen_at` de tous
+    les comptes existants à `now()` : le délai court depuis la mise en production
+    de la règle. Pas de courriel d'avertissement (aucun prestataire d'envoi).
+- `GET /api/v1/auth/export` — export RGPD des données de compte (droit d'accès
+  et portabilité, art. 15/20) : ligne `users` avec ses dates, identités OAuth
+  (identifiant chez le fournisseur compris), TOUTES les sessions encore en base
+  (révoquées/remplacées/expirées incluses tant que `purgeDeadSessions` ne les a
+  pas effacées — `GET /auth/sessions` ne montre que les vivantes), configuration
+  avec horodatage par clé. **Sans l'historique**, volontairement : le client
+  (`AccountExportService`) enchaîne les quatre `GET /api/v1/history/*` paginés
+  (`limit=200`) jusqu'à épuisement pour composer le fichier — sérialiser des
+  milliers de combats d'un bloc sortirait du budget CPU d'une Pages Function,
+  alors que la pagination existante est déjà bornée. Le bouton « Exporter » de
+  la page « Mon compte » produit ainsi `{ data: <configuration locale>, account:
+  <cette réponse + history> }` ; en invité, seulement `data`. Tout ou rien côté
+  client : aucun fichier n'est écrit si une requête échoue.
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
+- `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
+  session** : porteur `Authorization: Bearer` obligatoire (jamais un cookie —
+  un navigateur l'enverrait tout seul), la ligne de `sessions` est SUPPRIMÉE
+  et non pas seulement marquée révoquée, et les appairages natifs périmés
+  sont purgés au passage. Appelée par l'overlay à chaque déconnexion et par
+  son bouton « Supprimer les données locales » (RGPD art. 17, constat C5 de
+  `docs/analyse-rgpd.md` du dépôt `wakfu-companion-overlay`) : sans elle, un
+  jeton effacé de la machine restait valide en base.
+- `POST /api/v1/auth/native/session` — **rotation du jeton natif**
+  (2026-09-19, même constat C5, « reste ouvert : la rotation ») : même porteur
+  obligatoire, corps vide, réponse `{ token, issuedAt, expiresAt,
+previousTokenValidUntil }`. Un jeton neuf de 30 jours glissants est émis
+  pour le même compte et le même appareil ; l'ancienne session est
+  **remplacée** (`sessions.superseded_at`, migration `0029`) et son expiration
+  ramenée à 5 min (`NATIVE_SESSION_ROTATION_GRACE_MS`) : encore acceptée le
+  temps que l'overlay persiste le nouveau jeton et que ses requêtes déjà
+  parties aboutissent (un 401 côté overlay vaut « jeton refusé », donc
+  déconnexion et purge locale — à ne jamais provoquer pour une course), mais
+  plus jamais prolongée par l'expiration glissante, plus listée dans « Mon
+  compte » (la nouvelle la représente), et toujours emportée par « déconnecter
+  tous mes appareils ». Une rotation depuis un jeton déjà remplacé mais encore
+  en grâce est admise (overlay planté entre la réponse et l'écriture au
+  trousseau). Le rythme est laissé à l'overlay : le serveur ne force rien, un
+  jeton jamais renouvelé reste un jeton de 30 jours glissants. Logique pure
+  dans `server/auth/pairing.ts::rotateNativeSession` (testée).
 
 Les endpoints `/api/v1/prices/*` (lot 4) ont été déplacés le 2026-08-18 vers
 le projet **wakfu-companion-price** (dépôt séparé, même base Neon — voir son
@@ -118,23 +193,19 @@ README.md) ; ne plus les chercher ici, ni dans `functions/api/v1/`.
 
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
+### Le référentiel est un fichier local, pas un fetch
 
-Contrairement à ce que le prompt 2.2 envisageait initialement, le script
-d'import (`server/import/import-catalog.ts`) **ne lit pas**
-disponibilité d'image sur les CDN tiers, identification de la rareté "old")
-ne fait partie d'aucun script de ce dépôt — elle vit dans deux **skills
-dépôt privé séparé (`wakfu-companion-private-skills`, plugin Claude),
-exécutés **manuellement** par le mainteneur (le référentiel Ankama change
-très rarement). Réimplémenter cette transformation ici aurait dupliqué une
-logique en partie manuelle (voir le commentaire de `normalizeRarity` dans
-`server/import/import-catalog.ts` sur l'identification des objets "old",
-seule implémentation restante depuis la suppression des tables embarquées
-côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
+Le script d'import (`server/import/import-catalog.ts`) lit un référentiel
+JSON local, hors dépôt (dossier ignoré par git), que le mainteneur met à
+jour lui-même, très rarement. Le script ne contient aucune logique de
+constitution de ce référentiel — seulement sa transformation vers les
+tables (voir le commentaire de `normalizeRarity` sur l'identification des
+objets "old", seule implémentation restante depuis la suppression des tables
+embarquées côté client, lot 3.1 étape 8) — décision actée avec l'utilisateur.
 
-Conséquence sur le déclenchement : **pas de cron quotidien** interrogeant
-`.github/workflows/import-catalog.yml` se déclenche sur tout push modifiant
-suit donc directement les mises à jour du référentiel committé, sans
-polling.
+Conséquence sur le déclenchement : **pas de cron, pas de workflow** — l'import
+se lance à la main (`npm run main:catalog:import` / `dev:catalog:import`)
+quand le référentiel a changé.
 
 ### Script d'import
 
@@ -144,6 +215,7 @@ remplacement complet des tables `items`/`monsters`/`dungeons`/`item_recipes`
 diff incrémental. Réutilise scrupuleusement les règles déjà établies côté
 client (exclusion des objets de rareté "old"), et dédoublonne les objets par
 `(fr, rareté, gfxId)` avant insertion (`dedupeItemRows`, cas apparu en volume
+le 2026-08-13 après un élargissement des sources du référentiel :
 283 groupes de vrais doublons, même objet mais ankamaId différent) — pas de
 déduplication par ankamaId seul, qui reste non fiable comme clé (voir le
 commentaire de `server/db/schema.ts` sur la clé primaire synthétique
@@ -282,6 +354,55 @@ IndexedDB + service worker actif : `CatalogService.status()` passe
 directement à `ready` sans requête réseau, aucun badge « catalogue
 indisponible » affiché).
 
+## En-têtes de sécurité HTTP (`public/_headers`) et CSP
+
+Posés par Cloudflare Pages sur toutes les réponses (RGPD art. 32, écart 4.8 de
+`docs/analyse-rgpd.md`, 2026-09-19) : `X-Content-Type-Options: nosniff`,
+`X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`,
+`Permissions-Policy`, `Strict-Transport-Security` (1 an, sans
+`includeSubDomains` ni `preload` : décision à prendre à part, elle engage tout
+sous-domaine futur), et une **CSP bloquante** (`Content-Security-Policy`, en
+`Report-Only` du 2026-09-19 au 2026-09-20) — inventaire des origines et
+justification de chaque directive en commentaire dans le fichier lui-même.
+
+- **`ng serve` n'applique jamais `_headers`.** Pour vérifier en local :
+  `npm run build` puis `npx wrangler pages dev dist/wakfu-companion/browser
+--port 8790 --compatibility-date 2026-08-07 --compatibility-flags nodejs_compat`
+  (le même `wrangler pages dev` que `npm run functions:dev`, pointé sur le
+  build au lieu de `public/`), puis lire les en-têtes (`curl -D -`) et écouter
+  l'événement `securitypolicyviolation` dans la page (ou la console : les
+  violations s'y affichent en « Refused to... »).
+- **Validation avant passage en mode bloquant (2026-09-20)** : servir le build
+  sur le port 4200 (celui de `PUBLIC_BASE_URL` dans `.dev.vars`, pour que le
+  retour OAuth Discord aboutisse en local), ajouter temporairement `report-uri
+  http://localhost:4299/csp` à la copie `dist/.../_headers` (jamais à
+  `public/_headers`) et écouter ce port avec un mini serveur HTTP qui journalise
+  chaque POST : contrairement à un écouteur `securitypolicyviolation` posé après
+  coup, ça capte aussi les violations de la phase de chargement et des pages de
+  retour OAuth. Les messages « [Report Only] Refused… » de la console Chrome
+  sont émis par le navigateur lui-même et invisibles à une extension/un outil
+  qui ne lit que l'API `console` — ne pas s'y fier pour conclure « aucune
+  violation ». Résultat : 0 rapport sur 96 requêtes (accueil avec fichier
+  reconnecté, profil, son d'alerte, compte, déconnexion, OAuth Discord complet,
+  `/pair`, chat, historique). Google non exercé (pas d'identifiants locaux),
+  chemin structurellement identique (navigation complète vers `/api/v1/auth/*`).
+- **Deux incompatibilités CSP corrigées à cette occasion**, à ne pas
+  réintroduire : (1) le script anti-flash du thème de `src/index.html` était
+  inline → déplacé dans `public/theme-init.js` (`script-src 'self'`, pas de
+  hash à maintenir : le build réécrit le script inline, un hash calculé sur la
+  source ne correspondrait pas) ; (2) l'option `inlineCritical` du CLI Angular
+  (activée par défaut avec `optimization: true`) injecte
+  `<link ... onload="this.media='all'">`, un gestionnaire d'événement inline
+  refusé par `script-src` — désactivée dans `angular.json`
+  (`optimization.styles.inlineCritical: false`, incompatibilité documentée par
+  Angular). Vérifié en Chrome sur le build : zéro violation (dashboard, page
+  d'appairage, pages légales, icônes `vertylo.github.io`, son d'alerte,
+  service worker, `/api/v1/auth/me`).
+- **Passer en mode bloquant** (`Content-Security-Policy`, même valeur) une
+  fois la preview validée en conditions réelles, en particulier le retour
+  OAuth Discord/Google (navigation complète, donc hors CSP de la page, mais à
+  confirmer) — c'est le seul chemin que ce sandbox ne peut pas exercer.
+
 ## Piège PWA : le service worker interceptait `/api/**`
 
 `navigationUrls` par défaut d'Angular (`/**` sauf les URLs comportant une
@@ -315,9 +436,8 @@ l'état du déploiement.
 
 ## Authentification (lot 5, prompt 5.1)
 
-Voir `docs/plan-migration-serveur.md` §7 pour le cadre (OAuth uniquement,
-cookie opaque, mode invité intact). Cette section documente ce qui a été
-réellement implémenté et les écarts assumés.
+Cadre retenu : OAuth uniquement, cookie opaque, mode invité intact. Cette
+section documente ce qui a été réellement implémenté et les écarts assumés.
 
 ### Ce qui n'existe pas, volontairement
 
@@ -345,7 +465,7 @@ les quatre exigences du prompt — `state` invalide, code rejoué, session
 révoquée, fusion sur e-mail — plus redirection ouverte, CSRF, rotation,
 expiration glissante et limitation de débit.
 
-### Trois écarts par rapport au schéma du §6 du plan
+### Trois écarts par rapport au schéma d'origine
 
 1. **`sessions.id` n'est pas le jeton, mais son SHA-256.** Le jeton opaque
    (256 bits) ne vit que dans le cookie `httpOnly`. Une fuite en lecture de la
@@ -448,13 +568,72 @@ données, aucun compte utilisateur » — faux dès ce lot. Réécrite pour couv
 les deux modes d'utilisation, les données réellement conservées avec un
 compte, le cookie de session, le fait que le chat n'est jamais transmis,
 l'hébergement (Cloudflare + Neon) et les droits RGPD (export, suppression
-réelle). Obligation annoncée au §7 du plan.
+réelle).
+
+#### Portée réelle du bouton « Exporter » (droit d'accès)
+
+Précisé le 2026-09-19. Le bouton « Exporter » de la page « Mon compte » appelle
+`AppDataExportService.buildExport()`, qui relit **uniquement** les 11 clés de
+`USER_DATA_KEYS` (profil, watchlist, réattributions, roster, chat, disposition
+du tableau de bord) : c'est un export de **configurations**, pas un export RGPD
+complet. Rien côté serveur n'en sort — ni `users` (e-mail vérifié, nom
+affiché), ni `userIdentities`, ni `sessions`, ni l'historique
+(`fights`/`fightParticipants`/`fightLoot`/`purchases`/`trades`/`tradeItems`/
+`pactExtractions`) — et **aucun endpoint d'export n'existe** dans
+`functions/api/v1/`.
+
+Le point 6 de `privacy.notice.body` affirmait pourtant, dans les 4 locales, que
+ce bouton satisfaisait le droit d'accès (art. 15) et la portabilité (art. 20)
+« en un clic ». Écart corrigé côté texte : il décrit maintenant ce que le
+bouton télécharge réellement et renvoie à `contact@wakfu-companion.com`, sous
+un mois (art. 12.3), pour les données de compte.
+
+Le jour où un endpoint d'export serveur est ajouté (`GET /api/v1/auth/export`,
+protégé par la session, renvoyant identité + sessions + historique complet),
+fusionner sa réponse dans `exportData()` **et** rétablir la promesse « en un
+clic » dans les 4 locales — les deux ensemble, jamais l'un sans l'autre.
+
+#### Relecture complète des textes légaux (2026-09-19)
+
+Les 3 textes (`legal.notice.body`, `privacy.notice.body`, `terms.notice.body`,
+4 locales chacun) ont été repassés affirmation par affirmation contre le code.
+Corrigé en plus de l'export :
+
+- **Comptage anti-abus par adresse IP.** `server/auth/rate-limit.ts` écrit
+  l'IP EN CLAIR dans `auth_rate_limits.bucket` (`auth:callback:ip:{ip}`,
+  fenêtre de 10 min, purge opportuniste) sur toutes les routes `/auth/*`. La
+  politique n'en disait rien et affirmait même qu'aucune donnée personnelle
+  n'était conservée par nous hors journaux d'hébergeur. Désormais décrit aux
+  points 1, 1.2 (traitement), 1.3 (intérêt légitime) et 5 (durée).
+- **Extractions de pacte.** `pactExtractions`/`pactExtractionItems` sont bien
+  alimentées par le SITE (`POST /api/v1/history/pacts`, voir
+  `HistorySyncService`), mais l'historique décrit s'arrêtait aux « combats,
+  achats et échanges ». Ajoutées aux points 1.2 et 6. **Le point 1.4
+  (énumération de ce que l'overlay envoie) ne les mentionne toujours pas** :
+  à vérifier dans le dépôt de l'overlay, hors périmètre de ce dépôt-ci.
+- **Trois cookies, pas un.** `wc_session`, `wc_csrf` (tous deux
+  `SESSION_TTL_MS`) et `wc_oauth_state` (10 min) — la politique n'en décrivait
+  qu'un seul.
+- **Configuration synchronisée automatiquement**, pas « que vous choisissez
+  explicitement de sauvegarder » : une fois connecté, `UserDataService` route
+  tout `write` vers le compte sans geste par donnée.
+- **Date des CGU** restée au 18 septembre alors que leur §5 changeait.
+
+Vérifié conforme sans changement : hébergement Cloudflare + Neon (GitHub Pages
+décommissionné, plus aucune mention), session de 30 jours glissants
+(`SESSION_TTL_MS`) et purge des sessions mortes à 30 jours
+(`DEAD_SESSION_RETENTION_MS`), suppression de compte immédiate en cascade
+(`DELETE /api/v1/auth/account`), icônes du SITE chargées en direct depuis
+`vertylo.github.io`/`static.ankama.com` (le relais `/api/v1/icons` ne sert que
+l'overlay), contenu du chat jamais transmis (`SYNCED_SETTING_KEYS` ne porte que
+canaux et filtres), historique plafonné en invité (`MAX_FIGHT_HISTORY`) et
+illimité en compte.
 
 ## Configuration utilisateur synchronisée (lot 6, prompt 6.1)
 
 Objectif du lot : ne plus perdre ses données en vidant son navigateur, et les
-retrouver d'un appareil à l'autre. Voir `docs/plan-migration-serveur.md` §4
-(« deux modes de données utilisateur ») et §11.
+retrouver d'un appareil à l'autre — les « deux modes de données utilisateur » :
+invité (local seul) et connecté (remonté sur le compte).
 
 ### Aucune migration de base
 
@@ -489,6 +668,55 @@ l'arbitrage cherche à empêcher.
 
 Les clés refusées repartent au client **avec la valeur conservée**, qui
 s'aligne dessus sans second aller-retour.
+
+### Écritures partielles (`patch`) pour `profile` et `roster`
+
+Ajouté le 2026-09-19 (analyse RGPD de l'overlay, constat C9 — minimisation des
+données) : une entrée du `PATCH` peut porter `patch` à la place de `value`
+(`{ key, patch, updatedAt }`, exactement l'un des deux). Le serveur fusionne le
+correctif dans la valeur en compte et écrit la valeur entière résultante — la
+table ne connaît toujours que des valeurs entières, aucune migration. Avant,
+un réglage d'alerte fait depuis l'overlay renvoyait le profil entier (pseudo,
+avatar, mode d'affichage) que l'overlay ne connaît pas et n'a pas à
+transmettre ; idem pour un personnage ajouté à un compte du roster.
+
+`server/settings/patch.ts` (pur, `patch.spec.ts`) fixe la sémantique, propre à
+chaque clé — les autres clés (listes plates, booléens) sont refusées en 400,
+il n'y a pas de sous-clé qui ait un sens :
+
+| Clé       | Correctif                                                | Fusion                                                                                                                                                                            |
+| --------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `profile` | objet de champs, non vide                                | Superficielle : chaque champ cité remplace le sien en bloc (`soundItems` est une liste, remplacée entière), les autres restent.                                                   |
+| `roster`  | `{ accounts?: [{ id, ...champs }], removedIds?: [ids] }` | Par `id` : chaque compte cité est fusionné superficiellement dans le compte de même `id` (créé en fin de liste sinon), `removedIds` retire ; comptes et champs non cités intacts. |
+
+Un correctif **ne sait pas supprimer un champ** (`null` est une valeur légitime,
+`gameServer`/`avatarIndex`) ni réordonner les comptes : le client envoie alors
+la valeur entière, comme avant.
+
+**Garde-fou SQL plus strict que pour un remplacement.** La valeur fusionnée est
+calculée en JS à partir de celle lue par le `SELECT` ; le `setWhere` de
+l'upsert n'est donc pas `updated_at < excluded.updated_at` mais
+`updated_at = <horodatage lu>` (compare-and-set à la milliseconde près, `date_trunc` — un `Date` JS
+n'a pas la précision microseconde de `timestamptz` ; `false` si la ligne n'existait
+pas à la lecture). Sinon une écriture concurrente d'un autre appareil, même
+plus ancienne que la nôtre, serait écrasée par une fusion calculée sans elle.
+Une course perdue (`.returning()` vide) est relue et renvoyée comme un rejet
+ordinaire, avec la version fraîche. Un upsert par clé fusionnable (deux au
+plus), le compare-and-set étant propre à chaque ligne.
+
+La réponse renvoie, pour une fusion appliquée seulement, `applied[].value` : la
+valeur entière résultante, que le client ne connaît pas puisqu'il n'a envoyé
+qu'un écart.
+
+**Côté client web** (`core/data-access/user-data-patch.util.ts`,
+`RemoteUserDataRepository.acked`) : le dépôt distant retient la dernière version
+de chaque champ que le serveur détient (reçue au `pull()`, renvoyée par un
+rejet, confirmée par un envoi appliqué) et n'envoie que l'écart
+(`buildUserDataPatch` : `none` → aucune requête, `patch` → correctif, `full` →
+valeur entière quand l'écart n'est pas exprimable). Les deux clés fusionnables
+y sont dupliquées (`MERGEABLE_USER_DATA_KEYS`), `src/` n'important jamais
+`server/`. L'overlay de bureau (dépôt séparé) reste libre d'adopter le format
+ou de continuer à envoyer la valeur entière : les deux formes coexistent.
 
 ### Liste blanche de clés
 
@@ -527,8 +755,7 @@ bouts :
 constructeur pour initialiser des signaux, et la watchlist est réécrite en
 plein chemin chaud de parsing. La copie `localStorage` reste donc la source de
 vérité immédiate dans les deux modes ; le compte est une **réplication**, pas
-un chemin de lecture. Même raisonnement que pour `findWakfuItemEntry` (§4,
-point de vigilance n°3 du plan).
+un chemin de lecture. Même raisonnement que pour `findWakfuItemEntry`.
 
 **Le seul `if (connecté)` vit dans `AuthService`**, qui déclenche
 `activateRemote()` / `deactivateRemote()`. Aucun composant ne connaît l'état de
@@ -555,7 +782,7 @@ silence, ce que le prompt 5.2 interdit.
 ### Gating `isInitialLoad` : rien ne change
 
 La watchlist et ses compteurs restent du **suivi persistant** (principe
-d'architecture n°2 de `CLAUDE.md`) : jamais incrémentés pendant
+d'architecture `isInitialLoad`, `.claude/rules/log-ingestion.md`) : jamais incrémentés pendant
 `isInitialLoad`, jamais réinitialisés. Une version venue d'un autre appareil la
 remplace intégralement, compteurs compris — c'est la sémantique voulue, sans
 rapport avec le gating, qui ne concerne que les incréments issus du fichier de
@@ -647,7 +874,8 @@ la valeur voyage dans une charge utile déjà synchronisée.
 
 La liste des serveurs, elle, est mise en cache dans une clé locale **hors**
 `USER_DATA_KEYS` : ce n'est pas une donnée utilisateur mais une copie d'une
-table serveur, elle n'a rien à faire dans le compte ni dans l'export RGPD.
+table serveur, elle n'a rien à faire dans le compte ni dans l'export de
+configurations.
 
 ### Hors ligne
 
@@ -663,7 +891,7 @@ Le dernier personnage reconnu n'est pas persisté : il se reconstruit à chaque
 lecture du log. Le mettre à jour pendant `isInitialLoad` est donc ici le
 comportement **correct** (une reconnexion relit tout le fichier et retrouve
 naturellement le dernier personnage vu), contrairement aux compteurs de suivi —
-principe d'architecture n°2 de `CLAUDE.md`, appliqué dans l'autre sens.
+principe d'architecture `isInitialLoad` de `.claude/rules/log-ingestion.md`, appliqué dans l'autre sens.
 
 ### Où s'affiche le badge
 
@@ -694,7 +922,7 @@ combats (`MAX_FIGHT_HISTORY`) et perdu au rechargement.
 
 ### Le piège central : la clé déterministe
 
-Le principe d'architecture n°2 de `CLAUDE.md` veut que toute (re)connexion au
+Le principe d'architecture `isInitialLoad` (`.claude/rules/log-ingestion.md`) veut que toute (re)connexion au
 fichier de log le relise **depuis le début** et reconstruise l'historique
 complet. Sans précaution, chaque reconnexion réenverrait tout et créerait des
 doublons **persistés** — qu'un simple F5 ne réparerait pas, contrairement au bug
@@ -728,14 +956,14 @@ dans `src/app/core/sync/history-event.model.ts`) :
    pas pour autant un journal figé : la clé identifie le **combat**, son détail
    se rafraîchit (voir « Ce qui est immuable, ce qui se rafraîchit » plus bas).
 
-### Six écarts par rapport au schéma du §6 du plan
+### Six écarts par rapport au schéma d'origine
 
 1. **`game_server` sur les trois tables**, pas seulement `purchases` : c'est ce
    pour quoi le lot 7 existe (« taguer l'historique personnel — combats, achats,
    échanges — par serveur »). Toujours nullable : un événement sans serveur
    résolu part quand même, le champ reste vide (prompt 8.1 point 4).
 2. **`fight_participants` porte un `instance_index`** dans sa clé primaire. La
-   PK `(fight_id, name, side)` du plan entre en collision dès que deux
+   PK `(fight_id, name, side)` d'origine entre en collision dès que deux
    combattants du même camp partagent un nom — courant, et tout un mécanisme
    client y est consacré (`InitiativeSeat`, `countNameInstances`). Sans lui, un
    combat contre trois Bouftous perdrait deux lignes sur trois.
@@ -820,7 +1048,7 @@ de tête pour la marche à suivre complète (capture en navigateur des corps de
 requête avec l'`uid` réel du compte, suppression ciblée par `fight_log_id`,
 dry-run avec diff colonne par colonne avant `--apply`). Premier usage réel :
 l'historique du 15/09 d'un utilisateur archivé sans butin (session HDV jamais
-refermée, voir CLAUDE.md « Combats interrompus... ») — `fights` étant immuable
+refermée, voir `.claude/rules/log-ingestion.md` « Combats interrompus... ») — `fights` étant immuable
 après insertion, un simple rejeu par son client n'aurait jamais corrigé ses
 lignes existantes.
 

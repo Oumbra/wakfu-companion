@@ -149,6 +149,40 @@ export class PersistenceService {
     });
   }
 
+  /**
+   * Efface TOUT ce que l'application a stocké sur cet appareil : `localStorage`
+   * (réglages, personnages, liste de suivi, réattributions, filtres de chat,
+   * préférences, classifications détectées...) et la base IndexedDB entière
+   * (handle du fichier, cache catalogue, file de synchronisation).
+   *
+   * Pendant de « Supprimer les données locales » de l'overlay de bureau, proposé
+   * à la suppression du compte (RGPD art. 17, écart 4.9 de
+   * `docs/analyse-rgpd.md`) : les données rapatriées depuis le compte (pseudos de
+   * tiers compris) ne doivent pas survivre sur un poste partagé quand
+   * l'intention d'effacer est sans ambiguïté. L'appelant doit **recharger la
+   * page aussitôt** (`location.reload()`) : les services en mémoire, eux, ont
+   * encore tout leur état et le réécriraient au premier changement.
+   *
+   * `deleteDatabase` reste « bloquée » tant qu'une connexion est ouverte (la
+   * nôtre, `openDb()` en ouvre une par opération) : on ne l'attend donc pas
+   * au-delà du signal `blocked`, la suppression s'achève d'elle-même au
+   * rechargement, qui ferme toutes les connexions.
+   */
+  async wipeLocalData(): Promise<void> {
+    try {
+      localStorage.clear();
+    } catch {
+      // Stockage indisponible : il n'y avait rien à effacer.
+    }
+    if (typeof indexedDB === 'undefined') return;
+    await new Promise<void>((resolve) => {
+      const request = indexedDB.deleteDatabase(DB_NAME);
+      request.onsuccess = () => resolve();
+      request.onerror = () => resolve();
+      request.onblocked = () => resolve();
+    });
+  }
+
   getJson<T>(key: string): T | undefined {
     const raw = localStorage.getItem(key);
     if (!raw) return undefined;

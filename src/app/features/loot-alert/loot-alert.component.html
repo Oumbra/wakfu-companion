@@ -19,9 +19,7 @@
         <app-item-icon [name]="itemName()" [id]="itemId()" [size]="34" />
       }
       <div class="loot-alert-text">
-        <span class="loot-alert-title">{{
-          (reason() === 'countdown' ? 'tracker.countdownAlertTitle' : 'profile.lootAlertTitle') | t
-        }}</span>
+        <span class="loot-alert-title">{{ titleKey() | t }}</span>
         <span class="loot-alert-name">
           {{
             kind() === 'enemy'

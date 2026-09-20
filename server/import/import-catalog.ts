@@ -1,7 +1,9 @@
 #!/usr/bin/env -S npx tsx
 /**
- * Importe le référentiel Ankama (objets, monstres, donjons, recettes) depuis
- * prompt 2.2. Déclenché par .github/workflows/import-catalog.yml quand
+ * Importe le référentiel (objets, monstres, donjons, recettes) depuis un
+ * dossier JSON local, hors dépôt, vers les tables catalogue (voir
+ * server/db/schema.ts) — prompt 2.2. Lancé à la main quand le référentiel
+ * a changé — PAS de cron, voir server/README.md. Exécuté via
  * `npx tsx server/import/import-catalog.ts` (voir script npm "catalog:import").
  *
  * Remplacement complet à chaque exécution (DELETE puis INSERT par lots) —
@@ -99,7 +101,8 @@ interface RawMonster {
   isBoss: boolean;
   isArchi: boolean;
   isDominant?: boolean;
-  // Ids Ankama des objets droppables sur ce monstre (référentiel curé par le skill externe
+  // Ids Ankama des objets droppables sur ce monstre (référentiel curé hors de ce
+  // dépôt) — toujours un tableau, potentiellement vide (~127 monstres sans loot
   // connu au moment de l'ajout de ce champ). Voir monsters.loot, server/db/schema.ts.
   loot?: number[];
 }
@@ -273,6 +276,7 @@ function warnUnknownSubCategories(rawCategories: readonly RawCategory[]): void {
 /**
  * Écarte les vrais doublons d'objets : même fr/rareté/gfxId (donc visuellement et
  * fonctionnellement le même objet), mais un ankamaId différent — cas apparu en volume (283
+ * groupes, 569 lignes en trop) après l'élargissement des sources du référentiel,
  * confirmé en base (requête `GROUP BY fr, rarity, gfx_id HAVING COUNT(*) > 1`, 2026-08-13). Le
  * champ `en`/`es`/`pt` n'entre PAS dans la clé : vérifié que ces doublons ne diffèrent que par
  * de la casse ou des variantes mineures de traduction sur `pt` (ex. "Amuleto Amargo" vs "Amuleto

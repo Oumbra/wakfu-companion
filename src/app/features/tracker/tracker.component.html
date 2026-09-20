@@ -32,10 +32,11 @@
           }
         </div>
       }
-      <div class="icon-switch tracker-add-mode-switch">
+      <div class="icon-switch icon-switch-3 tracker-add-mode-switch">
         <span
           class="icon-switch-highlight"
           [class.is-right]="watchlist.addMode() === 'down'"
+          [class.is-far-right]="watchlist.addMode() === 'goal'"
         ></span>
         <button
           type="button"
@@ -75,6 +76,25 @@
             {{ 'tracker.countDownMode' | t }}
           </span>
         </button>
+        <button
+          type="button"
+          class="icon-switch-option"
+          [appTooltip]="autocomplete.focused() ? ('tracker.goalMode' | t) : null"
+          tooltipPosition="top-left"
+          [class.compact]="autocomplete.focused()"
+          [class.selected]="watchlist.addMode() === 'goal'"
+          (click)="watchlist.setAddMode('goal')"
+        >
+          <app-icon name="goal-flag" [size]="13" [strokeWidth]="2.2" />
+          <span
+            class="icon-switch-option-label"
+            [appTooltip]="'tracker.goalMode' | t"
+            tooltipPosition="top-left"
+            [tooltipOnlyIfTruncated]="true"
+          >
+            {{ 'tracker.goalMode' | t }}
+          </span>
+        </button>
       </div>
       <app-wakfu-autocomplete
         #autocomplete
@@ -84,7 +104,7 @@
         (selected)="add($event)"
       />
     </div>
-    @if (watchlist.addMode() === 'down') {
+    @if (watchlist.addMode() !== 'up') {
       <div class="tracker-target-row">
         <div class="kpi-target-presets">
           @for (preset of watchlist.targetPresets; track preset) {
@@ -105,7 +125,12 @@
           [max]="9999"
           [prevTooltip]="'tracker.countdownTargetDecrease' | t"
           [nextTooltip]="'tracker.countdownTargetIncrease' | t"
-          [fieldTooltip]="'tracker.countdownTargetHint' | t"
+          [fieldTooltip]="
+            (watchlist.addMode() === 'goal'
+              ? 'tracker.goalTargetHint'
+              : 'tracker.countdownTargetHint'
+            ) | t
+          "
           (valueChange)="watchlist.addTarget.set($event)"
         />
       </div>
@@ -173,13 +198,20 @@
                 >
                   {{ watchlist.displayName(entry) }}
                 </span>
-                @if (entry.mode === 'down') {
-                  <span class="kpi-card-pct">{{ watchlist.countdownPercent(entry) }}%</span>
+                @if (watchlist.hasTarget(entry)) {
+                  <span class="kpi-card-pct"
+                    ><app-icon
+                      class="kpi-mode-icon"
+                      [name]="watchlist.modeIcon(entry)"
+                      [size]="11"
+                      [strokeWidth]="2.4"
+                    />{{ watchlist.countdownPercent(entry) }}%</span
+                  >
                 }
               </div>
 
               <div class="kpi-card-value-row">
-                @if (entry.mode === 'down') {
+                @if (watchlist.hasTarget(entry)) {
                   <app-input-number
                     class="kpi-card-value-input"
                     [value]="entry.count"
@@ -201,7 +233,7 @@
                 </button>
               </div>
 
-              @if (entry.mode === 'down') {
+              @if (watchlist.hasTarget(entry)) {
                 <div class="kpi-card-target-row">
                   <span
                     class="kpi-card-target"

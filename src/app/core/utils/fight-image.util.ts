@@ -7,13 +7,13 @@ import {
 } from '../api/catalog.service';
 import { normalizeWakfuName } from './wakfu-name.util';
 import { BREACH_IMAGE_URL, ULTIMATE_BREACH_IMAGE_URL } from '../data/breach-icon.data';
+import { wakassetsIconUrl } from './wakassets-url.util';
 
 /** Illustration générique wakassets, utilisée en repli erreur réseau (voir onFightImageError dans
  * fight-history.component.ts) quand même les replis wakassets d'un monstre échouent. Depuis le
  * 2026-08-24, n'est PLUS utilisée pour le cas "horde hétérogène" (voir BREACH_IMAGE_URL ci-dessous,
  * plus précis). */
-export const DEFAULT_FIGHT_IMAGE_URL =
-  'https://vertylo.github.io/wakassets/bossIllustrations/default.png';
+export const DEFAULT_FIGHT_IMAGE_URL = wakassetsIconUrl('bossIllustrations', 'default.png');
 
 /**
  * Illustration officielle Ankama d'un monstre (utilisée pour l'illustration de combat, PAS pour
@@ -45,14 +45,15 @@ function monsterPictureUrl(gfxId: string): string {
  */
 function monsterPictureFallbacks(gfxId: string): string[] {
   return [
-    `https://vertylo.github.io/wakassets/monsters/${gfxId}.png`,
-    `https://vertylo.github.io/wakassets/monsterIllustrations/${gfxId}.png`,
+    wakassetsIconUrl('monsters', `${gfxId}.png`),
+    wakassetsIconUrl('monsterIllustrations', `${gfxId}.png`),
   ];
 }
 
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, le combat est considéré comme une horde hétérogène (pas un donjon/archi/dominant précis) — voir resolveFightImageUrl. */
 const DISTINCT_FAMILY_THRESHOLD = 4;
 
+/** Regroupe les monstres sans famille de monstres (`family: null`) dans un même repli, plutôt que de les compter comme autant de familles distinctes qu'il y a de monstres sans famille. */
 const NO_FAMILY_KEY = 'none';
 
 /** Nom localisé (4 langues, déjà présentes sur les entrées donjon/monstre) de l'entité
@@ -377,11 +378,11 @@ export type FightTypeClassification =
   | {
       kind: 'family';
       categoryRank: number;
-      /**
+      /** Id de famille de monstres (voir `CatalogMonsterEntry.family`), ou nom de monstre normalisé
        * en repli pour les 28 monstres sans famille (voir CLAUDE.md) — chacun forme alors sa propre
        * "famille" à un seul membre, comme avant ce correctif. */
       key: string;
-      /**
+      /** Id de famille de monstres (`CatalogMonsterEntry.family`), `null` pour le repli par nom
        * (28 monstres sans famille, voir `key` ci-dessus). Permet à l'appelant de résoudre le VRAI
        * nom de famille via `CatalogService.findWakfuMonsterFamilyById` — préférable à
        * `candidateNames` ci-dessous, qui reste nécessaire en repli (id `null`, ou nom de famille pas

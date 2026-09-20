@@ -34,6 +34,14 @@ export interface SessionRecord {
   lastUsedAt: Date;
   userAgent: string | null;
   revokedAt: Date | null;
+  /**
+   * Remplacée par une session plus récente (rotation du jeton natif, voir
+   * `server/auth/pairing.ts::rotateNativeSession`). Encore acceptée jusqu'à
+   * `expiresAt` — ramené à une courte grâce au moment de la rotation — mais
+   * plus jamais prolongée par l'expiration glissante ni listée parmi les
+   * sessions actives : la nouvelle session la représente.
+   */
+  supersededAt: Date | null;
 }
 
 export interface UserRecord {
@@ -90,15 +98,54 @@ export interface AuthStore {
     patch: { email?: string | null; displayName?: string | null; lastSeenAt?: Date },
   ): Promise<void>;
   deleteUser(userId: string): Promise<void>;
+  /**
+   * **Efface** (en cascade : identités, sessions, configuration, historique)
+   * les comptes dont `lastSeenAt` est antérieur à `before` — limitation de la
+   * conservation (RGPD art. 5.1.e). Le délai est fixé par l'appelant
+   * (`INACTIVE_ACCOUNT_RETENTION_MS`, flow.ts) et annoncé dans la politique de
+   * confidentialité (§5). Renvoie le nombre de comptes effacés.
+   */
+  purgeInactiveUsers(before: Date): Promise<number>;
 
   // ── Sessions ──────────────────────────────────────────────────────────
   createSession(record: SessionRecord): Promise<void>;
   findSession(idHash: string): Promise<SessionRecord | null>;
   touchSession(idHash: string, patch: { lastUsedAt: Date; expiresAt: Date }): Promise<void>;
   revokeSession(idHash: string, now: Date): Promise<boolean>;
+  /**
+   * **Efface** la ligne de session, au lieu de la marquer révoquée — droit à l'effacement
+   * (RGPD art. 17) exercé depuis un client natif, voir
+   * `functions/api/v1/auth/native/session.ts`.
+   *
+   * Une session révoquée reste en base (`revoked_at`), ce qui est le bon défaut : elle documente
+   * qu'un appareil a été déconnecté, et `resolveSession` la refuse de toute façon. Mais quand
+   * l'utilisateur demande l'effacement de ce que l'overlay a laissé, cette trace-là — son
+   * `user_id`, ses horodatages, son `user_agent` — fait partie de ce qui doit partir. Le jeton
+   * devient inutilisable dans les deux cas : inconnu et révoqué donnent le même 401.
+   *
+   * `false` si la ligne n'existait pas (jeton déjà effacé, appel rejoué).
+   */
+  deleteSession(idHash: string): Promise<boolean>;
+  /**
+   * Marque la session comme remplacée (rotation du jeton natif) : pose
+   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie. Sans
+   * effet si la ligne n'existe pas.
+   */
+  supersedeSession(idHash: string, patch: { supersededAt: Date; expiresAt: Date }): Promise<void>;
   /** Révoque toutes les sessions actives d'un compte, sauf éventuellement une. */
   revokeAllSessions(userId: string, now: Date, exceptIdHash?: string): Promise<number>;
+  /** Sessions actives d'un compte : ni révoquées, ni expirées, ni remplacées. */
   listSessions(userId: string, now: Date): Promise<SessionRecord[]>;
+  /**
+   * **Efface** les sessions mortes depuis longtemps : expirées avant `before`
+   * ou révoquées avant `before` — limitation de la conservation (RGPD
+   * art. 5.1.e). Une session révoquée garde sa ligne un temps (elle documente
+   * qu'un appareil a été déconnecté, utile pour comprendre un incident), pas
+   * pour toujours : `resolveSession` la refuse de toute façon, et elle
+   * n'apparaît plus dans « Mon compte ». Renvoie le nombre de lignes effacées.
+   * Le délai est fixé par l'appelant (`DEAD_SESSION_RETENTION_MS`, flow.ts).
+   */
+  purgeDeadSessions(before: Date): Promise<number>;
 
   // ── Limitation de débit ───────────────────────────────────────────────
   /** Incrémente le compteur de la fenêtre et renvoie sa valeur APRÈS incrément. */

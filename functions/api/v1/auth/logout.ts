@@ -1,6 +1,6 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
-import { SESSION_RULE, checkRateLimit, clientIp } from '../../../../server/auth/rate-limit';
+import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -9,8 +9,7 @@ import type { Env } from '../../_types';
  *
  * La révocation est côté serveur (table `sessions`), pas seulement un
  * effacement de cookie : un jeton volé avant la déconnexion cesse d'être
- * utilisable — c'est précisément ce qu'un JWT autoporteur ne permettrait pas
- * (§7 du plan).
+ * utilisable — c'est précisément ce qu'un JWT autoporteur ne permettrait pas.
  */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
@@ -21,7 +20,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const now = new Date();
   const limit = await checkRateLimit(
     auth.store,
-    `auth:session:ip:${clientIp(context.request)}`,
+    `auth:session:ip:${await clientIpKey(context.request, context.env)}`,
     SESSION_RULE,
     now,
   );

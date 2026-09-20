@@ -5,7 +5,7 @@ import { createDb } from '../../server/db/client';
 import { createDbAuthStore } from '../../server/auth/db-store';
 import { SESSION_COOKIE, clearedAuthCookies, readCookie } from '../../server/auth/cookies';
 import { resolveSession, verifyCsrf } from '../../server/auth/flow';
-import type { AuthStore, ProviderId, UserRecord } from '../../server/auth/store';
+import type { AuthStore, ProviderId, SessionRecord, UserRecord } from '../../server/auth/store';
 import type { ProviderCredentials } from '../../server/auth/providers';
 import type { Env } from './_types';
 
@@ -62,6 +62,8 @@ export interface AuthenticatedContext {
   user: UserRecord;
   sessionIdHash: string;
   sessionToken: string;
+  /** Ligne de session telle que résolue (déjà lue : pas de second SELECT pour qui en a besoin). */
+  session: SessionRecord;
 }
 
 /**
@@ -83,7 +85,7 @@ function readBearerToken(request: Request): string | null {
  * Résout la session du cookie (navigateur) ou du porteur `Authorization: Bearer` (client natif).
  * Renvoie `null` si l'appelant n'est pas connecté (jeton absent, inconnu, expiré ou révoqué) — à
  * traduire en 401 par l'appelant, jamais en erreur serveur : côté client, un 401 fait simplement
- * basculer en mode invité (§7 du plan).
+ * basculer en mode invité.
  */
 export async function authenticate(
   request: Request,
@@ -99,6 +101,7 @@ export async function authenticate(
     user: resolved.user,
     sessionIdHash: resolved.session.idHash,
     sessionToken: token,
+    session: resolved.session,
   };
 }
 
@@ -110,7 +113,7 @@ export function unauthenticated(): Response {
 }
 
 /**
- * Contrôle CSRF double-submit sur les routes mutatives (§7 du plan) :
+ * Contrôle CSRF double-submit sur les routes mutatives :
  * l'en-tête `X-CSRF-Token` doit correspondre au jeton dérivé de la session,
  * que le client récupère dans le cookie `wc_csrf` — seul un script de la même
  * origine peut le lire, là où le cookie de session, lui, serait envoyé

@@ -8,9 +8,8 @@ import { HistoryStatsService } from '../sync/history-stats.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
 /**
- * État de session côté client (lot 5, prompt 5.2) — voir
- * docs/plan-migration-serveur.md §7 et server/README.md pour le versant
- * serveur.
+ * État de session côté client (lot 5, prompt 5.2) — voir server/README.md
+ * pour le versant serveur.
  *
  * Principe directeur, non négociable : **la connexion est optionnelle**.
  * `'guest'` n'est pas un état d'erreur mais le mode par défaut, dans lequel
@@ -20,8 +19,8 @@ import { HistorySyncService } from '../sync/history-sync.service';
  * `'guest'`.
  *
  * Le jeton de session n'est JAMAIS manipulé ici : il vit dans un cookie
- * `httpOnly` invisible du JavaScript (§7). Ce service ne connaît que l'état
- * dérivé des réponses de l'API.
+ * `httpOnly` invisible du JavaScript. Ce service ne connaît que l'état dérivé
+ * des réponses de l'API.
  */
 
 export type AuthStatus = 'unknown' | 'guest' | 'authenticated';
@@ -208,6 +207,11 @@ export class AuthService {
     });
     this._busy.set(false);
     if (!result.ok) return false;
+    // Le compte n'existe plus : la file d'historique en attente sur ce disque
+    // ne doit jamais repartir (une reconnexion réenverrait ce que l'utilisateur
+    // vient de faire effacer) — purgée avant le retour en mode invité, qui ne
+    // fait que désactiver la file.
+    await this.historySync.purge();
     this.becomeGuest();
     return true;
   }
@@ -458,7 +462,7 @@ export class AuthService {
     // Mois/Année de la carte Récap) appartient lui aussi au compte qu'on vient de quitter.
     this.historyStats.reset();
     // Retour au stockage purement local — les données déjà présentes sur cet
-    // appareil restent intactes et utilisables (mode invité, §7 du plan).
+    // appareil restent intactes et utilisables (mode invité).
     this.userData.deactivateRemote();
   }
 }

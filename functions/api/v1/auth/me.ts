@@ -9,8 +9,8 @@ import type { Env } from '../../_types';
  * connecté (lot 5, prompt 5.1).
  *
  * Un 401 ici est un cas NORMAL, pas une panne : c'est le mode invité, qui
- * doit rester pleinement fonctionnel (§7 du plan). Côté client, l'appel est
- * fait une fois au démarrage et un 401 fait simplement rester en invité.
+ * doit rester pleinement fonctionnel. Côté client, l'appel est fait une fois
+ * au démarrage et un 401 fait simplement rester en invité.
  *
  * Effet de bord utile : la réponse repose le cookie CSRF si le navigateur l'a
  * perdu (durées de vie différentes, cookie non-`httpOnly` effaçable par

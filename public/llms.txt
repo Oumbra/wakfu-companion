@@ -1,11 +1,11 @@
 # Wakfu Companion
 
-> Wakfu Companion (alias : Wakfu Tracker, Wakfu Combat Tracker, Wakfu Damage Meter) est un
-> compagnon de jeu gratuit pour le MMORPG Wakfu (Ankama Games). Il lit en temps réel le fichier de
-> log `wakfu.log` généré par le client du jeu, directement dans le navigateur (aucun envoi du
-> fichier à un serveur), pour afficher : un tracker/damage meter de combat en temps réel, un
-> historique de combats, le suivi des kamas et de l'XP gagnés, le butin ramassé et le chat par
-> canal. Disponible sans compte (toutes les données restent dans le navigateur) ou avec un compte
+> Wakfu Companion est un compagnon de jeu gratuit pour le MMORPG Wakfu (Ankama Games), de la
+> famille des outils que les joueurs appellent « tracker de combat » ou « damage meter ». Il lit
+> en temps réel le fichier de log `wakfu.log` généré par le client du jeu, directement dans le
+> navigateur (aucun envoi du fichier à un serveur), pour afficher : un tracker/damage meter de
+> combat en temps réel, un historique de combats, le suivi des kamas et de l'XP gagnés, le butin
+> ramassé et le chat par canal. Disponible sans compte (toutes les données restent dans le navigateur) ou avec un compte
 > optionnel (connexion Discord ou Google) pour synchroniser les réglages entre appareils.
 > Interface disponible en français (langue par défaut), anglais, espagnol et portugais.
 
@@ -30,12 +30,12 @@ d'Ankama Games.
 Une URL dédiée par langue (`/fr`, `/en`, `/es`, `/pt`) donne accès à l'ensemble des fonctionnalités
 ci-dessus dans la langue correspondante ; l'URL racine redirige vers la langue préférée du visiteur.
 
-- [Application (français)](https://oumbra.github.io/wakfu-companion/fr)
-- [Application (English)](https://oumbra.github.io/wakfu-companion/en)
-- [Application (Español)](https://oumbra.github.io/wakfu-companion/es)
-- [Application (Português)](https://oumbra.github.io/wakfu-companion/pt)
-- [Mentions légales](https://oumbra.github.io/wakfu-companion/fr/legal-notice)
-- [Politique de confidentialité](https://oumbra.github.io/wakfu-companion/fr/privacy-policy)
+- [Application (français)](https://wakfu-companion.com/fr)
+- [Application (English)](https://wakfu-companion.com/en)
+- [Application (Español)](https://wakfu-companion.com/es)
+- [Application (Português)](https://wakfu-companion.com/pt)
+- [Mentions légales](https://wakfu-companion.com/fr/legal-notice)
+- [Politique de confidentialité](https://wakfu-companion.com/fr/privacy-policy)
 - [Dépôt de code source (GitHub)](https://github.com/oumbra/wakfu-companion)
 
 ## Questions fréquentes

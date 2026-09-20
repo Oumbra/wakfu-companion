@@ -3,7 +3,7 @@
  * servies en fichiers statiques depuis public/assets/classes/ (noms hashés
  * pour un cache navigateur immuable — régénérer le hash si le fichier change)
  * plutôt qu'embarquées en base64 : l'app n'a plus de contrainte de
- * fonctionnement 100% hors-ligne (voir docs/plan-migration-serveur.md).
+ * fonctionnement 100% hors-ligne (mode standalone `file://` retiré).
  */
 export type Gender = 'm' | 'f';
 

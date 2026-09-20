@@ -59,9 +59,10 @@ export class AppHeaderComponent {
   protected readonly mobileMenuOpen = signal(false);
 
   /** Preview Cloudflare Pages (déploiement automatique de `claude/dev`, voir CLAUDE.md) : servie
-   * sur `*.pages.dev`, contrairement à la prod (GitHub Pages, `oumbra.github.io`) — seul signal
-   * fiable côté client, aucun flag d'environnement n'est embarqué au build. Sert à distinguer
-   * visuellement le titre de l'app pour ne jamais confondre les deux avec de vraies données. */
+   * sous le sous-domaine `claude-dev.`, contrairement à la prod servie à la racine du domaine —
+   * seul signal fiable côté client, aucun flag d'environnement n'est embarqué au build. Sert à
+   * distinguer visuellement le titre de l'app pour ne jamais confondre les deux avec de vraies
+   * données. */
   protected readonly isPreviewEnv = location.hostname.startsWith('claude-dev.');
 
   /** Logo + titre ramènent à la page principale, quelle que soit la vue courante — même

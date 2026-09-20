@@ -1,4 +1,5 @@
 import { isSyncedSettingKey, type SyncedSettingKey } from './keys';
+import { isMergeableSettingKey, parseSettingPatch, type SettingPatch } from './patch';
 
 /**
  * Logique pure de la synchronisation par clé (lot 6, prompt 6.1) — validation
@@ -10,13 +11,21 @@ import { isSyncedSettingKey, type SyncedSettingKey } from './keys';
  * (`server/settings/merge.spec.ts`).
  */
 
-/** Une valeur de configuration accompagnée de l'horodatage de sa dernière modification côté client. */
-export interface SettingWrite {
+/**
+ * Une écriture de configuration accompagnée de l'horodatage de sa dernière
+ * modification côté client. Deux formes :
+ *
+ * - `replace` : la valeur entière de la clé (`{ key, value, updatedAt }`), le
+ *   cas historique, valable pour toutes les clés.
+ * - `merge` : un correctif partiel (`{ key, patch, updatedAt }`), fusionné côté
+ *   serveur dans la valeur en compte — réservé aux clés de
+ *   `MERGEABLE_SETTING_KEYS` (voir `patch.ts` pour la sémantique par clé).
+ */
+export type SettingWrite = {
   key: SyncedSettingKey;
-  value: unknown;
   /** Date de modification déclarée par le client (ISO 8601). */
   updatedAt: Date;
-}
+} & ({ mode: 'replace'; value: unknown } | { mode: 'merge'; patch: SettingPatch });
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -41,7 +50,8 @@ function parseTimestamp(raw: unknown, now: Date): ParseResult<Date> {
 
 /**
  * Corps attendu par `PATCH /api/v1/settings` :
- * `{ entries: [{ key, value, updatedAt }] }`.
+ * `{ entries: [{ key, value, updatedAt }] }` — ou, pour une clé fusionnable,
+ * `{ key, patch, updatedAt }` (exactement l'un des deux, jamais les deux).
  *
  * Un lot d'une seule entrée est l'écriture « par clé » — inutile d'exposer
  * une route `/settings/{key}` séparée pour ça (voir server/README.md, section
@@ -58,19 +68,41 @@ export function parsePatchBody(body: unknown, now: Date): ParseResult<SettingWri
   const seen = new Set<string>();
   for (const raw of entries) {
     if (!raw || typeof raw !== 'object') return { ok: false, error: 'entrée non objet' };
-    const entry = raw as { key?: unknown; value?: unknown; updatedAt?: unknown };
+    const entry = raw as { key?: unknown; value?: unknown; patch?: unknown; updatedAt?: unknown };
     if (typeof entry.key !== 'string' || !isSyncedSettingKey(entry.key)) {
       return { ok: false, error: `clé inconnue : ${String(entry.key)}` };
     }
     if (seen.has(entry.key)) return { ok: false, error: `clé en double : ${entry.key}` };
     seen.add(entry.key);
+    const updatedAt = parseTimestamp(entry.updatedAt, now);
+    if (!updatedAt.ok) return updatedAt;
+    if (entry.patch !== undefined) {
+      if (entry.value !== undefined) {
+        return { ok: false, error: `"value" et "patch" sont exclusifs : ${entry.key}` };
+      }
+      if (!isMergeableSettingKey(entry.key)) {
+        return { ok: false, error: `clé non fusionnable : ${entry.key}` };
+      }
+      const patch = parseSettingPatch(entry.key, entry.patch);
+      if (!patch.ok) return patch;
+      writes.push({
+        key: entry.key,
+        mode: 'merge',
+        patch: patch.value,
+        updatedAt: updatedAt.value,
+      });
+      continue;
+    }
     // `undefined` n'existe pas en JSON ; une valeur absente est donc une
     // erreur de forme, jamais une demande de suppression (le client envoie une
     // liste vide, un objet vide... mais toujours une valeur).
     if (entry.value === undefined) return { ok: false, error: `valeur manquante : ${entry.key}` };
-    const updatedAt = parseTimestamp(entry.updatedAt, now);
-    if (!updatedAt.ok) return updatedAt;
-    writes.push({ key: entry.key, value: entry.value, updatedAt: updatedAt.value });
+    writes.push({
+      key: entry.key,
+      mode: 'replace',
+      value: entry.value,
+      updatedAt: updatedAt.value,
+    });
   }
   return { ok: true, value: writes };
 }

@@ -63,10 +63,10 @@
    1. `:root[data-theme='light']` porte tout ce qui est PARTAGÉ par les 4 variantes : la
       recoloration des couleurs sémantiques (dégâts élémentaires, canaux de chat, rareté d'objet,
       victoire/défaite, kamas) — calibrées pour un fond sombre à l'origine, elles échouaient très
-      majoritairement au contraste WCAG AA (4.5:1) sur fond clair (audité — voir
-      docs/plan-migration-serveur.md pour le détail de cet audit et sa revue par deux personas
-      experts indépendants) — ainsi que les valeurs structurelles par défaut, qui sont celles de la
-      variante `'a'` (« Ardoise Douce », recommandée par cet audit comme premier déploiement).
+      majoritairement au contraste WCAG AA (4.5:1) sur fond clair (audité, puis revu par deux
+      personas experts indépendants) — ainsi que les valeurs structurelles par défaut, qui sont
+      celles de la variante `'a'` (« Ardoise Douce », recommandée par cet audit comme premier
+      déploiement).
    2. `:root[data-theme='light'][data-light-theme='b'|'c'|'d']` ne redéfinit QUE les jetons
       structurels qui diffèrent de la variante par défaut (fond/panneaux/bordures/texte/accent) —
       la recoloration sémantique de la couche 1 reste strictement identique aux 4 variantes (elle a

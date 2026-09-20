@@ -87,6 +87,7 @@ export type WakfuDungeonType =
  *   catalogue — `{id}` est `monsters.family` (voir `monsterFamilies`) de l'ennemi "représentatif"
  *   du combat, même priorité que `resolveFightTypeClassification`/`familyPerFight` (stats.ts) :
  *   boss > archimonstre > dominant > plus gros dégât. `FAMILY_NONE` si ce représentant n'appartient
+ *   à aucune famille de monstres (les ~28 monstres sans famille, voir CLAUDE.md). Le repli "horde
  *   hétérogène" du client (`kind: 'other'`, plus de 4 familles distinctes sans brèche connue) n'a
  *   PAS d'équivalent dédié ici : comme `familyPerFight` déjà côté serveur, il retombe simplement sur
  *   la famille du participant le mieux classé — même approximation assumée, voir CLAUDE.md.
@@ -96,6 +97,7 @@ export type WakfuDungeonType =
  *   audit du contenu réel de ce seau sur la base de prod (155 combats) : quasi exclusivement des
  *   monstres d'ÉVÉNEMENT temporaire (Koutoulou, Chuchotueurs, Ougiptien, Tourbillon/Tornade du
  *   Zinit...) ou des combats environnementaux sans vrai monstre (ex. "Enigme pyramide", une
+ *   énigme). Pas jugé rentable d'étendre le référentiel de monstres (réservé
  *   aux monstres permanents) pour ces cas ponctuels — `EVENT` leur donne un seau générique visible
  *   dans les agrégations par type plutôt qu'un `null` invisible pour toujours (voir
  *   `server/history/fight-type.ts` pour le calcul).
@@ -122,7 +124,7 @@ export type FightTypeCode =
  * traduit pas les noms de serveurs dans ses 4 locales fr/en/es/pt), donc pas
  * besoin d'une colonne par locale ici — contrairement à l'avertissement du
  * prompt 2.1 sur les « locales attendues par serveur », qui ne s'applique pas
- * au schéma minimal retenu (code/label/is_active, voir docs/plan-migration-serveur.md §6).
+ * au schéma minimal retenu ici (code/label/is_active).
  */
 export const gameServers = pgTable('game_servers', {
   code: text('code').primaryKey(), // 'pandora' | 'rubilax' | 'ogrest'
@@ -131,10 +133,13 @@ export const gameServers = pgTable('game_servers', {
 });
 
 /**
+ * Sous-catégories fines d'objet (Casques,
  * Anneaux, Récoltes du Forestier, Costumes... voir ITEM_SUBCATEGORY_CATALOG dans
  * server/import/import-catalog.ts pour le regroupement vers la catégorie large
  * `items.category` ci-dessous). Table de référence normalisée plutôt qu'un texte répété sur
  * chaque ligne d'`items` — même principe que `monsterFamilies` ci-dessous, y compris pour
+ * `en`/`es`/`pt` depuis que le référentiel des catégories fournit les 4 locales (avant : `fr`
+ * seul). `id` vient directement du référentiel (id stable, plus réattribué arbitrairement à
  * chaque import comme avant) : la table est entièrement remplacée à chaque exécution, mais avec
  * les mêmes id d'un import à l'autre.
  */
@@ -147,8 +152,9 @@ export const itemCategories = pgTable('item_categories', {
 });
 
 /**
- * Référentiel Ankama (catalogue objets/monstres/donjons), lot 2.2 — voir
- * server/import/import-catalog.ts pour l'import et server/README.md pour
+ * Référentiel (catalogue objets/monstres/donjons), lot 2.2 — voir
+ * server/import/import-catalog.ts pour l'import (référentiel JSON local,
+ * hors dépôt, mis à jour à la main — voir server/README.md).
  *
  * Clé primaire synthétique (`pk`, bigserial) plutôt que l'id Ankama : ~142
  * objets historiques du référentiel n'ont pas d'id Ankama et 2 ids sont en
@@ -203,7 +209,7 @@ export const itemRecipes = pgTable(
 );
 
 /**
- * ~150 lignes, référentiel curé à la main comme le reste, voir
+ * Familles de monstres (~150 lignes, référentiel curé à la main comme le reste, voir
  * server/import/import-catalog.ts). Ajoutée pour donner un vrai libellé
  * localisé au regroupement "Type" de l'historique des combats (palier
  * "famille de monstre", voir resolveFightTypeClassification côté client,
@@ -334,14 +340,14 @@ export const catalogMeta = pgTable('catalog_meta', {
 // items/game_servers).
 
 /**
- * Authentification (lot 5, prompt 5.1) — voir docs/plan-migration-serveur.md §7.
+ * Authentification (lot 5, prompt 5.1) — voir server/README.md.
  *
  * Aucun mot de passe n'est géré en propre (pas de `password_hash`, pas de
  * réinitialisation, pas de vérification d'e-mail) : l'identité vient
  * exclusivement d'un fournisseur OAuth (Discord ou Google), qui vérifie
- * l'adresse à notre place. Décision actée §7 du plan, motivée aussi par la
- * limite de 10 ms de CPU par requête du plan gratuit Cloudflare — un hachage
- * de mot de passe correct n'y tient pas.
+ * l'adresse à notre place. Décision motivée aussi par la limite de 10 ms de
+ * CPU par requête du plan gratuit Cloudflare — un hachage de mot de passe
+ * correct n'y tient pas.
  *
  * Rappel structurant : la connexion est OPTIONNELLE. Aucune des tables
  * ci-dessus (catalogue, prix) ne référence `users` ; le mode invité continue
@@ -372,7 +378,16 @@ export const users = pgTable(
     displayName: text('display_name'),
     defaultGameServer: text('default_game_server'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+    /**
+     * Dernière activité authentifiée (connexion OAuth, ou rafraîchissement
+     * quotidien d'une session — web ou overlay). Sert UNIQUEMENT à la purge des
+     * comptes inactifs depuis 12 mois (`server/auth/flow.ts::purgeInactiveAccounts`,
+     * RGPD art. 5.1.e) ; annoncée dans la politique de confidentialité (§5).
+     * `NOT NULL DEFAULT now()` depuis la migration 0030, qui a aussi remis tous
+     * les comptes existants à `now()` : le délai court à compter de la mise en
+     * production de la règle, pas de la dernière connexion antérieure.
+     */
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('users_email_key').on(table.email)],
 );
@@ -380,9 +395,8 @@ export const users = pgTable(
 /**
  * Identités OAuth rattachées à un compte. Un même utilisateur peut se
  * connecter par Discord ET par Google : la fusion se fait automatiquement sur
- * e-mail vérifié identique (voir server/auth/flow.ts et §7 du plan — les deux
- * fournisseurs vérifient l'adresse, ce qui rend ce rattachement sûr sans
- * étape manuelle).
+ * e-mail vérifié identique (voir server/auth/flow.ts — les deux fournisseurs
+ * vérifient l'adresse, ce qui rend ce rattachement sûr sans étape manuelle).
  */
 export const userIdentities = pgTable(
   'user_identities',
@@ -403,14 +417,14 @@ export const userIdentities = pgTable(
 
 /**
  * Sessions serveur (révocation immédiate possible, contrairement à un JWT
- * autoporteur — §7 du plan).
+ * autoporteur).
  *
  * ⚠ `id` n'est PAS le jeton envoyé au navigateur : c'est son empreinte
  * SHA-256 (hex). Le jeton opaque (256 bits d'aléa) ne vit que dans le cookie
  * `httpOnly` du client ; une fuite en lecture de cette table ne permet donc
- * pas d'usurper une session. C'est le seul écart avec le schéma du §6 du
- * plan, qui décrivait `id` comme « identifiant opaque » — même colonne, même
- * type, une couche de hachage en plus.
+ * pas d'usurper une session. C'est le seul écart avec le schéma d'origine,
+ * qui décrivait `id` comme « identifiant opaque » — même colonne, même type,
+ * une couche de hachage en plus.
  */
 export const sessions = pgTable(
   'sessions',
@@ -424,6 +438,10 @@ export const sessions = pgTable(
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }).notNull().defaultNow(),
     userAgent: text('user_agent'),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    // Remplacée par une session plus récente (rotation du jeton natif, voir
+    // server/auth/pairing.ts) : encore acceptée jusqu'à `expires_at`, ramené
+    // à quelques minutes, mais plus jamais prolongée ni listée.
+    supersededAt: timestamp('superseded_at', { withTimezone: true }),
   },
   (table) => [index('sessions_user_id_idx').on(table.userId)],
 );
@@ -489,13 +507,14 @@ export const nativePairings = pgTable(
 );
 
 /**
- * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
- * compte »). Implémentée en base plutôt qu'en KV/Durable Object : ces routes
- * sont rares (une poignée d'appels par connexion), le coût d'une écriture
+ * Limitation de débit des routes `/auth/*`, par IP et par compte. Implémentée
+ * en base plutôt qu'en KV/Durable Object : ces routes sont rares (une poignée
+ * d'appels par connexion), le coût d'une écriture
  * Postgres y est négligeable, et ça évite d'ajouter un binding Cloudflare
  * supplémentaire au projet Pages.
  *
- * `bucket` = `"{portée}:{clé}"` (ex. `start:ip:1.2.3.4`, `callback:user:<uuid>`),
+ * `bucket` = `"{portée}:{clé}"` (ex. `auth:start:ip:<hmac tronqué>`, `auth:callback:user:<uuid>`
+ * — jamais l'adresse IP en clair, voir `clientIpKey` dans server/auth/rate-limit.ts),
  * `windowStart` = début de la fenêtre glissante arrondie. Une ligne par
  * fenêtre : les anciennes sont purgées opportunistement (voir
  * server/auth/rate-limit.ts).
@@ -511,9 +530,9 @@ export const authRateLimits = pgTable(
 );
 
 /**
- * Configuration utilisateur (lot 6 dans le phasage du plan §12) — une ligne
- * par clé, reprenant exactement `EXPORT_KEYS` d'`AppDataExportService` côté
- * client (`profile`, `watchlist`, `roster`, ...), comme prévu au §6.
+ * Configuration utilisateur (lot 6) — une ligne par clé, reprenant exactement
+ * `EXPORT_KEYS` d'`AppDataExportService` côté client (`profile`, `watchlist`,
+ * `roster`, ...).
  *
  * Créée par anticipation au lot 5 (le parcours de migration des données
  * locales du prompt 5.2 n'aurait été qu'une maquette sans stockage), puis
@@ -527,7 +546,7 @@ export const authRateLimits = pgTable(
  *
  * Le contenu du chat n'y figure pas plus que dans `AppDataExportService` :
  * seuls les *filtres* et *canaux actifs* sont des préférences — les messages
- * eux-mêmes ne quittent jamais la machine du joueur (§7, RGPD : ils
+ * eux-mêmes ne quittent jamais la machine du joueur (RGPD : ils
  * appartiennent à des tiers qui n'ont rien demandé).
  */
 export const userSettings = pgTable(
@@ -562,21 +581,22 @@ export const userSettings = pgTable(
  * rendent l'ingestion idempotente : rejouer dix fois le même log n'écrit
  * qu'une ligne.
  *
- * ## Écarts assumés par rapport au §6 du plan
+ * ## Écarts assumés par rapport au schéma d'origine
  *
  * 1. **`gameServer` sur les trois tables**, pas seulement `purchases` : le lot
  *    7 a été fait pour « taguer l'historique personnel (combats, achats,
- *    échanges) par serveur de jeu », le §6 ne le portait que sur les achats.
- *    Toujours nullable — aucun serveur résolu n'empêche jamais l'envoi (prompt
- *    8.1 point 4), la colonne reste simplement vide.
+ *    échanges) par serveur de jeu », le schéma d'origine ne le portait que sur
+ *    les achats. Toujours nullable — aucun serveur résolu n'empêche jamais
+ *    l'envoi (prompt 8.1 point 4), la colonne reste simplement vide.
  * 2. **`fight_participants` porte un `instanceIndex`** dans sa clé primaire :
- *    la PK `(fight_id, name, side)` du plan entre en collision dès que deux
+ *    la PK `(fight_id, name, side)` d'origine entre en collision dès que deux
  *    combattants du même camp partagent un nom, ce qui est courant (voir
  *    `countNameInstances`/`InitiativeSeat` côté client, tout un mécanisme y est
  *    consacré). Sans lui, un combat contre 3 Bouftous perdrait 2 lignes sur 3.
  * 3. **`trade_items` porte un `lineIndex`** et une vraie clé primaire, là où le
- *    §6 laissait la table sans contrainte : c'est ce qui permet de réinsérer
- *    les lignes filles en `ON CONFLICT DO NOTHING` sans jamais les dupliquer
+ *    schéma d'origine laissait la table sans contrainte : c'est ce qui permet
+ *    de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans jamais
+ *    les dupliquer
  *    (voir functions/api/v1/history/trades.ts — le driver `neon-http` n'offre
  *    pas de transaction, les filles sont donc écrites en une requête séparée
  *    de leur parent et doivent être idempotentes elles aussi).
@@ -585,7 +605,7 @@ export const userSettings = pgTable(
  *
  * Le contenu du chat (prompt 8.1 point 5) : aucune table ci-dessous ne le
  * référence, et `SYNCED_HISTORY_KINDS` côté client ne l'inclut pas. Les
- * messages appartiennent à des tiers qui n'ont rien demandé (§7 du plan).
+ * messages appartiennent à des tiers qui n'ont rien demandé.
  */
 export const fights = pgTable(
   'fights',
@@ -830,7 +850,7 @@ export const fightLoot = pgTable(
  * corrigeable après coup (`ON CONFLICT DO UPDATE`, voir `functions/api/v1/history/purchases.ts`).
  *
  * **Aucun rapport avec le monitoring de prix (lot 4)** : celui-ci vient d'un
- * scan de l'hôtel des ventes, jamais des achats des joueurs (§8 du plan).
+ * scan de l'hôtel des ventes, jamais des achats des joueurs.
  */
 export const purchases = pgTable(
   'purchases',

@@ -16,6 +16,8 @@ import {
   completeAuthorization,
   deriveCsrfToken,
   openSession,
+  purgeDeadSessions,
+  purgeInactiveAccounts,
   resolveSession,
   sanitizeRedirectTo,
   startAuthorization,
@@ -23,7 +25,7 @@ import {
 } from './flow';
 import { createMemoryAuthStore } from './memory-store';
 import type { OAuthProfile } from './providers';
-import { CALLBACK_RULE, checkRateLimit } from './rate-limit';
+import { CALLBACK_RULE, checkRateLimit, clientIpKey } from './rate-limit';
 import type { AuthStore, ProviderId } from './store';
 
 const NOW = new Date('2026-08-10T12:00:00Z');
@@ -225,6 +227,30 @@ describe('resolveSession', () => {
     expect(await resolveSession(store, session.token, NOW)).toBeNull();
   });
 
+  /**
+   * Effacement demandé par un client natif — `DELETE /api/v1/auth/native/session`, constat C5 de
+   * l'analyse RGPD de l'overlay. La ligne disparaît (contrairement à la révocation, qui la garde
+   * avec son `revoked_at`), et le jeton est aussi inutilisable qu'un jeton inconnu.
+   */
+  it('refuse une session effacée, et l’effacement ne laisse pas de ligne', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const session = await openSession(store, user.id, { now: NOW, userAgent: 'overlay' });
+
+    expect(await resolveSession(store, session.token, NOW)).not.toBeNull();
+
+    expect(await store.deleteSession(session.idHash)).toBe(true);
+
+    expect(await resolveSession(store, session.token, NOW)).toBeNull();
+    expect(await store.findSession(session.idHash)).toBeNull();
+    // Rejouer l'appel ne fabrique pas d'erreur : la route rend `deleted: false`.
+    expect(await store.deleteSession(session.idHash)).toBe(false);
+    // Les autres sessions du compte ne sont pas touchées.
+    const autre = await openSession(store, user.id, { now: NOW, userAgent: null });
+    expect(await store.deleteSession(session.idHash)).toBe(false);
+    expect(await resolveSession(store, autre.token, NOW)).not.toBeNull();
+  });
+
   it('refuse une session expirée et un jeton inconnu', async () => {
     const store = createMemoryAuthStore();
     const user = await store.createUser({ email: null, displayName: null });
@@ -269,6 +295,154 @@ describe('resolveSession', () => {
 
     expect(second.ok).toBe(true);
     expect(await resolveSession(store, first.result.token, NOW)).toBeNull();
+  });
+});
+
+/**
+ * Limitation de la conservation (RGPD art. 5.1.e) : une session expirée ou
+ * révoquée n'a plus d'usage passé un délai — sa ligne (`user_id`, `user_agent`,
+ * horodatages) doit partir, sans cron, à l'occasion des appels existants.
+ */
+describe('purgeDeadSessions', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  async function seed() {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const live = await openSession(store, user.id, { now: NOW, userAgent: 'vivante' });
+    // Expirée il y a 31 jours (ouverte il y a 61 jours, jamais prolongée).
+    const longExpired = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 61 * DAY),
+      userAgent: 'expirée depuis longtemps',
+    });
+    // Expirée hier seulement.
+    const freshlyExpired = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 31 * DAY),
+      userAgent: 'expirée hier',
+    });
+    // Révoquée il y a 31 jours, mais pas encore expirée (elle courait jusqu'à J+29).
+    const longRevoked = await openSession(store, user.id, {
+      now: new Date(NOW.getTime() - 1 * DAY),
+      userAgent: 'révoquée depuis longtemps',
+    });
+    await store.revokeSession(longRevoked.idHash, new Date(NOW.getTime() - 31 * DAY));
+    // Révoquée hier.
+    const freshlyRevoked = await openSession(store, user.id, {
+      now: NOW,
+      userAgent: 'révoquée hier',
+    });
+    await store.revokeSession(freshlyRevoked.idHash, new Date(NOW.getTime() - 1 * DAY));
+    return { store, live, longExpired, freshlyExpired, longRevoked, freshlyRevoked };
+  }
+
+  it('efface ce qui est mort depuis plus de 30 jours, et rien d’autre', async () => {
+    const { store, live, longExpired, freshlyExpired, longRevoked, freshlyRevoked } = await seed();
+
+    expect(await purgeDeadSessions(store, NOW)).toBe(2);
+
+    expect(await store.findSession(longExpired.idHash)).toBeNull();
+    expect(await store.findSession(longRevoked.idHash)).toBeNull();
+    expect(await store.findSession(live.idHash)).not.toBeNull();
+    expect(await store.findSession(freshlyExpired.idHash)).not.toBeNull();
+    expect(await store.findSession(freshlyRevoked.idHash)).not.toBeNull();
+    expect(await resolveSession(store, live.token, NOW)).not.toBeNull();
+  });
+
+  it('rattrape le reste 30 jours plus tard, et ne touche jamais une session vivante', async () => {
+    const { store, live } = await seed();
+    await purgeDeadSessions(store, NOW);
+
+    const later = new Date(NOW.getTime() + 31 * DAY);
+    // La session vivante a expiré entre-temps (jamais prolongée), mais depuis un jour seulement.
+    expect(await purgeDeadSessions(store, later)).toBe(2);
+    expect(await store.findSession(live.idHash)).not.toBeNull();
+    expect(store.sessions.size).toBe(1);
+  });
+
+  it('est déclenchée par la connexion et par le rafraîchissement glissant', async () => {
+    const { store, longExpired } = await seed();
+    expect(await store.findSession(longExpired.idHash)).not.toBeNull();
+
+    const logged = await login(store);
+    expect(logged.ok).toBe(true);
+    expect(await store.findSession(longExpired.idHash)).toBeNull();
+
+    // Une seconde ligne morte, puis un simple usage de session deux jours plus
+    // tard : c'est le rafraîchissement quotidien qui fait le ménage.
+    const dead = await openSession(store, 'user-x', {
+      now: new Date(NOW.getTime() - 61 * DAY),
+      userAgent: null,
+    });
+    if (!logged.ok) return;
+    const later = new Date(NOW.getTime() + 2 * DAY);
+    expect(await resolveSession(store, logged.result.token, later)).not.toBeNull();
+    expect(await store.findSession(dead.idHash)).toBeNull();
+  });
+});
+
+/**
+ * Limitation de la conservation, volet compte (RGPD art. 5.1.e, décision du
+ * 2026-09-20) : un compte sans activité authentifiée depuis 12 mois est effacé
+ * avec tout ce qui lui est rattaché — sans cron, à l'occasion des appels
+ * existants, et jamais par sa propre requête de retour.
+ */
+describe('purgeInactiveAccounts', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('efface un compte inactif depuis plus de 12 mois, avec identités et sessions', async () => {
+    const store = createMemoryAuthStore();
+    const logged = await login(store, { now: new Date(NOW.getTime() - 370 * DAY) });
+    expect(logged.ok).toBe(true);
+    if (!logged.ok) return;
+    const dormant = logged.result.user.id;
+    const recent = await login(store, {
+      oauthProfile: profile({ providerUid: 'uid-2', email: 'actif@example.com' }),
+      now: new Date(NOW.getTime() - 360 * DAY),
+    });
+    expect(recent.ok).toBe(true);
+
+    expect(await purgeInactiveAccounts(store, NOW)).toBe(1);
+    expect(await store.findUserById(dormant)).toBeNull();
+    expect(await store.findIdentity('discord', 'uid-1')).toBeNull();
+    expect([...store.sessions.values()].some((s) => s.userId === dormant)).toBe(false);
+    expect(await store.findIdentity('discord', 'uid-2')).not.toBeNull();
+  });
+
+  it("l'usage quotidien d'une session (web ou overlay) tient le compte vivant sans reconnexion", async () => {
+    const store = createMemoryAuthStore();
+    const logged = await login(store, { now: new Date(NOW.getTime() - 400 * DAY) });
+    expect(logged.ok).toBe(true);
+    if (!logged.ok) return;
+    // L'overlay sert tous les jours : le rafraîchissement glissant marque l'activité.
+    for (let d = 399; d >= 0; d -= 10) {
+      const at = new Date(NOW.getTime() - d * DAY);
+      expect(await resolveSession(store, logged.result.token, at)).not.toBeNull();
+    }
+    expect(store.lastSeenAt.get(logged.result.user.id)?.getTime()).toBeGreaterThan(
+      NOW.getTime() - 10 * DAY,
+    );
+    expect(await purgeInactiveAccounts(store, NOW)).toBe(0);
+    expect(await store.findUserById(logged.result.user.id)).not.toBeNull();
+  });
+
+  it('est déclenchée par la connexion, qui ne purge jamais le compte qui revient', async () => {
+    const store = createMemoryAuthStore();
+    const dormant = await login(store, {
+      oauthProfile: profile({ providerUid: 'uid-dormant', email: 'dormant@example.com' }),
+      now: new Date(NOW.getTime() - 370 * DAY),
+    });
+    const returning = await login(store, { now: new Date(NOW.getTime() - 370 * DAY) });
+    expect(dormant.ok && returning.ok).toBe(true);
+    if (!dormant.ok || !returning.ok) return;
+
+    // Le compte `returning` revient après 370 jours : il est marqué actif AVANT
+    // la purge, qui n'emporte que l'autre.
+    const back = await login(store);
+    expect(back.ok).toBe(true);
+    if (!back.ok) return;
+    expect(back.result.user.id).toBe(returning.result.user.id);
+    expect(back.result.isNewUser).toBe(false);
+    expect(await store.findUserById(dormant.result.user.id)).toBeNull();
   });
 });
 
@@ -405,5 +579,43 @@ describe('limitation de débit', () => {
 
     const nextWindow = new Date(NOW.getTime() + CALLBACK_RULE.windowMs);
     expect((await checkRateLimit(store, bucket, CALLBACK_RULE, nextWindow)).allowed).toBe(true);
+  });
+});
+
+/**
+ * Minimisation (RGPD art. 5.1.c, écart 4.4 de docs/analyse-rgpd.md) : la clé de
+ * comptage dérivée de l'adresse IP ne doit jamais la laisser lire ni retrouver
+ * sans le secret serveur.
+ */
+describe('clientIpKey', () => {
+  function requestFrom(ip: string): Request {
+    return new Request('https://example.test/api/v1/auth/discord/start', {
+      headers: { 'cf-connecting-ip': ip },
+    });
+  }
+
+  it("ne contient jamais l'adresse en clair et reste stable pour une même adresse", async () => {
+    const env = { RATE_LIMIT_SALT: 'sel-de-test' };
+    const key = await clientIpKey(requestFrom('203.0.113.7'), env);
+    expect(key).toMatch(/^[0-9a-f]{16}$/);
+    expect(key).not.toContain('203.0.113.7');
+    expect(await clientIpKey(requestFrom('203.0.113.7'), env)).toBe(key);
+    expect(await clientIpKey(requestFrom('203.0.113.8'), env)).not.toBe(key);
+  });
+
+  it('dépend du secret : sans lui, la table ne permet pas de retrouver une adresse', async () => {
+    const request = requestFrom('203.0.113.7');
+    const salted = await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-A' });
+    expect(await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-B' })).not.toBe(salted);
+    // Repli sur DATABASE_URL quand aucun sel dédié n'est posé : jamais un hachage non salé.
+    expect(await clientIpKey(request, { DATABASE_URL: 'postgres://x' })).not.toBe(
+      await clientIpKey(request, { DATABASE_URL: 'postgres://y' }),
+    );
+  });
+
+  it("vaut 'unknown' haché quand Cloudflare ne transmet pas l'adresse", async () => {
+    const env = { RATE_LIMIT_SALT: 'sel' };
+    const key = await clientIpKey(new Request('https://example.test/'), env);
+    expect(key).toMatch(/^[0-9a-f]{16}$/);
   });
 });

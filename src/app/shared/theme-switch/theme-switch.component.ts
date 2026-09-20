@@ -2,12 +2,13 @@ import { Component, inject, input } from '@angular/core';
 import { ThemeService } from '../../core/services/theme.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
+import { wakassetsIconUrl } from '../../core/utils/wakassets-url.util';
 
 /** Icônes wakassets (chat noir/blanc) fournies pour ce switch — pas de rapport avec les icônes de
  * monstre affichées ailleurs dans l'app (dégâts, suivi...), uniquement réutilisées ici pour leur
  * imagerie sombre/claire. */
-const DARK_ICON_URL = 'https://vertylo.github.io/wakassets/monsters/108900833.png';
-const LIGHT_ICON_URL = 'https://vertylo.github.io/wakassets/monsters/117601209.png';
+const DARK_ICON_URL = wakassetsIconUrl('monsters', '108900833.png');
+const LIGHT_ICON_URL = wakassetsIconUrl('monsters', '117601209.png');
 
 /**
  * Switch clair/sombre à deux icônes (fond glissant, réutilise le mécanisme générique

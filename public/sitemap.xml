@@ -2,9 +2,9 @@
 <!--
   Wakfu Companion — sitemap.xml
 
-  Domaine canonique en dur (GH Pages, hébergement de prod actuel — voir
-  docs/plan-migration-serveur.md). À METTRE À JOUR (avec src/index.html, robots.txt, llms.txt,
-  core/services/seo.service.ts) le jour où la prod bascule sur Cloudflare/domaine personnalisé.
+  Domaine canonique en dur (Cloudflare Pages, domaine personnalisé). À METTRE À JOUR (avec
+  src/index.html, robots.txt, llms.txt, core/services/seo.service.ts) le jour où le domaine change
+  — un grep sur `wakfu-companion.com` retrouve les 5 endroits.
 
   Une URL par langue pour l'accueil (/fr, /en, /es, /pt — voir app.routes.ts), pas plus :
   /profile, /account, /legal-notice, /privacy-policy existent comme routes Angular mais n'ont
@@ -16,7 +16,7 @@
   (src/index.html statique + SeoService dynamique) — les deux mécanismes sont complémentaires, pas
   redondants : celui-ci aide un crawler qui indexe par sitemap avant de visiter les pages.
 
-  L'ancienne URL racine sans préfixe (https://oumbra.github.io/wakfu-companion/) n'est plus listée
+  L'URL racine sans préfixe (https://wakfu-companion.com/) n'est pas listée
   ici : elle continue de fonctionner (redirection côté client vers la langue préférée, voir
   app.routes.ts) mais n'est plus une page indexable à part entière — un crawler qui la visiterait
   directement obtiendrait un contenu qui varie selon la locale détectée, jamais stable.
@@ -26,60 +26,60 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml"
 >
   <url>
-    <loc>https://oumbra.github.io/wakfu-companion/fr</loc>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
-    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
-    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <loc>https://wakfu-companion.com/fr</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wakfu-companion.com/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wakfu-companion.com/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://wakfu-companion.com/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://wakfu-companion.com/pt" />
     <xhtml:link
       rel="alternate"
       hreflang="x-default"
-      href="https://oumbra.github.io/wakfu-companion/fr"
+      href="https://wakfu-companion.com/fr"
     />
     <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://oumbra.github.io/wakfu-companion/en</loc>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
-    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
-    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <loc>https://wakfu-companion.com/en</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wakfu-companion.com/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wakfu-companion.com/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://wakfu-companion.com/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://wakfu-companion.com/pt" />
     <xhtml:link
       rel="alternate"
       hreflang="x-default"
-      href="https://oumbra.github.io/wakfu-companion/fr"
+      href="https://wakfu-companion.com/fr"
     />
     <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://oumbra.github.io/wakfu-companion/es</loc>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
-    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
-    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <loc>https://wakfu-companion.com/es</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wakfu-companion.com/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wakfu-companion.com/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://wakfu-companion.com/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://wakfu-companion.com/pt" />
     <xhtml:link
       rel="alternate"
       hreflang="x-default"
-      href="https://oumbra.github.io/wakfu-companion/fr"
+      href="https://wakfu-companion.com/fr"
     />
     <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://oumbra.github.io/wakfu-companion/pt</loc>
-    <xhtml:link rel="alternate" hreflang="fr" href="https://oumbra.github.io/wakfu-companion/fr" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://oumbra.github.io/wakfu-companion/en" />
-    <xhtml:link rel="alternate" hreflang="es" href="https://oumbra.github.io/wakfu-companion/es" />
-    <xhtml:link rel="alternate" hreflang="pt" href="https://oumbra.github.io/wakfu-companion/pt" />
+    <loc>https://wakfu-companion.com/pt</loc>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://wakfu-companion.com/fr" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://wakfu-companion.com/en" />
+    <xhtml:link rel="alternate" hreflang="es" href="https://wakfu-companion.com/es" />
+    <xhtml:link rel="alternate" hreflang="pt" href="https://wakfu-companion.com/pt" />
     <xhtml:link
       rel="alternate"
       hreflang="x-default"
-      href="https://oumbra.github.io/wakfu-companion/fr"
+      href="https://wakfu-companion.com/fr"
     />
     <lastmod>2026-08-14</lastmod>
     <changefreq>weekly</changefreq>

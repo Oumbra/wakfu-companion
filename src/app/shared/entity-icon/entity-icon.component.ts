@@ -2,6 +2,7 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { EntityClassifierService, EntitySide } from '../../core/services/entity-classifier.service';
 import { getClassIconUri, UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
 import { CatalogService, CatalogMonsterEntry } from '../../core/api/catalog.service';
+import { wakassetsIconUrl } from '../../core/utils/wakassets-url.util';
 
 /**
  * Construit la liste des URLs candidates pour un monstre : wakassets/monsters
@@ -14,8 +15,8 @@ import { CatalogService, CatalogMonsterEntry } from '../../core/api/catalog.serv
  */
 function monsterImageCandidates(entry: CatalogMonsterEntry): string[] {
   return [
-    `https://vertylo.github.io/wakassets/monsters/${entry.gfxId}.png`,
-    `https://vertylo.github.io/wakassets/monsterIllustrations/${entry.gfxId}.png`,
+    wakassetsIconUrl('monsters', `${entry.gfxId}.png`),
+    wakassetsIconUrl('monsterIllustrations', `${entry.gfxId}.png`),
   ];
 }
 

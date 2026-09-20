@@ -1,6 +1,5 @@
 /**
- * Limitation de débit des routes `/auth/*` (§7 du plan : « par IP et par
- * compte »).
+ * Limitation de débit des routes `/auth/*`, par IP et par compte.
  *
  * Fenêtres fixes plutôt que glissantes : une ligne `(bucket, window_start)`
  * incrémentée par upsert, ce qui tient en une seule requête SQL — important
@@ -61,7 +60,41 @@ export async function checkRateLimit(
   };
 }
 
-/** Adresse IP de l'appelant telle que vue par Cloudflare (jamais un en-tête arbitraire côté client). */
-export function clientIp(request: Request): string {
-  return request.headers.get('cf-connecting-ip') ?? 'unknown';
+/** Secrets utilisés pour pseudonymiser l'adresse IP (sous-ensemble de `Env`, voir `functions/api/_types.ts`). */
+export interface IpKeyEnv {
+  RATE_LIMIT_SALT?: string;
+  DATABASE_URL?: string;
+}
+
+/** Longueur du condensat conservé (hex) : 64 bits, largement assez pour ne pas confondre deux appelants. */
+const IP_KEY_HEX_LENGTH = 16;
+
+/**
+ * Clé de comptage dérivée de l'adresse IP de l'appelant (telle que vue par
+ * Cloudflare, jamais un en-tête arbitraire côté client) — **jamais l'IP en
+ * clair** : compter des requêtes n'exige aucune réversibilité, et l'adresse IP
+ * est une donnée personnelle (minimisation, art. 5.1.c ; écart 4.4 de
+ * `docs/analyse-rgpd.md`). `HMAC-SHA256(ip, secret)` tronqué : sans le secret,
+ * la table `auth_rate_limits` ne permet pas de retrouver une adresse — un
+ * simple SHA-256 non salé serait inversible en quelques secondes sur l'espace
+ * IPv4. Le secret est `RATE_LIMIT_SALT` ; à défaut, `DATABASE_URL` (toujours
+ * présent, jamais public) sert de matière à clé, pour que le repli ne soit
+ * jamais un hachage non salé. Une rotation du secret ne fait que remettre les
+ * compteurs à zéro sur la fenêtre en cours.
+ */
+export async function clientIpKey(request: Request, env: IpKeyEnv): Promise<string> {
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const secret = env.RATE_LIMIT_SALT || env.DATABASE_URL || '';
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(`wakfu-companion:rate-limit:${secret}`),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const digest = new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(ip)));
+  return Array.from(digest, (byte) => byte.toString(16).padStart(2, '0'))
+    .join('')
+    .slice(0, IP_KEY_HEX_LENGTH);
 }

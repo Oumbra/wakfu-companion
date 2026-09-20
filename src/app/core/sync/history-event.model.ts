@@ -35,7 +35,7 @@ import type { FightResult } from '../models/fight.model';
  *    le vrai risque, lui, est quotidien.
  *
  * 2. **Aucune valeur révisable.** Les dégâts d'un combat n'entrent PAS dans sa
- *    signature (le plan disait déjà `fightId|participants triés`) : une
+ *    signature (`fightId|participants triés` suffit à l'identifier) : une
  *    réattribution manuelle (`reassignSpell`) les modifie après coup, ce qui
  *    changerait la clé et créerait une seconde ligne pour le même combat.
  *
@@ -189,6 +189,14 @@ export type HistoryPayload = FightPayload | PurchasePayload | TradePayload | Pac
 export interface HistoryEvent {
   /** `${kind}:${signature}` — clé primaire du magasin, donc dédoublonnage naturel dans la file elle-même. */
   id: string;
+  /**
+   * Compte auquel l'événement est destiné (`AuthUser.id` au moment de la mise en file). La file
+   * IndexedDB est partagée par tous les comptes qui se connectent sur ce navigateur : sans ce champ,
+   * une entrée laissée par A (déconnexion avec un lot en attente) repartait sous le compte de B à sa
+   * connexion suivante, re-signée avec son `uid` — voir `SyncQueueService.activate`, qui ne recharge
+   * que les entrées du compte courant et efface les autres.
+   */
+  uid: string;
   kind: HistoryEventKind;
   /** Signature de contenu (voir en-tête) — sert aussi à reconnaître localement un événement déjà archivé. */
   signature: string;
@@ -245,7 +253,7 @@ export function fightSignature(input: {
   return `${input.time}|${input.fightId}|${input.result}|${participants}`;
 }
 
-/** Signature d'un achat : `item|quantité|coût`, comme prévu au §11 du plan. */
+/** Signature d'un achat : `item|quantité|coût`. */
 export function purchaseSignature(input: {
   time: string;
   item: string;

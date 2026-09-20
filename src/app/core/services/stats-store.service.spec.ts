@@ -1198,6 +1198,110 @@ describe('StatsStoreService', () => {
     });
   });
 
+  describe('Suivi (watchlist) : mode objectif', () => {
+    it("basculer en mode 'goal' fait partir le compteur de 0, la cible fixée à part", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistMode('Laine de Bouftou', 'goal');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 5);
+
+      const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
+      expect(entry.mode).toBe('goal');
+      expect(entry.count).toBe(0);
+      expect(entry.countdownTarget).toBe(5);
+    });
+
+    it("un ramassage incrémente le compteur en mode 'goal', borné à la cible", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistMode('Laine de Bouftou', 'goal');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 5);
+
+      feedMore(access, [
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
+      ]);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(2);
+
+      feedMore(access, [
+        'INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 10x Laine de Bouftou.',
+      ]);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(5);
+    });
+
+    it("déclenche l'alerte (reason 'goal') exactement quand la cible est atteinte, jamais une deuxième fois", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      const lootAlert = TestBed.inject(LootAlertService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistMode('Laine de Bouftou', 'goal');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 2);
+
+      feed(access, [
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+      ]);
+      expect(lootAlert.current()).toBeNull();
+
+      feedMore(access, [
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+      ]);
+      expect(lootAlert.current()).toBeNull();
+
+      feedMore(access, [
+        'INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+      ]);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(2);
+      expect(lootAlert.current()).toEqual({
+        name: 'Laine de Bouftou',
+        quantity: 2,
+        kind: 'item',
+        reason: 'goal',
+        id: null,
+      });
+
+      lootAlert.current.set(null);
+      feedMore(access, [
+        'INFO 12:00:02,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+      ]);
+      expect(lootAlert.current()).toBeNull();
+    });
+
+    it("resetWatchedCount et setWatchlistCurrentCount respectent le sens de l'objectif", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistMode('Laine de Bouftou', 'goal');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 3);
+      feedMore(access, [
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
+      ]);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(2);
+
+      stats.resetWatchedCount('Laine de Bouftou');
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(0);
+
+      stats.setWatchlistCurrentCount('Laine de Bouftou', 7);
+      expect(stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!.count).toBe(3);
+    });
+
+    it("increaseWatchlistCountdownTarget relève la cible d'un objectif sans toucher au compteur", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      stats.addWatchedItem('Laine de Bouftou');
+      stats.setWatchlistMode('Laine de Bouftou', 'goal');
+      stats.setWatchlistCountdownTarget('Laine de Bouftou', 3);
+      feedMore(access, [
+        'INFO 12:00:00,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 2x Laine de Bouftou.',
+      ]);
+
+      stats.increaseWatchlistCountdownTarget('Laine de Bouftou', 4);
+
+      const entry = stats.watchlist().find((w) => w.name === 'Laine de Bouftou')!;
+      expect(entry.countdownTarget).toBe(7);
+      expect(entry.count).toBe(2);
+    });
+  });
+
   describe('Suivi (watchlist) : homonymes distingués par catalogId', () => {
     it('deux entrées de même nom mais d\'id différent coexistent (ex. les deux "Larme d\'Ogrest")', () => {
       const stats = TestBed.inject(StatsStoreService);

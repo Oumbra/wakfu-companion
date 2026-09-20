@@ -7,15 +7,22 @@ on:
   # Déclenchement manuel via l'API (dispatch direct), indépendant de la
   # livraison webhook des push — utile pendant l'incident GitHub Actions du
   # 2026-08-06 (webhooks throttled), qui empêchait tout run de démarrer même
-  # sur un push tout neuf. Voir docs/plan-migration-serveur.md.
+  # sur un push tout neuf.
   workflow_dispatch:
 
 permissions:
   contents: read
   deployments: write
 
+# Groupe de concurrence PROPRE au déploiement de production — jamais le même que
+# celui de `deploy-preview.yml`. Un groupe est un espace de noms à l'échelle du
+# DÉPÔT, pas du workflow : partager `preview-deploy` entre les deux sérialisait
+# prod et preview (l'une attendait l'autre sans raison), et surtout GitHub ne
+# garde qu'UN SEUL run en attente par groupe — un push sur `claude/dev` pendant
+# qu'un déploiement tournait pouvait donc annuler silencieusement le
+# déploiement de production qui patientait derrière.
 concurrency:
-  group: preview-deploy
+  group: main-deploy
   cancel-in-progress: false
 
 jobs:
@@ -36,11 +43,10 @@ jobs:
       - name: Generate data tables
         run: npm run generate
 
-      # Branche Neon DÉDIÉE à la preview (jamais la production, voir
-      # server/README.md) : DATABASE_URL, secret distinct de
-      # DATABASE_URL (utilisé par la prod, encore sur GitHub Pages — voir
-      # plus bas). Migrations jouées AVANT le build/déploiement du front.
-      - name: Run DB migrations (preview)
+      # Branche Neon de PRODUCTION (voir server/README.md) : DATABASE_URL,
+      # secret distinct de DATABASE_URL_PREVIEW (utilisé par la preview, voir
+      # deploy-preview.yml). Migrations jouées AVANT le build/déploiement du front.
+      - name: Run DB migrations (production)
         run: npm run db:migrate
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -49,25 +55,23 @@ jobs:
       # réellement tout appliqué (vécu le 2026-08-12, voir le commentaire en
       # tête de server/db/verify-migrations.ts) — fait échouer le job plutôt
       # que de déployer silencieusement sur un schéma en retard.
-      - name: Verify DB migrations (preview)
+      - name: Verify DB migrations (production)
         run: npm run db:verify-migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # Pas de --base-href custom : Cloudflare Pages sert ce projet à la
-      # racine de son propre domaine (*.pages.dev), contrairement au hack de
-      # sous-dossier /wakfu-companion/preview/claude-dev/ nécessaire sur
-      # GitHub Pages (voir deploy-main.yml, qui reste sur GitHub Pages).
+      # racine de son domaine, la balise <base href="/"> de src/index.html
+      # convient donc telle quelle.
       - name: Build
         run: npx ng build
 
       # Rend DATABASE_URL disponible à l'exécution dans les Pages
       # Functions (functions/api/v1/*, context.env.DATABASE_URL) — distinct
       # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du
-      # build/CI. --env production cible spécifiquement l'environnement preview
-      # du projet Cloudflare Pages (à vérifier au premier run : si le flag
-      # n'est pas reconnu par cette version de wrangler, adapter ici).
-      - name: Push DB secret to Cloudflare Pages (preview)
+      # build/CI. --env production cible l'environnement de production du
+      # projet Cloudflare Pages.
+      - name: Push DB secret to Cloudflare Pages (production)
         run: echo "$DATABASE_URL" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env production
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -79,7 +83,7 @@ jobs:
       # application OAuth n'est pas créée côté fournisseur, les routes /auth/{provider}/* répondent
       # 503 « fournisseur non configuré » et le reste de l'application (mode invité) est intact —
       # jamais un déploiement en échec pour un secret manquant.
-      - name: Push OAuth secrets to Cloudflare Pages (preview)
+      - name: Push OAuth secrets to Cloudflare Pages (production)
         run: |
           push_secret() {
             if [ -n "$2" ]; then
@@ -93,7 +97,9 @@ jobs:
           push_secret GOOGLE_CLIENT_ID "$GOOGLE_CLIENT_ID"
           push_secret GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
           push_secret PUBLIC_BASE_URL "$PUBLIC_BASE_URL"
+          push_secret RATE_LIMIT_SALT "$RATE_LIMIT_SALT"
         env:
+          RATE_LIMIT_SALT: ${{ secrets.RATE_LIMIT_SALT }}
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -102,16 +108,13 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      # La preview (claude/dev) est passée sur Cloudflare Pages (déploiement
-      # natif, sans hack de sous-dossier ni dépendance au workflow système
-      # GitHub instable — voir l'historique de deploy-main.yml) : le workflow
-      # système "pages build and deployment" de GitHub restait bloqué en
-      # deployment_queued jusqu'au timeout dès le passage au build
-      # multi-fichiers (lot 1, commit 3ab11c78), y compris via le pipeline
-      # Actions natif (upload-pages-artifact + deploy-pages, cf. tentatives
-      # du 2026-08-06). La prod (master) reste sur GitHub Pages pendant la
-      # migration (voir docs/plan-migration-serveur.md) — seule la preview
-      # est avancée sur la cible finale, functions/api/ compris.
+      # Production servie par Cloudflare Pages (déploiement natif et
+      # atomique). L'ancien déploiement GitHub Pages (branche master, workflow
+      # deploy-master.yml) a été décommissionné le 2026-09-19 : il ne servait
+      # plus que de portail vers cette version, et le workflow système "pages
+      # build and deployment" de GitHub restait de toute façon bloqué en
+      # deployment_queued jusqu'au timeout depuis le passage au build
+      # multi-fichiers (lot 1, commit 3ab11c78).
       # cloudflare/pages-action@v1 (déprécié depuis 2024) a disparu de GitHub
       # le 2026-09-18 (« Unable to resolve action `cloudflare/pages-action`,
       # not found » dès l'étape « Set up job ») : remplacé par

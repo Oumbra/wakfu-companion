@@ -1,17 +1,23 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService, AuthSessionInfo } from '../../../core/auth/auth.service';
-import { AppDataExportService } from '../../../core/services/app-data-export.service';
+import { AccountExportService } from '../../../core/services/account-export.service';
+import {
+  AppDataExportService,
+  type AppDataExport,
+} from '../../../core/services/app-data-export.service';
 import { ConfirmDeleteService } from '../../../core/services/confirm-delete.service';
+import { PersistenceService } from '../../../core/services/persistence.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { NavigationService } from '../../../core/services/navigation.service';
 import { AppPageComponent } from '../../../shared/app-page/app-page.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
+import { SwitchComponent } from '../../../shared/switch/switch.component';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
  * Page compte (lot 5, prompt 5.2) : identité, fournisseurs liés, sessions
- * actives avec révocation, export RGPD, suppression du compte, et l'écran de
- * migration des données locales à la première connexion.
+ * actives avec révocation, export de configurations, suppression du compte, et
+ * l'écran de migration des données locales à la première connexion.
  *
  * C'est aussi la page d'atterrissage après un retour OAuth réussi — voir
  * `App.ngOnInit` : c'est là que se prend, le cas échéant, la décision
@@ -23,7 +29,7 @@ import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-account-page',
-  imports: [AppPageComponent, TranslatePipe, TooltipDirective],
+  imports: [AppPageComponent, TranslatePipe, TooltipDirective, SwitchComponent],
   templateUrl: './account-page.component.html',
   styleUrl: './account-page.component.css',
 })
@@ -31,11 +37,16 @@ export class AccountPageComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   private readonly nav = inject(NavigationService);
   private readonly dataExport = inject(AppDataExportService);
+  private readonly accountExport = inject(AccountExportService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
+  private readonly persistence = inject(PersistenceService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly sessions = signal<readonly AuthSessionInfo[]>([]);
   protected readonly sessionsLoading = signal(false);
+  /** Export en cours de composition (plusieurs requêtes en mode connecté, voir `exportData`). */
+  protected readonly exporting = signal(false);
+  protected readonly exportFailed = signal(false);
 
   ngOnInit(): void {
     void this.refreshSessions();
@@ -79,17 +90,80 @@ export class AccountPageComponent implements OnInit {
     this.sessions.set([]);
   }
 
+  /**
+   * « Effacer aussi les données de cet appareil » à la suppression du compte (RGPD art. 17,
+   * écart 4.9 de `docs/analyse-rgpd.md`) — décoché par défaut : le mode invité reste pleinement
+   * utilisable après la suppression, et effacer d'office les données locales de quelqu'un qui n'a
+   * demandé que la suppression de son compte serait une destruction surprise. Coché, c'est le
+   * pendant du bouton « Supprimer les données locales » de l'overlay.
+   */
+  protected readonly wipeLocalOnDelete = signal(false);
+
   /** Suppression irréversible : confirmée par la même popover que les autres actions destructives. */
   protected confirmDeleteAccount(event: Event): void {
     const button = event.currentTarget as HTMLElement;
     this.confirmDelete.open(button, this.i18n.t('auth.account.deleteConfirm'), () => {
-      void this.auth.deleteAccount();
+      void this.deleteAccount();
     });
   }
 
-  /** Export RGPD — même charge utile que l'export du profil (AppDataExportService). */
-  protected exportData(): void {
-    const payload = this.dataExport.buildExport();
+  /**
+   * Mode invité : « Supprimer les données de cet appareil » — la seule façon, dans l'application,
+   * d'effacer réellement TOUT le stockage local (le « Réinitialiser » de l'en-tête ne remet à zéro
+   * que la session de statistiques : kamas, combats, compteurs — jamais le profil, le roster ni
+   * les filtres de chat). Promis par la politique de confidentialité (§5 et §6), pendant du bouton
+   * de l'overlay.
+   */
+  protected confirmWipeLocal(event: Event): void {
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t('auth.account.wipeLocalConfirm'), () => {
+      void this.persistence.wipeLocalData().then(() => window.location.reload());
+    });
+  }
+
+  private async deleteAccount(): Promise<void> {
+    const deleted = await this.auth.deleteAccount();
+    if (!deleted || !this.wipeLocalOnDelete()) return;
+    // Après le retour en mode invité (`becomeGuest`, déjà fait par `deleteAccount`), plus rien ne
+    // synchronise : on peut vider le disque, puis repartir de zéro — même mécanique que l'import
+    // d'un fichier de configurations (`ProfilePageComponent.onImportFileSelected`).
+    await this.persistence.wipeLocalData();
+    window.location.reload();
+  }
+
+  /**
+   * Export RGPD (droit d'accès et portabilité, politique de confidentialité §6) :
+   * la configuration de cet appareil (`AppDataExportService`, les 11 clés de
+   * `USER_DATA_KEYS`, même format que l'export du profil) et, en mode connecté,
+   * TOUT ce que le serveur détient sur le compte (`AccountExportService` :
+   * identité, identités OAuth, sessions, configuration synchronisée, historique
+   * complet) sous la clé `account`. Le bouton n'est rendu qu'en mode connecté
+   * (voir le template) ; la garde `isAuthenticated()` ci-dessous est défensive —
+   * en invité il n'existerait de toute façon rien d'autre que le local, et
+   * l'export de configuration reste disponible depuis la page profil.
+   *
+   * Le fichier reste importable (`applyImport` ne lit que `data`). La promesse
+   * « en un clic » de la politique (4 locales) repose sur cette méthode : si le
+   * périmètre change, relire le texte.
+   *
+   * Tout ou rien : un échec réseau à mi-parcours ne produit AUCUN fichier
+   * (l'utilisateur croirait un fichier partiel complet), seulement l'erreur.
+   */
+  protected async exportData(): Promise<void> {
+    if (this.exporting()) return;
+    this.exportFailed.set(false);
+    const payload: AppDataExport = this.dataExport.buildExport();
+    if (this.auth.isAuthenticated()) {
+      this.exporting.set(true);
+      try {
+        payload.account = await this.accountExport.build();
+      } catch {
+        this.exportFailed.set(true);
+        return;
+      } finally {
+        this.exporting.set(false);
+      }
+    }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

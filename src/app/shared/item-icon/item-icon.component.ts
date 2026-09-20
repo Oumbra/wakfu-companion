@@ -2,6 +2,7 @@ import { Component, computed, inject, input, linkedSignal } from '@angular/core'
 import { CatalogService, CatalogItemEntry } from '../../core/api/catalog.service';
 import { WAKFU_ITEM_IMAGE_OVERRIDES } from '../../core/data/wakfu-item-image-overrides.data';
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
+import { wakassetsIconUrl } from '../../core/utils/wakassets-url.util';
 
 /**
  * Construit la liste des URLs candidates pour un objet : wakassets, seule
@@ -11,7 +12,7 @@ import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
  * de l'index compact servi par l'API (voir server/catalog/compact-index.ts).
  */
 function itemImageCandidates(entry: CatalogItemEntry): string[] {
-  return [`https://vertylo.github.io/wakassets/items/${entry.gfxId}.png`];
+  return [wakassetsIconUrl('items', `${entry.gfxId}.png`)];
 }
 
 /**

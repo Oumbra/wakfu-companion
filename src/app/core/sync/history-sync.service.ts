@@ -44,8 +44,7 @@ interface DungeonAssignment {
  * `StatsStoreService` l'appelle inconditionnellement, à chaque combat terminé,
  * chaque achat, chaque échange — y compris pendant un `isInitialLoad`. C'est
  * `SyncQueueService.isActive()` (donc `AuthService`) qui décide si quoi que ce
- * soit part. Aucun `if (connecté)` ne remonte ainsi jusqu'au store, comme
- * l'exige le §4 du plan.
+ * soit part. Aucun `if (connecté)` ne remonte ainsi jusqu'au store.
  *
  * ## Pourquoi enfiler pendant `isInitialLoad` aussi
  *
@@ -99,6 +98,12 @@ export class HistorySyncService {
   disable(): void {
     this.enabled.set(false);
     this.queue.deactivate();
+  }
+
+  /** Suppression de compte : comme `disable()`, plus l'effacement de la file sur le disque (voir `SyncQueueService.purge`). */
+  async purge(): Promise<void> {
+    this.enabled.set(false);
+    await this.queue.purge();
   }
 
   /** Envoie immédiatement ce qui est en attente (bouton « Synchroniser maintenant »). */

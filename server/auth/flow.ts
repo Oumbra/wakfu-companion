@@ -6,8 +6,8 @@
  * invalide rejeté, code réutilisé rejeté, session révoquée refusée, fusion
  * sur e-mail identique.
  *
- * Voir docs/plan-migration-serveur.md §7 pour les décisions structurantes
- * (OAuth uniquement, cookie opaque, sessions en base, mode invité intact).
+ * Décisions structurantes de ce flux : OAuth uniquement, cookie opaque,
+ * sessions en base, mode invité intact (voir server/README.md).
  */
 
 import { pkceChallenge, randomToken, sha256Hex, timingSafeEqual } from './crypto';
@@ -21,6 +21,57 @@ import type { AuthStore, ProviderId, SessionRecord, UserRecord } from './store';
  * authentifiée pour un gain nul.
  */
 const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Délai au bout duquel une session **morte** (expirée ou révoquée) est effacée
+ * de la table — limitation de la conservation (RGPD art. 5.1.e). Ces lignes
+ * n'ouvrent plus rien (`resolveSession` les refuse) et n'apparaissent plus
+ * dans « Mon compte » ; on les garde le temps de pouvoir relire un incident
+ * (« cet appareil s'était déconnecté quand ? »), pas au-delà. Annoncé dans la
+ * politique de confidentialité (section 5) : ne pas changer l'un sans l'autre.
+ */
+export const DEAD_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Délai d'inactivité au bout duquel un **compte** est effacé, avec tout ce qui
+ * lui est rattaché (identités, sessions, configuration, historique) —
+ * limitation de la conservation (RGPD art. 5.1.e), décision du responsable de
+ * traitement du 2026-09-20. « Inactif » = aucune activité authentifiée
+ * (`users.last_seen_at`) : ni connexion OAuth, ni requête d'une session web ou
+ * overlay (le rafraîchissement quotidien de `resolveSession` compte). Annoncé
+ * dans la politique de confidentialité (section 5) : ne pas changer l'un sans
+ * l'autre. Pas de courriel d'avertissement : le service n'envoie aucun
+ * courriel (aucun prestataire d'envoi), l'information passe par la politique.
+ */
+export const INACTIVE_ACCOUNT_RETENTION_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
+ * Ménage opportuniste des sessions mortes — Cloudflare Pages n'a pas de Cron
+ * Trigger (voir server/README.md), donc, comme pour les autorisations OAuth
+ * et les appairages, on le fait à l'occasion d'appels qui touchent déjà à la
+ * table : connexion, appairage natif, rotation, consultation des appareils,
+ * et le rafraîchissement quotidien de l'expiration glissante (seul déclencheur
+ * pour un compte qui ne se reconnecte jamais mais dont l'overlay tourne).
+ */
+export function purgeDeadSessions(store: AuthStore, now: Date): Promise<number> {
+  return store.purgeDeadSessions(new Date(now.getTime() - DEAD_SESSION_RETENTION_MS));
+}
+
+/** Efface les comptes sans activité depuis `INACTIVE_ACCOUNT_RETENTION_MS`. */
+export function purgeInactiveAccounts(store: AuthStore, now: Date): Promise<number> {
+  return store.purgeInactiveUsers(new Date(now.getTime() - INACTIVE_ACCOUNT_RETENTION_MS));
+}
+
+/**
+ * Les deux purges de conservation, dans l'ordre (un compte inactif emporte ses
+ * sessions par cascade). Toujours appeler APRÈS avoir marqué l'activité du
+ * compte courant (`lastSeenAt`), jamais avant : c'est ce qui garantit qu'un
+ * compte ne peut pas être purgé par sa propre requête de retour.
+ */
+export async function runRetentionPurges(store: AuthStore, now: Date): Promise<void> {
+  await purgeInactiveAccounts(store, now);
+  await purgeDeadSessions(store, now);
+}
 
 export interface StartedAuthorization {
   state: string;
@@ -91,7 +142,7 @@ export async function completeAuthorization(
     fetchProfile: (codeVerifier: string) => Promise<OAuthProfile | null>;
     now: Date;
     userAgent: string | null;
-    /** Session courante éventuelle, révoquée à la connexion (rotation, §7). */
+    /** Session courante éventuelle, révoquée à la connexion (rotation). */
     currentSessionIdHash?: string | null;
   },
 ): Promise<{ ok: true; result: CompletedAuthorization } | { ok: false; error: CompleteError }> {
@@ -119,6 +170,7 @@ export async function completeAuthorization(
   // Purge opportuniste : Cloudflare Pages n'offre pas de Cron Trigger (voir
   // server/README.md), et ces lignes n'ont plus aucune valeur passé leur date.
   await store.purgeExpiredAuthorizations(params.now);
+  await runRetentionPurges(store, params.now);
 
   return {
     ok: true,
@@ -137,7 +189,7 @@ export async function completeAuthorization(
  * Résolution du compte, dans cet ordre :
  * 1. identité `(provider, provider_uid)` déjà connue → ce compte ;
  * 2. sinon, e-mail **vérifié** déjà porté par un compte → l'identité est
- *    rattachée à ce compte (**fusion**, §7 du plan : Discord et Google
+ *    rattachée à ce compte (**fusion** : Discord et Google
  *    vérifient tous deux l'adresse, ce qui rend le rattachement automatique
  *    sûr et évite un écran de liaison manuelle) ;
  * 3. sinon → nouveau compte.
@@ -244,6 +296,7 @@ export async function openSession(
     lastUsedAt: options.now,
     userAgent: options.userAgent,
     revokedAt: null,
+    supersededAt: null,
   });
   return { token, csrfToken: await deriveCsrfToken(token), idHash, expiresAt };
 }
@@ -261,10 +314,12 @@ export interface ResolvedSession {
  * Résout la session portée par un jeton de cookie. Renvoie `null` si le jeton
  * est inconnu, **révoqué** ou expiré — jamais une erreur : l'appelant retombe
  * simplement en mode invité (le mode invité doit rester pleinement
- * fonctionnel, §7).
+ * fonctionnel).
  *
  * Applique l'expiration glissante de 30 jours, mais seulement quand il reste
- * moins de 29 jours (voir SESSION_REFRESH_THRESHOLD_MS).
+ * moins de 29 jours (voir SESSION_REFRESH_THRESHOLD_MS) — et jamais à une
+ * session remplacée par rotation (`supersededAt`) : sa courte grâce doit
+ * s'écouler, un usage pendant la grâce ne la ressuscite pas pour 30 jours.
  */
 export async function resolveSession(
   store: AuthStore,
@@ -282,9 +337,15 @@ export async function resolveSession(
   if (!user) return null;
 
   const remaining = session.expiresAt.getTime() - now.getTime();
-  if (remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
+  if (session.supersededAt === null && remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
     const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     await store.touchSession(idHash, { lastUsedAt: now, expiresAt });
+    // Même rythme pour l'activité du compte (purge d'inactivité) : une session
+    // web ou overlay qui sert chaque jour tient le compte vivant sans
+    // reconnexion.
+    await store.updateUser(user.id, { lastSeenAt: now });
+    // Au plus une fois par jour et par session : le bon rythme pour le ménage.
+    await runRetentionPurges(store, now);
     return { session: { ...session, lastUsedAt: now, expiresAt }, user };
   }
 
@@ -293,9 +354,8 @@ export async function resolveSession(
 
 /**
  * Vérifie le jeton CSRF double-submit d'une requête mutative. `SameSite=Lax`
- * couvre déjà l'essentiel ; ce contrôle est la seconde barrière exigée par le
- * §7 du plan sur les routes sensibles (déconnexion, révocation, suppression
- * de compte).
+ * couvre déjà l'essentiel ; ce contrôle est la seconde barrière posée sur les
+ * routes sensibles (déconnexion, révocation, suppression de compte).
  */
 export async function verifyCsrf(
   sessionToken: string,

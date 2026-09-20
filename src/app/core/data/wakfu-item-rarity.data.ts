@@ -21,6 +21,7 @@
  * embarqué.
  */
 import type { CatalogService } from '../api/catalog.service';
+import { wakassetsIconUrl } from '../utils/wakassets-url.util';
 
 export type WakfuRarity =
   'old' | 'common' | 'rare' | 'mythical' | 'legendary' | 'memory' | 'epic' | 'relic';
@@ -65,7 +66,7 @@ const RARITY_ICON_NUMBER: Readonly<Record<WakfuRarity, number>> = {
   epic: 7,
 };
 
-/** URL de l'icône de rareté (wakassets, même CDN que les icônes d'objets/monstres). */
+/** URL de l'icône de rareté (wakassets via notre relais, même source que les icônes d'objets/monstres). */
 export function wakfuRarityIconUrl(rarity: WakfuRarity): string {
-  return `https://vertylo.github.io/wakassets/rarities/${RARITY_ICON_NUMBER[rarity]}.png`;
+  return wakassetsIconUrl('rarities', `${RARITY_ICON_NUMBER[rarity]}.png`);
 }

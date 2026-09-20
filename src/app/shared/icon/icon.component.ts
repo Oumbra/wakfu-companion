@@ -22,6 +22,7 @@ export type AppIconName =
   | 'swords'
   | 'trending-up'
   | 'target'
+  | 'goal-flag'
   | 'messages-square'
   | 'crossed-swords'
   | 'shopping-bag'
@@ -36,7 +37,7 @@ export type AppIconName =
   | 'pouch';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-15ac947e.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-cfde50b4.svg';
 
 @Component({
   selector: 'app-icon',

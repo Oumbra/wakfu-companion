@@ -6,13 +6,13 @@ import { LegalPageService } from './legal-page.service';
 import { AppLocale, I18nService, SUPPORTED_LOCALES } from './i18n.service';
 
 /**
- * Domaine canonique en dur — même valeur, même raison d'être en dur (previews `*.pages.dev`
- * comprises) que `src/index.html`/`public/robots.txt`/`public/sitemap.xml`/`public/llms.txt` (voir
- * leurs commentaires respectifs) : À METTRE À JOUR PARTOUT le jour où la prod bascule sur
- * Cloudflare/un domaine personnalisé (voir `docs/plan-migration-serveur.md`). Un grep sur
- * `oumbra.github.io/wakfu-companion` retrouve les 5 occurrences.
+ * Domaine canonique en dur — même valeur, même raison d'être en dur (previews `*.pages.dev` et
+ * `claude-dev.` comprises, qui doivent pointer les moteurs vers la prod plutôt que d'être indexées
+ * en double) que `src/index.html`/`public/robots.txt`/`public/sitemap.xml`/`public/llms.txt` (voir
+ * leurs commentaires respectifs) : À METTRE À JOUR PARTOUT le jour où le domaine change. Un grep
+ * sur `wakfu-companion.com` retrouve les 5 occurrences.
  */
-const SITE_ORIGIN = 'https://oumbra.github.io/wakfu-companion';
+const SITE_ORIGIN = 'https://wakfu-companion.com';
 
 /**
  * Titre d'onglet + meta description mis à jour dynamiquement selon la page (`NavigationService.view()`,

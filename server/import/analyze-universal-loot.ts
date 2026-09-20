@@ -11,6 +11,7 @@
 // plutôt que jeté après ce premier passage : `distinct_dungeons` est le signal le plus fiable pour
 // juger si un objet est réellement universel (vu dans plusieurs donjons différents) ou s'il s'agit
 // simplement d'un trou du référentiel `monsters.loot` pour UN monstre d'un seul donjon (à corriger
+// dans le référentiel de monstres plutôt qu'à ajouter à un référentiel d'objets universels).
 import { createDb } from '../db/client';
 import { sql } from 'drizzle-orm';
 import { writeFileSync } from 'node:fs';

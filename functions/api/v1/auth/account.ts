@@ -5,8 +5,8 @@ import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../
 import type { Env } from '../../_types';
 
 /**
- * DELETE /api/v1/auth/account — suppression du compte, exigée par le RGPD
- * (§7 du plan : « suppression du compte avec effet réel »).
+ * DELETE /api/v1/auth/account — suppression du compte, exigée par le RGPD,
+ * avec effet réel et non une simple désactivation.
  *
  * Suppression réelle de la ligne `users` : identités, sessions et — à partir
  * du lot 6 — configuration et historiques partent en cascade
