@@ -64,6 +64,12 @@ devancé la documentation.
 >   4.2, politique §6 et CGU §5 dans les 4 locales) ; règle de relecture des textes légaux inscrite
 >   dans `CLAUDE.md` (#15). Le périmètre de ce document est le seul dépôt du site : ce qui relève
 >   du dépôt de l'overlay y est suivi séparément.
+> - **2026-09-20 (soir) — entretien annuel planifié** (#20) : le workflow
+>   `.github/workflows/rgpd-revision-annuelle.yml` ouvre chaque 1er septembre une issue assignée au
+>   responsable avec la liste de contrôle (`sous-traitants-dpa.md` §5 + relecture des documents
+>   du 19 septembre 2026, alerte adéquation Royaume-Uni à partir de 2030) ; doublon calendrier
+>   `revision-rgpd.ics` hors dépôt. Le `schedule` ne tourne que depuis `main` : effectif après la
+>   fusion.
 
 | Gravité                  | Nombre | Nature                                                                                                                                                                            |
 | ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -545,6 +551,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~17~~ | ~~Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté~~ — **fait le 2026-09-20** (voir 4.2) | 4.2   | —      |
 | ~~18~~ | ~~Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)~~ — **décidé et fait le 2026-09-20** : purge des comptes inactifs depuis 12 mois (`purgeInactiveAccounts`, migration `0030`, politique §5) | —     | —      |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
+| ~~20~~ | ~~Planifier l'entretien annuel (DPA, DPF, adéquation Royaume-Uni, relecture des documents du 19 septembre)~~ — **fait le 2026-09-20** : workflow `rgpd-revision-annuelle.yml` (issue chaque 1er septembre, actif après fusion sur `main`) + `revision-rgpd.ics` hors dépôt | 4.10  | Minime |
 
 ### Préalable à toute mise en production
 
