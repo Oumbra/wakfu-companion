@@ -1,6 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { createDb } from '../../../server/db/client';
 import { dungeons } from '../../../server/db/schema';
+import { rejectUnknownCaller } from '../_caller';
 import type { Env } from '../_types';
 
 // GET /api/v1/dungeons — liste complète (151 lignes, toutes colonnes) pour
@@ -11,6 +12,9 @@ import type { Env } from '../_types';
 // combat de boss (findWakfuDungeonByBossMonsterId côté client, voir
 // core/utils/fight-image.util.ts).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);
   const rows = await db.select().from(dungeons);
 

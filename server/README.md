@@ -89,6 +89,18 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`).
 - `GET /api/v1/game-servers` — liste des serveurs de jeu (table
   `game_servers`, jamais compilée en dur côté client).
+- **Routes référentiel réservées au site et à l'overlay** (2026-09-20,
+  `docs/analyse-cgu.md`, recommandation 4 — licence de données WAKFU § 1-2,
+  pas de sous-licence) : `catalog/*`, `items/{id}`, `monsters/{id}`,
+  `monster-loot`, `monster-families`, `dungeons` et `icons/*` passent par
+  `rejectUnknownCaller` (`functions/api/_caller.ts`, logique pure dans
+  `server/http/caller.ts`, testée) : site reconnu par `Sec-Fetch-Site:
+  same-origin` (à défaut `Referer`/`Origin` du même hôte, valable sous
+  `ng serve` et sur les previews Pages), overlay par une session valide en
+  `Authorization: Bearer` (signature cible) ou, en transition, par son
+  `User-Agent` `ureq/` — à retirer quand l'overlay enverra son jeton sur ces
+  routes (`overlay-sync/src/client.rs`, `fetch_catalog_*`,
+  `fetch_item_detail`, `fetch_dungeons`). Tout autre appelant : 403.
 - `GET /api/v1/catalog/version` — métadonnées du dernier import catalogue
   (voir plus bas).
 - `GET /api/v1/catalog/` — index compact objets+monstres, gzip (surtout
@@ -113,12 +125,9 @@ DATABASE_URL=... npm run db:migrate
   minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   Sans authentification, mais **réservé au site et à l'overlay** depuis le
   2026-09-20 (`docs/analyse-cgu.md`, recommandation 8 : ne pas devenir un
-  CDN public d'images du jeu) — `identifyCaller` reconnaît le site par
-  `Sec-Fetch-Site: same-origin` (à défaut un `Referer`/`Origin` du même
-  hôte, valable sous `ng serve` et sur les previews Pages) et l'overlay par
-  son `User-Agent` (`ureq/`, ou `wakfu-companion-overlay/` s'il le déclare
-  un jour) ; tout autre appelant reçoit un 403, et
-  `access-control-allow-origin: *` a disparu. Réponse mise en cache à la périphérie
+  CDN public d'images du jeu) — même garde `rejectUnknownCaller` que les
+  routes référentiel ci-dessus, 403 sinon, et `access-control-allow-origin:
+  *` a disparu. Réponse mise en cache à la périphérie
   (`caches.default`, une semaine pour une icône, une heure pour un 404
   amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
   l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.

@@ -2,11 +2,15 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { eq } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { monsters } from '../../../../server/db/schema';
+import { rejectUnknownCaller } from '../../_caller';
 import type { Env } from '../../_types';
 
 // GET /api/v1/monsters/{id} — détail complet d'un monstre (id Ankama,
 // unique — voir schema.ts, contrairement aux objets).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const id = Number(context.params['id']);
   if (!Number.isInteger(id)) {
     return new Response(JSON.stringify({ error: 'id invalide' }), {

@@ -1,13 +1,14 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { identifyCaller, relayHeaders, upstreamUrl } from '../../../../../server/icons/proxy';
+import { relayHeaders, upstreamUrl } from '../../../../../server/icons/proxy';
+import { rejectUnknownCaller } from '../../../_caller';
 import type { Env } from '../../../_types';
 
 // GET /api/v1/icons/{folder}/{gfxId}.png — relais d'icônes `wakassets` pour l'overlay de bureau
 // (2026-09-19, constat C10 RGPD : l'adresse IP de l'utilisateur ne sort plus vers GitHub Pages
 // pour une icône) et pour le site. Sans authentification (une icône n'a rien de personnel, et
 // l'overlay en charge avant même d'être appairé), mais réservé à ces deux appelants — reconnus par
-// la signature de la requête, voir `identifyCaller` : le relais redistribue des images du jeu, il
-// ne doit pas servir de CDN à des pages tierces (2026-09-20, docs/analyse-cgu.md, reco 8). Voir
+// la signature de la requête, voir `rejectUnknownCaller` : le relais redistribue des images du jeu,
+// il ne doit pas servir de CDN à des pages tierces (2026-09-20, docs/analyse-cgu.md, reco 8). Voir
 // server/icons/proxy.ts pour ce qui est accepté.
 //
 // Deux caches : `caches.default` (périphérie Cloudflare, indexé par l'URL de CETTE requête) pour
@@ -15,12 +16,8 @@ import type { Env } from '../../../_types';
 // L'overlay a de son côté son propre cache disque (`overlay_sync::icon_cache`) : une icône donnée
 // n'arrive ici qu'une fois par installation.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  if (identifyCaller(context.request.headers, context.request.url) === null) {
-    return new Response(JSON.stringify({ error: 'appelant non autorisé' }), {
-      status: 403,
-      headers: { 'content-type': 'application/json' },
-    });
-  }
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
 
   const folder = String(context.params['folder'] ?? '');
   const file = String(context.params['file'] ?? '');

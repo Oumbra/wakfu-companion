@@ -1,6 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { createDb } from '../../../server/db/client';
 import { monsterFamilies } from '../../../server/db/schema';
+import { rejectUnknownCaller } from '../_caller';
 import type { Env } from '../_types';
 
 // GET /api/v1/monster-families — liste complète (~150 lignes, toutes colonnes) pour
@@ -10,6 +11,9 @@ import type { Env } from '../_types';
 // (resolveFightTypeClassification, core/utils/fight-image.util.ts), à la place du nom d'un
 // monstre membre du groupe utilisé jusqu'ici faute de cette table (voir server/db/schema.ts).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);
   const rows = await db.select().from(monsterFamilies);
 

@@ -2,6 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { ilike, sql } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { items, monsters } from '../../../../server/db/schema';
+import { rejectUnknownCaller } from '../../_caller';
 import type { Env } from '../../_types';
 
 type Locale = 'fr' | 'en' | 'es' | 'pt';
@@ -16,6 +17,9 @@ const SEARCH_RESULT_LIMIT = 30;
 // résultats différentes (objets ont rareté/hasRecipe, monstres non) dans
 // une même réponse.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const url = new URL(context.request.url);
   const q = url.searchParams.get('q')?.trim() ?? '';
   const localeParam = url.searchParams.get('locale') ?? 'fr';
