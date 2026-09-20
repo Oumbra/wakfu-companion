@@ -4,7 +4,15 @@ import { OnboardingIconName } from '../../shared/onboarding-icon/onboarding-icon
  * `poster` (aperçu statique) affichée en attendant que le fichier réel (potentiellement volumineux
  * pour un GIF non recompressé) finisse de charger — voir OnboardingTourComponent, qui fait un
  * fondu enchaîné entre les deux. `null` pour les 2 diapositives de bord (bienvenue/fin), qui n'ont
- * qu'une grande icône plutôt qu'une démonstration. */
+ * qu'une grande icône plutôt qu'une démonstration.
+ *
+ * ⚠ Données FACTICES uniquement dans ces captures (RGPD) : `chat.gif` a été publié pendant plusieurs
+ * semaines avec les pseudonymes réels et les messages intégraux d'une vingtaine de joueurs tiers
+ * (constaté à l'audit du 2026-09-20, réenregistré le même jour avec des lignes synthétiques poussées
+ * sur `newLines$`, voir le skill `verify-wakfu-companion`). `tools/check-fixtures.mjs` ne voit pas
+ * une image : avant de remplacer un GIF/poster, relire chaque frame (pseudos, messages de chat,
+ * partenaires d'échange, noms de personnages) — c'est une diffusion publique de données de tiers
+ * sans base légale, pas un simple détail cosmétique. */
 export interface OnboardingSlideMedia {
   readonly kind: 'gif' | 'video';
   readonly src: string;
