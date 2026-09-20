@@ -404,7 +404,7 @@ subsistaient, tous de complétude ; le premier est résolu :
 règle « toute nouvelle table rattachée à `users` ou toute nouvelle clé synchronisée implique une
 relecture des documents légaux » — à inscrire dans `CLAUDE.md` au même titre que le gating
 `isInitialLoad`. **Fait le 2026-09-20** (#15) : règle inscrite dans `CLAUDE.md` (« Autres
-conventions »), avec la liste des déclencheurs (table/colonne référençant `users`, clé
+conventions », déplacée le même jour dans `.claude/rules/user-data-legal.md`), avec la liste des déclencheurs (table/colonne référençant `users`, clé
 synchronisée, champ envoyé par un client, durée, service tiers) et des textes à relire.
 
 ### ✅ 4.7 — Aucune information au point de collecte — **résolu le 2026-09-19**

@@ -782,7 +782,7 @@ silence, ce que le prompt 5.2 interdit.
 ### Gating `isInitialLoad` : rien ne change
 
 La watchlist et ses compteurs restent du **suivi persistant** (principe
-d'architecture n°2 de `CLAUDE.md`) : jamais incrémentés pendant
+d'architecture `isInitialLoad`, `.claude/rules/log-ingestion.md`) : jamais incrémentés pendant
 `isInitialLoad`, jamais réinitialisés. Une version venue d'un autre appareil la
 remplace intégralement, compteurs compris — c'est la sémantique voulue, sans
 rapport avec le gating, qui ne concerne que les incréments issus du fichier de
@@ -891,7 +891,7 @@ Le dernier personnage reconnu n'est pas persisté : il se reconstruit à chaque
 lecture du log. Le mettre à jour pendant `isInitialLoad` est donc ici le
 comportement **correct** (une reconnexion relit tout le fichier et retrouve
 naturellement le dernier personnage vu), contrairement aux compteurs de suivi —
-principe d'architecture n°2 de `CLAUDE.md`, appliqué dans l'autre sens.
+principe d'architecture `isInitialLoad` de `.claude/rules/log-ingestion.md`, appliqué dans l'autre sens.
 
 ### Où s'affiche le badge
 
@@ -922,7 +922,7 @@ combats (`MAX_FIGHT_HISTORY`) et perdu au rechargement.
 
 ### Le piège central : la clé déterministe
 
-Le principe d'architecture n°2 de `CLAUDE.md` veut que toute (re)connexion au
+Le principe d'architecture `isInitialLoad` (`.claude/rules/log-ingestion.md`) veut que toute (re)connexion au
 fichier de log le relise **depuis le début** et reconstruise l'historique
 complet. Sans précaution, chaque reconnexion réenverrait tout et créerait des
 doublons **persistés** — qu'un simple F5 ne réparerait pas, contrairement au bug
@@ -1048,7 +1048,7 @@ de tête pour la marche à suivre complète (capture en navigateur des corps de
 requête avec l'`uid` réel du compte, suppression ciblée par `fight_log_id`,
 dry-run avec diff colonne par colonne avant `--apply`). Premier usage réel :
 l'historique du 15/09 d'un utilisateur archivé sans butin (session HDV jamais
-refermée, voir CLAUDE.md « Combats interrompus... ») — `fights` étant immuable
+refermée, voir `.claude/rules/log-ingestion.md` « Combats interrompus... ») — `fights` étant immuable
 après insertion, un simple rejeu par son client n'aurait jamais corrigé ses
 lignes existantes.
 

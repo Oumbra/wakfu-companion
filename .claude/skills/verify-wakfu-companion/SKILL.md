@@ -1,11 +1,13 @@
 ---
 name: verify-wakfu-companion
-description: Vérifier un changement dans Wakfu Companion (Angular) via le navigateur de prévisualisation, en simulant l'arrivée de lignes de log sans vrai fichier disque. À utiliser après toute modification touchant le parsing de log, le store de stats, le tracker, le profil ou les alertes sonores.
+description: Vérifier un changement dans Wakfu Companion (Angular) dans un vrai Chrome piloté par Playwright — état applicatif simulé via les signaux Angular (lignes de log synthétiques sur `newLines$`, import du jeu de données profil, données factices), inspection DOM/CSSOM réelle. À utiliser AVANT de déclarer terminée toute tâche à effet visuel ou comportemental (CSS, layout, interaction, nouveau composant, tooltip, scroll, parsing de log, store de stats, tracker, profil, alertes sonores) — jamais se contenter d'une relecture du code.
 ---
 
 # Vérifier un changement dans Wakfu Companion via le navigateur
 
-Cette app n'a pas de tests automatisés significatifs sur le parsing de log : la vérification passe systématiquement par le navigateur de prévisualisation, en simulant la sélection du fichier `wakfu.log` (pas besoin d'un vrai fichier sur disque, ni de lancer le jeu).
+Cette app n'a pas de tests automatisés significatifs sur le parsing de log : la vérification passe systématiquement par le navigateur de prévisualisation, en simulant la sélection du fichier `wakfu.log` (pas besoin d'un vrai fichier sur disque, ni de lancer le jeu). La confiance « ça devrait marcher d'après le CSS » a produit plusieurs faux positifs dans l'historique du projet (z-index du header, clipping de grille CSS, tooltip natif invisible) : inspecter le DOM/CSSOM réel (`getComputedStyle`, `getBoundingClientRect`, `elementFromPoint`, `scrollWidth`/`clientWidth`) plutôt que deviner, surtout pour tout ce qui touche au _stacking context_ ou au débordement.
+
+Écrire les scripts de vérification dans le dossier scratchpad de la session (jamais dans le repo), et les supprimer une fois la vérification terminée.
 
 ## Démarrer
 
@@ -50,11 +52,20 @@ const browser = await chromium.launch({
   headless: false,
 });
 ```
-Voir CLAUDE.md pour le détail complet de ce gotcha (section Chrome/Chromium).
+### Chrome absent (repli uniquement, ex. un sandbox Linux sans Chrome installé)
+
+si `mcp__playwright__browser_navigate` échoue avec `Chromium distribution 'chrome' is not found at /opt/google/chrome/chrome`, et que `npx playwright install chrome` échoue aussi (sudo indisponible), une vraie installation Chrome n'est pas récupérable dans cet environnement précis — mais ça reste une exception d'environnement, pas la référence : sur une machine où Chrome est installé (ex. ce dépôt cloné sous Windows, `C:\Program Files\Google\Chrome\Application\chrome.exe`), toujours reconfigurer le serveur MCP sur `--browser chrome` plutôt que de rester sur Firefox par défaut. Solution de repli qui fonctionne sans sudo quand Chrome est vraiment absent : installer Firefox via Playwright (`npx playwright install firefox`, ne nécessite pas de droits root) puis piloter le navigateur directement avec le paquet `playwright-core` (déjà présent après un premier `npm install playwright-core` dans le répertoire scratchpad) en pointant l'exécutable :
+
+```js
+const { firefox } = require('playwright-core');
+const browser = await firefox.launch({
+  executablePath: '/home/deck/.cache/ms-playwright/firefox-XXXX/firefox/firefox', // adapter le numéro de version présent sous ~/.cache/ms-playwright
+});
+```
 
 ## Simuler une connexion au fichier de log
 
-Le sélecteur classique (`<input type="file">`) a été supprimé : l'app n'utilise plus que l'API File System Access (bouton/clic sur la zone de dépôt = `showOpenFilePicker()`, bloqué sous `%AppData%\Roaming` ; glisser-déposer = `getAsFileSystemHandle()`, non bloqué — voir CLAUDE.md). Aucune des deux ne s'injecte facilement depuis la console (un vrai `FileSystemFileHandle` n'est pas synthétisable en JS).
+Le sélecteur classique (`<input type="file">`) a été supprimé : l'app n'utilise plus que l'API File System Access (bouton/clic sur la zone de dépôt = `showOpenFilePicker()`, bloqué sous `%AppData%\Roaming` ; glisser-déposer = `getAsFileSystemHandle()`, non bloqué — voir `.claude/rules/log-ingestion.md`, section « Accès au fichier »). Aucune des deux ne s'injecte facilement depuis la console : un vrai `FileSystemFileHandle`/`File` lié au disque ne peut pas être reproduit par un objet créé en mémoire (impossible à automatiser via CDP) — pour tester un comportement de péremption/permission FSA, s'appuyer sur le comportement documenté du navigateur plutôt que sur un test automatisé.
 
 Le plus simple pour tester le pipeline de parsing/store sans passer par le File System Access API : récupérer l'instance de `LogFileAccessService` déjà injectée dans `app-root` (`protected readonly logFileAccess`, lisible en JS runtime via `ng.getComponent` malgré `protected`/`private` — TypeScript n'efface pas ces propriétés à l'exécution) et pousser directement des lignes synthétiques sur son `newLines$` — c'est exactement ce que `processFile()` fait en interne après lecture du fichier, donc ça déclenche le même pipeline (`StatsStoreService` y est abonné) :
 
@@ -81,7 +92,40 @@ Contenus utiles pour construire un scénario de test :
 - Dégâts : `[Information (combat)] Cible: -1234 PV (Élément)`
 - Butin : `[Information (jeu)] Vous avez ramassé 3x Nom de l'objet.`
 - Kamas : `[Information (jeu)] Vous avez gagné 10 kamas.`
-- Rejointe combattant (allié/ennemi) : `[_FL_] fightId=1 Nom breed : 9 [12345] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (0,0,0)}` — `isControlledByAI=false` = joueur réel, `=true` = IA/monstre, `obstacleId != -1` = décor (ignoré par le parser).
+- Rejointe combattant (allié/ennemi) : `[_FL_] fightId=1 Nom breed : 9 [12345] isControlledByAI=false obstacleId : -1 join the fight at {Point3 : (0,0,0)}` — `isControlledByAI=false` = joueur réel, `=true` = IA/monstre (y compris l'invocation d'un allié). `obstacleId` ne dit RIEN sur la nature de l'entité (l'ancien filtre « `!= -1` = décor » était faux, voir `.claude/rules/log-ingestion.md`).
+
+## Jeu de données réaliste pour la page profil (comptes/personnages/watchlist...)
+
+`tests/wakfu-companion-export.json` (fourni par l'utilisateur, à conserver) — un export réel de l'app (profil, watchlist, roster de comptes/personnages...). À utiliser via le vrai système d'import de l'app plutôt qu'en reconstituant des données à la main, dès qu'un test touche à la page profil/roster :
+
+```js
+// 1. Se placer sur la page profil (le rail "Personnages" n'existe qu'une fois `fileConnectedGuard`
+//    satisfait — voir app.routes.ts — donc simuler `status: 'connected'` avant de naviguer) :
+const root = ng.getComponent(document.querySelector('app-root'));
+root.logFileAccess.status.set('connected');
+root.nav.openProfile();
+// 2. Basculer sur l'onglet "Personnages" (bouton du rail, texte traduit selon la langue) :
+document.querySelectorAll('.profile-rail-btn')
+  .find(b => b.textContent.toLowerCase().includes('personnage'))?.click();
+// 3. Importer via le VRAI <input type="file"> (accept="application/json", voir
+//    profile-page.component.html) — fonctionne même sans FSA, Playwright peut lui assigner un
+//    fichier directement :
+// (côté Playwright, pas dans la page) await page.locator('input[type="file"]').setInputFiles(
+//   '/chemin/vers/wakfu-companion-export.json'
+// );
+```
+
+⚠️ **`onImportFileSelected` fait `window.location.reload()` après un import réussi** (réinitialise proprement tout l'état applicatif depuis les nouvelles données, voir le composant) — attendre `page.waitForLoadState('load')` puis **refaire les étapes 1-2** (le rechargement repart de zéro, `status`/`nav` ne sont plus `'connected'`/sur la page profil).
+
+Pour tester un cas de débordement (ex. très nombreux comptes/personnages, qu'aucun jeu de données réel n'atteint confortablement) plutôt que de gonfler le JSON à la main, injecter directement dans `CharacterRosterService` après import (mêmes services accessibles via `ng.getComponent(document.querySelector('app-profile-page'))`) :
+```js
+const comp = ng.getComponent(document.querySelector('app-profile-page'));
+comp.roster.accounts.set([{ id: 'fake', label: 'Compte test', gameServer: null, characters: [...] }]);
+```
+
+⚠️ **Piège : plusieurs `.app-page-body`/`.profile-rail` coexistent dans le DOM** (un jeu par vue `AppPageComponent`, la vue `main`/dashboard ET la vue `profile` sont toutes deux montées via `@defer` dans `app.html`) — `document.querySelector('.app-page-body')` peut renvoyer celui de la MAUVAISE vue (silencieusement, sans erreur : juste un élément qui ne scrolle jamais quand on agit dessus). Toujours scoper la recherche à la vue active, ex. `document.querySelector('app-profile-page .app-page-body')` ou `[...document.querySelectorAll(...)].find(el => el.closest('app-profile-page'))`.
+
+⚠️ **Piège CSS proche, à ne pas confondre avec le précédent** : `Element.closest()` cherche parmi les ANCÊTRES (et l'élément lui-même), jamais les descendants. Un composant dont le template englobe entièrement un autre composant partagé (ex. `<app-profile-page>` qui contient `<app-page>`, lequel rend `.app-page-body` plus bas dans SON PROPRE template) a cet élément comme **descendant**, pas ancêtre, dans le DOM final — `hostEl.nativeElement.closest('.app-page-body')` échoue toujours (retourne `null`) dans ce sens-là ; c'est `querySelector('.app-page-body')` (recherche descendante) qu'il faut utiliser depuis le composant hôte. Confondu une fois en session (`ProfilePageComponent` cherchant son propre `.app-page-body` pour y poser un `ResizeObserver` — voir le piège « mesurer dans un `effect()` » dans `.claude/rules/ui-conventions.md`).
 
 ## ⚠️ Piège n°1 : lectures incrémentales (simuler un nouveau lot de lignes)
 
