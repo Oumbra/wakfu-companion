@@ -1,15 +1,23 @@
+import { wakassetsIconUrl } from '../utils/wakassets-url.util';
+
 /**
- * Recours manuel (nom FR, minuscule -> URL d'image directe) pour les objets
- * absents du catalogue — voir core/api/catalog.service.ts (catalogue servi par
- * l'API distante). Ce sont typiquement des objets spéciaux (trophées de
- * combat, jetons de monstre...). URLs relevées manuellement.
- *
- * static.ankama.com bloque ces URLs si la requête porte un en-tête Referer
- * d'un domaine tiers (protection anti-hotlink) : `<img>` doit être chargée
- * avec `referrerpolicy="no-referrer"` (voir item-icon.component.ts), sinon
- * l'image échoue silencieusement même si l'URL est correcte.
+ * Recours manuel (nom FR, minuscule -> `gfxId`) pour les objets dont le nom lu dans le log ne
+ * correspond à aucune entrée du catalogue — voir core/api/catalog.service.ts (catalogue servi par
+ * l'API distante). Ce sont typiquement des objets spéciaux (trophées de combat, jetons de
+ * monstre...) ou un nom au singulier dans le log pour une entrée au pluriel dans le catalogue
+ * (« Eclat » / « Eclats »). L'image est résolue sur wakassets comme n'importe quel objet connu
+ * (voir item-icon.component.ts) : plus aucun hotlink `static.ankama.com`, dont la protection
+ * anti-hotlink devait être contournée par `referrerpolicy="no-referrer"` — retiré le 2026-09-20
+ * (voir docs/analyse-cgu.md, recommandation 5).
  */
-export const WAKFU_ITEM_IMAGE_OVERRIDES: Readonly<Record<string, string>> = {
-  'jeton brut': 'https://static.ankama.com/wakfu/portal/game/item/64/64921003.png',
-  eclat: 'https://static.ankama.com/wakfu/portal/game/item/64/81127083.png',
+const WAKFU_ITEM_GFX_ID_OVERRIDES: Readonly<Record<string, number>> = {
+  'jeton brut': 64921003,
+  eclat: 81127083,
 };
+
+export const WAKFU_ITEM_IMAGE_OVERRIDES: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(WAKFU_ITEM_GFX_ID_OVERRIDES).map(([name, gfxId]) => [
+    name,
+    wakassetsIconUrl('items', `${gfxId}.png`),
+  ]),
+);

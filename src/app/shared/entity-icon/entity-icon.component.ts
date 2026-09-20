@@ -35,7 +35,6 @@ function monsterImageCandidates(entry: CatalogMonsterEntry): string[] {
     [style.width.px]="size()"
     [style.height.px]="size()"
     [src]="src()"
-    referrerpolicy="no-referrer"
     draggable="false"
     (error)="onError()"
     alt=""

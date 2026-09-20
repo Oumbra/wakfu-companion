@@ -75,8 +75,64 @@ export function relayHeaders(status: 200 | 404): Record<string, string> {
   return {
     'content-type': status === 200 ? 'image/png' : 'application/json',
     'cache-control': `public, max-age=${maxAge}`,
-    // Le site charge lui aussi ses icônes par ici (même origine, CORS sans objet) ; l'en-tête
-    // reste pour l'overlay et rien de personnel ne transite dans une icône.
-    'access-control-allow-origin': '*',
+    // Pas d'`access-control-allow-origin: *` (retiré le 2026-09-20, `docs/analyse-cgu.md`,
+    // recommandation 8) : le site est de même origine et l'overlay n'est pas un navigateur —
+    // l'en-tête ne servait qu'à un tiers, que `identifyCaller` refuse désormais.
   };
+}
+
+/** Qui appelle le relais : le site (même origine), l'overlay de bureau, ou personne de connu. */
+export type IconCaller = 'site' | 'overlay' | null;
+
+/** Sous-ensemble de `Headers` suffisant pour `identifyCaller` (testable sans `Request`). */
+export interface HeaderReader {
+  get(name: string): string | null;
+}
+
+/**
+ * Préfixes de `User-Agent` reconnus comme l'overlay de bureau : `ureq/` est l'agent par défaut de
+ * son client HTTP (`overlay-sync/src/client.rs`, aucun en-tête ajouté — les icônes sont chargées
+ * avant même l'appairage, donc sans jeton) ; `wakfu-companion-overlay/` est le nom qu'il pourra
+ * déclarer lui-même, accepté d'avance pour que la bascule ne coupe rien.
+ */
+export const OVERLAY_USER_AGENT_PREFIXES = ['wakfu-companion-overlay/', 'ureq/'] as const;
+
+/**
+ * Le relais ne sert que ses deux consommateurs (2026-09-20, `docs/analyse-cgu.md`, recommandation
+ * 8 : ne pas devenir un CDN public d'images Ankama — art. 13.2 des CGU). Il n'y a pas
+ * d'authentification possible (icônes chargées avant l'appairage, `<img>` sans en-tête), donc une
+ * reconnaissance par signature de requête :
+ *
+ * - **site** : `Sec-Fetch-Site: same-origin` (tout navigateur récent le pose sur une image de la
+ *   page) ou, à défaut (Safari < 16.4), un `Referer` ou `Origin` du même hôte que la requête —
+ *   vrai aussi sous `ng serve` (proxy `/api` sans `changeOrigin`, hôte et Referer restent
+ *   `localhost:4200`) et sur les previews Cloudflare Pages ;
+ * - **overlay** : `User-Agent` parmi `OVERLAY_USER_AGENT_PREFIXES`, sans en-tête de navigateur.
+ *
+ * Un `<img>` posé sur un autre site arrive avec `Sec-Fetch-Site: cross-site` et son propre
+ * Referer, un `curl` sans rien : refusés (403 par la route). Ce n'est pas un contrôle d'accès fort
+ * (un `User-Agent` se forge), c'est la limite qui fait la différence entre « nos deux clients » et
+ * « n'importe quelle page du web ».
+ */
+export function identifyCaller(headers: HeaderReader, requestUrl: string): IconCaller {
+  if (headers.get('sec-fetch-site')?.toLowerCase() === 'same-origin') return 'site';
+  const host = hostOf(requestUrl);
+  if (host !== null) {
+    for (const name of ['referer', 'origin']) {
+      const value = headers.get(name);
+      if (value !== null && hostOf(value) === host) return 'site';
+    }
+  }
+  const userAgent = headers.get('user-agent') ?? '';
+  if (OVERLAY_USER_AGENT_PREFIXES.some((prefix) => userAgent.startsWith(prefix))) return 'overlay';
+  return null;
+}
+
+/** `host` (nom + port) d'une URL absolue, `null` si elle ne se parse pas (Referer tronqué, `null`). */
+function hostOf(url: string): string | null {
+  try {
+    return new URL(url).host.toLowerCase();
+  } catch {
+    return null;
+  }
 }

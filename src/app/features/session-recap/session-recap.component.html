@@ -733,12 +733,7 @@
           <span class="section-caret" [class.expanded]="isGroupExpanded(row.key)">▸</span>
           <div class="dungeon-thumb">
             @if (row.pictureUrl && !failedThumbs().has(row.key)) {
-              <img
-                [src]="row.pictureUrl"
-                alt=""
-                referrerpolicy="no-referrer"
-                (error)="onThumbError(row.key)"
-              />
+              <img [src]="row.pictureUrl" alt="" (error)="onThumbError(row.key)" />
             } @else if (row.stoneItemId !== null) {
               <!-- Pierre du type de donjon (voir CLAUDE.md, mode "Type") : repère visuel en avant
                    du libellé plutôt qu'une vignette de donjon (bucket fusionné, plusieurs donjons
@@ -904,7 +899,6 @@
                         <img
                           [src]="tile.pictureUrl"
                           alt=""
-                          referrerpolicy="no-referrer"
                           (error)="onThumbError(tileThumbKey(tile.dungeonId))"
                         />
                       } @else {

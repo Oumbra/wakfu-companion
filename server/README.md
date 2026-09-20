@@ -111,7 +111,14 @@ DATABASE_URL=... npm run db:migrate
   `rarities`, `itemTypes`, `spells`, `icons`, `aptitudes` ; fichier
   `<nombre>.png` (négatif accepté : `itemTypes/-1.png`) ou `<mot court en
   minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
-  Public, sans authentification. Réponse mise en cache à la périphérie
+  Sans authentification, mais **réservé au site et à l'overlay** depuis le
+  2026-09-20 (`docs/analyse-cgu.md`, recommandation 8 : ne pas devenir un
+  CDN public d'images du jeu) — `identifyCaller` reconnaît le site par
+  `Sec-Fetch-Site: same-origin` (à défaut un `Referer`/`Origin` du même
+  hôte, valable sous `ng serve` et sur les previews Pages) et l'overlay par
+  son `User-Agent` (`ureq/`, ou `wakfu-companion-overlay/` s'il le déclare
+  un jour) ; tout autre appelant reçoit un 403, et
+  `access-control-allow-origin: *` a disparu. Réponse mise en cache à la périphérie
   (`caches.default`, une semaine pour une icône, une heure pour un 404
   amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
   l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
@@ -269,12 +276,14 @@ compact :
    `src/app/core/utils/fight-image.util.ts`) pour rester synchrone, et non
    déductibles du `gfxId` — impact mesuré négligeable (+7,4 Ko brut / +1,3 Ko
    gzip pour 851 monstres, voir tableau ci-dessus). En revanche PAS de
-   `pictureUrl` monstre dans l'index : contrairement aux objets, cette URL
-   EST intégralement déductible du `gfxId`
-   (`https://static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`,
-   vérifié strictement 851/851 sur le référentiel actuel) — même principe que
-   les URLs d'icônes wakassets/CDN, déjà construites côté client à partir du
-   seul `gfxId`.
+   `pictureUrl` monstre dans l'index : l'URL wakassets est construite côté
+   client à partir du seul `gfxId` (`monsters/{gfxId}.png`, puis
+   `monsterIllustrations/{gfxId}.png` en repli), comme les icônes. Jusqu'au
+   2026-09-20 c'était l'URL officielle
+   `https://static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`
+   (elle aussi déductible du `gfxId`, vérifié 851/851), abandonnée avec le
+   contournement anti-hotlink `referrerpolicy="no-referrer"` qu'elle exigeait
+   (voir `docs/analyse-cgu.md`, recommandation 5).
 
 **La compression gzip/brotli automatique de l'edge Cloudflare ramène le
 transfert réel à ~348 Ko** — c'est ce qui est effectivement envoyé au
@@ -625,7 +634,8 @@ décommissionné, plus aucune mention), session de 30 jours glissants
 (`DEAD_SESSION_RETENTION_MS`), suppression de compte immédiate en cascade
 (`DELETE /api/v1/auth/account`), icônes du SITE chargées en direct depuis
 `vertylo.github.io`/`static.ankama.com` (le relais `/api/v1/icons` ne sert que
-l'overlay), contenu du chat jamais transmis (`SYNCED_SETTING_KEYS` ne porte que
+l'overlay — depuis le 2026-09-20 le site passe lui aussi par le relais, voir
+plus haut), contenu du chat jamais transmis (`SYNCED_SETTING_KEYS` ne porte que
 canaux et filtres), historique plafonné en invité (`MAX_FIGHT_HISTORY`) et
 illimité en compte.
 

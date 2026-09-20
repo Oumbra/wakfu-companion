@@ -10,7 +10,7 @@
       tooltipPosition="bottom"
       (click)="theme.setTheme('dark')"
     >
-      <img [src]="darkIcon" alt="" referrerpolicy="no-referrer" draggable="false" />
+      <img [src]="darkIcon" alt="" draggable="false" />
     </button>
     <button
       type="button"
@@ -21,7 +21,7 @@
       tooltipPosition="bottom"
       (click)="theme.setTheme('light')"
     >
-      <img [src]="lightIcon" alt="" referrerpolicy="no-referrer" draggable="false" />
+      <img [src]="lightIcon" alt="" draggable="false" />
     </button>
   </div>
   @if (variant() === 'row') {
