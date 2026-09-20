@@ -550,10 +550,25 @@ Des noms réels étaient aussi recopiés dans `log-parser.spec.ts`, `stats-store
    hors la fixture.
 
 **Reste ouvert — décision du mainteneur.** Les fichiers réels restent dans l'historique Git public
-(~790 commits) et dans le cache de GitHub : comme pour le C1 de l'overlay, seule une réécriture
+(662 commits) et dans le cache de GitHub : comme pour le C1 de l'overlay, seule une réécriture
 d'historique suivie d'une demande de purge à GitHub Support les retire réellement. La note
 d'incident hors dépôt (`note-incident-2026-09-15.md`) couvre l'overlay ; ce volet reste à y ajouter
 si la même qualification est retenue.
+
+**Réécriture préparée (2026-09-20, soir).** Dossier hors dépôt (`reecriture-site/`, à côté des
+documents RGPD) : `git filter-repo` vérifié dans un clone miroir, **non poussé**. Périmètre plus
+large que les seules fixtures, à la demande du mainteneur : (1) les 35 blobs réels remplacés par
+leur version pseudonymisée sous tous leurs chemins ; (2) purge des journaux réels que l'historique
+gardait sous d'anciens chemins (`test-logs/`, `assets/wakfu_chat.log`, `tests/logs/{en,es,pt}/`,
+captures `.playwright-mcp/`), des fichiers aujourd'hui ignorés par git mais committés un temps
+(référentiel JSON, tables générées, builds) et de l'outillage qui les produisait ; (3) valeurs
+réelles recopiées dans specs, code et doc → mêmes pseudonymes ; (4) suppression, sur tout
+l'historique, des commentaires qui nomment ces fichiers ou l'origine des données (le nettoyage
+équivalent à HEAD : `e897c8d`, `4783f91`, `bdf2d46`). Contrôle exhaustif de tous les blobs texte
+avant/après : 0 donnée réelle, 0 chemin purgé, 0 commentaire résiduel ; 662 commits → 635 (les
+27 élagués ne touchaient que des fichiers purgés), auteurs/dates/sujets identiques. Reste : le
+force-push par le mainteneur, puis le ticket GitHub Support (28 `refs/pull/*` retiennent
+l'ancien historique) — décisions et procédure dans le `README.md` du dossier.
 
 ## 5. Plan d'action proposé
 
@@ -593,7 +608,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~18~~ | ~~Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)~~ — **décidé et fait le 2026-09-20** : purge des comptes inactifs depuis 12 mois (`purgeInactiveAccounts`, migration `0030`, politique §5) | —     | —      |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 | ~~20~~ | ~~Planifier l'entretien annuel (DPA, DPF, adéquation Royaume-Uni, relecture des documents du 19 septembre)~~ — **fait le 2026-09-20** : workflow `rgpd-revision-annuelle.yml` (issue chaque 1er septembre, actif après fusion sur `main`) + `revision-rgpd.ics` hors dépôt | 4.10  | Minime |
-| 21     | Réécrire l'historique Git pour retirer les fixtures réelles (~790 commits) et demander la purge du cache à GitHub Support, comme pour l'overlay — décision du mainteneur                                | 4.11  | Moyen  |
+| 21     | Réécrire l'historique Git (fixtures réelles, journaux sous d'anciens chemins, fichiers ignorés, commentaires sur les sources) et demander la purge du cache à GitHub Support — **préparée et vérifiée le 2026-09-20** (dossier `reecriture-site/` hors dépôt), force-push et ticket à la main du mainteneur | 4.11  | Moyen  |
 
 ### Préalable à toute mise en production
 
