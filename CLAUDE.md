@@ -22,6 +22,30 @@ Toutes les réponses, y compris la description des étapes, des actions et des r
 - Les outils dédiés (`Read`, `Grep`, `Glob`, `Edit`) restent préférables au shell quand ils suffisent ; la règle ci-dessus vaut dès qu'on passe par Bash/PowerShell.
 - **Mode dégradé** : si `rtk` est absent (`command -v rtk` échoue — typiquement une session cloud dont l'environnement n'a pas de setup script, ou la machine d'un autre contributeur), le signaler **une seule fois** puis utiliser les commandes natives sans réessayer le préfixe. Ne pas tenter d'installer `rtk` soi-même : en session cloud il s'installe via le setup script de l'environnement (UI claude.ai/code, résultat mis en cache ~7 jours ; le script officiel `install.sh` peut échouer en 403 sur les release assets GitHub — repli `cargo install --git https://github.com/rtk-ai/rtk --locked`), en local c'est un choix de l'utilisateur. Le hook `PreToolUse` de `.claude/settings.json` est déjà protégé et devient un no-op sans `rtk`.
 
+# Style de réponse : Caveman (plugin `caveman@caveman`)
+
+Le plugin [caveman](https://github.com/JuliusBrussee/caveman) compresse la **prose** des réponses
+(articles, remplissage, narration des appels d'outils) sans toucher au code, aux commandes, aux
+chemins ni aux messages d'erreur exacts. Il complète rtk : rtk réduit ce que Claude *lit*, Caveman
+ce que Claude *écrit*.
+
+- Installation : déclaré dans `.claude/settings.json` (`extraKnownMarketplaces` + `enabledPlugins`),
+  Claude Code le propose à l'ouverture du dépôt ; à la main :
+  `claude plugin marketplace add JuliusBrussee/caveman && claude plugin install caveman@caveman`.
+  En session cloud, c'est le setup script de l'environnement qui l'installe.
+- Niveau par défaut : `.caveman.json` à la racine (`defaultMode`, ici `full`). Changer en session :
+  `/caveman lite|full|ultra|off` (`/caveman-help` rappelle les niveaux) ; `CAVEMAN_DEFAULT_MODE`
+  en variable d'environnement prime sur le fichier.
+- La règle « répondre en français » prime : Caveman compresse le style, pas la langue.
+- Hors périmètre (règle du plugin) : commits, docs, issues, fichiers mémoire et tout texte persistant
+  restent en prose normale ; les avertissements de sécurité et les confirmations d'actions
+  irréversibles aussi.
+- **Mode dégradé** : si le plugin est absent (le hook `SessionStart` le signale), appliquer les mêmes
+  règles à la main — phrases courtes, sans remplissage ni narration d'outils, termes techniques
+  exacts — sans tenter d'installer le plugin soi-même.
+- Ne pas installer le CLI/proxy `@caveman-ai/cli` (`caveman claude`, `caveman setup`) : il redirige
+  tout le trafic API vers un proxy local et double rtk sur les sorties de commandes.
+
 # Wakfu Companion — contexte projet
 
 Application Angular 21 (standalone components, signals, `@if`/`@for`) : compagnon de jeu en temps réel qui lit le fichier `wakfu.log` du MMORPG Wakfu (parsing de logs, suivi de dégâts, historique de combats, butin, chat, alertes sonores). Deux cibles de build : dev servi (`npm start`) et build web classique (`npm run build`), déployée en application web servie. **Le mode standalone `file://` (fichier HTML autonome) a été retiré** dans le cadre d'une migration vers un serveur distant — les contraintes qu'il imposait (tout embarqué, aucune dépendance externe) ne s'appliquent plus.
