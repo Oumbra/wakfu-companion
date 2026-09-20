@@ -51,7 +51,7 @@ export const ITEM_CATEGORY_SORT_ORDER: Readonly<Record<WakfuItemCategory, number
 
 /** Numéro d'icône `itemTypes` Ankama (voir wakassets/itemTypes/{n}.png, même CDN que les icônes
  * d'objets/monstres/raretés) représentant la catégorie dans l'arbre de filtre "Types" de
-  */
+ */
 const ITEM_CATEGORY_ICON_NUMBER: Readonly<Record<WakfuItemCategory, number>> = {
   equipment: 109,
   resources: 226,

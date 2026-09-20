@@ -78,7 +78,10 @@ describe(
         classifier.registerFighterJoin('Anonyme-Eniripsa2', false, 4);
         // Mécanique de boss : le jeu affiche "Anonyme-Eniripsa2: Invoque un(e) K'abah'al..." dans le log — LogParser
         // (SUMMON_ANNOUNCE_RE) le détecte comme une invocation classique, avec Anonyme-Eniripsa2 comme invocateur.
-        classifier.registerSummonJoin("K'abah'al, Gardien de la route des morts", 'Anonyme-Eniripsa2');
+        classifier.registerSummonJoin(
+          "K'abah'al, Gardien de la route des morts",
+          'Anonyme-Eniripsa2',
+        );
 
         expect(classifier.classify("K'abah'al, Gardien de la route des morts")).toBe('enemy');
       },
