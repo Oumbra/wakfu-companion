@@ -60,13 +60,14 @@ devancé la documentation.
 | 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                                  |
 | 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                   |
 | 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP bloquante depuis le 2026-09-20 —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
-| ⚪ Mineur / documentaire | 3      | DPA, procédure de violation, note d'absence d'AIPD (le registre art. 30 et la note de mise en balance sont rédigés, l'adresse de contact est confirmée — voir 4.10)               |
+| ⚪ Mineur / documentaire | 0      | — (registre, note de mise en balance, DPA archivés, procédure de violation, note d'absence d'AIPD : tous rédigés les 2026-09-19/20, hors dépôt — voir 4.10)                       |
 
 Aucun écart ne relevait d'une collecte abusive ou dissimulée : tous étaient soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
 critique — un **bug de cloisonnement** dans la file de synchronisation. **Au 2026-09-19 (soir),
-tous les écarts de code sont résolus** ; restent trois documents internes à rédiger (4.10), le
-passage de la CSP en mode bloquant après validation sur la preview, et la mise en production.
+tous les écarts de code sont résolus** ; les documents internes (4.10) sont rédigés le 2026-09-19 et
+complétés le 2026-09-20 ; la CSP est bloquante depuis le 2026-09-20. Il ne reste que la mise en
+production (fusion `claude/dev` → `main`) et des améliorations facultatives (#15, #17, #18).
 
 ---
 
@@ -468,14 +469,14 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 
 ### ⚪ 4.10 — Obligations documentaires absentes
 
-| Obligation                                 | État           | Commentaire                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Registre des traitements** (art. 30)     | ✅ Rédigé      | Rédigé le 2026-09-19 avec la note de mise en balance des intérêts (pseudonymes de tiers, point 1.3) — documents internes du responsable de traitement, conservés **hors dépôt** (voir §8). L'ébauche du §6 en reste la base.                                                                                                                         |
-| **Contrats de sous-traitance** (art. 28.3) | Non documentés | Les DPA de Cloudflare, Neon/Databricks et GitHub existent et sont acceptés par défaut à l'usage ; il faut les archiver et les référencer.                                                                                                                                                                                                            |
-| **Procédure de violation** (art. 33/34)    | Absente        | Notification à la CNIL sous 72 h. Pour un projet d'une personne, une demi-page suffit (détection, périmètre, notification, information des personnes).                                                                                                                                                                                               |
-| **AIPD / DPIA** (art. 35)                  | Absente        | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                        |
-| **Vérification de l'âge**                  | Absente        | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                               |
-| **Adresse de contact**                     | ✅ Confirmée   | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — boîte **confirmée relevée par le mainteneur** le 2026-09-19 (art. 12.2/12.3 : réponse sous un mois). |
+| Obligation                                 | État         | Commentaire                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Contrats de sous-traitance** (art. 28.3) | ✅ Archivés  | `sous-traitants-dpa.md` + copies datées (Cloudflare DPA v6.4, Neon schedule 5/8/2026 → Databricks MCSA 20/2/2026 → Databricks DPA, GitHub DPA), 2026-09-19 ; identifiants de compte/projet consignés le 2026-09-20. Hors dépôt (§8).                                                                                                                 |
+| **Procédure de violation** (art. 33/34)    | ✅ Rédigée   | `procedure-violation-de-donnees.md` (2026-09-19) : six scénarios de confinement, qualification sous 24 h, grille de notification CNIL/personnes, modèle de courriel, aide-mémoire des leviers. Hors dépôt.                                                                                                                                           |
+| **AIPD / DPIA** (art. 35)                  | ✅ Consignée | `note-absence-aipd.md` (2026-09-19) : art. 35.3 et neuf critères WP248 passés en revue, aucun rempli ; liste des changements qui imposeraient d'y revenir. Hors dépôt.                                                                                                                                                                               |
+| **AIPD / DPIA** (art. 35)                  | Absente      | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                        |
+| **Vérification de l'âge**                  | Absente      | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                               |
+| **Adresse de contact**                     | ✅ Confirmée | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — boîte **confirmée relevée par le mainteneur** le 2026-09-19 (art. 12.2/12.3 : réponse sous un mois). |
 
 ---
 
@@ -487,7 +488,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 | #     | Action                                                                                                                                                             | Écart | Effort |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- | ------ |
-| ~~1~~ | ~~Vérifier que `contact@wakfu-companion.com` est réellement relevée~~ — **confirmé** par le mainteneur le 2026-09-19                                               | 4.10  | —      |
+| ~~2~~ | ~~Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte~~ — **fait** le 2026-09-19 (voir 4.1)                                    | 4.1   | —      |
 | 2     | Cloisonner la file de synchronisation par `uid` et la purger à la suppression de compte                                                                            | 4.1   | Moyen  |
 | ~~3~~ | ~~Ajouter `GET /api/v1/auth/export` et y brancher le bouton « Exporter »~~ — rétrogradé en #17 : la politique ne promet plus que ce que le bouton fait (`168cd01`) | 4.2   | —      |
 | ~~4~~ | ~~Déclarer GitHub, Inc. comme hébergeur du site (ou finaliser la bascule Cloudflare)~~ — **fait** : GitHub Pages décommissionné le 2026-09-19                      | 4.3   | —      |
@@ -506,9 +507,9 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 | #      | Action                                                                                                                                                      | Écart | Effort |
 | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                                                                 | 4.10  | —      |
-| 11     | Archiver les DPA des trois sous-traitants                                                                                                                   | 4.10  | Minime |
-| 12     | Écrire la procédure de violation de données                                                                                                                 | 4.10  | Faible |
+| ~~11~~ | ~~Archiver les DPA des trois sous-traitants~~ — **fait** le 2026-09-19, complété le 2026-09-20 (hors dépôt)                                                 | 4.10  | —      |
+| ~~12~~ | ~~Écrire la procédure de violation de données~~ — **fait** le 2026-09-19 (hors dépôt)                                                                       | 4.10  | —      |
+| ~~13~~ | ~~Consigner l'analyse d'absence d'AIPD~~ — **fait** le 2026-09-19 (hors dépôt)                                                                              | 4.10  | —      |
 | 13     | Consigner l'analyse d'absence d'AIPD                                                                                                                        | 4.10  | Minime |
 | ~~14~~ | ~~Proposer l'effacement local à la suppression de compte, comme le fait l'overlay~~ — **fait** le 2026-09-19 (+ bouton invité, politique §5/§6 corrigée)    | 4.9   | —      |
 | 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                    | 4.6   | Minime |
