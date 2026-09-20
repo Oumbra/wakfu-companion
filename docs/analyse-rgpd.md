@@ -570,6 +570,11 @@ avant/après : 0 donnée réelle, 0 chemin purgé, 0 commentaire résiduel ; 662
 force-push par le mainteneur, puis le ticket GitHub Support (28 `refs/pull/*` retiennent
 l'ancien historique) — décisions et procédure dans le `README.md` du dossier.
 
+**`claude/dev` réécrite et poussée le 2026-09-20 (soir)** par le mainteneur (`b1bb423` → `14a8134`,
+665 → 637 commits ; l'analyse CGU sort du dépôt au passage). `main` reste à réécrire : elle
+pointe encore sur l'ancien historique, les anciens objets restent donc accessibles par elle —
+à pousser avec la même méthode avant le ticket GitHub Support.
+
 ## 5. Plan d'action proposé
 
 Classé par rapport gain de conformité / coût de mise en œuvre.
