@@ -571,9 +571,10 @@ force-push par le mainteneur, puis le ticket GitHub Support (28 `refs/pull/*` re
 l'ancien historique) — décisions et procédure dans le `README.md` du dossier.
 
 **`claude/dev` réécrite et poussée le 2026-09-20 (soir)** par le mainteneur (`b1bb423` → `14a8134`,
-665 → 637 commits ; l'analyse CGU sort du dépôt au passage). `main` reste à réécrire : elle
-pointe encore sur l'ancien historique, les anciens objets restent donc accessibles par elle —
-à pousser avec la même méthode avant le ticket GitHub Support.
+665 → 637 commits ; l'analyse CGU sort du dépôt au passage), puis **`main`** le même soir
+(`7408c4f` → `8aff03f`, 609 → 586 commits, même arbre hors commentaires et fixtures). Reste le
+ticket GitHub Support (texte prêt hors dépôt ; les anciens SHA sont encore servis) et le volet 2
+de la note d'incident, rédigé le même soir.
 
 ## 5. Plan d'action proposé
 
