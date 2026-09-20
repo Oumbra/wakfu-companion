@@ -136,14 +136,14 @@ describe('StatsStoreService', () => {
   });
 
   describe('Historique Echanges (assets/logs/tests/fr/trade*.log)', () => {
-    function withOumbraRoster(): void {
+    function withSelfRoster(): void {
       const roster = TestBed.inject(CharacterRosterService);
       const accountId = roster.accounts()[0].id;
-      roster.addCharacter(accountId, 'Oumbra', 'Sram', 'm');
+      roster.addCharacter(accountId, 'Anonyme-Sram1', 'Sram', 'm');
     }
 
     it('attribue correctement acquis/cédés (trade.log, deux objets reçus contre un donné)', () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('trade.log'));
@@ -159,7 +159,7 @@ describe('StatsStoreService', () => {
     });
 
     it('gère un échange où le compte courant ne donne rien (trade_2.log)', () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('trade_2.log'));
@@ -172,14 +172,14 @@ describe('StatsStoreService', () => {
     });
 
     it('gère un échange incluant des kamas côté partenaire (trade_3.log)', () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('trade_3.log'));
 
       const trades = stats.tradeHistory();
       expect(trades).toHaveLength(1);
-      expect(trades[0].selfName).toBe('Oumbra');
+      expect(trades[0].selfName).toBe('Anonyme-Sram1');
       expect(trades[0].characterName).toBe('Anonyme-Joueur2');
       expect(trades[0].acquired).toEqual([
         { name: "Les Doigts d'Enutrof", catalogId: null, quantity: 1 },
@@ -190,20 +190,20 @@ describe('StatsStoreService', () => {
       expect(stats.kamasEarned()).toBe(10);
     });
 
-    it('ne classe jamais un personnage du roster déclaré comme "characterName" (jamais Oumbra)', () => {
-      withOumbraRoster();
+    it('ne classe jamais un personnage du roster déclaré comme "characterName" (jamais Anonyme-Sram1)', () => {
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, [...readFixture('trade.log'), ...readFixture('trade_3.log')]);
 
       const names = stats.tradeHistory().map((t) => t.characterName);
-      expect(names).not.toContain('Oumbra');
+      expect(names).not.toContain('Anonyme-Sram1');
     });
 
     it("ignore un échange entre deux personnages du roster déclaré (et non plus dès qu'un seul y figure)", () => {
       const roster = TestBed.inject(CharacterRosterService);
       const accountId = roster.accounts()[0].id;
-      roster.addCharacter(accountId, 'Oumbra', 'Sram', 'm');
+      roster.addCharacter(accountId, 'Anonyme-Sram1', 'Sram', 'm');
       roster.addCharacter(accountId, 'Anonyme-Joueur1', 'Iop', 'm');
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
@@ -213,7 +213,7 @@ describe('StatsStoreService', () => {
     });
 
     it('tolère des lignes de chat/multi-compte intercalées dans la négociation', () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       const lines = readFixture('trade.log');
@@ -227,23 +227,23 @@ describe('StatsStoreService', () => {
     });
 
     it("n'enregistre l'échange qu'une seule fois quand le résumé final est réémis avec l'ordre des deux \"donne\" inversé (observation multi-compte, cas réel signalé)", () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, [
-        ' INFO 13:45:55,483 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Oumbra (id=90000007) and Anonyme-Joueur1 (id=90001045)',
+        ' INFO 13:45:55,483 [AWT-EventQueue-0] (Sk:64) - [Trade] Starting an exchange between Anonyme-Sram1 (id=90000007) and Anonyme-Joueur1 (id=90001045)',
         ' INFO 13:46:13,009 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez perdu 20 kamas.',
         " INFO 13:46:13,009 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange",
         ' INFO 13:46:13,012 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Anonyme-Joueur1 donne : 20K ; ',
-        'le joueur Oumbra donne : 0K ; ',
+        'le joueur Anonyme-Sram1 donne : 0K ; ',
         ' INFO 13:46:13,012 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] Vous avez gagné 20 kamas.',
         " INFO 13:46:13,013 [AWT-EventQueue-0] (buN:229) - [Trade] Fin de l'échange",
         " INFO 13:46:13,013 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.",
-        ' INFO 13:46:13,013 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=90000007) and Anonyme-Joueur1 (id=90001045)',
-        ' INFO 13:46:13,014 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Oumbra donne : 0K ; ',
+        ' INFO 13:46:13,013 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Anonyme-Sram1 (id=90000007) and Anonyme-Joueur1 (id=90001045)',
+        ' INFO 13:46:13,014 [AWT-EventQueue-0] (buN:252) - [Trade] le joueur Anonyme-Sram1 donne : 0K ; ',
         'le joueur Anonyme-Joueur1 donne : 20K ; ',
         " INFO 13:46:13,015 [AWT-EventQueue-0] (aPV:174) - [Information (jeu)] L'échange s'est correctement terminé.",
-        ' INFO 13:46:13,016 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Oumbra (id=90000007) and Anonyme-Joueur1 (id=90001045)',
+        ' INFO 13:46:13,016 [AWT-EventQueue-0] (Sk:162) - [Trade] Ending the exchange between Anonyme-Sram1 (id=90000007) and Anonyme-Joueur1 (id=90001045)',
       ]);
 
       const trades = stats.tradeHistory();
@@ -251,19 +251,19 @@ describe('StatsStoreService', () => {
       expect(trades[0].kamasAcquired).toBe(20);
       expect(trades[0].kamasGiven).toBe(0);
       expect(trades[0].characterName).toBe('Anonyme-Joueur1');
-      expect(trades[0].selfName).toBe('Oumbra');
+      expect(trades[0].selfName).toBe('Anonyme-Sram1');
     });
 
     it('rejoue le cas réel signalé (deux échanges dans un log multi-compte bruyant) sans doublon (trade_multi-account.log)', () => {
-      withOumbraRoster();
+      withSelfRoster();
       const stats = TestBed.inject(StatsStoreService);
       const access = TestBed.inject(LogFileAccessService);
       feed(access, readFixture('trade_multi-account.log'));
 
       const trades = stats.tradeHistory();
       expect(trades).toHaveLength(2);
-      // Le plus récent en tête : l'échange de 13:48 (Oumbra donne 10K + Poudre) puis celui de 13:46 (Oumbra reçoit 20K).
-      expect(trades[0].selfName).toBe('Oumbra');
+      // Le plus récent en tête : l'échange de 13:48 (Anonyme-Sram1 donne 10K + Poudre) puis celui de 13:46 (Anonyme-Sram1 reçoit 20K).
+      expect(trades[0].selfName).toBe('Anonyme-Sram1');
       expect(trades[0].characterName).toBe('Anonyme-Joueur1');
       expect(trades[0].kamasGiven).toBe(10);
       expect(trades[0].kamasAcquired).toBe(0);
