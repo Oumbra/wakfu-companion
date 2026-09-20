@@ -40,11 +40,13 @@ devancé la documentation.
 >   fin de session), politique §5 à jour.
 > - 4.2 (export) : le volet **documentaire** est résolu par `168cd01` — la politique ne promet plus
 >   que ce que le bouton fait réellement, le reste est fourni sur demande écrite sous un mois
->   (art. 12.3). L'endpoint d'export serveur reste souhaitable, plus obligatoire.
+>   (art. 12.3). **Résolu entièrement le 2026-09-20** : `GET /api/v1/auth/export` +
+>   `AccountExportService`, le bouton produit la copie complète (voir 4.2).
 > - 4.4 (IP en clair) : le volet **déclaration** est résolu par `1651a41` (points 1, 1.2, 1.3 et 5) ;
 >   le volet **minimisation** (hachage) par `efc004c` — résolu (voir 4.4).
 > - 4.6 : les extractions de pacte sont désormais citées (`1651a41`) ; les deux autres omissions
->   restent ouvertes.
+>   sont comblées le 2026-09-19, et la règle de relecture est inscrite dans `CLAUDE.md` le
+>   2026-09-20 (#15).
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
 > - **2026-09-20 — localisation de la base corrigée** : la politique (§3, §4) et les mentions
@@ -58,11 +60,15 @@ devancé la documentation.
 > - **2026-09-20 (après-midi) — trois décisions du responsable consignées** (registre §7) : purge des
 >   comptes inactifs depuis 12 mois (#18, code + migration `0030` + politique §5), base maintenue au
 >   Royaume-Uni, âge minimum assumé sans mécanisme de vérification (4.10).
+> - **2026-09-20 (soir) — améliorations facultatives faites** : export RGPD complet en un clic (#17,
+>   4.2, politique §6 et CGU §5 dans les 4 locales) ; règle de relecture des textes légaux inscrite
+>   dans `CLAUDE.md` (#15). Le périmètre de ce document est le seul dépôt du site : ce qui relève
+>   du dépôt de l'overlay y est suivi séparément.
 
 | Gravité                  | Nombre | Nature                                                                                                                                                                            |
 | ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                                  |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                   |
+| 🟠 Majeur                | 0      | — (export 4.2 résolu le 2026-09-20, hébergeur 4.3 résolu)                                                                                                                   |
 | 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP bloquante depuis le 2026-09-20 —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
 | ⚪ Mineur / documentaire | 0      | — (registre, note de mise en balance, DPA archivés, procédure de violation, note d'absence d'AIPD : tous rédigés les 2026-09-19/20, hors dépôt — voir 4.10)                       |
 
@@ -71,7 +77,8 @@ d'information**, soit des **défauts de minimisation ou de rétention**, soit �
 critique — un **bug de cloisonnement** dans la file de synchronisation. **Au 2026-09-19 (soir),
 tous les écarts de code sont résolus** ; les documents internes (4.10) sont rédigés le 2026-09-19 et
 complétés le 2026-09-20 ; la CSP est bloquante depuis le 2026-09-20. Il ne reste que la mise en
-production (fusion `claude/dev` → `main`) et des améliorations facultatives (#15, #17).
+production (fusion `claude/dev` → `main`) — les améliorations facultatives (#15, #17) sont faites
+le 2026-09-20.
 
 ---
 
@@ -217,11 +224,27 @@ l'historique que l'utilisateur venait de faire effacer.
 (`getSyncQueue(uid)`), et purger le magasin dans `deactivate()` — ou au minimum lors d'une suppression
 de compte.
 
-### 🟠 4.2 — L'export « RGPD » ne contient pas les données du compte — **volet documentaire résolu le 2026-09-19**
+### ✅ 4.2 — L'export « RGPD » ne contient pas les données du compte — **résolu le 2026-09-20**
 
 **Articles concernés** : 15 (droit d'accès), 20 (portabilité), 12 (transparence).
 
-> **Résolution partielle (`168cd01`).** Le point 6 de la politique (4 locales) ne présente plus le
+> **Résolution complète (2026-09-20, #17).** `GET /api/v1/auth/export`
+> (`functions/api/v1/auth/export.ts`) renvoie la ligne `users` avec ses dates, les identités OAuth
+> (identifiant chez le fournisseur compris), **toutes** les sessions encore en base (révoquées,
+> remplacées ou expirées incluses tant que la purge de 30 jours ne les a pas effacées — une trace
+> détenue est une donnée à restituer, même si `GET /auth/sessions` ne la liste plus) et la
+> configuration synchronisée avec son horodatage par clé. L'historique n'y est pas servi d'un
+> bloc : `AccountExportService` enchaîne les quatre `GET /api/v1/history/*` paginés (`limit=200`)
+> jusqu'à épuisement — sérialiser des milliers de combats dans une seule réponse sortirait du
+> budget CPU d'une Pages Function, alors que la pagination existante est bornée et testée ; le
+> fichier final est le même. Le bouton « Exporter » de la page « Mon compte » produit
+> `{ data: <configuration de l'appareil>, account: <réponse + history> }` (en invité : `data`
+> seul, il n'existe rien d'autre), sans rien écrire si une requête échoue (un fichier partiel
+> passerait pour complet). Le fichier reste importable (`applyImport` ne lit que `data`).
+> Politique §6 (droit d'accès, portabilité) et CGU §5 réécrites dans les 4 locales : la promesse
+> « en un clic » est rétablie, la demande écrite reste possible. Registre version 5.
+>
+> **Résolution partielle antérieure (`168cd01`).** Le point 6 de la politique (4 locales) ne présente plus le
 > bouton « Exporter » que pour ce qu'il fait réellement (données de configuration) et renvoie, pour
 > l'identité, les sessions et l'historique serveur, à une demande écrite à
 > `contact@wakfu-companion.com`, honorée « dans le délai d'un mois prévu par le RGPD ». L'écart
@@ -356,8 +379,7 @@ subsistaient, tous de complétude ; le premier est résolu :
 1. ✅ **Extractions de pacte** — résolu par `1651a41` (points 1.2 et 6). Constat d'origine : les
    tables `pact_extractions` / `pact_extraction_items` existent depuis le 5 septembre, et la
    politique énumérait « votre historique de combats, achats et échanges » sans cette quatrième
-   catégorie. Reste à vérifier, dans le dépôt de l'overlay, si le point 1.4 (ce que l'overlay
-   envoie) doit aussi les citer.
+   catégorie.
 2. **Données de configuration synchronisées** — le point 1.2 cite « profil, personnages, liste de
    suivi, filtres de recherche du chat, préférences d'affichage » (« préférences d'affichage »
    ajouté par `1651a41`, ce qui couvre `combatPanelCollapsed`, `chatPanelCollapsed`,
@@ -375,7 +397,9 @@ subsistaient, tous de complétude ; le premier est résolu :
 **Correctif proposé** : synchroniser le texte avec `SYNCED_SETTING_KEYS` et le schéma, et adopter la
 règle « toute nouvelle table rattachée à `users` ou toute nouvelle clé synchronisée implique une
 relecture des documents légaux » — à inscrire dans `CLAUDE.md` au même titre que le gating
-`isInitialLoad`.
+`isInitialLoad`. **Fait le 2026-09-20** (#15) : règle inscrite dans `CLAUDE.md` (« Autres
+conventions »), avec la liste des déclencheurs (table/colonne référençant `users`, clé
+synchronisée, champ envoyé par un client, durée, service tiers) et des textes à relire.
 
 ### ✅ 4.7 — Aucune information au point de collecte — **résolu le 2026-09-19**
 
@@ -516,9 +540,9 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~13~~ | ~~Consigner l'analyse d'absence d'AIPD~~ — **fait** le 2026-09-19 (hors dépôt)                                                                              | 4.10  | —      |
 | 13     | Consigner l'analyse d'absence d'AIPD                                                                                                                        | 4.10  | Minime |
 | ~~14~~ | ~~Proposer l'effacement local à la suppression de compte, comme le fait l'overlay~~ — **fait** le 2026-09-19 (+ bouton invité, politique §5/§6 corrigée)    | 4.9   | —      |
-| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                    | 4.6   | Minime |
+| ~~15~~ | ~~Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »~~ — **fait le 2026-09-20**              | 4.6   | —      |
 | ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                   | —     | —      |
-| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                    | 4.2   | Moyen  |
+| ~~17~~ | ~~Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté~~ — **fait le 2026-09-20** (voir 4.2) | 4.2   | —      |
 | ~~18~~ | ~~Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)~~ — **décidé et fait le 2026-09-20** : purge des comptes inactifs depuis 12 mois (`purgeInactiveAccounts`, migration `0030`, politique §5) | —     | —      |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 

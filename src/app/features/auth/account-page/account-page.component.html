@@ -182,13 +182,23 @@
             }
           </div>
           <div class="account-actions">
-            <button type="button" class="account-btn" (click)="exportData()">
-              {{ 'auth.account.export' | t }}
+            <button
+              type="button"
+              class="account-btn"
+              [disabled]="exporting()"
+              [appTooltip]="'auth.account.exportTooltip' | t"
+              [tooltipMultiline]="true"
+              (click)="exportData()"
+            >
+              {{ (exporting() ? 'auth.account.exporting' : 'auth.account.export') | t }}
             </button>
             <button type="button" class="account-btn" [disabled]="auth.busy()" (click)="syncNow()">
               {{ 'auth.account.syncNow' | t }}
             </button>
           </div>
+          @if (exportFailed()) {
+            <p class="account-error" role="alert">{{ 'auth.account.exportFailed' | t }}</p>
+          }
           @if (auth.error(); as errorKey) {
             <p class="account-error" role="alert">{{ errorKey | t }}</p>
           }

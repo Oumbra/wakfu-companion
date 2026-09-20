@@ -147,6 +147,19 @@ DATABASE_URL=... npm run db:migrate
     propre requête de retour. La migration `0030` a remis `last_seen_at` de tous
     les comptes existants à `now()` : le délai court depuis la mise en production
     de la règle. Pas de courriel d'avertissement (aucun prestataire d'envoi).
+- `GET /api/v1/auth/export` — export RGPD des données de compte (droit d'accès
+  et portabilité, art. 15/20) : ligne `users` avec ses dates, identités OAuth
+  (identifiant chez le fournisseur compris), TOUTES les sessions encore en base
+  (révoquées/remplacées/expirées incluses tant que `purgeDeadSessions` ne les a
+  pas effacées — `GET /auth/sessions` ne montre que les vivantes), configuration
+  avec horodatage par clé. **Sans l'historique**, volontairement : le client
+  (`AccountExportService`) enchaîne les quatre `GET /api/v1/history/*` paginés
+  (`limit=200`) jusqu'à épuisement pour composer le fichier — sérialiser des
+  milliers de combats d'un bloc sortirait du budget CPU d'une Pages Function,
+  alors que la pagination existante est déjà bornée. Le bouton « Exporter » de
+  la page « Mon compte » produit ainsi `{ data: <configuration locale>, account:
+  <cette réponse + history> }` ; en invité, seulement `data`. Tout ou rien côté
+  client : aucun fichier n'est écrit si une requête échoue.
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
 - `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
   session** : porteur `Authorization: Bearer` obligatoire (jamais un cookie —

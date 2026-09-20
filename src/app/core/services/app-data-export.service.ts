@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { USER_DATA_KEY_LIST, type UserDataKey } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
+import type { AccountExport } from './account-export.service';
 
 export type ExportField = UserDataKey;
 
@@ -9,6 +10,13 @@ export interface AppDataExport {
   version: 1;
   exportedAt: string;
   data: Partial<Record<ExportField, unknown>>;
+  /**
+   * Données de COMPTE détenues par le serveur (identité, sessions, configuration synchronisée,
+   * historique complet) — présent uniquement dans l'export RGPD de la page « Mon compte » en mode
+   * connecté (`AccountExportService`). Ignoré à l'import (`applyImport` ne relit que `data`) : un
+   * fichier avec ou sans cette clé reste importable à l'identique, d'où `version` inchangée.
+   */
+  account?: AccountExport;
 }
 
 function isAppDataExport(value: unknown): value is AppDataExport {

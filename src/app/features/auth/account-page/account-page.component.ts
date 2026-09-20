@@ -1,6 +1,10 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { AuthService, AuthSessionInfo } from '../../../core/auth/auth.service';
-import { AppDataExportService } from '../../../core/services/app-data-export.service';
+import { AccountExportService } from '../../../core/services/account-export.service';
+import {
+  AppDataExportService,
+  type AppDataExport,
+} from '../../../core/services/app-data-export.service';
 import { ConfirmDeleteService } from '../../../core/services/confirm-delete.service';
 import { PersistenceService } from '../../../core/services/persistence.service';
 import { I18nService } from '../../../core/services/i18n.service';
@@ -33,12 +37,16 @@ export class AccountPageComponent implements OnInit {
   protected readonly auth = inject(AuthService);
   private readonly nav = inject(NavigationService);
   private readonly dataExport = inject(AppDataExportService);
+  private readonly accountExport = inject(AccountExportService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
   private readonly persistence = inject(PersistenceService);
   protected readonly i18n = inject(I18nService);
 
   protected readonly sessions = signal<readonly AuthSessionInfo[]>([]);
   protected readonly sessionsLoading = signal(false);
+  /** Export en cours de composition (plusieurs requêtes en mode connecté, voir `exportData`). */
+  protected readonly exporting = signal(false);
+  protected readonly exportFailed = signal(false);
 
   ngOnInit(): void {
     void this.refreshSessions();
@@ -124,18 +132,38 @@ export class AccountPageComponent implements OnInit {
   }
 
   /**
-   * Export de configurations — même charge utile que l'export du profil
-   * (`AppDataExportService`, soit les 11 clés de `USER_DATA_KEYS`).
+   * Export RGPD (droit d'accès et portabilité, politique de confidentialité §6) :
+   * la configuration de cet appareil (`AppDataExportService`, les 11 clés de
+   * `USER_DATA_KEYS`, même format que l'export du profil) et, en mode connecté,
+   * TOUT ce que le serveur détient sur le compte (`AccountExportService` :
+   * identité, identités OAuth, sessions, configuration synchronisée, historique
+   * complet) sous la clé `account`. Le bouton n'est rendu qu'en mode connecté
+   * (voir le template) ; la garde `isAuthenticated()` ci-dessous est défensive —
+   * en invité il n'existerait de toute façon rien d'autre que le local, et
+   * l'export de configuration reste disponible depuis la page profil.
    *
-   * Ce n'est **pas** un export RGPD complet, et la politique de confidentialité ne
-   * le présente pas comme tel (point 6, « Vos droits ») : l'identité, les sessions
-   * et l'historique de combats/achats/échanges vivent uniquement côté serveur et
-   * n'ont aujourd'hui aucun point de sortie — le droit d'accès s'exerce pour eux
-   * par courriel. Si un endpoint d'export serveur est ajouté un jour, fusionner sa
-   * réponse ici ET rétablir la promesse « en un clic » dans les 4 locales.
+   * Le fichier reste importable (`applyImport` ne lit que `data`). La promesse
+   * « en un clic » de la politique (4 locales) repose sur cette méthode : si le
+   * périmètre change, relire le texte.
+   *
+   * Tout ou rien : un échec réseau à mi-parcours ne produit AUCUN fichier
+   * (l'utilisateur croirait un fichier partiel complet), seulement l'erreur.
    */
-  protected exportData(): void {
-    const payload = this.dataExport.buildExport();
+  protected async exportData(): Promise<void> {
+    if (this.exporting()) return;
+    this.exportFailed.set(false);
+    const payload: AppDataExport = this.dataExport.buildExport();
+    if (this.auth.isAuthenticated()) {
+      this.exporting.set(true);
+      try {
+        payload.account = await this.accountExport.build();
+      } catch {
+        this.exportFailed.set(true);
+        return;
+      } finally {
+        this.exporting.set(false);
+      }
+    }
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
