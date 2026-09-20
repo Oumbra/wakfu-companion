@@ -77,7 +77,7 @@ export function relayHeaders(status: 200 | 404): Record<string, string> {
     'cache-control': `public, max-age=${maxAge}`,
     // Pas d'`access-control-allow-origin: *` (retiré le 2026-09-20, `docs/analyse-cgu.md`,
     // recommandation 8) : le site est de même origine et l'overlay n'est pas un navigateur —
-    // l'en-tête ne servait qu'à un tiers, que `rejectUnknownCaller` (`functions/api/_caller.ts`,
-    // sur `server/http/caller.ts`) refuse désormais.
+    // l'en-tête ne servait qu'à un tiers, que `rejectUnknownCaller` (`functions/api/_caller.ts`)
+    // refuse désormais.
   };
 }

@@ -94,13 +94,12 @@ DATABASE_URL=... npm run db:migrate
   pas de sous-licence) : `catalog/*`, `items/{id}`, `monsters/{id}`,
   `monster-loot`, `monster-families`, `dungeons` et `icons/*` passent par
   `rejectUnknownCaller` (`functions/api/_caller.ts`, logique pure dans
-  `server/http/caller.ts`, testée) : site reconnu par `Sec-Fetch-Site:
-  same-origin` (à défaut `Referer`/`Origin` du même hôte, valable sous
-  `ng serve` et sur les previews Pages), overlay par une session valide en
-  `Authorization: Bearer` (signature cible) ou, en transition, par son
-  `User-Agent` `ureq/` — à retirer quand l'overlay enverra son jeton sur ces
-  routes (`overlay-sync/src/client.rs`, `fetch_catalog_*`,
-  `fetch_item_detail`, `fetch_dungeons`). Tout autre appelant : 403.
+  `server/http/caller.ts`, testée) : deux signatures et seulement deux
+  (décision du mainteneur, ni `Referer` ni `User-Agent`) — le site par
+  `Sec-Fetch-Site: same-origin` (relayé tel quel par le proxy `ng serve`,
+  valable sur les previews Pages), l'overlay par une session valide en
+  `Authorization: Bearer` (il envoie son jeton sur ces routes depuis le
+  2026-09-20, `overlay-sync/src/client.rs`). Tout autre appelant : 403.
 - `GET /api/v1/catalog/version` — métadonnées du dernier import catalogue
   (voir plus bas).
 - `GET /api/v1/catalog/` — index compact objets+monstres, gzip (surtout
