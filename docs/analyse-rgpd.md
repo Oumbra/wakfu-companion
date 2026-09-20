@@ -514,6 +514,47 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 
 ---
 
+### 🟠 4.11 — Fixtures de test réelles, non pseudonymisées, dans un dépôt public — **pseudonymisées le 2026-09-20**
+
+**Articles concernés** : 5.1.b (limitation des finalités), 5.1.c (minimisation), 5.1.f (intégrité et
+confidentialité), 32 (sécurité).
+
+**Faits.** Constat remonté par le mainteneur le 2026-09-20, par analogie avec le C1 du dépôt de
+l'overlay : ce dépôt — public depuis sa création (`f3135d0`, 2026-07-15) — versionnait
+`tests/wakfu.log` (le MÊME journal réel du 2026-08-04 que la fixture de l'overlay : jeton de
+session, IP locale, nom de compte Windows, 6 personnages avec identifiants, 119 pseudonymes de
+joueurs tiers et l'intégralité de leurs messages, 12 identifiants de compte Ankama de la liste
+d'amis), 36 extraits réels dans `tests/logs/fr/` (7 personnages du mainteneur avec identifiants,
+2 partenaires d'échange, 23 auteurs de chat avec leurs messages, un ami avec son identifiant de
+compte, une trentaine d'identifiants de joueurs tiers dans les lignes `[NATION]`) et
+`tests/wakfu-companion-export.json` (60 noms de personnages du mainteneur). Arrivés par `git add`
+ordinaire (`2f70d5f` 2026-07-30, `1ea4234`/`bb66df6` 2026-08-16), sans qu'aucun garde-fou n'alerte.
+Des noms réels étaient aussi recopiés dans `log-parser.spec.ts`, `stats-store.service.spec.ts`,
+`server/history/parse.spec.ts`.
+
+**Ce qui a été fait (2026-09-20, `db72a3c`).**
+
+1. `tests/wakfu.log` remplacé octet pour octet par la fixture pseudonymisée de l'overlay ; les 36
+   journaux de `tests/logs/fr/` et l'export pseudonymisés avec le **même schéma et la même table**
+   (déduite en comparant les deux versions du journal commun, prolongée pour les noms nouveaux) :
+   personnages `Anonyme-<Classe><N>` / ids `9000000N`, tiers `90001NNN`, auteurs de chat
+   `Anonyme-NNN` (numérotation reprise après celle de l'overlay) avec messages en lorem ipsum de
+   longueur voisine — un message répété reste répété —, compte Ankama `anonymeNN#NNNN`. Structure
+   des fichiers intacte (fins de ligne, retours chariot isolés). Le pseudonyme du mainteneur est
+   traité comme les autres dans les fixtures (`Anonyme-Sram1`, décision du mainteneur) ; il reste
+   le nom générique des tests synthétiques et du code. Les trois specs sont alignées ; 292 + 159
+   tests passent.
+2. `tools/check-fixtures.mjs` (8 règles, une par catégorie trouvée — jeton, `C:\Users`, IP privée,
+   auteur de chat, combattant humain, compte Ankama, échange, roster de l'export), en hook
+   `pre-commit` (`.husky/pre-commit`) **et** en étape de `ci.yml` ; `.gitignore` sur `wakfu.log`
+   hors la fixture.
+
+**Reste ouvert — décision du mainteneur.** Les fichiers réels restent dans l'historique Git public
+(~790 commits) et dans le cache de GitHub : comme pour le C1 de l'overlay, seule une réécriture
+d'historique suivie d'une demande de purge à GitHub Support les retire réellement. La note
+d'incident hors dépôt (`note-incident-2026-09-15.md`) couvre l'overlay ; ce volet reste à y ajouter
+si la même qualification est retenue.
+
 ## 5. Plan d'action proposé
 
 Classé par rapport gain de conformité / coût de mise en œuvre.
@@ -552,6 +593,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | ~~18~~ | ~~Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)~~ — **décidé et fait le 2026-09-20** : purge des comptes inactifs depuis 12 mois (`purgeInactiveAccounts`, migration `0030`, politique §5) | —     | —      |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 | ~~20~~ | ~~Planifier l'entretien annuel (DPA, DPF, adéquation Royaume-Uni, relecture des documents du 19 septembre)~~ — **fait le 2026-09-20** : workflow `rgpd-revision-annuelle.yml` (issue chaque 1er septembre, actif après fusion sur `main`) + `revision-rgpd.ics` hors dépôt | 4.10  | Minime |
+| 21     | Réécrire l'historique Git pour retirer les fixtures réelles (~790 commits) et demander la purge du cache à GitHub Support, comme pour l'overlay — décision du mainteneur                                | 4.11  | Moyen  |
 
 ### Préalable à toute mise en production
 
