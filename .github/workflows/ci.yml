@@ -35,6 +35,11 @@ jobs:
       - name: Generate data tables
         run: npm run generate
 
+      # Refuse un journal wakfu.log ou un export réel dans tests/ (dépôt public, données de
+      # joueurs) — voir tools/check-fixtures.mjs. Aussi en hook pre-commit ; la CI fait foi.
+      - name: Check test fixtures are pseudonymised
+        run: node tools/check-fixtures.mjs
+
       - name: Check formatting
         run: npx prettier --check "src/**/*.{ts,html,css}" "server/**/*.ts" "functions/**/*.ts"
 

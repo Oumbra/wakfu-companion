@@ -1,1 +1,2 @@
+node tools/check-fixtures.mjs
 node tools/pre-commit-format.mjs

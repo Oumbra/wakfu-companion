@@ -58,3 +58,9 @@ Thumbs.db
 
 .playwright-mcp/
 .playwright-mcp/*
+
+# Journal du client Wakfu déposé pour un test manuel : jamais versionné (données réelles de
+# joueurs — dépôt public). Seule la fixture PSEUDONYMISÉE tests/wakfu.log l'est, contrôlée par
+# tools/check-fixtures.mjs.
+wakfu.log
+!/tests/wakfu.log
