@@ -41,9 +41,9 @@ function generateId(): string {
 /**
  * Comptes et personnages déclarés manuellement (page profil) : source de
  * vérité prioritaire pour la classification d'un personnage repéré par son
- * nom exact dans les logs (classe, sexe, camp allié) — avant repli sur la
- * détection automatique via les sorts lancés (voir EntityClassifierService,
- * qui consomme ce service).
+ * nom exact dans les logs (classe, sexe, camp allié) — avant repli sur le
+ * `breed` de la ligne `[_FL_]` du combat (voir EntityClassifierService, qui
+ * consomme ce service).
  */
 @Injectable({ providedIn: 'root' })
 export class CharacterRosterService {

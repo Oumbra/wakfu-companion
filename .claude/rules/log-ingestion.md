@@ -288,7 +288,7 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
 
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 
-- Le log `[_FL_] fightId=... Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight` (un par combattant, à chaque combat) est le signal le plus fiable pour classer allié/ennemi — plus fiable que les heuristiques par sorts lancés ou dégâts subis, utilisé en dernier recours dans `EntityClassifierService`. **`obstacleId` ne dit RIEN sur la nature de l'entité** (voir la section Invocations ci-dessus : l'ancien filtre « `obstacleId != -1` = décor » était faux et supprimait la majorité des ennemis réels — ne jamais le réintroduire).
+- Le log `[_FL_] fightId=... Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight` (un par combattant, à chaque combat) est le signal le plus fiable pour classer allié/ennemi — plus fiable que l'heuristique par dégâts subis, dernier repli d'`EntityClassifierService` (la détection de classe par sorts lancés et la liste statique d'invocations alliées ont été retirées le 2026-09-21 : le `breed` de cette ligne suffit). **`obstacleId` ne dit RIEN sur la nature de l'entité** (voir la section Invocations ci-dessus : l'ancien filtre « `obstacleId != -1` = décor » était faux et supprimait la majorité des ennemis réels — ne jamais le réintroduire).
 
 ## Accès au fichier (File System Access) : gotchas navigateur
 

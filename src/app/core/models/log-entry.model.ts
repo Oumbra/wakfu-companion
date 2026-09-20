@@ -232,8 +232,8 @@ export interface LogDateAnchorEntry {
  * isControlledByAI=true/false obstacleId : O join the fight..."). Signal fiable
  * et systématique (émis pour CHAQUE combattant de CHAQUE combat) pour distinguer
  * allié (isControlledByAI=false, contrôlé par un vrai joueur) d'ennemi
- * (isControlledByAI=true) — bien plus robuste que les heuristiques par sorts/dégâts
- * quand un monstre est absent de la base statique ou qu'aucun sort n'a été lancé.
+ * (isControlledByAI=true) — bien plus robuste que l'heuristique par dégâts subis
+ * quand un monstre est absent de la base statique.
  */
 export interface FighterJoinedEntry {
   kind: 'fighter-joined';

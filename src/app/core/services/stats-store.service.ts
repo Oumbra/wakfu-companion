@@ -1283,7 +1283,6 @@ export class StatsStoreService {
         }
         break;
       case 'spell-cast':
-        this.classifier.registerSpellCast(entry.caster, entry.spell);
         this.registerFightTurn(entry.fightId, entry.caster);
         break;
       case 'fighter-joined':
