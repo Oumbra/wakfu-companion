@@ -17,6 +17,7 @@ import {
   deriveCsrfToken,
   openSession,
   purgeDeadSessions,
+  purgeInactiveAccounts,
   resolveSession,
   sanitizeRedirectTo,
   startAuthorization,
@@ -376,6 +377,72 @@ describe('purgeDeadSessions', () => {
     const later = new Date(NOW.getTime() + 2 * DAY);
     expect(await resolveSession(store, logged.result.token, later)).not.toBeNull();
     expect(await store.findSession(dead.idHash)).toBeNull();
+  });
+});
+
+/**
+ * Limitation de la conservation, volet compte (RGPD art. 5.1.e, décision du
+ * 2026-09-20) : un compte sans activité authentifiée depuis 12 mois est effacé
+ * avec tout ce qui lui est rattaché — sans cron, à l'occasion des appels
+ * existants, et jamais par sa propre requête de retour.
+ */
+describe('purgeInactiveAccounts', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('efface un compte inactif depuis plus de 12 mois, avec identités et sessions', async () => {
+    const store = createMemoryAuthStore();
+    const logged = await login(store, { now: new Date(NOW.getTime() - 370 * DAY) });
+    expect(logged.ok).toBe(true);
+    if (!logged.ok) return;
+    const dormant = logged.result.user.id;
+    const recent = await login(store, {
+      oauthProfile: profile({ providerUid: 'uid-2', email: 'actif@example.com' }),
+      now: new Date(NOW.getTime() - 360 * DAY),
+    });
+    expect(recent.ok).toBe(true);
+
+    expect(await purgeInactiveAccounts(store, NOW)).toBe(1);
+    expect(await store.findUserById(dormant)).toBeNull();
+    expect(await store.findIdentity('discord', 'uid-1')).toBeNull();
+    expect([...store.sessions.values()].some((s) => s.userId === dormant)).toBe(false);
+    expect(await store.findIdentity('discord', 'uid-2')).not.toBeNull();
+  });
+
+  it("l'usage quotidien d'une session (web ou overlay) tient le compte vivant sans reconnexion", async () => {
+    const store = createMemoryAuthStore();
+    const logged = await login(store, { now: new Date(NOW.getTime() - 400 * DAY) });
+    expect(logged.ok).toBe(true);
+    if (!logged.ok) return;
+    // L'overlay sert tous les jours : le rafraîchissement glissant marque l'activité.
+    for (let d = 399; d >= 0; d -= 10) {
+      const at = new Date(NOW.getTime() - d * DAY);
+      expect(await resolveSession(store, logged.result.token, at)).not.toBeNull();
+    }
+    expect(store.lastSeenAt.get(logged.result.user.id)?.getTime()).toBeGreaterThan(
+      NOW.getTime() - 10 * DAY,
+    );
+    expect(await purgeInactiveAccounts(store, NOW)).toBe(0);
+    expect(await store.findUserById(logged.result.user.id)).not.toBeNull();
+  });
+
+  it('est déclenchée par la connexion, qui ne purge jamais le compte qui revient', async () => {
+    const store = createMemoryAuthStore();
+    const dormant = await login(store, {
+      oauthProfile: profile({ providerUid: 'uid-dormant', email: 'dormant@example.com' }),
+      now: new Date(NOW.getTime() - 370 * DAY),
+    });
+    const returning = await login(store, { now: new Date(NOW.getTime() - 370 * DAY) });
+    expect(dormant.ok && returning.ok).toBe(true);
+    if (!dormant.ok || !returning.ok) return;
+
+    // Le compte `returning` revient après 370 jours : il est marqué actif AVANT
+    // la purge, qui n'emporte que l'autre.
+    const back = await login(store);
+    expect(back.ok).toBe(true);
+    if (!back.ok) return;
+    expect(back.result.user.id).toBe(returning.result.user.id);
+    expect(back.result.isNewUser).toBe(false);
+    expect(await store.findUserById(dormant.result.user.id)).toBeNull();
   });
 });
 

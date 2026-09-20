@@ -98,6 +98,14 @@ export interface AuthStore {
     patch: { email?: string | null; displayName?: string | null; lastSeenAt?: Date },
   ): Promise<void>;
   deleteUser(userId: string): Promise<void>;
+  /**
+   * **Efface** (en cascade : identités, sessions, configuration, historique)
+   * les comptes dont `lastSeenAt` est antérieur à `before` — limitation de la
+   * conservation (RGPD art. 5.1.e). Le délai est fixé par l'appelant
+   * (`INACTIVE_ACCOUNT_RETENTION_MS`, flow.ts) et annoncé dans la politique de
+   * confidentialité (§5). Renvoie le nombre de comptes effacés.
+   */
+  purgeInactiveUsers(before: Date): Promise<number>;
 
   // ── Sessions ──────────────────────────────────────────────────────────
   createSession(record: SessionRecord): Promise<void>;

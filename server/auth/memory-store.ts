@@ -35,6 +35,8 @@ interface StoredPairing extends PairingRecord {
 export interface MemoryAuthStore extends AuthStore {
   /** Accès direct pour les assertions de test. */
   readonly users: Map<string, UserRecord>;
+  /** Dernière activité par compte (`users.last_seen_at`), par `userId`. */
+  readonly lastSeenAt: Map<string, Date>;
   readonly identities: Map<string, IdentityRecord>;
   readonly sessions: Map<string, SessionRecord>;
 }
@@ -42,6 +44,7 @@ export interface MemoryAuthStore extends AuthStore {
 export function createMemoryAuthStore(): MemoryAuthStore {
   const authorizations = new Map<string, StoredAuthorization>();
   const users = new Map<string, UserRecord>();
+  const lastSeenAt = new Map<string, Date>();
   const identities = new Map<string, IdentityRecord>();
   const sessions = new Map<string, SessionRecord>();
   const rateLimits = new Map<string, number>();
@@ -50,9 +53,22 @@ export function createMemoryAuthStore(): MemoryAuthStore {
 
   const identityKey = (provider: ProviderId, providerUid: string) => `${provider}:${providerUid}`;
   const rateKey = (bucket: string, windowStart: Date) => `${bucket}@${windowStart.toISOString()}`;
+  // Cascade « ON DELETE » de la base, reproduite ici : identités et sessions
+  // partent avec le compte (suppression demandée comme purge d'inactivité).
+  const deleteUser = (userId: string) => {
+    users.delete(userId);
+    lastSeenAt.delete(userId);
+    for (const [key, identity] of identities) {
+      if (identity.userId === userId) identities.delete(key);
+    }
+    for (const [key, session] of sessions) {
+      if (session.userId === userId) sessions.delete(key);
+    }
+  };
 
   return {
     users,
+    lastSeenAt,
     identities,
     sessions,
 
@@ -104,6 +120,7 @@ export function createMemoryAuthStore(): MemoryAuthStore {
         displayName: input.displayName,
       };
       users.set(user.id, user);
+      lastSeenAt.set(user.id, new Date()); // DEFAULT now() de la colonne
       return user;
     },
 
@@ -122,16 +139,21 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       if (!user) return;
       if (patch.email !== undefined) user.email = patch.email;
       if (patch.displayName !== undefined) user.displayName = patch.displayName;
+      if (patch.lastSeenAt !== undefined) lastSeenAt.set(userId, patch.lastSeenAt);
+    },
+
+    async purgeInactiveUsers(before) {
+      let purged = 0;
+      for (const [userId, seenAt] of lastSeenAt) {
+        if (seenAt.getTime() >= before.getTime()) continue;
+        deleteUser(userId);
+        purged++;
+      }
+      return purged;
     },
 
     async deleteUser(userId) {
-      users.delete(userId);
-      for (const [key, identity] of identities) {
-        if (identity.userId === userId) identities.delete(key);
-      }
-      for (const [key, session] of sessions) {
-        if (session.userId === userId) sessions.delete(key);
-      }
+      deleteUser(userId);
     },
 
     async createSession(record) {

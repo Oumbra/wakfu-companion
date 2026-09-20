@@ -378,7 +378,16 @@ export const users = pgTable(
     displayName: text('display_name'),
     defaultGameServer: text('default_game_server'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }),
+    /**
+     * Dernière activité authentifiée (connexion OAuth, ou rafraîchissement
+     * quotidien d'une session — web ou overlay). Sert UNIQUEMENT à la purge des
+     * comptes inactifs depuis 12 mois (`server/auth/flow.ts::purgeInactiveAccounts`,
+     * RGPD art. 5.1.e) ; annoncée dans la politique de confidentialité (§5).
+     * `NOT NULL DEFAULT now()` depuis la migration 0030, qui a aussi remis tous
+     * les comptes existants à `now()` : le délai court à compter de la mise en
+     * production de la règle, pas de la dernière connexion antérieure.
+     */
+    lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [uniqueIndex('users_email_key').on(table.email)],
 );

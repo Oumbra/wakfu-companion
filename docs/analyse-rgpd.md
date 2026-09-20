@@ -53,7 +53,11 @@ devancé la documentation.
 >   par décision d'adéquation de la Commission (renouvelée le 21 décembre 2025, valable jusqu'en
 >   2031, art. 45), mais l'information était inexacte (art. 13.1.f) : textes corrigés dans les 4
 >   locales. Alternative si l'on veut retrouver « UE » : recréer le projet Neon dans une région
->   européenne (Francfort) et migrer la base — décision du responsable, non prise à ce jour.
+>   européenne (Francfort) et migrer la base — **décision du 2026-09-20 (après-midi) : la base reste à
+>   Londres** sous adéquation, échéance 2031 surveillée (registre §7).
+> - **2026-09-20 (après-midi) — trois décisions du responsable consignées** (registre §7) : purge des
+>   comptes inactifs depuis 12 mois (#18, code + migration `0030` + politique §5), base maintenue au
+>   Royaume-Uni, âge minimum assumé sans mécanisme de vérification (4.10).
 
 | Gravité                  | Nombre | Nature                                                                                                                                                                            |
 | ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -67,7 +71,7 @@ d'information**, soit des **défauts de minimisation ou de rétention**, soit �
 critique — un **bug de cloisonnement** dans la file de synchronisation. **Au 2026-09-19 (soir),
 tous les écarts de code sont résolus** ; les documents internes (4.10) sont rédigés le 2026-09-19 et
 complétés le 2026-09-20 ; la CSP est bloquante depuis le 2026-09-20. Il ne reste que la mise en
-production (fusion `claude/dev` → `main`) et des améliorations facultatives (#15, #17, #18).
+production (fusion `claude/dev` → `main`) et des améliorations facultatives (#15, #17).
 
 ---
 
@@ -475,7 +479,7 @@ cet appareil » (le bouton « Réinitialiser » existe déjà côté profil, la 
 | **Procédure de violation** (art. 33/34)    | ✅ Rédigée   | `procedure-violation-de-donnees.md` (2026-09-19) : six scénarios de confinement, qualification sous 24 h, grille de notification CNIL/personnes, modèle de courriel, aide-mémoire des leviers. Hors dépôt.                                                                                                                                           |
 | **AIPD / DPIA** (art. 35)                  | ✅ Consignée | `note-absence-aipd.md` (2026-09-19) : art. 35.3 et neuf critères WP248 passés en revue, aucun rempli ; liste des changements qui imposeraient d'y revenir. Hors dépôt.                                                                                                                                                                               |
 | **AIPD / DPIA** (art. 35)                  | Absente      | Vraisemblablement non requise : pas de données sensibles (art. 9), pas de profilage à grande échelle, pas de décision automatisée. Consigner ce raisonnement par écrit est la bonne pratique.                                                                                                                                                        |
-| **Vérification de l'âge**                  | Absente      | Les CGU annoncent l'accord parental en deçà de 15 ans, sans aucun mécanisme. Acceptable en pratique pour ce type de service ; à assumer explicitement.                                                                                                                                                                                               |
+| **Vérification de l'âge**                  | ✅ Assumée   | Les CGU et la politique §6 annoncent 15 ans avec accord parental en deçà, sans mécanisme — **décision motivée le 2026-09-20** (registre §7) : une date de naissance ou une case à cocher serait une donnée de plus sans valeur probante ; les fournisseurs OAuth appliquent leur propre âge minimum ; le mode invité, sans donnée transmise, est libre d'âge. À reconsidérer si le service ajoutait une interaction entre utilisateurs ou un contenu public.                                                                                                                                                                                               |
 | **Adresse de contact**                     | ✅ Confirmée | `contact@wakfu-companion.com` est l'unique voie d'exercice des droits, y compris pour le **retrait d'un pseudonyme de tiers** promis au point 1.3. Depuis la bascule du 2026-09-19 (cf. 4.3), l'adresse est bien sur le domaine de production — boîte **confirmée relevée par le mainteneur** le 2026-09-19 (art. 12.2/12.3 : réponse sous un mois). |
 
 ---
@@ -515,7 +519,7 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 | 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                    | 4.6   | Minime |
 | ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                   | —     | —      |
 | 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                    | 4.2   | Moyen  |
-| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                                                        | —     | Minime |
+| ~~18~~ | ~~Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)~~ — **décidé et fait le 2026-09-20** : purge des comptes inactifs depuis 12 mois (`purgeInactiveAccounts`, migration `0030`, politique §5) | —     | —      |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 
 ### Préalable à toute mise en production
@@ -666,10 +670,14 @@ service, d'où ce reliquat.
   Databricks, Inc. / Neon (PostgreSQL, serveurs au Royaume-Uni, décision d'adéquation), Discord et Google (connexion), GitHub
   (mises à jour de l'overlay).
 - ✅ **Mentions légales** publiées, étendues à l'overlay (`8e3fdd8`).
-- ⚠ **Durée de conservation de l'historique** : la politique annonce « tant que le compte
-  existe, aucune suppression automatique après inactivité ». Conforme si c'est assumé ; une purge
-  après N mois d'inactivité serait une décision du responsable de traitement, pas un correctif
-  (plan d'action #18).
+- ✅ **Durée de conservation de l'historique** : décision du responsable du 2026-09-20 — un
+  compte sans activité authentifiée pendant **12 mois** est effacé en cascade
+  (`server/auth/flow.ts::purgeInactiveAccounts`, `users.last_seen_at` tenu à jour par la connexion
+  OAuth et le rafraîchissement quotidien des sessions web/overlay ; migration `0030` remettant tous
+  les comptes existants à `now()` pour que le délai coure à partir de la mise en production de la
+  règle). Politique §5 mise à jour dans les 4 langues. Pas de courriel d'avertissement : le service
+  n'envoie aucun courriel — en ajouter un supposerait un prestataire d'envoi (nouveau
+  sous-traitant), choix écarté et consigné au registre §7.
 - ✅ **Registre des traitements (art. 30)** et note de mise en balance (C3) : rédigés le
   2026-09-19, documents internes du mainteneur conservés hors dépôt (voir
   [`analyse-rgpd-mainteneur.md`](https://github.com/Oumbra/wakfu-companion-overlay/blob/dev/docs/analyse-rgpd-mainteneur.md)).

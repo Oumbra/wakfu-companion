@@ -33,6 +33,19 @@ const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 export const DEAD_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 
 /**
+ * Délai d'inactivité au bout duquel un **compte** est effacé, avec tout ce qui
+ * lui est rattaché (identités, sessions, configuration, historique) —
+ * limitation de la conservation (RGPD art. 5.1.e), décision du responsable de
+ * traitement du 2026-09-20. « Inactif » = aucune activité authentifiée
+ * (`users.last_seen_at`) : ni connexion OAuth, ni requête d'une session web ou
+ * overlay (le rafraîchissement quotidien de `resolveSession` compte). Annoncé
+ * dans la politique de confidentialité (section 5) : ne pas changer l'un sans
+ * l'autre. Pas de courriel d'avertissement : le service n'envoie aucun
+ * courriel (aucun prestataire d'envoi), l'information passe par la politique.
+ */
+export const INACTIVE_ACCOUNT_RETENTION_MS = 365 * 24 * 60 * 60 * 1000;
+
+/**
  * Ménage opportuniste des sessions mortes — Cloudflare Pages n'a pas de Cron
  * Trigger (voir server/README.md), donc, comme pour les autorisations OAuth
  * et les appairages, on le fait à l'occasion d'appels qui touchent déjà à la
@@ -42,6 +55,22 @@ export const DEAD_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
  */
 export function purgeDeadSessions(store: AuthStore, now: Date): Promise<number> {
   return store.purgeDeadSessions(new Date(now.getTime() - DEAD_SESSION_RETENTION_MS));
+}
+
+/** Efface les comptes sans activité depuis `INACTIVE_ACCOUNT_RETENTION_MS`. */
+export function purgeInactiveAccounts(store: AuthStore, now: Date): Promise<number> {
+  return store.purgeInactiveUsers(new Date(now.getTime() - INACTIVE_ACCOUNT_RETENTION_MS));
+}
+
+/**
+ * Les deux purges de conservation, dans l'ordre (un compte inactif emporte ses
+ * sessions par cascade). Toujours appeler APRÈS avoir marqué l'activité du
+ * compte courant (`lastSeenAt`), jamais avant : c'est ce qui garantit qu'un
+ * compte ne peut pas être purgé par sa propre requête de retour.
+ */
+export async function runRetentionPurges(store: AuthStore, now: Date): Promise<void> {
+  await purgeInactiveAccounts(store, now);
+  await purgeDeadSessions(store, now);
 }
 
 export interface StartedAuthorization {
@@ -141,7 +170,7 @@ export async function completeAuthorization(
   // Purge opportuniste : Cloudflare Pages n'offre pas de Cron Trigger (voir
   // server/README.md), et ces lignes n'ont plus aucune valeur passé leur date.
   await store.purgeExpiredAuthorizations(params.now);
-  await purgeDeadSessions(store, params.now);
+  await runRetentionPurges(store, params.now);
 
   return {
     ok: true,
@@ -311,8 +340,12 @@ export async function resolveSession(
   if (session.supersededAt === null && remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
     const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
     await store.touchSession(idHash, { lastUsedAt: now, expiresAt });
+    // Même rythme pour l'activité du compte (purge d'inactivité) : une session
+    // web ou overlay qui sert chaque jour tient le compte vivant sans
+    // reconnexion.
+    await store.updateUser(user.id, { lastSeenAt: now });
     // Au plus une fois par jour et par session : le bon rythme pour le ménage.
-    await purgeDeadSessions(store, now);
+    await runRetentionPurges(store, now);
     return { session: { ...session, lastUsedAt: now, expiresAt }, user };
   }
 

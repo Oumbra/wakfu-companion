@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { purgeDeadSessions } from '../../../../../server/auth/flow';
+import { runRetentionPurges } from '../../../../../server/auth/flow';
 import { rotateNativeSession } from '../../../../../server/auth/pairing';
 import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, unauthenticated } from '../../../_auth';
@@ -67,8 +67,8 @@ import type { Env } from '../../../_types';
  * déjà effacée). Jamais une erreur : côté overlay, l'appel est best-effort, il précède un
  * effacement local qui a lieu de toute façon.
  *
- * Le ménage des sessions mortes depuis plus de 30 jours (`purgeDeadSessions`, flow.ts) est fait
- * aux deux verbes, pour la même raison que les appairages : pas de cron, on profite des appels
+ * Le ménage de conservation (sessions mortes depuis plus de 30 jours, comptes inactifs depuis
+ * 12 mois — `runRetentionPurges`, flow.ts) est fait aux deux verbes, pour la même raison que les appairages : pas de cron, on profite des appels
  * qui touchent déjà à la table.
  */
 
@@ -118,7 +118,7 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
 
   const deleted = await auth.store.deleteSession(auth.sessionIdHash);
   await auth.store.purgeExpiredPairings(now);
-  await purgeDeadSessions(auth.store, now);
+  await runRetentionPurges(auth.store, now);
 
   return json({ deleted });
 };

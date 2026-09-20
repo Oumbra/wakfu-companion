@@ -136,6 +136,17 @@ DATABASE_URL=... npm run db:migrate
   seul déclencheur pour un compte qui ne se reconnecte jamais mais dont
   l'overlay tourne). Le délai est annoncé dans la politique de confidentialité
   (section 5) : ne pas changer l'un sans l'autre.
+  - Même mécanisme, un cran au-dessus, pour les **comptes inactifs** : un compte
+    sans activité authentifiée depuis **12 mois** (`users.last_seen_at`, posé à
+    la connexion OAuth et par le rafraîchissement quotidien de `resolveSession`,
+    donc tenu vivant par un overlay qui tourne) est effacé en cascade
+    (`INACTIVE_ACCOUNT_RETENTION_MS`, `purgeInactiveAccounts`, décision du
+    responsable de traitement du 2026-09-20, politique §5). Les deux purges sont
+    regroupées dans `runRetentionPurges`, toujours appelée APRÈS que l'activité
+    du compte courant a été marquée — un compte ne peut pas être purgé par sa
+    propre requête de retour. La migration `0030` a remis `last_seen_at` de tous
+    les comptes existants à `now()` : le délai court depuis la mise en production
+    de la règle. Pas de courriel d'avertissement (aucun prestataire d'envoi).
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
 - `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
   session** : porteur `Authorization: Bearer` obligatoire (jamais un cookie —

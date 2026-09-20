@@ -21,7 +21,7 @@
 
 import { randomToken, sha256Hex } from './crypto';
 import { SESSION_TTL_MS } from './cookies';
-import { purgeDeadSessions } from './flow';
+import { runRetentionPurges } from './flow';
 import type { AuthStore, PollPairingResult, SessionRecord, UserRecord } from './store';
 
 /** 10 min, comme `OAUTH_STATE_TTL_MS` — assez pour ouvrir le navigateur et confirmer. */
@@ -90,7 +90,7 @@ export async function claimPairing(
   const claimed = await store.claimPairing(params.userCode, token, params.now);
   if (!claimed) return null;
   // Un appareil qui s'appaire est une bonne occasion de ménage (voir flow.ts).
-  await purgeDeadSessions(store, params.now);
+  await runRetentionPurges(store, params.now);
   return { token };
 }
 
@@ -160,7 +160,7 @@ export async function rotateNativeSession(
     supersededAt: current.supersededAt ?? now,
     expiresAt: previousTokenValidUntil,
   });
-  await purgeDeadSessions(store, now);
+  await runRetentionPurges(store, now);
   return { token, issuedAt: now, expiresAt, previousTokenValidUntil };
 }
 

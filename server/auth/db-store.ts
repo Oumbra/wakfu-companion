@@ -134,6 +134,16 @@ export function createDbAuthStore(db: Db): AuthStore {
       await db.delete(users).where(eq(users.id, userId));
     },
 
+    async purgeInactiveUsers(before) {
+      // Même cascade que `deleteUser` : un compte inactif part avec tout ce
+      // qui lui est rattaché, exactement comme une suppression demandée.
+      const rows = await db
+        .delete(users)
+        .where(lt(users.lastSeenAt, before))
+        .returning({ id: users.id });
+      return rows.length;
+    },
+
     async createSession(record: SessionRecord) {
       await db.insert(sessions).values({
         id: record.idHash,
