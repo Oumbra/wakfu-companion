@@ -2,9 +2,25 @@
 
 Toutes les réponses, y compris la description des étapes, des actions et des raisonnements communiqués à l'utilisateur, doivent être rédigées exclusivement en français. Cela s'applique même si les messages de l'utilisateur, le code, ou la documentation du projet sont en anglais.
 
-# Mode full confiance (commandes shell)
+# Commandes shell : passer par `rtk` (obligatoire)
 
-Ne jamais demander d'autorisation avant d'exécuter une commande Bash/Shell/Python/Npm/Node dont l'objectif est de répondre à une demande liée à ce projet (build, tests, scripts de vérification navigateur, installation de dépendances, inspection git en lecture, etc.). Exécuter ces commandes directement tant qu'elles ne compromettent pas l'intégrité de l'environnement OS ou du dépôt (pas de suppression destructive hors zone de travail temporaire, pas de force-push, pas de `git reset --hard`/`git clean -f` sans confirmation explicite, pas de modification de configuration système). Le détail des règles d'autorisation associées est dans `.claude/settings.json` (allowlist partagée par l'équipe) — l'étendre si une nouvelle commande de dev récurrente et sûre apparaît, plutôt que de laisser le prompt d'autorisation se répéter à chaque session.
+[`rtk`](https://github.com/rtk-ai/rtk) (`rtk --help` pour la liste complète) est un proxy CLI qui condense la sortie des commandes avant qu'elle n'atteigne le contexte — même signal, beaucoup moins de tokens. **Toute commande que `rtk` sait filtrer doit être préfixée par `rtk`**, jamais lancée en natif. Le hook global `PreToolUse` (`rtk hook claude`) réécrit déjà la plupart des appels simples ; le préfixe explicite reste la règle pour ne pas dépendre de ce filet (commandes composées, pipes, `cd ... &&`, scripts) et pour que la commande réellement exécutée soit celle affichée.
+
+| Besoin | Écrire | Pas |
+| --- | --- | --- |
+| Git (usage premier) | `rtk git status` / `diff` / `log` / `show` / `add` / `commit` / `checkout` / `push` / `pull` / `branch` / `fetch` / `stash` / `worktree` (accepte `-C`, `-c`, `--no-pager`) | `git ...` |
+| Recherche de contenu | `rtk grep ...`, `rtk rg ...`, `rtk ast-grep ...` | `grep`/`rg` natifs |
+| Fichiers et arborescence | `rtk find ...`, `rtk ls ...`, `rtk tree ...`, `rtk wc ...` | `find`/`ls`/`tree`/`wc` |
+| Lecture d'un fichier en shell | `rtk read <fichier>` | `cat`/`head`/`sed -n` |
+| npm / npx / outils du projet | `rtk npm run build`, `rtk npm start`, `rtk npx ...`, `rtk tsc`, `rtk lint`, `rtk prettier`, `rtk playwright ...`, `rtk pip ...` | appels natifs |
+| GitHub, HTTP, JSON | `rtk gh ...`, `rtk curl ...`, `rtk json ...`, `rtk diff ...` | `gh`/`curl`/`jq`/`diff` |
+| Commande sans filtre dédié | `rtk err <cmd>` (erreurs/avertissements seulement), `rtk test <cmd>` (échecs seulement), `rtk summary <cmd>` (résumé heuristique) | sortie brute |
+
+- Enchaîner plusieurs commandes liées dans un seul appel (`rtk git add -A && rtk git commit -m "..."`) plutôt que multiplier les tours.
+- Traiter la sortie condensée comme le résultat complet. Une sortie tronquée indique son propre chemin de récupération (`rtk recall <hash>`). Repasser en `rtk proxy <cmd>` (sortie brute, usage tracé) **uniquement** si le résultat est inutilisable : vide alors qu'une sortie était attendue, contredisant le code de sortie, ou illisible.
+- `rtk run <cmd>` (aucun filtre, aucun suivi) est réservé aux commandes qui cassent sous filtre — à justifier dans le message.
+- Les outils dédiés (`Read`, `Grep`, `Glob`, `Edit`) restent préférables au shell quand ils suffisent ; la règle ci-dessus vaut dès qu'on passe par Bash/PowerShell.
+- **Mode dégradé** : si `rtk` est absent (`command -v rtk` échoue — typiquement une session cloud dont l'environnement n'a pas de setup script, ou la machine d'un autre contributeur), le signaler **une seule fois** puis utiliser les commandes natives sans réessayer le préfixe. Ne pas tenter d'installer `rtk` soi-même : en session cloud il s'installe via le setup script de l'environnement (UI claude.ai/code, résultat mis en cache ~7 jours ; le script officiel `install.sh` peut échouer en 403 sur les release assets GitHub — repli `cargo install --git https://github.com/rtk-ai/rtk --locked`), en local c'est un choix de l'utilisateur. Le hook `PreToolUse` de `.claude/settings.json` est déjà protégé et devient un no-op sans `rtk`.
 
 # Wakfu Companion — contexte projet
 
@@ -46,7 +62,6 @@ Démarche standard :
 
 ## Conventions valables pour toute tâche
 
-- Ne jamais toucher aux fichiers sous `prompts/` sans qu'on le demande explicitement.
 - **Toujours un composant partagé (`shared/`), jamais un bloc HTML+CSS+JS local recopié** — même s'il ne semble utilisé qu'à un seul endroit au départ. Le catalogue des composants existants (stepper, champ numérique, tooltips, icônes, panneaux...) est dans `.claude/rules/ui-conventions.md` : le consulter avant d'écrire un nouveau bloc d'UI.
 - i18n maison (pas `@angular/localize`) : 4 locales `fr`/`en`/`es`/`pt`, toujours mises à jour ensemble dans `core/i18n/translations.ts`.
 - Toute nouvelle donnée rattachée au compte (table/colonne référençant `users`, clé synchronisée, champ envoyé au serveur, service tiers) ⇒ relecture des textes légaux **dans le même commit** — checklist dans `.claude/rules/user-data-legal.md`.
