@@ -7,6 +7,14 @@
  * Ankama est inférieur à la taille de la plage) qui n'ont pas de liste séparée connue ; l'appelant
  * doit masquer au chargement les urls dont l'`<img>` échoue (voir profile-page.component, événement
  * `error`) plutôt que de coder en dur une liste d'ids valides.
+ *
+ * Ces images sont hotlinkées depuis `static.ankama.com`, qui les refuse avec un `Referer` d'un
+ * autre domaine (403, revérifié le 2026-09-20) : les balises `<img>` de la page profil qui les
+ * affichent portent `referrerpolicy="no-referrer"`. C'est le SEUL endroit de l'app où cet attribut
+ * subsiste (retiré partout ailleurs, `docs/analyse-cgu.md` reco 5) — décision du mainteneur du
+ * 2026-09-20 : il s'agit de fan-art fourni par des artistes de la communauté, pas d'œuvres
+ * produites par Ankama, et un outil communautaire peut légitimement les proposer. Ne pas étendre
+ * l'attribut à d'autres balises.
  */
 
 export type AvatarFanartGalleryId = 'barbottine' | 'hoopyon' | 'papetona';
