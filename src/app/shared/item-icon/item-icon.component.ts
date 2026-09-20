@@ -1,7 +1,5 @@
 import { Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { CatalogService, CatalogItemEntry } from '../../core/api/catalog.service';
-import { WAKFU_ITEM_IMAGE_OVERRIDES } from '../../core/data/wakfu-item-image-overrides.data';
-import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { wakassetsIconUrl } from '../../core/utils/wakassets-url.util';
 
 /**
@@ -17,13 +15,12 @@ function itemImageCandidates(entry: CatalogItemEntry): string[] {
 
 /**
  * Icône précédant un objet (butin, suivi de ressources). Illustration réelle
- * résolue via une chaîne de sources, dans l'ordre : recours manuel direct
- * (wakfu-item-image-overrides.data.ts, pour les objets absents du
- * référentiel) puis, pour un objet connu (voir wakfu-items.data.ts), les
- * sources déterminées par `itemImageCandidates` selon la disponibilité
- * réelle de l'objet sur chaque CDN, essayées l'une après l'autre en cas
- * d'échec de chargement. Repli final sur une icône générique si tout échoue
- * ou si l'objet est inconnu.
+ * résolue, pour un objet connu du catalogue (par id, sinon par nom — les
+ * divergences log/catalogue comme « Eclat »/« Eclats » sont absorbées par
+ * les alias de wakfu-item-name-aliases.data.ts, appliqués dans l'index du
+ * CatalogService), via les sources déterminées par `itemImageCandidates`,
+ * essayées l'une après l'autre en cas d'échec de chargement. Repli final
+ * sur une icône générique si tout échoue ou si l'objet est inconnu.
  */
 @Component({
   selector: 'app-item-icon',
@@ -84,9 +81,6 @@ export class ItemIconComponent {
 
   private readonly candidates = computed(() => {
     this.catalog.revision(); // dépendance réactive : recalcule une fois le catalogue chargé
-    const key = normalizeWakfuName(this.name());
-    const override = WAKFU_ITEM_IMAGE_OVERRIDES[key];
-    if (override) return [override];
     const byId = this.id();
     const entry =
       (byId !== null ? this.catalog.findWakfuItemEntryById(byId) : undefined) ??

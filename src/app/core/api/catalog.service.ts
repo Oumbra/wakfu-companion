@@ -5,6 +5,7 @@ import { normalizeWakfuName } from '../utils/wakfu-name.util';
 import { indexDungeonsByBossMonsterId } from '../utils/dungeon-boss-index.util';
 import { RARITY_SORT_ORDER, WakfuRarity } from '../data/wakfu-item-rarity.data';
 import { ITEM_CATEGORY_SORT_ORDER, WakfuItemCategory } from '../data/wakfu-item-category.data';
+import { WAKFU_ITEM_NAME_ALIASES } from '../data/wakfu-item-name-aliases.data';
 import { proxyWakassetsUrl } from '../utils/wakassets-url.util';
 
 const INDEX_CACHE_KEY = 'catalog-index';
@@ -622,6 +623,15 @@ export class CatalogService {
         }
         ids.add(id);
       }
+    }
+    // Alias nom du log -> nom catalogue (voir wakfu-item-name-aliases.data.ts) : l'alias devient
+    // une clé supplémentaire de chaque index par nom, sans jamais masquer un vrai nom du catalogue.
+    for (const [alias, target] of WAKFU_ITEM_NAME_ALIASES) {
+      const entry = itemsByFrName.get(target) ?? itemsByOtherLocaleName.get(target);
+      const ids = itemIdsByName.get(target);
+      if (!entry || !ids || itemIdsByName.has(alias)) continue;
+      (itemsByFrName.has(target) ? itemsByFrName : itemsByOtherLocaleName).set(alias, entry);
+      itemIdsByName.set(alias, ids);
     }
     this.itemsById = itemsById;
     this.itemsByFrName = itemsByFrName;
