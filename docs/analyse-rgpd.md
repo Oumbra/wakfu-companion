@@ -47,13 +47,20 @@ devancé la documentation.
 >   restent ouvertes.
 > - Le reliquat issu de l'analyse menée depuis l'overlay (`analyse-rgpd-site.md`, fusionné ici le
 >   2026-09-19) est repris en **section 8**.
+> - **2026-09-20 — localisation de la base corrigée** : la politique (§3, §4) et les mentions
+>   légales (§2) affirmaient « serveurs situés au sein de l'Union européenne » ; la région réelle
+>   du projet Neon est `aws-eu-west-2` (**Londres, Royaume-Uni** — hors UE). Le transfert est licite
+>   par décision d'adéquation de la Commission (renouvelée le 21 décembre 2025, valable jusqu'en
+>   2031, art. 45), mais l'information était inexacte (art. 13.1.f) : textes corrigés dans les 4
+>   locales. Alternative si l'on veut retrouver « UE » : recréer le projet Neon dans une région
+>   européenne (Francfort) et migrer la base — décision du responsable, non prise à ce jour.
 
-| Gravité                  | Nombre | Nature                                                                                                                                                                   |
-| ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                         |
-| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                          |
+| Gravité                  | Nombre | Nature                                                                                                                                                                            |
+| ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔴 Critique              | 0      | — (fuite d'historique entre comptes, 4.1, résolue le 2026-09-19)                                                                                                                  |
+| 🟠 Majeur                | 0      | — (export 4.2 rétrogradé en amélioration, hébergeur 4.3 résolu)                                                                                                                   |
 | 🟡 Modéré                | 0      | — (IP en clair 4.4, omissions de la politique 4.6, point de collecte 4.7, en-têtes 4.8 — CSP bloquante depuis le 2026-09-20 —, rémanence locale 4.9 : tous résolus le 2026-09-19) |
-| ⚪ Mineur / documentaire | 3      | DPA, procédure de violation, note d'absence d'AIPD (le registre art. 30 et la note de mise en balance sont rédigés, l'adresse de contact est confirmée — voir 4.10)      |
+| ⚪ Mineur / documentaire | 3      | DPA, procédure de violation, note d'absence d'AIPD (le registre art. 30 et la note de mise en balance sont rédigés, l'adresse de contact est confirmée — voir 4.10)               |
 
 Aucun écart ne relevait d'une collecte abusive ou dissimulée : tous étaient soit des **omissions
 d'information**, soit des **défauts de minimisation ou de rétention**, soit — pour le point
@@ -497,17 +504,17 @@ Classé par rapport gain de conformité / coût de mise en œuvre.
 
 ### Priorité 3 — documentaire et amélioration continue
 
-| #      | Action                                                                                                                                                   | Écart | Effort |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
-| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                                                              | 4.10  | —      |
-| 11     | Archiver les DPA des trois sous-traitants                                                                                                                | 4.10  | Minime |
-| 12     | Écrire la procédure de violation de données                                                                                                              | 4.10  | Faible |
-| 13     | Consigner l'analyse d'absence d'AIPD                                                                                                                     | 4.10  | Minime |
-| ~~14~~ | ~~Proposer l'effacement local à la suppression de compte, comme le fait l'overlay~~ — **fait** le 2026-09-19 (+ bouton invité, politique §5/§6 corrigée) | 4.9   | —      |
-| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                 | 4.6   | Minime |
-| ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                | —     | —      |
-| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                 | 4.2   | Moyen  |
-| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                                                     | —     | Minime |
+| #      | Action                                                                                                                                                      | Écart | Effort |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----- | ------ |
+| ~~10~~ | ~~Rédiger le registre des traitements (art. 30)~~ — **fait** le 2026-09-19, hors dépôt (§8)                                                                 | 4.10  | —      |
+| 11     | Archiver les DPA des trois sous-traitants                                                                                                                   | 4.10  | Minime |
+| 12     | Écrire la procédure de violation de données                                                                                                                 | 4.10  | Faible |
+| 13     | Consigner l'analyse d'absence d'AIPD                                                                                                                        | 4.10  | Minime |
+| ~~14~~ | ~~Proposer l'effacement local à la suppression de compte, comme le fait l'overlay~~ — **fait** le 2026-09-19 (+ bouton invité, politique §5/§6 corrigée)    | 4.9   | —      |
+| 15     | Inscrire dans `CLAUDE.md` la règle « nouvelle table `users` ou nouvelle clé synchronisée ⇒ relecture des textes légaux »                                    | 4.6   | Minime |
+| ~~16~~ | ~~Auditer le dépôt `wakfu-companion-overlay` pour confirmer les affirmations du point 1.4~~ — **fait** le 2026-09-18 (§8)                                   | —     | —      |
+| 17     | Ajouter `GET /api/v1/auth/export` (identité, sessions, historique) et y brancher le bouton « Exporter » en mode connecté                                    | 4.2   | Moyen  |
+| 18     | Décider et consigner : purge (ou non) de l'historique après N mois d'inactivité (§8)                                                                        | —     | Minime |
 | ~~19~~ | ~~Passer la CSP de `Report-Only` en mode bloquant après validation du retour OAuth~~ — **fait le 2026-09-20** (validé en local, Chrome réel, OAuth Discord) | 4.8   | Minime |
 
 ### Préalable à toute mise en production
@@ -541,7 +548,7 @@ même jour.
   applicatifs, historique de combats/achats/échanges/extractions, noms de personnages (utilisateur et
   tiers).
 - **Destinataires** : Cloudflare, Inc. (hébergement du site **et** de l'API) ; Databricks, Inc. /
-  Neon (base, serveurs UE).
+  Neon (base, serveurs au Royaume-Uni — décision d'adéquation).
 - **Transferts hors UE** : États-Unis — Data Privacy Framework (Cloudflare, Google, Discord),
   clauses contractuelles types (Databricks).
 - **Durée** : vie du compte ; effacement immédiat et en cascade à la suppression.
@@ -568,15 +575,15 @@ l'utilisateur, qui en conserve le contrôle exclusif.
 
 ### 7.1 Sous-traitants et destinataires
 
-| Entité                             | Rôle                                                                                                                      | Localisation            | Encadrement du transfert          | Déclaré ? |
-| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------------------------------- | --------- |
-| Cloudflare, Inc.                   | Hébergement API + preview (et bascule du front à venir)                                                                   | US / edge mondial       | Data Privacy Framework            | ✅        |
-| Databricks, Inc. (Neon)            | Base PostgreSQL                                                                                                           | Serveurs UE, société US | Clauses contractuelles types      | ✅        |
-| GitHub, Inc. (Microsoft)           | Vérification de mise à jour de l'overlay de bureau (l'hébergement du front est passé à Cloudflare le 2026-09-19, cf. 4.3) | US                      | DPF (via Microsoft)               | ✅        |
-| Discord, Inc.                      | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
-| Google LLC                         | Fournisseur OAuth                                                                                                         | US                      | Data Privacy Framework            | ✅        |
-| `static.ankama.com` (Ankama Games) | Icônes d'objets (site uniquement)                                                                                         | FR                      | — (requête directe du navigateur) | ✅        |
-| `vertylo.github.io` (wakassets)    | Icônes — relayées par nos serveurs pour le site (depuis le 2026-09-20) comme pour l'overlay ; GitHub ne voit que l'IP de Cloudflare | US (GitHub Pages)       | —                                 | ✅        |
+| Entité                             | Rôle                                                                                                                                | Localisation                      | Encadrement du transfert                        | Déclaré ? |
+| ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------------------- | --------- |
+| Cloudflare, Inc.                   | Hébergement API + preview (et bascule du front à venir)                                                                             | US / edge mondial                 | Data Privacy Framework                          | ✅        |
+| Databricks, Inc. (Neon)            | Base PostgreSQL                                                                                                                     | Royaume-Uni (Londres), société US | Adéquation RU (21/12/2025, jusqu'en 2031) + CCT | ✅        |
+| GitHub, Inc. (Microsoft)           | Vérification de mise à jour de l'overlay de bureau (l'hébergement du front est passé à Cloudflare le 2026-09-19, cf. 4.3)           | US                                | DPF (via Microsoft)                             | ✅        |
+| Discord, Inc.                      | Fournisseur OAuth                                                                                                                   | US                                | Data Privacy Framework                          | ✅        |
+| Google LLC                         | Fournisseur OAuth                                                                                                                   | US                                | Data Privacy Framework                          | ✅        |
+| `static.ankama.com` (Ankama Games) | Icônes d'objets (site uniquement)                                                                                                   | FR                                | — (requête directe du navigateur)               | ✅        |
+| `vertylo.github.io` (wakassets)    | Icônes — relayées par nos serveurs pour le site (depuis le 2026-09-20) comme pour l'overlay ; GitHub ne voit que l'IP de Cloudflare | US (GitHub Pages)                 | —                                               | ✅        |
 
 Les deux derniers ne sont pas des sous-traitants pour le site : le navigateur les contacte
 directement, ils reçoivent l'IP du visiteur comme pour n'importe quelle image chargée sur le web. La
@@ -655,7 +662,7 @@ service, d'où ce reliquat.
   sessions mortes effacées 30 jours après leur fin (voir le tableau) ; rotation du jeton natif
   côté serveur et appelée par l'overlay (2026-09-19).
 - ✅ **Sous-traitants** nommés (mentions légales §2, politique §4) : Cloudflare, Inc. (hébergement),
-  Databricks, Inc. / Neon (PostgreSQL, serveurs dans l'UE), Discord et Google (connexion), GitHub
+  Databricks, Inc. / Neon (PostgreSQL, serveurs au Royaume-Uni, décision d'adéquation), Discord et Google (connexion), GitHub
   (mises à jour de l'overlay).
 - ✅ **Mentions légales** publiées, étendues à l'overlay (`8e3fdd8`).
 - ⚠ **Durée de conservation de l'historique** : la politique annonce « tant que le compte
