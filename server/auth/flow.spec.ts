@@ -19,6 +19,7 @@ import {
   purgeDeadSessions,
   purgeInactiveAccounts,
   resolveSession,
+  runFullPurge,
   sanitizeRedirectTo,
   startAuthorization,
   verifyCsrf,
@@ -617,5 +618,66 @@ describe('clientIpKey', () => {
     const env = { RATE_LIMIT_SALT: 'sel' };
     const key = await clientIpKey(new Request('https://example.test/'), env);
     expect(key).toMatch(/^[0-9a-f]{16}$/);
+  });
+});
+
+/**
+ * Purge planifiée (`server/import/run-retention-purges.ts`, écart 4.13 de `docs/analyse-rgpd.md`) :
+ * ce que les purges opportunistes laissent derrière elles quand le trafic d'authentification
+ * s'arrête doit disparaître quand même.
+ */
+describe('runFullPurge', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('efface le compte inactif et la session morte, comme les purges de routes', async () => {
+    const store = createMemoryAuthStore();
+    const dormant = await login(store, { now: new Date(NOW.getTime() - 370 * DAY) });
+    expect(dormant.ok).toBe(true);
+    if (!dormant.ok) return;
+
+    const report = await runFullPurge(store, NOW);
+    expect(report.inactiveAccounts).toBe(1);
+    expect(await store.findUserById(dormant.result.user.id)).toBeNull();
+  });
+
+  it('remet à zéro un compteur anti-abus dont la fenêtre est close', async () => {
+    const store = createMemoryAuthStore();
+    const closedWindow = new Date(NOW.getTime() - 30 * 60 * 1000);
+    expect(await store.bumpRateLimit('auth:start:ip:abc', closedWindow)).toBe(1);
+
+    await runFullPurge(store, NOW);
+
+    // La ligne a disparu : le comptage repart de 1 au lieu de 2.
+    expect(await store.bumpRateLimit('auth:start:ip:abc', closedWindow)).toBe(1);
+  });
+
+  it('laisse intacte la fenêtre de comptage en cours', async () => {
+    const store = createMemoryAuthStore();
+    const openWindow = new Date(NOW.getTime() - 60 * 1000);
+    expect(await store.bumpRateLimit('auth:start:ip:abc', openWindow)).toBe(1);
+
+    await runFullPurge(store, NOW);
+
+    expect(await store.bumpRateLimit('auth:start:ip:abc', openWindow)).toBe(2);
+  });
+
+  it('déclenche aussi les purges sans effet observable : autorisations OAuth et appairages', async () => {
+    const store = createMemoryAuthStore();
+    const called: string[] = [];
+    const spied: AuthStore = {
+      ...store,
+      purgeExpiredAuthorizations: async (now) => {
+        called.push('authorizations');
+        await store.purgeExpiredAuthorizations(now);
+      },
+      purgeExpiredPairings: async (now) => {
+        called.push('pairings');
+        await store.purgeExpiredPairings(now);
+      },
+    };
+
+    await runFullPurge(spied, NOW);
+
+    expect(called).toEqual(['authorizations', 'pairings']);
   });
 });

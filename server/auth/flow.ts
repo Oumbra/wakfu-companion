@@ -13,6 +13,7 @@
 import { pkceChallenge, randomToken, sha256Hex, timingSafeEqual } from './crypto';
 import { OAUTH_STATE_TTL_MS, SESSION_TTL_MS } from './cookies';
 import type { OAuthProfile } from './providers';
+import { MAX_RATE_LIMIT_WINDOW_MS } from './rate-limit';
 import type { AuthStore, ProviderId, SessionRecord, UserRecord } from './store';
 
 /**
@@ -71,6 +72,35 @@ export function purgeInactiveAccounts(store: AuthStore, now: Date): Promise<numb
 export async function runRetentionPurges(store: AuthStore, now: Date): Promise<void> {
   await purgeInactiveAccounts(store, now);
   await purgeDeadSessions(store, now);
+}
+
+/** Ce qu'une passe de `runFullPurge` a effacé, pour le journal du run planifié. */
+export interface FullPurgeReport {
+  inactiveAccounts: number;
+  deadSessions: number;
+}
+
+/**
+ * TOUTES les purges de conservation en une passe, y compris celles qu'aucune route ne déclenche
+ * quand le trafic se tarit : autorisations OAuth et appairages natifs expirés, compteurs anti-abus
+ * dont la fenêtre est close.
+ *
+ * Raison d'être : chacune de ces purges est opportuniste — elle s'exécute à l'occasion d'un appel
+ * qui touche déjà la table (Cloudflare Pages n'a pas de Cron Trigger, voir server/README.md). Sans
+ * trafic d'authentification, rien ne tourne, et les durées annoncées par la politique de
+ * confidentialité (§5) cessent d'être tenues : un compte inactif au-delà de 12 mois survit tant que
+ * personne d'autre ne se connecte, et la dernière fenêtre de comptage anti-abus reste en base
+ * indéfiniment (`docs/analyse-rgpd.md` 4.13). D'où l'appel planifié, hors requête
+ * (`.github/workflows/rgpd-purges.yml` → `server/import/run-retention-purges.ts`), qui ne dépend
+ * plus de la fréquentation du service.
+ */
+export async function runFullPurge(store: AuthStore, now: Date): Promise<FullPurgeReport> {
+  const inactiveAccounts = await purgeInactiveAccounts(store, now);
+  const deadSessions = await purgeDeadSessions(store, now);
+  await store.purgeExpiredAuthorizations(now);
+  await store.purgeExpiredPairings(now);
+  await store.purgeRateLimits(new Date(now.getTime() - MAX_RATE_LIMIT_WINDOW_MS));
+  return { inactiveAccounts, deadSessions };
 }
 
 export interface StartedAuthorization {

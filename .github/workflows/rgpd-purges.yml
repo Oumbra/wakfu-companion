@@ -1,0 +1,57 @@
+# Purges de conservation quotidiennes (RGPD art. 5.1.e) — `docs/analyse-rgpd.md`, écart 4.13.
+#
+# Pourquoi un workflow planifié : toutes les purges du service sont opportunistes (Cloudflare Pages
+# n'offre pas de Cron Trigger, voir server/README.md) — elles ne tournent qu'à l'occasion d'un appel
+# d'authentification. Sans trafic, les durées annoncées par la politique de confidentialité (§5)
+# cessent d'être tenues : un compte inactif depuis plus de 12 mois survit jusqu'à ce que quelqu'un
+# d'autre se connecte, et la dernière fenêtre de comptage anti-abus reste en base indéfiniment.
+#
+# Ce job exécute `server/import/run-retention-purges.ts`, qui appelle `runFullPurge` : les délais
+# eux-mêmes restent définis dans `server/auth/flow.ts`, jamais ici.
+#
+# Limites connues, identiques à `rgpd-revision-annuelle.yml` :
+# - un `schedule` ne tourne que depuis la branche par défaut (`main`) — inactif tant que
+#   `claude/dev` n'y est pas fusionnée ;
+# - GitHub désactive les workflows planifiés d'un dépôt public sans commit depuis 60 jours
+#   (courriel d'avertissement, réactivation en un clic dans l'onglet Actions). Un run manqué n'a
+#   aucune conséquence irréversible : la purge suivante rattrape tout ce qui a dépassé son délai.
+# `workflow_dispatch` permet de le déclencher à la main (test, rattrapage).
+name: RGPD — purges de conservation
+
+on:
+  schedule:
+    # Tous les jours à 03:20 UTC — creux de fréquentation, et décalé des minutes rondes (GitHub
+    # concentre la charge à :00, d'où des démarrages retardés).
+    - cron: '20 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Jamais deux purges en parallèle sur la même base : `cancel-in-progress: false` laisse la
+# première finir plutôt que d'interrompre une suppression en cours.
+concurrency:
+  group: rgpd-purges
+  cancel-in-progress: false
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Base de PRODUCTION (même secret que deploy-main.yml). La branche Neon de preview n'a pas
+      # de purge planifiée : ses données sont de test et sa branche est recréée à volonté.
+      - name: Run retention purges (production)
+        run: npx tsx server/import/run-retention-purges.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

@@ -33,6 +33,15 @@ export const PAIR_POLL_RULE: RateLimitRule = { limit: 250, windowMs: 10 * 60 * 1
  * même IP — 20 par 10 min laisse large, et borne le coût `siteverify` d'un appelant abusif. */
 export const APP_TOKEN_RULE: RateLimitRule = { limit: 20, windowMs: 10 * 60 * 1000 };
 
+/**
+ * Fenêtre la plus longue de toutes les règles ci-dessus. Passé ce délai, une ligne
+ * `auth_rate_limits` ne sert plus à aucun comptage et n'a plus à exister — c'est le délai annoncé
+ * par la politique de confidentialité (§5, « effacé au bout d'une fenêtre de 10 minutes »).
+ * Utilisé par la purge planifiée (`server/import/run-retention-purges.ts`), là où la purge
+ * opportuniste de `checkRateLimit` ne nettoie qu'au prochain appel de la même règle.
+ */
+export const MAX_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
+
 export interface RateLimitResult {
   allowed: boolean;
   retryAfterSeconds: number;
