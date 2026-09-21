@@ -71,6 +71,7 @@ jobs:
               `### Documents du responsable de traitement\n` +
               `- [ ] Registre des traitements : relire, confirmer qu'aucune table/clé/tiers n'est apparu sans y figurer (\`server/db/schema.ts\`, \`server/settings/keys.ts\`, règle \`.claude/rules/user-data-legal.md\`).\n` +
               `- [ ] Note de mise en balance (pseudonymes de tiers) : conditions de révision toujours remplies ?\n` +
+              `- [ ] Note art. 14 (information des joueurs tiers, exception d'effort disproportionné) : le service a-t-il gagné un moyen de les joindre, un contenu public ou une interaction entre joueurs, qui ferait tomber l'exception ?\n` +
               `- [ ] Note d'absence d'AIPD : aucun nouveau critère CNIL/G29 atteint ?\n` +
               `- [ ] Procédure de violation de données : contacts, hébergeur, base et mécanisme d'authentification inchangés ?\n` +
               `- [ ] Politique de confidentialité, CGU, mentions légales : date « Dernière mise à jour » et contenu cohérents avec le code (4 locales).\n\n` +
