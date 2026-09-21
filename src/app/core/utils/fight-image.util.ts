@@ -22,7 +22,7 @@ export const DEFAULT_FIGHT_IMAGE_URL = wakassetsIconUrl('bossIllustrations', 'de
  * rectangulaire, voir la règle catalog-assets). Jusqu'au 2026-09-20, la 1ʳᵉ tentative était l'image
  * officielle `static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png` (gabarit déductible du
  * `gfxId`, vérifié 851/851 — mais au moins 24 assets absents, 403), dont la protection anti-hotlink
- * devait être contournée par `referrerpolicy="no-referrer"` : retirée (docs/analyse-cgu.md,
+ * devait être contournée par `referrerpolicy="no-referrer"` : retirée (docs/analyse-cgu-2026-09-21.md,
  * recommandation 5), wakassets couvre 842 monstres sur 851 (les 9 restants retombent sur
  * DEFAULT_FIGHT_IMAGE_URL via onFightImageError dans fight-history.component.ts).
  */

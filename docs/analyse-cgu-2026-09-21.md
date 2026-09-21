@@ -488,3 +488,55 @@ seul compte à la fois par serveur. »
   déploiement en production vérifiés (`120abfb`). Registre des traitements du responsable (hors
   dépôt) mis à jour — version 8 : Turnstile au traitement n° 2 et à l'annexe A, décision motivée au
   § 7, fiche sous-traitants et note d'absence d'AIPD complétées.
+
+- **2026-09-21** — Contre-vérification indépendante sur la version 1.146.2 (commit `48a9489`),
+  postérieure aux correctifs ci-dessus : voir § 8.
+
+---
+
+## 8. Contre-vérification du 21 septembre 2026 (v1.146.2, commit `48a9489`)
+
+Seconde lecture du dépôt, faite après les correctifs des § 5 et 7, pour vérifier dans le code — et
+non dans le journal — que chaque point annoncé comme traité l'est réellement, et qu'aucun écart
+nouveau n'a été introduit par les commits `3a08283` à `48a9489` (Turnstile, jeton d'application,
+retrait de la planche d'avatars transparente, audit RGPD).
+
+| Point | Vérification faite sur `48a9489` | Résultat |
+| --- | --- | --- |
+| Cœur de l'outil (5.2.1 à 5.2.9) | `log-file-access.service.ts` ouvre `wakfu.log` en `{ mode: 'read' }` ; aucun `createWritable` dans `src/` ; aucune requête vers un serveur de jeu (les seules URL `ankama.com` du code client sont des `src` d'`<img>` de galeries fan-art et un lien sortant vers la page avatar du compte) ; aucune frappe, aucun clic, aucune interception ; aucun collecteur automatisé dans le dépôt (`server/import/` ne lit que des fichiers JSON locaux, `tools/` ne contient aucun client HTTP) | ✅ inchangé |
+| Monétisation (5.2.7) | Aucune trace de paiement, don, publicité, abonnement ou mesure d'audience dans `src/`, `public/`, `functions/`, `server/` | ✅ |
+| `alternateName` JSON-LD (13.3, reco 2) | Absent de `src/index.html` ; les deux blocs JSON-LD restants (`WebApplication`, `FAQPage`) sont valides et descriptifs ; aucune balise `keywords` ; aucun autre texte caché portant la marque (le seul bloc `sr-only` de l'app est le libellé d'accessibilité de `loading-overlay`, et `sitemap.xml` ne contient que des URL) | ✅ corrigé |
+| Mention imposée par la licence de données (reco 7) | `footer.copyright` dit « WAKFU MMORPG : © 2012-{{year}} **Ankama Studio**. Tous droits réservés. » dans les 4 locales, année injectée au chargement (`app-footer.component.ts`) | ✅ corrigé — reste à confirmer le libellé exact sur le fil officiel, toujours inaccessible |
+| Contournement anti-hotlink (reco 5) | 3 balises `<img referrerpolicy="no-referrer">` subsistent, toutes sur les galeries d'avatars fan-art (`profile`, `profile-page`) ; `wakfu-item-image-overrides.data.ts` a disparu, `fight-image.util.ts` est passé sur wakassets ; `.claude/rules/catalog-assets.md` dit désormais « ne plus contourner » | ✅ conforme à la décision du 2026-09-20 |
+| Relais d'icônes (reco 8) | `server/icons/proxy.ts` n'émet plus `access-control-allow-origin: *` ; `functions/api/v1/icons/[folder]/[file].ts` passe par `rejectUnknownCaller` | ✅ |
+| Routes référentiel (reco 4) | Les six routes de données (`catalog/index`, `catalog/search`, `catalog/version`, `items/[id]`, `monsters/[id]`, `monster-loot`, `monster-families`, `dungeons`) appellent toutes `rejectUnknownCaller` ; jeton `wc_app` signé et Turnstile en place | ✅ en production |
+| Sources des assets (reco 7 de l'analyse précédente) | `public/assets/SOURCES.md` existe et couvre aussi les trois sons (FilterBlade pour l'alerte de butin, Pixabay pour les deux autres) | ✅ |
+| Agrégation inter-comptes (13.1) | `server/import/analyze-universal-loot.ts` et ses trois scripts npm sont absents du dépôt | ✅ |
+
+**Deux écarts documentaires trouvés et corrigés dans le commit qui porte cette section** — sans
+portée contractuelle par eux-mêmes, mais un dossier de conformité ne vaut que si l'on peut le suivre
+depuis le code :
+
+1. **23 références à `docs/analyse-cgu.md`** — fichier renommé `analyse-cgu-2026-09-21.md` — dans
+   21 fichiers : commentaires des huit routes de données, `server/http/caller.ts`,
+   `server/icons/proxy.ts`, `server/catalog/compact-index.ts`, `fight-image.util.ts` (+ spec),
+   `avatar-fanart-galleries.data.ts`, `app-footer.component.ts`, `public/assets/SOURCES.md` et
+   `server/README.md`. Chaque garde du code justifiait sa présence par un document introuvable.
+   Toutes repointées sur le nom actuel.
+2. **`README.md` annonçait « le suivi de prix d'Hôtel de Vente »** parmi les services de l'API,
+   alors que ces tables ont été déplacées hors du dépôt le 2026-08-18
+   (`server/db/schema.ts` l. 331-339, projet `wakfu-companion-price`). La description publique du
+   service, que lirait Ankama en premier, annonçait donc un traitement de données de jeu que ce
+   dépôt ne fait plus. Corrigé, avec le renvoi au projet qui le porte.
+
+**Ajout au rappel annuel** : `.github/workflows/rgpd-revision-annuelle.yml` ouvrait une issue
+couvrant le RGPD seul. Un volet « Conformité CGU Ankama » y est ajouté (re-télécharger CGU, Règles
+de conduite et licence de données ; rejouer l'audit article par article ; état de la demande
+d'autorisation et de son plan B ; exactitude de la mention imposée). L'art. 13.4 permettant à Ankama
+de mettre fin à tout moment à la tolérance, une relecture datée vaut mieux qu'une veille implicite.
+
+**Reste ouvert, par ordre d'importance** : (1) envoyer la demande d'autorisation
+(`docs/demande-autorisation-ankama-2026-09-21.md`) — c'est la seule action qui fait sortir le logo,
+le nom, le domaine, les images et le référentiel de la zone grise ; (2) formulation de
+`terms.notice.body` § 2 sur la frappe simulée de l'overlay (reco 5) ; (3) traçabilité hors dépôt du
+référentiel (reco 6) ; (4) relecture de la licence de données (reco 7).

@@ -11,7 +11,7 @@ import type { Env } from '../_types';
 // (resolveFightTypeClassification, core/utils/fight-image.util.ts), à la place du nom d'un
 // monstre membre du groupe utilisé jusqu'ici faute de cette table (voir server/db/schema.ts).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);

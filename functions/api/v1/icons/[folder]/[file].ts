@@ -8,7 +8,7 @@ import type { Env } from '../../../_types';
 // pour une icône) et pour le site. Sans authentification (une icône n'a rien de personnel, et
 // l'overlay en charge avant même d'être appairé), mais réservé à ces deux appelants — reconnus par
 // la signature de la requête, voir `rejectUnknownCaller` : le relais redistribue des images du jeu,
-// il ne doit pas servir de CDN à des pages tierces (2026-09-20, docs/analyse-cgu.md, reco 8). Voir
+// il ne doit pas servir de CDN à des pages tierces (2026-09-20, docs/analyse-cgu-2026-09-21.md, reco 8). Voir
 // server/icons/proxy.ts pour ce qui est accepté. Contrairement aux routes de données, le jeton
 // d'application (`wc_app`, voir functions/api/_caller.ts) n'est PAS exigé ici : une `<img>` peut
 // partir avant que le jeton n'existe, et ces fichiers sont publics sur wakassets.

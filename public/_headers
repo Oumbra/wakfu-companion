@@ -14,7 +14,7 @@
 # src/app` les retrouve) :
 #   img-src   : static.ankama.com (galeries d'avatars fan-art de la page profil, seul usage restant
 #               depuis le 2026-09-20 — recours objets et illustrations de combat passés sur
-#               wakassets, docs/analyse-cgu.md reco 5). Les icônes wakassets
+#               wakassets, docs/analyse-cgu-2026-09-21.md reco 5). Les icônes wakassets
 #               (vertylo.github.io) passent par notre relais /api/v1/icons depuis le 2026-09-20
 #               (src/app/core/utils/wakassets-url.util.ts) : même origine, plus d'exception ici.
 #   scripts   : challenges.cloudflare.com (widget Turnstile du jeton d'application, chargé à la

@@ -90,7 +90,7 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/game-servers` — liste des serveurs de jeu (table
   `game_servers`, jamais compilée en dur côté client).
 - **Routes référentiel réservées au site et à l'overlay** (2026-09-20,
-  `docs/analyse-cgu.md`, recommandation 4 — licence de données WAKFU § 1-2,
+  `docs/analyse-cgu-2026-09-21.md`, recommandation 4 — licence de données WAKFU § 1-2,
   pas de sous-licence) : `catalog/*`, `items/{id}`, `monsters/{id}`,
   `monster-loot`, `monster-families`, `dungeons` et `icons/*` passent par
   `rejectUnknownCaller` (`functions/api/_caller.ts`, logique pure dans
@@ -192,7 +192,7 @@ DATABASE_URL=... npm run db:migrate
   `<nombre>.png` (négatif accepté : `itemTypes/-1.png`) ou `<mot court en
 minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   Sans authentification, mais **réservé au site et à l'overlay** depuis le
-  2026-09-20 (`docs/analyse-cgu.md`, recommandation 8 : ne pas devenir un
+  2026-09-20 (`docs/analyse-cgu-2026-09-21.md`, recommandation 8 : ne pas devenir un
   CDN public d'images du jeu) — même garde `rejectUnknownCaller` que les
   routes référentiel ci-dessus, 403 sinon, et `access-control-allow-origin:
 *` a disparu. Réponse mise en cache à la périphérie
@@ -360,7 +360,7 @@ compact :
    `https://static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`
    (elle aussi déductible du `gfxId`, vérifié 851/851), abandonnée avec le
    contournement anti-hotlink `referrerpolicy="no-referrer"` qu'elle exigeait
-   (voir `docs/analyse-cgu.md`, recommandation 5).
+   (voir `docs/analyse-cgu-2026-09-21.md`, recommandation 5).
 
 **La compression gzip/brotli automatique de l'edge Cloudflare ramène le
 transfert réel à ~348 Ko** — c'est ce qui est effectivement envoyé au

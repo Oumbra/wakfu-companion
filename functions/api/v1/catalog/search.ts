@@ -17,7 +17,7 @@ const SEARCH_RESULT_LIMIT = 30;
 // résultats différentes (objets ont rareté/hasRecipe, monstres non) dans
 // une même réponse.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const url = new URL(context.request.url);

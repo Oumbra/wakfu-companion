@@ -21,7 +21,7 @@ import type { Env } from '../_types';
 // monstres avec au moins un objet connu (`loot.length > 0` filtré en SQL via gt(length, 0)) — pas
 // la peine d'envoyer un tableau vide pour les ~127 monstres sans loot connu.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);

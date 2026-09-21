@@ -2,7 +2,7 @@
 
 Inventaire de ce que `public/assets/` distribue depuis nos serveurs, avec l'origine de chaque
 fichier et la transformation appliquée — tenu à jour à chaque ajout ou remplacement d'asset
-(`docs/analyse-cgu.md`, recommandation 7). Les dates sont celles du premier commit qui a ajouté le
+(`docs/analyse-cgu-2026-09-21.md`, recommandation 7). Les dates sont celles du premier commit qui a ajouté le
 fichier (`git log --diff-filter=A`) ; un nom hashé change quand le contenu change, la ligne reste.
 
 Tout ce qui vient du jeu (illustrations, icônes, interface) reste la propriété d'Ankama et est

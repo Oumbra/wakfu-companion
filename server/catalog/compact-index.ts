@@ -89,7 +89,7 @@ export interface CompactIndexMonsterInput {
  * à partir de gfxId (voir fight-image.util.ts / entity-icon.component.ts ;
  * jusqu'au 2026-09-20 c'était l'URL officielle
  * `static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`, elle aussi
- * déductible de gfxId — abandonnée, voir docs/analyse-cgu.md, reco 5).
+ * déductible de gfxId — abandonnée, voir docs/analyse-cgu-2026-09-21.md, reco 5).
  *
  * v4 — ajoute `category` (WakfuItemCategoryCode, voir server/db/schema.ts) aux objets, encodé en
  * entier via CATEGORY_SORT_ORDER (même principe que `raritySortOrder`) : filtre par icône de

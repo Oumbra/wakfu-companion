@@ -8,7 +8,7 @@ import type { Env } from '../../_types';
 // GET /api/v1/monsters/{id} — détail complet d'un monstre (id Ankama,
 // unique — voir schema.ts, contrairement aux objets).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const id = Number(context.params['id']);

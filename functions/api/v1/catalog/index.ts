@@ -30,7 +30,7 @@ import type { Env } from '../../_types';
 // prompt 2.2 s'entend sur ce qui est réellement transféré une fois cette
 // compression automatique appliquée (voir server/README.md).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);
