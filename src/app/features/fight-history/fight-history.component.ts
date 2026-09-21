@@ -227,6 +227,16 @@ export class FightHistoryComponent {
    * convention que SessionRecapComponent (voir sa doc `lootSearch`). Filtre insensible à la
    * casse/aux accents via `normalizeWakfuName`, appliqué AVANT le tri dans `sortedLoot`. */
   protected readonly lootSearch = signal('');
+  /** Recherche texte sur le CONTENU des combats de l'historique — un combat est retenu dès qu'un
+   * de ses combattants (allié OU ennemi, toutes statistiques confondues) ou un de ses objets de
+   * butin porte un nom contenant la requête. Volontairement placée sur la même ligne que le switch
+   * de regroupement (voir template) : elle filtre la liste ENTIÈRE, pas un groupe précis, et reste
+   * valable quel que soit le mode Jour/Origine/Donjons & familles. Distincte de `lootSearch`
+   * ci-dessus, qui filtre les lignes de butin À L'INTÉRIEUR d'un combat déjà affiché — les deux se
+   * cumulent sans se remplacer. Non persistée (contrairement à `groupMode`/`collapsedGroupKeys`) :
+   * une recherche est un état de consultation éphémère, la retrouver après un F5 donnerait une
+   * liste tronquée sans raison apparente. */
+  protected readonly fightSearch = signal('');
   /** Toujours grise, que le tri par rareté soit actif ou non — seul le fond du bouton (pastille glissante) indique la sélection. */
   protected readonly rarityIcon = RARITY_ICON_BASE_DATA_URI;
   /** Sections XP/butin REPLIÉES par combat — vide par défaut, tout DÉPLIÉ (même convention que
@@ -367,9 +377,42 @@ export class FightHistoryComponent {
     this.stats.selectDisplayedFight(fightId);
   }
 
+  /** Noms (normalisés une seule fois) de tout ce qu'un combat "contient" au sens de `fightSearch` :
+   * ses combattants — alliés comme ennemis, y compris ceux qui n'apparaissent que dans les onglets
+   * Soin/Armure ou dans le gain d'XP (un allié sans dégât reste un allié du combat) — et ses objets
+   * de butin. Pas de `EntityClassifierService` ici : la recherche accepte les deux camps, les
+   * distinguer serait un travail inutile sur un chemin réexécuté à chaque frappe. */
+  private fightSearchHaystack(record: HistoryFight): string[] {
+    const names: string[] = [];
+    for (const row of record.rows) names.push(row.name);
+    for (const row of record.healRows) names.push(row.name);
+    for (const row of record.armorRows) names.push(row.name);
+    for (const row of record.xp) names.push(row.name);
+    for (const row of record.loot) names.push(row.name);
+    return names.map(normalizeWakfuName);
+  }
+
+  /** Entrées d'historique retenues par `fightSearch` — requête vide = aucun filtrage (liste
+   * complète, référence inchangée). Une entrée "donjon" (voir `DungeonHistoryEntry`) est gardée
+   * ENTIÈRE dès qu'un seul de ses combats correspond : la découper reviendrait à afficher un run de
+   * donjon amputé de ses salles, alors que le regroupement par run est justement ce qui rend la
+   * liste lisible. Comparaison `includes` sur des noms normalisés (`normalizeWakfuName` : minuscule,
+   * accents retirés, apostrophes uniformisées) — recherche "contains", insensible à la casse et aux
+   * accents. */
+  private readonly filteredHistoryEntries = computed<DungeonHistoryEntry<HistoryFight>[]>(() => {
+    const entries = this.historyEntries();
+    const query = normalizeWakfuName(this.fightSearch());
+    if (!query) return entries;
+    return entries.filter((entry) =>
+      (entry.kind === 'single' ? [entry.record] : entry.fights).some((record) =>
+        this.fightSearchHaystack(record).some((name) => name.includes(query)),
+      ),
+    );
+  });
+
   protected readonly fightGroups = computed<FightGroup[]>(() => {
     const mode = this.groupMode();
-    const entries = this.historyEntries();
+    const entries = this.filteredHistoryEntries();
     if (mode === 'type') return this.buildTypeGroups(entries);
 
     const groups = new Map<string, FightGroup>();

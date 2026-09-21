@@ -19,11 +19,29 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  /* Le champ de recherche (`app-loot-search`, `flex:1`) partage cette ligne avec le switch de
+     regroupement et le bouton "tout replier/déplier" — dans un panneau étroit (onglet mobile du
+     dashboard, rail replié), les trois ne tiennent plus : `wrap` fait alors descendre le bloc
+     d'actions sous le champ plutôt que d'écraser le switch. `flex-basis` minimal sur la recherche
+     (voir `.fight-group-controls app-loot-search`) pour que ce passage à la ligne se déclenche
+     avant que le champ ne devienne inutilisable. */
+  flex-wrap: wrap;
   gap: 8px;
   padding: 6px 10px;
   background: var(--surface-raised);
   border-bottom: 1px solid var(--surface-active);
   flex-shrink: 0;
+}
+/* Switch de regroupement + bouton "tout replier/déplier" tenus ensemble : sans ce wrapper, le
+   `wrap` ci-dessus pourrait laisser le bouton seul sur une 3e ligne. */
+.fight-group-controls-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.fight-group-controls app-loot-search {
+  flex: 1 1 150px;
 }
 /* Bouton "tout replier/déplier" (voir FightHistoryComponent.toggleAllGroups) — même ligne que le
    switch de regroupement (justify-content: flex-end ci-dessus), placé avant lui. */
