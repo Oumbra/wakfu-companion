@@ -30,6 +30,11 @@ const TURNSTILE_ACTION = 'app-token';
  * absent…) : l'application reste utilisable, seules les routes référentiel répondent 403 et le
  * bandeau « catalogue indisponible » existant le dit. Nouvel essai au prochain chargement. */
 const TURNSTILE_TIMEOUT_MS = 12_000;
+/** Quand Turnstile demande une interaction (case à cocher, navigateur jugé suspect), le délai
+ * ci-dessus ne vaut plus : la personne doit remarquer la case en bas à droite et cliquer. Constaté
+ * le 2026-09-21 sur la preview avec un Chrome piloté par Playwright : défi interactif, retiré par
+ * le délai de 12 s avant tout clic possible. */
+const TURNSTILE_INTERACTIVE_TIMEOUT_MS = 3 * 60_000;
 const CONTAINER_ID = 'wc-turnstile';
 
 /** Surface minimale de l'API globale `turnstile` (script Cloudflare, voir TURNSTILE_SCRIPT_URL). */
@@ -41,9 +46,11 @@ interface TurnstileApi {
       action?: string;
       appearance?: 'always' | 'execute' | 'interaction-only';
       callback?: (token: string) => void;
-      'error-callback'?: () => void;
+      'error-callback'?: (code?: string) => void;
       'expired-callback'?: () => void;
       'timeout-callback'?: () => void;
+      'before-interactive-callback'?: () => void;
+      'after-interactive-callback'?: () => void;
     },
   ): string;
   remove(widgetId: string): void;
@@ -189,6 +196,11 @@ export class AppTokenService {
     return new Promise<string | null>((resolve) => {
       let widgetId: string | null = null;
       let settled = false;
+      let timer: ReturnType<typeof setTimeout>;
+      const arm = (delayMs: number): void => {
+        clearTimeout(timer);
+        timer = setTimeout(() => finish(null), delayMs);
+      };
       const finish = (token: string | null): void => {
         if (settled) return;
         settled = true;
@@ -202,7 +214,7 @@ export class AppTokenService {
         }
         resolve(token);
       };
-      const timer = setTimeout(() => finish(null), TURNSTILE_TIMEOUT_MS);
+      arm(TURNSTILE_TIMEOUT_MS);
       try {
         widgetId = api.render(container, {
           sitekey: siteKey,
@@ -212,6 +224,8 @@ export class AppTokenService {
           'error-callback': () => finish(null),
           'expired-callback': () => finish(null),
           'timeout-callback': () => finish(null),
+          'before-interactive-callback': () => arm(TURNSTILE_INTERACTIVE_TIMEOUT_MS),
+          'after-interactive-callback': () => arm(TURNSTILE_TIMEOUT_MS),
         });
       } catch {
         finish(null);

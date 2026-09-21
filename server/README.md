@@ -136,7 +136,13 @@ DATABASE_URL=... npm run db:migrate
     démarrage (`App.ngOnInit`), widget Turnstile en `appearance:
     'interaction-only'` (invisible sauf interaction requise) dans un conteneur
     fixé en bas à droite, échéance mémorisée en `localStorage` (le cookie est
-    `HttpOnly`, jamais lu). CSP : `script-src` et `frame-src` autorisent
+    `HttpOnly`, jamais lu). Délai d'abandon 12 s, porté à 3 min dès que
+    Turnstile signale un défi interactif (`before-interactive-callback`) : la
+    case à cocher apparaît en bas à droite et la personne doit avoir le temps
+    de la voir — un navigateur automatisé (Playwright, headless) reçoit
+    systématiquement ce défi, ce qui rend le flux invérifiable de bout en bout
+    autrement que dans un navigateur réel (clés de test : `3x…FF` force le
+    défi interactif en local). CSP : `script-src` et `frame-src` autorisent
     `https://challenges.cloudflare.com` (`public/_headers`). Politique de
     confidentialité § 2 mise à jour dans les 4 locales.
   - Configuration : widget Turnstile créé dans le tableau de bord Cloudflare
