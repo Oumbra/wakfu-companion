@@ -17,7 +17,9 @@
 #               wakassets, docs/analyse-cgu.md reco 5). Les icônes wakassets
 #               (vertylo.github.io) passent par notre relais /api/v1/icons depuis le 2026-09-20
 #               (src/app/core/utils/wakassets-url.util.ts) : même origine, plus d'exception ici.
-#   scripts   : aucun inline (le script anti-flash du thème vit dans public/theme-init.js, voir
+#   scripts   : challenges.cloudflare.com (widget Turnstile du jeton d'application, chargé à la
+#               demande par src/app/core/api/app-token.service.ts — script-src ET frame-src, le
+#               widget vit dans une iframe). Aucun inline (le script anti-flash du thème vit dans public/theme-init.js, voir
 #               src/index.html) ; les blocs JSON-LD ne sont pas exécutés, la CSP ne les concerne pas.
 #   styles    : 'unsafe-inline' requis — Angular injecte les styles de composants dans des <style>.
 #   connect   : API et service worker (ngsw.json) sur la même origine ; aucun appel tiers.
@@ -29,4 +31,4 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static.ankama.com; font-src 'self'; connect-src 'self'; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static.ankama.com; font-src 'self'; connect-src 'self'; frame-src https://challenges.cloudflare.com; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'

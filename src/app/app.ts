@@ -6,6 +6,7 @@ import { SeoService } from './core/services/seo.service';
 import { PurchaseRecord, StatsStoreService } from './core/services/stats-store.service';
 import { I18nService } from './core/services/i18n.service';
 import { CatalogService } from './core/api/catalog.service';
+import { AppTokenService } from './core/api/app-token.service';
 import { NavigationService } from './core/services/navigation.service';
 import { SetupComponent } from './features/setup/setup.component';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
@@ -93,6 +94,7 @@ export class App implements OnInit {
   // vue/locale (voir SeoService).
   private readonly seo = inject(SeoService);
   private readonly catalog = inject(CatalogService);
+  private readonly appToken = inject(AppTokenService);
   private readonly auth = inject(AuthService);
   private readonly gameServers = inject(GameServerService);
   // Idem : démarre l'effet de déclenchement automatique du pas-à-pas d'onboarding dès le démarrage
@@ -104,6 +106,10 @@ export class App implements OnInit {
 
   ngOnInit(): void {
     void this.logFileAccess.init();
+    // Jeton d'application (cookie `wc_app`, voir AppTokenService) demandé dès le démarrage, en
+    // avance de phase et sans bloquer quoi que ce soit : les routes référentiel appelées ci-dessous
+    // l'exigent, et un 403 `app_token_required` est de toute façon rattrapé par ApiClientService.
+    void this.appToken.ensure();
     // Chargement du catalogue Ankama (objets/monstres/donjons) — voir
     // core/api/catalog.service.ts. Lot 3.1 étape 3 : appelé dès maintenant
     // (et pas seulement à l'étape 7/état de démarrage explicite) car les

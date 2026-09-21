@@ -28,6 +28,10 @@ export const PAIR_RULE: RateLimitRule = { limit: 20, windowMs: 10 * 60 * 1000 };
 export const PAIR_CLAIM_RULE: RateLimitRule = { limit: 15, windowMs: 10 * 60 * 1000 };
 /** Sondage d'un appairage par l'overlay, par `deviceCode` : rythme ~3s pendant 10 min ⇒ jusqu'à ~200 appels légitimes. */
 export const PAIR_POLL_RULE: RateLimitRule = { limit: 250, windowMs: 10 * 60 * 1000 };
+/** Émission du jeton d'application (`POST /api/v1/app/token`), par IP : un navigateur en demande un
+ * toutes les 12 h, quelques-uns de plus en cas d'échec Turnstile ou de plusieurs profils derrière une
+ * même IP — 20 par 10 min laisse large, et borne le coût `siteverify` d'un appelant abusif. */
+export const APP_TOKEN_RULE: RateLimitRule = { limit: 20, windowMs: 10 * 60 * 1000 };
 
 export interface RateLimitResult {
   allowed: boolean;

@@ -37,6 +37,7 @@ function sleep(ms: number): Promise<void> {
 export class ApiClientService {
   private readonly baseUrl = '/api/v1';
   private unauthorizedHandler: (() => void) | null = null;
+  private appTokenRefreshHandler: (() => Promise<boolean>) | null = null;
 
   /**
    * Point d'accroche unique pour le `401` (lot 5, prompt 5.2 : « intercepteur
@@ -58,6 +59,27 @@ export class ApiClientService {
   }
 
   /**
+   * Point d'accroche du jeton d'application (voir `AppTokenService`, même principe que
+   * `setUnauthorizedHandler`, même raison de ne pas injecter le service ici) : un `403` portant le
+   * code `app_token_required` sur une route référentiel déclenche une demande de jeton, puis la
+   * requête est rejouée une seule fois. Le rappel renvoie `false` si aucun jeton n'a pu être
+   * obtenu — la requête échoue alors normalement, sans nouvelle tentative.
+   */
+  setAppTokenRefreshHandler(handler: () => Promise<boolean>): void {
+    this.appTokenRefreshHandler = handler;
+  }
+
+  /** Vrai si cette réponse 403 réclame un jeton d'application (corps `{ code: 'app_token_required' }`). */
+  private async isAppTokenRequired(response: Response): Promise<boolean> {
+    try {
+      const body = (await response.clone().json()) as { code?: unknown };
+      return body?.code === 'app_token_required';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
    * GET JSON avec retry (backoff simple) et timeout. Pas de retry sur une
    * erreur HTTP 4xx (le serveur a répondu, retenter ne changera rien) —
    * uniquement sur timeout/erreur réseau, où un aléa transitoire est
@@ -74,6 +96,7 @@ export class ApiClientService {
     const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     const retries = options?.retries ?? DEFAULT_RETRIES;
     let lastError: ApiError = { kind: 'network' };
+    let appTokenRetried = false;
 
     for (let attempt = 0; attempt <= retries; attempt++) {
       const controller = new AbortController();
@@ -88,6 +111,20 @@ export class ApiClientService {
         if (!response.ok) {
           lastError = { kind: 'http', status: response.status };
           this.notifyIfUnauthorized(response.status);
+          if (
+            response.status === 403 &&
+            !appTokenRetried &&
+            this.appTokenRefreshHandler &&
+            (await this.isAppTokenRequired(response))
+          ) {
+            // Jeton d'application absent ou expiré : on le (re)demande et on rejoue cette même
+            // tentative (pas une de plus, pas de délai) — une seule fois par appel.
+            appTokenRetried = true;
+            if (await this.appTokenRefreshHandler()) {
+              attempt--;
+              continue;
+            }
+          }
           if (response.status >= 400 && response.status < 500) break;
         } else {
           return { ok: true, data: (await response.json()) as T };

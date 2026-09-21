@@ -99,7 +99,70 @@ DATABASE_URL=... npm run db:migrate
   `Sec-Fetch-Site: same-origin` (relayé tel quel par le proxy `ng serve`,
   valable sur les previews Pages), l'overlay par une session valide en
   `Authorization: Bearer` (il envoie son jeton sur ces routes depuis le
-  2026-09-20, `overlay-sync/src/client.rs`). Tout autre appelant : 403.
+  2026-09-20, `overlay-sync/src/client.rs`). Tout autre appelant : 403. **Complété le
+  2026-09-21** : sur les routes de données (pas le relais d'icônes), le site
+  doit en plus présenter le jeton d'application, point suivant.
+- **Jeton d'application du site** (2026-09-21, `docs/analyse-cgu-2026-09-21.md`,
+  recommandation 4, options B + C ; logique pure dans `server/http/app-token.ts`
+  et `server/http/turnstile.ts`, testées) : `Sec-Fetch-Site` seul est un
+  en-tête qu'un client non navigateur écrit librement. Les routes `catalog/*`,
+  `items/{id}`, `monsters/{id}`, `monster-loot`, `monster-families` et
+  `dungeons` exigent donc aussi le cookie `wc_app` (`HttpOnly`, `Secure`,
+  `SameSite=Strict`, `Path=/api/v1`, 12 h) : un jeton
+  `<issuedAtMs>.<HMAC-SHA256>` signé avec `APP_TOKEN_SECRET` (à défaut
+  `DATABASE_URL` comme matière à clé, même repli que `RATE_LIMIT_SALT`), sans
+  état en base. Sans cookie valide, la route répond 403 avec le code
+  `app_token_required` ; `ApiClientService` (client) redemande alors un jeton
+  et rejoue la requête une fois. Un navigateur connecté (cookie de session)
+  et l'overlay (`Bearer`) passent sans jeton d'application. Le relais
+  `icons/*` ne l'exige pas (`rejectUnknownCaller(..., { appToken: false })`) :
+  une `<img>` peut partir avant que le jeton n'existe, et ces fichiers sont
+  publics sur wakassets.
+  - `GET /api/v1/app/token` — `{ siteKey, ttlSeconds, hasToken }` (same-origin
+    requis). `siteKey` = clé de site Cloudflare Turnstile, `null` si Turnstile
+    n'est pas configuré.
+  - `POST /api/v1/app/token` — corps `{ turnstileToken }` ; quand
+    `TURNSTILE_SECRET_KEY` est posé, vérifie le jeton auprès de `siteverify`
+    (`success`, `action` = `app-token`, `hostname` ∈ {hôte de `PUBLIC_BASE_URL`,
+    hôte de la requête}, échec réseau = refus) puis pose le cookie et répond
+    `{ ok, expiresAt }`. 403 `turnstile_failed` sinon. Sans clé de site NI secret
+    (développement local sans `.dev.vars` dédié) : jeton émis sans
+    vérification ; l'un sans l'autre : 503. Limité par IP (`APP_TOKEN_RULE`,
+    20 par 10 min, même table `auth_rate_limits` que les routes `/auth/*`) :
+    429 au-delà — c'est ce qui borne le coût `siteverify` et le « farming » de
+    cookies, le rate limiting de zone Cloudflare n'étant pas disponible sur le
+    plan du projet (voir ci-dessous).
+  - Côté client : `src/app/core/api/app-token.service.ts` — `ensure()` au
+    démarrage (`App.ngOnInit`), widget Turnstile en `appearance:
+    'interaction-only'` (invisible sauf interaction requise) dans un conteneur
+    fixé en bas à droite, échéance mémorisée en `localStorage` (le cookie est
+    `HttpOnly`, jamais lu). CSP : `script-src` et `frame-src` autorisent
+    `https://challenges.cloudflare.com` (`public/_headers`). Politique de
+    confidentialité § 2 mise à jour dans les 4 locales.
+  - Configuration : widget Turnstile créé dans le tableau de bord Cloudflare
+    (Turnstile → Add widget, mode *Managed*, domaines `wakfu-companion.com` pour
+    la prod et `wakfu-companion.pages.dev` pour la preview — un widget par
+    environnement), puis variable GitHub `TURNSTILE_SITE_KEY`(`_PREVIEW`) et
+    secrets `TURNSTILE_SECRET_KEY`(`_PREVIEW`), `APP_TOKEN_SECRET`(`_PREVIEW`)
+    (`openssl rand -hex 32`), poussés par les workflows comme les autres. En
+    local, les clés de test Cloudflare (`TURNSTILE_SITE_KEY=1x00000000000000000000AA`,
+    `TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA` dans `.dev.vars`)
+    exercent tout le circuit : pour ces seuls secrets, `action` et `hostname`
+    ne sont pas contrôlés (réponse de démonstration de Cloudflare).
+  - **Rate limiting de périphérie (option A)** : non retenu — le réglage
+    *Security* → *WAF* → *Rate limiting rules* n'est pas disponible sur le plan
+    Cloudflare du projet (constat du mainteneur, 2026-09-21). Ce que ça aurait
+    apporté (freiner un flot de requêtes avant l'exécution des fonctions) n'a
+    pas d'équivalent en code : une fonction doit s'exécuter pour refuser. Le
+    risque résiduel est donc un coût (quota d'invocations Pages, compute Neon)
+    en cas de flot, pas une redistribution des données — celle-ci est couverte
+    par le jeton d'application + Turnstile, et l'émission du jeton est limitée
+    par IP dans le code (ci-dessus). `RATE_LIMIT_SALT`/`auth_rate_limits`
+    (`server/auth/rate-limit.ts`) sont ce mécanisme en base, pas un réglage
+    Cloudflare. *Bot Fight Mode* (*Security* → *Bots*, disponible en gratuit) est
+    à essayer avec prudence : il peut défier l'overlay (client Rust, pas un
+    navigateur) et n'est pas configurable par chemin — vérifier l'overlay après
+    activation, désactiver s'il est bloqué.
 - `GET /api/v1/catalog/version` — métadonnées du dernier import catalogue
   (voir plus bas).
 - `GET /api/v1/catalog/` — index compact objets+monstres, gzip (surtout

@@ -3,8 +3,9 @@
  * une table `monsters.loot` (voir server/db/schema.ts) puisqu'ils ne sont pas propres à un monstre
  * précis, donc systématiquement marqués `'doubtful'` par `resolveLootConfidence`
  * (core/utils/loot-confidence.util.ts) sans ce référentiel. Curée à la main par l'utilisateur à
- * partir d'une analyse statistique réelle sur la base de production (voir
- * `server/import/analyze-universal-loot.ts`, `npm run main:analyze:universal-loot`) : signal retenu
+ * partir d'une analyse statistique ponctuelle sur la base de production (script d'analyse
+ * `server/import/analyze-universal-loot.ts`, supprimé le 2026-09-21 une fois la liste établie —
+ * voir l'historique git) : signal retenu
  * pour juger de l'universalité d'un objet marqué "doute" = apparition dans de nombreux donjons
  * différents plutôt qu'un seul (auquel cas il s'agit plutôt d'un trou du référentiel `monsters.loot`
  * pour UN monstre précis, à corriger dans le référentiel plutôt qu'ici).

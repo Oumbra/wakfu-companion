@@ -19,4 +19,12 @@ export interface Env {
    * `server/auth/rate-limit.ts::clientIpKey`). Optionnel : à défaut, `DATABASE_URL` sert de
    * matière à clé — poser un secret dédié reste préférable (rotation indépendante). */
   RATE_LIMIT_SALT?: string;
+  /** Jeton d'application du site (`server/http/app-token.ts`) : secret HMAC — à défaut,
+   * `DATABASE_URL` sert de matière à clé, comme pour `RATE_LIMIT_SALT`. */
+  APP_TOKEN_SECRET?: string;
+  /** Cloudflare Turnstile (`server/http/turnstile.ts`, `functions/api/v1/app/token.ts`) : clé de
+   * site (publique, variable Pages) et secret. Absents ensemble = jeton émis sans vérification
+   * (développement local) ; l'un sans l'autre = 503. */
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
 }
