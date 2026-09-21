@@ -480,3 +480,11 @@ seul compte à la fois par serveur. »
   `wc_app` + vérification Turnstile (voir la ligne 4 du tableau pour le détail des fichiers et ce
   qui reste à configurer côté Cloudflare). Politique de confidentialité § 2 et date au 21 septembre
   2026 dans les 4 locales.
+- **2026-09-21** — Mise en service : widgets Turnstile créés (production `wakfu-companion.com`,
+  preview `claude-dev.wakfu-companion.com`, mode *Managed*, sans pre-clearance), variables et
+  secrets GitHub posés, commits `2410cc1` (fonctionnalité) et `254d527` (délai porté à 3 min pendant
+  un défi interactif, constaté sur la preview) ; flux vérifié en navigateur réel sur la preview
+  (passage invisible en fenêtre privée, chemin interactif après clic) ; fusion dans `main` et
+  déploiement en production vérifiés (`120abfb`). Registre des traitements du responsable (hors
+  dépôt) mis à jour — version 8 : Turnstile au traitement n° 2 et à l'annexe A, décision motivée au
+  § 7, fiche sous-traitants et note d'absence d'AIPD complétées.
