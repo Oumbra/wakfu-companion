@@ -1,0 +1,147 @@
+import type { PagesFunction } from '@cloudflare/workers-types';
+import { readCookie } from '../../../../server/auth/cookies';
+import {
+  APP_TOKEN_COOKIE,
+  APP_TOKEN_TTL_MS,
+  appTokenCookie,
+  appTokenSecret,
+  signAppToken,
+  verifyAppToken,
+} from '../../../../server/http/app-token';
+import { APP_TOKEN_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
+import { isSameOriginRequest } from '../../../../server/http/caller';
+import { verifyTurnstileToken } from '../../../../server/http/turnstile';
+import { authStore, json, jsonError, publicBaseUrl } from '../../_auth';
+import type { Env } from '../../_types';
+
+/**
+ * Jeton d'application du site (`docs/analyse-cgu-2026-09-21.md`, recommandation 4, options B + C ;
+ * voir `server/http/app-token.ts` pour le pourquoi et la forme du jeton).
+ *
+ * - `GET /api/v1/app/token` — configuration publique : `{ siteKey, ttlSeconds, hasToken }`.
+ *   `siteKey` est la clé de site Turnstile (publique par nature) ou `null` quand Turnstile n'est
+ *   pas configuré sur cet environnement (`TURNSTILE_SITE_KEY` absent) ; `hasToken` dit si le
+ *   cookie porté par cette requête est encore valide — le client s'en sert au démarrage.
+ * - `POST /api/v1/app/token` — corps `{ turnstileToken }` ; vérifie le jeton Turnstile auprès de
+ *   `siteverify` quand `TURNSTILE_SECRET_KEY` est configuré (403 `turnstile_failed` sinon), puis
+ *   pose le cookie `wc_app` et répond `{ ok: true, expiresAt }`.
+ *
+ * Les deux verbes exigent `Sec-Fetch-Site: same-origin` : le jeton n'est destiné qu'au site
+ * lui-même (l'overlay a sa session `Bearer`). Le `POST` est limité par IP (`APP_TOKEN_RULE`,
+ * 20 par 10 min, même mécanisme en base que les routes `/auth/*` — voir
+ * `server/auth/rate-limit.ts`) : c'est la seule écriture de la route, et elle borne le coût
+ * `siteverify` et le « farming » de cookies d'un appelant abusif, sans dépendre d'un réglage de
+ * périphérie Cloudflare (le rate limiting de zone n'est pas disponible sur le plan du projet). Un
+ * jeton Turnstile est de toute façon à usage unique : un automate n'en obtient pas gratuitement.
+ *
+ * Turnstile non configuré (ni clé de site ni secret) : le jeton est émis sans vérification — c'est
+ * le cas du développement local sans `.dev.vars` dédié, et le comportement doit rester utilisable.
+ * En production, les workflows poussent les deux (`TURNSTILE_SITE_KEY` en variable,
+ * `TURNSTILE_SECRET_KEY` en secret) ; une clé de site sans secret (ou l'inverse) est une
+ * configuration incohérente signalée par un 503 plutôt que silencieusement contournée.
+ */
+
+const MAX_BODY_BYTES = 4096;
+
+function notSameOrigin(): Response {
+  return jsonError('appelant non autorisé', 403);
+}
+
+/** Noms d'hôte (sans port) admis pour le `hostname` renvoyé par `siteverify` : l'origine publique
+ * déclarée (`PUBLIC_BASE_URL`, prod ou preview stable) et l'hôte réellement servi (URL par
+ * déploiement d'une preview, `localhost` en développement). Le domaine du widget Turnstile borne
+ * de toute façon où un jeton peut être obtenu. */
+function expectedHostnames(request: Request, env: Env): Set<string> {
+  const hosts = new Set<string>();
+  for (const candidate of [publicBaseUrl(request, env), request.url]) {
+    try {
+      hosts.add(new URL(candidate).hostname);
+    } catch {
+      // origine mal formée : ignorée, l'autre candidate suffit
+    }
+  }
+  return hosts;
+}
+
+export const onRequestGet: PagesFunction<Env> = async (context) => {
+  if (!isSameOriginRequest(context.request.headers)) return notSameOrigin();
+  const secret = appTokenSecret(context.env);
+  const hasToken = await verifyAppToken(
+    secret,
+    readCookie(context.request, APP_TOKEN_COOKIE),
+    Date.now(),
+  );
+  return json({
+    siteKey: context.env.TURNSTILE_SITE_KEY || null,
+    ttlSeconds: Math.floor(APP_TOKEN_TTL_MS / 1000),
+    hasToken,
+  });
+};
+
+export const onRequestPost: PagesFunction<Env> = async (context) => {
+  if (!isSameOriginRequest(context.request.headers)) return notSameOrigin();
+
+  const limit = await checkRateLimit(
+    authStore(context.env),
+    `app:token:ip:${await clientIpKey(context.request, context.env)}`,
+    APP_TOKEN_RULE,
+    new Date(),
+  );
+  if (!limit.allowed) {
+    return jsonError('trop de demandes de jeton, réessayez plus tard', 429, {
+      'retry-after': String(limit.retryAfterSeconds),
+    });
+  }
+
+  const siteKey = context.env.TURNSTILE_SITE_KEY || null;
+  const turnstileSecret = context.env.TURNSTILE_SECRET_KEY || null;
+  if ((siteKey === null) !== (turnstileSecret === null)) {
+    return jsonError('Turnstile mal configuré (clé de site et secret vont ensemble)', 503);
+  }
+
+  const raw = await context.request.text();
+  if (raw.length > MAX_BODY_BYTES) return jsonError('corps trop volumineux', 413);
+  let body: unknown = null;
+  if (raw.length > 0) {
+    try {
+      body = JSON.parse(raw);
+    } catch {
+      return jsonError('corps JSON invalide', 400);
+    }
+  }
+  const turnstileToken =
+    typeof body === 'object' && body !== null && 'turnstileToken' in body
+      ? (body as { turnstileToken: unknown }).turnstileToken
+      : null;
+
+  if (turnstileSecret !== null) {
+    const verification = await verifyTurnstileToken({
+      secret: turnstileSecret,
+      token: turnstileToken,
+      remoteIp: context.request.headers.get('cf-connecting-ip'),
+      expectedHostnames: expectedHostnames(context.request, context.env),
+    });
+    if (!verification.ok) {
+      return json(
+        {
+          error: 'vérification Turnstile refusée',
+          code: 'turnstile_failed',
+          reason: verification.reason,
+        },
+        403,
+      );
+    }
+  }
+
+  const secret = appTokenSecret(context.env);
+  if (!secret) return jsonError('jeton d’application non configuré', 503);
+  const now = Date.now();
+  const token = await signAppToken(secret, now);
+  const headers = new Headers();
+  headers.append('set-cookie', appTokenCookie(token));
+  return json(
+    { ok: true, expiresAt: new Date(now + APP_TOKEN_TTL_MS).toISOString() },
+    200,
+    headers,
+  );
+};

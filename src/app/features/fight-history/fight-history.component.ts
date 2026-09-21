@@ -815,7 +815,7 @@ export class FightHistoryComponent {
     ).url;
   }
 
-  /** URLs de repli pour `fightImageUrl` ci-dessus si l'URL Ankama échoue au chargement (voir
+  /** URLs de repli pour `fightImageUrl` ci-dessus si sa 1ʳᵉ source échoue au chargement (voir
    * onFightImageError/monsterPictureFallbacks) — vide pour un donjon ou une illustration déjà
    * générique. Encodées dans un attribut `data-*` de l'`<img>` (voir template) plutôt que dans un
    * état de composant : chaque `<img>` porte lui-même sa propre chaîne de secours restante. */
@@ -869,9 +869,9 @@ export class FightHistoryComponent {
     return entry.representative.loot.some((item) => item.catalogId === stoneId) ? stoneId : null;
   }
 
-  /** L'URL Ankama de `fightImageUrl` (1er choix, meilleure qualité) peut ne pas exister pour de vrai
-   * (403, ~24/851 monstres du référentiel actuel — voir monsterPictureFallbacks) : avant de tomber
-   * sur l'illustration générique, essayer un par un les replis wakassets posés sur l'`<img>` via
+  /** La 1ʳᵉ source de `fightImageUrl` (wakassets `monsters/`) peut ne pas exister pour de vrai
+   * (monstres qui n'ont qu'une bannière `monsterIllustrations/`, voir monsterPictureFallbacks) :
+   * avant de tomber sur l'illustration générique, essayer un par un les replis posés sur l'`<img>` via
    * `data-fallback-urls` (voir template/fightImageFallbacks) — même principe que
    * EntityIconComponent.onError, adapté ici en pur DOM (pas de state de composant par ligne) car
    * cette illustration est rendue inline dans un `@for`, pas via un composant dédié par entité. */

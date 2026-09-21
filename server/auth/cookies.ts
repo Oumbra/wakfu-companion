@@ -45,14 +45,19 @@ interface CookieOptions {
   maxAgeSeconds: number;
   httpOnly: boolean;
   path?: string;
+  /** `Lax` par défaut (cookies d'authentification : le retour OAuth est une navigation
+   * cross-site) ; `Strict` pour le jeton d'application (`server/http/app-token.ts`), qui ne
+   * sert qu'à des requêtes émises par la page elle-même. */
+  sameSite?: 'Lax' | 'Strict';
 }
 
-function serializeCookie(name: string, value: string, options: CookieOptions): string {
+/** Exporté pour `server/http/app-token.ts` (cookie `wc_app`) — même sérialisation, mêmes attributs par défaut. */
+export function serializeCookie(name: string, value: string, options: CookieOptions): string {
   const parts = [
     `${name}=${encodeURIComponent(value)}`,
     `Path=${options.path ?? '/'}`,
     `Max-Age=${options.maxAgeSeconds}`,
-    'SameSite=Lax',
+    `SameSite=${options.sameSite ?? 'Lax'}`,
     'Secure',
   ];
   if (options.httpOnly) parts.push('HttpOnly');

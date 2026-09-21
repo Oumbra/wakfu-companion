@@ -12,8 +12,10 @@ import { CatalogService } from '../api/catalog.service';
 import { ApiClientService, ApiResult } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 
+/** Miroir de `monsterPictureUrl` (fight-image.util.ts) : wakassets via le relais, plus
+ * `static.ankama.com` depuis le 2026-09-20 (docs/analyse-cgu.md, recommandation 5). */
 function monsterPictureUrl(gfxId: string): string {
-  return `https://static.ankama.com/wakfu/portal/game/monster/42/${gfxId}.png`;
+  return `/api/v1/icons/monsters/${gfxId}.png`;
 }
 
 // Tuple v3 (server/catalog/compact-index.ts) :
@@ -462,20 +464,18 @@ describe('resolveFightImageInfo (tooltip)', () => {
   });
 });
 
-describe('resolveFightImageInfo (fallbackUrls, bug réel corrigé le 2026-08-24 : image Ankama absente pour certains monstres, ex. "Larve Verte")', () => {
-  it('propre image d’un monstre (repli boss/archi/dominant/plus gros dégât) -> 2 replis wakassets (monsters puis monsterIllustrations)', async () => {
+describe('resolveFightImageInfo (fallbackUrls : monstres qui n’ont qu’une bannière monsterIllustrations, voir la règle catalog-assets)', () => {
+  it('propre image d’un monstre (repli boss/archi/dominant/plus gros dégât) -> 1 repli wakassets (monsterIllustrations)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 
     const info = resolveFightImageInfo(catalog, ['Ennemi Normal A', 'Ennemi Normal B']);
 
-    expect(info.fallbackUrls).toEqual([
-      '/api/v1/icons/monsters/900110.png',
-      '/api/v1/icons/monsterIllustrations/900110.png',
-    ]);
+    expect(info.url).toBe('/api/v1/icons/monsters/900110.png');
+    expect(info.fallbackUrls).toEqual(['/api/v1/icons/monsterIllustrations/900110.png']);
   });
 
-  it('illustration de donjon -> aucun repli (pas concerné par le bug Ankama/monstre)', async () => {
+  it('illustration de donjon -> aucun repli (jamais une image de monstre)', async () => {
     const catalog = setupCatalog();
     await catalog.initialize();
 

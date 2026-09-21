@@ -2,6 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { gt, sql } from 'drizzle-orm';
 import { createDb } from '../../../server/db/client';
 import { monsters } from '../../../server/db/schema';
+import { rejectUnknownCaller } from '../_caller';
 import type { Env } from '../_types';
 
 // GET /api/v1/monster-loot — table de loot par monstre (`monsters.loot`), pour
@@ -20,6 +21,9 @@ import type { Env } from '../_types';
 // monstres avec au moins un objet connu (`loot.length > 0` filtré en SQL via gt(length, 0)) — pas
 // la peine d'envoyer un tableau vide pour les ~127 monstres sans loot connu.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);
   const rows = await db
     .select({ id: monsters.id, loot: monsters.loot })

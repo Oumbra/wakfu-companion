@@ -10,44 +10,30 @@ import { BREACH_IMAGE_URL, ULTIMATE_BREACH_IMAGE_URL } from '../data/breach-icon
 import { wakassetsIconUrl } from './wakassets-url.util';
 
 /** Illustration générique wakassets, utilisée en repli erreur réseau (voir onFightImageError dans
- * fight-history.component.ts) quand même les replis wakassets d'un monstre échouent. Depuis le
+ * fight-history.component.ts) quand les sources wakassets d'un monstre échouent toutes. Depuis le
  * 2026-08-24, n'est PLUS utilisée pour le cas "horde hétérogène" (voir BREACH_IMAGE_URL ci-dessous,
  * plus précis). */
 export const DEFAULT_FIGHT_IMAGE_URL = wakassetsIconUrl('bossIllustrations', 'default.png');
 
 /**
- * Illustration officielle Ankama d'un monstre (utilisée pour l'illustration de combat, PAS pour
- * l'icône de dégâts/suivi — voir entity-icon.component.ts qui utilise wakassets). Contrairement à
- * l'URL équivalente pour un objet (voir item-icon.component.ts), le GABARIT d'URL EST intégralement
- * déductible du `gfxId` : vérifié strictement 851/851 sur le référentiel actuel (le segment "42"
- * est constant pour tous les monstres) — c'est pourquoi elle n'est volontairement PAS incluse dans
- * l'index compact du catalogue (voir server/catalog/compact-index.ts). ⚠️ Ne garantit PAS que
- * l'asset existe réellement à cette URL pour tout `gfxId` (au moins 24/851 renvoient 403, voir
- * monsterPictureFallbacks juste en dessous — bug réel corrigé le 2026-08-24, ex. "Larve Verte") :
- * cette fonction reste volontairement le 1er choix (image officielle) mais jamais la seule
- * tentative côté appelant.
+ * Illustration d'un monstre pour l'historique de combat (PAS l'icône de dégâts/suivi, voir
+ * entity-icon.component.ts qui utilise la même chaîne de sources) : `monsters/{gfxId}.png` sur
+ * wakassets, puis `monsterIllustrations/{gfxId}.png` en repli (quelques boss n'ont qu'une bannière
+ * rectangulaire, voir la règle catalog-assets). Jusqu'au 2026-09-20, la 1ʳᵉ tentative était l'image
+ * officielle `static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png` (gabarit déductible du
+ * `gfxId`, vérifié 851/851 — mais au moins 24 assets absents, 403), dont la protection anti-hotlink
+ * devait être contournée par `referrerpolicy="no-referrer"` : retirée (docs/analyse-cgu.md,
+ * recommandation 5), wakassets couvre 842 monstres sur 851 (les 9 restants retombent sur
+ * DEFAULT_FIGHT_IMAGE_URL via onFightImageError dans fight-history.component.ts).
  */
 function monsterPictureUrl(gfxId: string): string {
-  return `https://static.ankama.com/wakfu/portal/game/monster/42/${gfxId}.png`;
+  return wakassetsIconUrl('monsters', `${gfxId}.png`);
 }
 
-/**
- * URLs de repli (wakassets, voir shared/entity-icon/entity-icon.component.ts) pour l'illustration
- * "propre image du monstre" de resolveFightImageInfo — bug réel corrigé le 2026-08-24 : contrairement
- * à ce qu'affirmait un commentaire d'origine ("851/851 déductible du gfxId"), au moins 24 monstres du
- * référentiel actuel (champ `wakfu_available: false`, ex. "Larve Verte")
- * n'ont PAS d'image sur le CDN Ankama (403, asset absent) alors que wakassets l'a bien (200) — ce
- * champ `wakfu_available` n'est de toute façon pas inclus dans l'index compact servi au client (voir
- * server/catalog/compact-index.ts), donc pas exploitable directement ici : on tente Ankama en premier
- * (image officielle, meilleure qualité) puis ces deux replis en cas d'échec de chargement (voir
- * onFightImageError dans fight-history.component.ts), plutôt que de tomber directement sur
- * l'illustration générique DEFAULT_FIGHT_IMAGE_URL comme avant ce correctif.
- */
+/** URLs de repli pour `monsterPictureUrl` (voir ci-dessus), essayées par l'appelant en cas d'échec de
+ * chargement (voir onFightImageError dans fight-history.component.ts). */
 function monsterPictureFallbacks(gfxId: string): string[] {
-  return [
-    wakassetsIconUrl('monsters', `${gfxId}.png`),
-    wakassetsIconUrl('monsterIllustrations', `${gfxId}.png`),
-  ];
+  return [wakassetsIconUrl('monsterIllustrations', `${gfxId}.png`)];
 }
 
 /** Au-delà de ce nombre de familles distinctes parmi les ennemis, le combat est considéré comme une horde hétérogène (pas un donjon/archi/dominant précis) — voir resolveFightImageUrl. */
@@ -204,8 +190,8 @@ export function findDungeonForEnemies(
  * d'historique de combat".
  *
  * `fallbackUrls` (voir FightImageInfo) accompagne `url` pour les priorités 1(repli)/3/4/5 (propre
- * image d'un monstre, jamais un donjon) : des replis wakassets, à essayer par l'appelant si `url`
- * (CDN Ankama) échoue au chargement — voir monsterPictureFallbacks.
+ * image d'un monstre, jamais un donjon) : un repli wakassets, à essayer par l'appelant si `url`
+ * échoue au chargement — voir monsterPictureFallbacks.
  *
  * Fonction PARAMÉTRÉE (pas un service) : `catalog` doit être un
  * `CatalogService` déjà injecté par l'appelant (composant), voir

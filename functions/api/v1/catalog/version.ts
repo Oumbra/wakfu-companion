@@ -2,6 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { eq } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { catalogMeta } from '../../../../server/db/schema';
+import { rejectUnknownCaller } from '../../_caller';
 import type { Env } from '../../_types';
 
 // GET /api/v1/catalog/version — métadonnées du dernier import réussi (voir
@@ -9,6 +10,9 @@ import type { Env } from '../../_types';
 // référentiel : sourceCommit + indexHash servent d'équivalent pour
 // détecter côté client si le catalogue local (lot 3) est à jour.
 export const onRequestGet: PagesFunction<Env> = async (context) => {
+  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  const rejected = await rejectUnknownCaller(context.request, context.env);
+  if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);
   const [row] = await db.select().from(catalogMeta).where(eq(catalogMeta.id, 'catalog')).limit(1);
 

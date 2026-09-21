@@ -85,11 +85,11 @@ export interface CompactIndexMonsterInput {
  * +7 559 octets bruts / +1 301 octets gzip pour les 851 monstres — négligeable
  * par rapport au total (voir server/README.md pour la mesure v2 de référence).
  * PAS de pictureUrl monstre dans l'index (contrairement à ce qui a été
- * envisagé pour les objets) : contrairement à ceux-ci, l'URL est
- * intégralement déductible de gfxId
- * (`https://static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`,
- * vérifié strictement 851/851 sur le référentiel actuel — voir
- * fight-image.util.ts).
+ * envisagé pour les objets) : le client construit lui-même l'URL wakassets
+ * à partir de gfxId (voir fight-image.util.ts / entity-icon.component.ts ;
+ * jusqu'au 2026-09-20 c'était l'URL officielle
+ * `static.ankama.com/wakfu/portal/game/monster/42/{gfxId}.png`, elle aussi
+ * déductible de gfxId — abandonnée, voir docs/analyse-cgu.md, reco 5).
  *
  * v4 — ajoute `category` (WakfuItemCategoryCode, voir server/db/schema.ts) aux objets, encodé en
  * entier via CATEGORY_SORT_ORDER (même principe que `raritySortOrder`) : filtre par icône de

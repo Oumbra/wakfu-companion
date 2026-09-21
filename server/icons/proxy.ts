@@ -75,8 +75,9 @@ export function relayHeaders(status: 200 | 404): Record<string, string> {
   return {
     'content-type': status === 200 ? 'image/png' : 'application/json',
     'cache-control': `public, max-age=${maxAge}`,
-    // Le site charge lui aussi ses icônes par ici (même origine, CORS sans objet) ; l'en-tête
-    // reste pour l'overlay et rien de personnel ne transite dans une icône.
-    'access-control-allow-origin': '*',
+    // Pas d'`access-control-allow-origin: *` (retiré le 2026-09-20, `docs/analyse-cgu.md`,
+    // recommandation 8) : le site est de même origine et l'overlay n'est pas un navigateur —
+    // l'en-tête ne servait qu'à un tiers, que `rejectUnknownCaller` (`functions/api/_caller.ts`)
+    // refuse désormais.
   };
 }

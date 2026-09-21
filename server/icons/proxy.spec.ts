@@ -54,5 +54,6 @@ describe('relais d’icônes wakassets', () => {
     expect(miss['content-type']).toBe('application/json');
     expect(miss['cache-control']).toBe(`public, max-age=${MISS_MAX_AGE_SECONDS}`);
     expect(MISS_MAX_AGE_SECONDS).toBeLessThan(HIT_MAX_AGE_SECONDS);
+    expect(hit['access-control-allow-origin']).toBeUndefined();
   });
 });

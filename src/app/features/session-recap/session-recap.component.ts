@@ -236,7 +236,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
    * (dépendent des données de la période chargée), pas une liste connue à l'avance. */
   protected readonly expandedGroups = signal<ReadonlySet<string>>(new Set());
   /** Clés (`RecapGroupRow.key`) dont la vignette (`row.pictureUrl`) a échoué au chargement (image
-   * absente côté CDN Ankama pour cet id) — bascule alors sur le pictogramme générique, voir
+   * absente côté wakassets pour cet id) — bascule alors sur le pictogramme générique, voir
    * `onThumbError`/template. Jamais vidé : un échec de chargement reste un échec pour le reste de
    * la session, pas besoin de retenter. */
   protected readonly failedThumbs = signal<ReadonlySet<string>>(new Set());

@@ -327,6 +327,25 @@ describe('CatalogService', () => {
     expect(service.hasMultipleWakfuItemEntriesByName('Objet Inconnu')).toBe(false);
   });
 
+  it('résout un alias nom du log -> nom catalogue (« Eclat » singulier / « Eclats » en catalogue)', async () => {
+    const eclats = [27083, 'Eclats', 'Shards', 'Fragmentos', 'Fragmentos', 81127083, 0, 0, 0];
+    const { service } = setup({
+      cachedIndex: { indexHash: 'abc', items: [ITEM_TUPLE, eclats], monsters: [] },
+      cachedDungeons: [],
+      version: ok({ indexHash: 'abc' }),
+    });
+
+    await service.initialize();
+
+    // Voir wakfu-item-name-aliases.data.ts : l'alias est une clé supplémentaire de l'index, résolue
+    // par toutes les recherches par nom sans cas particulier chez l'appelant.
+    expect(service.findWakfuItemEntry('Eclat')?.id).toBe(27083);
+    expect(service.findAllWakfuItemEntriesByName('Eclat').map((e) => e.id)).toEqual([27083]);
+    expect(service.hasMultipleWakfuItemEntriesByName('Eclat')).toBe(false);
+    // Le nom catalogue reste résolu normalement.
+    expect(service.findWakfuItemEntry('Eclats')?.id).toBe(27083);
+  });
+
   it('getItemDetail/getMonsterDetail délèguent à ApiClientService et renvoient undefined en cas d’échec', async () => {
     const { service, getJson } = setup({});
     getJson.mockImplementation(async (path: string) => {
