@@ -13,7 +13,7 @@ import { ApiClientService, ApiResult } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 
 /** Miroir de `monsterPictureUrl` (fight-image.util.ts) : wakassets via le relais, plus
- * `static.ankama.com` depuis le 2026-09-20 (docs/analyse-cgu.md, recommandation 5). */
+ * `static.ankama.com` depuis le 2026-09-20 (docs/analyse-cgu-2026-09-21.md, recommandation 5). */
 function monsterPictureUrl(gfxId: string): string {
   return `/api/v1/icons/monsters/${gfxId}.png`;
 }

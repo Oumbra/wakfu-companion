@@ -25,7 +25,7 @@ export class AppFooterComponent {
 
   // Année courante de la mention imposée par la licence d'utilisation de données WAKFU
   // (« WAKFU MMORPG : © 2012-[année en cours] Ankama Studio. Tous droits réservés. »), calculée
-  // au chargement plutôt que codée dans les 4 locales — voir docs/analyse-cgu.md, § 3.5.
+  // au chargement plutôt que codée dans les 4 locales — voir docs/analyse-cgu-2026-09-21.md, § 3.5.
   protected readonly year = new Date().getFullYear();
 
   // BUILD_VERSION/BUILD_TIMESTAMP : générés par tools/generate-build-info.mjs

@@ -12,7 +12,7 @@ import type { Env } from '../_types';
 // combat de boss (findWakfuDungeonByBossMonsterId côté client, voir
 // core/utils/fight-image.util.ts).
 export const onRequestGet: PagesFunction<Env> = async (context) => {
-  // Réservé au site et à l'overlay (docs/analyse-cgu.md, reco 4) — voir functions/api/_caller.ts.
+  // Réservé au site et à l'overlay (docs/analyse-cgu-2026-09-21.md, reco 4) — voir functions/api/_caller.ts.
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const db = createDb(context.env.DATABASE_URL);

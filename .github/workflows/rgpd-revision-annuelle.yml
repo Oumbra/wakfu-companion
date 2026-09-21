@@ -74,6 +74,11 @@ jobs:
               `- [ ] Note d'absence d'AIPD : aucun nouveau critère CNIL/G29 atteint ?\n` +
               `- [ ] Procédure de violation de données : contacts, hébergeur, base et mécanisme d'authentification inchangés ?\n` +
               `- [ ] Politique de confidentialité, CGU, mentions légales : date « Dernière mise à jour » et contenu cohérents avec le code (4 locales).\n\n` +
+              `### Conformité CGU Ankama (\`docs/analyse-cgu-2026-09-21.md\`)\n` +
+              `- [ ] Re-télécharger les CGU Ankama, les Règles de conduite WAKFU et la licence de données WAKFU ; comparer avec les extraits du § 6 de l'analyse (numéros d'articles et formulations).\n` +
+              `- [ ] Rejouer l'audit article par article sur le code de l'année (marques et textes cachés, images et référentiel, API et relais d'icônes, overlay) et journaliser le résultat au § 7.\n` +
+              `- [ ] Demande d'autorisation à Ankama : envoyée ? réponse reçue et archivée dans \`docs/\` ? plan B déclenché en cas de refus ?\n` +
+              `- [ ] Mention imposée par la licence de données (\`footer.copyright\`, 4 locales) : libellé et année toujours exacts.\n\n` +
               `### Clôture\n` +
               `- [ ] Mettre à jour la ligne **Version** du registre et la date de relecture de chaque document touché.\n` +
               `- [ ] Fermer cette issue.\n`;

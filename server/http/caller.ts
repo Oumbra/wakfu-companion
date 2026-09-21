@@ -3,7 +3,7 @@
  * la partie pure, sans base ni `Request`, testée à part (`caller.spec.ts`) ; le branchement
  * Pages Functions (403, repli sur la session `Bearer`) vit dans `functions/api/_caller.ts`.
  *
- * Pourquoi (2026-09-20, `docs/analyse-cgu.md`, recommandations 4 et 8) : ces routes servent des
+ * Pourquoi (2026-09-20, `docs/analyse-cgu-2026-09-21.md`, recommandations 4 et 8) : ces routes servent des
  * données et des images du jeu — les objets/recettes sous la Licence d'utilisation de données
  * WAKFU (personnelle, non cessible, « dans le cadre de votre Projet », § 1-2), le reste sous
  * l'art. 13.2 des CGU Ankama. Une API ouverte à n'importe quel tiers est une redistribution de
