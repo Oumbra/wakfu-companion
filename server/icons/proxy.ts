@@ -20,8 +20,9 @@
 export const WAKASSETS_ORIGIN = 'https://vertylo.github.io/wakassets';
 
 /**
- * Les dossiers demandés par l'overlay (miroir de `IconRef::primary_folder` et de
- * `WAKASSETS_SPELLS_URL_PREFIX` dans `overlay-engine`) et par le site (`WakassetsFolder` dans
+ * Les dossiers demandés par l'overlay (miroir de `IconRef::primary_folder` dans `overlay-engine` :
+ * `spells` et `timePointBonus` pour les référentiels de sorts, dont les bonus PA/PM des monstres)
+ * et par le site (`WakassetsFolder` dans
  * `wakassets-url.util.ts` : `bossIllustrations`/`monstersfamily` pour les `pictureUrl` de
  * donjons/familles, `icons`/`aptitudes` pour les onglets de statistiques). Tout autre dossier est
  * refusé : ce relais n'est pas un proxy ouvert vers GitHub Pages.
@@ -35,6 +36,7 @@ export const ALLOWED_FOLDERS = new Set([
   'rarities',
   'itemTypes',
   'spells',
+  'timePointBonus',
   'icons',
   'aptitudes',
 ]);

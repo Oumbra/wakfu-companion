@@ -32,6 +32,12 @@ describe('relais d’icônes wakassets', () => {
     );
   });
 
+  it('relaie les bonus PA/PM des sorts de monstres (timePointBonus)', () => {
+    expect(upstreamUrl({ folder: 'timePointBonus', file: '9.png' })).toBe(
+      'https://vertylo.github.io/wakassets/timePointBonus/9.png',
+    );
+  });
+
   it('refuse tout ce qui n’est pas <dossier connu>/<nombre ou mot court>.png', () => {
     expect(upstreamUrl({ folder: 'autre', file: '1.png' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '1.jpg' })).toBeNull();
