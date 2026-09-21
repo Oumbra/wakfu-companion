@@ -34,9 +34,9 @@
  * insensible à la casse (`lower(name) = lower($1)`), jamais une comparaison « contient » — retirer
  * « Bobby » pour une demande de « Bob » serait une atteinte aux données d'un autre tiers.
  *
- * ⚠ Consigner la demande et son exécution dans le registre des traitements (hors dépôt,
- * `C:\\Users\\Oumbra\\Documents\\wakfu-companion-rgpd\\`) : date de réception, pseudonyme visé,
- * compteurs affichés ci-dessous, date de réponse au demandeur.
+ * ⚠ Consigner la demande et son exécution dans le registre des traitements (dossier RGPD du
+ * responsable, hors dépôt) : date de réception, pseudonyme visé, compteurs affichés ci-dessous,
+ * date de réponse au demandeur.
  */
 import { neon } from '@neondatabase/serverless';
 import { redactName } from '../settings/redact-name';
