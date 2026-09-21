@@ -218,6 +218,13 @@
       "when": 1789898722098,
       "tag": "0030_users_last_seen_at_not_null",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790001282335,
+      "tag": "0031_drop_users_default_game_server",
+      "breakpoints": true
     }
   ]
 }
