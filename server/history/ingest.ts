@@ -21,12 +21,14 @@ import type { FightInput, PactExtractionInput, PurchaseInput, TradeInput } from 
 /**
  * Ingestion idempotente de l'historique d'un compte — le cœur des quatre `POST /api/v1/history/*`
  * (`functions/api/v1/history/{fights,purchases,trades,pacts}.ts`), sorti des handlers pour être
- * rejouable HORS requête HTTP : le script de support `server/import/replay-user-history.ts`
- * réinjecte pour un compte donné exactement ce que son client aurait envoyé (charges utiles déjà
- * validées par `parse.ts`), avec les mêmes garanties d'idempotence et les mêmes traitements
- * dérivés (regroupement de donjon, `fight_type`). Les handlers ne gardent que l'authentification,
- * la lecture/validation du corps et la réponse HTTP — aucune logique d'écriture ne doit revenir
- * chez eux, sinon le rejeu et le live divergent.
+ * rejouable HORS requête HTTP (scripts d'import/rattrapage sous `server/import/`), avec les
+ * mêmes garanties d'idempotence et les mêmes traitements dérivés (regroupement de donjon,
+ * `fight_type`). Les handlers ne gardent que l'authentification, la lecture/validation du corps
+ * et la réponse HTTP — aucune logique d'écriture ne doit revenir chez eux, sinon un rejeu et le
+ * live divergent. Le script de rejeu par compte (`replay-user-history.ts`) a été retiré le
+ * 2026-09-21 : il supposait qu'un utilisateur envoie son `wakfu.log` complet au mainteneur
+ * (messages de tiers, identifiants de compte, jeton de session), canal de collecte que la
+ * politique de confidentialité ne décrit pas — voir `docs/analyse-rgpd.md` §9, point 5.
  *
  * Chaque fonction reçoit un lot DÉJÀ validé (`parseXxxBody`) et non vide, et renvoie la forme
  * exacte de la réponse HTTP (`accepted`/`inserted`), que les handlers renvoient telle quelle.

@@ -40,12 +40,12 @@ Voir `server/db/client.ts` pour l'implémentation.
 À ajouter comme **secrets GitHub Actions** (`Settings → Secrets and
 variables → Actions`) sur `oumbra/wakfu-companion` :
 
-| Secret                  | Description                                                                                                                                                                        |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `CLOUDFLARE_API_TOKEN`  | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                            |
-| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place.                                                                                                                                                                     |
-| `DATABASE_URL`          | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                        |
-| `DATABASE_URL_PREVIEW`  | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. Créer via _Neon → Branches → Create child branch_. |
+| Secret                  | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CLOUDFLARE_API_TOKEN`  | Déjà en place (déploiement Pages). Permission _Cloudflare Pages: Edit_.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `CLOUDFLARE_ACCOUNT_ID` | Déjà en place.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `DATABASE_URL`          | Chaîne de connexion **poolée** (PgBouncer intégré Neon, host `...-pooler...`) de la branche **production**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `DATABASE_URL_PREVIEW`  | Chaîne de connexion poolée d'une branche Neon **distincte**, dédiée à la preview (`claude/dev`) — jamais la branche production. **Sans données de production** (RGPD, `docs/analyse-rgpd.md` §9 point 2) : une branche enfant Neon copie les données du parent à sa création — créer la branche en **Schema-only** si le plan le propose, sinon exécuter aussitôt `TRUNCATE users, auth_rate_limits, oauth_authorizations, native_pairings CASCADE;` avant de brancher le secret. **Ne jamais utiliser _Reset from parent_** sur cette branche (recopie tous les comptes) ; en cas de dérive de schéma, recréer la branche selon la même règle. Constat du 2026-09-21 : la branche `Dev` actuelle ne contient que le compte de test du mainteneur. |
 
 Secrets/variables supplémentaires du **lot 5** (authentification), tous
 **optionnels** : tant qu'ils sont absents, `/api/v1/auth/{provider}/*` répond
@@ -134,7 +134,7 @@ DATABASE_URL=... npm run db:migrate
     plan du projet (voir ci-dessous).
   - Côté client : `src/app/core/api/app-token.service.ts` — `ensure()` au
     démarrage (`App.ngOnInit`), widget Turnstile en `appearance:
-    'interaction-only'` (invisible sauf interaction requise) dans un conteneur
+'interaction-only'` (invisible sauf interaction requise) dans un conteneur
     fixé en bas à droite, échéance mémorisée en `localStorage` (le cookie est
     `HttpOnly`, jamais lu). Délai d'abandon 12 s, porté à 3 min dès que
     Turnstile signale un défi interactif (`before-interactive-callback`) : la
@@ -146,7 +146,7 @@ DATABASE_URL=... npm run db:migrate
     `https://challenges.cloudflare.com` (`public/_headers`). Politique de
     confidentialité § 2 mise à jour dans les 4 locales.
   - Configuration : widget Turnstile créé dans le tableau de bord Cloudflare
-    (Turnstile → Add widget, mode *Managed*, domaines `wakfu-companion.com` pour
+    (Turnstile → Add widget, mode _Managed_, domaines `wakfu-companion.com` pour
     la prod et `wakfu-companion.pages.dev` pour la preview — un widget par
     environnement), puis variable GitHub `TURNSTILE_SITE_KEY`(`_PREVIEW`) et
     secrets `TURNSTILE_SECRET_KEY`(`_PREVIEW`), `APP_TOKEN_SECRET`(`_PREVIEW`)
@@ -156,7 +156,7 @@ DATABASE_URL=... npm run db:migrate
     exercent tout le circuit : pour ces seuls secrets, `action` et `hostname`
     ne sont pas contrôlés (réponse de démonstration de Cloudflare).
   - **Rate limiting de périphérie (option A)** : non retenu — le réglage
-    *Security* → *WAF* → *Rate limiting rules* n'est pas disponible sur le plan
+    _Security_ → _WAF_ → _Rate limiting rules_ n'est pas disponible sur le plan
     Cloudflare du projet (constat du mainteneur, 2026-09-21). Ce que ça aurait
     apporté (freiner un flot de requêtes avant l'exécution des fonctions) n'a
     pas d'équivalent en code : une fonction doit s'exécuter pour refuser. Le
@@ -165,7 +165,7 @@ DATABASE_URL=... npm run db:migrate
     par le jeton d'application + Turnstile, et l'émission du jeton est limitée
     par IP dans le code (ci-dessus). `RATE_LIMIT_SALT`/`auth_rate_limits`
     (`server/auth/rate-limit.ts`) sont ce mécanisme en base, pas un réglage
-    Cloudflare. *Bot Fight Mode* (*Security* → *Bots*, disponible en gratuit) est
+    Cloudflare. _Bot Fight Mode_ (_Security_ → _Bots_, disponible en gratuit) est
     à essayer avec prudence : il peut défier l'overlay (client Rust, pas un
     navigateur) et n'est pas configurable par chemin — vérifier l'overlay après
     activation, désactiver s'il est bloqué.
@@ -190,12 +190,12 @@ DATABASE_URL=... npm run db:migrate
   `monsters`, `monsterIllustrations`, `bossIllustrations`, `monstersfamily`,
   `rarities`, `itemTypes`, `spells`, `icons`, `aptitudes` ; fichier
   `<nombre>.png` (négatif accepté : `itemTypes/-1.png`) ou `<mot court en
-  minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
+minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   Sans authentification, mais **réservé au site et à l'overlay** depuis le
   2026-09-20 (`docs/analyse-cgu.md`, recommandation 8 : ne pas devenir un
   CDN public d'images du jeu) — même garde `rejectUnknownCaller` que les
   routes référentiel ci-dessus, 403 sinon, et `access-control-allow-origin:
-  *` a disparu. Réponse mise en cache à la périphérie
+*` a disparu. Réponse mise en cache à la périphérie
   (`caches.default`, une semaine pour une icône, une heure pour un 404
   amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
   l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
@@ -242,7 +242,7 @@ DATABASE_URL=... npm run db:migrate
   milliers de combats d'un bloc sortirait du budget CPU d'une Pages Function,
   alors que la pagination existante est déjà bornée. Le bouton « Exporter » de
   la page « Mon compte » produit ainsi `{ data: <configuration locale>, account:
-  <cette réponse + history> }` ; en invité, seulement `data`. Tout ou rien côté
+<cette réponse + history> }` ; en invité, seulement `data`. Tout ou rien côté
   client : aucun fichier n'est écrit si une requête échoue.
 - `DELETE /api/v1/auth/account` — suppression du compte (RGPD, cascade).
 - `DELETE /api/v1/auth/native/session` — **le client natif (overlay) efface sa
@@ -461,7 +461,7 @@ justification de chaque directive en commentaire dans le fichier lui-même.
 - **Validation avant passage en mode bloquant (2026-09-20)** : servir le build
   sur le port 4200 (celui de `PUBLIC_BASE_URL` dans `.dev.vars`, pour que le
   retour OAuth Discord aboutisse en local), ajouter temporairement `report-uri
-  http://localhost:4299/csp` à la copie `dist/.../_headers` (jamais à
+http://localhost:4299/csp` à la copie `dist/.../_headers` (jamais à
   `public/_headers`) et écouter ce port avec un mini serveur HTTP qui journalise
   chaque POST : contrairement à un écouteur `securitypolicyviolation` posé après
   coup, ça capte aussi les violations de la phase de chargement et des pages de
@@ -1129,15 +1129,16 @@ dans ce document pour ce lot.
 Toute l'écriture vit dans `server/history/ingest.ts` (une fonction par table
 d'historique), **pas dans les handlers** `functions/api/v1/history/*.ts`, qui ne
 font plus que authentification + validation + réponse HTTP (depuis le
-2026-09-16) : le script de support `server/import/replay-user-history.ts`
-rejoue ces mêmes fonctions hors requête HTTP pour un compte donné — voir sa doc
-de tête pour la marche à suivre complète (capture en navigateur des corps de
-requête avec l'`uid` réel du compte, suppression ciblée par `fight_log_id`,
-dry-run avec diff colonne par colonne avant `--apply`). Premier usage réel :
-l'historique du 15/09 d'un utilisateur archivé sans butin (session HDV jamais
-refermée, voir `.claude/rules/log-ingestion.md` « Combats interrompus... ») — `fights` étant immuable
-après insertion, un simple rejeu par son client n'aurait jamais corrigé ses
-lignes existantes.
+2026-09-16) : les scripts de `server/import/` peuvent ainsi rejouer ces mêmes
+fonctions hors requête HTTP. Un script de rejeu par compte
+(`replay-user-history.ts`, un seul usage réel le 16/09 pour un historique
+archivé sans butin) a été **retiré le 2026-09-21** : il reposait sur l'envoi
+par l'utilisateur de son `wakfu.log` complet au mainteneur — messages de tiers,
+identifiants de compte, jeton de session —, un canal de collecte que la
+politique de confidentialité ne décrit pas (`docs/analyse-rgpd.md` §9, point 5).
+Un historique erroné se corrige désormais par relecture du fichier par le
+client corrigé, dans la limite de l'immuabilité de `fights` (`ON CONFLICT DO
+NOTHING`) — ou ne se corrige pas.
 
 ### Endpoints
 

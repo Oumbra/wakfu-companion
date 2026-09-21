@@ -363,12 +363,10 @@ export const catalogMeta = pgTable('catalog_meta', {
  * vérifié (compte Discord sans e-mail confirmé) — le compte reste utilisable,
  * il ne participe simplement pas à la fusion sur e-mail (voir flow.ts).
  *
- * `defaultGameServer` était prévue comme repli du lot 7, posée dès le lot 5
- * pour éviter une migration supplémentaire. Le lot 7 a finalement abandonné
- * tout repli global (le serveur vient uniquement du compte roster, voir
- * server/README.md) : **cette colonne n'est lue ni écrite par personne**.
- * Nullable, elle ne coûte rien ; à supprimer si le lot 8 confirme qu'elle ne
- * sert à rien.
+ * Une colonne `default_game_server` (repli global du serveur de jeu, posée au lot 5 pour le
+ * lot 7) n'a jamais été lue ni écrite : le serveur vient uniquement du roster (voir
+ * server/README.md). Retirée par la migration 0031 (2026-09-21, minimisation RGPD art. 5.1.c —
+ * une colonne vide n'est pas une donnée, mais elle n'a rien à faire dans le schéma d'un compte).
  */
 export const users = pgTable(
   'users',
@@ -376,7 +374,6 @@ export const users = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     email: text('email'),
     displayName: text('display_name'),
-    defaultGameServer: text('default_game_server'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     /**
      * Dernière activité authentifiée (connexion OAuth, ou rafraîchissement

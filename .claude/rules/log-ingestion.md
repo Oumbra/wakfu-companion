@@ -1,11 +1,11 @@
 ---
 paths:
-  - "src/app/core/services/log-parser*.ts"
-  - "src/app/core/services/stats-store.service*.ts"
-  - "src/app/core/services/entity-classifier.service*.ts"
-  - "src/app/core/services/log-file-access.service*.ts"
-  - "src/app/core/models/fight.model.ts"
-  - "src/app/features/setup/**"
+  - 'src/app/core/services/log-parser*.ts'
+  - 'src/app/core/services/stats-store.service*.ts'
+  - 'src/app/core/services/entity-classifier.service*.ts'
+  - 'src/app/core/services/log-file-access.service*.ts'
+  - 'src/app/core/models/fight.model.ts'
+  - 'src/app/features/setup/**'
 ---
 
 # log-ingestion
@@ -124,7 +124,7 @@ dans `ingest()`, avant même `LogParser.parseLine`) — **deux seuils distincts*
   figée à `activeMs + 10s` passé ce délai sans nouveau lot, immobile ensuite, puis reprise exacte dès
   qu'un nouveau lot arrive (le total bondit à la nouvelle valeur confirmée, le tick repart).
 - Affichée = `sessionActiveDurationMs + min(max(Date.now() - sessionLastIngestAtMs, 0),
-  SESSION_LIVE_TICK_GRACE_MS)` (voir `SessionRecapComponent.updateDuration`).
+SESSION_LIVE_TICK_GRACE_MS)` (voir `SessionRecapComponent.updateDuration`).
 
 **Pourquoi deux seuils et pas un seul** (régression corrigée le 2026-08-27, remontée par
 l'utilisateur après un test réel sur le fichier de calibration) : la version initiale utilisait UNE
@@ -146,7 +146,7 @@ l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
 
 1. **`obstacleId != -1` ne signale PAS du décor** — hypothèse fausse qui existait depuis un vieux fix
    ("Larme d'Ogrest"). Vérifié sur ce fichier réel : **jusqu'à 61% des lignes `[_FL_] ... join the
-   fight` de VRAIS monstres** (pas des invocations, pas du décor) ont un `obstacleId` non -1 — sans
+fight` de VRAIS monstres** (pas des invocations, pas du décor) ont un `obstacleId` non -1 — sans
    rapport avec leur nature de combattant (probablement leur position de départ sur une case
    elle-même praticable/obstacle). L'ancien filtre `if (join[6] !== '-1') return null;` dans
    `LogParser.parseFighterJoin` faisait donc disparaître silencieusement la MAJORITÉ des ennemis de
@@ -170,11 +170,11 @@ l'utilisateur (donjons variés, Sadida/Osamodas/Sram invoquant abondamment) :
      fiable** comme nom réel — le sort "Invocation" de l'Osamodas annonce une créature "du" thème
      invoqué, ex. "Invoque une créature du Gobgob", mais le combattant qui rejoint peut s'appeler
      "Chafer Elite") → ligne technique sans crochets `"(eXG:...) - Instanciation d'une nouvelle
-     invocation avec un id de N"` ou `"(eXM:...) - New summon with id N"` (comptage total DIFFÉRENT du
+invocation avec un id de N"` ou `"(eXM:...) - New summon with id N"` (comptage total DIFFÉRENT du
      nombre d'annonces "Invoque" sur ce fichier — glyphes/décor/transformations en produisent aussi —
      **volontairement pas exploitée** pour corréler, corrélation par id essayée puis abandonnée :
      l'écart entre les deux comptages cause de faux appariements) → `"[_FL_] ... Z ... join the
-     fight"`.
+fight"`.
    - Corrélation retenue (`LogParser`, `FightParseState.pendingSummonCasters`/`summonOwners`, voir
      `SUMMON_ANNOUNCE_RE`) : chaque annonce "Invoque" empile son invocateur (+ horodatage) dans une
      file PAR COMBAT ; le PROCHAIN combattant au `fighterId` encore jamais vu de ce combat (voir
@@ -276,15 +276,13 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
      inchangés (39/14), les 17 combats retrouvant 20 à 27 objets de butin chacun.
    - **Rattrapage en prod de l'historique du compte concerné** (même jour) : `fights` est immuable
      après insertion (`ON CONFLICT DO NOTHING`), une relecture du fichier par le client corrigé
-     n'aurait jamais réparé les lignes existantes → `server/import/replay-user-history.ts` (voir
-     sa doc de tête et `server/README.md`) : capture en Chrome des corps `POST /history/*` que le
-     client corrigé produit pour ce fichier (`HistorySyncService.enable(uid réel)` +
-     `queue.api.requestJson` remplacé par un collecteur — mêmes `clientKey` que le vrai client,
-     donc idempotent avec ses envois futurs), suppression des combats du fichier par
-     `fight_log_id` bornée par `--since`, rejeu via `server/history/ingest.ts`. Toujours lire le
-     dry-run (diff par combat) avant `--apply` : c'est lui qui a révélé qu'un combat coupé en tête
-     de fichier n'était pas rejoué (exclu de la suppression) et qu'une ancienne copie prod classait
-     à tort une défaite en victoire.
+     n'aurait jamais réparé les lignes existantes → rejeu manuel par un script de support
+     (`replay-user-history.ts`, **retiré le 2026-09-21**, voir `docs/analyse-rgpd.md` §9 point 5 :
+     il supposait de recevoir le `wakfu.log` complet de l'utilisateur, canal non décrit par la
+     politique de confidentialité). Leçon à garder sans le script : un bug de parsing qui écrit
+     des lignes fausses dans `fights` n'est PAS rattrapable par le client — d'où l'importance de
+     la validation en navigateur sur fichier réel AVANT mise en production d'un changement du
+     parseur ou du store.
 
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 
