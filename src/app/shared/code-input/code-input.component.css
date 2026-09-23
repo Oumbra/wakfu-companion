@@ -1,0 +1,33 @@
+:host {
+  display: block;
+}
+
+.code-input-field {
+  box-sizing: border-box;
+  width: 100%;
+  font-family: monospace;
+  font-size: var(--code-input-font-size, 1.6rem);
+  letter-spacing: 0.15em;
+  text-align: center;
+  text-transform: uppercase;
+  background-color: var(--surface-well);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--accent);
+}
+
+.code-input-field::placeholder {
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.code-input-field:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.code-input-field:disabled {
+  opacity: 0.6;
+}

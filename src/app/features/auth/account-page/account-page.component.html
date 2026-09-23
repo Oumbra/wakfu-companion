@@ -181,6 +181,9 @@
               </span>
             }
           </div>
+          @if (auth.historyQuotaExceeded()) {
+            <p class="account-hint" role="status">{{ 'auth.sync.historyQuota' | t }}</p>
+          }
           <div class="account-actions">
             <button
               type="button"
@@ -212,6 +215,17 @@
             <button type="button" class="account-btn" [disabled]="auth.busy()" (click)="logout()">
               {{ 'auth.account.logout' | t }}
             </button>
+          </div>
+          <label class="account-switch-row">
+            <span>{{ 'auth.account.logoutWipeLocal' | t }}</span>
+            <app-switch
+              [checked]="wipeLocalOnLogout()"
+              [disabled]="auth.busy()"
+              (checkedChange)="wipeLocalOnLogout.set($event)"
+            />
+          </label>
+          <p class="account-hint">{{ 'auth.account.logoutWipeLocalHint' | t }}</p>
+          <div class="account-actions">
             <button
               type="button"
               class="account-btn danger"

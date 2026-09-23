@@ -3,6 +3,7 @@ import { LocalUserDataRepository } from './local-user-data.repository';
 import { RemoteUserDataRepository } from './remote-user-data.repository';
 import { USER_DATA_KEY_LIST, type UserDataKey } from './user-data.keys';
 import type { UserDataRepository } from './user-data.repository';
+import { sanitizeUserDataValue } from './user-data.validation';
 
 /** Rappel à exécuter quand un champ a été modifié ailleurs qu'ici (autre appareil, autre onglet). */
 export type ExternalChangeListener = () => void;
@@ -56,8 +57,11 @@ export class UserDataService {
     }
   }
 
+  /** Valeur validée (voir `sanitizeUserDataValue`) : une valeur stockée malformée — `localStorage`
+   * modifié à la main, import ou compte corrompu — revient `undefined` ou filtrée, et le
+   * consommateur applique sa valeur par défaut au lieu de planter. */
   read<T>(key: UserDataKey): T | undefined {
-    return this.active.read<T>(key);
+    return sanitizeUserDataValue(key, this.active.read<unknown>(key)) as T | undefined;
   }
 
   write(key: UserDataKey, value: unknown): void {
@@ -82,6 +86,18 @@ export class UserDataService {
   async activateRemote(): Promise<void> {
     this.active = this.remoteRepo;
     await this.remoteRepo.pull();
+  }
+
+  /**
+   * Efface de cet appareil les données utilisateur (profil, suivi, roster, chat, disposition...)
+   * — option « effacer les données de cet appareil » de la déconnexion (voir `AuthService.logout`).
+   * Uniquement en mode invité (après `deactivateRemote`) : en mode connecté, une écriture en
+   * attente pourrait repartir après coup. L'appelant recharge la page ensuite : les signaux en
+   * mémoire des services portent encore les anciennes valeurs.
+   */
+  clearLocalUserData(): void {
+    if (this.isRemote()) return;
+    this.localRepo.clearAll();
   }
 
   /** Retour au mode invité (déconnexion, session expirée). Les données locales restent intactes. */

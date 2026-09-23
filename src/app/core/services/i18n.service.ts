@@ -85,6 +85,22 @@ export class I18nService {
     return this.interpolate(raw, params);
   }
 
+  /**
+   * Variante de `t()` destinée à un rendu HTML (`TranslateHtmlPipe`, `[innerHTML]`) : le balisage
+   * de la TRADUCTION est conservé, mais chaque valeur de `params` est échappée (`& < > " '`) avant
+   * interpolation — un paramètre peut venir d'une donnée externe (nom de joueur, texte de log...)
+   * et ne doit jamais pouvoir injecter de balisage, le pipe contournant ensuite le sanitizer
+   * d'Angular. `t()` reste inchangé : son résultat passe par l'interpolation `{{ }}`, qui échappe.
+   */
+  tHtml(key: string, params?: Record<string, string | number | null | undefined>): string {
+    if (!params) return this.t(key);
+    const escaped: Record<string, string | number | null | undefined> = {};
+    for (const [name, value] of Object.entries(params)) {
+      escaped[name] = typeof value === 'string' ? escapeHtml(value) : value;
+    }
+    return this.t(key, escaped);
+  }
+
   /** Interpolation `{{placeholder}}` (substitution simple) + blocs conditionnels optionnels
    * `{{#if param}}...{{else}}...{{/if}}` (le bloc "si" ne s'affiche que si `params[param]` est
    * défini et non vide — chaîne vide/`null`/`undefined` comptent comme "absent", `{{else}}`
@@ -215,4 +231,17 @@ export class I18nService {
     const translated = entry?.[this.locale()];
     return translated ? translated : name;
   }
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&#39;',
+};
+
+/** Échappe une valeur texte pour l'insérer dans du HTML (contenu ou valeur d'attribut entre guillemets). */
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
 }

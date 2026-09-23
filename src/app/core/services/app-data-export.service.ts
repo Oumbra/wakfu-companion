@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { USER_DATA_KEY_LIST, type UserDataKey } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
+import { sanitizeUserDataValue } from '../data-access/user-data.validation';
 import type { AccountExport } from './account-export.service';
 
 export type ExportField = UserDataKey;
@@ -22,7 +23,13 @@ export interface AppDataExport {
 function isAppDataExport(value: unknown): value is AppDataExport {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Record<string, unknown>;
-  return candidate['app'] === 'wakfu-companion' && typeof candidate['data'] === 'object';
+  const data = candidate['data'];
+  return (
+    candidate['app'] === 'wakfu-companion' &&
+    typeof data === 'object' &&
+    data !== null &&
+    !Array.isArray(data)
+  );
 }
 
 /**
@@ -64,7 +71,10 @@ export class AppDataExportService {
     if (!isAppDataExport(raw)) throw new Error('invalid-export-file');
     const data = raw.data;
     for (const field of USER_DATA_KEY_LIST) {
-      if (data[field] !== undefined) this.userData.write(field, data[field]);
+      // Garde de type par clé (voir user-data.validation.ts) : un champ inexploitable est ignoré
+      // — la valeur locale existante est conservée — plutôt qu'écrit puis relu en plantant.
+      const value = sanitizeUserDataValue(field, data[field]);
+      if (value !== undefined) this.userData.write(field, value);
     }
     await this.userData.flush();
   }

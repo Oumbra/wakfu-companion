@@ -8,7 +8,8 @@ import { I18nService } from '../core/services/i18n.service';
  * traduction dont le texte est explicitement mis en forme en HTML (`<b>`, `<i>`, `<u>`...) dans
  * translations.ts — aucune traduction n'est censée contenir de Markdown (`**...**` etc.), voir
  * CLAUDE.md. Le contenu vient exclusivement de notre propre dictionnaire de traductions (jamais
- * d'une saisie utilisateur), d'où le bypassSecurityTrustHtml.
+ * d'une saisie utilisateur), d'où le bypassSecurityTrustHtml — les VALEURS de `params`, elles, peuvent
+ * venir d'ailleurs : elles sont échappées par `I18nService.tHtml` avant interpolation.
  */
 @Pipe({ name: 'tHtml', pure: false })
 export class TranslateHtmlPipe implements PipeTransform {
@@ -16,6 +17,6 @@ export class TranslateHtmlPipe implements PipeTransform {
   private readonly sanitizer = inject(DomSanitizer);
 
   transform(key: string, params?: Record<string, string | number>): SafeHtml {
-    return this.sanitizer.bypassSecurityTrustHtml(this.i18n.t(key, params));
+    return this.sanitizer.bypassSecurityTrustHtml(this.i18n.tHtml(key, params));
   }
 }
