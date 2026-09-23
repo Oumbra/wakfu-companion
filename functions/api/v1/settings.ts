@@ -139,7 +139,7 @@ async function patchSettings(request: Request, env: Env): Promise<Response> {
 
   const replaces = accepted.filter((write) => write.mode === 'replace');
   if (replaces.length > 0) {
-    await db
+    const written = await db
       .insert(userSettings)
       .values(
         replaces.map((write) => ({
@@ -158,9 +158,41 @@ async function patchSettings(request: Request, env: Env): Promise<Response> {
         // écriture plus ancienne pourrait alors écraser une plus récente —
         // exactement ce que l'arbitrage cherche à empêcher.
         setWhere: sql`${userSettings.updatedAt} < excluded.updated_at`,
-      });
+      })
+      .returning({ key: userSettings.key });
+    // Une clé que la condition SQL a écartée (course perdue contre un autre appareil) n'est PAS
+    // appliquée (audit du 2026-09-23, S11) : elle était jusqu'ici annoncée comme telle, et le
+    // client croyait sa valeur enregistrée. Elle est rejetée avec la version fraîche, comme une
+    // fusion perdue ci-dessous.
+    const writtenKeys = new Set(written.map((row) => row.key));
+    const lost = replaces.filter((write) => !writtenKeys.has(write.key));
+    const fresh =
+      lost.length > 0
+        ? await db
+            .select()
+            .from(userSettings)
+            .where(
+              and(
+                eq(userSettings.userId, auth.user.id),
+                inArray(
+                  userSettings.key,
+                  lost.map((write) => write.key),
+                ),
+              ),
+            )
+        : [];
+    const freshByKey = new Map(fresh.map((row) => [row.key, row]));
     for (const write of replaces) {
-      applied.push({ key: write.key, updatedAt: write.updatedAt.toISOString() });
+      if (writtenKeys.has(write.key)) {
+        applied.push({ key: write.key, updatedAt: write.updatedAt.toISOString() });
+        continue;
+      }
+      const row = freshByKey.get(write.key);
+      rejectedOut.push({
+        key: write.key,
+        remoteUpdatedAt: (row?.updatedAt ?? new Date()).toISOString(),
+        value: row?.value ?? null,
+      });
     }
   }
 
