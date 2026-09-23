@@ -33,6 +33,7 @@
     {
       "name": "icons",
       "urls": ["/api/v1/icons/**"],
+      "version": 2,
       "cacheConfig": {
         "strategy": "performance",
         "maxSize": 5000,
