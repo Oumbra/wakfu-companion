@@ -95,13 +95,14 @@ Réglages manuels (une fois) :
    attention, `rgpd-purges.yml` utilise le même environnement : ses runs
    nocturnes attendraient alors eux aussi une approbation (sinon, lui dédier
    un environnement `production-purge` ne portant que `DATABASE_URL`).
-   Y créer les secrets `DATABASE_URL`, `CLOUDFLARE_API_TOKEN` (jeton prod),
+   Y créer les secrets `DATABASE_URL` (propriétaire, migrations seulement),
+   `DATABASE_URL_APP` (rôle `app_runtime`, point 6), `CLOUDFLARE_API_TOKEN` (jeton prod),
    `CLOUDFLARE_ACCOUNT_ID`, `RATE_LIMIT_SALT`, `APP_TOKEN_SECRET`,
    `TURNSTILE_SECRET_KEY`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
    `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` et les variables
    `TURNSTILE_SITE_KEY`, `PUBLIC_BASE_URL`.
 2. Environnement `preview` : branche `claude/dev` uniquement. Secrets
-   `DATABASE_URL_PREVIEW`, `CLOUDFLARE_API_TOKEN` (jeton preview distinct),
+   `DATABASE_URL_PREVIEW`, `DATABASE_URL_APP_PREVIEW`, `CLOUDFLARE_API_TOKEN` (jeton preview distinct),
    `CLOUDFLARE_ACCOUNT_ID`, `RATE_LIMIT_SALT_PREVIEW`,
    `APP_TOKEN_SECRET_PREVIEW`, `TURNSTILE_SECRET_KEY_PREVIEW`,
    `DISCORD_CLIENT_ID_PREVIEW`, `DISCORD_CLIENT_SECRET_PREVIEW`,
@@ -122,6 +123,24 @@ Réglages manuels (une fois) :
    techniquement déployer en production ; la séparation apporte la révocation
    indépendante et la traçabilité, pas une isolation stricte (qui
    demanderait un projet Pages distinct pour la preview).
+6. Neon, sur chaque branche (production et preview) : rôle `app_runtime` pour les Functions,
+   limité aux lectures et écritures. Le code serveur n'exécute aucune DDL (`CREATE`,
+   `TRUNCATE`, `LOCK`...) : seules les migrations en ont besoin, avec le propriétaire.
+   Rôle créé dans la console Neon (_Roles → New role_), puis :
+
+   ```sql
+   GRANT USAGE ON SCHEMA public TO app_runtime;
+   GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO app_runtime;
+   GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO app_runtime;
+   ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
+     GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_runtime;
+   ALTER DEFAULT PRIVILEGES FOR ROLE neondb_owner IN SCHEMA public
+     GRANT USAGE, SELECT ON SEQUENCES TO app_runtime;
+   ```
+
+   Sa chaîne poolée va dans `DATABASE_URL_APP` / `DATABASE_URL_APP_PREVIEW`. Les workflows
+   de déploiement la poussent comme `DATABASE_URL` des Functions et échouent si elle manque.
+   `DATABASE_URL` / `DATABASE_URL_PREVIEW` (propriétaire) restent requis pour les migrations.
 
 HSTS : `max-age` 2 ans + `includeSubDomains` dans `public/_headers`, **sans
 `preload`** — l'inscription sur hstspreload.org (domaine personnalisé
@@ -681,7 +700,7 @@ testé : `server/http/{body,api-guards,host-guard}.ts`, `server/history/guards.t
     défaut pour le plan gratuit de 512 Mo), `pg_database_size` relue au plus une fois par minute
     et par isolate, toute écriture d'historique nouvelle reçoit un 503
     `history_storage_full` réessayable. Comptes, sessions et réglages continuent de fonctionner.
-  À relever avec le plan Neon : `MAX_HISTORY_BYTES_PER_ACCOUNT` et `HISTORY_STORAGE_CEILING_MB`.
+    À relever avec le plan Neon : `MAX_HISTORY_BYTES_PER_ACCOUNT` et `HISTORY_STORAGE_CEILING_MB`.
 - **Validation par entrée** des lots d'historique (voir « Historiques serveur ») : une entrée
   invalide est ignorée et listée dans `rejected`, jamais un 400 ni un 500 pour tout le lot.
 - **Validation renforcée** (`server/history/parse.ts`) : entiers bornés au type réel de la colonne
@@ -878,12 +897,12 @@ déploiement et une vraie application OAuth permettent de conclure :
 
 ## Parcours client (lot 5, prompt 5.2)
 
-| Fichier                                  | Rôle                                                                                                       |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `src/app/core/auth/auth.service.ts`      | État de session en signaux, connexion/déconnexion, sessions, suppression de compte, décision de migration. |
-| `src/app/features/auth/login-page/`      | Deux boutons (Discord, Google) + erreur explicite au retour d'un échec.                                    |
+| Fichier                                   | Rôle                                                                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/app/core/auth/auth.service.ts`       | État de session en signaux, connexion/déconnexion, sessions, suppression de compte, décision de migration.                                              |
+| `src/app/features/auth/login-page/`       | Deux boutons (Discord, Google) + erreur explicite au retour d'un échec.                                                                                 |
 | `src/app/features/auth/account-sections/` | Blocs du compte sous les boutons de l’onglet Connexion du profil : identité, appareils connectés (révocation), export, suppression, écran de migration. |
-| `src/app/core/api/api-client.service.ts` | `requestJson` (écritures + en-tête CSRF) et le point d'accroche global du `401`.                           |
+| `src/app/core/api/api-client.service.ts`  | `requestJson` (écritures + en-tête CSRF) et le point d'accroche global du `401`.                                                                        |
 
 Trois points valent d'être retenus :
 
