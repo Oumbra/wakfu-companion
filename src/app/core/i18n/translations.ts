@@ -492,7 +492,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte), chacun renommable ; le bouton « Ajouter un personnage » ouvre un formulaire (nom, classe, sexe) pour déclarer chaque personnage, et le glisser-déposer permet ensuite de réordonner les personnages d'un compte.\n\nChaque compte peut recevoir un serveur de jeu : utilisé pour associer l'historique et le badge serveur de l'en-tête au bon monde si vous jouez sur plusieurs serveurs.",
     'help.profileConnection.title': 'Profil > Connexion',
     'help.profileConnection.body':
-      "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nDiscord et Google peuvent tous les deux être liés au même compte.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
+      "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nUn compte n'utilise qu'un seul fournisseur : connectez-vous toujours avec celui (Discord ou Google) qui a servi à le créer.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
 
     'onboarding.helpButton': 'Pas-à-pas',
     'onboarding.jumpToEnd': 'Aller à la fin',
@@ -562,6 +562,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.error.state':
       'La demande de connexion a expiré ou n’a pas pu être vérifiée. Merci de réessayer.',
     'auth.error.rateLimited': 'Trop de tentatives de connexion. Réessayez dans quelques minutes.',
+    'auth.error.emailTakenDiscord':
+      'Cette adresse e-mail est déjà utilisée par un compte créé avec Discord. Connectez-vous avec Discord.',
+    'auth.error.emailTakenGoogle':
+      'Cette adresse e-mail est déjà utilisée par un compte créé avec Google. Connectez-vous avec Google.',
+    'auth.error.emailTaken':
+      'Cette adresse e-mail est déjà utilisée par un compte créé avec un autre fournisseur.',
     'auth.error.generic': 'La connexion a échoué. Merci de réessayer.',
     'auth.error.sync': 'La synchronisation des données a échoué. Réessayez plus tard.',
     'auth.error.logoutUnsynced':
@@ -574,8 +580,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.email': 'E-mail',
     'auth.account.noEmail': 'Non communiqué',
     'auth.account.providers': 'Connexions liées',
-    'auth.account.mergeHint':
-      'Discord et Google menant à la même adresse e-mail vérifiée ouvrent le même compte.',
+    'auth.account.singleProviderHint':
+      'Un compte n’utilise qu’un seul fournisseur : reconnectez-vous toujours avec celui ci-dessus.',
     'auth.account.sessions': 'Appareils connectés',
     'auth.account.refresh': 'Actualiser',
     'auth.account.sessionsLoading': 'Chargement…',
@@ -1178,7 +1184,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Adapts the app's most sensitive colors (win/loss, elemental damage, item rarity, chat channels) to the colorblindness type you choose, so they stay distinguishable.\n\nProtanopia and deuteranopia are grouped under a single option: both cause the same red-green confusion, so the same correction applies to both.\n\nThe before/after preview under the selector shows exactly which colors change with the currently chosen profile.",
     'help.profileConnection.title': 'Profile > Sign in',
     'help.profileConnection.body':
-      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nDiscord and Google can both be linked to the same account.\n\nOnce signed in, the Account page (reachable from this panel) lets you manage your connected devices (revoke access), force an immediate sync, export your data, or delete your account.',
+      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nAn account uses a single provider: always sign in with the one (Discord or Google) you created it with.\n\nOnce signed in, the Account page (reachable from this panel) lets you manage your connected devices (revoke access), force an immediate sync, export your data, or delete your account.',
     'help.profileCharacters.title': 'Profile > Characters',
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
@@ -1250,6 +1256,12 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.error.cancelled': 'Sign-in cancelled.',
     'auth.error.state': 'The sign-in request expired or could not be verified. Please try again.',
     'auth.error.rateLimited': 'Too many sign-in attempts. Try again in a few minutes.',
+    'auth.error.emailTakenDiscord':
+      'This email address is already used by an account created with Discord. Sign in with Discord.',
+    'auth.error.emailTakenGoogle':
+      'This email address is already used by an account created with Google. Sign in with Google.',
+    'auth.error.emailTaken':
+      'This email address is already used by an account created with another provider.',
     'auth.error.generic': 'Sign-in failed. Please try again.',
     'auth.error.sync': 'Data synchronisation failed. Please try again later.',
     'auth.error.logoutUnsynced':
@@ -1262,8 +1274,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.email': 'Email',
     'auth.account.noEmail': 'Not provided',
     'auth.account.providers': 'Linked sign-ins',
-    'auth.account.mergeHint':
-      'Discord and Google leading to the same verified email address open the same account.',
+    'auth.account.singleProviderHint':
+      'An account uses a single provider: always sign in again with the one above.',
     'auth.account.sessions': 'Signed-in devices',
     'auth.account.refresh': 'Refresh',
     'auth.account.sessionsLoading': 'Loading…',
@@ -1869,7 +1881,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta), cada una renombrable; el botón «Añadir personaje» abre un formulario (nombre, clase, sexo) para declarar cada personaje, y luego arrastra y suelta para reordenar los personajes de una cuenta.\n\nCada cuenta puede recibir un servidor de juego: se usa para asociar el historial y la insignia de servidor de la cabecera con el mundo correcto si juegas en varios servidores.',
     'help.profileConnection.title': 'Perfil > Inicio de sesión',
     'help.profileConnection.body':
-      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nDiscord y Google pueden vincularse ambos a la misma cuenta.\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
+      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nUna cuenta usa un solo proveedor: inicia sesión siempre con el que usaste para crearla (Discord o Google).\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
 
     'onboarding.helpButton': 'Tutorial',
     'onboarding.jumpToEnd': 'Ir al final',
@@ -1939,6 +1951,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.error.state':
       'La solicitud de inicio de sesión ha caducado o no se ha podido verificar. Inténtalo de nuevo.',
     'auth.error.rateLimited': 'Demasiados intentos. Vuelve a intentarlo en unos minutos.',
+    'auth.error.emailTakenDiscord':
+      'Este correo ya lo usa una cuenta creada con Discord. Inicia sesión con Discord.',
+    'auth.error.emailTakenGoogle':
+      'Este correo ya lo usa una cuenta creada con Google. Inicia sesión con Google.',
+    'auth.error.emailTaken': 'Este correo ya lo usa una cuenta creada con otro proveedor.',
     'auth.error.generic': 'No se ha podido iniciar sesión. Inténtalo de nuevo.',
     'auth.error.sync': 'La sincronización de datos ha fallado. Inténtalo más tarde.',
     'auth.error.logoutUnsynced':
@@ -1951,8 +1968,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.email': 'Correo electrónico',
     'auth.account.noEmail': 'No facilitado',
     'auth.account.providers': 'Accesos vinculados',
-    'auth.account.mergeHint':
-      'Discord y Google que llevan al mismo correo verificado abren la misma cuenta.',
+    'auth.account.singleProviderHint':
+      'Una cuenta usa un solo proveedor: vuelve a iniciar sesión siempre con el indicado arriba.',
     'auth.account.sessions': 'Dispositivos conectados',
     'auth.account.refresh': 'Actualizar',
     'auth.account.sessionsLoading': 'Cargando…',
@@ -2561,7 +2578,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta), cada uma renomeável; o botão "Adicionar personagem" abre um formulário (nome, classe, sexo) para declarar cada personagem, e depois arraste e solte para reordenar os personagens de uma conta.\n\nCada conta pode receber um servidor de jogo: usado para associar o histórico e o selo de servidor do cabeçalho ao mundo correto quando você joga em vários servidores.',
     'help.profileConnection.title': 'Perfil > Iniciar sessão',
     'help.profileConnection.body':
-      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nDiscord e Google podem ambos ser associados à mesma conta.\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
+      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nUma conta usa um único fornecedor: inicie sessão sempre com aquele que usou para criá-la (Discord ou Google).\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
 
     'onboarding.helpButton': 'Tutorial',
     'onboarding.jumpToEnd': 'Ir para o fim',
@@ -2631,6 +2648,11 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.error.state':
       'O pedido de início de sessão expirou ou não pôde ser verificado. Tente novamente.',
     'auth.error.rateLimited': 'Demasiadas tentativas. Tente novamente dentro de alguns minutos.',
+    'auth.error.emailTakenDiscord':
+      'Este e-mail já é usado por uma conta criada com o Discord. Inicie sessão com o Discord.',
+    'auth.error.emailTakenGoogle':
+      'Este e-mail já é usado por uma conta criada com o Google. Inicie sessão com o Google.',
+    'auth.error.emailTaken': 'Este e-mail já é usado por uma conta criada com outro fornecedor.',
     'auth.error.generic': 'Não foi possível iniciar sessão. Tente novamente.',
     'auth.error.sync': 'A sincronização de dados falhou. Tente mais tarde.',
     'auth.error.logoutUnsynced':
@@ -2643,8 +2665,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.email': 'E-mail',
     'auth.account.noEmail': 'Não fornecido',
     'auth.account.providers': 'Acessos associados',
-    'auth.account.mergeHint':
-      'Discord e Google que levam ao mesmo e-mail verificado abrem a mesma conta.',
+    'auth.account.singleProviderHint':
+      'Uma conta usa um único fornecedor: inicie sessão sempre com o indicado acima.',
     'auth.account.sessions': 'Dispositivos com sessão iniciada',
     'auth.account.refresh': 'Atualizar',
     'auth.account.sessionsLoading': 'A carregar…',

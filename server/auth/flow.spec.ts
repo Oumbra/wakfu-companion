@@ -1,7 +1,7 @@
 /**
  * Tests du flux d'authentification (lot 5, prompt 5.1) : les quatre
  * exigences explicites du prompt — `state` invalide rejeté, code réutilisé
- * rejeté, session révoquée refusée, fusion sur e-mail identique — plus les
+ * rejeté, session révoquée refusée, un seul fournisseur par compte — plus les
  * garanties voisines qu'il serait coûteux de découvrir en production
  * (redirection ouverte, CSRF, expiration glissante, limitation de débit).
  *
@@ -450,8 +450,8 @@ describe('purgeInactiveAccounts', () => {
   });
 });
 
-describe('fusion de comptes', () => {
-  it('rattache Google à un compte Discord existant sur e-mail vérifié identique', async () => {
+describe('un compte = un seul fournisseur', () => {
+  it('refuse Google quand l’e-mail vérifié appartient déjà à un compte Discord', async () => {
     const store = createMemoryAuthStore();
 
     const viaDiscord = await login(store, {
@@ -466,34 +466,85 @@ describe('fusion de comptes', () => {
       provider: 'google',
       oauthProfile: profile({ providerUid: 'google-1', displayName: 'Joueur (Google)' }),
     });
-    expect(viaGoogle.ok).toBe(true);
-    if (!viaGoogle.ok) return;
+    expect(viaGoogle).toEqual({ ok: false, error: 'email_taken', existingProvider: 'discord' });
 
-    expect(viaGoogle.result.user.id).toBe(viaDiscord.result.user.id);
-    expect(viaGoogle.result.isNewUser).toBe(false);
+    // Rien n'a été rattaché ni créé.
     expect(store.users.size).toBe(1);
-    expect(
-      (await store.listIdentities(viaGoogle.result.user.id)).map((i) => i.provider).sort(),
-    ).toEqual(['discord', 'google']);
+    expect((await store.listIdentities(viaDiscord.result.user.id)).map((i) => i.provider)).toEqual([
+      'discord',
+    ]);
+    expect(await store.findIdentity('google', 'google-1')).toBeNull();
   });
 
-  it('normalise la casse de l’e-mail avant de fusionner', async () => {
+  it('normalise la casse de l’e-mail avant de comparer', async () => {
+    const store = createMemoryAuthStore();
+    const first = await login(store, {
+      provider: 'google',
+      oauthProfile: profile({ providerUid: 'google-1', email: 'Joueur@Example.COM' }),
+    });
+    const second = await login(store, {
+      provider: 'discord',
+      oauthProfile: profile({ providerUid: 'discord-1', email: 'joueur@example.com' }),
+    });
+    expect(first.ok).toBe(true);
+    expect(second).toEqual({ ok: false, error: 'email_taken', existingProvider: 'google' });
+    expect(store.users.size).toBe(1);
+  });
+
+  it('ne révoque pas la session déjà ouverte quand la connexion est refusée', async () => {
     const store = createMemoryAuthStore();
     const first = await login(store, {
       provider: 'discord',
-      oauthProfile: profile({ providerUid: 'discord-1', email: 'Joueur@Example.COM' }),
+      oauthProfile: profile({ providerUid: 'discord-1' }),
     });
-    const second = await login(store, {
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const { state } = await startAuthorization(store, {
       provider: 'google',
-      oauthProfile: profile({ providerUid: 'google-1', email: 'joueur@example.com' }),
+      redirectTo: null,
+      now: NOW,
     });
-    expect(first.ok && second.ok).toBe(true);
-    if (!first.ok || !second.ok) return;
-    expect(second.result.user.id).toBe(first.result.user.id);
-    expect(store.users.size).toBe(1);
+    const refused = await completeAuthorization(store, {
+      provider: 'google',
+      state,
+      cookieState: state,
+      now: NOW,
+      userAgent: 'test-agent',
+      currentSessionIdHash: await sha256Hex(first.result.token),
+      fetchProfile: async () => profile({ providerUid: 'google-1' }),
+    });
+    expect(refused.ok).toBe(false);
+    expect(await resolveSession(store, first.result.token, NOW)).not.toBeNull();
   });
 
-  it('ne fusionne PAS quand le fournisseur ne donne pas d’e-mail vérifié', async () => {
+  it('garde les comptes déjà liés aux deux fournisseurs avant la règle', async () => {
+    const store = createMemoryAuthStore();
+    const viaDiscord = await login(store, {
+      provider: 'discord',
+      oauthProfile: profile({ providerUid: 'discord-1' }),
+    });
+    expect(viaDiscord.ok).toBe(true);
+    if (!viaDiscord.ok) return;
+    // Identité Google rattachée du temps de la fusion automatique.
+    await store.linkIdentity({
+      userId: viaDiscord.result.user.id,
+      provider: 'google',
+      providerUid: 'google-1',
+      email: 'joueur@example.com',
+      now: NOW,
+    });
+
+    const viaGoogle = await login(store, {
+      provider: 'google',
+      oauthProfile: profile({ providerUid: 'google-1' }),
+    });
+    expect(viaGoogle.ok).toBe(true);
+    if (!viaGoogle.ok) return;
+    expect(viaGoogle.result.user.id).toBe(viaDiscord.result.user.id);
+  });
+
+  it('ouvre un compte distinct quand le fournisseur ne donne pas d’e-mail vérifié', async () => {
     const store = createMemoryAuthStore();
     const first = await login(store, {
       provider: 'discord',

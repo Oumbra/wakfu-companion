@@ -101,7 +101,7 @@
               }
             </span>
           </div>
-          <p class="account-hint">{{ 'auth.account.mergeHint' | t }}</p>
+          <p class="account-hint">{{ 'auth.account.singleProviderHint' | t }}</p>
         </div>
       </section>
 
@@ -252,6 +252,9 @@
         <div class="panel-header">{{ 'auth.account.guestTitle' | t }}</div>
         <div class="account-body">
           <p class="account-text">{{ 'auth.account.guestText' | t }}</p>
+          @if (auth.error(); as errorKey) {
+            <p class="account-error" role="alert">{{ errorKey | t }}</p>
+          }
           <div class="account-actions">
             <button type="button" class="account-btn primary" (click)="openLogin()">
               {{ 'auth.account.loginAction' | t }}

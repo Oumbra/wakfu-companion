@@ -3,8 +3,9 @@
  * Cloudflare, de Postgres et du réseau : tout passe par le port `AuthStore`
  * (server/auth/store.ts) et par un `ProfileFetcher` injecté. C'est ce qui
  * rend testables sans infrastructure les quatre exigences du prompt : `state`
- * invalide rejeté, code réutilisé rejeté, session révoquée refusée, fusion
- * sur e-mail identique.
+ * invalide rejeté, code réutilisé rejeté, session révoquée refusée, e-mail
+ * vérifié d'un compte existant refusé à un autre fournisseur (un compte = un
+ * seul fournisseur, voir `resolveAccount`).
  *
  * Décisions structurantes de ce flux : OAuth uniquement, cookie opaque,
  * sessions en base, mode invité intact (voir server/README.md).
@@ -191,7 +192,8 @@ export async function startAuthorization(
 export type CompleteError =
   | 'invalid_state' // state inconnu, expiré, DÉJÀ CONSOMMÉ (rejeu), ou ne correspondant pas au cookie
   | 'provider_mismatch'
-  | 'exchange_failed';
+  | 'exchange_failed'
+  | 'email_taken'; // e-mail vérifié déjà porté par un compte ouvert avec un autre fournisseur
 
 export interface CompletedAuthorization {
   /** Jeton de session à poser dans le cookie — jamais stocké tel quel en base. */
@@ -226,7 +228,15 @@ export async function completeAuthorization(
     /** Session courante éventuelle, révoquée à la connexion (rotation). */
     currentSessionIdHash?: string | null;
   },
-): Promise<{ ok: true; result: CompletedAuthorization } | { ok: false; error: CompleteError }> {
+): Promise<
+  | { ok: true; result: CompletedAuthorization }
+  | {
+      ok: false;
+      error: CompleteError;
+      /** Fournisseur du compte existant, seulement pour `email_taken` (message « connectez-vous avec… »). */
+      existingProvider?: ProviderId;
+    }
+> {
   if (!params.state || !params.cookieState || !timingSafeEqual(params.state, params.cookieState)) {
     return { ok: false, error: 'invalid_state' };
   }
@@ -238,7 +248,11 @@ export async function completeAuthorization(
   const profile = await params.fetchProfile(authorization.codeVerifier);
   if (!profile) return { ok: false, error: 'exchange_failed' };
 
-  const { user, isNewUser } = await resolveAccount(store, params.provider, profile, params.now);
+  const resolution = await resolveAccount(store, params.provider, profile, params.now);
+  if (!resolution.ok) {
+    return { ok: false, error: 'email_taken', existingProvider: resolution.existingProvider };
+  }
+  const { user, isNewUser } = resolution;
 
   if (params.currentSessionIdHash) {
     await store.revokeSession(params.currentSessionIdHash, params.now);
@@ -269,22 +283,30 @@ export async function completeAuthorization(
 /**
  * Résolution du compte, dans cet ordre :
  * 1. identité `(provider, provider_uid)` déjà connue → ce compte ;
- * 2. sinon, e-mail **vérifié** déjà porté par un compte → l'identité est
- *    rattachée à ce compte (**fusion** : Discord et Google
- *    vérifient tous deux l'adresse, ce qui rend le rattachement automatique
- *    sûr et évite un écran de liaison manuelle) ;
+ * 2. sinon, e-mail **vérifié** déjà porté par un compte → **refus**
+ *    (`email_taken`) : un compte n'utilise qu'UN fournisseur, Discord OU
+ *    Google (décision du 2026-09-23, qui remplace la fusion automatique sur
+ *    e-mail identique). L'utilisateur est invité à se reconnecter avec le
+ *    fournisseur qui a ouvert le compte. Pas de création d'un second compte
+ *    à la place : l'e-mail est unique en base (`users_email_key`), et deux
+ *    comptes pour une même adresse seraient de toute façon un piège. Les
+ *    comptes déjà liés aux deux fournisseurs avant cette décision restent
+ *    tels quels (étape 1 : chaque identité connue retrouve son compte) ;
  * 3. sinon → nouveau compte.
  *
- * Un profil sans e-mail vérifié ne participe jamais à la fusion (étape 2
- * sautée) : une adresse non vérifiée permettrait de s'approprier le compte
- * d'un tiers.
+ * Un profil sans e-mail vérifié saute l'étape 2 : il ouvre toujours un
+ * nouveau compte, sans e-mail (rien ne permet alors de reconnaître le compte
+ * d'un autre fournisseur).
  */
 async function resolveAccount(
   store: AuthStore,
   provider: ProviderId,
   profile: OAuthProfile,
   now: Date,
-): Promise<{ user: UserRecord; isNewUser: boolean }> {
+): Promise<
+  | { ok: true; user: UserRecord; isNewUser: boolean }
+  | { ok: false; existingProvider: ProviderId | undefined }
+> {
   const email = profile.email ? profile.email.trim().toLowerCase() : null;
 
   const identity = await store.findIdentity(provider, profile.providerUid);
@@ -302,6 +324,7 @@ async function resolveAccount(
         lastSeenAt: now,
       });
       return {
+        ok: true,
         user: { ...user, email: email ?? user.email, displayName: user.displayName },
         isNewUser: false,
       };
@@ -311,15 +334,8 @@ async function resolveAccount(
   if (email) {
     const existing = await store.findUserByEmail(email);
     if (existing) {
-      await store.linkIdentity({
-        userId: existing.id,
-        provider,
-        providerUid: profile.providerUid,
-        email,
-        now,
-      });
-      await store.updateUser(existing.id, { lastSeenAt: now });
-      return { user: existing, isNewUser: false };
+      const identities = await store.listIdentities(existing.id);
+      return { ok: false, existingProvider: identities[0]?.provider };
     }
   }
 
@@ -332,7 +348,7 @@ async function resolveAccount(
     now,
   });
   await store.updateUser(created.id, { lastSeenAt: now });
-  return { user: created, isNewUser: true };
+  return { ok: true, user: created, isNewUser: true };
 }
 
 async function isEmailTaken(

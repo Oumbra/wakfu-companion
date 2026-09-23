@@ -133,6 +133,14 @@ export class App implements OnInit {
       // fausserait la toute PROCHAINE connexion réussie dans ce même onglet (ex. depuis la page
       // profil), qui n'a plus rien à voir avec le bouton mobile "passer cette étape".
       const mobileSkipPending = outcome ? this.auth.consumeMobileSkipLoginPending() : false;
+      // Connexion refusée parce que l'e-mail appartient déjà à un compte ouvert avec l'autre
+      // fournisseur (un compte = un seul fournisseur, voir server/auth/flow.ts) : même page que
+      // pour un succès, où l'état invité affiche avec quel fournisseur se reconnecter. Sans ça,
+      // le retour sur `/` laisserait l'utilisateur sans explication.
+      if (outcome?.status === 'error' && outcome.reason?.startsWith('email_taken')) {
+        this.nav.openAccount();
+        return;
+      }
       if (outcome?.status !== 'ok') return;
       // Retour du bouton mobile "passer cette étape" (voir SetupComponent/
       // LogFileAccessService.simulateConnected) : la connexion vient d'aboutir pour cette seule

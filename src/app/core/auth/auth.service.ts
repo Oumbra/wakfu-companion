@@ -87,6 +87,14 @@ function loginErrorKey(reason: string | null): string {
       return 'auth.error.state';
     case 'rate_limited':
       return 'auth.error.rateLimited';
+    // Un compte = un seul fournisseur : l'e-mail appartient déjà à un compte ouvert avec l'autre
+    // (voir `resolveAccount`, server/auth/flow.ts).
+    case 'email_taken_discord':
+      return 'auth.error.emailTakenDiscord';
+    case 'email_taken_google':
+      return 'auth.error.emailTakenGoogle';
+    case 'email_taken':
+      return 'auth.error.emailTaken';
     default:
       return 'auth.error.generic';
   }

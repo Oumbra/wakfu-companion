@@ -671,20 +671,20 @@ façade.
 
 ### Organisation du code
 
-| Fichier                                                | Rôle                                                                                                                                     |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/auth/store.ts`                                 | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.                                                   |
-| `server/auth/flow.ts`                                  | Toute la logique : validation du `state`, usage unique du code, fusion de comptes, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
-| `server/auth/db-store.ts`                              | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                                                                           |
-| `server/auth/memory-store.ts`                          | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                                                              |
-| `server/auth/providers.ts`                             | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                                                                 |
-| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.                                                                 |
-| `functions/api/_auth.ts`                               | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.                                                          |
+| Fichier                                                | Rôle                                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `server/auth/store.ts`                                 | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.                                                           |
+| `server/auth/flow.ts`                                  | Toute la logique : validation du `state`, usage unique du code, un fournisseur par compte, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
+| `server/auth/db-store.ts`                              | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                                                                                   |
+| `server/auth/memory-store.ts`                          | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                                                                      |
+| `server/auth/providers.ts`                             | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                                                                         |
+| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.                                                                         |
+| `functions/api/_auth.ts`                               | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.                                                                  |
 
 Tests : `npm run test:server` (config `vitest.server.config.ts`, séparée de
 `npm test` qui passe par le builder Angular et ne voit que `src/`). Couvrent
 les quatre exigences du prompt — `state` invalide, code rejoué, session
-révoquée, fusion sur e-mail — plus redirection ouverte, CSRF, rotation,
+révoquée, e-mail déjà pris par un autre fournisseur — plus redirection ouverte, CSRF, rotation,
 expiration glissante et limitation de débit.
 
 ### Trois écarts par rapport au schéma d'origine
@@ -702,18 +702,27 @@ expiration glissante et limitation de débit.
    binding KV supplémentaire — même contrainte Cloudflare Pages que pour les
    rollups de prix).
 
-### Fusion de comptes : rattachement automatique sur e-mail vérifié
+### Un compte = un seul fournisseur (plus de fusion sur e-mail)
 
-Décision du §7, appliquée telle quelle : si l'e-mail **vérifié** renvoyé par
-le fournisseur correspond déjà à un compte, la nouvelle identité y est
-rattachée automatiquement (pas d'écran de liaison manuelle). Les deux
-fournisseurs vérifient l'adresse, ce qui rend le rattachement sûr.
+Décision du 2026-09-23, qui remplace le rattachement automatique du §7 : un
+compte s'ouvre et se rouvre avec **un seul** fournisseur, Discord OU Google.
+Si l'e-mail **vérifié** renvoyé par un fournisseur appartient déjà à un compte
+ouvert avec l'autre, la connexion est **refusée** (`email_taken`) : le callback
+redirige avec `?login=error&reason=email_taken_{fournisseur du compte}`, et
+l'application invite à se reconnecter avec ce fournisseur. Aucun second compte
+n'est créé à la place (`users.email` est unique). La session éventuellement
+ouverte dans le navigateur n'est pas révoquée (le refus intervient avant la
+rotation).
 
-Corollaire important : **un profil sans e-mail vérifié ne participe jamais à
-la fusion** (`providers.ts` normalise un e-mail non vérifié en `null`) — sans
-quoi une adresse non validée permettrait de s'approprier le compte d'un tiers.
-Un tel compte reste parfaitement utilisable, il est simplement isolé par
-fournisseur.
+Les comptes déjà liés aux deux fournisseurs avant cette décision restent tels
+quels : chaque identité connue retrouve son compte (première étape de
+`resolveAccount`), rien n'est supprimé.
+
+Corollaire : **un profil sans e-mail vérifié n'est jamais reconnu par son
+e-mail** (`providers.ts` normalise un e-mail non vérifié en `null`) — il ouvre
+un compte distinct, sans e-mail. Sans cette règle, une adresse non validée
+permettrait de bloquer ou de viser le compte d'un tiers. Même limite pour deux
+fournisseurs aux e-mails différents : rien ne les relie, ce sont deux comptes.
 
 ### CSRF : jeton double-submit dérivé, non stocké
 

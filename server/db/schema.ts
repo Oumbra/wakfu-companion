@@ -374,7 +374,7 @@ export const catalogMeta = pgTable('catalog_meta', {
  * gain nul dès lors que la normalisation est faite en un seul endroit.
  * Nullable : un fournisseur peut théoriquement ne pas renvoyer d'e-mail
  * vérifié (compte Discord sans e-mail confirmé) — le compte reste utilisable,
- * il ne participe simplement pas à la fusion sur e-mail (voir flow.ts).
+ * il n'est simplement pas reconnu par son e-mail (voir flow.ts).
  *
  * Une colonne `default_game_server` (repli global du serveur de jeu, posée au lot 5 pour le
  * lot 7) n'a jamais été lue ni écrite : le serveur vient uniquement du roster (voir
@@ -403,10 +403,12 @@ export const users = pgTable(
 );
 
 /**
- * Identités OAuth rattachées à un compte. Un même utilisateur peut se
- * connecter par Discord ET par Google : la fusion se fait automatiquement sur
- * e-mail vérifié identique (voir server/auth/flow.ts — les deux fournisseurs
- * vérifient l'adresse, ce qui rend ce rattachement sûr sans étape manuelle).
+ * Identités OAuth rattachées à un compte. Depuis le 2026-09-23, un compte
+ * n'utilise qu'UN fournisseur (Discord OU Google) : la connexion par l'autre
+ * fournisseur avec le même e-mail vérifié est refusée (voir
+ * server/auth/flow.ts, `resolveAccount`). Les comptes liés aux deux avant
+ * cette date gardent leurs deux identités, d'où la table plutôt qu'une
+ * colonne sur `users`.
  */
 export const userIdentities = pgTable(
   'user_identities',
