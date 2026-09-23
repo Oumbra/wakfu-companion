@@ -127,13 +127,22 @@ export function createMemoryAuthStore(): MemoryAuthStore {
     },
 
     async linkIdentity(input) {
-      identities.set(identityKey(input.provider, input.providerUid), {
+      const key = identityKey(input.provider, input.providerUid);
+      const existing = identities.get(key);
+      if (existing) return existing.userId;
+      identities.set(key, {
         provider: input.provider,
         providerUid: input.providerUid,
         userId: input.userId,
         email: input.email,
         linkedAt: input.now,
       });
+      return input.userId;
+    },
+
+    async updateIdentityEmail(provider, providerUid, email) {
+      const identity = identities.get(identityKey(provider, providerUid));
+      if (identity) identity.email = email;
     },
 
     async updateUser(userId, patch) {

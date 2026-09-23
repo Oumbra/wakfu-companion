@@ -323,6 +323,11 @@ async function resolveAccount(
         ...(profile.displayName && !user.displayName ? { displayName: profile.displayName } : {}),
         lastSeenAt: now,
       });
+      // L'e-mail de l'identité suit celui du fournisseur : sans ça, l'ancienne adresse restait
+      // conservée indéfiniment après un changement chez lui (RGPD art. 5.1.c/d).
+      if (identity.email !== email) {
+        await store.updateIdentityEmail(provider, profile.providerUid, email);
+      }
       return {
         ok: true,
         user: { ...user, email: email ?? user.email, displayName: user.displayName },
@@ -339,14 +344,41 @@ async function resolveAccount(
     }
   }
 
-  const created = await store.createUser({ email, displayName: profile.displayName });
-  await store.linkIdentity({
+  let created: UserRecord;
+  try {
+    created = await store.createUser({ email, displayName: profile.displayName });
+  } catch (error) {
+    // Deux premières connexions simultanées avec la même adresse (deux onglets) : la seconde bute
+    // sur l'unicité de `users.email`. On relit ce que la première a créé au lieu d'un 500.
+    const winner = await store.findIdentity(provider, profile.providerUid);
+    const winnerUser = winner ? await store.findUserById(winner.userId) : null;
+    if (winnerUser) {
+      await store.updateUser(winnerUser.id, { lastSeenAt: now });
+      return { ok: true, user: winnerUser, isNewUser: false };
+    }
+    const emailOwner = email ? await store.findUserByEmail(email) : null;
+    if (emailOwner) {
+      const identities = await store.listIdentities(emailOwner.id);
+      return { ok: false, existingProvider: identities[0]?.provider };
+    }
+    throw error;
+  }
+  const ownerId = await store.linkIdentity({
     userId: created.id,
     provider,
     providerUid: profile.providerUid,
     email,
     now,
   });
+  if (ownerId !== created.id) {
+    // Course sans e-mail : une requête concurrente a rattaché cette identité à SON compte. Le
+    // nôtre, tout juste créé et vide, est supprimé ; la connexion se fait sur le compte gagnant.
+    await store.deleteUser(created.id);
+    const owner = await store.findUserById(ownerId);
+    if (!owner) throw new Error('identité rattachée à un compte introuvable');
+    await store.updateUser(owner.id, { lastSeenAt: now });
+    return { ok: true, user: owner, isNewUser: false };
+  }
   await store.updateUser(created.id, { lastSeenAt: now });
   return { ok: true, user: created, isNewUser: true };
 }
@@ -366,6 +398,9 @@ export interface OpenedSession {
   idHash: string;
   expiresAt: Date;
 }
+
+/** Longueur conservée de l'en-tête `User-Agent` d'une session. */
+export const MAX_USER_AGENT_LENGTH = 256;
 
 /**
  * Ouvre une session : jeton opaque de 256 bits côté cookie, empreinte
@@ -397,7 +432,9 @@ export async function openSession(
     issuedAt: options.now,
     expiresAt,
     lastUsedAt: options.now,
-    userAgent: options.userAgent,
+    // Libellé d'appareil affiché dans « Mon compte » : un en-tête arbitrairement long n'a pas à
+    // être conservé (minimisation, RGPD art. 5.1.c).
+    userAgent: options.userAgent?.slice(0, MAX_USER_AGENT_LENGTH) ?? null,
     revokedAt: null,
     supersededAt: null,
     chainId: idHash,

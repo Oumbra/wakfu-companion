@@ -123,7 +123,16 @@ export interface AuthStore {
     providerUid: string;
     email: string | null;
     now: Date;
-  }): Promise<void>;
+  }): Promise<string>;
+  /**
+   * Met à jour l'e-mail d'une identité existante (il suit celui du fournisseur à chaque connexion :
+   * exactitude, RGPD art. 5.1.d).
+   */
+  updateIdentityEmail(
+    provider: ProviderId,
+    providerUid: string,
+    email: string | null,
+  ): Promise<void>;
   updateUser(
     userId: string,
     patch: { email?: string | null; displayName?: string | null; lastSeenAt?: Date },

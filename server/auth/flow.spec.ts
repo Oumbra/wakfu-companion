@@ -15,6 +15,7 @@ import { sha256Hex } from './crypto';
 import {
   completeAuthorization,
   deriveCsrfToken,
+  MAX_USER_AGENT_LENGTH,
   openSession,
   purgeDeadSessions,
   purgeInactiveAccounts,
@@ -821,5 +822,71 @@ describe('durée de vie absolue des sessions', () => {
     expect(
       await resolveSession(store, opened.token, new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS)),
     ).toBeNull();
+  });
+});
+
+describe('minimisation et courses à la création de compte (audit du 2026-09-23)', () => {
+  it('tronque un User-Agent démesuré', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const opened = await openSession(store, user.id, { now: NOW, userAgent: 'x'.repeat(10_000) });
+    expect((await store.findSession(opened.idHash))?.userAgent).toHaveLength(MAX_USER_AGENT_LENGTH);
+  });
+
+  it('met à jour l’e-mail de l’identité quand il change chez le fournisseur', async () => {
+    const store = createMemoryAuthStore();
+    await login(store);
+    await login(store, { oauthProfile: profile({ email: 'nouvelle@example.com' }) });
+    expect((await store.findIdentity('discord', 'uid-1'))?.email).toBe('nouvelle@example.com');
+  });
+
+  it('course sur l’e-mail : la seconde connexion rejoint le compte créé par la première', async () => {
+    const store = createMemoryAuthStore();
+    let winnerId = '';
+    let identityLookups = 0;
+    const racing: AuthStore = {
+      ...store,
+      // Le premier SELECT ne voit encore rien ; la requête concurrente a déjà tout écrit ensuite.
+      findIdentity: async (provider, uid) =>
+        identityLookups++ === 0 ? null : store.findIdentity(provider, uid),
+      findUserByEmail: async () => null,
+      createUser: async () => {
+        const winner = await store.createUser({ email: 'joueur@example.com', displayName: null });
+        await store.linkIdentity({
+          userId: winner.id,
+          provider: 'discord',
+          providerUid: 'uid-1',
+          email: 'joueur@example.com',
+          now: NOW,
+        });
+        winnerId = winner.id;
+        throw new Error('duplicate key value violates unique constraint "users_email_key"');
+      },
+    };
+    const result = await login(racing);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.result.user.id).toBe(winnerId);
+  });
+
+  it('course sans e-mail : pas de compte orphelin, l’identité reste au premier compte', async () => {
+    const store = createMemoryAuthStore();
+    const first = await store.createUser({ email: null, displayName: null });
+    await store.linkIdentity({
+      userId: first.id,
+      provider: 'discord',
+      providerUid: 'uid-1',
+      email: null,
+      now: NOW,
+    });
+    let lookups = 0;
+    const racing: AuthStore = {
+      ...store,
+      findIdentity: async (provider, uid) =>
+        lookups++ === 0 ? null : store.findIdentity(provider, uid),
+    };
+    const result = await login(racing, { oauthProfile: profile({ email: null }) });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.result.user.id).toBe(first.id);
+    expect(store.users.size).toBe(1);
   });
 });

@@ -119,10 +119,30 @@ export function createDbAuthStore(db: Db): AuthStore {
           email: input.email,
           linkedAt: input.now,
         })
-        .onConflictDoUpdate({
-          target: [userIdentities.provider, userIdentities.providerUid],
-          set: { userId: input.userId, email: input.email },
-        });
+        // Jamais de réattribution silencieuse : deux callbacks concurrents du même
+        // (fournisseur, uid) créaient chacun un compte, et le second « volait » l'identité au
+        // premier (compte orphelin qui avait pourtant reçu une session). Le premier arrivé garde
+        // l'identité ; l'appelant lit le propriétaire réel et nettoie son compte en trop.
+        .onConflictDoNothing({ target: [userIdentities.provider, userIdentities.providerUid] });
+      const [owner] = await db
+        .select({ userId: userIdentities.userId })
+        .from(userIdentities)
+        .where(
+          and(
+            eq(userIdentities.provider, input.provider),
+            eq(userIdentities.providerUid, input.providerUid),
+          ),
+        );
+      return owner?.userId ?? input.userId;
+    },
+
+    async updateIdentityEmail(provider, providerUid, email) {
+      await db
+        .update(userIdentities)
+        .set({ email })
+        .where(
+          and(eq(userIdentities.provider, provider), eq(userIdentities.providerUid, providerUid)),
+        );
     },
 
     async updateUser(userId, patch) {
