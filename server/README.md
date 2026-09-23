@@ -95,6 +95,8 @@ Réglages manuels (une fois) :
    attention, `rgpd-purges.yml` utilise le même environnement : ses runs
    nocturnes attendraient alors eux aussi une approbation (sinon, lui dédier
    un environnement `production-purge` ne portant que `DATABASE_URL`).
+   Fait le 2026-09-23 : `rgpd-purges.yml` utilise `production-purge` (règle de branche `main`,
+   sans relecteur), dont `DATABASE_URL` est la chaîne du rôle `app_runtime` (point 6).
    Y créer les secrets `DATABASE_URL` (propriétaire, migrations seulement),
    `DATABASE_URL_APP` (rôle `app_runtime`, point 6), `CLOUDFLARE_API_TOKEN` (jeton prod),
    `CLOUDFLARE_ACCOUNT_ID`, `RATE_LIMIT_SALT`, `APP_TOKEN_SECRET`,
