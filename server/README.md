@@ -648,6 +648,21 @@ testé : `server/http/{body,api-guards,host-guard}.ts`, `server/history/guards.t
   `history_quota_exceeded` au-delà, lot refusé en entier. Un lot ne contenant que des
   événements déjà stockés passe toujours ; le comptage (`LIMIT quota + 1`) n'a lieu que si le
   lot apporte du neuf, et seulement sur ses entrées valides.
+- **Volume d'historique en octets** (lot 6 de l'audit du 2026-09-23) : les quotas ci-dessus
+  comptent des lignes, qui peuvent chacune peser lourd. Quatre bornes complémentaires :
+  - `HISTORY_WRITE_BYTES_RULE` (`server/http/api-guards.ts`) : 8 Mio de corps de requête par
+    10 min et par compte, les quatre historiques confondus — 429 réessayable ;
+  - `MAX_HISTORY_ENTRY_BYTES` (`server/history/batch.ts`) : une entrée de plus de 64 Kio de JSON
+    est ignorée et listée dans `rejected` ;
+  - `MAX_HISTORY_BYTES_PER_ACCOUNT` (`server/history/storage.ts`) : 64 Mio par compte, comptés dans
+    `account_storage` à l'écriture des seules entrées NOUVELLES (un renvoi ne pèse rien) —
+    403 `history_quota_exceeded`. La migration 0037 initialise le compteur à la taille réelle
+    (`pg_column_size`) de ce que chaque compte stockait déjà ;
+  - coupe-circuit global : au-delà de `HISTORY_STORAGE_CEILING_MB` (variable Pages, 450 par
+    défaut pour le plan gratuit de 512 Mo), `pg_database_size` relue au plus une fois par minute
+    et par isolate, toute écriture d'historique nouvelle reçoit un 503
+    `history_storage_full` réessayable. Comptes, sessions et réglages continuent de fonctionner.
+  À relever avec le plan Neon : `MAX_HISTORY_BYTES_PER_ACCOUNT` et `HISTORY_STORAGE_CEILING_MB`.
 - **Validation par entrée** des lots d'historique (voir « Historiques serveur ») : une entrée
   invalide est ignorée et listée dans `rejected`, jamais un 400 ni un 500 pour tout le lot.
 - **Validation renforcée** (`server/history/parse.ts`) : entiers bornés au type réel de la colonne
