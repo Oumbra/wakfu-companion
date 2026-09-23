@@ -85,6 +85,13 @@ jobs:
       - name: Build
         run: npx ng build
 
+      # Icônes wakassets publiées en fichiers statiques sous /api/v1/icons (+ _routes.json qui sort
+      # ce chemin des Functions) : plus aucune invocation de Function par icône affichée — le
+      # quota quotidien a été dépassé le 2026-09-23 (projet en « Fail open » : toute l'API servait
+      # index.html). Détails : tools/bundle-wakassets-icons.mjs.
+      - name: Bundle wakassets icons
+        run: node tools/bundle-wakassets-icons.mjs dist/wakfu-companion/browser
+
       # Rend DATABASE_URL_PREVIEW disponible à l'exécution dans les Pages
       # Functions (functions/api/v1/*, context.env.DATABASE_URL) — distinct
       # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du

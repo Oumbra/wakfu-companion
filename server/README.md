@@ -264,6 +264,20 @@ minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
   l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
   Logique pure dans `server/icons/proxy.ts` (testée).
+  **En production et en preview, ce n'est plus la Function qui répond**
+  (2026-09-23) : chaque icône coûtait une invocation, même servie depuis le
+  cache, et le quota quotidien du compte a été dépassé — projet en « Fail
+  open », toute l'API renvoyait alors `index.html`. Les workflows de
+  déploiement lancent `tools/bundle-wakassets-icons.mjs` après `ng build` :
+  les mêmes dossiers (et le même filtre de noms) sont copiés en fichiers
+  statiques sous `dist/.../api/v1/icons/`, un `_routes.json` exclut
+  `/api/v1/icons/*` des Functions, et un `404.html` imbriqué garde un vrai 404
+  pour une icône absente. Mêmes URLs pour le site et l'overlay ; la garde
+  `rejectUnknownCaller` est remplacée par `Cross-Origin-Resource-Policy:
+  same-origin` (`public/_headers`), cache navigateur d'une semaine. Nouvelles
+  icônes `wakassets` : visibles au déploiement suivant. La Function reste pour
+  `wrangler pages dev` sans ce script. Limite Pages : 20 000 fichiers par
+  déploiement (≈ 15 200 aujourd'hui, le script échoue au-delà de 19 500).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
 - `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
