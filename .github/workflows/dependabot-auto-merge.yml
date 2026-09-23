@@ -1,0 +1,36 @@
+name: Dependabot auto-merge
+
+# Active l'auto-merge GitHub sur les PR Dependabot de correctif/mineure visant `claude/dev` :
+# GitHub fusionne seul quand le check requis `test` (ci.yml) est vert — il faut pour cela le
+# ruleset `claude/dev` (check `test` obligatoire) et « Allow auto-merge » dans les réglages du
+# dépôt ; sans check requis, l'auto-merge fusionnerait immédiatement.
+# - Majeures : jamais automatiques, relecture manuelle (les majeures Angular/TypeScript sont en
+#   outre ignorées dans dependabot.yml).
+# - cloudflare/wrangler-action : jamais automatique, même en mineure — il ne sert qu'aux
+#   workflows de déploiement, que la CI d'une PR n'exécute pas (v4.1.x publiées cassées).
+# - Squash : un commit par PR sur `claude/dev`, titré par le titre Conventional Commits de la PR
+#   (`chore`/`ci` : aucun bump de version).
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.base.ref == 'claude/dev'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Enable auto-merge
+        if: >-
+          steps.meta.outputs.update-type != 'version-update:semver-major' &&
+          !contains(steps.meta.outputs.dependency-names, 'cloudflare/wrangler-action')
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
