@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { HIT_MAX_AGE_SECONDS, MISS_MAX_AGE_SECONDS, relayHeaders, upstreamUrl } from './proxy';
+import {
+  HIT_MAX_AGE_SECONDS,
+  MISS_MAX_AGE_SECONDS,
+  UPSTREAM_FETCH_INIT,
+  iconCacheKeyUrl,
+  relayHeaders,
+  upstreamUrl,
+} from './proxy';
 
 describe('relais d’icônes wakassets', () => {
   it('reconstruit l’URL amont pour chaque dossier connu', () => {
@@ -32,6 +39,12 @@ describe('relais d’icônes wakassets', () => {
     );
   });
 
+  it('relaie les bonus PA/PM des sorts de monstres (timePointBonus)', () => {
+    expect(upstreamUrl({ folder: 'timePointBonus', file: '9.png' })).toBe(
+      'https://vertylo.github.io/wakassets/timePointBonus/9.png',
+    );
+  });
+
   it('refuse tout ce qui n’est pas <dossier connu>/<nombre ou mot court>.png', () => {
     expect(upstreamUrl({ folder: 'autre', file: '1.png' })).toBeNull();
     expect(upstreamUrl({ folder: 'items', file: '1.jpg' })).toBeNull();
@@ -55,5 +68,32 @@ describe('relais d’icônes wakassets', () => {
     expect(miss['cache-control']).toBe(`public, max-age=${MISS_MAX_AGE_SECONDS}`);
     expect(MISS_MAX_AGE_SECONDS).toBeLessThan(HIT_MAX_AGE_SECONDS);
     expect(hit['access-control-allow-origin']).toBeUndefined();
+  });
+});
+
+describe('clé de cache et fetch amont (audit 2026-09-23)', () => {
+  it('construit la clé depuis l’origine et le chemin canonique, sans query string', () => {
+    const icon = { folder: 'items', file: '1234.png' };
+    const a = iconCacheKeyUrl('https://wakfu-companion.com/api/v1/icons/items/1234.png?x=1', icon);
+    const b = iconCacheKeyUrl(
+      'https://wakfu-companion.com/api/v1/icons/items/1234.png?x=2#f',
+      icon,
+    );
+    expect(a).toBe('https://wakfu-companion.com/api/v1/icons/items/1234.png');
+    expect(b).toBe(a);
+  });
+
+  it('garde l’origine dans la clé (preview et production séparées)', () => {
+    const icon = { folder: 'items', file: '1234.png' };
+    expect(
+      iconCacheKeyUrl(
+        'https://claude-dev.wakfu-companion.pages.dev/api/v1/icons/items/1234.png',
+        icon,
+      ),
+    ).toBe('https://claude-dev.wakfu-companion.pages.dev/api/v1/icons/items/1234.png');
+  });
+
+  it('ne suit jamais une redirection amont', () => {
+    expect(UPSTREAM_FETCH_INIT.redirect).toBe('error');
   });
 });

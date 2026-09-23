@@ -135,3 +135,98 @@ describe('SyncQueueService — cloisonnement par compte', () => {
     expect([...disk.keys()]).toEqual(['purchase:b1']);
   });
 });
+
+describe('SyncQueueService — limite de débit (HTTP 429)', () => {
+  let disk: Map<string, HistoryEvent>;
+  let calls: number;
+  let respond: () => ApiResult<unknown>;
+  let queue: SyncQueueService;
+
+  beforeEach(() => {
+    disk = new Map();
+    calls = 0;
+    respond = () => ({ ok: false, error: { kind: 'http', status: 429, retryAfterMs: 60_000 } });
+    const api: Pick<ApiClientService, 'requestJson'> = {
+      async requestJson<T>(): Promise<ApiResult<T>> {
+        calls += 1;
+        return respond() as ApiResult<T>;
+      },
+    };
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const persistence = TestBed.inject(PersistenceService);
+    persistence.getSyncQueue = async <T>() => [...disk.values()] as T[];
+    persistence.putSyncQueueEntries = async (entries) => {
+      for (const entry of entries) disk.set(entry.id, entry as HistoryEvent);
+    };
+    persistence.deleteSyncQueueEntries = async (ids) => {
+      for (const id of ids) disk.delete(id);
+    };
+    queue = TestBed.inject(SyncQueueService);
+  });
+
+  it('garde les entrées en file et respecte Retry-After pour tout nouveau flush', async () => {
+    disk.set('purchase:x1', fakeEvent('compte-A', 'x1'));
+    await queue.activate('compte-A');
+
+    expect(calls).toBe(1);
+    expect(queue.pendingCount()).toBe(1);
+    expect(disk.has('purchase:x1')).toBe(true);
+    expect(queue.state()).toBe('error');
+
+    // Un déclencheur externe (retour réseau, bouton « Synchroniser maintenant ») ne doit pas
+    // contourner le délai imposé par le serveur.
+    await queue.flush();
+    await queue.flush();
+    expect(calls).toBe(1);
+    expect(queue.pendingCount()).toBe(1);
+
+    // Plusieurs 429 d'affilée ne comptent jamais comme un refus de la charge utile.
+    expect(disk.get('purchase:x1')?.attempts).toBe(0);
+    queue.deactivate();
+  });
+});
+
+describe('SyncQueueService — quota d’historique atteint (403 history_quota_exceeded)', () => {
+  let disk: Map<string, HistoryEvent>;
+  let calls: number;
+  let queue: SyncQueueService;
+
+  beforeEach(() => {
+    disk = new Map();
+    calls = 0;
+    const api: Pick<ApiClientService, 'requestJson'> = {
+      async requestJson<T>(): Promise<ApiResult<T>> {
+        calls += 1;
+        return { ok: false, error: { kind: 'http', status: 403, code: 'history_quota_exceeded' } };
+      },
+    };
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const persistence = TestBed.inject(PersistenceService);
+    persistence.getSyncQueue = async <T>() => [...disk.values()] as T[];
+    persistence.putSyncQueueEntries = async (entries) => {
+      for (const entry of entries) disk.set(entry.id, entry as HistoryEvent);
+    };
+    persistence.deleteSyncQueueEntries = async (ids) => {
+      for (const id of ids) disk.delete(id);
+    };
+    queue = TestBed.inject(SyncQueueService);
+  });
+
+  it("n'envoie plus rien automatiquement et garde les éléments sans les compter comme tentatives", async () => {
+    disk.set('purchase:q1', fakeEvent('compte-A', 'q1'));
+    await queue.activate('compte-A');
+    expect(calls).toBe(1);
+    expect(queue.quotaExceeded()).toBe(true);
+
+    for (let i = 0; i < 15; i++) await queue.flush();
+    expect(calls).toBe(1);
+    expect(queue.pendingCount()).toBe(1);
+    expect(disk.get('purchase:q1')?.attempts ?? 0).toBe(0);
+
+    // Un envoi manuel retente une seule fois.
+    await queue.flush({ manual: true });
+    expect(calls).toBe(2);
+    expect(disk.has('purchase:q1')).toBe(true);
+    queue.deactivate();
+  });
+});

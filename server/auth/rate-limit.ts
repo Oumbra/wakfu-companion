@@ -9,6 +9,8 @@
  * anti-abus de routes de connexion.
  */
 
+import { sha256Hex } from './crypto';
+import { MissingProductionSecretError, isPublicDeployment } from './environment';
 import type { AuthStore } from './store';
 
 export interface RateLimitRule {
@@ -26,8 +28,16 @@ export const SESSION_RULE: RateLimitRule = { limit: 60, windowMs: 10 * 60 * 1000
 export const PAIR_RULE: RateLimitRule = { limit: 20, windowMs: 10 * 60 * 1000 };
 /** Confirmation d'un appairage (navigateur connecté) : plus serré, écrit en base. */
 export const PAIR_CLAIM_RULE: RateLimitRule = { limit: 15, windowMs: 10 * 60 * 1000 };
-/** Sondage d'un appairage par l'overlay, par `deviceCode` : rythme ~3s pendant 10 min ⇒ jusqu'à ~200 appels légitimes. */
+/** Sondage d'un appairage par l'overlay, par `deviceCode` : rythme ~3s pendant 5 min
+ * (`PAIRING_TTL_MS`) ⇒ ~100 appels légitimes, un peu plus à cheval sur deux fenêtres. */
 export const PAIR_POLL_RULE: RateLimitRule = { limit: 250, windowMs: 10 * 60 * 1000 };
+/** Sondage d'appairage, par IP, AVANT la règle par jeton (audit du 2026-09-23) : sans elle, un
+ * appelant qui fait varier le `pollToken` n'est jamais freiné (un compteur neuf par jeton inventé).
+ * Laisse passer ~4 overlays qui s'appairent en même temps derrière la même IP. */
+export const PAIR_POLL_IP_RULE: RateLimitRule = { limit: 1000, windowMs: 10 * 60 * 1000 };
+/** Consultation d'une demande d'appairage par la page `/pair`, par compte (lecture seule, mais
+ * c'est un oracle sur les codes en attente : on borne l'énumération). */
+export const PAIR_INFO_RULE: RateLimitRule = { limit: 30, windowMs: 10 * 60 * 1000 };
 /** Émission du jeton d'application (`POST /api/v1/app/token`), par IP : un navigateur en demande un
  * toutes les 12 h, quelques-uns de plus en cas d'échec Turnstile ou de plusieurs profils derrière une
  * même IP — 20 par 10 min laisse large, et borne le coût `siteverify` d'un appelant abusif. */
@@ -73,14 +83,101 @@ export async function checkRateLimit(
   };
 }
 
+/** Clé de comptage du sondage d'appairage : le `pollToken` est un secret (il donne le jeton de
+ * session une fois l'appairage confirmé), il n'a pas à apparaître en clair dans `auth_rate_limits`. */
+export async function pollTokenBucket(pollToken: string): Promise<string> {
+  return `auth:native-poll:token:${(await sha256Hex(pollToken)).slice(0, 32)}`;
+}
+
 /** Secrets utilisés pour pseudonymiser l'adresse IP (sous-ensemble de `Env`, voir `functions/api/_types.ts`). */
 export interface IpKeyEnv {
   RATE_LIMIT_SALT?: string;
   DATABASE_URL?: string;
+  PUBLIC_BASE_URL?: string;
 }
 
 /** Longueur du condensat conservé (hex) : 64 bits, largement assez pour ne pas confondre deux appelants. */
 const IP_KEY_HEX_LENGTH = 16;
+
+/** Découpe une adresse IPv6 (compressée ou non, suffixe IPv4 et zone admis) en 8 mots de 16 bits. */
+function parseIpv6(raw: string): number[] | null {
+  let text = raw.trim().toLowerCase();
+  if (text.startsWith('[') && text.endsWith(']')) text = text.slice(1, -1);
+  const zone = text.indexOf('%');
+  if (zone !== -1) text = text.slice(0, zone);
+  if (!text.includes(':')) return null;
+
+  const lastColon = text.lastIndexOf(':');
+  const tail = text.slice(lastColon + 1);
+  if (tail.includes('.')) {
+    const v4 = parseIpv4(tail);
+    if (!v4) return null;
+    const high = ((v4[0] << 8) | v4[1]).toString(16);
+    const low = ((v4[2] << 8) | v4[3]).toString(16);
+    text = `${text.slice(0, lastColon + 1)}${high}:${low}`;
+  }
+
+  const halves = text.split('::');
+  if (halves.length > 2) return null;
+  const parse = (part: string): number[] | null => {
+    if (part === '') return [];
+    const words: number[] = [];
+    for (const group of part.split(':')) {
+      if (!/^[0-9a-f]{1,4}$/.test(group)) return null;
+      words.push(parseInt(group, 16));
+    }
+    return words;
+  };
+  const head = parse(halves[0]);
+  const rest = halves.length === 2 ? parse(halves[1]) : [];
+  if (!head || !rest) return null;
+  if (halves.length === 1) return head.length === 8 ? head : null;
+  const missing = 8 - head.length - rest.length;
+  if (missing < 1) return null;
+  return [...head, ...new Array<number>(missing).fill(0), ...rest];
+}
+
+function parseIpv4(raw: string): number[] | null {
+  const parts = raw.split('.');
+  if (parts.length !== 4) return null;
+  const bytes = parts.map((part) => (/^\d{1,3}$/.test(part) ? Number(part) : NaN));
+  return bytes.every((byte) => byte >= 0 && byte <= 255) ? bytes : null;
+}
+
+/**
+ * Sujet de comptage dérivé de l'adresse (audit du 2026-09-23) : une adresse IPv4 telle quelle,
+ * une adresse IPv6 **tronquée à son /64**. Un abonné IPv6 reçoit couramment un /64 (voire un /56)
+ * entier : compter par adresse complète lui laissait 2^64 compteurs neufs, donc aucune limite.
+ * Une IPv6 « IPv4-mappée » (`::ffff:a.b.c.d`) est ramenée à son IPv4. Une valeur illisible est
+ * comptée telle quelle (elle vient de Cloudflare, pas du client).
+ */
+export function rateLimitIpSubject(ip: string): string {
+  const trimmed = ip.trim();
+  if (parseIpv4(trimmed)) return trimmed;
+  const words = parseIpv6(trimmed);
+  if (!words) return trimmed.toLowerCase();
+  if (words.slice(0, 5).every((word) => word === 0) && words[5] === 0xffff) {
+    return [words[6] >> 8, words[6] & 0xff, words[7] >> 8, words[7] & 0xff].join('.');
+  }
+  return `${words
+    .slice(0, 4)
+    .map((word) => word.toString(16))
+    .join(':')}::/64`;
+}
+
+/**
+ * Secret HMAC de pseudonymisation. `RATE_LIMIT_SALT` ; en développement local seulement, repli sur
+ * `DATABASE_URL`. Sur un déploiement public (voir `server/auth/environment.ts`), son absence est
+ * une erreur explicite (audit du 2026-09-23) : réutiliser la chaîne de connexion à la base comme
+ * clé mélange deux secrets aux cycles de vie différents.
+ */
+export function rateLimitSecret(env: IpKeyEnv, requestUrl?: string | null): string {
+  if (env.RATE_LIMIT_SALT) return env.RATE_LIMIT_SALT;
+  if (isPublicDeployment(env, requestUrl)) {
+    throw new MissingProductionSecretError('RATE_LIMIT_SALT');
+  }
+  return env.DATABASE_URL || '';
+}
 
 /**
  * Clé de comptage dérivée de l'adresse IP de l'appelant (telle que vue par
@@ -90,14 +187,13 @@ const IP_KEY_HEX_LENGTH = 16;
  * `docs/analyse-rgpd.md`). `HMAC-SHA256(ip, secret)` tronqué : sans le secret,
  * la table `auth_rate_limits` ne permet pas de retrouver une adresse — un
  * simple SHA-256 non salé serait inversible en quelques secondes sur l'espace
- * IPv4. Le secret est `RATE_LIMIT_SALT` ; à défaut, `DATABASE_URL` (toujours
- * présent, jamais public) sert de matière à clé, pour que le repli ne soit
- * jamais un hachage non salé. Une rotation du secret ne fait que remettre les
- * compteurs à zéro sur la fenêtre en cours.
+ * IPv4. Le secret est `RATE_LIMIT_SALT` (voir `rateLimitSecret`). Une IPv6
+ * est d'abord ramenée à son /64 (`rateLimitIpSubject`). Une rotation du secret
+ * ne fait que remettre les compteurs à zéro sur la fenêtre en cours.
  */
 export async function clientIpKey(request: Request, env: IpKeyEnv): Promise<string> {
-  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
-  const secret = env.RATE_LIMIT_SALT || env.DATABASE_URL || '';
+  const ip = rateLimitIpSubject(request.headers.get('cf-connecting-ip') ?? 'unknown');
+  const secret = rateLimitSecret(env, request.url);
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',

@@ -2,28 +2,80 @@
   <div class="pair-card">
     <h1>{{ 'nativePair.title' | t }}</h1>
 
-    @if (!hasCode()) {
-      <p class="pair-error">{{ 'nativePair.missingCode' | t }}</p>
+    @if (state() === 'done') {
+      <p class="pair-success" role="status">{{ 'nativePair.success' | t }}</p>
     } @else {
-      <p class="pair-intro">{{ 'nativePair.intro' | t }}</p>
-      <div class="pair-code">{{ code() }}</div>
+      <p class="pair-warning" role="note">{{ 'nativePair.warning' | t }}</p>
 
-      @if (state() === 'done') {
-        <p class="pair-success">{{ 'nativePair.success' | t }}</p>
-      } @else if (!auth.isAuthenticated()) {
+      @if (!auth.isAuthenticated()) {
         <p class="pair-login-prompt">{{ 'nativePair.loginPrompt' | t }}</p>
         <app-auth-provider-buttons (providerChosen)="login($event)" />
       } @else {
+        <label class="pair-intro" for="pair-code-input">{{ 'nativePair.intro' | t }}</label>
+        <app-code-input
+          class="pair-code-input"
+          inputId="pair-code-input"
+          [value]="code()"
+          [maxLength]="codeLength"
+          [placeholder]="'nativePair.codePlaceholder' | t"
+          [disabled]="state() === 'confirming'"
+          (valueChange)="onCodeChange($event)"
+          (submitted)="confirm()"
+        />
+        @switch (infoState().kind) {
+          @case ('loading') {
+            <p class="pair-info-status" role="status">{{ 'nativePair.info.loading' | t }}</p>
+          }
+          @case ('loaded') {
+            @if (loadedInfo(); as info) {
+              <dl class="pair-info" [attr.aria-label]="'nativePair.info.title' | t">
+                <dt>{{ 'nativePair.info.country' | t }}</dt>
+                <dd>{{ countryLabel(info.country) }}</dd>
+                <dt>{{ 'nativePair.info.device' | t }}</dt>
+                <dd class="pair-info-ua">
+                  {{ info.userAgent ?? ('nativePair.info.unknown' | t) }}
+                </dd>
+                <dt>{{ 'nativePair.info.age' | t }}</dt>
+                <dd>{{ ageLabel(info.ageSeconds) }}</dd>
+              </dl>
+              <p class="pair-info-hint">{{ 'nativePair.info.hint' | t }}</p>
+            }
+          }
+          @case ('notFound') {
+            <p class="pair-error" role="alert">{{ 'nativePair.errorInvalid' | t }}</p>
+          }
+          @case ('browserSessionRequired') {
+            <p class="pair-error" role="alert">
+              {{ 'nativePair.errorBrowserSessionRequired' | t }}
+            </p>
+          }
+          @case ('unavailable') {
+            <p class="pair-info-status" role="status">{{ 'nativePair.info.unavailable' | t }}</p>
+          }
+        }
         <button
           type="button"
           class="pair-confirm-btn"
-          [disabled]="state() === 'confirming'"
+          [disabled]="!canConfirm()"
           (click)="confirm()"
         >
           {{ (state() === 'confirming' ? 'nativePair.confirming' : 'nativePair.confirm') | t }}
         </button>
-        @if (state() === 'error') {
-          <p class="pair-error">{{ 'nativePair.errorInvalid' | t }}</p>
+        @switch (state()) {
+          @case ('invalid') {
+            <p class="pair-error" role="alert">{{ 'nativePair.errorInvalid' | t }}</p>
+          }
+          @case ('browserSessionRequired') {
+            <p class="pair-error" role="alert">
+              {{ 'nativePair.errorBrowserSessionRequired' | t }}
+            </p>
+          }
+          @case ('rateLimited') {
+            <p class="pair-error" role="alert">{{ 'nativePair.errorRateLimited' | t }}</p>
+          }
+          @case ('error') {
+            <p class="pair-error" role="alert">{{ 'nativePair.errorGeneric' | t }}</p>
+          }
         }
       }
     }

@@ -124,6 +124,8 @@ export class AuthService {
   readonly syncState = this.userData.syncState;
   readonly syncPendingKeys = this.userData.pendingKeys;
   readonly lastSyncedAt = this.userData.lastSyncedAt;
+  /** Quota d'historique atteint côté serveur (voir `SyncQueueService.quotaExceeded`). */
+  readonly historyQuotaExceeded = computed(() => this.historySync.quotaExceeded());
 
   constructor() {
     // Équivalent de l'intercepteur HTTP demandé par le prompt 5.2 : tout 401
@@ -167,15 +169,43 @@ export class AuthService {
     location.assign(`/api/v1/auth/${provider}/start${target}`);
   }
 
-  async logout(): Promise<boolean> {
+  /**
+   * Déconnexion volontaire. Par défaut, les données de configuration restent sur cet appareil
+   * (mode invité pleinement utilisable, cas du PC personnel — le plus courant pour un compagnon
+   * qui lit le `wakfu.log` local). Avec `wipeLocalData` (interrupteur explicite de la page compte,
+   * décoché par défaut — même principe que « effacer aussi les données de cet appareil » à la
+   * suppression du compte), les clés `USER_DATA_KEYS` sont effacées après la déconnexion, pour
+   * qu'un navigateur PARTAGÉ ne laisse pas le profil/roster/suivi du compte au prochain
+   * utilisateur. Ces données restent sur le compte : elles reviennent à la prochaine connexion.
+   *
+   * Garde-fou : on n'efface jamais une modification qui n'aurait pas encore atteint le compte —
+   * envoi forcé d'abord, et si des champs restent en attente (hors ligne, limite de débit),
+   * la déconnexion est refusée (`'unsynced'`) plutôt que de détruire ces modifications.
+   *
+   * @returns `'ok'`, `'failed'` (appel serveur en échec, déconnecté localement quand même) ou
+   *   `'unsynced'` (effacement demandé mais données non synchronisées : rien n'est fait).
+   */
+  async logout(options?: { wipeLocalData?: boolean }): Promise<'ok' | 'failed' | 'unsynced'> {
     this._busy.set(true);
+    // Jamais d'effacement pour un invité qui n'a jamais été connecté : ses données ne sont
+    // nulle part ailleurs que sur cet appareil.
+    const wipe = options?.wipeLocalData === true && this.isAuthenticated();
+    if (wipe) {
+      await this.userData.flush();
+      if (this.userData.pendingKeys().length > 0 || this.userData.syncState() === 'error') {
+        this._busy.set(false);
+        this._error.set('auth.error.logoutUnsynced');
+        return 'unsynced';
+      }
+    }
     const result = await this.api.requestJson<{ ok: boolean }>('/auth/logout', { method: 'POST' });
     this._busy.set(false);
     // Même si l'appel échoue côté réseau, on retombe en invité côté client :
     // rester affiché comme connecté alors que l'utilisateur a demandé à partir
     // serait le pire des deux mondes.
     this.becomeGuest();
-    return result.ok;
+    if (wipe) this.userData.clearLocalUserData();
+    return result.ok ? 'ok' : 'failed';
   }
 
   async listSessions(): Promise<AuthSessionInfo[] | null> {

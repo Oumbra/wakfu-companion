@@ -186,6 +186,12 @@ export const items = pgTable(
   (table) => [
     index('items_ankama_id_idx').on(table.ankamaId),
     index('items_sub_category_id_idx').on(table.subCategoryId),
+    // Recherche catalogue `ILIKE '%q%'` (functions/api/v1/catalog/search.ts) : index trigramme par
+    // locale (extension pg_trgm, migration 0033) plutôt qu'un balayage séquentiel par requête.
+    index('items_fr_trgm_idx').using('gin', table.fr.op('gin_trgm_ops')),
+    index('items_en_trgm_idx').using('gin', table.en.op('gin_trgm_ops')),
+    index('items_es_trgm_idx').using('gin', table.es.op('gin_trgm_ops')),
+    index('items_pt_trgm_idx').using('gin', table.pt.op('gin_trgm_ops')),
   ],
 );
 
@@ -266,7 +272,14 @@ export const monsters = pgTable(
     // d'import non garanti entre les tables).
     loot: integer('loot').array().notNull().default([]),
   },
-  (table) => [index('monsters_loot_idx').using('gin', table.loot)],
+  (table) => [
+    index('monsters_loot_idx').using('gin', table.loot),
+    // Même raison que les index trigramme de `items` (recherche catalogue par nom).
+    index('monsters_fr_trgm_idx').using('gin', table.fr.op('gin_trgm_ops')),
+    index('monsters_en_trgm_idx').using('gin', table.en.op('gin_trgm_ops')),
+    index('monsters_es_trgm_idx').using('gin', table.es.op('gin_trgm_ops')),
+    index('monsters_pt_trgm_idx').using('gin', table.pt.op('gin_trgm_ops')),
+  ],
 );
 
 /** Donjons — `id` Ankama en clé primaire (151 donjons, tous uniques). */
@@ -439,8 +452,18 @@ export const sessions = pgTable(
     // server/auth/pairing.ts) : encore acceptée jusqu'à `expires_at`, ramené
     // à quelques minutes, mais plus jamais prolongée ni listée.
     supersededAt: timestamp('superseded_at', { withTimezone: true }),
+    // Audit de sécurité du 2026-09-23 (voir server/auth/flow.ts) : chaîne de rotation (empreinte
+    // de la première session, recopiée à chaque rotation native), échéance absolue propagée aux
+    // rotations (`SESSION_MAX_LIFETIME_MS`), et rotation de rattrapage déjà consommée. Nullables :
+    // le code tolère une ligne écrite avant la migration (repli sur `id` / `issued_at`).
+    chainId: text('chain_id'),
+    absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }),
+    graceRotatedAt: timestamp('grace_rotated_at', { withTimezone: true }),
   },
-  (table) => [index('sessions_user_id_idx').on(table.userId)],
+  (table) => [
+    index('sessions_user_id_idx').on(table.userId),
+    index('sessions_chain_id_idx').on(table.chainId),
+  ],
 );
 
 /**
@@ -499,6 +522,12 @@ export const nativePairings = pgTable(
     sessionToken: text('session_token'),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    // Métadonnées de la demande, affichées sur la page `/pair` avant confirmation (audit du
+    // 2026-09-23) : pays Cloudflare (`cf-ipcountry`, jamais l'IP) et user-agent tronqué. Durée de
+    // vie = celle de la ligne (`PAIRING_TTL_MS`, puis purge des appairages expirés).
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    requesterCountry: text('requester_country'),
+    requesterUserAgent: text('requester_user_agent'),
   },
   (table) => [index('native_pairings_expires_at_idx').on(table.expiresAt)],
 );

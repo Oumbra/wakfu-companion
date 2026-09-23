@@ -20,8 +20,9 @@
 export const WAKASSETS_ORIGIN = 'https://vertylo.github.io/wakassets';
 
 /**
- * Les dossiers demandés par l'overlay (miroir de `IconRef::primary_folder` et de
- * `WAKASSETS_SPELLS_URL_PREFIX` dans `overlay-engine`) et par le site (`WakassetsFolder` dans
+ * Les dossiers demandés par l'overlay (miroir de `IconRef::primary_folder` dans `overlay-engine` :
+ * `spells` et `timePointBonus` pour les référentiels de sorts, dont les bonus PA/PM des monstres)
+ * et par le site (`WakassetsFolder` dans
  * `wakassets-url.util.ts` : `bossIllustrations`/`monstersfamily` pour les `pictureUrl` de
  * donjons/familles, `icons`/`aptitudes` pour les onglets de statistiques). Tout autre dossier est
  * refusé : ce relais n'est pas un proxy ouvert vers GitHub Pages.
@@ -35,6 +36,7 @@ export const ALLOWED_FOLDERS = new Set([
   'rarities',
   'itemTypes',
   'spells',
+  'timePointBonus',
   'icons',
   'aptitudes',
 ]);
@@ -64,6 +66,30 @@ export function upstreamUrl({ folder, file }: IconRequest): string | null {
   if (!ALLOWED_FOLDERS.has(folder) || !FILE_PATTERN.test(file)) return null;
   return `${WAKASSETS_ORIGIN}/${folder}/${file}`;
 }
+
+/**
+ * Clé de cache périphérique (`caches.default`) d'une icône — correctif du 2026-09-23 (audit
+ * sécurité). Construite depuis l'ORIGINE de la requête et le chemin CANONIQUE (dossier et fichier
+ * déjà validés par `upstreamUrl`), jamais depuis l'URL brute : avec l'URL brute, chaque variante
+ * de query string (`?a=1`, `?a=2`...) était une entrée de cache distincte — autant d'allers-retours
+ * amont et d'entrées de cache qu'un appelant voulait en fabriquer. L'origine reste dans la clé :
+ * la preview et la production ne partagent pas leurs entrées.
+ */
+export function iconCacheKeyUrl(requestUrl: string, { folder, file }: IconRequest): string {
+  return `${new URL(requestUrl).origin}/api/v1/icons/${folder}/${file}`;
+}
+
+/**
+ * Options du `fetch` amont. `redirect: 'error'` : `wakassets` sert ses fichiers directement ;
+ * une redirection (dépôt déplacé, page d'erreur GitHub Pages, domaine repris) ne doit jamais
+ * être suivie — le relais n'irait plus chercher ses octets chez `WAKASSETS_ORIGIN` mais là où la
+ * redirection pointe, et les servirait sous notre origine. Le `fetch` lève alors une exception,
+ * traduite en 502 par la route.
+ */
+export const UPSTREAM_FETCH_INIT = {
+  redirect: 'error',
+  cf: { cacheEverything: true, cacheTtl: 24 * 60 * 60 },
+} as const;
 
 /**
  * Les en-têtes de la réponse relayée. On ne recopie **rien** de l'amont (ni `ETag`, ni `Server`,

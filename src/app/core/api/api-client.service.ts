@@ -6,6 +6,12 @@ export interface ApiError {
   kind: ApiErrorKind;
   /** Renseigné uniquement pour `kind: 'http'`. */
   status?: number;
+  /** Délai demandé par l'en-tête `Retry-After` (429/503 surtout), en ms — absent si non fourni
+   * ou illisible. Voir `parseRetryAfterMs`. */
+  retryAfterMs?: number;
+  /** Code d'erreur applicatif du corps JSON (`{ code: '...' }`), lu seulement pour un 403 — ex.
+   * `browser_session_required` (route réservée à une session de navigateur). */
+  code?: string;
 }
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -109,7 +115,7 @@ export class ApiClientService {
         clearTimeout(timer);
 
         if (!response.ok) {
-          lastError = { kind: 'http', status: response.status };
+          lastError = await httpError(response);
           this.notifyIfUnauthorized(response.status);
           if (
             response.status === 403 &&
@@ -150,7 +156,8 @@ export class ApiClientService {
    *
    * Ajoute le jeton CSRF double-submit (`X-CSRF-Token`) attendu par les
    * routes mutatives de l'API d'authentification (voir
-   * functions/api/_auth.ts) : il est lu dans le cookie `wc_csrf`, seul cookie
+   * functions/api/_auth.ts) : il est lu dans le cookie `__Host-wc_csrf` (ou `wc_csrf`, ancien
+   * nom, voir `readCsrfCookie`), seul cookie
    * d'authentification volontairement lisible en JS — le cookie de session,
    * lui, est `httpOnly` et reste invisible d'ici.
    */
@@ -181,7 +188,7 @@ export class ApiClientService {
 
       if (!response.ok) {
         this.notifyIfUnauthorized(response.status);
-        return { ok: false, error: { kind: 'http', status: response.status } };
+        return { ok: false, error: await httpError(response) };
       }
       // 204 ou corps vide : renvoyer `undefined` plutôt que planter sur un JSON absent.
       const text = await response.text();
@@ -196,13 +203,67 @@ export class ApiClientService {
   }
 }
 
-/** Cookie CSRF posé par l'API (voir server/auth/cookies.ts) — non `httpOnly` par conception. */
-function readCsrfCookie(): string | null {
-  for (const part of document.cookie.split(';')) {
+/** Plafond d'un `Retry-After` honoré : au-delà, une valeur aberrante bloquerait la file des heures. */
+const MAX_RETRY_AFTER_MS = 60 * 60_000;
+
+async function httpError(response: Response): Promise<ApiError> {
+  const error: ApiError = { kind: 'http', status: response.status };
+  const retryAfterMs = parseRetryAfterMs(response.headers?.get('Retry-After') ?? null);
+  if (retryAfterMs !== undefined) error.retryAfterMs = retryAfterMs;
+  if (response.status === 403) {
+    try {
+      const body = (await response.clone().json()) as { code?: unknown };
+      if (typeof body?.code === 'string') error.code = body.code;
+    } catch {
+      // Corps absent ou non JSON : pas de code applicatif.
+    }
+  }
+  return error;
+}
+
+/** `Retry-After` : nombre de secondes ou date HTTP (RFC 9110, section Retry-After), borné à `MAX_RETRY_AFTER_MS`. */
+export function parseRetryAfterMs(
+  header: string | null,
+  nowMs: number = Date.now(),
+): number | undefined {
+  if (header === null) return undefined;
+  const trimmed = header.trim();
+  if (!trimmed) return undefined;
+  let ms: number;
+  if (/^\d+$/.test(trimmed)) {
+    ms = Number(trimmed) * 1000;
+  } else {
+    const date = Date.parse(trimmed);
+    if (Number.isNaN(date)) return undefined;
+    ms = date - nowMs;
+  }
+  return Math.min(Math.max(ms, 0), MAX_RETRY_AFTER_MS);
+}
+
+/**
+ * Noms possibles du cookie CSRF posé par l'API (voir server/auth/cookies.ts) — non `httpOnly` par
+ * conception. Le préfixe `__Host-` (cookie lié à l'hôte, `Secure`, `Path=/`, sans `Domain`) est
+ * prioritaire ; l'ancien nom reste lu pour la transition (session ouverte avant le renommage).
+ */
+const CSRF_COOKIE_NAMES = ['__Host-wc_csrf', 'wc_csrf'] as const;
+
+export function readCsrfCookie(cookieString: string = document.cookie): string | null {
+  const found = new Map<string, string>();
+  for (const part of cookieString.split(';')) {
     const eq = part.indexOf('=');
     if (eq === -1) continue;
-    if (part.slice(0, eq).trim() === 'wc_csrf')
-      return decodeURIComponent(part.slice(eq + 1).trim());
+    const name = part.slice(0, eq).trim();
+    if ((CSRF_COOKIE_NAMES as readonly string[]).includes(name) && !found.has(name)) {
+      try {
+        found.set(name, decodeURIComponent(part.slice(eq + 1).trim()));
+      } catch {
+        // Valeur mal encodée : ignorée, on tente l'autre nom.
+      }
+    }
+  }
+  for (const name of CSRF_COOKIE_NAMES) {
+    const value = found.get(name);
+    if (value) return value;
   }
   return null;
 }

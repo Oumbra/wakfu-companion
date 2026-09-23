@@ -85,9 +85,20 @@ export class AccountPageComponent implements OnInit {
     this.sessions.set([]);
   }
 
+  /**
+   * « Effacer aussi les données de cet appareil » à la déconnexion (navigateur partagé) — décoché
+   * par défaut : sur un PC personnel, retrouver sa configuration en mode invité après une
+   * déconnexion est le comportement attendu. Voir `AuthService.logout`.
+   */
+  protected readonly wipeLocalOnLogout = signal(false);
+
   protected async logout(): Promise<void> {
-    await this.auth.logout();
+    const wipe = this.wipeLocalOnLogout();
+    const outcome = await this.auth.logout({ wipeLocalData: wipe });
+    if (outcome === 'unsynced') return;
     this.sessions.set([]);
+    // Les services gardent les anciennes valeurs en mémoire : on repart de zéro.
+    if (wipe) window.location.reload();
   }
 
   /**

@@ -2,8 +2,9 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { and, eq, inArray, notInArray, sql } from 'drizzle-orm';
 import { createDb } from '../../../server/db/client';
 import { userSettings } from '../../../server/db/schema';
-import { isSyncedSettingKey } from '../../../server/settings/keys';
-import { parsePatchBody, resolveWrites } from '../../../server/settings/merge';
+import { enforceUserRateLimit, internalErrorResponse } from '../../../server/http/api-guards';
+import { readJsonBodyLimited } from '../../../server/http/body';
+import { parsePatchBody, parsePutBody, resolveWrites } from '../../../server/settings/merge';
 import { applySettingPatch } from '../../../server/settings/patch';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../_auth';
 import type { Env } from '../_types';
@@ -30,7 +31,8 @@ import type { Env } from '../_types';
  * supplémentaire à maintenir en double.
  */
 
-/** Taille maximale acceptée pour l'ensemble de la configuration (garde-fou anti-abus). */
+/** Taille maximale acceptée pour l'ensemble de la configuration (garde-fou anti-abus), en OCTETS,
+ * appliquée pendant la lecture du corps (`readJsonBodyLimited`, server/http/body.ts). */
 const MAX_PAYLOAD_BYTES = 512 * 1024;
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
@@ -75,26 +77,31 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
  * sans second aller-retour.
  */
 export const onRequestPatch: PagesFunction<Env> = async (context) => {
-  const auth = await authenticate(context.request, context.env);
-  if (!auth) return unauthenticated();
-  if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
-
-  const raw = await context.request.text();
-  if (raw.length > MAX_PAYLOAD_BYTES) return jsonError('configuration trop volumineuse', 413);
-
-  let body: unknown;
   try {
-    body = JSON.parse(raw);
-  } catch {
-    return jsonError('corps JSON invalide', 400);
+    return await patchSettings(context.request, context.env);
+  } catch (error) {
+    // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
+    return internalErrorResponse('settings PATCH', error);
   }
+};
+
+async function patchSettings(request: Request, env: Env): Promise<Response> {
+  const auth = await authenticate(request, env);
+  if (!auth) return unauthenticated();
+  if (!(await requireCsrf(request, auth))) return jsonError('jeton CSRF invalide', 403);
+  // Limite de débit par compte (server/http/api-guards.ts) — avant toute lecture du corps.
+  const limited = await enforceUserRateLimit(auth.store, 'settings:write', auth.user.id);
+  if (limited) return limited;
+
+  const body = await readJsonBodyLimited(request, MAX_PAYLOAD_BYTES);
+  if (!body.ok) return jsonError(body.error, body.status);
 
   const now = new Date();
-  const parsed = parsePatchBody(body, now);
+  const parsed = parsePatchBody(body.value, now);
   if (!parsed.ok) return jsonError(parsed.error, 400);
   if (parsed.value.length === 0) return json({ applied: [], rejected: [] });
 
-  const db = createDb(context.env.DATABASE_URL);
+  const db = createDb(env.DATABASE_URL);
   const keys = parsed.value.map((write) => write.key);
   const existing = await db
     .select()
@@ -188,7 +195,7 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
   // entière résultante, que le client ne connaît pas puisqu'il n'a envoyé
   // qu'un correctif. Pour un remplacement, il l'a déjà.
   return json({ applied, rejected: rejectedOut });
-};
+}
 
 /**
  * PUT /api/v1/settings — remplace la configuration du compte par celle du
@@ -199,35 +206,29 @@ export const onRequestPatch: PagesFunction<Env> = async (context) => {
  * (garder le local / garder le compte) au moment où cet appel part.
  */
 export const onRequestPut: PagesFunction<Env> = async (context) => {
-  const auth = await authenticate(context.request, context.env);
-  if (!auth) return unauthenticated();
-  if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
-
-  const raw = await context.request.text();
-  if (raw.length > MAX_PAYLOAD_BYTES) return jsonError('configuration trop volumineuse', 413);
-
-  let body: unknown;
   try {
-    body = JSON.parse(raw);
-  } catch {
-    return jsonError('corps JSON invalide', 400);
+    return await putSettings(context.request, context.env);
+  } catch (error) {
+    return internalErrorResponse('settings PUT', error);
   }
+};
 
-  const data = (body as { data?: unknown } | null)?.data;
-  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
-    return jsonError('champ "data" manquant ou invalide', 400);
-  }
+async function putSettings(request: Request, env: Env): Promise<Response> {
+  const auth = await authenticate(request, env);
+  if (!auth) return unauthenticated();
+  if (!(await requireCsrf(request, auth))) return jsonError('jeton CSRF invalide', 403);
+  const limited = await enforceUserRateLimit(auth.store, 'settings:write', auth.user.id);
+  if (limited) return limited;
 
-  const entries = Object.entries(data as Record<string, unknown>).filter(
-    ([, value]) => value !== undefined,
-  );
-  // Liste blanche fermée (server/settings/keys.ts) : refuser franchement une
-  // clé inconnue plutôt que de laisser `user_settings` accumuler n'importe
-  // quel nom envoyé par un client modifié.
-  const unknownKey = entries.find(([key]) => !isSyncedSettingKey(key));
-  if (unknownKey) return jsonError(`clé inconnue : ${unknownKey[0]}`, 400);
+  const body = await readJsonBodyLimited(request, MAX_PAYLOAD_BYTES);
+  if (!body.ok) return jsonError(body.error, body.status);
 
-  const db = createDb(context.env.DATABASE_URL);
+  // Liste blanche fermée (server/settings/keys.ts) et profondeur bornée — voir `parsePutBody`.
+  const parsed = parsePutBody(body.value);
+  if (!parsed.ok) return jsonError(parsed.error, 400);
+  const entries = parsed.value;
+
+  const db = createDb(env.DATABASE_URL);
   const now = new Date();
 
   // Pas de transaction possible avec le driver `neon-http` (voir
@@ -254,4 +255,4 @@ export const onRequestPut: PagesFunction<Env> = async (context) => {
     );
 
   return json({ saved: keptKeys.length, updatedAt: now.toISOString() });
-};
+}

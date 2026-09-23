@@ -23,6 +23,23 @@ Deux catégories d'état dans `StatsStoreService`, à traiter différemment à c
 
 Si un nouveau champ cumulatif est ajouté au store, se demander explicitement : persistant (jamais reset) ou dérivé du fichier (reset à chaque `isInitialLoad`, dans `resetSessionState()`) ?
 
+## Texte des autres joueurs : jamais évaluer une regex « technique » sur une ligne de chat
+
+Corrigé le 2026-09-23 (audit de sécurité) : `CLIENT_BUILD_DATE_RE` n'était pas ancrée et était
+évaluée AVANT l'aiguillage `[Catégorie]`. Un joueur écrivant `vends pano [2000-01-01 @ 00H00min00]`
+dans un canal public déplaçait `logDateAnchor` chez tous les lecteurs du log — dates de combat
+fausses, envoyées ensuite au serveur. Règles :
+
+- Toute regex qui donne un sens « système » à une ligne (ancre de date, début de session, build...)
+  est **ancrée `^…$` sur la forme exacte de la ligne technique** et n'est jamais évaluée sur une
+  ligne `[Catégorie] …` (chat, commerce, guilde...), dont le texte est contrôlé par des tiers.
+- Une valeur extraite d'une ligne est **bornée** (date : année ≥ 2012, calendrier valide, pas au-delà
+  de maintenant + 1 jour) — voir `matchClientBuildDate()` dans `log-parser.ts`.
+- Longueur de ligne plafonnée (`MAX_LOG_LINE_LENGTH = 4096`, traitée comme une ligne WARN au-delà) :
+  défense en profondeur contre les regex à retour arrière. Plus longue ligne réelle constatée :
+  ~1 000 caractères (liste OpenAL au démarrage). Pas de regex à quantificateurs imbriqués sur du
+  texte libre (`TRADE_ITEM_RE` remplacée par un découpage linéaire `parseTradeItems`).
+
 ## Performance du chemin chaud d'ingestion : jamais de balayage O(catalogue) par ligne
 
 Corrigé le 2026-08-30, remonté par l'utilisateur avec vidéo à l'appui : jusqu'à ~10s de gel total,

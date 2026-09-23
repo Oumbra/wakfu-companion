@@ -26,20 +26,61 @@ h1 {
 }
 
 .pair-intro {
+  display: block;
   color: var(--text-muted);
-  margin: 0 0 20px;
+  margin: 0 0 12px;
 }
 
-.pair-code {
-  font-family: monospace;
-  font-size: 1.8rem;
-  letter-spacing: 0.15em;
-  background-color: var(--surface-well);
-  border: 1px solid var(--border-strong);
+.pair-warning {
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0 0 20px;
+  padding: 10px 12px;
+  border: 1px solid var(--btn-active-red);
+  border-left-width: 4px;
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
-  color: var(--accent);
+  background-color: var(--surface-well);
+  color: var(--text-color);
+}
+
+.pair-code-input {
+  margin-bottom: 16px;
+}
+
+.pair-info {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 12px;
+  margin: 0 0 8px;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  background-color: var(--surface-well);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.pair-info dt {
+  color: var(--text-muted);
+}
+
+.pair-info dd {
+  margin: 0;
+  min-width: 0;
+  color: var(--text-bright);
+}
+
+.pair-info-ua {
+  overflow-wrap: anywhere;
+  font-size: 0.8rem;
+}
+
+.pair-info-hint,
+.pair-info-status {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 16px;
 }
 
 .pair-login-prompt {

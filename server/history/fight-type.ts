@@ -88,13 +88,22 @@ export function dungeonFightTypeSelectSql(scope: SQL): SQL {
  * version de drizzle-orm utilisée ici). Un combat dont AUCUN ennemi n'a de `monster_id` résolu
  * (jamais catalogué) ne matche aucune ligne ici : `fight_type` reste `null` pour lui — même trou
  * déjà accepté par `familyPerFight` (voir `FightTypeCode`).
+ *
+ * **`scope` est injecté DANS la sous-requête** (correctif du 2026-09-23, audit sécurité/DoS) :
+ * sans lui, le `DISTINCT ON` triait `fight_participants` de TOUS les comptes à chaque
+ * `POST /history/fights` (la jointure avec le lot n'avait lieu qu'après, dans la requête
+ * englobante), soit un coût qui croissait avec la base entière plutôt qu'avec le lot. Même
+ * principe que `familyPerFight` (stats.ts), filtrée par compte et par plage dès la sous-requête.
+ * La sous-requête joint donc `fights` sous l'alias `f` — celui qu'attend `scope` (voir la doc de
+ * tête) — et restreint aux combats hors donjon, comme la requête englobante.
  */
-function representativeFamilyPerFightSql(): SQL {
+function representativeFamilyPerFightSql(scope: SQL): SQL {
   return sql`(
     select distinct on (fp.fight_id) fp.fight_id as fight_id, m.family as family
-    from fight_participants fp
+    from fights f
+    join fight_participants fp on fp.fight_id = f.id
     join monsters m on m.id = fp.monster_id
-    where fp.side = 'enemy'
+    where fp.side = 'enemy' and f.dungeon_id is null and (${scope})
     order by fp.fight_id,
       case when m.is_boss then 0 when m.is_archi then 1 when m.is_dominant then 2 else 3 end,
       fp.damage desc
@@ -111,7 +120,7 @@ export function familyFightTypeUpdateSql(scope: SQL): SQL {
   return sql`
     update fights as f
     set fight_type = ${familyFightTypeValueExpr()}
-    from ${representativeFamilyPerFightSql()} ff
+    from ${representativeFamilyPerFightSql(scope)} ff
     where f.id = ff.fight_id and f.dungeon_id is null and (${scope})
   `;
 }
@@ -123,7 +132,7 @@ export function familyFightTypeSelectSql(scope: SQL): SQL {
   return sql`
     select f.id as id, f.fight_type as current, ${familyFightTypeValueExpr()} as computed
     from fights f
-    join ${representativeFamilyPerFightSql()} ff on ff.fight_id = f.id
+    join ${representativeFamilyPerFightSql(scope)} ff on ff.fight_id = f.id
     where f.dungeon_id is null and (${scope})
   `;
 }

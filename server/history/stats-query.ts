@@ -1,4 +1,4 @@
-import type { ParseResult } from './parse';
+import { HISTORY_MAX_FUTURE_SKEW_MS, HISTORY_MIN_DATE_MS, type ParseResult } from './parse';
 
 /**
  * Validation pure de la requête d'agrégation par période (`GET /api/v1/history/stats`) — même
@@ -31,16 +31,48 @@ export interface StatsQuery {
   until: Date;
 }
 
-export function parseStatsQuery(params: URLSearchParams): ParseResult<StatsQuery> {
-  const rawSince = params.get('since');
-  if (rawSince === null) return { ok: false, error: 'since manquant' };
-  const since = new Date(rawSince);
-  if (Number.isNaN(since.getTime())) return { ok: false, error: `since invalide : ${rawSince}` };
+/**
+ * Bornes absolues de la plage (correctif du 2026-09-23, audit sécurité) — en plus de l'écart
+ * maximal `MAX_RANGE_MS` :
+ *
+ * - `since` ≥ 2012-01-01 moins un jour (`HISTORY_MIN_DATE_MS`, parse.ts : aucun événement n'est
+ *   accepté avant ; le jour de marge couvre un début d'année civile LOCALE en UTC+14) et
+ *   ≤ maintenant + 1 jour (une période qui commence dans le futur ne contient rien) ;
+ * - `until` ≤ maintenant + `MAX_RANGE_MS` — PAS maintenant + 1 jour : la période EN COURS se
+ *   termine à la fin du jour/mois/année civil(e) (`periodBounds`, local-period.util.ts), donc
+ *   jusqu'à un an dans le futur pour la vue Année.
+ *
+ * Tient aussi toute date loin des limites de `timestamptz` (une date JS extrême y ferait échouer
+ * la requête en 500).
+ */
+const MIN_SINCE_MS = HISTORY_MIN_DATE_MS - 24 * 60 * 60 * 1000;
 
-  const rawUntil = params.get('until');
-  if (rawUntil === null) return { ok: false, error: 'until manquant' };
-  const until = new Date(rawUntil);
-  if (Number.isNaN(until.getTime())) return { ok: false, error: `until invalide : ${rawUntil}` };
+function parseInstant(raw: string | null, field: string): ParseResult<Date> {
+  if (raw === null) return { ok: false, error: `${field} manquant` };
+  if (raw.length > 64) return { ok: false, error: `${field} invalide` };
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return { ok: false, error: `${field} invalide : ${raw}` };
+  return { ok: true, value: parsed };
+}
+
+export function parseStatsQuery(
+  params: URLSearchParams,
+  now: Date = new Date(),
+): ParseResult<StatsQuery> {
+  const sinceResult = parseInstant(params.get('since'), 'since');
+  if (!sinceResult.ok) return sinceResult;
+  const since = sinceResult.value;
+  if (since.getTime() < MIN_SINCE_MS) return { ok: false, error: 'since antérieur à 2012' };
+  if (since.getTime() > now.getTime() + HISTORY_MAX_FUTURE_SKEW_MS) {
+    return { ok: false, error: 'since dans le futur' };
+  }
+
+  const untilResult = parseInstant(params.get('until'), 'until');
+  if (!untilResult.ok) return untilResult;
+  const until = untilResult.value;
+  if (until.getTime() > now.getTime() + MAX_RANGE_MS) {
+    return { ok: false, error: 'until trop loin dans le futur' };
+  }
 
   if (until.getTime() <= since.getTime()) {
     return { ok: false, error: 'until doit être postérieur à since' };

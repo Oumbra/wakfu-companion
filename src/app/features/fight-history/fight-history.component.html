@@ -1,67 +1,80 @@
 <div class="fight-group-controls">
-  <!-- "Origine" (session/compte) n'a de sens qu'en mode connecté (voir constructeur du composant)
+  <!-- Recherche sur le CONTENU des combats (combattants alliés/ennemis + butin, voir
+       FightHistoryComponent.fightSearch) — même composant partagé que la recherche de butin d'un
+       combat (`app-loot-search`, voir CLAUDE.md conventions UI) plutôt qu'un champ recopié. Placée
+       AVANT le switch dans le DOM (lecture naturelle gauche -> droite) et en `flex:1`, elle occupe
+       l'espace laissé libre par le bloc d'actions à droite. -->
+  <app-loot-search
+    [value]="fightSearch()"
+    [placeholder]="'history.search.placeholder' | t"
+    [clearTooltip]="'history.search.clear' | t"
+    (valueChange)="fightSearch.set($event)"
+  />
+  <div class="fight-group-controls-actions">
+    <!-- "Origine" (session/compte) n'a de sens qu'en mode connecté (voir constructeur du composant)
        — invité, un switch à 2 options (Jour/Type) réutilise la variante de base `.icon-switch`
        (fond glissant à 50%) plutôt que `.icon-switch-3` (33%, réservée aux 3 options). -->
-  <div class="icon-switch fight-group-switch" [class.icon-switch-3]="auth.isAuthenticated()">
-    <span
-      class="icon-switch-highlight"
-      [class.is-right]="
-        auth.isAuthenticated() ? groupMode() === 'location' : groupMode() === 'type'
-      "
-      [class.is-far-right]="auth.isAuthenticated() && groupMode() === 'type'"
-    ></span>
-    <button
-      type="button"
-      class="icon-switch-option fight-group-switch-option"
-      [class.selected]="groupMode() === 'day'"
-      [appTooltip]="'history.group.day' | t"
-      (click)="setGroupMode('day')"
-    >
-      <app-icon name="calendar" [size]="13" [strokeWidth]="2" />
-      <span class="fight-group-switch-label">{{ 'history.group.day' | t }}</span>
-    </button>
-    @if (auth.isAuthenticated()) {
+    <div class="icon-switch fight-group-switch" [class.icon-switch-3]="auth.isAuthenticated()">
+      <span
+        class="icon-switch-highlight"
+        [class.is-right]="
+          auth.isAuthenticated() ? groupMode() === 'location' : groupMode() === 'type'
+        "
+        [class.is-far-right]="auth.isAuthenticated() && groupMode() === 'type'"
+      ></span>
       <button
         type="button"
         class="icon-switch-option fight-group-switch-option"
-        [class.selected]="groupMode() === 'location'"
-        [appTooltip]="'history.group.origin' | t"
-        (click)="setGroupMode('location')"
+        [class.selected]="groupMode() === 'day'"
+        [appTooltip]="'history.group.day' | t"
+        (click)="setGroupMode('day')"
       >
-        <app-icon name="map-pin" [size]="13" [strokeWidth]="2" />
-        <span class="fight-group-switch-label">{{ 'history.group.origin' | t }}</span>
+        <app-icon name="calendar" [size]="13" [strokeWidth]="2" />
+        <span class="fight-group-switch-label">{{ 'history.group.day' | t }}</span>
       </button>
-    }
-    <button
-      type="button"
-      class="icon-switch-option fight-group-switch-option"
-      [class.selected]="groupMode() === 'type'"
-      [appTooltip]="'history.group.type' | t"
-      (click)="setGroupMode('type')"
-    >
-      <!-- Même icône que le regroupement "Donjon & Famille" de la carte Récap (session-recap,
+      @if (auth.isAuthenticated()) {
+        <button
+          type="button"
+          class="icon-switch-option fight-group-switch-option"
+          [class.selected]="groupMode() === 'location'"
+          [appTooltip]="'history.group.origin' | t"
+          (click)="setGroupMode('location')"
+        >
+          <app-icon name="map-pin" [size]="13" [strokeWidth]="2" />
+          <span class="fight-group-switch-label">{{ 'history.group.origin' | t }}</span>
+        </button>
+      }
+      <button
+        type="button"
+        class="icon-switch-option fight-group-switch-option"
+        [class.selected]="groupMode() === 'type'"
+        [appTooltip]="'history.group.type' | t"
+        (click)="setGroupMode('type')"
+      >
+        <!-- Même icône que le regroupement "Donjon & Famille" de la carte Récap (session-recap,
            demande explicite de l'utilisateur, 2026-08-30) : ce mode regroupe déjà par donjon
            précis/famille de monstre, exactement le même concept — voir sprite `dungeon`. -->
-      <app-icon name="dungeon" [size]="13" [strokeWidth]="2" />
-      <span class="fight-group-switch-label">{{ 'history.group.type' | t }}</span>
-    </button>
+        <app-icon name="dungeon" [size]="13" [strokeWidth]="2" />
+        <span class="fight-group-switch-label">{{ 'history.group.type' | t }}</span>
+      </button>
+    </div>
+    @if (fightGroups().length > 0) {
+      <button
+        type="button"
+        class="icon-btn fight-group-toggle-all-btn"
+        [appTooltip]="
+          (anyGroupExpanded() ? 'history.group.collapseAll' : 'history.group.expandAll') | t
+        "
+        (click)="toggleAllGroups()"
+      >
+        <app-icon
+          [name]="anyGroupExpanded() ? 'chevrons-collapse' : 'chevrons-expand'"
+          [size]="15"
+          [strokeWidth]="2"
+        />
+      </button>
+    }
   </div>
-  @if (fightGroups().length > 0) {
-    <button
-      type="button"
-      class="icon-btn fight-group-toggle-all-btn"
-      [appTooltip]="
-        (anyGroupExpanded() ? 'history.group.collapseAll' : 'history.group.expandAll') | t
-      "
-      (click)="toggleAllGroups()"
-    >
-      <app-icon
-        [name]="anyGroupExpanded() ? 'chevrons-collapse' : 'chevrons-expand'"
-        [size]="15"
-        [strokeWidth]="2"
-      />
-    </button>
-  }
 </div>
 
 <div class="panel-body meter-body">
@@ -131,6 +144,10 @@
     } @else {
       <div class="empty-state">{{ 'damageMeter.noFight' | t }}</div>
     }
+  } @else if (fightGroups().length === 0) {
+    <!-- Des combats existent mais aucun ne correspond à `fightSearch` — distinct du message
+         "aucun combat détecté" ci-dessus, qui parlerait à tort d'un historique vide. -->
+    <div class="empty-state">{{ 'history.search.empty' | t }}</div>
   } @else if (groupMode() === 'type') {
     <!-- Donjons & familles : en-tête de catégorie non cliquable au-dessus de chaque paquet de
          groupes (2/3/4 salles, 3 joueurs, boss ultime, brèches, familles...) — même système que

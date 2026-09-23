@@ -154,6 +154,9 @@ export function createDbAuthStore(db: Db): AuthStore {
         userAgent: record.userAgent,
         revokedAt: record.revokedAt,
         supersededAt: record.supersededAt,
+        chainId: record.chainId,
+        absoluteExpiresAt: record.absoluteExpiresAt,
+        graceRotatedAt: record.graceRotatedAt,
       });
     },
 
@@ -191,6 +194,31 @@ export function createDbAuthStore(db: Db): AuthStore {
         .update(sessions)
         .set({ supersededAt: patch.supersededAt, expiresAt: patch.expiresAt })
         .where(eq(sessions.id, idHash));
+    },
+
+    async revokeSessionChain(chainId, now, exceptIdHash) {
+      const conditions = [
+        or(eq(sessions.chainId, chainId), eq(sessions.id, chainId)),
+        isNull(sessions.revokedAt),
+      ];
+      if (exceptIdHash) conditions.push(sql`${sessions.id} <> ${exceptIdHash}`);
+      const rows = await db
+        .update(sessions)
+        .set({ revokedAt: now })
+        .where(and(...conditions))
+        .returning({ id: sessions.id });
+      return rows.length;
+    },
+
+    async markGraceRotation(idHash, now) {
+      // Une seule requête : `grace_rotated_at IS NULL` fait échouer le second de deux rattrapages
+      // concurrents (même principe que `consumeAuthorization`).
+      const rows = await db
+        .update(sessions)
+        .set({ graceRotatedAt: now })
+        .where(and(eq(sessions.id, idHash), isNull(sessions.graceRotatedAt)))
+        .returning({ id: sessions.id });
+      return rows.length > 0;
     },
 
     async revokeAllSessions(userId, now, exceptIdHash) {
@@ -253,6 +281,9 @@ export function createDbAuthStore(db: Db): AuthStore {
         deviceCode: record.deviceCode,
         userCode: record.userCode,
         expiresAt: record.expiresAt,
+        createdAt: record.createdAt,
+        requesterCountry: record.requesterCountry,
+        requesterUserAgent: record.requesterUserAgent,
       });
     },
 
@@ -300,6 +331,29 @@ export function createDbAuthStore(db: Db): AuthStore {
     async purgeExpiredPairings(now: Date) {
       await db.delete(nativePairings).where(lt(nativePairings.expiresAt, now));
     },
+
+    async findPendingPairing(userCode: string, now: Date) {
+      const [row] = await db
+        .select()
+        .from(nativePairings)
+        .where(
+          and(
+            eq(nativePairings.userCode, userCode),
+            isNull(nativePairings.claimedAt),
+            gt(nativePairings.expiresAt, now),
+          ),
+        )
+        .limit(1);
+      if (!row) return null;
+      return {
+        deviceCode: row.deviceCode,
+        userCode: row.userCode,
+        expiresAt: row.expiresAt,
+        createdAt: row.createdAt,
+        requesterCountry: row.requesterCountry,
+        requesterUserAgent: row.requesterUserAgent,
+      };
+    },
   };
 }
 
@@ -327,5 +381,8 @@ function toSession(row: typeof sessions.$inferSelect): SessionRecord {
     userAgent: row.userAgent,
     revokedAt: row.revokedAt,
     supersededAt: row.supersededAt,
+    chainId: row.chainId,
+    absoluteExpiresAt: row.absoluteExpiresAt,
+    graceRotatedAt: row.graceRotatedAt,
   };
 }

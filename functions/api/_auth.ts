@@ -3,8 +3,14 @@
 
 import { createDb } from '../../server/db/client';
 import { createDbAuthStore } from '../../server/auth/db-store';
-import { SESSION_COOKIE, clearedAuthCookies, readCookie } from '../../server/auth/cookies';
+import { clearedAuthCookies } from '../../server/auth/cookies';
 import { resolveSession, verifyCsrf } from '../../server/auth/flow';
+import {
+  isCsrfExempt,
+  isNativeCaller,
+  readRequestCredential,
+} from '../../server/auth/request-auth';
+import type { AuthVia } from '../../server/auth/request-auth';
 import type { AuthStore, ProviderId, SessionRecord, UserRecord } from '../../server/auth/store';
 import type { ProviderCredentials } from '../../server/auth/providers';
 import type { Env } from './_types';
@@ -64,45 +70,69 @@ export interface AuthenticatedContext {
   sessionToken: string;
   /** Ligne de session telle que résolue (déjà lue : pas de second SELECT pour qui en a besoin). */
   session: SessionRecord;
+  /**
+   * Source EFFECTIVE de l'authentification (audit du 2026-09-23) : `bearer` = en-tête
+   * `Authorization: Bearer` (client natif), `cookie` = cookie de session (navigateur). C'est elle,
+   * et non la forme de l'en-tête, qui décide de l'exemption CSRF (`requireCsrf`).
+   */
+  via: AuthVia;
+  /** Session lue sous l'ancien nom de cookie `wc_session` (transition `__Host-`, voir cookies.ts). */
+  legacyCookie: boolean;
 }
 
 /**
- * Jeton porté par un client natif (overlay, lot L4 de `wakfu-companion-overlay` — voir
- * `server/auth/pairing.ts`) : `Authorization: Bearer <jeton>`, jamais un cookie. Un porteur
- * explicite n'est envoyé QUE par un appelant qui le construit volontairement (contrairement au
- * cookie, qu'un navigateur envoie automatiquement) — c'est précisément ce que le contrôle CSRF
- * cherche à exclure, donc `requireCsrf` n'a pas de sens sur ce chemin et n'est jamais appelé pour
- * une requête authentifiée ainsi (`docs/plan-architecture.md` §7.2 du dépôt overlay).
- */
-function readBearerToken(request: Request): string | null {
-  const header = request.headers.get('authorization');
-  if (!header?.startsWith('Bearer ')) return null;
-  const token = header.slice('Bearer '.length).trim();
-  return token || null;
-}
-
-/**
- * Résout la session du cookie (navigateur) ou du porteur `Authorization: Bearer` (client natif).
- * Renvoie `null` si l'appelant n'est pas connecté (jeton absent, inconnu, expiré ou révoqué) — à
- * traduire en 401 par l'appelant, jamais en erreur serveur : côté client, un 401 fait simplement
- * basculer en mode invité.
+ * Résout la session du cookie (navigateur) ou du porteur `Authorization: Bearer` (client natif,
+ * overlay — lot L4 de `wakfu-companion-overlay`, voir `server/auth/pairing.ts`). Renvoie `null` si
+ * l'appelant n'est pas connecté (jeton absent, inconnu, expiré ou révoqué) — à traduire en 401 par
+ * l'appelant, jamais en erreur serveur : côté client, un 401 fait simplement basculer en mode
+ * invité.
+ *
+ * Un porteur explicite n'est envoyé QUE par un appelant qui le construit volontairement
+ * (contrairement au cookie, qu'un navigateur envoie automatiquement) : c'est ce qui dispense ce
+ * chemin du contrôle CSRF. Dès qu'un en-tête `Authorization` est présent, le cookie n'est JAMAIS
+ * consulté — un porteur mal formé vaut `null`, pas un repli sur le cookie (audit du 2026-09-23,
+ * voir `server/auth/request-auth.ts`).
  */
 export async function authenticate(
   request: Request,
   env: Env,
 ): Promise<AuthenticatedContext | null> {
-  const token = readBearerToken(request) ?? readCookie(request, SESSION_COOKIE);
-  if (!token) return null;
+  const credential = readRequestCredential(request);
+  if (credential.kind !== 'token') return null;
   const store = authStore(env);
-  const resolved = await resolveSession(store, token, new Date());
+  const resolved = await resolveSession(store, credential.token, new Date());
   if (!resolved) return null;
   return {
     store,
     user: resolved.user,
     sessionIdHash: resolved.session.idHash,
-    sessionToken: token,
+    sessionToken: credential.token,
     session: resolved.session,
+    via: credential.via,
+    legacyCookie: credential.legacyCookie,
   };
+}
+
+/**
+ * Portée des jetons natifs (audit du 2026-09-23) : un jeton d'overlay sert à synchroniser
+ * l'historique et à gérer SA propre session (`/native/session`), pas à administrer le compte.
+ * Suppression du compte, révocation de sessions, export RGPD et confirmation d'un nouvel appairage
+ * exigent une session de NAVIGATEUR (cookie + CSRF) et répondent 403
+ * `{ code: 'browser_session_required' }` à un client natif.
+ *
+ * Deux critères, l'un OU l'autre suffit à refuser : le porteur `Authorization: Bearer`, et le
+ * libellé de la session (`native-overlay`, recopié à chaque rotation) — sans le second, un jeton
+ * d'overlay copié pourrait être présenté en cookie avec un `X-CSRF-Token` recalculé
+ * (`sha256(jeton + ":csrf")`, dérivation publique) et passer pour une session de navigateur.
+ *
+ * Renvoie la réponse 403 à renvoyer telle quelle, ou `null` si l'appelant est un navigateur.
+ */
+export function rejectNativeCaller(auth: AuthenticatedContext): Response | null {
+  if (!isNativeCaller(auth.via, auth.session)) return null;
+  return json(
+    { error: 'action réservée à une session de navigateur', code: 'browser_session_required' },
+    403,
+  );
 }
 
 /** 401 avec effacement des cookies d'authentification (jeton devenu inutilisable). */
@@ -124,7 +154,7 @@ export function unauthenticated(): Response {
  * ce que la protection cherche à empêcher (le cookie voyage tout seul, pas
  * l'en-tête).
  *
- * **Exception porteur `Authorization: Bearer` (client natif)** — voir la doc de `readBearerToken` :
+ * **Exception porteur `Authorization: Bearer` (client natif)** — voir la doc de `authenticate` :
  * ce chemin n'est jamais envoyé automatiquement par un navigateur, donc rien à protéger contre un
  * site tiers. **Correctif du 2026-09-03** (retour utilisateur : overlay `wakfu-companion-overlay`,
  * historique jamais synchronisé) : cette exception était déjà DOCUMENTÉE ci-dessus depuis
@@ -134,6 +164,8 @@ export function unauthenticated(): Response {
  * `X-CSRF-Token` (que ce client ne peut de toute façon pas produire : pas de cookie `wc_csrf`).
  */
 export async function requireCsrf(request: Request, auth: AuthenticatedContext): Promise<boolean> {
-  if (request.headers.get('authorization')?.startsWith('Bearer ')) return true;
+  // Décidé sur la source EFFECTIVE de l'authentification (audit du 2026-09-23), jamais sur la
+  // forme de l'en-tête : voir `server/auth/request-auth.ts`.
+  if (isCsrfExempt(auth.via)) return true;
   return verifyCsrf(auth.sessionToken, request.headers.get('x-csrf-token'));
 }

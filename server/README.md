@@ -67,6 +67,67 @@ déploiement via `wrangler pages secret put`, voir
 `deploy-preview.yml` pour la preview) : c'est ce qui les rend
 disponibles dans `context.env.DATABASE_URL` côté Pages Functions.
 
+## Sécurité de la chaîne de déploiement (GitHub Actions)
+
+Mise en place le 2026-09-23 (audit DevSecOps) :
+
+- **Environnements GitHub** : `deploy-main.yml` et `rgpd-purges.yml` tournent
+  dans l'environnement `production`, `deploy-preview.yml` dans `preview`, avec
+  une garde `if: github.ref == ...` (main / claude/dev). La garde seule ne
+  protège pas d'un workflow modifié sur une autre branche : la vraie barrière
+  est la **règle de branche de l'environnement** et le fait que les secrets
+  vivent **dans l'environnement**, plus au niveau du dépôt (réglage manuel,
+  ci-dessous).
+- **Prod conditionnée à la CI** : `deploy-main.yml` appelle `ci.yml`
+  (`workflow_call`, job `ci`) et son job de déploiement en dépend (`needs`) —
+  aucune migration de la base de production si les tests/le build échouent.
+- **Actions épinglées par SHA** (commentaire `# vX.Y.Z`), tenues à jour par
+  Dependabot (`.github/dependabot.yml`, lu seulement sur `main`).
+- **Jobs porteurs de secrets** : `npm ci --ignore-scripts` puis
+  `npm rebuild esbuild workerd` (seuls scripts d'installation utiles), et
+  `persist-credentials: false` sur tous les checkouts (aucun job ne pousse).
+
+Réglages manuels (une fois) :
+
+1. _Settings → Environments → New environment_ `production` : _Deployment
+   branches and tags_ → **Selected branches** → `main` ; _Required reviewers_
+   (soi-même) si l'on veut une validation humaine avant chaque déploiement —
+   attention, `rgpd-purges.yml` utilise le même environnement : ses runs
+   nocturnes attendraient alors eux aussi une approbation (sinon, lui dédier
+   un environnement `production-purge` ne portant que `DATABASE_URL`).
+   Y créer les secrets `DATABASE_URL`, `CLOUDFLARE_API_TOKEN` (jeton prod),
+   `CLOUDFLARE_ACCOUNT_ID`, `RATE_LIMIT_SALT`, `APP_TOKEN_SECRET`,
+   `TURNSTILE_SECRET_KEY`, `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`,
+   `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` et les variables
+   `TURNSTILE_SITE_KEY`, `PUBLIC_BASE_URL`.
+2. Environnement `preview` : branche `claude/dev` uniquement. Secrets
+   `DATABASE_URL_PREVIEW`, `CLOUDFLARE_API_TOKEN` (jeton preview distinct),
+   `CLOUDFLARE_ACCOUNT_ID`, `RATE_LIMIT_SALT_PREVIEW`,
+   `APP_TOKEN_SECRET_PREVIEW`, `TURNSTILE_SECRET_KEY_PREVIEW`,
+   `DISCORD_CLIENT_ID_PREVIEW`, `DISCORD_CLIENT_SECRET_PREVIEW`,
+   `GOOGLE_CLIENT_ID_PREVIEW`, `GOOGLE_CLIENT_SECRET_PREVIEW` ; variables
+   `TURNSTILE_SITE_KEY_PREVIEW`, `PUBLIC_BASE_URL_PREVIEW`. Mêmes noms que
+   dans les workflows : aucune modification de YAML nécessaire.
+3. Vérifier un déploiement de chaque côté, **puis supprimer les secrets et
+   variables de dépôt** correspondants (_Secrets and variables → Actions_) :
+   tant qu'ils existent, tout workflow de n'importe quelle branche peut les
+   lire.
+4. Protection de `main` (_Settings → Rules → Rulesets_ ou _Branches_) :
+   PR obligatoire, check requis `test` (job de `ci.yml`), pas de force-push
+   ni de suppression.
+5. Cloudflare : deux jetons API (_My Profile → API Tokens_), permission
+   _Account → Cloudflare Pages → Edit_ limitée au compte, avec filtre d'IP
+   client si souhaité et date d'expiration. Limite : Cloudflare ne sait pas
+   restreindre un jeton Pages à une branche — le jeton preview peut
+   techniquement déployer en production ; la séparation apporte la révocation
+   indépendante et la traçabilité, pas une isolation stricte (qui
+   demanderait un projet Pages distinct pour la preview).
+
+HSTS : `max-age` 2 ans + `includeSubDomains` dans `public/_headers`, **sans
+`preload`** — l'inscription sur hstspreload.org (domaine personnalisé
+uniquement, pas `*.pages.dev`) engage durablement tous les sous-domaines et
+se défait en plusieurs mois : décision manuelle.
+
 ## Migrations
 
 Outil : [drizzle-kit](https://orm.drizzle.team/kit-docs/overview). Schéma
@@ -86,7 +147,9 @@ DATABASE_URL=... npm run db:migrate
 
 ## Endpoints actuels
 
-- `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`).
+- `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`). `no-store` ; depuis le
+  2026-09-23, le message d'erreur de la base n'est plus renvoyé (`db: 'error'` seulement, détail
+  dans les journaux Cloudflare via `console.error`).
 - `GET /api/v1/game-servers` — liste des serveurs de jeu (table
   `game_servers`, jamais compilée en dur côté client).
 - **Routes référentiel réservées au site et à l'overlay** (2026-09-20,
@@ -174,7 +237,8 @@ DATABASE_URL=... npm run db:migrate
 - `GET /api/v1/catalog/` — index compact objets+monstres, gzip (surtout
   **pas** `/catalog/index` — voir gotcha ci-dessous).
 - `GET /api/v1/catalog/search?q=&locale=fr|en|es|pt&kind=item|monster` —
-  recherche serveur par sous-chaîne (ILIKE), 30 résultats max.
+  recherche serveur par sous-chaîne (ILIKE), 30 résultats max. `q` : 2 à 64 caractères (400
+  sinon, y compris vide), métacaractères `\ % _` échappés (`server/catalog/params.ts`).
 - `GET /api/v1/items/{id}` / `GET /api/v1/monsters/{id}` — détail complet
   (`id` = id Ankama).
 - `GET /api/v1/dungeons` — liste complète (151 lignes, pas de format
@@ -442,12 +506,14 @@ indisponible » affiché).
 
 ## En-têtes de sécurité HTTP (`public/_headers`) et CSP
 
-Posés par Cloudflare Pages sur toutes les réponses (RGPD art. 32, écart 4.8 de
+Posés par Cloudflare Pages sur les réponses statiques — pas sur celles des
+Pages Functions, qui reçoivent les leurs de `functions/api/_middleware.ts` (voir « Garde-fous de
+l'API » ci-dessous ; RGPD art. 32, écart 4.8 de
 `docs/analyse-rgpd.md`, 2026-09-19) : `X-Content-Type-Options: nosniff`,
 `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`,
-`Permissions-Policy`, `Strict-Transport-Security` (1 an, sans
-`includeSubDomains` ni `preload` : décision à prendre à part, elle engage tout
-sous-domaine futur), et une **CSP bloquante** (`Content-Security-Policy`, en
+`Permissions-Policy`, `Strict-Transport-Security` (2 ans + `includeSubDomains`
+depuis le 2026-09-23, sans `preload` : décision à prendre à part),
+`Cross-Origin-Opener-Policy`/`Cross-Origin-Resource-Policy: same-origin`, et une **CSP bloquante** (`Content-Security-Policy`, en
 `Report-Only` du 2026-09-19 au 2026-09-20) — inventaire des origines et
 justification de chaque directive en commentaire dans le fichier lui-même.
 
@@ -488,6 +554,76 @@ http://localhost:4299/csp` à la copie `dist/.../_headers` (jamais à
   fois la preview validée en conditions réelles, en particulier le retour
   OAuth Discord/Google (navigation complète, donc hors CSP de la page, mais à
   confirmer) — c'est le seul chemin que ce sandbox ne peut pas exercer.
+
+## Garde-fous de l'API (audit sécurité du 2026-09-23)
+
+Défense contre l'abus de coût (DoS applicatif, volume stocké) et contre les fuites d'erreur. Code
+testé : `server/http/{body,api-guards,host-guard}.ts`, `server/history/guards.ts`,
+`server/catalog/params.ts`.
+
+- **Middleware `functions/api/_middleware.ts`** (toutes les routes `/api/*`) :
+  - **Contrôle d'hôte** (`decideHost`) : chaque déploiement Pages reste joignable indéfiniment à
+    son URL immuable `<hash>.wakfu-companion.pages.dev` (et chaque ancienne branche à son alias),
+    avec l'API de l'époque branchée sur la même base. Politique par défaut : sur `*.pages.dev`,
+    seuls `wakfu-companion.pages.dev`, `claude-dev.wakfu-companion.pages.dev` (alias de la branche
+    `claude/dev`) et l'hôte de `PUBLIC_BASE_URL` sont servis, tout autre sous-domaine reçoit un
+    404 ; les autres hôtes (`wakfu-companion.com`, IP de réseau local) passent ; la boucle locale
+    (`localhost`, `127.x`, `::1`) passe TOUJOURS — le développement n'est jamais bloqué.
+    Variables Pages optionnelles : `ALLOWED_HOSTS` (liste séparée par des virgules, ex.
+    `wakfu-companion.com,www.wakfu-companion.com`) passe en mode strict (seuls ces hôtes + celui
+    de `PUBLIC_BASE_URL` + la boucle locale) ; `HOST_GUARD=off` désactive le contrôle (urgence).
+    ⚠ Ne protège que les déploiements qui contiennent ce middleware : **supprimer à la main les
+    déploiements antérieurs** (tableau de bord Cloudflare → Pages → `wakfu-companion` →
+    Deployments → « Delete deployment ») et les alias de branches obsolètes.
+  - **En-têtes de sécurité** sur toutes les réponses des Functions, sans écraser ceux d'une
+    route : `nosniff`, HSTS 2 ans + sous-domaines, `X-Frame-Options: DENY`, `Referrer-Policy`,
+    CSP `default-src 'none'; frame-ancestors 'none'` (réponses JSON, images, redirections OAuth),
+    `Cross-Origin-Resource-Policy: same-origin` (les icônes relayées restent chargeables en `<img>`
+    par le site, même origine).
+  - Filet : une exception non interceptée devient un 500 JSON générique.
+  - Pourquoi sous `functions/api/` et pas à la racine `functions/` : un middleware racine ferait
+    passer chaque fichier statique du site par une invocation de Function (`_routes.json` généré
+    `/*` au lieu de `/api/*`) — coût en quota d'invocations sans bénéfice, toutes les Functions
+    vivant sous `/api/`.
+- **Corps de requête bornés en octets** (`readBodyLimited`) : 413 sur `Content-Length` déclaré trop
+  grand, puis lecture en flux abandonnée dès la borne franchie — remplace
+  `await request.text(); if (raw.length > MAX)` (lecture intégrale d'abord, et `length` compte des
+  unités UTF-16). Routes `history/*` et `settings` ; restent à migrer : `auth/native/poll.ts`,
+  `auth/native/claim.ts`, `app/token.ts`.
+- **Limite de débit par compte** (`enforceUserRateLimit`, même table `auth_rate_limits` et même
+  fenêtre de 10 min que les routes d'authentification — obligatoire, voir la doc du fichier) :
+  `POST history/*` 600 / 10 min (compartiment `history:write:user:<id>`, les quatre types
+  confondus), `GET history/stats` 120 / 10 min, `PATCH`/`PUT settings` 600 / 10 min. Calibrés
+  sur la cadence réelle des clients (file d'historique : debounce 2 s, lots de 50 ; configuration :
+  debounce 1,5 s). 429 + `Retry-After` au-delà : la file d'historique le traite comme réessayable
+  (délai croissant 15 s → 5 min, aucune perte), la configuration garde ses clés en attente.
+- **Quota de combats** : 250 000 par compte (`MAX_FIGHTS_PER_ACCOUNT`), 403
+  `history_quota_exceeded` au-delà. Un lot ne contenant que des combats déjà stockés passe
+  toujours ; le comptage (`LIMIT quota + 1`) n'a lieu que si le lot apporte du neuf.
+- **Validation renforcée** (`server/history/parse.ts`) : entiers bornés au type réel de la colonne
+  (`PG_INT32_MAX` pour `integer`, `Number.MAX_SAFE_INTEGER` pour `bigint`/`jsonb` — `1e300` passait
+  `Number.isInteger`), dates d'événement et curseur `before` dans [2012-01-01, maintenant + 1 j]
+  (`stats` : `since` idem, `until` ≤ maintenant + 400 j car la période en cours se termine dans le
+  futur), `byElement` ≤ 16 clés sans `__proto__`/`constructor`/`prototype`, `gameServer` en forme
+  de code puis vérifié contre `game_servers` et `dungeonId` contre `dungeons` (400 au lieu d'une
+  violation de clé étrangère en 500) ; `INSERT` de lignes filles découpés en tranches de ≤ 30 000
+  paramètres liés (limite protocole 65 535) ; erreurs d'écriture → 500 JSON générique, détail
+  journalisé seulement. Configuration : profondeur JSON ≤ 32, clés de prototype filtrées des
+  correctifs, correctif roster ≤ 50 comptes, fusion indexée par `id`.
+- **Référentiel** : `items/{id}`/`monsters/{id}` exigent un entier décimal positif ≤ 2³¹−1 (400
+  sinon) ; `catalog/index`, `dungeons`, `monster-families`, `monster-loot` passent de
+  `public, max-age=300` à `private, max-age=300` (réservés au site et à l'overlay, un cache
+  partagé ne doit pas les resservir) ; relais d'icônes : clé de cache = origine + chemin canonique
+  (sans query string), `redirect: 'error'` sur le fetch amont.
+- **`fight_type`** : la sous-requête « famille représentative » (`server/history/fight-type.ts`)
+  est désormais filtrée par le `scope` du lot — elle triait auparavant `fight_participants` de tous
+  les comptes à chaque `POST /history/fights`.
+- **Non fait — index trigramme** (`pg_trgm` + GIN `gin_trgm_ops` sur les colonnes de nom) : à
+  ajouter par `drizzle-kit generate` (index
+  `.using('gin', table.fr.op('gin_trgm_ops'))` dans `schema.ts`) précédé d'une migration
+  `--custom` contenant `create extension if not exists pg_trgm;`, hors d'une période où une autre
+  migration est en cours d'écriture. Avec ~16 000 objets et ~850 monstres, le balayage séquentiel
+  d'un ILIKE échappé et borné reste de l'ordre de la milliseconde : gain faible à ce volume.
 
 ## Piège PWA : le service worker interceptait `/api/**`
 

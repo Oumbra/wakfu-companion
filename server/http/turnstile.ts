@@ -14,7 +14,8 @@
  * échoue ») : leur réponse porte un `hostname` et une `action` de démonstration, pas les nôtres —
  * les deux contrôles sont donc relâchés pour ces seuls secrets, ce qui permet de vérifier tout le
  * circuit en local sans widget réel. Jamais en production : les workflows y poussent le vrai
- * secret (`TURNSTILE_SECRET_KEY`).
+ * secret (`TURNSTILE_SECRET_KEY`), et `turnstileMode` refuse un secret de test sur un déploiement
+ * public (fail-closed, audit du 2026-09-23).
  */
 
 export const TURNSTILE_SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
@@ -30,6 +31,32 @@ const TEST_SECRET_PATTERN = /^[123]x0{31}AA$/;
 
 export function isTurnstileTestSecret(secret: string): boolean {
   return TEST_SECRET_PATTERN.test(secret);
+}
+
+/**
+ * Que faire d'une demande de jeton d'application, selon la configuration Turnstile (audit du
+ * 2026-09-23) :
+ * - `verify` : clé de site et secret posés, secret réel (ou secret de test hors production) ;
+ * - `skip` : ni l'un ni l'autre, en développement local — émission sans vérification ;
+ * - `misconfigured` : l'un sans l'autre (partout), ou, sur un déploiement public, aucune clé OU le
+ *   secret de test Cloudflare (`1x…` réussit toujours) — émettre reviendrait à ne rien vérifier.
+ *   La route répond 503 (fail-closed).
+ */
+export type TurnstileMode = 'verify' | 'skip' | 'misconfigured';
+
+export function turnstileMode(params: {
+  siteKey: string | null | undefined;
+  secret: string | null | undefined;
+  publicDeployment: boolean;
+}): TurnstileMode {
+  const hasSiteKey = !!params.siteKey;
+  const hasSecret = !!params.secret;
+  if (hasSiteKey !== hasSecret) return 'misconfigured';
+  if (!hasSecret) return params.publicDeployment ? 'misconfigured' : 'skip';
+  if (params.publicDeployment && isTurnstileTestSecret(params.secret as string)) {
+    return 'misconfigured';
+  }
+  return 'verify';
 }
 
 export type TurnstileFailure =

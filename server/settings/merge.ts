@@ -38,6 +38,35 @@ export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string
  */
 export const MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Profondeur d'imbrication maximale d'une valeur de configuration (correctif du 2026-09-23, audit
+ * sécurité). Les valeurs réelles ne dépassent pas 4 ou 5 niveaux (profil → `soundItems` → objet ;
+ * roster → compte → `characters` → personnage). Une valeur très profonde (`[[[[...]]]]`, quelques
+ * octets par niveau, donc des dizaines de milliers de niveaux dans 512 Ko) coûterait en revanche
+ * cher à chaque sérialisation, ici comme chez chaque client qui la relit — voire ferait déborder
+ * une pile récursive.
+ */
+export const MAX_SETTING_DEPTH = 32;
+
+/**
+ * Vrai si `value` imbrique plus de `maxDepth` niveaux d'objets/tableaux. Parcours ITÉRATIF (pile
+ * explicite) : une vérification récursive déborderait sur exactement l'entrée qu'elle doit refuser.
+ */
+export function jsonDepthExceeds(value: unknown, maxDepth: number = MAX_SETTING_DEPTH): boolean {
+  const stack: { node: unknown; depth: number }[] = [{ node: value, depth: 0 }];
+  while (stack.length > 0) {
+    const { node, depth } = stack.pop()!;
+    if (typeof node !== 'object' || node === null) continue;
+    if (depth + 1 > maxDepth) return true;
+    const children = Array.isArray(node) ? node : Object.values(node as Record<string, unknown>);
+    for (const child of children) {
+      if (typeof child === 'object' && child !== null)
+        stack.push({ node: child, depth: depth + 1 });
+    }
+  }
+  return false;
+}
+
 function parseTimestamp(raw: unknown, now: Date): ParseResult<Date> {
   if (typeof raw !== 'string') return { ok: false, error: 'updatedAt manquant' };
   const parsed = new Date(raw);
@@ -76,6 +105,9 @@ export function parsePatchBody(body: unknown, now: Date): ParseResult<SettingWri
     seen.add(entry.key);
     const updatedAt = parseTimestamp(entry.updatedAt, now);
     if (!updatedAt.ok) return updatedAt;
+    if (jsonDepthExceeds(entry.patch) || jsonDepthExceeds(entry.value)) {
+      return { ok: false, error: `valeur trop imbriquée : ${entry.key}` };
+    }
     if (entry.patch !== undefined) {
       if (entry.value !== undefined) {
         return { ok: false, error: `"value" et "patch" sont exclusifs : ${entry.key}` };
@@ -144,4 +176,27 @@ export function resolveWrites(
     accepted.push(write);
   }
   return { accepted, rejected };
+}
+
+/**
+ * Corps attendu par `PUT /api/v1/settings` : `{ data: { <clé>: <valeur>, ... } }` — remplacement
+ * complet (voir la route). Liste blanche fermée (`keys.ts`) et profondeur bornée
+ * (`MAX_SETTING_DEPTH`) ; une valeur `undefined` n'existe pas en JSON, les entrées sont renvoyées
+ * telles quelles.
+ */
+export function parsePutBody(body: unknown): ParseResult<[SyncedSettingKey, unknown][]> {
+  const data = (body as { data?: unknown } | null)?.data;
+  if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+    return { ok: false, error: 'champ "data" manquant ou invalide' };
+  }
+  const entries: [SyncedSettingKey, unknown][] = [];
+  for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
+    if (value === undefined) continue;
+    // Refuser franchement une clé inconnue plutôt que de laisser `user_settings` accumuler
+    // n'importe quel nom envoyé par un client modifié.
+    if (!isSyncedSettingKey(key)) return { ok: false, error: `clé inconnue : ${key}` };
+    if (jsonDepthExceeds(value)) return { ok: false, error: `valeur trop imbriquée : ${key}` };
+    entries.push([key, value]);
+  }
+  return { ok: true, value: entries };
 }

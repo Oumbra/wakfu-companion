@@ -45,6 +45,22 @@ const MAX_SPELLS_PER_PARTICIPANT = 64;
 const MAX_LOOT_PER_FIGHT = 128;
 /** `clientKey` est un SHA-256 en hexadécimal minuscule (voir core/sync/client-key.util.ts). */
 const CLIENT_KEY_PATTERN = /^[0-9a-f]{64}$/;
+/**
+ * Nombre maximal d'éléments distincts dans `byElement` (ventilation d'un sort par élément). Le jeu
+ * en compte une poignée (Feu, Eau, Terre, Air, Lumière, Stasis...) ; 16 laisse la marge d'une
+ * extension future sans laisser un client gonfler chaque ligne `jsonb` de milliers de clés.
+ */
+export const MAX_ELEMENTS_PER_SPELL = 16;
+
+/**
+ * Bornes des dates d'événement (`startedAt`/`occurredAt`) et du curseur `before`. Wakfu est sorti
+ * en 2012 : un événement antérieur ne vient pas d'un log réel (horloge à l'epoch, voir la doc de
+ * `parseCount`), et une date au-delà de maintenant + 1 jour non plus (même tolérance d'horloge
+ * client que `MAX_CLOCK_SKEW_MS`, server/settings/merge.ts). Au passage, ces bornes tiennent toute
+ * date loin des limites de `timestamptz` (une date JS extrême y ferait échouer l'`INSERT` en 500).
+ */
+export const HISTORY_MIN_DATE_MS = Date.UTC(2012, 0, 1);
+export const HISTORY_MAX_FUTURE_SKEW_MS = 24 * 60 * 60 * 1000;
 
 /** Ventilation des dégâts d'un sort, par élément — miroir de `SpellBreakdownRow` côté client. */
 export interface FightSpellInput {
@@ -174,10 +190,18 @@ function parseClientKey(raw: unknown): ParseResult<string> {
   return { ok: true, value: raw };
 }
 
-function parseDate(raw: unknown, field: string): ParseResult<Date> {
+/** Date ISO dans `[HISTORY_MIN_DATE_MS, now + HISTORY_MAX_FUTURE_SKEW_MS]` — voir leur doc. */
+export function parseBoundedDate(raw: unknown, field: string, now: Date): ParseResult<Date> {
   if (typeof raw !== 'string') return { ok: false, error: `${field} manquant` };
+  if (raw.length > 64) return { ok: false, error: `${field} invalide` };
   const parsed = new Date(raw);
   if (Number.isNaN(parsed.getTime())) return { ok: false, error: `${field} invalide : ${raw}` };
+  if (parsed.getTime() < HISTORY_MIN_DATE_MS) {
+    return { ok: false, error: `${field} antérieur à 2012 : ${raw}` };
+  }
+  if (parsed.getTime() > now.getTime() + HISTORY_MAX_FUTURE_SKEW_MS) {
+    return { ok: false, error: `${field} dans le futur : ${raw}` };
+  }
   return { ok: true, value: parsed };
 }
 
@@ -192,14 +216,17 @@ function parseText(raw: unknown, field: string): ParseResult<string> {
  * `numeric field overflow`, une exception NON interceptée qui remonte en 500 générique (voir la
  * doc de `max` ci-dessous pour l'incident réel que ça a causé).
  */
-const PG_INT32_MAX = 2_147_483_647;
+export const PG_INT32_MAX = 2_147_483_647;
 
 /**
- * Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. `max`, quand
- * fourni, doit correspondre au type de la colonne Postgres réellement écrite (voir
- * `server/db/schema.ts`) — **obligatoire pour toute colonne `integer`** (32 bits, ex.
- * `fights.duration_ms`), inutile pour une colonne `bigint` (kamas/xp/dégâts : jusqu'à ~9,2×10¹⁸,
- * largement au-delà de `Number.MAX_SAFE_INTEGER`, qui borne de toute façon tout `number` JS reçu).
+ * Entier fini et positif ou nul — `null`/absent accepté seulement si `optional`. `max` doit
+ * correspondre au type de la colonne Postgres réellement écrite (voir `server/db/schema.ts`) —
+ * **`PG_INT32_MAX` obligatoire pour toute colonne `integer`** (32 bits, ex. `fights.duration_ms`,
+ * `turns`, `monster_id`, `dungeon_id`, `item_id`, quantités...). Par défaut
+ * `Number.MAX_SAFE_INTEGER`, pour les colonnes `bigint` (kamas/xp/dégâts) et les nombres stockés
+ * en `jsonb` : contrairement à ce qu'affirmait une version antérieure de cette doc, rien ne
+ * bornait un `number` JS reçu — `Number.isInteger(1e300)` est vrai, et un tel nombre fait échouer
+ * l'`INSERT` d'une colonne `bigint` (`out of range`, 500) ou perd sa précision (au-delà de 2⁵³).
  *
  * **Correctif du 2026-09-04** (retour utilisateur, overlay `wakfu-companion-overlay`) : `durationMs`
  * n'était borné nulle part avant l'écriture en base. Un combat restauré après un redémarrage de
@@ -214,7 +241,7 @@ function parseCount(
   raw: unknown,
   field: string,
   optional = false,
-  max?: number,
+  max: number = Number.MAX_SAFE_INTEGER,
 ): ParseResult<number | null> {
   if (raw === null || raw === undefined) {
     return optional ? { ok: true, value: null } : { ok: false, error: `${field} manquant` };
@@ -222,7 +249,7 @@ function parseCount(
   if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
     return { ok: false, error: `${field} invalide : ${String(raw)}` };
   }
-  if (max !== undefined && raw > max) {
+  if (raw > max) {
     return { ok: false, error: `${field} trop grand : ${raw}` };
   }
   return { ok: true, value: raw };
@@ -240,7 +267,7 @@ function parseItemIdentity(
   itemNameRaw: unknown,
   field: string,
 ): ParseResult<{ itemId: number | null; itemName: string | null }> {
-  const itemId = parseCount(itemIdRaw, `${field}.itemId`, true);
+  const itemId = parseCount(itemIdRaw, `${field}.itemId`, true, PG_INT32_MAX);
   if (!itemId.ok) return itemId;
   if (itemId.value !== null) return { ok: true, value: { itemId: itemId.value, itemName: null } };
 
@@ -267,7 +294,7 @@ function parseDungeonAssignment(
   dungeonIdRaw: unknown,
   dungeonRunKeyRaw: unknown,
 ): ParseResult<{ dungeonId: number | null; dungeonRunKey: string | null }> {
-  const dungeonId = parseCount(dungeonIdRaw, 'dungeonId', true);
+  const dungeonId = parseCount(dungeonIdRaw, 'dungeonId', true, PG_INT32_MAX);
   if (!dungeonId.ok) return dungeonId;
 
   let dungeonRunKey: string | null = null;
@@ -288,10 +315,17 @@ function parseDungeonAssignment(
  * Le serveur de jeu est **toujours facultatif** (prompt 8.1 point 4) : sans
  * serveur résolu, l'événement est enregistré quand même, le champ reste vide.
  * Aucun repli inventé ici — même règle qu'au lot 7 (voir server/README.md).
+ *
+ * Forme bornée ici (code court en minuscules, comme `game_servers.code`) ; l'EXISTENCE du code est
+ * vérifiée contre la table `game_servers` avant l'écriture (`server/history/references.ts`), la
+ * clé étrangère ne servant plus que de dernier filet — sans ce contrôle, un code inconnu faisait
+ * échouer l'`INSERT` en 500 au lieu d'un 400.
  */
+const GAME_SERVER_PATTERN = /^[a-z0-9_-]{1,32}$/;
+
 function parseGameServer(raw: unknown): ParseResult<string | null> {
   if (raw === null || raw === undefined || raw === '') return { ok: true, value: null };
-  if (typeof raw !== 'string' || raw.length > MAX_NAME_LENGTH) {
+  if (typeof raw !== 'string' || !GAME_SERVER_PATTERN.test(raw)) {
     return { ok: false, error: 'gameServer invalide' };
   }
   return { ok: true, value: raw };
@@ -339,6 +373,9 @@ function parseBatch<T>(
  * une future extension du jeu ne doit pas faire rejeter tout un historique. Les
  * valeurs, elles, sont bornées comme partout ailleurs.
  */
+/** Clés qui, une fois relues côté client dans un objet ordinaire, pollueraient son prototype. */
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
 function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput> {
   const record = asRecord(raw, 'sort');
   if (!record.ok) return record;
@@ -353,9 +390,16 @@ function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput
   if (typeof rawByElement !== 'object' || rawByElement === null || Array.isArray(rawByElement)) {
     return { ok: false, error: `${field}.byElement invalide` };
   }
+  const elementEntries = Object.entries(rawByElement as Record<string, unknown>);
+  if (elementEntries.length > MAX_ELEMENTS_PER_SPELL) {
+    return {
+      ok: false,
+      error: `${field}.byElement : trop d'éléments (max ${MAX_ELEMENTS_PER_SPELL})`,
+    };
+  }
   const byElement: Record<string, number> = {};
-  for (const [element, amount] of Object.entries(rawByElement as Record<string, unknown>)) {
-    if (element.length === 0 || element.length > MAX_NAME_LENGTH) {
+  for (const [element, amount] of elementEntries) {
+    if (element.length === 0 || element.length > MAX_NAME_LENGTH || FORBIDDEN_KEYS.has(element)) {
       return { ok: false, error: `${field}.byElement : élément invalide` };
     }
     const parsed = parseCount(amount, `${field}.byElement.${element}`);
@@ -415,9 +459,14 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   }
   const name = parseText(entry['name'], 'participant.name');
   if (!name.ok) return name;
-  const monsterId = parseCount(entry['monsterId'], 'participant.monsterId', true);
+  const monsterId = parseCount(entry['monsterId'], 'participant.monsterId', true, PG_INT32_MAX);
   if (!monsterId.ok) return monsterId;
-  const instanceIndex = parseCount(entry['instanceIndex'] ?? 1, 'participant.instanceIndex');
+  const instanceIndex = parseCount(
+    entry['instanceIndex'] ?? 1,
+    'participant.instanceIndex',
+    false,
+    PG_INT32_MAX,
+  );
   if (!instanceIndex.ok) return instanceIndex;
   const damage = parseCount(entry['damage'] ?? 0, 'participant.damage');
   if (!damage.ok) return damage;
@@ -462,7 +511,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   };
 }
 
-export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
+export function parseFightsBody(body: unknown, now: Date = new Date()): ParseResult<FightInput[]> {
   return parseBatch(
     body,
     (entry) => {
@@ -470,11 +519,11 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!clientKey.ok) return clientKey;
       const fightId = parseCount(entry['fightId'], 'fightId', true);
       if (!fightId.ok) return fightId;
-      const startedAt = parseDate(entry['startedAt'], 'startedAt');
+      const startedAt = parseBoundedDate(entry['startedAt'], 'startedAt', now);
       if (!startedAt.ok) return startedAt;
       const durationMs = parseCount(entry['durationMs'], 'durationMs', true, PG_INT32_MAX);
       if (!durationMs.ok) return durationMs;
-      const turns = parseCount(entry['turns'], 'turns', true);
+      const turns = parseCount(entry['turns'], 'turns', true, PG_INT32_MAX);
       if (!turns.ok) return turns;
       const totalDamage = parseCount(entry['totalDamage'], 'totalDamage', true);
       if (!totalDamage.ok) return totalDamage;
@@ -482,9 +531,19 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
       if (!xpGained.ok) return xpGained;
       const kamasGained = parseCount(entry['kamasGained'], 'kamasGained', true);
       if (!kamasGained.ok) return kamasGained;
-      const challengesPassed = parseCount(entry['challengesPassed'] ?? 0, 'challengesPassed');
+      const challengesPassed = parseCount(
+        entry['challengesPassed'] ?? 0,
+        'challengesPassed',
+        false,
+        PG_INT32_MAX,
+      );
       if (!challengesPassed.ok) return challengesPassed;
-      const challengesFailed = parseCount(entry['challengesFailed'] ?? 0, 'challengesFailed');
+      const challengesFailed = parseCount(
+        entry['challengesFailed'] ?? 0,
+        'challengesFailed',
+        false,
+        PG_INT32_MAX,
+      );
       if (!challengesFailed.ok) return challengesFailed;
       const won = parseFlag(entry['won'], 'won');
       if (!won.ok) return won;
@@ -554,7 +613,10 @@ export function parseFightsBody(body: unknown): ParseResult<FightInput[]> {
   );
 }
 
-export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> {
+export function parsePurchasesBody(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<PurchaseInput[]> {
   return parseBatch(
     body,
     (entry) => {
@@ -566,7 +628,7 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
       if (!quantity.ok) return quantity;
       const totalCost = parseCount(entry['totalCost'], 'totalCost');
       if (!totalCost.ok) return totalCost;
-      const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
+      const occurredAt = parseBoundedDate(entry['occurredAt'], 'occurredAt', now);
       if (!occurredAt.ok) return occurredAt;
       const gameServer = parseGameServer(entry['gameServer']);
       if (!gameServer.ok) return gameServer;
@@ -587,7 +649,7 @@ export function parsePurchasesBody(body: unknown): ParseResult<PurchaseInput[]> 
   );
 }
 
-export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
+export function parseTradesBody(body: unknown, now: Date = new Date()): ParseResult<TradeInput[]> {
   return parseBatch(
     body,
     (entry) => {
@@ -597,7 +659,7 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
       if (!peerName.ok) return peerName;
       const selfName = parseText(entry['selfName'], 'selfName');
       if (!selfName.ok) return selfName;
-      const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
+      const occurredAt = parseBoundedDate(entry['occurredAt'], 'occurredAt', now);
       if (!occurredAt.ok) return occurredAt;
       const kamasAcquired = parseCount(entry['kamasAcquired'] ?? 0, 'kamasAcquired');
       if (!kamasAcquired.ok) return kamasAcquired;
@@ -655,13 +717,16 @@ export function parseTradesBody(body: unknown): ParseResult<TradeInput[]> {
   );
 }
 
-export function parsePactExtractionsBody(body: unknown): ParseResult<PactExtractionInput[]> {
+export function parsePactExtractionsBody(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<PactExtractionInput[]> {
   return parseBatch(
     body,
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
       if (!clientKey.ok) return clientKey;
-      const occurredAt = parseDate(entry['occurredAt'], 'occurredAt');
+      const occurredAt = parseBoundedDate(entry['occurredAt'], 'occurredAt', now);
       if (!occurredAt.ok) return occurredAt;
       const gameServer = parseGameServer(entry['gameServer']);
       if (!gameServer.ok) return gameServer;
@@ -718,7 +783,10 @@ export interface PageQuery {
   before: Date | null;
 }
 
-export function parsePageQuery(params: URLSearchParams): ParseResult<PageQuery> {
+export function parsePageQuery(
+  params: URLSearchParams,
+  now: Date = new Date(),
+): ParseResult<PageQuery> {
   const rawLimit = params.get('limit');
   let limit = DEFAULT_PAGE_SIZE;
   if (rawLimit !== null) {
@@ -731,7 +799,7 @@ export function parsePageQuery(params: URLSearchParams): ParseResult<PageQuery> 
 
   const rawBefore = params.get('before');
   if (rawBefore === null) return { ok: true, value: { limit, before: null } };
-  const before = new Date(rawBefore);
-  if (Number.isNaN(before.getTime())) return { ok: false, error: `before invalide : ${rawBefore}` };
-  return { ok: true, value: { limit, before } };
+  const before = parseBoundedDate(rawBefore, 'before', now);
+  if (!before.ok) return before;
+  return { ok: true, value: { limit, before: before.value } };
 }

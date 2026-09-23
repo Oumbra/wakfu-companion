@@ -50,6 +50,38 @@ function isJsonObject(value: unknown): value is JsonObject {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * Nombre maximal de comptes dans un correctif roster (`accounts` comme `removedIds`). Le site
+ * n'impose aucune limite à la création de comptes (`CharacterRosterService.addAccount`), mais un
+ * roster réel en compte une poignée (un par compte Ankama joué) : 50 laisse une marge très large
+ * tout en bornant le travail d'une fusion (voir `applySettingPatch`).
+ */
+export const MAX_ROSTER_PATCH_ACCOUNTS = 50;
+
+/**
+ * Clés jamais recopiées d'un correctif (correctif du 2026-09-23, audit sécurité) : `JSON.parse`
+ * crée `__proto__` comme propriété PROPRE, que la fusion par décomposition (`{ ...a, ...b }`)
+ * recopie telle quelle dans la valeur stockée — relue plus tard par un client qui l'assignerait
+ * champ par champ (`obj[key] = value`), elle remplacerait le prototype de l'objet. Filtrées
+ * silencieusement : aucun client légitime ne les produit.
+ */
+const FORBIDDEN_PATCH_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function withoutForbiddenKeys(source: JsonObject): JsonObject {
+  const clean: JsonObject = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (FORBIDDEN_PATCH_KEYS.has(key)) continue;
+    // `defineProperty` plutôt qu'une affectation : robuste même pour une clé exotique.
+    Object.defineProperty(clean, key, {
+      value,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return clean;
+}
+
 /** Correctif du roster : comptes à fusionner (par `id`) et/ou comptes à retirer. */
 export interface RosterPatch {
   accounts: readonly (JsonObject & { id: string })[];
@@ -73,8 +105,9 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
   if (!isJsonObject(raw)) return { ok: false, error: `correctif non objet : ${key}` };
 
   if (key === 'profile') {
-    if (Object.keys(raw).length === 0) return { ok: false, error: 'correctif vide : profile' };
-    return { ok: true, value: { key, fields: raw } };
+    const fields = withoutForbiddenKeys(raw);
+    if (Object.keys(fields).length === 0) return { ok: false, error: 'correctif vide : profile' };
+    return { ok: true, value: { key, fields } };
   }
 
   const {
@@ -100,7 +133,17 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
   if (accounts.length === 0 && removedIds.length === 0) {
     return { ok: false, error: 'correctif vide : roster' };
   }
+  if (
+    accounts.length > MAX_ROSTER_PATCH_ACCOUNTS ||
+    removedIds.length > MAX_ROSTER_PATCH_ACCOUNTS
+  ) {
+    return {
+      ok: false,
+      error: `correctif roster : trop de comptes (max ${MAX_ROSTER_PATCH_ACCOUNTS})`,
+    };
+  }
   const seen = new Set<string>();
+  const cleanAccounts: (JsonObject & { id: string })[] = [];
   for (const account of accounts) {
     if (!isJsonObject(account) || typeof account['id'] !== 'string' || account['id'] === '') {
       return { ok: false, error: 'correctif roster : compte sans "id"' };
@@ -109,6 +152,7 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
       return { ok: false, error: `correctif roster : compte en double : ${account['id']}` };
     }
     seen.add(account['id']);
+    cleanAccounts.push(withoutForbiddenKeys(account) as JsonObject & { id: string });
   }
   if (!removedIds.every((id) => typeof id === 'string' && id !== '')) {
     return { ok: false, error: 'correctif roster : "removedIds" doit contenir des identifiants' };
@@ -118,7 +162,7 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
     value: {
       key,
       roster: {
-        accounts: accounts as (JsonObject & { id: string })[],
+        accounts: cleanAccounts,
         removedIds: removedIds as string[],
       },
     },
@@ -143,6 +187,9 @@ export function applySettingPatch(patch: SettingPatch, stored: unknown): unknown
   }
 
   const removed = new Set(patch.roster.removedIds);
+  // Index par `id` (correctif du 2026-09-23) : la recherche linéaire dans le correctif pour chaque
+  // compte stocké rendait la fusion O(n·m).
+  const updatesById = new Map(patch.roster.accounts.map((entry) => [entry.id, entry]));
   const current = (Array.isArray(stored) ? stored : []).filter((account): account is JsonObject =>
     isJsonObject(account),
   );
@@ -151,8 +198,7 @@ export function applySettingPatch(patch: SettingPatch, stored: unknown): unknown
   for (const account of current) {
     const id = account['id'];
     if (typeof id === 'string' && removed.has(id)) continue;
-    const update =
-      typeof id === 'string' ? patch.roster.accounts.find((entry) => entry.id === id) : undefined;
+    const update = typeof id === 'string' ? updatesById.get(id) : undefined;
     if (update) consumed.add(update.id);
     merged.push(update ? { ...account, ...update } : account);
   }

@@ -8,6 +8,14 @@ import {
   parseFightsBody,
   parsePageQuery,
 } from '../../../../server/history/parse';
+import {
+  HISTORY_QUOTA_EXCEEDED_CODE,
+  MAX_FIGHTS_PER_ACCOUNT,
+  checkFightQuota,
+  checkHistoryReferences,
+} from '../../../../server/history/guards';
+import { readJsonBodyLimited } from '../../../../server/http/body';
+import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -22,30 +30,50 @@ import type { Env } from '../../_types';
  *   d'abord.
  */
 
-/** Garde-fou de taille, en miroir de `MAX_HISTORY_BATCH` (un combat porte jusqu'à 64 participants). */
+/** Garde-fou de taille, en miroir de `MAX_HISTORY_BATCH` (un combat porte jusqu'à 128 participants),
+ * mesuré en OCTETS et appliqué pendant la lecture (`readJsonBodyLimited`, server/http/body.ts). */
 const MAX_PAYLOAD_BYTES = 1024 * 1024;
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const auth = await authenticate(context.request, context.env);
-  if (!auth) return unauthenticated();
-  if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
-
-  const raw = await context.request.text();
-  if (raw.length > MAX_PAYLOAD_BYTES) return jsonError('lot trop volumineux', 413);
-
-  let body: unknown;
   try {
-    body = JSON.parse(raw);
-  } catch {
-    return jsonError('corps JSON invalide', 400);
+    const auth = await authenticate(context.request, context.env);
+    if (!auth) return unauthenticated();
+    if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
+    // Limite de débit par compte (server/http/api-guards.ts) — avant toute lecture du corps.
+    const limited = await enforceUserRateLimit(auth.store, 'history:write', auth.user.id);
+    if (limited) return limited;
+
+    const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
+    if (!body.ok) return jsonError(body.error, body.status);
+
+    const parsed = parseFightsBody(body.value);
+    if (!parsed.ok) return jsonError(parsed.error, 400);
+    if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
+
+    const db = createDb(context.env.DATABASE_URL);
+    // Références inconnues ⇒ 400 plutôt qu'une violation de clé étrangère en 500 (guards.ts).
+    const unknownReference = await checkHistoryReferences(db, parsed.value);
+    if (unknownReference) return jsonError(unknownReference, 400);
+    if (
+      !(await checkFightQuota(
+        db,
+        auth.user.id,
+        parsed.value.map((f) => f.clientKey),
+      ))
+    ) {
+      return json(
+        {
+          error: `quota de combats atteint (${MAX_FIGHTS_PER_ACCOUNT} par compte)`,
+          code: HISTORY_QUOTA_EXCEEDED_CODE,
+        },
+        403,
+      );
+    }
+    return json(await ingestFights(db, auth.user.id, parsed.value));
+  } catch (error) {
+    // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
+    return internalErrorResponse('history/fights POST', error);
   }
-
-  const parsed = parseFightsBody(body);
-  if (!parsed.ok) return jsonError(parsed.error, 400);
-  if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
-
-  const db = createDb(context.env.DATABASE_URL);
-  return json(await ingestFights(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

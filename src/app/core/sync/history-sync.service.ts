@@ -71,6 +71,8 @@ export class HistorySyncService {
   readonly state = this.queue.state;
   readonly pendingCount = this.queue.pendingCount;
   readonly lastSyncedAt = this.queue.lastSyncedAt;
+  /** Quota d'historique du compte atteint : envois suspendus, éléments conservés en file. */
+  readonly quotaExceeded = this.queue.quotaExceeded;
 
   /**
    * Rappel enregistré par `StatsStoreService` pour repasser l'historique déjà
@@ -108,7 +110,7 @@ export class HistorySyncService {
 
   /** Envoie immédiatement ce qui est en attente (bouton « Synchroniser maintenant »). */
   flush(): Promise<void> {
-    return this.queue.flush();
+    return this.queue.flush({ manual: true });
   }
 
   /**

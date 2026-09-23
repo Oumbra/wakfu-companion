@@ -1,0 +1,59 @@
+# Mises à jour automatiques des dépendances (Dependabot « version updates »).
+#
+# - Cible `claude/dev` (branche de travail, voir CLAUDE.md), pas `main` : `target-branch` n'agit
+#   que sur les mises à jour de version ; les mises à jour de SÉCURITÉ (alertes Dependabot)
+#   visent toujours la branche par défaut.
+# - Ce fichier n'est lu par GitHub QUE sur la branche par défaut (`main`) : inactif tant que
+#   `claude/dev` n'y est pas fusionnée.
+# - Mineures et correctifs groupés en une PR par écosystème (moins de bruit) ; les majeures
+#   restent des PR individuelles, à relire une par une.
+# - Actions épinglées par SHA dans .github/workflows/ : Dependabot met à jour le SHA ET le
+#   commentaire `# vX.Y.Z`.
+# - npm : Dependabot régénère package-lock.json avec SA version de npm, pas celle de la CI
+#   (`packageManager`, `npm run install:ci`) — si `npm ci` échoue en CI sur une PR Dependabot
+#   (« Missing: X from lock file »), régénérer le lockfile avec `npm run install:ci`.
+# - Préfixes Conventional Commits `chore`/`ci` : aucun bump de version (voir
+#   .claude/rules/versioning.md — de toute façon, le hook post-commit ne tourne pas sur un commit
+#   créé par GitHub).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: claude/dev
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci
+    ignore:
+      # Tags v4.1.0/v4.1.1 publiés sans dist/index.mjs (« File not found » au déploiement,
+      # 2026-09-23) : ne pas les reproposer.
+      - dependency-name: cloudflare/wrangler-action
+        versions: ['4.1.0', '4.1.1']
+    groups:
+      github-actions-minor-patch:
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: npm
+    directory: /
+    target-branch: claude/dev
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    # Laisse 7 jours à une nouvelle version avant de la proposer : les paquets compromis
+    # (attaques de chaîne d'approvisionnement npm) sont en général retirés dans ce délai.
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      prefix-development: chore
+      include: scope
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch

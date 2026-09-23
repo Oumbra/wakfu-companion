@@ -67,4 +67,53 @@ describe('parseStatsQuery', () => {
     );
     expect(result.ok).toBe(true);
   });
+
+  describe('bornes absolues (audit 2026-09-23)', () => {
+    const NOW = new Date('2026-09-23T12:00:00.000Z');
+
+    it('accepte la période Année en cours, qui se termine plusieurs mois dans le futur', () => {
+      const result = parseStatsQuery(
+        query({ since: '2025-12-31T23:00:00.000Z', until: '2026-12-31T23:00:00.000Z' }),
+        NOW,
+      );
+      expect(result.ok).toBe(true);
+    });
+
+    it('accepte un début d’année 2012 en heure locale UTC+14', () => {
+      const result = parseStatsQuery(
+        query({ since: '2011-12-31T10:00:00.000Z', until: '2012-01-31T10:00:00.000Z' }),
+        NOW,
+      );
+      expect(result.ok).toBe(true);
+    });
+
+    it('refuse since antérieur à 2012', () => {
+      const result = parseStatsQuery(
+        query({ since: '1970-01-01T00:00:00.000Z', until: '1970-02-01T00:00:00.000Z' }),
+        NOW,
+      );
+      expect(result.ok).toBe(false);
+    });
+
+    it('refuse since dans le futur au-delà d’un jour', () => {
+      const result = parseStatsQuery(
+        query({ since: '2026-09-25T00:00:00.000Z', until: '2026-09-26T00:00:00.000Z' }),
+        NOW,
+      );
+      expect(result.ok).toBe(false);
+    });
+
+    it('refuse until au-delà de maintenant + 400 jours', () => {
+      const result = parseStatsQuery(
+        query({ since: '2026-09-23T00:00:00.000Z', until: '+275760-09-13T00:00:00.000Z' }),
+        NOW,
+      );
+      expect(result.ok).toBe(false);
+    });
+
+    it('refuse une chaîne de date démesurée', () => {
+      const result = parseStatsQuery(query({ since: '2026-09-01'.padEnd(200, ' ') }), NOW);
+      expect(result.ok).toBe(false);
+    });
+  });
 });

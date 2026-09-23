@@ -1,4 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { readBodyLimited } from '../../../../server/http/body';
 import { readCookie } from '../../../../server/auth/cookies';
 import {
   APP_TOKEN_COOKIE,
@@ -10,7 +11,8 @@ import {
 } from '../../../../server/http/app-token';
 import { APP_TOKEN_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
 import { isSameOriginRequest } from '../../../../server/http/caller';
-import { verifyTurnstileToken } from '../../../../server/http/turnstile';
+import { turnstileMode, verifyTurnstileToken } from '../../../../server/http/turnstile';
+import { isPublicDeployment } from '../../../../server/auth/environment';
 import { authStore, json, jsonError, publicBaseUrl } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -34,11 +36,13 @@ import type { Env } from '../../_types';
  * périphérie Cloudflare (le rate limiting de zone n'est pas disponible sur le plan du projet). Un
  * jeton Turnstile est de toute façon à usage unique : un automate n'en obtient pas gratuitement.
  *
- * Turnstile non configuré (ni clé de site ni secret) : le jeton est émis sans vérification — c'est
- * le cas du développement local sans `.dev.vars` dédié, et le comportement doit rester utilisable.
- * En production, les workflows poussent les deux (`TURNSTILE_SITE_KEY` en variable,
- * `TURNSTILE_SECRET_KEY` en secret) ; une clé de site sans secret (ou l'inverse) est une
- * configuration incohérente signalée par un 503 plutôt que silencieusement contournée.
+ * Turnstile non configuré (ni clé de site ni secret) : en développement local SEULEMENT, le jeton
+ * est émis sans vérification (`wrangler pages dev` sans `.dev.vars` dédié doit rester utilisable).
+ * Sur un déploiement public (https hors localhost, `server/auth/environment.ts`), c'est un 503
+ * `turnstile_unavailable` — de même que le secret de test Cloudflare (`1x…`, réussit toujours) et
+ * qu'une clé de site sans secret (ou l'inverse) partout : fail-closed, audit du 2026-09-23 (voir
+ * `turnstileMode`). Même principe pour le secret HMAC : sans `APP_TOKEN_SECRET` en production, pas
+ * de repli sur `DATABASE_URL`, 503 explicite.
  */
 
 const MAX_BODY_BYTES = 4096;
@@ -65,7 +69,7 @@ function expectedHostnames(request: Request, env: Env): Set<string> {
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!isSameOriginRequest(context.request.headers)) return notSameOrigin();
-  const secret = appTokenSecret(context.env);
+  const secret = appTokenSecret(context.env, context.request.url);
   const hasToken = await verifyAppToken(
     secret,
     readCookie(context.request, APP_TOKEN_COOKIE),
@@ -93,14 +97,26 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
-  const siteKey = context.env.TURNSTILE_SITE_KEY || null;
   const turnstileSecret = context.env.TURNSTILE_SECRET_KEY || null;
-  if ((siteKey === null) !== (turnstileSecret === null)) {
-    return jsonError('Turnstile mal configuré (clé de site et secret vont ensemble)', 503);
+  const mode = turnstileMode({
+    siteKey: context.env.TURNSTILE_SITE_KEY,
+    secret: turnstileSecret,
+    publicDeployment: isPublicDeployment(context.env, context.request.url),
+  });
+  if (mode === 'misconfigured') {
+    return json(
+      {
+        error:
+          'Turnstile non configuré pour ce déploiement (clé de site + secret réel requis en production)',
+        code: 'turnstile_unavailable',
+      },
+      503,
+    );
   }
 
-  const raw = await context.request.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError('corps trop volumineux', 413);
+  const read = await readBodyLimited(context.request, MAX_BODY_BYTES);
+  if (!read.ok) return jsonError(read.error, read.status);
+  const raw = read.text;
   let body: unknown = null;
   if (raw.length > 0) {
     try {
@@ -114,7 +130,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
       ? (body as { turnstileToken: unknown }).turnstileToken
       : null;
 
-  if (turnstileSecret !== null) {
+  if (mode === 'verify' && turnstileSecret !== null) {
     const verification = await verifyTurnstileToken({
       secret: turnstileSecret,
       token: turnstileToken,
@@ -133,8 +149,10 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     }
   }
 
-  const secret = appTokenSecret(context.env);
-  if (!secret) return jsonError('jeton d’application non configuré', 503);
+  const secret = appTokenSecret(context.env, context.request.url);
+  if (!secret) {
+    return jsonError('jeton d’application non configuré (APP_TOKEN_SECRET manquant)', 503);
+  }
   const now = Date.now();
   const token = await signAppToken(secret, now);
   const headers = new Headers();

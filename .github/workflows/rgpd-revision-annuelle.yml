@@ -3,9 +3,9 @@
 # Chaque 1er septembre, ouvre une issue assignée au responsable de traitement avec la liste de
 # contrôle à dérouler avant le 19 septembre (date anniversaire des documents rédigés le
 # 19 septembre 2026 : registre, note de mise en balance, note d'absence d'AIPD, procédure de
-# violation, `sous-traitants-dpa.md` §5). Les documents eux-mêmes vivent hors dépôt
-# (`C:\Users\Oumbra\Documents\wakfu-companion-rgpd\`) : l'issue ne contient que la liste, jamais
-# leur contenu.
+# violation, `sous-traitants-dpa.md` §5). Les documents eux-mêmes vivent hors dépôt (dossier
+# local `wakfu-companion-rgpd` du responsable de traitement) : l'issue ne contient que la liste,
+# jamais leur contenu.
 #
 # Limites connues, d'où le doublon calendrier (`revision-rgpd.ics`, hors dépôt) :
 # - un `schedule` ne tourne que depuis la branche par défaut (`main`) — inactif tant que
@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ouvrir l'issue de révision (si absente)
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const year = new Date().getUTCFullYear();
@@ -71,6 +71,7 @@ jobs:
               `### Documents du responsable de traitement\n` +
               `- [ ] Registre des traitements : relire, confirmer qu'aucune table/clé/tiers n'est apparu sans y figurer (\`server/db/schema.ts\`, \`server/settings/keys.ts\`, règle \`.claude/rules/user-data-legal.md\`).\n` +
               `- [ ] Note de mise en balance (pseudonymes de tiers) : conditions de révision toujours remplies ?\n` +
+              `- [ ] Note art. 14 (information des joueurs tiers, exception d'effort disproportionné) : le service a-t-il gagné un moyen de les joindre, un contenu public ou une interaction entre joueurs, qui ferait tomber l'exception ?\n` +
               `- [ ] Note d'absence d'AIPD : aucun nouveau critère CNIL/G29 atteint ?\n` +
               `- [ ] Procédure de violation de données : contacts, hébergeur, base et mécanisme d'authentification inchangés ?\n` +
               `- [ ] Politique de confidentialité, CGU, mentions légales : date « Dernière mise à jour » et contenu cohérents avec le code (4 locales).\n\n` +

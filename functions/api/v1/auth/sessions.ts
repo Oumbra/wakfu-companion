@@ -2,7 +2,14 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
 import { runRetentionPurges } from '../../../../server/auth/flow';
 import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
-import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
+import {
+  authenticate,
+  json,
+  jsonError,
+  rejectNativeCaller,
+  requireCsrf,
+  unauthenticated,
+} from '../../_auth';
 import type { Env } from '../../_types';
 
 /**
@@ -46,10 +53,16 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
  * - sans paramètre : révoque TOUTES les sessions du compte, y compris la
  *   courante (« déconnecter tous mes appareils »), et efface donc les cookies
  *   de l'appelant.
+ *
+ * Session de navigateur exigée (audit du 2026-09-23) : un jeton d'overlay reçoit 403
+ * `browser_session_required` — il efface SA session par `DELETE /native/session`, il ne révoque
+ * pas les autres appareils (voir `rejectNativeCaller`, `_auth.ts`).
  */
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
+  const nativeRejection = rejectNativeCaller(auth);
+  if (nativeRejection) return nativeRejection;
 
   if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
 

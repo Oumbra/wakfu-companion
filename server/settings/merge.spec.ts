@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_CLOCK_SKEW_MS, parsePatchBody, resolveWrites, type SettingWrite } from './merge';
+import {
+  MAX_CLOCK_SKEW_MS,
+  MAX_SETTING_DEPTH,
+  jsonDepthExceeds,
+  parsePatchBody,
+  parsePutBody,
+  resolveWrites,
+  type SettingWrite,
+} from './merge';
 
 const NOW = new Date('2026-08-10T12:00:00.000Z');
 
@@ -208,5 +216,45 @@ describe('resolveWrites', () => {
     );
     expect(accepted.map((w) => w.key)).toEqual(['roster', 'watchlist']);
     expect(rejected.map((r) => r.key)).toEqual(['profile']);
+  });
+});
+
+describe('profondeur des valeurs (audit 2026-09-23)', () => {
+  const nested = (depth: number): unknown => {
+    let value: unknown = 1;
+    for (let i = 0; i < depth; i++) value = [value];
+    return value;
+  };
+
+  it('jsonDepthExceeds compte les niveaux d’objets/tableaux, sans récursion', () => {
+    expect(jsonDepthExceeds(1)).toBe(false);
+    expect(jsonDepthExceeds({ a: { b: [1] } }, 3)).toBe(false);
+    expect(jsonDepthExceeds({ a: { b: [1] } }, 2)).toBe(true);
+    expect(jsonDepthExceeds(nested(MAX_SETTING_DEPTH))).toBe(false);
+    expect(jsonDepthExceeds(nested(MAX_SETTING_DEPTH + 1))).toBe(true);
+    // Une imbrication extrême ne fait pas déborder la pile.
+    expect(jsonDepthExceeds(nested(200_000))).toBe(true);
+  });
+
+  it('parsePatchBody refuse une valeur ou un correctif trop imbriqué', () => {
+    const tooDeep = nested(MAX_SETTING_DEPTH + 1);
+    const updatedAt = '2026-08-10T11:00:00.000Z';
+    expect(
+      parsePatchBody({ entries: [{ key: 'watchlist', value: tooDeep, updatedAt }] }, NOW).ok,
+    ).toBe(false);
+    expect(
+      parsePatchBody({ entries: [{ key: 'profile', patch: { x: tooDeep }, updatedAt }] }, NOW).ok,
+    ).toBe(false);
+    expect(
+      parsePatchBody({ entries: [{ key: 'watchlist', value: nested(5), updatedAt }] }, NOW).ok,
+    ).toBe(true);
+  });
+
+  it('parsePutBody applique liste blanche et profondeur', () => {
+    expect(parsePutBody({ data: { watchlist: [], profile: { a: 1 } } }).ok).toBe(true);
+    expect(parsePutBody({ data: { inconnue: 1 } }).ok).toBe(false);
+    expect(parsePutBody({ data: { watchlist: nested(MAX_SETTING_DEPTH + 1) } }).ok).toBe(false);
+    expect(parsePutBody({ data: [] }).ok).toBe(false);
+    expect(parsePutBody(null).ok).toBe(false);
   });
 });

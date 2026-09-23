@@ -93,6 +93,12 @@ export class LocalUserDataRepository implements UserDataRepository {
     return value === undefined ? undefined : JSON.stringify(value);
   }
 
+  /** Efface toutes les données utilisateur de cet appareil (les 11 clés de `USER_DATA_KEYS` et
+   * leurs horodatages) — voir `UserDataService.clearLocalUserData`. */
+  clearAll(): void {
+    this.persistence.removeKeys([...Object.values(USER_DATA_KEYS), USER_DATA_META_KEY]);
+  }
+
   private meta(): UserDataMeta {
     return this.persistence.getJson<UserDataMeta>(USER_DATA_META_KEY) ?? {};
   }

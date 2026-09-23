@@ -183,6 +183,17 @@ export class PersistenceService {
     });
   }
 
+  /** Retire des clés `localStorage` précises (sans toucher au reste ni à IndexedDB). */
+  removeKeys(keys: readonly string[]): void {
+    for (const key of keys) {
+      try {
+        localStorage.removeItem(key);
+      } catch {
+        // Stockage indisponible : il n'y avait rien à effacer.
+      }
+    }
+  }
+
   getJson<T>(key: string): T | undefined {
     const raw = localStorage.getItem(key);
     if (!raw) return undefined;

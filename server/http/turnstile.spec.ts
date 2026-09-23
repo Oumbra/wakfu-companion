@@ -3,6 +3,7 @@ import {
   TURNSTILE_ACTION,
   TURNSTILE_SITEVERIFY_URL,
   isTurnstileTestSecret,
+  turnstileMode,
   verifyTurnstileToken,
 } from './turnstile';
 
@@ -133,5 +134,42 @@ describe('vérification Turnstile (siteverify)', () => {
       fetchImpl: fetchReturning({ success: true, action: '', hostname: 'example.com' }),
     });
     expect(result).toEqual({ ok: true, hostname: 'example.com' });
+  });
+});
+
+/** Audit de sécurité du 2026-09-23 : fail-closed sur un déploiement public. */
+describe('turnstileMode', () => {
+  const REAL = '0x4AAAAAAAreal-secret-value';
+  const TEST = `1x${'0'.repeat(31)}AA`;
+
+  it('développement local : sans clés, émission sans vérification ; clé de test admise', () => {
+    expect(turnstileMode({ siteKey: null, secret: null, publicDeployment: false })).toBe('skip');
+    expect(turnstileMode({ siteKey: 'site', secret: TEST, publicDeployment: false })).toBe(
+      'verify',
+    );
+  });
+
+  it('déploiement public : sans clés ou avec le secret de test, refus (503)', () => {
+    expect(turnstileMode({ siteKey: null, secret: null, publicDeployment: true })).toBe(
+      'misconfigured',
+    );
+    expect(turnstileMode({ siteKey: '', secret: '', publicDeployment: true })).toBe(
+      'misconfigured',
+    );
+    expect(turnstileMode({ siteKey: 'site', secret: TEST, publicDeployment: true })).toBe(
+      'misconfigured',
+    );
+    expect(turnstileMode({ siteKey: 'site', secret: REAL, publicDeployment: true })).toBe('verify');
+  });
+
+  it('clé de site sans secret (ou l’inverse) : refus partout', () => {
+    for (const publicDeployment of [true, false]) {
+      expect(turnstileMode({ siteKey: 'site', secret: null, publicDeployment })).toBe(
+        'misconfigured',
+      );
+      expect(turnstileMode({ siteKey: null, secret: REAL, publicDeployment })).toBe(
+        'misconfigured',
+      );
+    }
   });
 });

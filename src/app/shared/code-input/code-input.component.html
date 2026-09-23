@@ -1,0 +1,17 @@
+<input
+  class="code-input-field"
+  type="text"
+  inputmode="text"
+  autocomplete="off"
+  autocapitalize="characters"
+  autocorrect="off"
+  spellcheck="false"
+  [attr.id]="inputId()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.maxlength]="maxLength()"
+  [placeholder]="placeholder()"
+  [value]="value()"
+  [disabled]="disabled()"
+  (input)="onInput($event)"
+  (keydown.enter)="submitted.emit()"
+/>

@@ -169,7 +169,55 @@ const WALKON_RE = /^Action \[WALKON\] performed on interactive element : \d+$/;
 /** Ligne technique émise une seule fois, tout au début de chaque session client ("1.92 (build -1
  * [2026-08-20 @ 14H18min45])") — seule source fiable de la date CALENDAIRE réelle du fichier (le
  * reste du log n'expose que l'heure HH:MM:SS,mmm, voir HEADER_RE). Voir LogDateAnchorEntry. */
-const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]/;
+/** Ancrée sur la forme EXACTE et complète de la ligne technique (version, `build N`, date entre
+ * crochets, parenthèse fermante, fin de contenu) — jamais une simple recherche du motif de date
+ * n'importe où dans le contenu : un joueur qui écrit `vends pano [2000-01-01 @ 00H00min00]` dans
+ * un canal public de chat faisait sinon basculer `logDateAnchor` chez TOUS les lecteurs du fichier
+ * (audit sécurité du 2026-09-23, dates fausses envoyées au serveur). Un contenu `[Catégorie] ...`
+ * (chat compris) commence par `[`, jamais par un chiffre : il ne peut plus correspondre. */
+const CLIENT_BUILD_DATE_RE =
+  /^\d{1,4}(?:\.\d{1,4}){0,3} \(build -?\d{1,10} \[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{2})\]\)$/;
+/** Première année plausible d'un `wakfu.log` (sortie du jeu : 2012) — borne basse de l'ancrage. */
+const MIN_PLAUSIBLE_LOG_YEAR = 2012;
+/** Tolérance au-delà de l'horloge locale (fuseaux horaires, horloge légèrement décalée). */
+const MAX_LOG_DATE_AHEAD_MS = 24 * 60 * 60 * 1000;
+/**
+ * Longueur maximale d'une ligne physique traitée (défense en profondeur contre les regex coûteuses
+ * sur une ligne anormale). Plus longue ligne mesurée sur les fixtures réelles (`tests/wakfu.log`,
+ * `tests/logs/**`) : 997 caractères (liste d'extensions OpenAL) — les lignes de jeu restent sous
+ * ~330. Une ligne plus longue est ignorée comme une ligne WARN/ERROR.
+ */
+export const MAX_LOG_LINE_LENGTH = 4096;
+/** Plafond du contenu reconstitué d'un enregistrement multi-lignes (voir `LogParser.pending`). */
+const MAX_PENDING_CONTENT_LENGTH = 4 * MAX_LOG_LINE_LENGTH;
+
+/**
+ * Reconnaît la ligne d'ancrage de date du client (voir CLIENT_BUILD_DATE_RE) et valide la date :
+ * calendrier réel, année ≥ MIN_PLAUSIBLE_LOG_YEAR, pas plus d'un jour dans le futur. O(1) : le
+ * premier caractère suffit à rejeter l'immense majorité des lignes (toute ligne `[Catégorie] ...`).
+ */
+function matchClientBuildDate(
+  content: string,
+  nowMs: number = Date.now(),
+): { year: number; month: number; day: number } | null {
+  const first = content.charCodeAt(0);
+  if (!(first >= 48 && first <= 57)) return null; // ni chiffre : jamais une ligne d'ancrage
+  const match = CLIENT_BUILD_DATE_RE.exec(content);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hours = Number(match[4]);
+  const minutes = Number(match[5]);
+  const seconds = Number(match[6]);
+  if (year < MIN_PLAUSIBLE_LOG_YEAR || hours > 23 || minutes > 59 || seconds > 59) return null;
+  const date = new Date(year, month - 1, day, hours, minutes, seconds);
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null; // 2026-02-31, mois 13...
+  }
+  if (date.getTime() > nowMs + MAX_LOG_DATE_AHEAD_MS) return null;
+  return { year, month, day };
+}
 
 /**
  * Extrait uniquement l'heure d'une ligne brute (et, le cas échéant, la date calendaire si cette ligne
@@ -185,14 +233,11 @@ const CLIENT_BUILD_DATE_RE = /\[(\d{4})-(\d{2})-(\d{2}) @ (\d{2})H(\d{2})min(\d{
 export function peekLineTime(
   rawLine: string,
 ): { time: string; buildDate: { year: number; month: number; day: number } | null } | null {
+  if (rawLine.length > MAX_LOG_LINE_LENGTH) return null;
   const headerMatch = HEADER_RE.exec(rawLine.replace(/\r$/, ''));
   if (!headerMatch) return null;
   const [, , time, content] = headerMatch;
-  const buildMatch = CLIENT_BUILD_DATE_RE.exec(content);
-  const buildDate = buildMatch
-    ? { year: Number(buildMatch[1]), month: Number(buildMatch[2]), day: Number(buildMatch[3]) }
-    : null;
-  return { time, buildDate };
+  return { time, buildDate: matchClientBuildDate(content) };
 }
 
 /**
@@ -230,7 +275,26 @@ const IGNORED_TAG = 'Parade !';
 /** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
 const TRADE_DONNE_RE =
   /le joueur (.+?) donne\s*:\s*(\d+)\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
-const TRADE_ITEM_RE = /(\d+)\s*x\s*(.+?)\s*\(refId=-?\d+\)/g;
+/** Fin d'un objet d'échange : "1xNom (refId=I)". Découpage linéaire autour de ce marqueur (voir
+ * parseTradeItems) plutôt qu'une regex `(\d+)\s*x\s*(.+?)\s*\(refId=...\)` globale, quadratique
+ * sur une suite de `1 x ` sans `(refId=` final. */
+const TRADE_REF_ID_RE = /\(refId=-?\d+\)/g;
+const TRADE_ITEM_HEAD_RE = /^(\d+)\s*x\s*/;
+
+/** "1xFeuilluchon de Fortune (refId=13360) 2xPoudre (refId=27093) " → objets et quantités. O(n). */
+function parseTradeItems(itemsText: string): { name: string; quantity: number }[] {
+  const items: { name: string; quantity: number }[] = [];
+  let segmentStart = 0;
+  for (const refMatch of itemsText.matchAll(TRADE_REF_ID_RE)) {
+    const segment = itemsText.slice(segmentStart, refMatch.index).trim();
+    segmentStart = refMatch.index + refMatch[0].length;
+    const head = TRADE_ITEM_HEAD_RE.exec(segment);
+    if (!head) continue;
+    const name = segment.slice(head[0].length).trim();
+    if (name) items.push({ quantity: Number(head[1]), name });
+  }
+  return items;
+}
 
 const DAMAGE_ELEMENTS = new Set<string>([
   'Neutre',
@@ -383,12 +447,19 @@ export class LogParser {
   private currentFightId: number | null = null;
 
   /** Ligne en cours d'accumulation : un enregistrement Java peut s'étaler sur plusieurs lignes physiques (ex. résumé d'échange), la suite n'ayant pas d'en-tête LEVEL/horodatage. */
-  private pending: { time: string; parts: string[] } | null = null;
+  private pending: { time: string; parts: string[]; length: number } | null = null;
 
   /** Horodatage (ms depuis minuit) de la dernière occurrence de chaque signature d'événement, pour ignorer les doublons multi-compte. */
   private readonly recentSignatures = new Map<string, number>();
 
   parseLine(rawLine: string): LogEntry | null {
+    // Ligne anormalement longue (voir MAX_LOG_LINE_LENGTH) : traitée comme une ligne WARN/ERROR —
+    // clôt l'enregistrement en cours et n'est jamais bufferisée ni passée aux regex.
+    if (rawLine.length > MAX_LOG_LINE_LENGTH) {
+      const flushed = this.flushPending();
+      this.pending = null;
+      return flushed;
+    }
     const line = rawLine.replace(/\r$/, '');
     if (!line.trim()) return null;
 
@@ -397,12 +468,21 @@ export class LogParser {
       const flushed = this.flushPending();
       const [, level, time, firstPart] = headerMatch;
       // WARN/ERROR toujours ignorées : on ne les bufferise même pas.
-      this.pending = level === 'INFO' ? { time, parts: [firstPart] } : null;
+      this.pending =
+        level === 'INFO' ? { time, parts: [firstPart], length: firstPart.length } : null;
       return flushed;
     }
 
     // Suite d'un enregistrement multi-lignes (ex. résumé d'échange) : pas d'en-tête sur cette ligne.
-    this.pending?.parts.push(line.trim());
+    if (this.pending) {
+      const trimmed = line.trim();
+      this.pending.length += trimmed.length + 1;
+      if (this.pending.length > MAX_PENDING_CONTENT_LENGTH) {
+        this.pending = null; // enregistrement anormal : abandonné plutôt que tronqué
+      } else {
+        this.pending.parts.push(trimmed);
+      }
+    }
     return null;
   }
 
@@ -487,20 +567,12 @@ export class LogParser {
       return null;
     }
 
-    const buildDate = CLIENT_BUILD_DATE_RE.exec(content);
-    if (buildDate) {
-      const [, year, month, day] = buildDate;
-      return {
-        kind: 'log-date-anchor',
-        time,
-        year: Number(year),
-        month: Number(month),
-        day: Number(day),
-      };
-    }
-
     const bracketMatch = BRACKET_RE.exec(content);
-    if (!bracketMatch) return null;
+    if (!bracketMatch) {
+      // Évaluée seulement hors enveloppe `[Catégorie]` (chat compris) — voir CLIENT_BUILD_DATE_RE.
+      const buildDate = matchClientBuildDate(content);
+      return buildDate ? { kind: 'log-date-anchor', time, ...buildDate } : null;
+    }
     const [, category, rest] = bracketMatch;
     const bracketContent = (rest ?? '').trim();
 
@@ -555,9 +627,7 @@ export class LogParser {
       const kamas = Number(match[2]);
       const itemsText = match[3];
       const items: { name: string; quantity: number }[] = [];
-      for (const itemMatch of itemsText.matchAll(TRADE_ITEM_RE)) {
-        items.push({ quantity: Number(itemMatch[1]), name: itemMatch[2].trim() });
-      }
+      items.push(...parseTradeItems(itemsText));
       sides.push({ playerName, items, kamas });
     }
     if (sides.length !== 2) return null;

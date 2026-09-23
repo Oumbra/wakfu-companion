@@ -82,6 +82,9 @@ export class RemoteUserDataRepository implements UserDataRepository {
    */
   private readonly acked = new Map<UserDataKey, unknown>();
   private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Heure avant laquelle aucun `PATCH` ne part (en-tête `Retry-After` d'un 429/503) : les champs
+   * restent en attente, un envoi est reprogrammé à l'échéance. */
+  private notBeforeMs = 0;
   private inFlight: Promise<void> | null = null;
 
   /** Prévenu quand des champs ont changé **hors** de cet appareil (hydratation). */
@@ -169,6 +172,7 @@ export class RemoteUserDataRepository implements UserDataRepository {
   /** Vide l'état de synchronisation (déconnexion) sans toucher aux données locales. */
   reset(): void {
     this.cancelScheduledFlush();
+    this.notBeforeMs = 0;
     this.pendingKeys.clear();
     this.acked.clear();
     this._pending.set([]);
@@ -218,6 +222,13 @@ export class RemoteUserDataRepository implements UserDataRepository {
       return;
     }
 
+    if (this.notBeforeMs > Date.now()) {
+      // Limite de débit en cours : rien ne part avant l'échéance (déjà reprogrammée).
+      this._state.set('pending');
+      this.scheduleFlush();
+      return;
+    }
+
     this._state.set('syncing');
     const result = await this.api.requestJson<PatchResponse>('/settings', {
       method: 'PATCH',
@@ -225,6 +236,14 @@ export class RemoteUserDataRepository implements UserDataRepository {
     });
 
     if (!result.ok) {
+      if (result.error.retryAfterMs !== undefined) {
+        // 429 (ou 503) avec `Retry-After` : réessai automatique à l'échéance, et aucune écriture
+        // intermédiaire ne relance de requête avant (voir `scheduleFlush`).
+        this.notBeforeMs = Date.now() + result.error.retryAfterMs;
+        this._state.set('error');
+        this.scheduleFlush();
+        return;
+      }
       // Rien n'est perdu : les champs restent en attente et repartiront à la
       // prochaine écriture, au prochain `pull()` ou à la fermeture de l'onglet.
       this._state.set('error');
@@ -274,10 +293,11 @@ export class RemoteUserDataRepository implements UserDataRepository {
 
   private scheduleFlush(): void {
     this.cancelScheduledFlush();
+    const delay = Math.max(WRITE_DEBOUNCE_MS, this.notBeforeMs - Date.now());
     this.debounceTimer = setTimeout(() => {
       this.debounceTimer = null;
       void this.flush();
-    }, WRITE_DEBOUNCE_MS);
+    }, delay);
   }
 
   private cancelScheduledFlush(): void {

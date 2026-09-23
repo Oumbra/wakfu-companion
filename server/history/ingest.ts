@@ -39,6 +39,33 @@ export interface IngestResult {
 }
 
 /**
+ * Plafond de paramètres liés par requête. Le protocole Postgres les numérote sur 16 bits (65 535
+ * au plus) : au-delà, la requête est refusée en bloc (500). Or les lignes filles d'un lot maximal
+ * le dépassent largement — 100 combats × 128 participants × 15 colonnes ≈ 192 000 paramètres,
+ * 100 échanges × 128 objets × 6 colonnes ≈ 77 000. Les `INSERT` de lignes filles sont donc
+ * découpés en tranches (`chunkRows`), avec une marge confortable sous la limite du protocole.
+ * Chaque tranche est un upsert idempotent : une interruption entre deux tranches est réparée par
+ * le rejeu du lot, exactement comme une interruption entre deux requêtes de la séquence en trois
+ * temps (voir `ingestFights`).
+ */
+export const MAX_BIND_PARAMS_PER_QUERY = 30_000;
+
+/** Découpe `rows` en tranches d'au plus `MAX_BIND_PARAMS_PER_QUERY / columnsPerRow` lignes. */
+export function chunkRows<T>(rows: readonly T[], columnsPerRow: number): T[][] {
+  const size = Math.max(1, Math.floor(MAX_BIND_PARAMS_PER_QUERY / columnsPerRow));
+  const chunks: T[][] = [];
+  for (let offset = 0; offset < rows.length; offset += size) {
+    chunks.push(rows.slice(offset, offset + size));
+  }
+  return chunks;
+}
+
+/** Nombre de colonnes d'une ligne (toutes les lignes d'un même lot ont la même forme). */
+function columnCount(rows: readonly object[]): number {
+  return rows.length > 0 ? Object.keys(rows[0]).length : 1;
+}
+
+/**
  * Combats (lot 8, prompt 8.1).
  *
  * ## Pourquoi trois requêtes SQL et non deux
@@ -151,10 +178,10 @@ export async function ingestFights(
     }));
   });
 
-  if (participantRows.length > 0) {
+  for (const participantChunk of chunkRows(participantRows, columnCount(participantRows))) {
     await db
       .insert(fightParticipants)
-      .values(participantRows)
+      .values(participantChunk)
       // Seule table de l'historique écrite en `DO UPDATE` : une réattribution
       // manuelle de dégâts (`reassignSpell` côté client) renvoie le combat avec
       // sa ventilation corrigée, et c'est cette correction-là qui doit prendre.
@@ -257,14 +284,14 @@ export async function ingestFights(
     }));
   });
 
-  if (lootRows.length > 0) {
+  for (const lootChunk of chunkRows(lootRows, columnCount(lootRows))) {
     // Le CONTENU du butin d'un combat terminé ne bouge plus, mais son IDENTIFICATION, si (correction
     // manuelle d'objet homonyme, voir ItemPickerService côté client) : `DO UPDATE` sur `item_id`/
     // `item_name` plutôt que `DO NOTHING`, une relecture du même log réécrivant de toute façon les
     // mêmes valeurs en l'absence de correction.
     await db
       .insert(fightLoot)
-      .values(lootRows)
+      .values(lootChunk)
       .onConflictDoUpdate({
         target: [fightLoot.fightId, fightLoot.lineIndex],
         set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
@@ -368,12 +395,12 @@ export async function ingestTrades(
     }));
   });
 
-  if (itemRows.length > 0) {
+  for (const itemChunk of chunkRows(itemRows, columnCount(itemRows))) {
     // `DO UPDATE` plutôt que `DO NOTHING` — voir `ingestPurchases` (même raison : correction
     // manuelle d'objet homonyme, voir ItemPickerService côté client).
     await db
       .insert(tradeItems)
-      .values(itemRows)
+      .values(itemChunk)
       .onConflictDoUpdate({
         target: [tradeItems.tradeId, tradeItems.direction, tradeItems.lineIndex],
         set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
@@ -421,12 +448,12 @@ export async function ingestPactExtractions(
     }));
   });
 
-  if (itemRows.length > 0) {
+  for (const itemChunk of chunkRows(itemRows, columnCount(itemRows))) {
     // `DO UPDATE` plutôt que `DO NOTHING` — voir `ingestPurchases` (même raison : correction
     // manuelle d'objet homonyme, voir PactReassignService côté client).
     await db
       .insert(pactExtractionItems)
-      .values(itemRows)
+      .values(itemChunk)
       .onConflictDoUpdate({
         target: [pactExtractionItems.extractionId, pactExtractionItems.lineIndex],
         set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },

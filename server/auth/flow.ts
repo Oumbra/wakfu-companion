@@ -24,6 +24,31 @@ import type { AuthStore, ProviderId, SessionRecord, UserRecord } from './store';
 const SESSION_REFRESH_THRESHOLD_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * Durée de vie ABSOLUE d'une session, quelle que soit l'activité (audit de sécurité du
+ * 2026-09-23) : l'expiration glissante de 30 jours seule laissait un jeton volé — ou une chaîne de
+ * rotations natives — vivre indéfiniment tant qu'il servait. Comptée depuis l'ouverture initiale
+ * (connexion OAuth ou appairage natif) et **propagée** aux rotations (`rotateNativeSession`) :
+ * une rotation renouvelle le jeton, pas le droit de rester connecté. Passé ce délai, l'utilisateur
+ * se reconnecte (site) ou réappaire l'overlay. Colonne `sessions.absolute_expires_at`.
+ */
+export const SESSION_MAX_LIFETIME_MS = 180 * 24 * 60 * 60 * 1000;
+
+/**
+ * Échéance absolue d'une session. `absoluteExpiresAt` est nul pour une ligne écrite par du code
+ * antérieur à la colonne (fenêtre entre migration et déploiement) : repli sur `issuedAt`.
+ */
+export function sessionAbsoluteExpiry(session: SessionRecord): Date {
+  return (
+    session.absoluteExpiresAt ?? new Date(session.issuedAt.getTime() + SESSION_MAX_LIFETIME_MS)
+  );
+}
+
+/** Chaîne de rotation d'une session (repli sur son propre identifiant, même raison que ci-dessus). */
+export function sessionChainId(session: SessionRecord): string {
+  return session.chainId ?? session.idHash;
+}
+
+/**
  * Délai au bout duquel une session **morte** (expirée ou révoquée) est effacée
  * de la table — limitation de la conservation (RGPD art. 5.1.e). Ces lignes
  * n'ouvrent plus rien (`resolveSession` les refuse) et n'apparaissent plus
@@ -108,16 +133,42 @@ export interface StartedAuthorization {
   codeChallenge: string;
 }
 
+/** Base factice servant à résoudre la cible de retour comme le ferait un navigateur. */
+const REDIRECT_PROBE_ORIGIN = 'https://redirect-probe.invalid';
+const MAX_REDIRECT_LENGTH = 2048;
+
 /**
  * Normalise la cible de retour après connexion. **Seuls les chemins internes
  * sont acceptés** (`/quelque-chose`) : accepter une URL absolue ouvrirait une
  * redirection ouverte, qui transformerait notre domaine en tremplin de
- * hameçonnage. `//evil.com` est rejeté aussi (URL protocole-relative).
+ * hameçonnage.
+ *
+ * Audit du 2026-09-23 : un simple contrôle de préfixe (`/` sans `//`) ne
+ * suffit pas — le parseur d'URL WHATWG traite `\` comme `/` et retire
+ * tabulations et sauts de ligne, si bien que `/\evil.com`, `/\t/evil.com` ou
+ * `/\n/evil.com` se résolvent tous vers `evil.com`. D'où, en plus du préfixe :
+ * 1. rejet de toute barre oblique inverse et de tout caractère de contrôle
+ *    (C0, DEL) ;
+ * 2. résolution effective par `new URL` sur une origine factice, et contrôle
+ *    que l'origine résolue est bien celle-là ;
+ * 3. on renvoie la forme NORMALISÉE (chemin + requête + fragment), et on
+ *    refuse qu'elle commence par `//` (cas `/.//evil.com`, que la
+ *    normalisation des segments ramène à `//evil.com`).
  */
 export function sanitizeRedirectTo(raw: string | null): string | null {
-  if (!raw) return null;
+  if (!raw || raw.length > MAX_REDIRECT_LENGTH) return null;
   if (!raw.startsWith('/') || raw.startsWith('//')) return null;
-  return raw;
+  if (/[\\\u0000-\u001f\u007f]/.test(raw)) return null;
+  let resolved: URL;
+  try {
+    resolved = new URL(raw, `${REDIRECT_PROBE_ORIGIN}/`);
+  } catch {
+    return null;
+  }
+  if (resolved.origin !== REDIRECT_PROBE_ORIGIN) return null;
+  const normalized = `${resolved.pathname}${resolved.search}${resolved.hash}`;
+  if (!normalized.startsWith('/') || normalized.startsWith('//')) return null;
+  return normalized;
 }
 
 /** Étape 1 : crée l'autorisation en attente (state + `code_verifier` PKCE). */
@@ -317,7 +368,13 @@ export async function openSession(
 ): Promise<OpenedSession> {
   const token = randomToken();
   const idHash = await sha256Hex(token);
-  const expiresAt = new Date(options.now.getTime() + (options.ttlMs ?? SESSION_TTL_MS));
+  const absoluteExpiresAt = new Date(options.now.getTime() + SESSION_MAX_LIFETIME_MS);
+  const expiresAt = new Date(
+    Math.min(
+      options.now.getTime() + (options.ttlMs ?? SESSION_TTL_MS),
+      absoluteExpiresAt.getTime(),
+    ),
+  );
   await store.createSession({
     idHash,
     userId,
@@ -327,6 +384,9 @@ export async function openSession(
     userAgent: options.userAgent,
     revokedAt: null,
     supersededAt: null,
+    chainId: idHash,
+    absoluteExpiresAt,
+    graceRotatedAt: null,
   });
   return { token, csrfToken: await deriveCsrfToken(token), idHash, expiresAt };
 }
@@ -362,13 +422,21 @@ export async function resolveSession(
   if (!session) return null;
   if (session.revokedAt !== null) return null;
   if (session.expiresAt.getTime() <= now.getTime()) return null;
+  const absoluteExpiry = sessionAbsoluteExpiry(session).getTime();
+  if (absoluteExpiry <= now.getTime()) return null;
 
   const user = await store.findUserById(session.userId);
   if (!user) return null;
 
-  const remaining = session.expiresAt.getTime() - now.getTime();
-  if (session.supersededAt === null && remaining < SESSION_TTL_MS - SESSION_REFRESH_THRESHOLD_MS) {
-    const expiresAt = new Date(now.getTime() + SESSION_TTL_MS);
+  // Prolongation plafonnée par la durée de vie absolue. Rafraîchie au plus une fois par jour :
+  // soit parce qu'elle gagne au moins un jour, soit (session arrivée à son plafond) parce que la
+  // dernière activité enregistrée date de plus d'un jour — l'activité du compte doit continuer à
+  // être notée jusqu'au bout.
+  const target = Math.min(now.getTime() + SESSION_TTL_MS, absoluteExpiry);
+  const extendsByADay = target - session.expiresAt.getTime() > SESSION_REFRESH_THRESHOLD_MS;
+  const staleActivity = now.getTime() - session.lastUsedAt.getTime() > SESSION_REFRESH_THRESHOLD_MS;
+  if (session.supersededAt === null && (extendsByADay || staleActivity)) {
+    const expiresAt = new Date(Math.max(target, session.expiresAt.getTime()));
     await store.touchSession(idHash, { lastUsedAt: now, expiresAt });
     // Même rythme pour l'activité du compte (purge d'inactivité) : une session
     // web ou overlay qui sert chaque jour tient le compte vivant sans

@@ -39,7 +39,7 @@ export async function rejectUnknownCaller(
   if (sameOrigin) {
     if (!options.appToken) return null;
     const cookie = readCookie(request, APP_TOKEN_COOKIE);
-    if (await verifyAppToken(appTokenSecret(env), cookie, Date.now())) return null;
+    if (await verifyAppToken(appTokenSecret(env, request.url), cookie, Date.now())) return null;
   }
   if ((await authenticate(request, env)) !== null) return null;
   if (sameOrigin) {

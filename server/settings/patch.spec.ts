@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { applySettingPatch, isMergeableSettingKey, parseSettingPatch } from './patch';
+import {
+  MAX_ROSTER_PATCH_ACCOUNTS,
+  applySettingPatch,
+  isMergeableSettingKey,
+  parseSettingPatch,
+} from './patch';
 
 describe('isMergeableSettingKey', () => {
   it('n’admet que profile et roster', () => {
@@ -160,5 +165,60 @@ describe('applySettingPatch — roster', () => {
       undefined,
     );
     expect(result).toEqual([{ id: 'main', characters: [] }]);
+  });
+});
+
+describe('garde-fous du correctif (audit 2026-09-23)', () => {
+  it('filtre __proto__/constructor/prototype d’un correctif de profil', () => {
+    const raw = JSON.parse('{"__proto__": {"admin": true}, "constructor": 1, "pseudo": "Oumbra"}');
+    const parsed = parseSettingPatch('profile', raw);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || parsed.value.key !== 'profile') return;
+    expect(Object.keys(parsed.value.fields)).toEqual(['pseudo']);
+    const merged = applySettingPatch(parsed.value, { pseudo: 'Ancien' }) as Record<string, unknown>;
+    expect(Object.getPrototypeOf(merged)).toBe(Object.prototype);
+    expect(Object.prototype.hasOwnProperty.call(merged, '__proto__')).toBe(false);
+  });
+
+  it('refuse un correctif de profil réduit à des clés interdites', () => {
+    expect(parseSettingPatch('profile', JSON.parse('{"__proto__": 1}')).ok).toBe(false);
+  });
+
+  it('filtre les clés interdites des comptes du roster', () => {
+    const raw = JSON.parse('{"accounts": [{"id": "a", "__proto__": {"x": 1}, "label": "A"}]}');
+    const parsed = parseSettingPatch('roster', raw);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok || parsed.value.key !== 'roster') return;
+    expect(Object.keys(parsed.value.roster.accounts[0])).toEqual(['id', 'label']);
+  });
+
+  it(`borne le correctif roster à ${MAX_ROSTER_PATCH_ACCOUNTS} comptes`, () => {
+    const accounts = (n: number) => Array.from({ length: n }, (_, i) => ({ id: `id-${i}` }));
+    expect(parseSettingPatch('roster', { accounts: accounts(MAX_ROSTER_PATCH_ACCOUNTS) }).ok).toBe(
+      true,
+    );
+    expect(
+      parseSettingPatch('roster', { accounts: accounts(MAX_ROSTER_PATCH_ACCOUNTS + 1) }).ok,
+    ).toBe(false);
+    const removedIds = Array.from({ length: MAX_ROSTER_PATCH_ACCOUNTS + 1 }, (_, i) => `r${i}`);
+    expect(parseSettingPatch('roster', { removedIds }).ok).toBe(false);
+  });
+
+  it('fusionne un gros roster stocké en conservant l’ordre et les comptes non cités', () => {
+    const stored = Array.from({ length: 5000 }, (_, i) => ({ id: `id-${i}`, label: `L${i}` }));
+    const parsed = parseSettingPatch('roster', {
+      accounts: [
+        { id: 'id-4999', label: 'fin' },
+        { id: 'neuf', label: 'N' },
+      ],
+      removedIds: ['id-0'],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const merged = applySettingPatch(parsed.value, stored) as { id: string; label: string }[];
+    expect(merged).toHaveLength(5000);
+    expect(merged[0]).toEqual({ id: 'id-1', label: 'L1' });
+    expect(merged[4998]).toEqual({ id: 'id-4999', label: 'fin' });
+    expect(merged[4999]).toEqual({ id: 'neuf', label: 'N' });
   });
 });

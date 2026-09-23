@@ -225,6 +225,27 @@
       "when": 1790001282335,
       "tag": "0031_drop_users_default_game_server",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790124120779,
+      "tag": "0032_auth_hardening",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790124934967,
+      "tag": "0033_enable_pg_trgm",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790124957311,
+      "tag": "0034_catalog_trgm_indexes",
+      "breakpoints": true
     }
   ]
 }

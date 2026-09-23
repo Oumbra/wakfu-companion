@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { USER_DATA_KEYS } from '../data-access/user-data.keys';
 import { UserDataService } from '../data-access/user-data.service';
+import { isAllowedAvatarExternalUrl } from '../data-access/user-data.validation';
 import { CatalogService } from '../api/catalog.service';
 import {
   AVATAR_INDEX_SCHEMA_VERSION,
@@ -173,6 +174,8 @@ export class ProfileService {
   /** Choix d'un avatar "Fan-Art" (voir avatar-fanart-galleries.data.ts) — ne touche pas
    * `avatarIndex`, repris tel quel si l'utilisateur revient à la "Galerie MMO". */
   setAvatarExternal(url: string): void {
+    // Seules les URL des galeries fan-art connues sont acceptées (voir isAllowedAvatarExternalUrl).
+    if (!isAllowedAvatarExternalUrl(url)) return;
     this.avatarExternalUrl.set(url);
     this.persist();
   }

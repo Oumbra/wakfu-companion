@@ -8,12 +8,13 @@
       "Bash(npm test *)",
       "Bash(npm ci)",
       "Bash(npm ls)",
-      "Bash(npx *)",
-      "Bash(node *)",
-      "Bash(node)",
-      "Bash(python3 *)",
-      "Bash(pip install *)",
-      "Bash(pip3 install *)",
+      "Bash(node tools/*)",
+      "Bash(npx ng *)",
+      "Bash(npx tsc *)",
+      "Bash(npx vitest *)",
+      "Bash(npx prettier *)",
+      "Bash(npx drizzle-kit generate*)",
+      "Bash(npx wrangler pages dev*)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
@@ -27,7 +28,6 @@
       "Bash(find *)",
       "Bash(grep *)",
       "Bash(mkdir -p *)",
-      "Bash(curl *)",
       "Bash(sleep *)",
       "Bash(tail *)",
       "Bash(head *)",
@@ -37,8 +37,18 @@
       "Bash(pkill -f \"ng serve\")",
       "Bash(pkill -f *)",
       "Bash(npm ls *)",
-      "Bash(rm -f /tmp/claude-*)",
-      "Bash(cat *)"
+      "Bash(rm -f /tmp/claude-*)"
+    ],
+    "deny": [
+      "Read(./.vars)",
+      "Read(./.vars.*)",
+      "Read(./.dev.vars)",
+      "Read(./.dev.vars.*)",
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(cat .vars*)",
+      "Bash(cat .dev.vars*)",
+      "Bash(cat .env*)"
     ]
   },
   "hooks": {
