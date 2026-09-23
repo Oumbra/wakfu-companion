@@ -122,10 +122,18 @@ jobs:
       # des secrets GitHub Actions ci-dessus, qui ne servent qu'au moment du
       # build/CI. --env production cible l'environnement de production du
       # projet Cloudflare Pages.
+      # Les Functions reçoivent le rôle `app_runtime` (SELECT/INSERT/UPDATE/DELETE seulement,
+      # server/README.md), pas le propriétaire : DATABASE_URL (propriétaire) ne sert qu'aux
+      # migrations ci-dessus. Échec explicite si le secret manque, jamais de repli sur le propriétaire.
       - name: Push DB secret to Cloudflare Pages (production)
-        run: echo "$DATABASE_URL" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env production
+        run: |
+          if [ -z "$DATABASE_URL_APP" ]; then
+            echo "::error::Secret DATABASE_URL_APP absent de l'environnement production (rôle app_runtime, voir server/README.md)."
+            exit 1
+          fi
+          echo "$DATABASE_URL_APP" | npx wrangler pages secret put DATABASE_URL --project-name wakfu-companion --env production
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL_APP: ${{ secrets.DATABASE_URL_APP }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
