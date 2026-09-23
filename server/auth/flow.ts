@@ -121,11 +121,36 @@ export interface FullPurgeReport {
  * plus de la fréquentation du service.
  */
 export async function runFullPurge(store: AuthStore, now: Date): Promise<FullPurgeReport> {
-  const inactiveAccounts = await purgeInactiveAccounts(store, now);
-  const deadSessions = await purgeDeadSessions(store, now);
-  await store.purgeExpiredAuthorizations(now);
-  await store.purgeExpiredPairings(now);
-  await store.purgeRateLimits(new Date(now.getTime() - MAX_RATE_LIMIT_WINDOW_MS));
+  // Chaque étape est isolée (audit du 2026-09-23, lot 20) : une purge qui échoue ne doit pas
+  // empêcher les suivantes. Les erreurs sont regroupées dans une `AggregateError` levée à la fin,
+  // qui fait échouer le run planifié (et ouvre l'issue d'alerte) sans rien avoir sauté.
+  const errors: Error[] = [];
+  const step = async <T>(label: string, run: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await run();
+    } catch (error) {
+      errors.push(
+        new Error(`${label} : ${error instanceof Error ? error.message : String(error)}`),
+      );
+      return fallback;
+    }
+  };
+  const inactiveAccounts = await step(
+    'comptes inactifs',
+    () => purgeInactiveAccounts(store, now),
+    0,
+  );
+  const deadSessions = await step('sessions mortes', () => purgeDeadSessions(store, now), 0);
+  await step('autorisations OAuth', () => store.purgeExpiredAuthorizations(now), undefined);
+  await step('appairages natifs', () => store.purgeExpiredPairings(now), undefined);
+  await step(
+    'compteurs anti-abus',
+    () => store.purgeRateLimits(new Date(now.getTime() - MAX_RATE_LIMIT_WINDOW_MS)),
+    undefined,
+  );
+  if (errors.length > 0) {
+    throw new AggregateError(errors, `${errors.length} purge(s) de conservation en échec`);
+  }
   return { inactiveAccounts, deadSessions };
 }
 

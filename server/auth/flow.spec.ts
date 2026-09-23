@@ -768,6 +768,26 @@ describe('runFullPurge', () => {
 
     expect(called).toEqual(['authorizations', 'pairings']);
   });
+
+  it('continue les purges suivantes quand une étape échoue, puis lève toutes les erreurs', async () => {
+    const store = createMemoryAuthStore();
+    const closedWindow = new Date(NOW.getTime() - 30 * 60 * 1000);
+    await store.bumpRateLimit('auth:start:ip:abc', closedWindow);
+    const failing: AuthStore = {
+      ...store,
+      purgeExpiredAuthorizations: async () => {
+        throw new Error('base indisponible');
+      },
+    };
+
+    const error = await runFullPurge(failing, NOW).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect((error as AggregateError).errors.map((e: Error) => e.message)).toEqual([
+      'autorisations OAuth : base indisponible',
+    ]);
+    // L'étape suivante a tourné malgré l'échec : le compteur de fenêtre close est parti.
+    expect(await store.bumpRateLimit('auth:start:ip:abc', closedWindow)).toBe(1);
+  });
 });
 
 /**
