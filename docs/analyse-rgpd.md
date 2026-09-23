@@ -139,7 +139,7 @@ politique depuis le 2026-09-21 (audit §9, point 4) :
 | `wc_app`         | jeton d'application HMAC, preuve de passage Turnstile (tout visiteur) | `HttpOnly` `Secure` `SameSite=Strict`, portée `/api/v1` | 12 h           |
 | `wc_session`     | jeton opaque 256 bits                                                 | `HttpOnly` `Secure` `SameSite=Lax`                      | 30 j glissants |
 | `wc_csrf`        | double-submit anti-CSRF                                               | `Secure` `SameSite=Lax` (lisible en JS par conception)  | 30 j           |
-| `wc_oauth_state` | liaison du callback OAuth au navigateur                               | `HttpOnly` `Secure`, portée `/api/v1/auth`              | 10 min         |
+| `__Host-wc_oauth_state` | liaison du callback OAuth au navigateur                               | `HttpOnly` `Secure`, portée `/`, préfixe `__Host-`         | 10 min         |
 
 Aucun cookie de mesure d'audience, de publicité ou de traçage. Vérifié par recherche exhaustive :
 aucune occurrence de `gtag`, `analytics`, `plausible`, `matomo`, `sentry`, `googletagmanager` ou

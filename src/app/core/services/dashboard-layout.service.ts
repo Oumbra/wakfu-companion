@@ -4,6 +4,13 @@ import { UserDataService } from '../data-access/user-data.service';
 import { MediaQuerySignal } from '../utils/media-query-signal';
 import { AuthService } from '../auth/auth.service';
 import { StatsStoreService } from './stats-store.service';
+import {
+  isDashboardBodyMode,
+  isDashboardFocusSide,
+  isDashboardFocusTarget,
+  isDashboardKpiPos,
+  isDashboardMenuPos,
+} from './dashboard-layout.values';
 
 export type DashboardMenuPos = 'left' | 'right' | 'top-left' | 'top-right';
 export type DashboardKpiPos = 'top' | 'bottom' | 'left' | 'right';
@@ -258,11 +265,21 @@ export class DashboardLayoutService {
   private applyStored(): void {
     const stored = this.userData.read<Partial<DashboardLayoutPrefs>>('dashboardLayout');
     if (!stored) return;
-    if (stored.menuPos) this.menuPos.set(stored.menuPos);
-    if (stored.kpiPos) this.kpiPos.set(stored.kpiPos);
-    if (stored.bodyMode) this.bodyMode.set(stored.bodyMode);
-    if (stored.focusTarget) this.focusTarget.set(stored.focusTarget);
-    if (stored.focusSide) this.focusSide.set(stored.focusSide);
+    // Garde par champ (en plus de `user-data.validation.ts`, défense en profondeur) : une valeur
+    // inconnue — corrompue, ancienne (`focusTarget: 'combat'`), importée — retombe sur le défaut de
+    // CE champ, jamais une chaîne arbitraire posée dans un signal typé (le picker en déduit des
+    // libellés, la grille des placements).
+    this.menuPos.set(isDashboardMenuPos(stored.menuPos) ? stored.menuPos : DEFAULT_PREFS.menuPos);
+    this.kpiPos.set(isDashboardKpiPos(stored.kpiPos) ? stored.kpiPos : DEFAULT_PREFS.kpiPos);
+    this.bodyMode.set(
+      isDashboardBodyMode(stored.bodyMode) ? stored.bodyMode : DEFAULT_PREFS.bodyMode,
+    );
+    this.focusTarget.set(
+      isDashboardFocusTarget(stored.focusTarget) ? stored.focusTarget : DEFAULT_PREFS.focusTarget,
+    );
+    this.focusSide.set(
+      isDashboardFocusSide(stored.focusSide) ? stored.focusSide : DEFAULT_PREFS.focusSide,
+    );
     if (stored.historyGroup) {
       this.historyGroup.set({ ...DEFAULT_PREFS.historyGroup, ...stored.historyGroup });
     }

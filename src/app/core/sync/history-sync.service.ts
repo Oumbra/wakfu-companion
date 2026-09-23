@@ -334,6 +334,25 @@ export class HistorySyncService {
     dungeonId: number | null,
     dungeonRunSignature: string | null,
   ): void {
+    const archive = record.archive;
+    if (archive) {
+      if (archive.lootMerged) {
+        // Positions du butin affiché ≠ `line_index` stockés (voir `FightRecord.archive`) : renvoyer
+        // réécrirait l'identité d'AUTRES lignes de butin côté compte. La correction reste appliquée
+        // localement (affichage, journal des réattributions) ; seul le renvoi est abandonné.
+        console.warn(
+          '[history-sync] correction non renvoyée : butin archivé fusionné à la lecture',
+          archive.clientKey,
+        );
+        return;
+      }
+      // Combat reconstruit depuis l'archive : son rattachement de donjon est déjà connu du serveur
+      // (envoi d'origine + recalcul serveur) et `runSignature(record)` porterait un `fightId`
+      // d'affichage négatif — `null`/`null`, que le `COALESCE` serveur n'applique jamais par-dessus
+      // une valeur connue.
+      dungeonId = null;
+      dungeonRunSignature = null;
+    }
     const participants = this.buildParticipants(record);
     const loot = this.buildLoot(record);
 
@@ -369,9 +388,13 @@ export class HistorySyncService {
     const signature = this.runSignature(record);
 
     this.queue.enqueue({
-      id: `fight:${signature}`,
+      // Combat archivé : identité = `clientKey` d'origine (jamais la signature, qui dépend ici d'un
+      // `id` d'affichage négatif variant avec la position dans l'archive chargée — voir
+      // `FightRecord.archive`) ; sinon un nouveau combat serait créé côté compte à chaque renvoi.
+      id: archive ? `fight:key:${archive.clientKey}` : `fight:${signature}`,
       kind: 'fight',
       signature,
+      ...(archive ? { clientKey: archive.clientKey } : {}),
       payload: {
         // Purement diagnostique côté serveur (fights.fightLogId) — voir sa doc. `archiveId()`
         // (HistoryArchiveService) attribue toujours un id négatif à un combat reconstruit depuis

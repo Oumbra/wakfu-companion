@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { PersistenceService } from '../services/persistence.service';
 import type { HistoryEvent } from './history-event.model';
@@ -228,5 +228,191 @@ describe('SyncQueueService — quota d’historique atteint (403 history_quota_e
     expect(calls).toBe(2);
     expect(disk.has('purchase:q1')).toBe(true);
     queue.deactivate();
+  });
+});
+
+/**
+ * Découpage des lots (audit 2026-09-23) : un lot de 50 combats contenant des combats de brèche
+ * pouvait dépasser `MAX_PAYLOAD_BYTES` (1 Mio) côté serveur → 413 → lot compté comme refusé puis
+ * abandonné après `MAX_ATTEMPTS` (combats perdus). Et prise en charge du champ `rejected` d'une
+ * réponse 200 partielle.
+ */
+describe('SyncQueueService — découpage par taille, 413 et rejets partiels', () => {
+  type Handler = (entries: { clientKey: string; blob?: string }[]) => ApiResult<unknown>;
+  let sent: { path: string; entries: { clientKey: string; blob?: string }[]; bytes: number }[];
+  let handler: Handler;
+  let queue: SyncQueueService;
+  let warn: ReturnType<typeof vi.spyOn>;
+
+  const ok = (): ApiResult<unknown> => ({ ok: true, data: { accepted: [], inserted: 0 } });
+
+  function fight(id: string, blobBytes: number, extra: Partial<HistoryEvent> = {}): void {
+    queue.enqueue({
+      id: `fight:${id}`,
+      kind: 'fight',
+      signature: id,
+      payload: { blob: 'x'.repeat(blobBytes) } as never,
+      ...extra,
+    });
+  }
+
+  beforeEach(async () => {
+    sent = [];
+    handler = ok;
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const api: Pick<ApiClientService, 'requestJson'> = {
+      async requestJson<T>(path: string, init?: { body?: unknown }): Promise<ApiResult<T>> {
+        const entries = (init?.body as { entries: { clientKey: string; blob?: string }[] }).entries;
+        const bytes = new TextEncoder().encode(JSON.stringify(init?.body)).length;
+        sent.push({ path, entries, bytes });
+        return handler(entries) as ApiResult<T>;
+      },
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const persistence = TestBed.inject(PersistenceService);
+    persistence.getSyncQueue = async <T>() => [] as T[];
+    persistence.putSyncQueueEntries = async () => undefined;
+    persistence.deleteSyncQueueEntries = async () => undefined;
+    queue = TestBed.inject(SyncQueueService);
+    await queue.activate('compte-A');
+  });
+
+  afterEach(() => {
+    warn.mockRestore();
+  });
+
+  it('découpe un lot trop lourd en plusieurs envois sous 900 Kio, sans rien perdre', async () => {
+    for (let i = 0; i < 50; i++) fight(`f${i}`, 40_000); // 50 × ~40 Ko ≈ 2 Mo
+    await queue.flush();
+
+    expect(sent.length).toBeGreaterThan(1);
+    for (const batch of sent) expect(batch.bytes).toBeLessThanOrEqual(900 * 1024);
+    expect(sent.flatMap((b) => b.entries)).toHaveLength(50);
+    expect(queue.pendingCount()).toBe(0);
+  });
+
+  it('écarte définitivement un combat seul plus gros que la limite, sans bloquer les autres', async () => {
+    fight('petit-1', 100);
+    fight('geant', 1_000_000);
+    fight('petit-2', 100);
+    await queue.flush();
+
+    expect(sent.flatMap((b) => b.entries)).toHaveLength(2);
+    expect(queue.pendingCount()).toBe(0);
+    expect(warn).toHaveBeenCalled();
+  });
+
+  it('sur 413, redivise le lot au lieu de compter une tentative', async () => {
+    // Serveur plus strict que prévu : refuse tout corps de plus de 2 entrées.
+    handler = (entries) =>
+      entries.length > 2 ? { ok: false, error: { kind: 'http', status: 413 } } : ok();
+    for (let i = 0; i < 5; i++) fight(`f${i}`, 10);
+    await queue.flush();
+
+    const accepted = sent.filter((b) => b.entries.length <= 2).flatMap((b) => b.entries);
+    expect(accepted.map((e) => e.blob?.length)).toHaveLength(5);
+    expect(queue.pendingCount()).toBe(0);
+    expect(queue.state()).toBe('idle');
+  });
+
+  it('sur 413 pour une entrée seule, l’écarte et continue', async () => {
+    handler = (entries) =>
+      entries.some((e) => (e.blob?.length ?? 0) > 50)
+        ? { ok: false, error: { kind: 'http', status: 413 } }
+        : ok();
+    fight('a', 10);
+    fight('refuse', 100);
+    fight('b', 10);
+    await queue.flush();
+
+    expect(queue.pendingCount()).toBe(0);
+    expect(queue.state()).toBe('idle');
+    const lastBatches = sent.filter((b) => b.entries.every((e) => (e.blob?.length ?? 0) <= 50));
+    expect(lastBatches.flatMap((b) => b.entries)).toHaveLength(2);
+  });
+
+  it('retire les entrées listées dans `rejected` (et confirme les autres)', async () => {
+    handler = () => ({
+      ok: true,
+      data: { accepted: [], inserted: 1, rejected: [{ index: 1, error: 'participant invalide' }] },
+    });
+    fight('a', 10);
+    fight('b', 10);
+    await queue.flush();
+
+    expect(sent).toHaveLength(1);
+    expect(queue.pendingCount()).toBe(0);
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('participant invalide'),
+      sent[0].entries[1].clientKey,
+    );
+  });
+
+  it('reste compatible avec une réponse sans `rejected` (ou vide)', async () => {
+    handler = () => ({ ok: true, data: undefined });
+    fight('a', 10);
+    await queue.flush();
+    expect(queue.pendingCount()).toBe(0);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('utilise tel quel un clientKey fourni, et n’envoie jamais deux fois la même clé dans un lot', async () => {
+    fight('archive', 10, { clientKey: 'cle-serveur' });
+    fight('autre', 10);
+    fight('archive-bis', 20, { clientKey: 'cle-serveur' });
+    await queue.flush();
+
+    for (const batch of sent) {
+      const keys = batch.entries.map((e) => e.clientKey);
+      expect(new Set(keys).size).toBe(keys.length);
+    }
+    const all = sent.flatMap((b) => b.entries);
+    expect(all.filter((e) => e.clientKey === 'cle-serveur').map((e) => e.blob?.length)).toEqual([
+      10, 20,
+    ]);
+    expect(queue.pendingCount()).toBe(0);
+  });
+});
+
+describe('SyncQueueService — renvois d’archive hérités (avant correctif)', () => {
+  it('écarte au rechargement un renvoi de combat signé avec un id d’archive négatif', async () => {
+    const disk = new Map<string, HistoryEvent>();
+    const sent: string[] = [];
+    const legacy: HistoryEvent = {
+      id: 'fight:12:00:00,000|-3|won|testeur#1',
+      uid: 'compte-A',
+      kind: 'fight',
+      signature: '12:00:00,000|-3|won|testeur#1',
+      payload: {} as never,
+      queuedAt: 0,
+      attempts: 0,
+    };
+    const normal: HistoryEvent = {
+      ...legacy,
+      id: 'fight:12:00:00,000|4242|won|testeur#1',
+      signature: '12:00:00,000|4242|won|testeur#1',
+    };
+    disk.set(legacy.id, legacy);
+    disk.set(normal.id, normal);
+    const api: Pick<ApiClientService, 'requestJson'> = {
+      async requestJson<T>(_path: string, init?: { body?: unknown }): Promise<ApiResult<T>> {
+        for (const e of (init?.body as { entries: { clientKey: string }[] }).entries)
+          sent.push(e.clientKey);
+        return { ok: true, data: undefined as T };
+      },
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const persistence = TestBed.inject(PersistenceService);
+    persistence.getSyncQueue = async <T>() => [...disk.values()] as T[];
+    persistence.putSyncQueueEntries = async () => undefined;
+    persistence.deleteSyncQueueEntries = async (ids) => {
+      for (const id of ids) disk.delete(id);
+    };
+    await TestBed.inject(SyncQueueService).activate('compte-A');
+
+    expect(sent).toHaveLength(1);
+    expect(disk.size).toBe(0);
   });
 });

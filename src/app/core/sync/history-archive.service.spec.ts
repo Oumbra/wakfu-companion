@@ -1,11 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { LogFileAccessService } from '../services/log-file-access.service';
 import { StatsStoreService } from '../services/stats-store.service';
 import { HistoryArchiveService } from './history-archive.service';
+import { PersistenceService } from '../services/persistence.service';
+import { SyncQueueService } from './sync-queue.service';
 
 const FIXTURES_DIR = join(process.cwd(), 'tests/logs/fr');
 
@@ -350,5 +352,150 @@ describe('HistoryArchiveService — loadMoreForSpan', () => {
     expect(archive.trades()).toHaveLength(12);
     expect(archive.hasMore('trade')).toBe(false);
     expect(callCount()).toBe(3); // ceil(12 / 5)
+  });
+});
+
+/**
+ * Régression (audit 2026-09-23) : une correction de butin faite depuis un combat ARCHIVÉ renvoyait
+ * le combat avec `FightRecord.id = archiveId(index)` (négatif, dépendant de la position dans la page
+ * chargée) comme `fightId` de sa signature → `clientKey` inédit → le serveur insérait un NOUVEAU
+ * combat au lieu de corriger l'existant (et un autre à chaque rechargement où l'index bougeait).
+ * Le renvoi doit réutiliser le `clientKey` d'origine renvoyé par `GET /history/fights`.
+ */
+describe('HistoryArchiveService — renvoi d’une correction depuis l’archive', () => {
+  interface Sent {
+    path: string;
+    entries: { clientKey: string; fightId?: number | null; loot?: unknown[] }[];
+  }
+
+  function archivedFight(clientKey: string, time: string) {
+    return {
+      clientKey,
+      startedAt: time,
+      durationMs: 60_000,
+      won: true,
+      turns: 3,
+      totalDamage: 100,
+      xpGained: 0,
+      kamasGained: 0,
+      gameServer: null,
+      challengesPassed: 0,
+      challengesFailed: 0,
+      participants: [
+        {
+          side: 'ally' as const,
+          name: 'Testeur',
+          instanceIndex: 1,
+          className: null,
+          damage: 100,
+          defeated: false,
+          fled: false,
+          spells: null,
+          heal: 0,
+          armor: 0,
+          healSpells: null,
+          armorSpells: null,
+          xpGained: 0,
+        },
+      ],
+      loot: [{ itemId: null, itemName: 'Objet de test inconnu', quantity: 2 }],
+    };
+  }
+
+  async function setup(pages: unknown[][]): Promise<{
+    archive: HistoryArchiveService;
+    queue: SyncQueueService;
+    sent: Sent[];
+  }> {
+    localStorage.clear();
+    const sent: Sent[] = [];
+    let call = 0;
+    const api: Partial<ApiClientService> = {
+      setUnauthorizedHandler: () => undefined,
+      getJson: async <T>(path: string) => {
+        if (!path.startsWith('/history/fights')) {
+          return { ok: false, error: { kind: 'offline' } } as ApiResult<T>;
+        }
+        const entries = pages[Math.min(call++, pages.length - 1)];
+        return { ok: true, data: { entries, nextBefore: null } as T };
+      },
+      requestJson: async <T>(path: string, init?: { body?: unknown }) => {
+        const entries = (init?.body as { entries: Sent['entries'] }).entries;
+        sent.push({ path, entries });
+        return {
+          ok: true,
+          data: { accepted: entries.map((e) => e.clientKey), inserted: 0 } as T,
+        } as ApiResult<T>;
+      },
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ApiClientService, useValue: api }] });
+    const persistence = TestBed.inject(PersistenceService);
+    persistence.getSyncQueue = async <T>() => [] as T[];
+    persistence.putSyncQueueEntries = async () => undefined;
+    persistence.deleteSyncQueueEntries = async () => undefined;
+    const queue = TestBed.inject(SyncQueueService);
+    await queue.activate('compte-test');
+    return { archive: TestBed.inject(HistoryArchiveService), queue, sent };
+  }
+
+  it('réutilise le clientKey d’origine (jamais un fightId négatif) pour une correction de butin', async () => {
+    const target = archivedFight('cle-origine-du-combat', '2026-09-20T10:00:00.000Z');
+    const { archive, queue, sent } = await setup([[target]]);
+    await archive.loadMore('fight');
+    const fight = archive.fights()[0];
+    expect(fight.id).toBeLessThan(0);
+
+    archive.reassignLootItem(fight, 'Objet de test inconnu', null, 2, 12345);
+    await queue.flush();
+
+    const fights = sent.filter((s) => s.path === '/history/fights').flatMap((s) => s.entries);
+    expect(fights).toHaveLength(1);
+    expect(fights[0].clientKey).toBe('cle-origine-du-combat');
+    expect(fights[0].fightId).toBeNull();
+    expect(fights[0].loot).toEqual([{ itemId: 12345, itemName: null, quantity: 2 }]);
+  });
+
+  it('le même combat corrigé depuis une position différente de l’archive garde la même clé', async () => {
+    const other = archivedFight('cle-autre-combat', '2026-09-21T10:00:00.000Z');
+    const target = archivedFight('cle-origine-du-combat', '2026-09-20T10:00:00.000Z');
+    const keys: string[] = [];
+    for (const page of [[target], [other, target]]) {
+      const { archive, queue, sent } = await setup([page]);
+      await archive.loadMore('fight');
+      const fight = archive
+        .fights()
+        .find((f) => f.fullTimestampMs === Date.parse(target.startedAt))!;
+      archive.reassignLootItem(fight, 'Objet de test inconnu', null, 2, 12345);
+      await queue.flush();
+      keys.push(...sent.flatMap((s) => s.entries.map((e) => e.clientKey)));
+    }
+    expect(keys).toEqual(['cle-origine-du-combat', 'cle-origine-du-combat']);
+  });
+
+  it('ne renvoie pas un combat dont le butin a été fusionné à la lecture (positions ≠ line_index)', async () => {
+    const target = {
+      ...archivedFight('cle-origine-du-combat', '2026-09-20T10:00:00.000Z'),
+      loot: [
+        { itemId: null, itemName: 'Objet de test inconnu', quantity: 1 },
+        { itemId: null, itemName: 'Autre objet inconnu', quantity: 1 },
+        { itemId: null, itemName: 'Objet de test inconnu', quantity: 1 },
+      ],
+    };
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const { archive, queue, sent } = await setup([[target]]);
+      await archive.loadMore('fight');
+      const fight = archive.fights()[0];
+      expect(fight.loot).toHaveLength(2);
+      archive.reassignLootItem(fight, 'Objet de test inconnu', null, 2, 12345);
+      await queue.flush();
+      expect(sent).toEqual([]);
+      // La correction reste visible localement.
+      expect(archive.fights()[0].loot.some((row) => row.catalogId === 12345)).toBe(true);
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
