@@ -99,6 +99,15 @@ export interface PairingRecord {
 export type PollPairingResult =
   { status: 'claimed'; token: string } | { status: 'pending' | 'expired' };
 
+/**
+ * Ce que le store rend au `/poll` : l'appairage confirmé est consommé atomiquement, et
+ * `pairing.ts::pollPairing` crée alors la session du compte `userId`. `legacyToken` : appairage
+ * confirmé par l'ancien flux (jeton déjà créé et stocké), remis tel quel.
+ */
+export type StorePollPairingResult =
+  | { status: 'claimed'; userId: string | null; legacyToken: string | null }
+  | { status: 'pending' | 'expired' };
+
 export interface AuthStore {
   // ── Autorisations OAuth en cours ──────────────────────────────────────
   createAuthorization(record: AuthorizationRecord): Promise<void>;
@@ -123,7 +132,16 @@ export interface AuthStore {
     providerUid: string;
     email: string | null;
     now: Date;
-  }): Promise<void>;
+  }): Promise<string>;
+  /**
+   * Met à jour l'e-mail d'une identité existante (il suit celui du fournisseur à chaque connexion :
+   * exactitude, RGPD art. 5.1.d).
+   */
+  updateIdentityEmail(
+    provider: ProviderId,
+    providerUid: string,
+    email: string | null,
+  ): Promise<void>;
   updateUser(
     userId: string,
     patch: { email?: string | null; displayName?: string | null; lastSeenAt?: Date },
@@ -159,10 +177,19 @@ export interface AuthStore {
   deleteSession(idHash: string): Promise<boolean>;
   /**
    * Marque la session comme remplacée (rotation du jeton natif) : pose
-   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie. Sans
-   * effet si la ligne n'existe pas.
+   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie.
+   *
+   * Avec `onlyIfCurrent` (rotation ordinaire), **atomiquement** et seulement si la session n'est
+   * pas déjà remplacée (`UPDATE ... WHERE superseded_at IS NULL RETURNING`, audit du 2026-09-23,
+   * #7) : de deux rotations concurrentes du même jeton, une seule peut réussir. Sans (rotation de
+   * rattrapage, déjà sérialisée par `markGraceRotation`), l'écriture est inconditionnelle.
+   *
+   * `false` si aucune ligne n'a été modifiée (inconnue, ou déjà remplacée avec `onlyIfCurrent`).
    */
-  supersedeSession(idHash: string, patch: { supersededAt: Date; expiresAt: Date }): Promise<void>;
+  supersedeSession(
+    idHash: string,
+    patch: { supersededAt: Date; expiresAt: Date; onlyIfCurrent: boolean },
+  ): Promise<boolean>;
   /**
    * Révoque toutes les sessions non révoquées d'une chaîne de rotation (`chain_id = chainId`, ou
    * `id = chainId` pour la racine d'une chaîne antérieure à la colonne), sauf éventuellement une.
@@ -192,7 +219,9 @@ export interface AuthStore {
 
   // ── Limitation de débit ───────────────────────────────────────────────
   /** Incrémente le compteur de la fenêtre et renvoie sa valeur APRÈS incrément. */
-  bumpRateLimit(bucket: string, windowStart: Date): Promise<number>;
+  /** Incrémente le compteur de `amount` (1 par défaut : une requête ; un nombre d'octets pour les
+   * budgets en volume, voir `server/http/api-guards.ts`) et rend sa nouvelle valeur. */
+  bumpRateLimit(bucket: string, windowStart: Date, amount?: number): Promise<number>;
   purgeRateLimits(before: Date): Promise<void>;
 
   // ── Appairage natif (overlay) ──────────────────────────────────────────
@@ -203,13 +232,21 @@ export interface AuthStore {
    * connu, pas expiré et pas déjà réclamé. Renvoie `false` sinon (code
    * inconnu/expiré/déjà utilisé), à traduire en 404 par la route.
    */
-  claimPairing(userCode: string, sessionToken: string, now: Date): Promise<boolean>;
+  claimPairing(userCode: string, userId: string, now: Date): Promise<boolean>;
   /**
    * Renvoie le jeton et marque l'appairage consommé — **atomiquement**, une
    * seule fois (`UPDATE ... WHERE consumed_at IS NULL ... RETURNING`) : un
    * second `poll` du même `deviceCode` ne revoit jamais le jeton.
    */
-  pollPairing(deviceCode: string, now: Date): Promise<PollPairingResult>;
+  pollPairing(deviceCode: string, now: Date): Promise<StorePollPairingResult>;
+  /**
+   * Efface les appairages expirés — ET les sessions nées d'un appairage réclamé mais jamais sondé
+   * (audit du 2026-09-23, #9) : `claimPairing` crée la session au moment de la confirmation dans le
+   * navigateur, mais son jeton n'est remis à l'overlay que par `/poll`. Un appairage expiré dont
+   * le jeton n'a jamais été remis (`session_token` encore présent, `consumed_at` nul) laissait une
+   * session vivante 30 jours, rattachée au compte, que personne ne détenait — et listée dans
+   * « Mon compte ». Passé l'expiration, `/poll` ne peut plus la remettre : elle est effacée.
+   */
   purgeExpiredPairings(now: Date): Promise<void>;
   /**
    * Appairage encore EN ATTENTE (ni réclamé, ni expiré) pour ce code — sert à la page `/pair`

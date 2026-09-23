@@ -14,20 +14,22 @@
  * (voir upsertDungeonsInBatches/deleteStaleDungeons plus bas) — seule table
  * catalogue référencée par une FK stricte depuis `fights.dungeon_id`.
  *
- * Utilise le driver neon-http (comme server/db/client.ts, voir sa
- * documentation) plutôt que neon-serverless : pas de vraies transactions
- * inter-requêtes ici (limite déjà documentée dans server/README.md) — un
- * échec en cours d'exécution peut laisser une table partiellement vidée. Un
- * import est déclenché par un humain à une fréquence très faible (voir
- * ci-dessus) ; le risque est jugé acceptable pour ce lot. À revoir avec
- * neon-serverless si ce script doit un jour tourner sans supervision.
+ * Tout l'import s'exécute dans UNE transaction (driver `neon-serverless`, WebSocket — audit de
+ * sécurité du 2026-09-23, lot 14) : jusque-là, le driver neon-http du runtime (sans transaction)
+ * laissait, pendant l'import ou après un échec en cours de route, des tables catalogue vides.
+ * Les combats ingérés entre-temps recevaient alors un `fight_type` nul jamais recalculé et la
+ * recherche renvoyait un résultat vide. Désormais, un échec annule tout : le catalogue précédent
+ * reste en place.
  */
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { notInArray, sql } from 'drizzle-orm';
-import { createDb } from '../db/client';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import type { PgDatabase } from 'drizzle-orm/pg-core';
+import * as schema from '../db/schema';
 import {
   catalogMeta,
   dungeons,
@@ -325,7 +327,7 @@ function dedupeItemRows(rows: ItemRow[], referencedAnkamaIds: ReadonlySet<number
 }
 
 async function insertInBatches(
-  db: ReturnType<typeof createDb>,
+  db: PgDatabase<any, typeof schema>,
   table: Parameters<typeof db.insert>[0],
   rows: unknown[],
   batchSize = 1000,
@@ -357,7 +359,7 @@ async function insertInBatches(
  * qui elle protège explicitement tout donjon encore référencé par un combat.
  */
 async function upsertDungeonsInBatches(
-  db: ReturnType<typeof createDb>,
+  db: PgDatabase<any, typeof schema>,
   rows: DungeonRow[],
   batchSize = 500,
 ): Promise<void> {
@@ -392,7 +394,7 @@ async function upsertDungeonsInBatches(
  * correct dans ce cas précis (un donjon disparu du jeu mais déjà joué ne doit pas être supprimé
  * sous le pied de son historique) plutôt que silencieusement contourné. */
 async function deleteStaleDungeons(
-  db: ReturnType<typeof createDb>,
+  db: PgDatabase<any, typeof schema>,
   keepIds: number[],
 ): Promise<void> {
   if (keepIds.length === 0) return; // jamais en pratique (référentiel toujours non vide) — garde-fou contre un DELETE sans condition.
@@ -586,7 +588,10 @@ async function main(): Promise<void> {
   const indexHash = createHash('sha256').update(compactIndexJson).digest('hex').slice(0, 16);
   const rawBytes = Buffer.byteLength(compactIndexJson, 'utf-8');
 
-  const db = createDb(databaseUrl);
+  // Node ≥ 22 fournit `WebSocket` en global ; le driver l'utilise pour la transaction.
+  neonConfig.webSocketConstructor = WebSocket;
+  const pool = new Pool({ connectionString: databaseUrl });
+  const client = drizzle(pool, { schema });
 
   console.log(
     `[import-catalog] ${rawItems.length} objets lus (${oldCount} "old" exclus, ${itemRows.length} conservés), ${recipeRows.length} lignes de recette, ${monsterRows.length} monstres, ${dungeonRows.length} donjons, ${monsterFamilyRows.length} familles de monstre, ${itemCategoryRows.length} sous-catégories d'objet.`,
@@ -600,45 +605,51 @@ async function main(): Promise<void> {
   // supprimée ici (voir upsertDungeonsInBatches/deleteStaleDungeons) : seule table catalogue
   // référencée par une FK stricte (fights.dungeon_id), un DELETE inconditionnel y échoue dès
   // qu'un combat de l'historique référence un donjon existant.
-  await db.delete(itemRecipes);
-  await db.delete(items);
-  await db.delete(itemCategories);
-  await db.delete(monsters);
-  await db.delete(monsterFamilies);
+  try {
+    await client.transaction(async (db) => {
+      await db.delete(itemRecipes);
+      await db.delete(items);
+      await db.delete(itemCategories);
+      await db.delete(monsters);
+      await db.delete(monsterFamilies);
 
-  await insertInBatches(db, itemCategories, itemCategoryRows);
-  await insertInBatches(db, items, itemRows);
-  await insertInBatches(db, monsterFamilies, monsterFamilyRows);
-  await insertInBatches(db, monsters, monsterRows);
-  await upsertDungeonsInBatches(db, dungeonRows);
-  await deleteStaleDungeons(
-    db,
-    dungeonRows.map((d) => d.id),
-  );
-  await insertInBatches(db, itemRecipes, recipeRows);
+      await insertInBatches(db, itemCategories, itemCategoryRows);
+      await insertInBatches(db, items, itemRows);
+      await insertInBatches(db, monsterFamilies, monsterFamilyRows);
+      await insertInBatches(db, monsters, monsterRows);
+      await upsertDungeonsInBatches(db, dungeonRows);
+      await deleteStaleDungeons(
+        db,
+        dungeonRows.map((d) => d.id),
+      );
+      await insertInBatches(db, itemRecipes, recipeRows);
 
-  await db
-    .insert(catalogMeta)
-    .values({
-      id: 'catalog',
-      importedAt: new Date(),
-      sourceCommit: process.env['GITHUB_SHA'] ?? null,
-      itemsCount: itemRows.length,
-      monstersCount: monsterRows.length,
-      dungeonsCount: dungeonRows.length,
-      indexHash,
-    })
-    .onConflictDoUpdate({
-      target: catalogMeta.id,
-      set: {
-        importedAt: new Date(),
-        sourceCommit: process.env['GITHUB_SHA'] ?? null,
-        itemsCount: itemRows.length,
-        monstersCount: monsterRows.length,
-        dungeonsCount: dungeonRows.length,
-        indexHash,
-      },
+      await db
+        .insert(catalogMeta)
+        .values({
+          id: 'catalog',
+          importedAt: new Date(),
+          sourceCommit: process.env['GITHUB_SHA'] ?? null,
+          itemsCount: itemRows.length,
+          monstersCount: monsterRows.length,
+          dungeonsCount: dungeonRows.length,
+          indexHash,
+        })
+        .onConflictDoUpdate({
+          target: catalogMeta.id,
+          set: {
+            importedAt: new Date(),
+            sourceCommit: process.env['GITHUB_SHA'] ?? null,
+            itemsCount: itemRows.length,
+            monstersCount: monsterRows.length,
+            dungeonsCount: dungeonRows.length,
+            indexHash,
+          },
+        });
     });
+  } finally {
+    await pool.end();
+  }
 
   console.log('[import-catalog] import terminé.');
 }

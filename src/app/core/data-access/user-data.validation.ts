@@ -1,5 +1,6 @@
 import { findAvatarFanartGallery } from '../data/avatar-fanart-galleries.data';
 import type { UserDataKey } from './user-data.keys';
+import { DASHBOARD_LAYOUT_SCALAR_GUARDS } from '../services/dashboard-layout.values';
 
 /**
  * Gardes de type légères des données utilisateur (audit sécurité du 2026-09-23) : un fichier
@@ -196,8 +197,11 @@ function isBooleanRecord(value: unknown): boolean {
 function sanitizeDashboardLayout(value: unknown): Json | undefined {
   if (!isPlainObject(value)) return undefined;
   const out: Json = { ...value };
-  for (const field of ['menuPos', 'kpiPos', 'bodyMode', 'focusTarget', 'focusSide']) {
-    if (!isOptional(out[field], isString)) delete out[field];
+  // Valeur inconnue (corrompue, ancienne clé comme `focusTarget: 'combat'`, import bricolé) :
+  // seul CE champ est retiré — le consommateur retombe sur son défaut sans perdre le reste de la
+  // disposition (voir `DashboardLayoutService.applyStored`).
+  for (const [field, guard] of Object.entries(DASHBOARD_LAYOUT_SCALAR_GUARDS)) {
+    if (!isOptional(out[field], guard)) delete out[field];
   }
   for (const field of ['historyGroup', 'collapsedSections']) {
     if (!isOptional(out[field], isBooleanRecord)) delete out[field];

@@ -21,6 +21,8 @@ import type {
   SessionRecord,
   UserRecord,
 } from './store';
+import { sha256Hex } from './crypto';
+import { NATIVE_SESSION_USER_AGENT } from './pairing';
 
 interface StoredAuthorization extends AuthorizationRecord {
   consumedAt: Date | null;
@@ -28,6 +30,7 @@ interface StoredAuthorization extends AuthorizationRecord {
 
 interface StoredPairing extends PairingRecord {
   sessionToken: string | null;
+  claimedUserId: string | null;
   claimedAt: Date | null;
   consumedAt: Date | null;
 }
@@ -63,6 +66,10 @@ export function createMemoryAuthStore(): MemoryAuthStore {
     }
     for (const [key, session] of sessions) {
       if (session.userId === userId) sessions.delete(key);
+    }
+    // Miroir du `ON DELETE CASCADE` de `native_pairings.claimed_user_id`.
+    for (const [key, pairing] of pairings) {
+      if (pairing.claimedUserId === userId) pairings.delete(key);
     }
   };
 
@@ -125,13 +132,22 @@ export function createMemoryAuthStore(): MemoryAuthStore {
     },
 
     async linkIdentity(input) {
-      identities.set(identityKey(input.provider, input.providerUid), {
+      const key = identityKey(input.provider, input.providerUid);
+      const existing = identities.get(key);
+      if (existing) return existing.userId;
+      identities.set(key, {
         provider: input.provider,
         providerUid: input.providerUid,
         userId: input.userId,
         email: input.email,
         linkedAt: input.now,
       });
+      return input.userId;
+    },
+
+    async updateIdentityEmail(provider, providerUid, email) {
+      const identity = identities.get(identityKey(provider, providerUid));
+      if (identity) identity.email = email;
     },
 
     async updateUser(userId, patch) {
@@ -185,9 +201,11 @@ export function createMemoryAuthStore(): MemoryAuthStore {
 
     async supersedeSession(idHash, patch) {
       const session = sessions.get(idHash);
-      if (!session) return;
+      if (!session) return false;
+      if (patch.onlyIfCurrent && session.supersededAt !== null) return false;
       session.supersededAt = patch.supersededAt;
       session.expiresAt = patch.expiresAt;
+      return true;
     },
 
     async revokeSessionChain(chainId, now, exceptIdHash) {
@@ -245,9 +263,9 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       return purged;
     },
 
-    async bumpRateLimit(bucket, windowStart) {
+    async bumpRateLimit(bucket, windowStart, amount = 1) {
       const key = rateKey(bucket, windowStart);
-      const next = (rateLimits.get(key) ?? 0) + 1;
+      const next = (rateLimits.get(key) ?? 0) + amount;
       rateLimits.set(key, next);
       return next;
     },
@@ -263,17 +281,18 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       pairings.set(record.deviceCode, {
         ...record,
         sessionToken: null,
+        claimedUserId: null,
         claimedAt: null,
         consumedAt: null,
       });
     },
 
-    async claimPairing(userCode, sessionToken, now) {
+    async claimPairing(userCode, userId, now) {
       const row = [...pairings.values()].find((p) => p.userCode === userCode);
       if (!row) return false;
       if (row.claimedAt !== null) return false; // déjà réclamé
       if (row.expiresAt.getTime() <= now.getTime()) return false;
-      row.sessionToken = sessionToken;
+      row.claimedUserId = userId;
       row.claimedAt = now;
       return true;
     },
@@ -284,16 +303,24 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       // Vérifié AVANT le statut pending/claimed : une fois consommé, `sessionToken` est effacé,
       // donc indiscernable d'un appairage encore pending si on ne teste pas `consumedAt` en 1er.
       if (row.consumedAt !== null) return { status: 'expired' }; // déjà consommé par un poll précédent
-      if (!row.sessionToken || !row.claimedAt) return { status: 'pending' };
+      if (!row.claimedAt || (!row.claimedUserId && !row.sessionToken)) return { status: 'pending' };
       row.consumedAt = now;
-      const token = row.sessionToken;
+      const legacyToken = row.sessionToken;
       row.sessionToken = null;
-      return { status: 'claimed', token };
+      return { status: 'claimed', userId: row.claimedUserId, legacyToken };
     },
 
     async purgeExpiredPairings(now) {
       for (const [deviceCode, row] of pairings) {
-        if (row.expiresAt.getTime() < now.getTime()) pairings.delete(deviceCode);
+        if (row.expiresAt.getTime() >= now.getTime()) continue;
+        // Jeton jamais remis à l'overlay : sa session part avec l'appairage (voir le port).
+        if (row.consumedAt === null && row.sessionToken) {
+          const idHash = await sha256Hex(row.sessionToken);
+          if (sessions.get(idHash)?.userAgent === NATIVE_SESSION_USER_AGENT) {
+            sessions.delete(idHash);
+          }
+        }
+        pairings.delete(deviceCode);
       }
     },
 

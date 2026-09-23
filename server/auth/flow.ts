@@ -3,8 +3,9 @@
  * Cloudflare, de Postgres et du réseau : tout passe par le port `AuthStore`
  * (server/auth/store.ts) et par un `ProfileFetcher` injecté. C'est ce qui
  * rend testables sans infrastructure les quatre exigences du prompt : `state`
- * invalide rejeté, code réutilisé rejeté, session révoquée refusée, fusion
- * sur e-mail identique.
+ * invalide rejeté, code réutilisé rejeté, session révoquée refusée, e-mail
+ * vérifié d'un compte existant refusé à un autre fournisseur (un compte = un
+ * seul fournisseur, voir `resolveAccount`).
  *
  * Décisions structurantes de ce flux : OAuth uniquement, cookie opaque,
  * sessions en base, mode invité intact (voir server/README.md).
@@ -120,11 +121,36 @@ export interface FullPurgeReport {
  * plus de la fréquentation du service.
  */
 export async function runFullPurge(store: AuthStore, now: Date): Promise<FullPurgeReport> {
-  const inactiveAccounts = await purgeInactiveAccounts(store, now);
-  const deadSessions = await purgeDeadSessions(store, now);
-  await store.purgeExpiredAuthorizations(now);
-  await store.purgeExpiredPairings(now);
-  await store.purgeRateLimits(new Date(now.getTime() - MAX_RATE_LIMIT_WINDOW_MS));
+  // Chaque étape est isolée (audit du 2026-09-23, lot 20) : une purge qui échoue ne doit pas
+  // empêcher les suivantes. Les erreurs sont regroupées dans une `AggregateError` levée à la fin,
+  // qui fait échouer le run planifié (et ouvre l'issue d'alerte) sans rien avoir sauté.
+  const errors: Error[] = [];
+  const step = async <T>(label: string, run: () => Promise<T>, fallback: T): Promise<T> => {
+    try {
+      return await run();
+    } catch (error) {
+      errors.push(
+        new Error(`${label} : ${error instanceof Error ? error.message : String(error)}`),
+      );
+      return fallback;
+    }
+  };
+  const inactiveAccounts = await step(
+    'comptes inactifs',
+    () => purgeInactiveAccounts(store, now),
+    0,
+  );
+  const deadSessions = await step('sessions mortes', () => purgeDeadSessions(store, now), 0);
+  await step('autorisations OAuth', () => store.purgeExpiredAuthorizations(now), undefined);
+  await step('appairages natifs', () => store.purgeExpiredPairings(now), undefined);
+  await step(
+    'compteurs anti-abus',
+    () => store.purgeRateLimits(new Date(now.getTime() - MAX_RATE_LIMIT_WINDOW_MS)),
+    undefined,
+  );
+  if (errors.length > 0) {
+    throw new AggregateError(errors, `${errors.length} purge(s) de conservation en échec`);
+  }
   return { inactiveAccounts, deadSessions };
 }
 
@@ -191,7 +217,8 @@ export async function startAuthorization(
 export type CompleteError =
   | 'invalid_state' // state inconnu, expiré, DÉJÀ CONSOMMÉ (rejeu), ou ne correspondant pas au cookie
   | 'provider_mismatch'
-  | 'exchange_failed';
+  | 'exchange_failed'
+  | 'email_taken'; // e-mail vérifié déjà porté par un compte ouvert avec un autre fournisseur
 
 export interface CompletedAuthorization {
   /** Jeton de session à poser dans le cookie — jamais stocké tel quel en base. */
@@ -226,7 +253,15 @@ export async function completeAuthorization(
     /** Session courante éventuelle, révoquée à la connexion (rotation). */
     currentSessionIdHash?: string | null;
   },
-): Promise<{ ok: true; result: CompletedAuthorization } | { ok: false; error: CompleteError }> {
+): Promise<
+  | { ok: true; result: CompletedAuthorization }
+  | {
+      ok: false;
+      error: CompleteError;
+      /** Fournisseur du compte existant, seulement pour `email_taken` (message « connectez-vous avec… »). */
+      existingProvider?: ProviderId;
+    }
+> {
   if (!params.state || !params.cookieState || !timingSafeEqual(params.state, params.cookieState)) {
     return { ok: false, error: 'invalid_state' };
   }
@@ -238,7 +273,11 @@ export async function completeAuthorization(
   const profile = await params.fetchProfile(authorization.codeVerifier);
   if (!profile) return { ok: false, error: 'exchange_failed' };
 
-  const { user, isNewUser } = await resolveAccount(store, params.provider, profile, params.now);
+  const resolution = await resolveAccount(store, params.provider, profile, params.now);
+  if (!resolution.ok) {
+    return { ok: false, error: 'email_taken', existingProvider: resolution.existingProvider };
+  }
+  const { user, isNewUser } = resolution;
 
   if (params.currentSessionIdHash) {
     await store.revokeSession(params.currentSessionIdHash, params.now);
@@ -269,22 +308,30 @@ export async function completeAuthorization(
 /**
  * Résolution du compte, dans cet ordre :
  * 1. identité `(provider, provider_uid)` déjà connue → ce compte ;
- * 2. sinon, e-mail **vérifié** déjà porté par un compte → l'identité est
- *    rattachée à ce compte (**fusion** : Discord et Google
- *    vérifient tous deux l'adresse, ce qui rend le rattachement automatique
- *    sûr et évite un écran de liaison manuelle) ;
+ * 2. sinon, e-mail **vérifié** déjà porté par un compte → **refus**
+ *    (`email_taken`) : un compte n'utilise qu'UN fournisseur, Discord OU
+ *    Google (décision du 2026-09-23, qui remplace la fusion automatique sur
+ *    e-mail identique). L'utilisateur est invité à se reconnecter avec le
+ *    fournisseur qui a ouvert le compte. Pas de création d'un second compte
+ *    à la place : l'e-mail est unique en base (`users_email_key`), et deux
+ *    comptes pour une même adresse seraient de toute façon un piège. Les
+ *    comptes déjà liés aux deux fournisseurs avant cette décision restent
+ *    tels quels (étape 1 : chaque identité connue retrouve son compte) ;
  * 3. sinon → nouveau compte.
  *
- * Un profil sans e-mail vérifié ne participe jamais à la fusion (étape 2
- * sautée) : une adresse non vérifiée permettrait de s'approprier le compte
- * d'un tiers.
+ * Un profil sans e-mail vérifié saute l'étape 2 : il ouvre toujours un
+ * nouveau compte, sans e-mail (rien ne permet alors de reconnaître le compte
+ * d'un autre fournisseur).
  */
 async function resolveAccount(
   store: AuthStore,
   provider: ProviderId,
   profile: OAuthProfile,
   now: Date,
-): Promise<{ user: UserRecord; isNewUser: boolean }> {
+): Promise<
+  | { ok: true; user: UserRecord; isNewUser: boolean }
+  | { ok: false; existingProvider: ProviderId | undefined }
+> {
   const email = profile.email ? profile.email.trim().toLowerCase() : null;
 
   const identity = await store.findIdentity(provider, profile.providerUid);
@@ -301,7 +348,13 @@ async function resolveAccount(
         ...(profile.displayName && !user.displayName ? { displayName: profile.displayName } : {}),
         lastSeenAt: now,
       });
+      // L'e-mail de l'identité suit celui du fournisseur : sans ça, l'ancienne adresse restait
+      // conservée indéfiniment après un changement chez lui (RGPD art. 5.1.c/d).
+      if (identity.email !== email) {
+        await store.updateIdentityEmail(provider, profile.providerUid, email);
+      }
       return {
+        ok: true,
         user: { ...user, email: email ?? user.email, displayName: user.displayName },
         isNewUser: false,
       };
@@ -311,28 +364,48 @@ async function resolveAccount(
   if (email) {
     const existing = await store.findUserByEmail(email);
     if (existing) {
-      await store.linkIdentity({
-        userId: existing.id,
-        provider,
-        providerUid: profile.providerUid,
-        email,
-        now,
-      });
-      await store.updateUser(existing.id, { lastSeenAt: now });
-      return { user: existing, isNewUser: false };
+      const identities = await store.listIdentities(existing.id);
+      return { ok: false, existingProvider: identities[0]?.provider };
     }
   }
 
-  const created = await store.createUser({ email, displayName: profile.displayName });
-  await store.linkIdentity({
+  let created: UserRecord;
+  try {
+    created = await store.createUser({ email, displayName: profile.displayName });
+  } catch (error) {
+    // Deux premières connexions simultanées avec la même adresse (deux onglets) : la seconde bute
+    // sur l'unicité de `users.email`. On relit ce que la première a créé au lieu d'un 500.
+    const winner = await store.findIdentity(provider, profile.providerUid);
+    const winnerUser = winner ? await store.findUserById(winner.userId) : null;
+    if (winnerUser) {
+      await store.updateUser(winnerUser.id, { lastSeenAt: now });
+      return { ok: true, user: winnerUser, isNewUser: false };
+    }
+    const emailOwner = email ? await store.findUserByEmail(email) : null;
+    if (emailOwner) {
+      const identities = await store.listIdentities(emailOwner.id);
+      return { ok: false, existingProvider: identities[0]?.provider };
+    }
+    throw error;
+  }
+  const ownerId = await store.linkIdentity({
     userId: created.id,
     provider,
     providerUid: profile.providerUid,
     email,
     now,
   });
+  if (ownerId !== created.id) {
+    // Course sans e-mail : une requête concurrente a rattaché cette identité à SON compte. Le
+    // nôtre, tout juste créé et vide, est supprimé ; la connexion se fait sur le compte gagnant.
+    await store.deleteUser(created.id);
+    const owner = await store.findUserById(ownerId);
+    if (!owner) throw new Error('identité rattachée à un compte introuvable');
+    await store.updateUser(owner.id, { lastSeenAt: now });
+    return { ok: true, user: owner, isNewUser: false };
+  }
   await store.updateUser(created.id, { lastSeenAt: now });
-  return { user: created, isNewUser: true };
+  return { ok: true, user: created, isNewUser: true };
 }
 
 async function isEmailTaken(
@@ -350,6 +423,9 @@ export interface OpenedSession {
   idHash: string;
   expiresAt: Date;
 }
+
+/** Longueur conservée de l'en-tête `User-Agent` d'une session. */
+export const MAX_USER_AGENT_LENGTH = 256;
 
 /**
  * Ouvre une session : jeton opaque de 256 bits côté cookie, empreinte
@@ -381,7 +457,9 @@ export async function openSession(
     issuedAt: options.now,
     expiresAt,
     lastUsedAt: options.now,
-    userAgent: options.userAgent,
+    // Libellé d'appareil affiché dans « Mon compte » : un en-tête arbitrairement long n'a pas à
+    // être conservé (minimisation, RGPD art. 5.1.c).
+    userAgent: options.userAgent?.slice(0, MAX_USER_AGENT_LENGTH) ?? null,
     revokedAt: null,
     supersededAt: null,
     chainId: idHash,

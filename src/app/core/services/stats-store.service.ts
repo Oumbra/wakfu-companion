@@ -387,6 +387,16 @@ export interface FightRecord {
    * (StatsStoreService.challengesPassed/Failed, indépendants de ce champ). */
   challengesPassed: number;
   challengesFailed: number;
+  /** Présent UNIQUEMENT sur un combat reconstruit depuis l'archive du compte (voir
+   * `HistoryArchiveService.toFightRecord`) : son `id` y est un identifiant d'affichage négatif
+   * (`archiveId`, dépendant de la position dans la page chargée), jamais le `fightId` du log — un
+   * renvoi (correction de butin) ne peut donc pas recalculer sa signature d'origine et doit
+   * réutiliser tel quel le `clientKey` renvoyé par le serveur, sans quoi il créerait un nouveau
+   * combat côté compte (voir `HistorySyncService.enqueueFight`). `lootMerged` : des lignes
+   * `fight_loot` ont été fusionnées à la lecture (`mergeLootRowsByIdentity`) — les positions du
+   * butin affiché ne correspondent plus alors aux `line_index` stockés, un renvoi réécrirait
+   * l'identité d'autres lignes : renvoi refusé dans ce cas. */
+  archive?: { readonly clientKey: string; readonly lootMerged: boolean };
 }
 
 /** État de travail d'un combat en cours, indexé par fightId — voir Fight (core/models/fight.model.ts). Isoler cet état par combat (plutôt qu'un unique état global) permet à plusieurs combats concurrents (multi-compte) de ne jamais se corrompre l'un l'autre. */

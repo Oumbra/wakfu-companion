@@ -9,6 +9,8 @@ import { isCsrfExempt, isNativeCaller, readRequestCredential } from './request-a
 import type { SessionRecord } from './store';
 
 const TOKEN = 'A'.repeat(43);
+const BEFORE_CUTOFF = new Date('2026-10-22T23:59:59Z');
+const AFTER_CUTOFF = new Date('2026-10-23T00:00:00Z');
 
 function request(headers: Record<string, string>): Request {
   return new Request('https://wakfu.example/api/v1/history/fights', { method: 'POST', headers });
@@ -63,12 +65,22 @@ describe('readRequestCredential', () => {
       via: 'cookie',
       legacyCookie: false,
     });
-    expect(readRequestCredential(request({ cookie: 'wc_session=abc' }))).toEqual({
+    expect(readRequestCredential(request({ cookie: 'wc_session=abc' }), BEFORE_CUTOFF)).toEqual({
       kind: 'token',
       token: 'abc',
       via: 'cookie',
       legacyCookie: true,
     });
+  });
+
+  it('ancien cookie `wc_session` ignoré après la date butoir (horloge injectée)', () => {
+    expect(readRequestCredential(request({ cookie: 'wc_session=abc' }), AFTER_CUTOFF)).toEqual({
+      kind: 'none',
+    });
+    // Le nouveau nom, lui, reste lu après la butoir — usage légitime inchangé.
+    expect(
+      readRequestCredential(request({ cookie: '__Host-wc_session=abc' }), AFTER_CUTOFF),
+    ).toMatchObject({ kind: 'token', token: 'abc', via: 'cookie', legacyCookie: false });
   });
 
   it('ni en-tête ni cookie → none', () => {

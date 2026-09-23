@@ -62,15 +62,17 @@ export async function checkRateLimit(
   bucket: string,
   rule: RateLimitRule,
   now: Date,
+  /** Poids de cet appel : 1 (une requête) par défaut, un nombre d'octets pour un budget en volume. */
+  amount = 1,
 ): Promise<RateLimitResult> {
   const windowStartMs = Math.floor(now.getTime() / rule.windowMs) * rule.windowMs;
   const windowStart = new Date(windowStartMs);
-  const count = await store.bumpRateLimit(bucket, windowStart);
+  const count = await store.bumpRateLimit(bucket, windowStart, amount);
 
   // Purge opportuniste des fenêtres passées, déclenchée sur la PREMIÈRE requête
   // d'une fenêtre (déterministe et rare, contrairement à un tirage aléatoire) —
   // Cloudflare Pages n'offre pas de Cron Trigger pour le faire ailleurs.
-  if (count === 1) {
+  if (count === amount) {
     await store.purgeRateLimits(new Date(windowStartMs - rule.windowMs));
   }
 

@@ -9,11 +9,13 @@
  *    codes : `userCode` (court, affiché à l'utilisateur, qu'il confirme
  *    dans son navigateur DÉJÀ connecté) et `deviceCode` (secret, gardé par
  *    l'overlay pour sonder l'état).
- * 2. `claimPairing` — le navigateur connecté associe une VRAIE session
- *    (créée ici comme n'importe quelle session, rotation exclue : un
- *    appairage natif s'ajoute à côté des sessions navigateur, il ne les
- *    remplace pas) au `userCode`.
- * 3. `pollPairing` — l'overlay récupère le jeton une seule fois.
+ * 2. `claimPairing` — le navigateur connecté associe son COMPTE au
+ *    `userCode`. Aucune session n'est créée à ce stade (audit du 2026-09-23,
+ *    lot 13) : aucun jeton n'est donc jamais stocké en base, et un appairage
+ *    confirmé mais jamais récupéré ne laisse aucune session derrière lui.
+ * 3. `pollPairing` — l'overlay consomme l'appairage, une seule fois ; la
+ *    session (rotation exclue : elle s'ajoute à côté des sessions navigateur)
+ *    est créée à cet instant et son jeton remis dans la même réponse.
  *
  * Puis, pendant la vie de la session : `rotateNativeSession` — l'overlay
  * échange son jeton contre un neuf (voir la doc de la fonction).
@@ -169,46 +171,33 @@ export async function findPendingPairingInfo(
   return record ? describePendingPairing(record, now) : null;
 }
 
-export interface ClaimedPairing {
-  token: string;
-}
-
-/** `null` si le code est inconnu, expiré, ou déjà réclamé — à traduire en 404 par la route. */
+/**
+ * `false` si le code est inconnu, expiré, ou déjà réclamé — à traduire en 404 par la route.
+ * N'enregistre que le compte : la session naît au `/poll` (voir l'en-tête du module).
+ */
 export async function claimPairing(
   store: AuthStore,
   params: { userCode: string; user: UserRecord; now: Date },
-): Promise<ClaimedPairing | null> {
-  const token = randomToken();
-  const idHash = await sha256Hex(token);
-  const absoluteExpiresAt = new Date(params.now.getTime() + SESSION_MAX_LIFETIME_MS);
-  // La session est créée AVANT l'association (le jeton ne doit jamais être remis par `/poll` sans
-  // que sa session existe). Si l'association échoue — code inconnu, expiré, ou réclamé entre-temps
-  // par une requête concurrente — ou lève, la session est EFFACÉE : avant l'audit du 2026-09-23
-  // elle restait active 30 jours, rattachée au compte, jamais remise à personne mais listée dans
-  // « Mon compte ».
-  await store.createSession({
-    idHash,
-    userId: params.user.id,
-    issuedAt: params.now,
-    expiresAt: new Date(params.now.getTime() + SESSION_TTL_MS),
-    lastUsedAt: params.now,
-    userAgent: NATIVE_SESSION_USER_AGENT,
-    revokedAt: null,
-    supersededAt: null,
-    chainId: idHash,
-    absoluteExpiresAt,
-    graceRotatedAt: null,
-  });
-  let claimed = false;
-  try {
-    claimed = await store.claimPairing(params.userCode, token, params.now);
-  } finally {
-    if (!claimed) await store.deleteSession(idHash);
-  }
-  if (!claimed) return null;
+): Promise<boolean> {
+  const claimed = await store.claimPairing(params.userCode, params.user.id, params.now);
+  if (!claimed) return false;
   // Un appareil qui s'appaire est une bonne occasion de ménage (voir flow.ts).
   await runRetentionPurges(store, params.now);
-  return { token };
+  return true;
+}
+
+/**
+ * Levée par `rotateNativeSession` quand une AUTRE rotation du même jeton a gagné la course (audit
+ * du 2026-09-23, #7) : la session courante a été remplacée entre sa lecture et notre écriture. La
+ * session créée par cette tentative est déjà effacée quand l'erreur est levée ; la route répond 409.
+ * Jamais atteint par un client qui ne lance pas deux rotations en parallèle (l'overlay n'en lance
+ * aucune à ce jour).
+ */
+export class NativeRotationConflictError extends Error {
+  constructor() {
+    super('rotation concurrente du même jeton');
+    this.name = 'NativeRotationConflictError';
+  }
 }
 
 export interface RotatedNativeSession {
@@ -294,18 +283,55 @@ export async function rotateNativeSession(
   const previousTokenValidUntil = new Date(
     Math.min(current.expiresAt.getTime(), now.getTime() + NATIVE_SESSION_ROTATION_GRACE_MS),
   );
-  await store.supersedeSession(current.idHash, {
+  // Conditionnel pour une rotation ordinaire (`onlyIfCurrent`) : de deux rotations concurrentes du
+  // même jeton, une seule remplace la session courante ; la perdante efface la session qu'elle
+  // vient de créer (jamais remise à personne) et lève `NativeRotationConflictError` (409). Sans
+  // ce contrôle, les deux jetons neufs restaient valides 30 jours — un jeton copié pouvait ainsi
+  // « forker » la chaîne sans que l'overlay légitime s'en aperçoive. Un rattrapage (session déjà
+  // remplacée) est déjà sérialisé par `markGraceRotation` : écriture inconditionnelle.
+  const superseded = await store.supersedeSession(current.idHash, {
     supersededAt: current.supersededAt ?? now,
     expiresAt: previousTokenValidUntil,
+    onlyIfCurrent: current.supersededAt === null,
   });
+  if (!superseded) {
+    await store.deleteSession(idHash);
+    throw new NativeRotationConflictError();
+  }
   await runRetentionPurges(store, now);
   return { token, issuedAt: now, expiresAt, previousTokenValidUntil };
 }
 
-export function pollPairing(
+/**
+ * Remet le jeton d'un appairage confirmé, une seule fois. Le store consomme l'appairage de façon
+ * atomique (un `/poll` rejoué ou concurrent reçoit `expired`), puis la session est créée ici.
+ * Si sa création échoue, l'appairage reste consommé : l'overlay recommence l'appairage, ce qui
+ * vaut mieux qu'un jeton remis deux fois.
+ */
+export async function pollPairing(
   store: AuthStore,
   deviceCode: string,
   now: Date,
 ): Promise<PollPairingResult> {
-  return store.pollPairing(deviceCode, now);
+  const result = await store.pollPairing(deviceCode, now);
+  if (result.status !== 'claimed') return result;
+  // Appairage confirmé par l'ancien flux, juste avant le déploiement : sa session existe déjà.
+  if (result.legacyToken) return { status: 'claimed', token: result.legacyToken };
+  if (!result.userId) return { status: 'expired' };
+  const token = randomToken();
+  const idHash = await sha256Hex(token);
+  await store.createSession({
+    idHash,
+    userId: result.userId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+    lastUsedAt: now,
+    userAgent: NATIVE_SESSION_USER_AGENT,
+    revokedAt: null,
+    supersededAt: null,
+    chainId: idHash,
+    absoluteExpiresAt: new Date(now.getTime() + SESSION_MAX_LIFETIME_MS),
+    graceRotatedAt: null,
+  });
+  return { status: 'claimed', token };
 }

@@ -793,11 +793,17 @@ function toFightRecord(
     xp: buildXpRows(entry),
     challengesPassed: entry.challengesPassed ?? 0,
     challengesFailed: entry.challengesFailed ?? 0,
+    // Identité côté compte, seule clé valable pour tout renvoi de ce combat (voir
+    // `FightRecord.archive`) — `id` ci-dessus n'est qu'un identifiant d'affichage.
+    archive: { clientKey: entry.clientKey, lootMerged: loot.length !== rawLoot.length },
   };
   // La correction n'avait encore jamais pu atteindre le serveur pour CETTE ligne précise (elle
   // n'était pas encore chargée au moment de la correction d'origine, voir StatsStoreService.
   // applyLootReassign) — c'est cette première rencontre qui s'en charge, avec la même garantie
-  // d'idempotence (ON CONFLICT DO UPDATE) que tout autre renvoi.
+  // d'idempotence (ON CONFLICT DO UPDATE) que tout autre renvoi : sous le `clientKey` d'origine
+  // (`record.archive`), donc sur la MÊME ligne `fights`. Auto-limité : une fois la correction
+  // appliquée côté serveur, `fight_loot.item_id` y vaut la cible, `findLootCorrection` (qui matche
+  // l'`itemId` source) ne la retrouve plus au chargement suivant — plus aucun renvoi.
   // `[record]` seul — même raison que HistoryArchiveService.reassignLootItem ci-dessus (rattachement
   // de donjon déjà connu du serveur pour ce combat, ce renvoi ne concerne que le butin corrigé).
   if (anyCorrected) historySync.recordFight(record, [record]);

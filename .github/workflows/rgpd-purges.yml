@@ -42,16 +42,25 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
+    # Une purge bloquée (base injoignable, verrou) ne doit pas occuper un runner 6 h.
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # Étape « Signaler l'échec » seulement : ouvrir une issue quand la purge échoue.
+      issues: write
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
+          # setup-node >= v5 active seul le cache npm (champ packageManager) : job porteur de
+          # secrets, pas de cache restauré (risque d'empoisonnement de cache).
+          package-manager-cache: false
 
       # `--ignore-scripts` : job porteur de DATABASE_URL (production), voir deploy-main.yml.
       # `npm rebuild esbuild` : tsx s'appuie sur esbuild.
@@ -66,3 +75,38 @@ jobs:
         run: npx tsx server/import/run-retention-purges.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # Un run planifié qui échoue ne prévient personne (courriel GitHub seulement si l'on y est
+      # abonné) : les durées de la politique de confidentialité cesseraient d'être tenues sans
+      # bruit. Une issue ouverte (une seule à la fois) rend l'échec visible.
+      - name: Signaler l'échec
+        if: failure()
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const title = 'RGPD — échec des purges de conservation';
+            const { data: open } = await github.rest.issues.listForRepo({
+              ...context.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const existing = open.find((issue) => issue.title === title && !issue.pull_request);
+            if (existing) {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: existing.number,
+                body: `Nouvel échec : ${run}`,
+              });
+              return;
+            }
+            await github.rest.issues.create({
+              ...context.repo,
+              title,
+              assignees: [context.repo.owner],
+              body:
+                `Le run planifié des purges de conservation a échoué : ${run}\n\n` +
+                `Le journal de l'étape « Run retention purges » liste chaque purge en échec. Les ` +
+                `autres purges ont tourné. Fermer l'issue une fois la cause corrigée et un run ` +
+                `relancé avec succès (workflow_dispatch).`,
+            });

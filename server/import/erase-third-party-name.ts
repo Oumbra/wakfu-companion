@@ -16,6 +16,7 @@
  * | `fight_participants.name`   | Renommé (jamais supprimé : la ligne porte les dégâts du combat) |
  * | `trades.peer_name`          | Renommé (l'échange reste dans l'historique de son titulaire)    |
  * | `user_settings.value`       | Filtre de chat / correction d'attribution retiré(e)             |
+ * | `erased_third_party_names`  | Ajouté : l'ingestion remplace ce nom dans tout envoi futur      |
  * | `trades.self_name`          | Signalé seulement — c'est un personnage du TITULAIRE            |
  * | `users.display_name`        | Signalé seulement — c'est le compte lui-même, pas un tiers      |
  *
@@ -40,9 +41,10 @@
  */
 import { neon } from '@neondatabase/serverless';
 import { redactName } from '../settings/redact-name';
+import { ERASED_NAME_PLACEHOLDER } from '../history/erased-names';
 
 /** Remplace le pseudonyme dans l'historique. Générique exprès : ne désigne plus personne. */
-const PLACEHOLDER = 'Joueur retiré';
+const PLACEHOLDER = ERASED_NAME_PLACEHOLDER;
 
 interface Args {
   name: string;
@@ -154,23 +156,39 @@ async function main(): Promise<void> {
     for (const row of displayNames) console.log(`    compte ${row.id} · users.display_name`);
   }
 
-  if (participantTotal + peerTotal + settingTotal === 0) {
+  const nothingStored = participantTotal + peerTotal + settingTotal === 0;
+  if (nothingStored) {
     console.log('\nRien à retirer : ce pseudonyme n’apparaît dans aucune donnée de compte.');
     if (residualTotal > 0)
       console.log('(Hors occurrences signalées ci-dessus, à traiter à la main.)');
-    return;
   }
 
   if (!apply) {
-    console.log('\nDry-run : rien n’a été écrit. Relancer avec --apply pour appliquer.');
+    console.log(
+      '\nDry-run : rien n’a été écrit. Relancer avec --apply pour appliquer' +
+        (nothingStored
+          ? ' (le pseudonyme sera tout de même ajouté à la liste des retraits).'
+          : '.'),
+    );
     return;
   }
 
   // ── Application ────────────────────────────────────────────────────────────────────────────
-  // Renommage des participants : la clé primaire est (fight_id, side, name, instance_index), donc
-  // un combat où le placeholder existerait DÉJÀ avec le même camp et le même indice ferait échouer
-  // l'UPDATE global. Traité ligne par ligne, la collision — théorique, mais destructrice si on la
-  // laissait au hasard — étant résolue en poussant l'indice d'instance au-delà du maximum du camp.
+  // D'abord la liste d'opposition, consultée à chaque ingestion (server/history/erased-names.ts) :
+  // sans elle, un combat ou un échange envoyé plus tard réécrirait le nom d'origine. Posée même
+  // quand rien n'est encore stocké : l'opposition vaut aussi pour les envois à venir.
+  await sql`
+    insert into erased_third_party_names (name_lower) values (lower(${name}))
+    on conflict (name_lower) do nothing
+  `;
+  console.log(`\n[0] « ${name} » ajouté à la liste des pseudonymes retirés`);
+  if (nothingStored) return;
+
+  // Renommage des participants : la clé primaire est (fight_id, name, instance_index) — sans le
+  // camp depuis la migration 0035 —, donc un combat où le placeholder existerait DÉJÀ avec le même
+  // indice (dans l'un OU l'autre camp) ferait échouer l'UPDATE global. Traité ligne par ligne, la
+  // collision — théorique, mais destructrice si on la laissait au hasard — étant résolue en
+  // poussant l'indice d'instance au-delà du maximum du combat.
   let renamedParticipants = 0;
   let shiftedParticipants = 0;
   const rows = (
@@ -183,7 +201,7 @@ async function main(): Promise<void> {
     const clash = (
       await sql`
         select 1 from fight_participants
-        where fight_id = ${row.fight_id} and side = ${row.side}
+        where fight_id = ${row.fight_id}
           and name = ${PLACEHOLDER} and instance_index = ${row.instance_index}
       `
     ).rows.length;
@@ -192,7 +210,7 @@ async function main(): Promise<void> {
       const max = (
         await sql`
           select coalesce(max(instance_index), 0)::int as m from fight_participants
-          where fight_id = ${row.fight_id} and side = ${row.side}
+          where fight_id = ${row.fight_id}
         `
       ).rows[0] as { m: number };
       instanceIndex = max.m + 1;

@@ -233,10 +233,15 @@ export class DashboardLayoutPickerComponent {
   });
 
   protected readonly summaryMenuLabel = computed(() =>
-    this.i18n.t(this.menuOptions.find((o) => o.value === this.layout.menuPos())!.nameKey),
+    this.i18n.t(
+      (this.menuOptions.find((o) => o.value === this.layout.menuPos()) ?? this.menuOptions[0])
+        .nameKey,
+    ),
   );
   protected readonly summaryKpiLabel = computed(() =>
-    this.i18n.t(this.kpiOptions.find((o) => o.value === this.layout.kpiPos())!.nameKey),
+    this.i18n.t(
+      (this.kpiOptions.find((o) => o.value === this.layout.kpiPos()) ?? this.kpiOptions[0]).nameKey,
+    ),
   );
   protected readonly summaryBodyLabel = computed(() => {
     const vis = this.activeSlots();

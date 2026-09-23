@@ -12,7 +12,7 @@
  * concurrentes.
  */
 
-import { and, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import {
   authRateLimits,
@@ -22,6 +22,8 @@ import {
   userIdentities,
   users,
 } from '../db/schema';
+import { sha256Hex } from './crypto';
+import { NATIVE_SESSION_USER_AGENT } from './pairing';
 import type {
   AuthStore,
   AuthorizationRecord,
@@ -117,10 +119,30 @@ export function createDbAuthStore(db: Db): AuthStore {
           email: input.email,
           linkedAt: input.now,
         })
-        .onConflictDoUpdate({
-          target: [userIdentities.provider, userIdentities.providerUid],
-          set: { userId: input.userId, email: input.email },
-        });
+        // Jamais de réattribution silencieuse : deux callbacks concurrents du même
+        // (fournisseur, uid) créaient chacun un compte, et le second « volait » l'identité au
+        // premier (compte orphelin qui avait pourtant reçu une session). Le premier arrivé garde
+        // l'identité ; l'appelant lit le propriétaire réel et nettoie son compte en trop.
+        .onConflictDoNothing({ target: [userIdentities.provider, userIdentities.providerUid] });
+      const [owner] = await db
+        .select({ userId: userIdentities.userId })
+        .from(userIdentities)
+        .where(
+          and(
+            eq(userIdentities.provider, input.provider),
+            eq(userIdentities.providerUid, input.providerUid),
+          ),
+        );
+      return owner?.userId ?? input.userId;
+    },
+
+    async updateIdentityEmail(provider, providerUid, email) {
+      await db
+        .update(userIdentities)
+        .set({ email })
+        .where(
+          and(eq(userIdentities.provider, provider), eq(userIdentities.providerUid, providerUid)),
+        );
     },
 
     async updateUser(userId, patch) {
@@ -190,10 +212,18 @@ export function createDbAuthStore(db: Db): AuthStore {
     },
 
     async supersedeSession(idHash, patch) {
-      await db
+      // Une seule requête : `superseded_at IS NULL` fait échouer la seconde de deux rotations
+      // concurrentes (même principe que `consumeAuthorization`).
+      const rows = await db
         .update(sessions)
         .set({ supersededAt: patch.supersededAt, expiresAt: patch.expiresAt })
-        .where(eq(sessions.id, idHash));
+        .where(
+          patch.onlyIfCurrent
+            ? and(eq(sessions.id, idHash), isNull(sessions.supersededAt))
+            : eq(sessions.id, idHash),
+        )
+        .returning({ id: sessions.id });
+      return rows.length > 0;
     },
 
     async revokeSessionChain(chainId, now, exceptIdHash) {
@@ -260,16 +290,16 @@ export function createDbAuthStore(db: Db): AuthStore {
       return rows.length;
     },
 
-    async bumpRateLimit(bucket, windowStart) {
+    async bumpRateLimit(bucket, windowStart, amount = 1) {
       const [row] = await db
         .insert(authRateLimits)
-        .values({ bucket, windowStart, count: 1 })
+        .values({ bucket, windowStart, count: amount })
         .onConflictDoUpdate({
           target: [authRateLimits.bucket, authRateLimits.windowStart],
-          set: { count: sql`${authRateLimits.count} + 1` },
+          set: { count: sql`${authRateLimits.count} + ${amount}` },
         })
         .returning({ count: authRateLimits.count });
-      return row?.count ?? 1;
+      return row?.count ?? amount;
     },
 
     async purgeRateLimits(before: Date) {
@@ -287,12 +317,12 @@ export function createDbAuthStore(db: Db): AuthStore {
       });
     },
 
-    async claimPairing(userCode: string, sessionToken: string, now: Date) {
+    async claimPairing(userCode: string, userId: string, now: Date) {
       // Une seule requête : `claimed_at IS NULL` empêche deux `/claim` concurrents sur le même
       // code de réussir tous les deux (même principe que `consumeAuthorization`).
       const rows = await db
         .update(nativePairings)
-        .set({ sessionToken, claimedAt: now })
+        .set({ claimedUserId: userId, claimedAt: now })
         .where(
           and(
             eq(nativePairings.userCode, userCode),
@@ -311,24 +341,49 @@ export function createDbAuthStore(db: Db): AuthStore {
         .where(eq(nativePairings.deviceCode, deviceCode))
         .limit(1);
       if (!row || row.expiresAt.getTime() <= now.getTime()) return { status: 'expired' as const };
-      // Vérifié AVANT le statut pending/claimed : une fois consommé, `sessionToken` est effacé,
-      // donc indiscernable d'un appairage encore pending si on ne teste pas `consumedAt` en 1er.
+      // Vérifié AVANT le statut pending/claimed : un appairage consommé ne se remet jamais deux fois.
       if (row.consumedAt !== null) return { status: 'expired' as const };
-      if (!row.sessionToken || !row.claimedAt) return { status: 'pending' as const };
-      // Le jeton est déjà en main (row.sessionToken, lu ci-dessus) : cette 2ᵉ requête ne sert
-      // qu'à garantir qu'il n'est renvoyé qu'UNE fois — `consumed_at IS NULL` fait échouer tout
-      // second `/poll` concurrent ou rejoué (0 ligne affectée), même principe que
-      // `consumeAuthorization`.
+      if (!row.claimedAt || (!row.claimedUserId && !row.sessionToken)) {
+        return { status: 'pending' as const };
+      }
+      // `consumed_at IS NULL` fait échouer tout second `/poll` concurrent ou rejoué (0 ligne
+      // affectée) : la session n'est créée qu'une fois, par l'appelant de ce port.
       const rows = await db
         .update(nativePairings)
         .set({ sessionToken: null, consumedAt: now })
         .where(and(eq(nativePairings.deviceCode, deviceCode), isNull(nativePairings.consumedAt)))
         .returning({ deviceCode: nativePairings.deviceCode });
-      if (rows.length === 0) return { status: 'expired' as const }; // déjà consommé par un poll précédent
-      return { status: 'claimed' as const, token: row.sessionToken };
+      if (rows.length === 0) return { status: 'expired' as const };
+      return {
+        status: 'claimed' as const,
+        userId: row.claimedUserId,
+        legacyToken: row.sessionToken,
+      };
     },
 
     async purgeExpiredPairings(now: Date) {
+      // Jetons jamais remis (réclamés, pas consommés) des appairages expirés : leurs sessions
+      // partent AVANT les lignes d'appairage, qui sont le seul lien vers elles (voir le port).
+      const undelivered = await db
+        .select({ sessionToken: nativePairings.sessionToken })
+        .from(nativePairings)
+        .where(
+          and(
+            lt(nativePairings.expiresAt, now),
+            isNull(nativePairings.consumedAt),
+            isNotNull(nativePairings.sessionToken),
+          ),
+        );
+      const idHashes = await Promise.all(
+        undelivered.flatMap((row) => (row.sessionToken ? [sha256Hex(row.sessionToken)] : [])),
+      );
+      if (idHashes.length > 0) {
+        await db
+          .delete(sessions)
+          .where(
+            and(inArray(sessions.id, idHashes), eq(sessions.userAgent, NATIVE_SESSION_USER_AGENT)),
+          );
+      }
       await db.delete(nativePairings).where(lt(nativePairings.expiresAt, now));
     },
 

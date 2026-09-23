@@ -1,7 +1,7 @@
 /**
  * Tests du flux d'authentification (lot 5, prompt 5.1) : les quatre
  * exigences explicites du prompt — `state` invalide rejeté, code réutilisé
- * rejeté, session révoquée refusée, fusion sur e-mail identique — plus les
+ * rejeté, session révoquée refusée, un seul fournisseur par compte — plus les
  * garanties voisines qu'il serait coûteux de découvrir en production
  * (redirection ouverte, CSRF, expiration glissante, limitation de débit).
  *
@@ -15,6 +15,7 @@ import { sha256Hex } from './crypto';
 import {
   completeAuthorization,
   deriveCsrfToken,
+  MAX_USER_AGENT_LENGTH,
   openSession,
   purgeDeadSessions,
   purgeInactiveAccounts,
@@ -450,8 +451,8 @@ describe('purgeInactiveAccounts', () => {
   });
 });
 
-describe('fusion de comptes', () => {
-  it('rattache Google à un compte Discord existant sur e-mail vérifié identique', async () => {
+describe('un compte = un seul fournisseur', () => {
+  it('refuse Google quand l’e-mail vérifié appartient déjà à un compte Discord', async () => {
     const store = createMemoryAuthStore();
 
     const viaDiscord = await login(store, {
@@ -466,34 +467,85 @@ describe('fusion de comptes', () => {
       provider: 'google',
       oauthProfile: profile({ providerUid: 'google-1', displayName: 'Joueur (Google)' }),
     });
-    expect(viaGoogle.ok).toBe(true);
-    if (!viaGoogle.ok) return;
+    expect(viaGoogle).toEqual({ ok: false, error: 'email_taken', existingProvider: 'discord' });
 
-    expect(viaGoogle.result.user.id).toBe(viaDiscord.result.user.id);
-    expect(viaGoogle.result.isNewUser).toBe(false);
+    // Rien n'a été rattaché ni créé.
     expect(store.users.size).toBe(1);
-    expect(
-      (await store.listIdentities(viaGoogle.result.user.id)).map((i) => i.provider).sort(),
-    ).toEqual(['discord', 'google']);
+    expect((await store.listIdentities(viaDiscord.result.user.id)).map((i) => i.provider)).toEqual([
+      'discord',
+    ]);
+    expect(await store.findIdentity('google', 'google-1')).toBeNull();
   });
 
-  it('normalise la casse de l’e-mail avant de fusionner', async () => {
+  it('normalise la casse de l’e-mail avant de comparer', async () => {
+    const store = createMemoryAuthStore();
+    const first = await login(store, {
+      provider: 'google',
+      oauthProfile: profile({ providerUid: 'google-1', email: 'Joueur@Example.COM' }),
+    });
+    const second = await login(store, {
+      provider: 'discord',
+      oauthProfile: profile({ providerUid: 'discord-1', email: 'joueur@example.com' }),
+    });
+    expect(first.ok).toBe(true);
+    expect(second).toEqual({ ok: false, error: 'email_taken', existingProvider: 'google' });
+    expect(store.users.size).toBe(1);
+  });
+
+  it('ne révoque pas la session déjà ouverte quand la connexion est refusée', async () => {
     const store = createMemoryAuthStore();
     const first = await login(store, {
       provider: 'discord',
-      oauthProfile: profile({ providerUid: 'discord-1', email: 'Joueur@Example.COM' }),
+      oauthProfile: profile({ providerUid: 'discord-1' }),
     });
-    const second = await login(store, {
+    expect(first.ok).toBe(true);
+    if (!first.ok) return;
+
+    const { state } = await startAuthorization(store, {
       provider: 'google',
-      oauthProfile: profile({ providerUid: 'google-1', email: 'joueur@example.com' }),
+      redirectTo: null,
+      now: NOW,
     });
-    expect(first.ok && second.ok).toBe(true);
-    if (!first.ok || !second.ok) return;
-    expect(second.result.user.id).toBe(first.result.user.id);
-    expect(store.users.size).toBe(1);
+    const refused = await completeAuthorization(store, {
+      provider: 'google',
+      state,
+      cookieState: state,
+      now: NOW,
+      userAgent: 'test-agent',
+      currentSessionIdHash: await sha256Hex(first.result.token),
+      fetchProfile: async () => profile({ providerUid: 'google-1' }),
+    });
+    expect(refused.ok).toBe(false);
+    expect(await resolveSession(store, first.result.token, NOW)).not.toBeNull();
   });
 
-  it('ne fusionne PAS quand le fournisseur ne donne pas d’e-mail vérifié', async () => {
+  it('garde les comptes déjà liés aux deux fournisseurs avant la règle', async () => {
+    const store = createMemoryAuthStore();
+    const viaDiscord = await login(store, {
+      provider: 'discord',
+      oauthProfile: profile({ providerUid: 'discord-1' }),
+    });
+    expect(viaDiscord.ok).toBe(true);
+    if (!viaDiscord.ok) return;
+    // Identité Google rattachée du temps de la fusion automatique.
+    await store.linkIdentity({
+      userId: viaDiscord.result.user.id,
+      provider: 'google',
+      providerUid: 'google-1',
+      email: 'joueur@example.com',
+      now: NOW,
+    });
+
+    const viaGoogle = await login(store, {
+      provider: 'google',
+      oauthProfile: profile({ providerUid: 'google-1' }),
+    });
+    expect(viaGoogle.ok).toBe(true);
+    if (!viaGoogle.ok) return;
+    expect(viaGoogle.result.user.id).toBe(viaDiscord.result.user.id);
+  });
+
+  it('ouvre un compte distinct quand le fournisseur ne donne pas d’e-mail vérifié', async () => {
     const store = createMemoryAuthStore();
     const first = await login(store, {
       provider: 'discord',
@@ -716,6 +768,26 @@ describe('runFullPurge', () => {
 
     expect(called).toEqual(['authorizations', 'pairings']);
   });
+
+  it('continue les purges suivantes quand une étape échoue, puis lève toutes les erreurs', async () => {
+    const store = createMemoryAuthStore();
+    const closedWindow = new Date(NOW.getTime() - 30 * 60 * 1000);
+    await store.bumpRateLimit('auth:start:ip:abc', closedWindow);
+    const failing: AuthStore = {
+      ...store,
+      purgeExpiredAuthorizations: async () => {
+        throw new Error('base indisponible');
+      },
+    };
+
+    const error = await runFullPurge(failing, NOW).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect((error as AggregateError).errors.map((e: Error) => e.message)).toEqual([
+      'autorisations OAuth : base indisponible',
+    ]);
+    // L'étape suivante a tourné malgré l'échec : le compteur de fenêtre close est parti.
+    expect(await store.bumpRateLimit('auth:start:ip:abc', closedWindow)).toBe(1);
+  });
 });
 
 /**
@@ -770,5 +842,71 @@ describe('durée de vie absolue des sessions', () => {
     expect(
       await resolveSession(store, opened.token, new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS)),
     ).toBeNull();
+  });
+});
+
+describe('minimisation et courses à la création de compte (audit du 2026-09-23)', () => {
+  it('tronque un User-Agent démesuré', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: null, displayName: null });
+    const opened = await openSession(store, user.id, { now: NOW, userAgent: 'x'.repeat(10_000) });
+    expect((await store.findSession(opened.idHash))?.userAgent).toHaveLength(MAX_USER_AGENT_LENGTH);
+  });
+
+  it('met à jour l’e-mail de l’identité quand il change chez le fournisseur', async () => {
+    const store = createMemoryAuthStore();
+    await login(store);
+    await login(store, { oauthProfile: profile({ email: 'nouvelle@example.com' }) });
+    expect((await store.findIdentity('discord', 'uid-1'))?.email).toBe('nouvelle@example.com');
+  });
+
+  it('course sur l’e-mail : la seconde connexion rejoint le compte créé par la première', async () => {
+    const store = createMemoryAuthStore();
+    let winnerId = '';
+    let identityLookups = 0;
+    const racing: AuthStore = {
+      ...store,
+      // Le premier SELECT ne voit encore rien ; la requête concurrente a déjà tout écrit ensuite.
+      findIdentity: async (provider, uid) =>
+        identityLookups++ === 0 ? null : store.findIdentity(provider, uid),
+      findUserByEmail: async () => null,
+      createUser: async () => {
+        const winner = await store.createUser({ email: 'joueur@example.com', displayName: null });
+        await store.linkIdentity({
+          userId: winner.id,
+          provider: 'discord',
+          providerUid: 'uid-1',
+          email: 'joueur@example.com',
+          now: NOW,
+        });
+        winnerId = winner.id;
+        throw new Error('duplicate key value violates unique constraint "users_email_key"');
+      },
+    };
+    const result = await login(racing);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.result.user.id).toBe(winnerId);
+  });
+
+  it('course sans e-mail : pas de compte orphelin, l’identité reste au premier compte', async () => {
+    const store = createMemoryAuthStore();
+    const first = await store.createUser({ email: null, displayName: null });
+    await store.linkIdentity({
+      userId: first.id,
+      provider: 'discord',
+      providerUid: 'uid-1',
+      email: null,
+      now: NOW,
+    });
+    let lookups = 0;
+    const racing: AuthStore = {
+      ...store,
+      findIdentity: async (provider, uid) =>
+        lookups++ === 0 ? null : store.findIdentity(provider, uid),
+    };
+    const result = await login(racing, { oauthProfile: profile({ email: null }) });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.result.user.id).toBe(first.id);
+    expect(store.users.size).toBe(1);
   });
 });

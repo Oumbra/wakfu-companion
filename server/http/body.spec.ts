@@ -66,6 +66,7 @@ describe('readJsonBodyLimited', () => {
     expect(await readJsonBodyLimited(post('{"entries":[]}'), 100)).toEqual({
       ok: true,
       value: { entries: [] },
+      bytes: 14,
     });
   });
 

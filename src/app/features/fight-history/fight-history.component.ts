@@ -24,7 +24,7 @@ import {
 } from '../../core/data/header-icons.data';
 import { RARITY_ICON_BASE_DATA_URI } from '../../core/data/rarity-icon.data';
 import {
-  DEFAULT_FIGHT_IMAGE_URL,
+  applyFightImageFallback,
   dungeonGroupImageUrl,
   FightImageLocalizedName,
   findDungeonForEnemies,
@@ -917,17 +917,10 @@ export class FightHistoryComponent {
    * avant de tomber sur l'illustration générique, essayer un par un les replis posés sur l'`<img>` via
    * `data-fallback-urls` (voir template/fightImageFallbacks) — même principe que
    * EntityIconComponent.onError, adapté ici en pur DOM (pas de state de composant par ligne) car
-   * cette illustration est rendue inline dans un `@for`, pas via un composant dédié par entité. */
+   * cette illustration est rendue inline dans un `@for`, pas via un composant dédié par entité.
+   * Logique dans `applyFightImageFallback` (garde anti-boucle sur l'illustration générique). */
   protected onFightImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    const remaining = (img.dataset['fallbackUrls'] ?? '').split('|').filter(Boolean);
-    const [next, ...rest] = remaining;
-    if (next) {
-      img.dataset['fallbackUrls'] = rest.join('|');
-      img.src = next;
-      return;
-    }
-    if (img.src !== DEFAULT_FIGHT_IMAGE_URL) img.src = DEFAULT_FIGHT_IMAGE_URL;
+    applyFightImageFallback(event.target as HTMLImageElement);
   }
 
   /** Tooltip nom du donjon pour l'en-tête d'un collapse de donjon — `null` pour une brèche (même

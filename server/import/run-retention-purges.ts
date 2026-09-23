@@ -43,5 +43,11 @@ async function main(): Promise<void> {
 
 main().catch((error) => {
   console.error(error instanceof Error ? error.message : error);
+  // `runFullPurge` regroupe les échecs de chaque étape : les détailler un par un.
+  if (error instanceof AggregateError) {
+    for (const cause of error.errors) {
+      console.error(`  - ${cause instanceof Error ? cause.message : String(cause)}`);
+    }
+  }
   process.exit(1);
 });

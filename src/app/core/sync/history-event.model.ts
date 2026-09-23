@@ -200,6 +200,10 @@ export interface HistoryEvent {
   kind: HistoryEventKind;
   /** Signature de contenu (voir en-tête) — sert aussi à reconnaître localement un événement déjà archivé. */
   signature: string;
+  /** `clientKey` déjà connu, envoyé tel quel au lieu d'être dérivé de `signature` — renvoi d'un
+   * combat reconstruit depuis l'archive du compte, dont la signature d'origine n'est plus
+   * calculable côté client (voir `FightRecord.archive`). Absent dans tous les autres cas. */
+  clientKey?: string;
   payload: HistoryPayload;
   /** Date de mise en file (diagnostic et purge des entrées trop anciennes). */
   queuedAt: number;

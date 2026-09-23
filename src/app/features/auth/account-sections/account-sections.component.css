@@ -1,23 +1,54 @@
 :host {
   display: block;
-  height: 100%;
-  min-height: 0;
 }
 
+/* Sous les boutons Discord/Google de l'onglet Connexion : même largeur que ceux-ci. */
 .account-content {
-  padding: 16px 20px 24px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 14px;
+  margin-top: 8px;
 }
 
-/* `.tool-panel` global impose height: 100% (voir styles.css) : neutralisé, ces sections
-   s'empilent en flux normal et grandissent avec leur contenu. */
+/* Panneaux propres (pas `.tool-panel`/`.panel-header`) : ils vivent dans la page profil, sous
+`.panels-row`, où les règles globales du mode onglet mobile (styles.css, <=800px) masquent tout
+`.panel-header` et retirent la bordure de tout `.tool-panel` — prévues pour les panneaux du tableau
+de bord, elles faisaient disparaître les titres de ces blocs en mobile. Même rendu que les classes
+globales, à reporter si celles-ci changent. */
 .account-panel {
   width: 100%;
-  max-width: 640px;
-  height: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.account-panel-header {
+  background: var(--panel-header-bg);
+  padding: 10px 15px;
+  font-weight: bold;
+  color: var(--text-bright);
+  border-bottom: 1px solid var(--border);
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.panel-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.panel-count {
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .migration-panel {
@@ -89,17 +120,30 @@ libellé à gauche, interrupteur à droite, le tout cliquable comme un seul labe
 .provider-badge.google {
   background: #fff;
   color: #3c4043;
+  /* contour : sans lui, le badge blanc disparaît sur le fond blanc du thème clair */
+  box-shadow: inset 0 0 0 1px #dadce0;
 }
 
+/* 5 appareils visibles au plus, au-delà une barre de défilement verticale : lignes de hauteur
+fixe (`--session-row-h`) pour que la hauteur maximale tombe pile sur la 5e. */
 .session-list {
+  --session-row-h: 54px;
+  --session-row-gap: 6px;
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--session-row-gap);
+  max-height: calc(5 * var(--session-row-h) + 4 * var(--session-row-gap));
+  overflow-y: auto;
+}
+.session-list:has(> :nth-child(6)) {
+  padding-right: 6px;
 }
 .session-row {
+  flex: none;
+  height: var(--session-row-h);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -120,7 +164,8 @@ libellé à gauche, interrupteur à droite, le tout cliquable comme un seul labe
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  min-width: 0;
+  white-space: nowrap;
 }
 .session-current {
   padding: 1px 6px;
@@ -133,6 +178,9 @@ libellé à gauche, interrupteur à droite, le tout cliquable comme un seul labe
 .session-dates {
   color: var(--text-muted);
   font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .account-actions {
@@ -165,9 +213,34 @@ libellé à gauche, interrupteur à droite, le tout cliquable comme un seul labe
   color: #06232b;
   font-weight: 600;
 }
-.account-btn.danger:not(:disabled):hover {
+/* Actions destructives en rouge : contour pour ce qui se rattrape (déconnexions, effacement
+local), plein pour la suppression du compte, seule action irréversible côté serveur. */
+.account-btn.danger {
   border-color: var(--btn-active-red);
   color: var(--btn-active-red);
+  background: color-mix(in srgb, var(--btn-active-red) 10%, transparent);
+  font-weight: 600;
+}
+.account-btn.danger:not(:disabled):hover {
+  border-color: var(--btn-active-red);
+  background: var(--btn-active-red);
+  color: #fff;
+}
+.account-btn.danger.solid {
+  background: var(--btn-active-red);
+  color: #fff;
+}
+.account-btn.danger.solid:not(:disabled):hover {
+  filter: brightness(1.1);
+}
+.account-btn.small {
+  padding: 5px 11px;
+  font-size: 0.82rem;
+}
+.account-separator {
+  height: 1px;
+  margin: 4px 0;
+  background: var(--border);
 }
 
 /* État de synchronisation (lot 6) — pastille de couleur + libellé. */
@@ -199,9 +272,6 @@ libellé à gauche, interrupteur à droite, le tout cliquable comme un seul labe
 }
 
 @media (max-width: 640px) {
-  .account-content {
-    padding: 12px 12px 20px;
-  }
   .identity-label {
     min-width: 0;
     width: 100%;

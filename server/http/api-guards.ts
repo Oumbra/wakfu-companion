@@ -40,6 +40,19 @@
 import { MAX_RATE_LIMIT_WINDOW_MS, checkRateLimit, type RateLimitRule } from '../auth/rate-limit';
 import type { AuthStore } from '../auth/store';
 
+/**
+ * VOLUME des écritures d'historique, en octets de corps de requête, les quatre types confondus
+ * (audit de sécurité du 2026-09-23, lot 6). La limite en nombre de requêtes seule laissait passer
+ * 600 corps de 1 Mio par 10 min : un compte pouvait remplir la base Neon (0,5 Go) en quelques
+ * minutes, ou la gonfler en réécrivant sans fin les mêmes combats (`DO UPDATE`, versions mortes
+ * MVCC). 8 Mio par 10 min laisse passer plus de 2 000 combats en rafale (un combat réel pèse
+ * quelques Ko) : un premier chargement de très gros journal s'étale simplement sur plusieurs
+ * fenêtres, la file cliente réessayant un 429 sans rien perdre.
+ */
+export const HISTORY_WRITE_BYTES_RULE: RateLimitRule = {
+  limit: 8 * 1024 * 1024,
+  windowMs: MAX_RATE_LIMIT_WINDOW_MS,
+};
 /** Écritures d'historique, les quatre types confondus. Voir le calibrage en tête de fichier. */
 export const HISTORY_WRITE_RULE: RateLimitRule = { limit: 600, windowMs: MAX_RATE_LIMIT_WINDOW_MS };
 /** Agrégat par période (`GET /history/stats`). */
@@ -50,10 +63,12 @@ export const SETTINGS_WRITE_RULE: RateLimitRule = {
   windowMs: MAX_RATE_LIMIT_WINDOW_MS,
 };
 
-export type UserLimitedAction = 'history:write' | 'history:stats' | 'settings:write';
+export type UserLimitedAction =
+  'history:write' | 'history:write-bytes' | 'history:stats' | 'settings:write';
 
 const RULE_BY_ACTION: Record<UserLimitedAction, RateLimitRule> = {
   'history:write': HISTORY_WRITE_RULE,
+  'history:write-bytes': HISTORY_WRITE_BYTES_RULE,
   'history:stats': HISTORY_STATS_RULE,
   'settings:write': SETTINGS_WRITE_RULE,
 };
@@ -80,6 +95,8 @@ export async function enforceUserRateLimit(
   action: UserLimitedAction,
   userId: string,
   now: Date = new Date(),
+  /** Poids de l'appel : 1 par défaut, le nombre d'octets du corps pour `history:write-bytes`. */
+  amount = 1,
 ): Promise<Response | null> {
   let result: Awaited<ReturnType<typeof checkRateLimit>>;
   try {
@@ -88,6 +105,7 @@ export async function enforceUserRateLimit(
       userRateLimitBucket(action, userId),
       RULE_BY_ACTION[action],
       now,
+      amount,
     );
   } catch (error) {
     console.error(`[rate-limit] ${action} : comptage indisponible`, error);

@@ -24,7 +24,7 @@ même déclenchée depuis un panneau déjà surélevé (voir class-picker.compon
   content: '';
   position: absolute;
   bottom: 100%;
-  right: 12px;
+  right: var(--arrow-right, 12px);
   border: 5px solid transparent;
   border-bottom-color: #000;
 }
