@@ -37,11 +37,13 @@ concurrency:
 jobs:
   purge:
     # Base de PRODUCTION : jamais depuis une autre ref (un `workflow_dispatch` peut viser n'importe
-    # quelle branche ; `schedule` tourne toujours sur main). Même environnement que deploy-main.yml,
-    # dont la règle de branche est la vraie barrière.
+    # quelle branche ; `schedule` tourne toujours sur main). Environnement dédié `production-purge`
+    # (règle de branche `main`, sans relecteur) : `production` exige une approbation humaine qui
+    # bloquerait la purge nocturne. Il ne porte que DATABASE_URL, chaîne du rôle `app_runtime`
+    # (lectures et écritures, voir server/README.md) : une purge ne fait que des DELETE.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment: production
+    environment: production-purge
     # Une purge bloquée (base injoignable, verrou) ne doit pas occuper un runner 6 h.
     timeout-minutes: 15
     permissions:
