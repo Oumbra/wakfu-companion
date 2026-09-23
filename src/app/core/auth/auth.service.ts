@@ -452,7 +452,7 @@ export class AuthService {
       sessionStorage.setItem(MOBILE_SKIP_LOGIN_STORAGE_KEY, '1');
     } catch {
       // Stockage indisponible (navigation privée stricte...) : dégradation mineure, l'utilisateur
-      // atterrit simplement sur la page compte au lieu du tableau de bord après connexion.
+      // atterrit simplement sur l'onglet Connexion au lieu du tableau de bord après connexion.
     }
   }
 

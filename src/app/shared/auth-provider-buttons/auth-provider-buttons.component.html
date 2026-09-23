@@ -17,6 +17,7 @@
         <app-icon name="check" [size]="12" />
         {{ 'auth.login.linked' | t }}
       </span>
+      <ng-container [ngTemplateOutlet]="linkedRing" />
     }
   </button>
 
@@ -51,6 +52,7 @@
         <app-icon name="check" [size]="12" />
         {{ 'auth.login.linked' | t }}
       </span>
+      <ng-container [ngTemplateOutlet]="linkedRing" />
     }
   </button>
 </div>
@@ -66,3 +68,24 @@
     }
   }
 </p>
+
+<!-- Bordure « comète » du bouton du fournisseur lié (voir le CSS `.provider-ring`) : un anneau
+d'accent discret et une série de tirets de longueurs croissantes, tous alignés sur la même tête,
+qui avancent ensemble le long de la bordure. -->
+<ng-template #linkedRing>
+  <svg class="provider-ring" aria-hidden="true">
+    <rect class="ring-base" x="0" y="0" width="100%" height="100%" rx="10" pathLength="100" />
+    @for (length of ringTailLengths; track length) {
+      <rect
+        class="ring-tail"
+        x="0"
+        y="0"
+        width="100%"
+        height="100%"
+        rx="10"
+        pathLength="100"
+        [style.--ring-len]="length"
+      />
+    }
+  </svg>
+</ng-template>

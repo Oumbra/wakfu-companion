@@ -9,7 +9,8 @@
     #popover
     class="confirm-delete-popover"
     tabindex="-1"
-    [style.right.px]="req.right"
+    [style.right.px]="req.right - shift()"
+    [style.--arrow-right.px]="12 + shift()"
     [style.top.px]="req.top"
     (keydown)="onKeydown($event)"
   >

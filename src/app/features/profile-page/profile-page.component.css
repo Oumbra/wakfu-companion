@@ -349,30 +349,6 @@ confidentialité, choix de migration des données...) vit dans la modale d'aide
 boutons en mobile (`.login-mobile-only`), à l'identique de l'ancienne page de connexion dédiée —
 masquées en desktop où la modale suffit et où la section reste compacte comme Alertes/
 Personnages. */
-.manage-account-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin-bottom: 4px;
-  border-radius: 8px;
-  border: 1px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.manage-account-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-.manage-account-btn svg {
-  width: 17px;
-  height: 17px;
-  flex: none;
-}
 .login-error {
   margin: 0;
   padding: 10px 12px;

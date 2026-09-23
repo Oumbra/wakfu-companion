@@ -834,7 +834,7 @@ déploiement et une vraie application OAuth permettent de conclure :
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `src/app/core/auth/auth.service.ts`      | État de session en signaux, connexion/déconnexion, sessions, suppression de compte, décision de migration. |
 | `src/app/features/auth/login-page/`      | Deux boutons (Discord, Google) + erreur explicite au retour d'un échec.                                    |
-| `src/app/features/auth/account-page/`    | Identité, fournisseurs liés, appareils connectés (révocation), export, suppression, écran de migration.    |
+| `src/app/features/auth/account-sections/` | Blocs du compte sous les boutons de l’onglet Connexion du profil : identité, appareils connectés (révocation), export, suppression, écran de migration. |
 | `src/app/core/api/api-client.service.ts` | `requestJson` (écritures + en-tête CSRF) et le point d'accroche global du `401`.                           |
 
 Trois points valent d'être retenus :

@@ -42,7 +42,13 @@ const redirectToPreferredLocale = (suffix: string) => (): string => {
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: redirectToPreferredLocale('') },
   { path: 'profile', pathMatch: 'full', redirectTo: redirectToPreferredLocale('/profile') },
-  { path: 'account', pathMatch: 'full', redirectTo: redirectToPreferredLocale('/account') },
+  // Ancienne page « Mon compte », fusionnée dans l'onglet Connexion du profil : redirection pour
+  // ne pas casser un favori ou un lien antérieur.
+  {
+    path: 'account',
+    pathMatch: 'full',
+    redirectTo: redirectToPreferredLocale('/profile/connection'),
+  },
   {
     path: 'legal-notice',
     pathMatch: 'full',
@@ -165,10 +171,10 @@ export const routes: Routes = [
         canActivate: [fileConnectedGuard],
       },
       {
+        // Ancienne page « Mon compte », fusionnée dans l'onglet Connexion (voir plus haut).
         path: 'account',
-        component: RouteBridgeComponent,
-        data: { view: 'account' },
-        canActivate: [fileConnectedGuard],
+        pathMatch: 'full',
+        redirectTo: 'profile/connection',
       },
       {
         path: 'legal-notice',
