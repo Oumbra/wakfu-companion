@@ -6,7 +6,13 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { processHistoryBatch, type HistoryBatchDeps } from './batch';
+import {
+  HISTORY_STORAGE_FULL_CODE,
+  MAX_HISTORY_ENTRY_BYTES,
+  processHistoryBatch,
+  type HistoryBatchDeps,
+} from './batch';
+import { MAX_HISTORY_BYTES_PER_ACCOUNT } from './storage';
 import {
   HISTORY_QUOTA_EXCEEDED_CODE,
   MAX_FIGHTS_PER_ACCOUNT,
@@ -199,5 +205,89 @@ describe('processHistoryBatch', () => {
       d,
     );
     expect(d.withinQuota).toHaveBeenCalledWith([KEY('a')]);
+  });
+
+  describe('budget de stockage (lot 6)', () => {
+    function storage(
+      overrides: Partial<NonNullable<HistoryBatchDeps<FightInput>['storage']>> = {},
+    ) {
+      return {
+        isFull: vi.fn(async () => false),
+        storedBytes: vi.fn(async () => 0),
+        knownClientKeys: vi.fn(async () => new Set<string>()),
+        charge: vi.fn(async () => undefined),
+        ...overrides,
+      };
+    }
+
+    it('ignore une entrée trop volumineuse sans refuser le lot', async () => {
+      // Forme valide (parse.ts), poids démesuré : 32 participants × 64 sorts aux noms longs.
+      const spells = Array.from({ length: 64 }, (_, j) => ({
+        spell: `Sort au nom volontairement long numéro ${j}`,
+        total: 1,
+      }));
+      const heavyParticipants = Array.from({ length: 32 }, (_, i) => ({
+        side: 'ally',
+        name: `Joueur${i}`,
+        instanceIndex: 1,
+        damage: 1,
+        spells,
+      }));
+      expect(JSON.stringify(heavyParticipants).length).toBeGreaterThan(MAX_HISTORY_ENTRY_BYTES);
+      const d = deps<FightInput>();
+      const outcome = await processHistoryBatch(
+        {
+          entries: [fight(KEY('a')), fight(KEY('b'), { participants: heavyParticipants })],
+        },
+        NOW,
+        FIGHTS,
+        d,
+      );
+      expect(outcome.status).toBe(200);
+      expect(d.written.map((e) => e.clientKey)).toEqual([KEY('a')]);
+      if (outcome.status === 200) {
+        expect(outcome.body.rejected).toEqual([
+          { index: 1, clientKey: KEY('b'), error: expect.stringContaining('trop volumineuse') },
+        ]);
+      }
+    });
+
+    it('compte le volume des seules entrées nouvelles, après écriture', async () => {
+      const s = storage({ knownClientKeys: vi.fn(async () => new Set([KEY('a')])) });
+      const d = deps<FightInput>({ storage: s });
+      await processHistoryBatch({ entries: [fight(KEY('a')), fight(KEY('b'))] }, NOW, FIGHTS, d);
+      expect(s.charge).toHaveBeenCalledTimes(1);
+      const charged = (s.charge as ReturnType<typeof vi.fn>).mock.calls[0][0];
+      expect(charged).toBe(JSON.stringify(d.written[1]).length);
+    });
+
+    it('refuse en 403 un lot qui dépasse le volume du compte', async () => {
+      const s = storage({ storedBytes: vi.fn(async () => MAX_HISTORY_BYTES_PER_ACCOUNT) });
+      const d = deps<FightInput>({ storage: s });
+      const outcome = await processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d);
+      expect(outcome).toMatchObject({ status: 403, body: { code: HISTORY_QUOTA_EXCEEDED_CODE } });
+      expect(d.ingest).not.toHaveBeenCalled();
+      expect(s.charge).not.toHaveBeenCalled();
+    });
+
+    it('refuse en 503 réessayable quand la base est pleine', async () => {
+      const s = storage({ isFull: vi.fn(async () => true) });
+      const d = deps<FightInput>({ storage: s });
+      const outcome = await processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d);
+      expect(outcome).toMatchObject({ status: 503, body: { code: HISTORY_STORAGE_FULL_CODE } });
+      expect(d.ingest).not.toHaveBeenCalled();
+    });
+
+    it('laisse toujours passer un renvoi d’événements déjà stockés', async () => {
+      const s = storage({
+        isFull: vi.fn(async () => true),
+        storedBytes: vi.fn(async () => MAX_HISTORY_BYTES_PER_ACCOUNT),
+        knownClientKeys: vi.fn(async () => new Set([KEY('a')])),
+      });
+      const d = deps<FightInput>({ storage: s });
+      const outcome = await processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d);
+      expect(outcome.status).toBe(200);
+      expect(s.charge).not.toHaveBeenCalled();
+    });
   });
 });

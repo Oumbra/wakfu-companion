@@ -1005,3 +1005,21 @@ export const erasedThirdPartyNames = pgTable('erased_third_party_names', {
   nameLower: text('name_lower').primaryKey(),
   erasedAt: timestamp('erased_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Volume d'historique stocké par compte, en octets (audit de sécurité du 2026-09-23, lot 6).
+ *
+ * Les quotas de `server/history/guards.ts` comptent des LIGNES (250 000 combats…) ; or un combat
+ * peut porter 128 participants et leurs sorts : un seul compte restait capable de remplir la base
+ * Neon en restant sous ces quotas. Ce compteur borne le VOLUME (`server/history/storage.ts`) :
+ * incrémenté à l'écriture d'événements NOUVEAUX (taille de leur JSON), jamais décrémenté — une
+ * suppression est rare (compte supprimé : la ligne part en cascade). Initialisé par la migration
+ * 0037 à la taille réelle des lignes déjà stockées.
+ */
+export const accountStorage = pgTable('account_storage', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  historyBytes: bigint('history_bytes', { mode: 'number' }).notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

@@ -260,6 +260,13 @@
       "when": 1790186997540,
       "tag": "0036_erased_third_party_names",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790187104849,
+      "tag": "0037_account_storage",
+      "breakpoints": true
     }
   ]
 }

@@ -185,6 +185,21 @@ export async function checkHistoryQuota(
   return !exceedsHistoryQuota(stored, newCount, quota);
 }
 
+/** `clientKey` du lot déjà stockées pour ce compte (index unique `(user_id, client_key)`). */
+export async function findKnownClientKeys(
+  db: Db,
+  table: QuotaTable,
+  userId: string,
+  clientKeys: readonly string[],
+): Promise<Set<string>> {
+  if (clientKeys.length === 0) return new Set();
+  const rows = await db
+    .select({ clientKey: table.clientKey })
+    .from(table)
+    .where(and(eq(table.userId, userId), inArray(table.clientKey, [...clientKeys])));
+  return new Set(rows.map((row) => row.clientKey));
+}
+
 /** `checkHistoryQuota` sur les combats (API d'origine, conservée). */
 export function checkFightQuota(
   db: Db,

@@ -249,9 +249,9 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       return purged;
     },
 
-    async bumpRateLimit(bucket, windowStart) {
+    async bumpRateLimit(bucket, windowStart, amount = 1) {
       const key = rateKey(bucket, windowStart);
-      const next = (rateLimits.get(key) ?? 0) + 1;
+      const next = (rateLimits.get(key) ?? 0) + amount;
       rateLimits.set(key, next);
       return next;
     },

@@ -1,6 +1,7 @@
 import type { IngestResult } from './ingest';
 import type { KnownReferences, HistoryReferences } from './guards';
-import { historyQuotaExceededBody, splitByReferences } from './guards';
+import { HISTORY_QUOTA_EXCEEDED_CODE, historyQuotaExceededBody, splitByReferences } from './guards';
+import { MAX_HISTORY_BYTES_PER_ACCOUNT, entryBytes, exceedsStorageBudget } from './storage';
 import type { ParseResult, ParsedBatch, RejectedEntry } from './parse';
 
 /**
@@ -29,7 +30,19 @@ export interface HistoryBatchResponse extends IngestResult {
 export type HistoryBatchOutcome =
   | { status: 200; body: HistoryBatchResponse }
   | { status: 400; body: { error: string } }
-  | { status: 403; body: { error: string; code: string } };
+  | { status: 403; body: { error: string; code: string } }
+  | { status: 503; body: { error: string; code: string } };
+
+/**
+ * Taille maximale d'UNE entrée (son JSON), audit de sécurité du 2026-09-23, lot 6. Un combat réel
+ * pèse quelques Ko ; les bornes de forme de `parse.ts` (128 participants × 64 sorts × 16 éléments)
+ * en autorisaient plusieurs centaines. Une entrée plus grosse est ignorée (listée dans `rejected`),
+ * comme toute entrée invalide — jamais le lot entier.
+ */
+export const MAX_HISTORY_ENTRY_BYTES = 64 * 1024;
+
+/** Code de la réponse 503 quand la base a atteint son plafond : réessayable côté client. */
+export const HISTORY_STORAGE_FULL_CODE = 'history_storage_full';
 
 export interface HistoryBatchSpec<T> {
   parse: (body: unknown, now: Date) => ParseResult<ParsedBatch<T>>;
@@ -43,6 +56,20 @@ export interface HistoryBatchDeps<T> {
   /** `true` si le lot (ses `clientKey`) tient dans le quota — voir `checkHistoryQuota`. */
   withinQuota: (clientKeys: readonly string[]) => Promise<boolean>;
   ingest: (entries: readonly T[]) => Promise<IngestResult>;
+  /**
+   * Budget de stockage (server/history/storage.ts). Facultatif pour les tests qui ne le visent
+   * pas ; les quatre routes le fournissent toujours.
+   */
+  storage?: {
+    /** Vrai si la base a atteint son plafond global. */
+    isFull: () => Promise<boolean>;
+    /** Volume déjà stocké par le compte, en octets. */
+    storedBytes: () => Promise<number>;
+    /** `clientKey` du lot déjà stockées : leur renvoi n'ajoute rien au volume. */
+    knownClientKeys: (clientKeys: readonly string[]) => Promise<ReadonlySet<string>>;
+    /** Ajoute au volume du compte la taille des entrées nouvelles réellement écrites. */
+    charge: (bytes: number) => Promise<void>;
+  };
 }
 
 export async function processHistoryBatch<T extends HistoryReferences & { clientKey: string }>(
@@ -54,7 +81,7 @@ export async function processHistoryBatch<T extends HistoryReferences & { client
   const parsed = spec.parse(body, now);
   if (!parsed.ok) return { status: 400, body: { error: parsed.error } };
 
-  let batch = parsed.value;
+  let batch = withoutOversizedEntries(parsed.value);
   if (batch.entries.length > 0) {
     // Référence inconnue ⇒ entrée ignorée plutôt qu'une violation de clé étrangère en 500.
     batch = splitByReferences(batch, await deps.loadKnownReferences(batch.entries));
@@ -67,6 +94,59 @@ export async function processHistoryBatch<T extends HistoryReferences & { client
     return { status: 403, body: historyQuotaExceededBody(spec.quotaLabel, spec.quota) };
   }
 
+  // Budget de stockage : seules les entrées NOUVELLES pèsent (un renvoi d'événements déjà stockés
+  // passe toujours, comme pour le quota en lignes).
+  let newBytes = 0;
+  if (deps.storage) {
+    const known = await deps.storage.knownClientKeys(batch.entries.map((e) => e.clientKey));
+    newBytes = batch.entries
+      .filter((entry) => !known.has(entry.clientKey))
+      .reduce((sum, entry) => sum + entryBytes(entry), 0);
+    if (newBytes > 0) {
+      if (await deps.storage.isFull()) {
+        return {
+          status: 503,
+          body: {
+            error: 'stockage de l’historique momentanément plein',
+            code: HISTORY_STORAGE_FULL_CODE,
+          },
+        };
+      }
+      if (exceedsStorageBudget(await deps.storage.storedBytes(), newBytes)) {
+        return {
+          status: 403,
+          body: {
+            error: `volume d'historique atteint (${MAX_HISTORY_BYTES_PER_ACCOUNT} octets par compte)`,
+            code: HISTORY_QUOTA_EXCEEDED_CODE,
+          },
+        };
+      }
+    }
+  }
+
   const result = await deps.ingest(batch.entries);
+  if (deps.storage && newBytes > 0) await deps.storage.charge(newBytes);
   return { status: 200, body: { ...result, rejected: batch.rejected } };
+}
+
+/** Écarte (dans `rejected`) les entrées dont le JSON dépasse `MAX_HISTORY_ENTRY_BYTES`. */
+function withoutOversizedEntries<T extends { clientKey: string }>(
+  batch: ParsedBatch<T>,
+): ParsedBatch<T> {
+  const result: ParsedBatch<T> = { entries: [], indices: [], rejected: [...batch.rejected] };
+  batch.entries.forEach((entry, i) => {
+    const size = entryBytes(entry);
+    if (size > MAX_HISTORY_ENTRY_BYTES) {
+      result.rejected.push({
+        index: batch.indices[i],
+        clientKey: entry.clientKey,
+        error: `entrée trop volumineuse (${size} octets, maximum ${MAX_HISTORY_ENTRY_BYTES})`,
+      });
+      return;
+    }
+    result.entries.push(entry);
+    result.indices.push(batch.indices[i]);
+  });
+  result.rejected.sort((a, b) => a.index - b.index);
+  return result;
 }

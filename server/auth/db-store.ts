@@ -270,16 +270,16 @@ export function createDbAuthStore(db: Db): AuthStore {
       return rows.length;
     },
 
-    async bumpRateLimit(bucket, windowStart) {
+    async bumpRateLimit(bucket, windowStart, amount = 1) {
       const [row] = await db
         .insert(authRateLimits)
-        .values({ bucket, windowStart, count: 1 })
+        .values({ bucket, windowStart, count: amount })
         .onConflictDoUpdate({
           target: [authRateLimits.bucket, authRateLimits.windowStart],
-          set: { count: sql`${authRateLimits.count} + 1` },
+          set: { count: sql`${authRateLimits.count} + ${amount}` },
         })
         .returning({ count: authRateLimits.count });
-      return row?.count ?? 1;
+      return row?.count ?? amount;
     },
 
     async purgeRateLimits(before: Date) {

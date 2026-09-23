@@ -201,7 +201,9 @@ export interface AuthStore {
 
   // ── Limitation de débit ───────────────────────────────────────────────
   /** Incrémente le compteur de la fenêtre et renvoie sa valeur APRÈS incrément. */
-  bumpRateLimit(bucket: string, windowStart: Date): Promise<number>;
+  /** Incrémente le compteur de `amount` (1 par défaut : une requête ; un nombre d'octets pour les
+   * budgets en volume, voir `server/http/api-guards.ts`) et rend sa nouvelle valeur. */
+  bumpRateLimit(bucket: string, windowStart: Date, amount?: number): Promise<number>;
   purgeRateLimits(before: Date): Promise<void>;
 
   // ── Appairage natif (overlay) ──────────────────────────────────────────

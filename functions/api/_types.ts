@@ -30,4 +30,7 @@ export interface Env {
    * l'un sans l'autre = 503 `turnstile_unavailable` (fail-closed, `turnstileMode`). */
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
+  /** Plafond de la base, en Mo, au-delà duquel les écritures d'historique sont refusées (503,
+   * réessayable) — voir `server/history/storage.ts`. Défaut : 450 (plan gratuit Neon, 512 Mo). */
+  HISTORY_STORAGE_CEILING_MB?: string;
 }

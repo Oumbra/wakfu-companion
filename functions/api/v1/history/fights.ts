@@ -14,6 +14,7 @@ import {
   loadKnownReferences,
 } from '../../../../server/history/guards';
 import { processHistoryBatch } from '../../../../server/history/batch';
+import { historyStorageDeps } from '../../../../server/history/storage';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
@@ -45,6 +46,15 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
     if (!body.ok) return jsonError(body.error, body.status);
+    // Volume écrit par compte, en octets (lot 6 de l'audit du 2026-09-23) — voir api-guards.ts.
+    const heavy = await enforceUserRateLimit(
+      auth.store,
+      'history:write-bytes',
+      auth.user.id,
+      new Date(),
+      body.bytes,
+    );
+    if (heavy) return heavy;
 
     const db = createDb(context.env.DATABASE_URL);
     const userId = auth.user.id;
@@ -58,6 +68,7 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
         loadKnownReferences: (entries) => loadKnownReferences(db, entries),
         withinQuota: (keys) => checkHistoryQuota(db, fights, userId, keys, MAX_FIGHTS_PER_ACCOUNT),
         ingest: (entries) => ingestFights(db, userId, entries),
+        storage: historyStorageDeps(db, fights, userId, context.env.HISTORY_STORAGE_CEILING_MB),
       },
     );
     return json(outcome.body, outcome.status);
