@@ -2,7 +2,8 @@
   <button
     type="button"
     class="provider-btn discord"
-    [disabled]="disabled()"
+    [class.linked]="isLinked('discord')"
+    [disabled]="disabled() || isLinked('discord')"
     (click)="providerChosen.emit('discord')"
   >
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -11,12 +12,19 @@
       />
     </svg>
     <span>{{ 'auth.login.discord' | t }}</span>
+    @if (isLinked('discord')) {
+      <span class="provider-linked">
+        <app-icon name="check" [size]="12" />
+        {{ 'auth.login.linked' | t }}
+      </span>
+    }
   </button>
 
   <button
     type="button"
     class="provider-btn google"
-    [disabled]="disabled()"
+    [class.linked]="isLinked('google')"
+    [disabled]="disabled() || isLinked('google')"
     (click)="providerChosen.emit('google')"
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -38,6 +46,12 @@
       />
     </svg>
     <span>{{ 'auth.login.google' | t }}</span>
+    @if (isLinked('google')) {
+      <span class="provider-linked">
+        <app-icon name="check" [size]="12" />
+        {{ 'auth.login.linked' | t }}
+      </span>
+    }
   </button>
 </div>
 

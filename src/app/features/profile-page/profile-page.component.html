@@ -425,6 +425,7 @@
 
               <app-auth-provider-buttons
                 [disabled]="auth.busy()"
+                [linkedProviders]="linkedProviders()"
                 (providerChosen)="login($event)"
               />
             </div>

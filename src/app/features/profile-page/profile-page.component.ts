@@ -169,6 +169,10 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly theme = inject(ThemeService);
   protected readonly helpModal = inject(HelpModalService);
   protected readonly auth = inject(AuthService);
+  /** Fournisseurs déjà liés au compte (vide en invité) : leur bouton de connexion est grisé. */
+  protected readonly linkedProviders = computed(() =>
+    this.auth.identities().map((identity) => identity.provider),
+  );
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);

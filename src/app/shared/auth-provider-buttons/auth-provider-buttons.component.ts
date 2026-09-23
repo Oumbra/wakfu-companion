@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { AuthProvider } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { LegalPageService, type LegalPageKind } from '../../core/services/legal-page.service';
+import { IconComponent } from '../icon/icon.component';
 import { TranslatePipe } from '../translate.pipe';
 
 /** Segment de la phrase de consentement : texte brut, ou lien vers un texte légal. */
@@ -25,10 +26,16 @@ const CONSENT_LINKS: Record<string, LegalPageKind> = { terms: 'terms', privacy: 
  * l'omettre. La phrase est UNE clé i18n avec les placeholders `{{terms}}`/`{{privacy}}` (ordre
  * des mots libre par langue), découpée ici en segments pour que les deux liens soient de vrais
  * boutons ouvrant `LegalPageService` — pas du HTML injecté.
+ *
+ * `linkedProviders()` : fournisseurs déjà liés au compte connecté (vide en invité). Leur bouton est
+ * grisé, désactivé et marqué « Lié » — relancer le flux OAuth d'un fournisseur déjà lié ne ferait
+ * que rouvrir la même session, et laisser le bouton actif suggère à tort une action utile. Le
+ * bouton de l'autre fournisseur reste actif : le serveur rattache la nouvelle identité au compte
+ * existant quand l'e-mail correspond (voir `server/auth/flow.ts`).
  */
 @Component({
   selector: 'app-auth-provider-buttons',
-  imports: [TranslatePipe],
+  imports: [IconComponent, TranslatePipe],
   templateUrl: './auth-provider-buttons.component.html',
   styleUrl: './auth-provider-buttons.component.css',
 })
@@ -37,7 +44,12 @@ export class AuthProviderButtonsComponent {
   protected readonly legalPage = inject(LegalPageService);
 
   readonly disabled = input(false);
+  readonly linkedProviders = input<readonly AuthProvider[]>([]);
   readonly providerChosen = output<AuthProvider>();
+
+  protected isLinked(provider: AuthProvider): boolean {
+    return this.linkedProviders().includes(provider);
+  }
 
   protected readonly consentParts = computed<ConsentPart[]>(() =>
     this.i18n
