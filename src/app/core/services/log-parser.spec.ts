@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LogParser } from './log-parser';
+import { LogParser, MAX_LOG_LINE_LENGTH, peekLineTime } from './log-parser';
 import { LogEntry } from '../models/log-entry.model';
 
 function parseAll(parser: LogParser, lines: string[]): LogEntry[] {
@@ -95,6 +95,88 @@ describe('LogParser — date calendaire réelle du fichier (log-date-anchor)', (
     expect(entries).toEqual([
       { kind: 'log-date-anchor', time: '14:18:46,005', year: 2026, month: 8, day: 20 },
     ]);
+  });
+});
+
+describe('LogParser — ancrage de date : lignes piégées (audit sécurité)', () => {
+  const REAL_ANCHOR =
+    ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45])';
+
+  it('ignore un motif de date écrit par un joueur dans un canal de chat (ligne [Catégorie])', () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 15:00:00,000 [AWT-EventQueue-0] (aPV:174) - [Commerce] Vendeur : vends pano [2000-01-01 @ 00H00min00]',
+      ' INFO 15:00:01,000 [AWT-EventQueue-0] (aPV:174) - [Commerce] Vendeur : 1.92 (build -1 [2000-01-01 @ 00H00min00])',
+    ];
+    const entries = parseAll(parser, lines);
+    expect(entries.some((e) => e.kind === 'log-date-anchor')).toBe(false);
+    expect(entries.filter((e) => e.kind === 'chat')).toHaveLength(2);
+    for (const line of lines) expect(peekLineTime(line)?.buildDate).toBeNull();
+  });
+
+  it("n'accepte que la forme complète de la ligne technique", () => {
+    const parser = new LogParser();
+    const lines = [
+      ' INFO 14:18:46,005 [main] (eEt:113) - blabla [2026-08-20 @ 14H18min45]',
+      ' INFO 14:18:46,006 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45]) suffixe',
+    ];
+    expect(parseAll(parser, lines)).toEqual([]);
+    for (const line of lines) expect(peekLineTime(line)?.buildDate).toBeNull();
+  });
+
+  it('rejette une date implausible (avant 2012, invalide ou à plus d’un jour dans le futur)', () => {
+    const bad = [
+      ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2000-01-01 @ 00H00min00])',
+      ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-02-31 @ 00H00min00])',
+      ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-13-01 @ 00H00min00])',
+      ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2999-01-01 @ 00H00min00])',
+    ];
+    for (const line of bad) {
+      expect(parseAll(new LogParser(), [line])).toEqual([]);
+      expect(peekLineTime(line)?.buildDate).toBeNull();
+    }
+    expect(peekLineTime(REAL_ANCHOR)?.buildDate).toEqual({ year: 2026, month: 8, day: 20 });
+  });
+});
+
+describe('LogParser — lignes anormalement longues (défense en profondeur)', () => {
+  it('ignore une ligne au-delà de MAX_LOG_LINE_LENGTH sans perdre la ligne précédente', () => {
+    const parser = new LogParser();
+    const kamas = ' INFO 12:00:00,000 [T] (a:1) - [Information (jeu)] Vous avez gagné 42 kamas.';
+    const huge =
+      ' INFO 12:00:01,000 [T] (a:1) - [Information (jeu)] Vous avez gagné 1 kamas.' +
+      'x'.repeat(MAX_LOG_LINE_LENGTH);
+    const entries = parseAll(parser, [kamas, huge]);
+    expect(entries).toHaveLength(1);
+    expect(peekLineTime(huge)).toBeNull();
+  });
+
+  it('abandonne un enregistrement multi-lignes démesuré', () => {
+    const parser = new LogParser();
+    const lines = [' INFO 12:00:00,000 [T] (a:1) - [Trade] le joueur A donne : 0K ;'];
+    for (let i = 0; i < 20; i++) lines.push('x'.repeat(MAX_LOG_LINE_LENGTH - 10));
+    expect(parseAll(parser, lines)).toEqual([]);
+  });
+
+  it("parse un résumé d'échange piégé (`1 x ` répété sans refId) en temps linéaire", () => {
+    const parser = new LogParser();
+    const junk = '1 x '.repeat(1000);
+    const lines = [
+      ` INFO 12:00:00,000 [T] (a:1) - [Trade] le joueur A donne : 0K ; ${junk}`,
+      'le joueur B donne : 0K ; 2xPoudre (refId=27093) ',
+    ];
+    const start = performance.now();
+    const entries = parseAll(parser, lines);
+    expect(performance.now() - start).toBeLessThan(200);
+    const trade = entries.find((e) => e.kind === 'trade-completed');
+    expect(trade).toEqual({
+      kind: 'trade-completed',
+      time: '12:00:00,000',
+      sides: [
+        { playerName: 'A', items: [], kamas: 0 },
+        { playerName: 'B', items: [{ name: 'Poudre', quantity: 2 }], kamas: 0 },
+      ],
+    });
   });
 });
 

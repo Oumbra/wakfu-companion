@@ -354,6 +354,33 @@ describe('StatsStoreService', () => {
     );
 
     it(
+      'ignore un faux ancrage de date écrit dans un canal de chat (audit sécurité : un joueur ' +
+        'pouvait décaler la date de tous les combats de tous les lecteurs du canal)',
+      () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-09-01T12:00:00Z'));
+        try {
+          const stats = TestBed.inject(StatsStoreService);
+          const access = TestBed.inject(LogFileAccessService);
+          feed(access, [
+            ' INFO 14:18:46,005 [main] (eEt:113) - 1.92 (build -1 [2026-08-20 @ 14H18min45])',
+            ' INFO 14:30:00,000 [T] (a:1) - [Commerce] Vendeur : vends pano [2000-01-01 @ 00H00min00]',
+            ' INFO 14:30:01,000 [T] (a:1) - [Commerce] Vendeur : 1.92 (build -1 [2000-01-01 @ 00H00min00])',
+            ' INFO 15:00:00,000 [T] (a:1) - [_FL_] fightId=1 Anonyme-Sram1 breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:00,001 [T] (a:1) - [_FL_] fightId=1 Bouftou breed : 1 [-1] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+            ' INFO 15:00:10,000 [T] (a:1) - [FIGHT] End fight with id 1',
+          ]);
+
+          const fights = stats.fightHistory();
+          expect(fights).toHaveLength(1);
+          expect(fights[0].fullTimestampMs).toBe(new Date(2026, 7, 20, 15, 0, 0, 0).getTime());
+        } finally {
+          vi.useRealTimers();
+        }
+      },
+    );
+
+    it(
       'inclut bien une entité dont le `obstacleId` de jointure diffère de -1 (contrairement à une ' +
         'hypothèse initiale fausse : vérifié sur un vrai fichier, la majorité des MONSTRES RÉELS ' +
         "d'un combat ont un obstacleId non -1, sans rapport avec leur nature de combattant — voir " +
