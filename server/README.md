@@ -145,6 +145,25 @@ DATABASE_URL=... npm run db:migrate
 `DATABASE_URL` doit pointer vers la branche Neon de l'environnement ciblé
 (jamais la production quand on teste en local).
 
+### Retour arrière : pas en deçà de la migration 0035
+
+Les migrations ne s'appliquent que vers l'avant ; elles sont faites pour que le code **précédent**
+tourne encore sur le schéma **suivant** (colonnes ajoutées nullables, contraintes `NOT VALID`).
+Exception : `0035_fight_participants_pk` change la clé primaire de `fight_participants`. Le code
+d'avant cette migration écrit ses participants avec `ON CONFLICT (fight_id, side, name,
+instance_index)`, qui n'existe plus : chaque envoi de combat échouerait en `42P10` (« there is no
+unique or exclusion constraint matching the ON CONFLICT specification »). Conséquences :
+
+- **ne jamais redéployer** un commit antérieur à 0035 sur une base qui l'a reçue (rollback
+  Cloudflare Pages compris) ; revenir en arrière = redéployer un commit postérieur qui annule la
+  régression ;
+- pendant le déploiement qui applique 0035, les anciennes Functions encore en service peuvent
+  répondre 500 aux envois de combats le temps de la bascule ; le client les garde en file et
+  les renvoie (aucune perte).
+
+Audit du 2026-09-23 (S9). Une prochaine migration de ce type se fera en deux temps (ajout de la
+nouvelle contrainte, déploiement du code, retrait de l'ancienne au déploiement suivant).
+
 ## Endpoints actuels
 
 - `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`). `no-store` ; depuis le
