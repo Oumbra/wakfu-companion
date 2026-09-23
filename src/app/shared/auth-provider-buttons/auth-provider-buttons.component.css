@@ -28,29 +28,6 @@
   opacity: 0.6;
   cursor: default;
 }
-/* Compte déjà lié à un fournisseur (un seul autorisé) : les deux boutons grisés (niveaux de gris,
-pas seulement l'opacité du simple `disabled`) pour qu'on lise « déjà fait », pas « indisponible
-pour l'instant ». Le badge « Lié » distingue le fournisseur effectivement lié. */
-.provider-btn.locked {
-  filter: grayscale(1);
-  opacity: 0.5;
-}
-/* Calé sur le bord droit du bouton (hors flux) : le label et le logo restent centrés comme sur
-l'autre bouton, au lieu d'être décalés vers la gauche par le badge. */
-.provider-linked {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.18);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
 .provider-btn:not(:disabled):hover {
   filter: brightness(1.12);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
@@ -73,6 +50,38 @@ l'autre bouton, au lieu d'être décalés vers la gauche par le badge. */
   background: #fff;
   border-color: #dadce0;
   color: #3c4043;
+}
+/* Compte déjà lié à un fournisseur (un seul autorisé) : les deux boutons grisés — fond neutre et
+logo en niveaux de gris plutôt qu'une opacité sur tout le bouton, qui délaverait aussi le badge
+« Lié ». Après les règles `.discord`/`.google` (même spécificité). On lit « déjà fait », pas « indisponible pour l'instant ». */
+.provider-btn.locked {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+  /* annule l'opacité générique de `:disabled`, qui délaverait le badge */
+  opacity: 1;
+}
+.provider-btn.locked svg {
+  filter: grayscale(1);
+  opacity: 0.6;
+}
+/* Badge du fournisseur lié : pleine opacité, fond contrasté (sombre en thème clair, clair en thème
+sombre) pour qu'il ressorte sur le bouton grisé. Calé sur le bord droit du bouton (hors flux) : le
+label et le logo restent centrés comme sur l'autre bouton. */
+.provider-linked {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--text-bright);
+  color: var(--panel-bg);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 /* Mention d'acceptation des textes légaux sous les boutons (voir le composant) : discrète, mais
 lisible — ce n'est pas une note de bas de page, c'est l'information due au point de collecte. */
