@@ -16,6 +16,30 @@ import { wakassetsIconUrl } from './wakassets-url.util';
 export const DEFAULT_FIGHT_IMAGE_URL = wakassetsIconUrl('bossIllustrations', 'default.png');
 
 /**
+ * Handler `(error)` d'une illustration de combat : essaie un par un les replis posés sur l'`<img>`
+ * (`data-fallback-urls`), puis DEFAULT_FIGHT_IMAGE_URL une seule fois, puis abandonne.
+ *
+ * Le repli générique est marqué sur l'élément (`data-default-fallback-tried`), jamais détecté en
+ * comparant `img.src` à DEFAULT_FIGHT_IMAGE_URL : `img.src` renvoie toujours l'URL absolue, alors que
+ * DEFAULT_FIGHT_IMAGE_URL est relative depuis le passage au relais d'icônes (2026-09-20). Cette
+ * comparaison était donc toujours vraie : quand l'illustration générique échouait elle aussi, chaque
+ * `error` la rechargeait, en boucle infinie (2026-09-23 : ~126 000 requêtes en une heure depuis
+ * deux navigateurs, pendant une panne du relais).
+ */
+export function applyFightImageFallback(img: Pick<HTMLImageElement, 'src' | 'dataset'>): void {
+  const remaining = (img.dataset['fallbackUrls'] ?? '').split('|').filter(Boolean);
+  const [next, ...rest] = remaining;
+  if (next) {
+    img.dataset['fallbackUrls'] = rest.join('|');
+    img.src = next;
+    return;
+  }
+  if (img.dataset['defaultFallbackTried'] !== undefined) return;
+  img.dataset['defaultFallbackTried'] = '';
+  img.src = DEFAULT_FIGHT_IMAGE_URL;
+}
+
+/**
  * Illustration d'un monstre pour l'historique de combat (PAS l'icône de dégâts/suivi, voir
  * entity-icon.component.ts qui utilise la même chaîne de sources) : `monsters/{gfxId}.png` sur
  * wakassets, puis `monsterIllustrations/{gfxId}.png` en repli (quelques boss n'ont qu'une bannière

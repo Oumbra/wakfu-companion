@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import {
+  applyFightImageFallback,
   DEFAULT_FIGHT_IMAGE_URL,
   findDungeonForEnemies,
   resolveFightImageInfo,
@@ -656,5 +657,47 @@ describe('resolveFightTypeClassification (bugs réels corrigés le 2026-08-28, m
       names: BREACH_MATCH_DUNGEON,
     });
     expect(info.categoryRank).toBe(breachByBossInfo.categoryRank);
+  });
+});
+
+describe('applyFightImageFallback', () => {
+  /** Un vrai `<img>` : son `src` se lit en URL absolue, c'est ce qui cassait l'ancienne garde. */
+  function brokenImage(src: string, fallbackUrls = ''): HTMLImageElement {
+    const img = document.createElement('img');
+    img.src = src;
+    if (fallbackUrls) img.dataset['fallbackUrls'] = fallbackUrls;
+    return img;
+  }
+
+  it('essaie les replis dans l’ordre, puis l’illustration générique', () => {
+    const img = brokenImage('/api/v1/icons/monsters/1.png', '/a.png|/b.png');
+
+    applyFightImageFallback(img);
+    expect(img.getAttribute('src')).toBe('/a.png');
+    applyFightImageFallback(img);
+    expect(img.getAttribute('src')).toBe('/b.png');
+    applyFightImageFallback(img);
+    expect(img.getAttribute('src')).toBe(DEFAULT_FIGHT_IMAGE_URL);
+  });
+
+  it('ne recharge jamais l’illustration générique quand elle échoue aussi (boucle du 2026-09-23)', () => {
+    const img = brokenImage('/api/v1/icons/monsters/1.png');
+    let loads = 0;
+    const setSrc = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, 'src')!.set!;
+    Object.defineProperty(img, 'src', {
+      get: () => new URL(img.getAttribute('src') ?? '', document.baseURI).href,
+      set: (value: string) => {
+        loads++;
+        setSrc.call(img, value);
+      },
+    });
+
+    // Chaque `error` du navigateur rappelle le handler : 20 échecs d'affilée.
+    for (let i = 0; i < 20; i++) applyFightImageFallback(img);
+
+    expect(loads).toBe(1);
+    expect(img.getAttribute('src')).toBe(DEFAULT_FIGHT_IMAGE_URL);
+    // La garde ne compare plus d'URL : `img.src` absolu ≠ DEFAULT_FIGHT_IMAGE_URL relative.
+    expect(img.src).not.toBe(DEFAULT_FIGHT_IMAGE_URL);
   });
 });
