@@ -1,4 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { readBodyLimited } from '../../../../../server/http/body';
 import { isWellFormedPollToken, pollPairing } from '../../../../../server/auth/pairing';
 import {
   PAIR_POLL_IP_RULE,
@@ -27,8 +28,9 @@ const MAX_BODY_BYTES = 1024;
  *    clair dans `auth_rate_limits`.
  */
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const raw = await context.request.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError('corps trop volumineux', 413);
+  const read = await readBodyLimited(context.request, MAX_BODY_BYTES);
+  if (!read.ok) return jsonError(read.error, read.status);
+  const raw = read.text;
   let body: unknown;
   try {
     body = JSON.parse(raw);

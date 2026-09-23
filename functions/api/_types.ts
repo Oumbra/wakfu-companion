@@ -16,15 +16,18 @@ export interface Env {
    * jamais déduite de l'URL de déploiement (variable par preview). Repli : origine de la requête. */
   PUBLIC_BASE_URL?: string;
   /** Secret de pseudonymisation des adresses IP dans `auth_rate_limits` (voir
-   * `server/auth/rate-limit.ts::clientIpKey`). Optionnel : à défaut, `DATABASE_URL` sert de
-   * matière à clé — poser un secret dédié reste préférable (rotation indépendante). */
+   * `server/auth/rate-limit.ts::clientIpKey`). OBLIGATOIRE sur un déploiement public (https hors
+   * localhost, `server/auth/environment.ts`) : absent = erreur explicite. Le repli sur
+   * `DATABASE_URL` comme matière à clé ne vaut plus qu'en développement local. */
   RATE_LIMIT_SALT?: string;
-  /** Jeton d'application du site (`server/http/app-token.ts`) : secret HMAC — à défaut,
-   * `DATABASE_URL` sert de matière à clé, comme pour `RATE_LIMIT_SALT`. */
+  /** Jeton d'application du site (`server/http/app-token.ts`) : secret HMAC. OBLIGATOIRE sur un
+   * déploiement public (absent = 503 à l'émission, 403 à la vérification) ; repli sur
+   * `DATABASE_URL` en développement local seulement, comme pour `RATE_LIMIT_SALT`. */
   APP_TOKEN_SECRET?: string;
   /** Cloudflare Turnstile (`server/http/turnstile.ts`, `functions/api/v1/app/token.ts`) : clé de
    * site (publique, variable Pages) et secret. Absents ensemble = jeton émis sans vérification
-   * (développement local) ; l'un sans l'autre = 503. */
+   * en développement local UNIQUEMENT ; sur un déploiement public, absents, clé de test `1x…` ou
+   * l'un sans l'autre = 503 `turnstile_unavailable` (fail-closed, `turnstileMode`). */
   TURNSTILE_SITE_KEY?: string;
   TURNSTILE_SECRET_KEY?: string;
 }

@@ -1,4 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { readBodyLimited } from '../../../../server/http/body';
 import { readCookie } from '../../../../server/auth/cookies';
 import {
   APP_TOKEN_COOKIE,
@@ -113,8 +114,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     );
   }
 
-  const raw = await context.request.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError('corps trop volumineux', 413);
+  const read = await readBodyLimited(context.request, MAX_BODY_BYTES);
+  if (!read.ok) return jsonError(read.error, read.status);
+  const raw = read.text;
   let body: unknown = null;
   if (raw.length > 0) {
     try {

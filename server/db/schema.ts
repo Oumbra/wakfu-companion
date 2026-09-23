@@ -186,6 +186,12 @@ export const items = pgTable(
   (table) => [
     index('items_ankama_id_idx').on(table.ankamaId),
     index('items_sub_category_id_idx').on(table.subCategoryId),
+    // Recherche catalogue `ILIKE '%q%'` (functions/api/v1/catalog/search.ts) : index trigramme par
+    // locale (extension pg_trgm, migration 0033) plutôt qu'un balayage séquentiel par requête.
+    index('items_fr_trgm_idx').using('gin', table.fr.op('gin_trgm_ops')),
+    index('items_en_trgm_idx').using('gin', table.en.op('gin_trgm_ops')),
+    index('items_es_trgm_idx').using('gin', table.es.op('gin_trgm_ops')),
+    index('items_pt_trgm_idx').using('gin', table.pt.op('gin_trgm_ops')),
   ],
 );
 
@@ -266,7 +272,14 @@ export const monsters = pgTable(
     // d'import non garanti entre les tables).
     loot: integer('loot').array().notNull().default([]),
   },
-  (table) => [index('monsters_loot_idx').using('gin', table.loot)],
+  (table) => [
+    index('monsters_loot_idx').using('gin', table.loot),
+    // Même raison que les index trigramme de `items` (recherche catalogue par nom).
+    index('monsters_fr_trgm_idx').using('gin', table.fr.op('gin_trgm_ops')),
+    index('monsters_en_trgm_idx').using('gin', table.en.op('gin_trgm_ops')),
+    index('monsters_es_trgm_idx').using('gin', table.es.op('gin_trgm_ops')),
+    index('monsters_pt_trgm_idx').using('gin', table.pt.op('gin_trgm_ops')),
+  ],
 );
 
 /** Donjons — `id` Ankama en clé primaire (151 donjons, tous uniques). */

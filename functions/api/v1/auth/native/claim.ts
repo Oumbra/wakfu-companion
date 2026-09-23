@@ -1,4 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
+import { readBodyLimited } from '../../../../../server/http/body';
 import { claimPairing, normalizeUserCode } from '../../../../../server/auth/pairing';
 import {
   PAIR_CLAIM_RULE,
@@ -45,8 +46,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     });
   }
 
-  const raw = await context.request.text();
-  if (raw.length > MAX_BODY_BYTES) return jsonError('corps trop volumineux', 413);
+  const read = await readBodyLimited(context.request, MAX_BODY_BYTES);
+  if (!read.ok) return jsonError(read.error, read.status);
+  const raw = read.text;
   let body: unknown;
   try {
     body = JSON.parse(raw);
