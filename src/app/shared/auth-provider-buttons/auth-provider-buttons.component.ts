@@ -27,11 +27,11 @@ const CONSENT_LINKS: Record<string, LegalPageKind> = { terms: 'terms', privacy: 
  * des mots libre par langue), découpée ici en segments pour que les deux liens soient de vrais
  * boutons ouvrant `LegalPageService` — pas du HTML injecté.
  *
- * `linkedProviders()` : fournisseurs déjà liés au compte connecté (vide en invité). Leur bouton est
- * grisé, désactivé et marqué « Lié » — relancer le flux OAuth d'un fournisseur déjà lié ne ferait
- * que rouvrir la même session, et laisser le bouton actif suggère à tort une action utile. Le
- * bouton de l'autre fournisseur reste actif : le serveur rattache la nouvelle identité au compte
- * existant quand l'e-mail correspond (voir `server/auth/flow.ts`).
+ * `linkedProviders()` : fournisseurs déjà liés au compte connecté (vide en invité). Un compte ne
+ * se connecte qu'avec UN seul fournisseur (Discord OU Google, jamais les deux — choix produit) :
+ * dès qu'un fournisseur est lié, les deux boutons sont grisés et désactivés, et celui du
+ * fournisseur lié porte le badge « Lié ». Relancer le flux OAuth du fournisseur lié ne ferait que
+ * rouvrir la même session ; celui de l'autre fournisseur lierait une seconde identité.
  */
 @Component({
   selector: 'app-auth-provider-buttons',
@@ -46,6 +46,8 @@ export class AuthProviderButtonsComponent {
   readonly disabled = input(false);
   readonly linkedProviders = input<readonly AuthProvider[]>([]);
   readonly providerChosen = output<AuthProvider>();
+
+  protected readonly locked = computed(() => this.linkedProviders().length > 0);
 
   protected isLinked(provider: AuthProvider): boolean {
     return this.linkedProviders().includes(provider);

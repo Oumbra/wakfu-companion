@@ -2,8 +2,8 @@
   <button
     type="button"
     class="provider-btn discord"
-    [class.linked]="isLinked('discord')"
-    [disabled]="disabled() || isLinked('discord')"
+    [class.locked]="locked()"
+    [disabled]="disabled() || locked()"
     (click)="providerChosen.emit('discord')"
   >
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -23,8 +23,8 @@
   <button
     type="button"
     class="provider-btn google"
-    [class.linked]="isLinked('google')"
-    [disabled]="disabled() || isLinked('google')"
+    [class.locked]="locked()"
+    [disabled]="disabled() || locked()"
     (click)="providerChosen.emit('google')"
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">

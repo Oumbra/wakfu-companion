@@ -28,9 +28,10 @@
   opacity: 0.6;
   cursor: default;
 }
-/* Fournisseur déjà lié au compte connecté : grisé (niveaux de gris, pas seulement l'opacité du
-simple `disabled`) pour qu'on lise « déjà fait », pas « indisponible pour l'instant ». */
-.provider-btn.linked {
+/* Compte déjà lié à un fournisseur (un seul autorisé) : les deux boutons grisés (niveaux de gris,
+pas seulement l'opacité du simple `disabled`) pour qu'on lise « déjà fait », pas « indisponible
+pour l'instant ». Le badge « Lié » distingue le fournisseur effectivement lié. */
+.provider-btn.locked {
   filter: grayscale(1);
   opacity: 0.5;
 }
