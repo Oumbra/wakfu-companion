@@ -6,8 +6,10 @@ name: Dependabot auto-merge
 # dépôt ; sans check requis, l'auto-merge fusionnerait immédiatement.
 # - Majeures : jamais automatiques, relecture manuelle (les majeures Angular/TypeScript sont en
 #   outre ignorées dans dependabot.yml).
-# - cloudflare/wrangler-action : jamais automatique, même en mineure — il ne sert qu'aux
-#   workflows de déploiement, que la CI d'une PR n'exécute pas (v4.1.x publiées cassées).
+# - Paquets qui ne s'exécutent qu'aux déploiements, aux migrations ou dans les jobs porteurs des
+#   secrets de production (DATABASE_URL, jeton Cloudflare), jamais dans la CI d'une PR : jamais
+#   automatiques, même en correctif (audit du 2026-09-23, S4/S5). Une version compromise ou
+#   cassée n'y serait détectée qu'une fois en production. Liste : MANUAL_REVIEW ci-dessous.
 # - Squash : un commit par PR sur `claude/dev`, titré par le titre Conventional Commits de la PR
 #   (`chore`/`ci` : aucun bump de version).
 
@@ -27,10 +29,33 @@ jobs:
         uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
 
       - name: Enable auto-merge
-        if: >-
-          steps.meta.outputs.update-type != 'version-update:semver-major' &&
-          !contains(steps.meta.outputs.dependency-names, 'cloudflare/wrangler-action')
-        run: gh pr merge --auto --squash "$PR_URL"
+        if: steps.meta.outputs.update-type != 'version-update:semver-major'
+        # Comparaison exacte nom par nom (un `contains` sur la liste brute confondrait
+        # `drizzle-orm` et `drizzle-orm-extra`). Un seul paquet listé suffit à tout bloquer : une
+        # PR groupée qui en contient un est relue à la main.
+        run: |
+          IFS=',' read -ra names <<< "$DEPENDENCY_NAMES"
+          for name in "${names[@]}"; do
+            name="$(echo "$name" | xargs)"
+            for manual in $MANUAL_REVIEW; do
+              if [ "$name" = "$manual" ]; then
+                echo "::notice::$name exige une relecture manuelle : pas d'auto-merge."
+                exit 0
+              fi
+            done
+          done
+          gh pr merge --auto --squash "$PR_URL"
         env:
+          DEPENDENCY_NAMES: ${{ steps.meta.outputs.dependency-names }}
+          MANUAL_REVIEW: >-
+            cloudflare/wrangler-action
+            actions/github-script
+            dependabot/fetch-metadata
+            wrangler
+            drizzle-kit
+            drizzle-orm
+            @neondatabase/serverless
+            tsx
+            @angular/build
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -25,6 +25,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Même délai que npm (audit du 2026-09-23, S5) : une action compromise (tag déplacé, compte
+    # du mainteneur repris) est en général repérée et retirée en quelques jours.
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci
     ignore:
