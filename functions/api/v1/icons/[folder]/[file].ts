@@ -1,5 +1,10 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { relayHeaders, upstreamUrl } from '../../../../../server/icons/proxy';
+import {
+  UPSTREAM_FETCH_INIT,
+  iconCacheKeyUrl,
+  relayHeaders,
+  upstreamUrl,
+} from '../../../../../server/icons/proxy';
 import { rejectUnknownCaller } from '../../../_caller';
 import type { Env } from '../../../_types';
 
@@ -13,7 +18,8 @@ import type { Env } from '../../../_types';
 // d'application (`wc_app`, voir functions/api/_caller.ts) n'est PAS exigé ici : une `<img>` peut
 // partir avant que le jeton n'existe, et ces fichiers sont publics sur wakassets.
 //
-// Deux caches : `caches.default` (périphérie Cloudflare, indexé par l'URL de CETTE requête) pour
+// Deux caches : `caches.default` (périphérie Cloudflare, indexé par l'URL CANONIQUE de l'icône —
+// origine + chemin validé, sans query string, voir `iconCacheKeyUrl`) pour
 // ne pas remonter à l'amont à chaque utilisateur, et `cf.cacheTtl` sur le fetch amont par sécurité.
 // L'overlay a de son côté son propre cache disque (`overlay_sync::icon_cache`) : une icône donnée
 // n'arrive ici qu'une fois par installation.
@@ -32,13 +38,24 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   }
 
   const cache = caches.default;
-  const cacheKey = new Request(context.request.url, { method: 'GET' });
+  // Clé canonique (origine + chemin validé, sans query string) — voir `iconCacheKeyUrl`.
+  const cacheKey = new Request(iconCacheKeyUrl(context.request.url, { folder, file }), {
+    method: 'GET',
+  });
   const cached = await cache.match(cacheKey);
   if (cached) return cached;
 
-  const response = await fetch(upstream, {
-    cf: { cacheEverything: true, cacheTtl: 24 * 60 * 60 },
-  });
+  let response: Response;
+  try {
+    // `redirect: 'error'` (voir `UPSTREAM_FETCH_INIT`) : une redirection amont lève ici.
+    response = await fetch(upstream, UPSTREAM_FETCH_INIT);
+  } catch (error) {
+    console.error('[icons] amont injoignable ou redirigé', error);
+    return new Response(JSON.stringify({ error: 'source d’icônes indisponible' }), {
+      status: 502,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
 
   let relayed: Response;
   if (response.ok) {

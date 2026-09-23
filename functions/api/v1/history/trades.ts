@@ -8,6 +8,9 @@ import {
   parseTradesBody,
 } from '../../../../server/history/parse';
 import { ingestTrades } from '../../../../server/history/ingest';
+import { checkHistoryReferences } from '../../../../server/history/guards';
+import { readJsonBodyLimited } from '../../../../server/http/body';
+import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -29,26 +32,30 @@ import type { Env } from '../../_types';
 const MAX_PAYLOAD_BYTES = 1024 * 1024;
 
 export const onRequestPost: PagesFunction<Env> = async (context) => {
-  const auth = await authenticate(context.request, context.env);
-  if (!auth) return unauthenticated();
-  if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
-
-  const raw = await context.request.text();
-  if (raw.length > MAX_PAYLOAD_BYTES) return jsonError('lot trop volumineux', 413);
-
-  let body: unknown;
   try {
-    body = JSON.parse(raw);
-  } catch {
-    return jsonError('corps JSON invalide', 400);
+    const auth = await authenticate(context.request, context.env);
+    if (!auth) return unauthenticated();
+    if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
+    // Limite de débit par compte (server/http/api-guards.ts) — avant toute lecture du corps.
+    const limited = await enforceUserRateLimit(auth.store, 'history:write', auth.user.id);
+    if (limited) return limited;
+
+    const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
+    if (!body.ok) return jsonError(body.error, body.status);
+
+    const parsed = parseTradesBody(body.value);
+    if (!parsed.ok) return jsonError(parsed.error, 400);
+    if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
+
+    const db = createDb(context.env.DATABASE_URL);
+    // Références inconnues ⇒ 400 plutôt qu'une violation de clé étrangère en 500 (guards.ts).
+    const unknownReference = await checkHistoryReferences(db, parsed.value);
+    if (unknownReference) return jsonError(unknownReference, 400);
+    return json(await ingestTrades(db, auth.user.id, parsed.value));
+  } catch (error) {
+    // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
+    return internalErrorResponse('history/trades POST', error);
   }
-
-  const parsed = parseTradesBody(body);
-  if (!parsed.ok) return jsonError(parsed.error, 400);
-  if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
-
-  const db = createDb(context.env.DATABASE_URL);
-  return json(await ingestTrades(db, auth.user.id, parsed.value));
 };
 
 export const onRequestGet: PagesFunction<Env> = async (context) => {

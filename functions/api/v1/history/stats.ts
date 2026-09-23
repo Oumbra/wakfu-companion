@@ -12,6 +12,7 @@ import {
   trades,
 } from '../../../../server/db/schema';
 import { HDV_KAMAS_SALE_ITEM, parseStatsQuery } from '../../../../server/history/stats-query';
+import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
@@ -116,8 +117,25 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!query.ok) return jsonError(query.error, 400);
   const { since, until } = query.value;
 
-  const db = createDb(context.env.DATABASE_URL);
-  const userId = auth.user.id;
+  // Treize `SELECT` par appel : limite de débit par compte (server/http/api-guards.ts), APRÈS la
+  // validation pour qu'une requête mal formée ne consomme pas le quota.
+  const limited = await enforceUserRateLimit(auth.store, 'history:stats', auth.user.id);
+  if (limited) return limited;
+
+  try {
+    return await aggregateStats(context.env, auth.user.id, since, until);
+  } catch (error) {
+    return internalErrorResponse('history/stats GET', error);
+  }
+};
+
+async function aggregateStats(
+  env: Env,
+  userId: string,
+  since: Date,
+  until: Date,
+): Promise<Response> {
+  const db = createDb(env.DATABASE_URL);
 
   // Miroir de EXCLUDED_STATS_FAMILY_ID (src/app/core/services/stats-store.service.ts) — server/
   // ne dépend jamais de src/, dupliqué comme HDV_KAMAS_SALE_ITEM (voir server/history/stats-query.ts).
@@ -527,4 +545,4 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       quantity: num(row.quantity),
     })),
   });
-};
+}

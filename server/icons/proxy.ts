@@ -68,6 +68,30 @@ export function upstreamUrl({ folder, file }: IconRequest): string | null {
 }
 
 /**
+ * Clé de cache périphérique (`caches.default`) d'une icône — correctif du 2026-09-23 (audit
+ * sécurité). Construite depuis l'ORIGINE de la requête et le chemin CANONIQUE (dossier et fichier
+ * déjà validés par `upstreamUrl`), jamais depuis l'URL brute : avec l'URL brute, chaque variante
+ * de query string (`?a=1`, `?a=2`...) était une entrée de cache distincte — autant d'allers-retours
+ * amont et d'entrées de cache qu'un appelant voulait en fabriquer. L'origine reste dans la clé :
+ * la preview et la production ne partagent pas leurs entrées.
+ */
+export function iconCacheKeyUrl(requestUrl: string, { folder, file }: IconRequest): string {
+  return `${new URL(requestUrl).origin}/api/v1/icons/${folder}/${file}`;
+}
+
+/**
+ * Options du `fetch` amont. `redirect: 'error'` : `wakassets` sert ses fichiers directement ;
+ * une redirection (dépôt déplacé, page d'erreur GitHub Pages, domaine repris) ne doit jamais
+ * être suivie — le relais n'irait plus chercher ses octets chez `WAKASSETS_ORIGIN` mais là où la
+ * redirection pointe, et les servirait sous notre origine. Le `fetch` lève alors une exception,
+ * traduite en 502 par la route.
+ */
+export const UPSTREAM_FETCH_INIT = {
+  redirect: 'error',
+  cf: { cacheEverything: true, cacheTtl: 24 * 60 * 60 },
+} as const;
+
+/**
  * Les en-têtes de la réponse relayée. On ne recopie **rien** de l'amont (ni `ETag`, ni `Server`,
  * ni cookies éventuels) : le type est connu (`wakassets` ne sert que du PNG), le reste ne regarde
  * pas le client.

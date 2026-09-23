@@ -2,6 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { ilike, sql } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { items, monsters } from '../../../../server/db/schema';
+import { parseSearchQuery } from '../../../../server/catalog/params';
 import { rejectUnknownCaller } from '../../_caller';
 import type { Env } from '../../_types';
 
@@ -21,20 +22,23 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const rejected = await rejectUnknownCaller(context.request, context.env);
   if (rejected) return rejected;
   const url = new URL(context.request.url);
-  const q = url.searchParams.get('q')?.trim() ?? '';
   const localeParam = url.searchParams.get('locale') ?? 'fr';
   const locale: Locale = LOCALES.includes(localeParam as Locale) ? (localeParam as Locale) : 'fr';
   const kind = url.searchParams.get('kind') === 'monster' ? 'monster' : 'item';
 
-  if (q.length === 0) {
-    return new Response(JSON.stringify([]), {
-      status: 200,
+  // `q` : 2 à 64 caractères, métacaractères LIKE (`\ % _`) échappés — voir server/catalog/params.ts
+  // (correctif du 2026-09-23 : `q=%` ou `q=_` balayait toute la table). Un `q` vide ou d'un seul
+  // caractère répondait auparavant `[]` (200) : désormais 400, aucun client connu ne l'envoie.
+  const search = parseSearchQuery(url.searchParams.get('q'));
+  if (!search.ok) {
+    return new Response(JSON.stringify({ error: search.error }), {
+      status: 400,
       headers: { 'content-type': 'application/json' },
     });
   }
 
   const db = createDb(context.env.DATABASE_URL);
-  const pattern = `%${q}%`;
+  const pattern = search.pattern;
 
   if (kind === 'monster') {
     const nameColumn = monsters[locale];

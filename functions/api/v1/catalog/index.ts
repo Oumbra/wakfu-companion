@@ -74,8 +74,11 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       'content-type': 'application/json',
       // Contenu figé pour une version donnée du référentiel (voir
       // GET /api/v1/catalog/version pour détecter un changement) : mise en
-      // cache CDN raisonnable, revalidée par le navigateur au besoin.
-      'cache-control': 'public, max-age=300',
+      // cache navigateur raisonnable, revalidée au besoin.
+      // `private` (correctif du 2026-09-23) : la route est réservée au site et à l'overlay
+      // (`rejectUnknownCaller`) — un cache PARTAGÉ (proxy, CDN) resservirait la réponse à un
+      // appelant qui n'a pas passé ce contrôle. Le cache du navigateur reste autorisé.
+      'cache-control': 'private, max-age=300',
     },
   });
 };

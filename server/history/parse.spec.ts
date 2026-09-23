@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_ELEMENTS_PER_SPELL,
   MAX_HISTORY_BATCH,
   MAX_PAGE_SIZE,
+  PG_INT32_MAX,
   parseFightsBody,
+  parsePactExtractionsBody,
   parsePageQuery,
   parsePurchasesBody,
   parseTradesBody,
@@ -557,5 +560,130 @@ describe('parsePageQuery', () => {
 
   it('refuse un curseur illisible', () => {
     expect(parsePageQuery(new URLSearchParams('before=avant-hier')).ok).toBe(false);
+  });
+});
+
+describe('bornes de sécurité (audit 2026-09-23)', () => {
+  const NOW = new Date('2026-09-23T12:00:00.000Z');
+  const spell = (byElement: Record<string, unknown>) => ({ spell: 'Sort', total: 1, byElement });
+  const withSpell = (byElement: Record<string, unknown>) =>
+    fightEntry({
+      participants: [{ side: 'ally', name: 'Oumbra', spells: [spell(byElement)] }],
+    });
+
+  it('refuse un entier hors Number.MAX_SAFE_INTEGER sur une colonne bigint', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ kamasGained: 1e300 })] }, NOW).ok).toBe(false);
+    expect(
+      parseFightsBody({ entries: [fightEntry({ totalDamage: Number.MAX_SAFE_INTEGER + 1 })] }, NOW)
+        .ok,
+    ).toBe(false);
+    expect(
+      parseFightsBody({ entries: [fightEntry({ totalDamage: Number.MAX_SAFE_INTEGER })] }, NOW).ok,
+    ).toBe(true);
+    expect(parsePurchasesBody({ entries: [purchaseEntry({ totalCost: 1e20 })] }, NOW).ok).toBe(
+      false,
+    );
+  });
+
+  it('refuse un entier au-delà de PG_INT32_MAX sur une colonne integer', () => {
+    const big = 2_147_483_648;
+    expect(parseFightsBody({ entries: [fightEntry({ turns: big })] }, NOW).ok).toBe(false);
+    expect(parseFightsBody({ entries: [fightEntry({ challengesPassed: big })] }, NOW).ok).toBe(
+      false,
+    );
+    expect(parsePurchasesBody({ entries: [purchaseEntry({ itemId: big })] }, NOW).ok).toBe(false);
+    expect(
+      parseFightsBody({ entries: [fightEntry({ dungeonId: big, dungeonRunKey: KEY_B })] }, NOW).ok,
+    ).toBe(false);
+    expect(
+      parseFightsBody(
+        {
+          entries: [
+            fightEntry({ participants: [{ side: 'enemy', name: 'Bouftou', monsterId: big }] }),
+          ],
+        },
+        NOW,
+      ).ok,
+    ).toBe(false);
+    expect(
+      parseFightsBody(
+        {
+          entries: [
+            fightEntry({ participants: [{ side: 'ally', name: 'Oumbra', instanceIndex: big }] }),
+          ],
+        },
+        NOW,
+      ).ok,
+    ).toBe(false);
+  });
+
+  it('borne les dates d’événement entre 2012 et maintenant + 1 jour', () => {
+    expect(
+      parseFightsBody({ entries: [fightEntry({ startedAt: '1970-01-01T00:00:00.000Z' })] }, NOW).ok,
+    ).toBe(false);
+    expect(
+      parseFightsBody({ entries: [fightEntry({ startedAt: '2026-09-24T11:00:00.000Z' })] }, NOW).ok,
+    ).toBe(true);
+    expect(
+      parseFightsBody({ entries: [fightEntry({ startedAt: '2026-09-25T00:00:00.000Z' })] }, NOW).ok,
+    ).toBe(false);
+    expect(
+      parseTradesBody({ entries: [tradeEntry({ occurredAt: '2011-12-31T23:59:59.000Z' })] }, NOW)
+        .ok,
+    ).toBe(false);
+    expect(
+      parsePurchasesBody(
+        { entries: [purchaseEntry({ occurredAt: '+275760-09-13T00:00:00.000Z' })] },
+        NOW,
+      ).ok,
+    ).toBe(false);
+    expect(
+      parsePactExtractionsBody(
+        {
+          entries: [
+            {
+              clientKey: KEY_A,
+              occurredAt: '2001-01-01T00:00:00.000Z',
+              items: [{ itemId: 1, quantity: 1 }],
+            },
+          ],
+        },
+        NOW,
+      ).ok,
+    ).toBe(false);
+  });
+
+  it('borne le curseur before de la même façon', () => {
+    expect(parsePageQuery(new URLSearchParams('before=1900-01-01T00:00:00Z'), NOW).ok).toBe(false);
+    expect(parsePageQuery(new URLSearchParams('before=2030-01-01T00:00:00Z'), NOW).ok).toBe(false);
+    expect(parsePageQuery(new URLSearchParams('before=2026-09-01T00:00:00Z'), NOW).ok).toBe(true);
+  });
+
+  it(`borne byElement à ${MAX_ELEMENTS_PER_SPELL} éléments et refuse les clés de prototype`, () => {
+    const many = Object.fromEntries(
+      Array.from({ length: MAX_ELEMENTS_PER_SPELL + 1 }, (_, i) => [`E${i}`, 1]),
+    );
+    const max = Object.fromEntries(
+      Array.from({ length: MAX_ELEMENTS_PER_SPELL }, (_, i) => [`E${i}`, 1]),
+    );
+    expect(parseFightsBody({ entries: [withSpell(many)] }, NOW).ok).toBe(false);
+    expect(parseFightsBody({ entries: [withSpell(max)] }, NOW).ok).toBe(true);
+    const proto = JSON.parse('{"__proto__": 3}') as Record<string, unknown>;
+    expect(parseFightsBody({ entries: [withSpell(proto)] }, NOW).ok).toBe(false);
+    expect(parseFightsBody({ entries: [withSpell({ constructor: 3 })] }, NOW).ok).toBe(false);
+  });
+
+  it('borne la forme de gameServer (code court en minuscules)', () => {
+    expect(parseFightsBody({ entries: [fightEntry({ gameServer: 'ogrest' })] }, NOW).ok).toBe(true);
+    expect(parseFightsBody({ entries: [fightEntry({ gameServer: 'Ogrest' })] }, NOW).ok).toBe(
+      false,
+    );
+    expect(parseFightsBody({ entries: [fightEntry({ gameServer: 'x'.repeat(33) })] }, NOW).ok).toBe(
+      false,
+    );
+  });
+
+  it('expose PG_INT32_MAX à la valeur Postgres', () => {
+    expect(PG_INT32_MAX).toBe(2 ** 31 - 1);
   });
 });
