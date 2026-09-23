@@ -31,7 +31,7 @@ Portée : toute donnée rattachée au compte (synchronisation, schéma serveur, 
   y être ajoutée dans le même commit** : sans ça, la promesse du §1.3 redevient intenable en silence
   (`docs/analyse-rgpd.md` §9.1, point 8). Consigner chaque demande et son exécution dans le registre
   du responsable (hors dépôt).
-- **Droit d'accès et portabilité** : bouton « Exporter » de « Mon compte »
+- **Droit d'accès et portabilité** : bouton « Exporter » de l’onglet Connexion du profil (bloc « Mes données »)
   (`AccountExportService` + `GET /api/v1/auth/export` + les quatre `GET /api/v1/history/*`). Une
   nouvelle table rattachée à `users` doit y apparaître, sinon l'export ment.
 

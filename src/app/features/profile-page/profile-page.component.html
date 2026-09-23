@@ -389,7 +389,12 @@
             <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
                 <label class="profile-label">
-                  {{ 'auth.login.panelTitle' | t }}
+                  {{
+                    (auth.isAuthenticated()
+                      ? 'auth.login.panelTitleConnected'
+                      : 'auth.login.panelTitle'
+                    ) | t
+                  }}
                   <button
                     type="button"
                     class="icon-btn help-icon-btn"
@@ -400,27 +405,19 @@
                   </button>
                 </label>
               </div>
-              <p class="profile-section-desc">{{ 'auth.login.intro' | t }}</p>
+              <p class="profile-section-desc">
+                @if (auth.isAuthenticated() && linkedProviderLabel()) {
+                  {{ 'auth.login.introConnected' | t: { provider: linkedProviderLabel() } }}
+                } @else {
+                  {{ 'auth.login.intro' | t }}
+                }
+              </p>
 
-              @if (auth.isAuthenticated()) {
-                <button type="button" class="manage-account-btn" (click)="openAccount()">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.8"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                    <circle cx="12" cy="7" r="4" />
-                  </svg>
-                  <span>{{ 'auth.account.title' | t }}</span>
-                </button>
-              }
-
-              @if (auth.error(); as errorKey) {
-                <p class="login-error" role="alert">{{ errorKey | t }}</p>
+              <!-- Connecté, l'erreur éventuelle (synchronisation...) s'affiche dans « Mes données ». -->
+              @if (!auth.isAuthenticated()) {
+                @if (auth.error(); as errorKey) {
+                  <p class="login-error" role="alert">{{ errorKey | t }}</p>
+                }
               }
 
               <app-auth-provider-buttons
@@ -428,6 +425,9 @@
                 [linkedProviders]="linkedProviders()"
                 (providerChosen)="login($event)"
               />
+
+              <!-- Ancienne page « Mon compte », rapatriée ici : identité, appareils, données, compte. -->
+              <app-account-sections />
             </div>
           </div>
         </div>

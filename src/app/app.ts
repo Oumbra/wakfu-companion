@@ -31,7 +31,6 @@ import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/rec
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
 import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppPageComponent } from './shared/app-page/app-page.component';
-import { AccountPageComponent } from './features/auth/account-page/account-page.component';
 import { TabSheetComponent } from './shared/tab-sheet/tab-sheet.component';
 import { AuthService } from './core/auth/auth.service';
 import { GameServerService } from './core/services/game-server.service';
@@ -64,7 +63,6 @@ import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-m
     LegalPageComponent,
     AppHeaderComponent,
     AppPageComponent,
-    AccountPageComponent,
     TabSheetComponent,
     TooltipComponent,
     LoadingOverlayComponent,
@@ -144,15 +142,15 @@ export class App implements OnInit {
       if (outcome?.status !== 'ok') return;
       // Retour du bouton mobile "passer cette étape" (voir SetupComponent/
       // LogFileAccessService.simulateConnected) : la connexion vient d'aboutir pour cette seule
-      // raison, direction le tableau de bord plutôt que la page compte — SAUF si une décision sur
+      // raison, direction le tableau de bord plutôt que l'onglet Connexion — SAUF si une décision sur
       // les données locales est en attente (voir AuthService.evaluateDataMigration, appelé juste
       // avant ce `.then`) : cette décision ne doit jamais être prise en silence, elle reste
-      // affichée sur la page compte comme pour toute autre connexion.
+      // affichée dans l'onglet Connexion comme pour toute autre connexion.
       if (mobileSkipPending && !this.auth.migrationPrompt()) {
         this.logFileAccess.simulateConnected(this.i18n.t('setup.mobileSkip.simulatedFileName'));
         return;
       }
-      // Au retour d'une connexion réussie, on atterrit sur la page compte :
+      // Au retour d'une connexion réussie, on atterrit sur l'onglet Connexion du profil :
       // c'est là que se prend, le cas échéant, la décision sur les données
       // locales (voir AuthService.evaluateDataMigration).
       this.nav.openAccount();

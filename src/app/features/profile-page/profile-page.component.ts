@@ -57,6 +57,7 @@ import { AppTheme, LightThemeVariant, ThemeService } from '../../core/services/t
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { EditableNameComponent } from '../../shared/editable-name/editable-name.component';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
+import { AccountSectionsComponent } from '../auth/account-sections/account-sections.component';
 import { DashboardLayoutPickerComponent } from './dashboard-layout-picker/dashboard-layout-picker.component';
 
 /** Choix combiné exposé par le picker "Thème" du profil : soit `'dark'`, soit l'une des 4
@@ -153,6 +154,7 @@ const COLORBLIND_SWATCHES: Record<
     TooltipDirective,
     EditableNameComponent,
     AuthProviderButtonsComponent,
+    AccountSectionsComponent,
     DashboardLayoutPickerComponent,
   ],
   templateUrl: './profile-page.component.html',
@@ -173,6 +175,12 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly linkedProviders = computed(() =>
     this.auth.identities().map((identity) => identity.provider),
   );
+  /** Nom du fournisseur du compte pour la phrase d'intro de l'onglet Connexion (état connecté). */
+  protected readonly linkedProviderLabel = computed(() => {
+    const provider = this.linkedProviders()[0];
+    if (!provider) return '';
+    return this.i18n.t(provider === 'discord' ? 'auth.login.discord' : 'auth.login.google');
+  });
   private readonly dataExport = inject(AppDataExportService);
   private readonly nav = inject(NavigationService);
   private readonly alertSound = inject(AlertSoundService);
@@ -435,8 +443,8 @@ export class ProfilePageComponent implements OnDestroy {
       this.railMaxHeight.set(scrollport.clientHeight);
     });
 
-    // Consomme le flag posé par la page compte (voir NavigationService) : forcer l'onglet
-    // Connexion quand on arrive ici depuis son CTA "Se connecter" (état invité).
+    // Consomme le flag posé par `NavigationService.openAccount()` : forcer l'onglet Connexion
+    // (retour OAuth, refus de connexion à expliquer).
     effect(() => {
       if (!this.nav.profileConnectionTabRequested()) return;
       this.activeTab.set('connection');
@@ -516,14 +524,6 @@ export class ProfilePageComponent implements OnDestroy {
         return tab ? this.i18n.t(tab.label) : '';
       }
     }
-  }
-
-  /** Bouton "Gérer mon compte" de l'onglet Connexion (état authentifié uniquement) — seul point
-   * d'entrée restant vers la page compte depuis que le bouton du header a été retiré (voir
-   * CLAUDE.md) : sans lui, un utilisateur déjà connecté n'aurait plus aucun moyen de consulter ses
-   * sessions, exporter ses données ou supprimer son compte après la redirection post-connexion. */
-  protected openAccount(): void {
-    this.nav.openAccount();
   }
 
   /** Voir EditableNameComponent (`(renamed)`) — appelé avec la valeur brute saisie, le trim/le

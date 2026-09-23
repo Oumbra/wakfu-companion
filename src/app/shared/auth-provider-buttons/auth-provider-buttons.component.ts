@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { AuthProvider } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
@@ -31,11 +32,12 @@ const CONSENT_LINKS: Record<string, LegalPageKind> = { terms: 'terms', privacy: 
  * se connecte qu'avec UN seul fournisseur (Discord OU Google, jamais les deux — choix produit) :
  * dès qu'un fournisseur est lié, les deux boutons sont grisés et désactivés, et celui du
  * fournisseur lié porte le badge « Lié ». Relancer le flux OAuth du fournisseur lié ne ferait que
- * rouvrir la même session ; celui de l'autre fournisseur lierait une seconde identité.
+ * rouvrir la même session ; celui de l'autre fournisseur lierait une seconde identité. Le bouton
+ * lié porte en plus une bordure animée couleur accent (« comète », voir le CSS `.provider-ring`).
  */
 @Component({
   selector: 'app-auth-provider-buttons',
-  imports: [IconComponent, TranslatePipe],
+  imports: [IconComponent, NgTemplateOutlet, TranslatePipe],
   templateUrl: './auth-provider-buttons.component.html',
   styleUrl: './auth-provider-buttons.component.css',
 })
@@ -48,6 +50,10 @@ export class AuthProviderButtonsComponent {
   readonly providerChosen = output<AuthProvider>();
 
   protected readonly locked = computed(() => this.linkedProviders().length > 0);
+
+  /** Longueurs (en centièmes du périmètre) des tirets superposés de la bordure « comète » du
+   * bouton lié : les plus courts s'empilent près de la tête, d'où une traînée qui s'estompe. */
+  protected readonly ringTailLengths = [3, 6, 9, 12, 16, 20, 24, 28, 33, 38];
 
   protected isLinked(provider: AuthProvider): boolean {
     return this.linkedProviders().includes(provider);
