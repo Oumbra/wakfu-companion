@@ -27,6 +27,16 @@ qui doit être piloté — jamais un autre navigateur ni un repli `playwright-co
 un autre navigateur (vérifié via `navigator.userAgent`, jamais supposé) ; dans ce cas il pointe lui
 aussi sur le même Chrome réel, donc reste conforme à la consigne.
 
+**Config en local (poste de l'utilisateur) : `--browser chrome --extension`.** Le serveur MCP se
+branche sur le Chrome déjà ouvert de l'utilisateur (son profil, ses onglets, ses sessions) via
+l'extension « Playwright MCP Bridge », au lieu de lancer Chrome avec un profil Playwright séparé.
+Prérequis : Chrome ouvert et l'extension installée ; à la connexion, l'utilisateur choisit l'onglet
+à partager. Cette config vit UNIQUEMENT dans `~/.claude.json` (scope `local`, une entrée par
+variante de chemin du dépôt : `D:/Users/...`, `d:/Users/...`, `D:\users\...`), jamais dans un
+`.mcp.json` versionné : en session cloud, il n'y a ni Chrome utilisateur ni extension, donc
+`--extension` ne peut pas fonctionner. En cloud, utiliser `--browser chrome` sans `--extension`, ou
+le repli décrit plus bas si Chrome est absent.
+
 L'app dépend de l'API File System Access (voir plus bas), absente de Firefox — tout ce qui touche
 réellement `LogFileAccessService`/le sélecteur de fichier n'a de sens QUE sous Chrome/Chromium.
 Piège vécu deux fois (2026-08-25 et 2026-08-26, la seconde fois découvert par l'utilisateur via des
