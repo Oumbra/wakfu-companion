@@ -74,13 +74,16 @@ async function main(): Promise<void> {
   const userFilter = userId ? sql`and f.user_id = ${userId}::uuid` : sql``;
   // Candidats : combats qui partagent (compte, début) avec au moins un AUTRE combat à
   // `fight_log_id` NULL (index `fights_user_started_at_idx`). Les sièges sont calculés ici, triés
-  // en SQL : deux combats aux mêmes participants ont exactement la même chaîne.
+  // en SQL : deux combats aux mêmes participants ont exactement la même chaîne. Encodage JSON
+  // (audit du 2026-09-23, S10) : avec un simple `nom#instance` joint par des virgules, un pseudo
+  // contenant `,` ou `#` pouvait faire coïncider les sièges de deux combats différents, et l'un des
+  // deux aurait été effacé comme doublon.
   const result = await db.execute(sql`
     select f.id, f.user_id::text as user_id, f.started_at::text as started_at, f.duration_ms,
       f.fight_log_id,
       coalesce((
-        select string_agg(fp.name || '#' || fp.instance_index::text, ','
-          order by fp.name, fp.instance_index)
+        select jsonb_agg(jsonb_build_array(fp.name, fp.instance_index)
+          order by fp.name, fp.instance_index)::text
         from fight_participants fp where fp.fight_id = f.id
       ), '') as seats
     from fights f
