@@ -29,9 +29,10 @@ export interface OAuthProfile {
   providerUid: string;
   /**
    * E-mail **vérifié** par le fournisseur, ou `null`. Un e-mail non vérifié
-   * est volontairement traité comme absent : c'est lui qui déclenche la
-   * fusion de comptes, et une adresse non vérifiée permettrait de
-   * s'approprier le compte d'un tiers.
+   * est volontairement traité comme absent : c'est lui qui reconnaît un
+   * compte existant (et refuse alors la connexion par un autre fournisseur,
+   * voir `resolveAccount` dans flow.ts), et une adresse non vérifiée
+   * permettrait de bloquer ou de viser le compte d'un tiers.
    */
   email: string | null;
   displayName: string | null;

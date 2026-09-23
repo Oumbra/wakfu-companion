@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - claude/dev
+      # Branches de release (skill `release`, workflow release.yml) : la PR vers `main` est
+      # créée avec le GITHUB_TOKEN, qui ne déclenche pas l'événement `pull_request` — c'est ce
+      # run sur push, rattaché au même SHA, qui fournit le check requis `test` de la PR.
+      # Glob (les filtres GitHub n'acceptent pas de regex) : le format exact
+      # `release-AAAA-MM-JJ(-N)` est contrôlé par release.yml.
+      - 'release-*'
   pull_request:
   # Appelé aussi par deploy-main.yml (job `ci`) : la production ne se déploie
   # qu'après ces vérifications, rejouées sur le commit exact à déployer.
@@ -29,13 +35,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Aucun job ne pousse avec git : ne pas laisser le GITHUB_TOKEN dans .git/config.
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: '22'
           cache: npm

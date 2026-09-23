@@ -1,5 +1,6 @@
 import {
   bigint,
+  check,
   bigserial,
   boolean,
   index,
@@ -12,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 /** Miroir de WakfuRarity (src/app/core/data/wakfu-item-rarity.data.ts) côté serveur — server/
  * reste indépendant de src/ (pas d'import cross-cible), voir server/README.md. `rarity` est
@@ -374,7 +376,7 @@ export const catalogMeta = pgTable('catalog_meta', {
  * gain nul dès lors que la normalisation est faite en un seul endroit.
  * Nullable : un fournisseur peut théoriquement ne pas renvoyer d'e-mail
  * vérifié (compte Discord sans e-mail confirmé) — le compte reste utilisable,
- * il ne participe simplement pas à la fusion sur e-mail (voir flow.ts).
+ * il n'est simplement pas reconnu par son e-mail (voir flow.ts).
  *
  * Une colonne `default_game_server` (repli global du serveur de jeu, posée au lot 5 pour le
  * lot 7) n'a jamais été lue ni écrite : le serveur vient uniquement du roster (voir
@@ -399,14 +401,21 @@ export const users = pgTable(
      */
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex('users_email_key').on(table.email)],
+  (table) => [
+    uniqueIndex('users_email_key').on(table.email),
+    // Purge quotidienne des comptes inactifs (`purgeInactiveUsers`) : sans index, un parcours
+    // complet de `users` à chaque passe.
+    index('users_last_seen_at_idx').on(table.lastSeenAt),
+  ],
 );
 
 /**
- * Identités OAuth rattachées à un compte. Un même utilisateur peut se
- * connecter par Discord ET par Google : la fusion se fait automatiquement sur
- * e-mail vérifié identique (voir server/auth/flow.ts — les deux fournisseurs
- * vérifient l'adresse, ce qui rend ce rattachement sûr sans étape manuelle).
+ * Identités OAuth rattachées à un compte. Depuis le 2026-09-23, un compte
+ * n'utilise qu'UN fournisseur (Discord OU Google) : la connexion par l'autre
+ * fournisseur avec le même e-mail vérifié est refusée (voir
+ * server/auth/flow.ts, `resolveAccount`). Les comptes liés aux deux avant
+ * cette date gardent leurs deux identités, d'où la table plutôt qu'une
+ * colonne sur `users`.
  */
 export const userIdentities = pgTable(
   'user_identities',
@@ -463,6 +472,8 @@ export const sessions = pgTable(
   (table) => [
     index('sessions_user_id_idx').on(table.userId),
     index('sessions_chain_id_idx').on(table.chainId),
+    // Purge des sessions mortes (`purgeDeadSessions`), lancée aussi depuis des routes publiques.
+    index('sessions_expires_at_idx').on(table.expiresAt),
   ],
 );
 
@@ -519,7 +530,14 @@ export const nativePairings = pgTable(
     deviceCode: text('device_code').primaryKey(),
     userCode: text('user_code').notNull().unique(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    // Jeton en clair d'un appairage confirmé par l'ANCIEN flux (session créée à la confirmation).
+    // Plus jamais écrit depuis l'audit du 2026-09-23 (lot 13) : lu seulement pour remettre les
+    // appairages confirmés juste avant le déploiement ; toujours nul ensuite.
     sessionToken: text('session_token'),
+    // Compte qui a confirmé l'appairage : la session n'est créée qu'au `/poll` qui la remet à
+    // l'overlay, donc aucun jeton n'est jamais stocké, et rien ne survit à un appairage jamais
+    // récupéré. `ON DELETE CASCADE` : un compte supprimé emporte ses confirmations en attente.
+    claimedUserId: uuid('claimed_user_id').references(() => users.id, { onDelete: 'cascade' }),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     // Métadonnées de la demande, affichées sur la page `/pair` avant confirmation (audit du
@@ -552,7 +570,12 @@ export const authRateLimits = pgTable(
     windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
     count: integer('count').notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.bucket, table.windowStart] })],
+  (table) => [
+    primaryKey({ columns: [table.bucket, table.windowStart] }),
+    // Purge opportuniste `window_start < …` à chaque première requête d'une fenêtre : la clé
+    // primaire commence par `bucket`, inutilisable pour ce filtre.
+    index('auth_rate_limits_window_start_idx').on(table.windowStart),
+  ],
 );
 
 /**
@@ -619,6 +642,7 @@ export const userSettings = pgTable(
  *    combattants du même camp partagent un nom, ce qui est courant (voir
  *    `countNameInstances`/`InitiativeSeat` côté client, tout un mécanisme y est
  *    consacré). Sans lui, un combat contre 3 Bouftous perdrait 2 lignes sur 3.
+ *    Depuis la migration 0035, `side` est SORTI de cette clé (voir la table).
  * 3. **`trade_items` porte un `lineIndex`** et une vraie clé primaire, là où le
  *    schéma d'origine laissait la table sans contrainte : c'est ce qui permet
  *    de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans jamais
@@ -730,6 +754,10 @@ export const fights = pgTable(
     // Regroupements/filtres par type (carte Récap, voir FightTypeCode) : « tous les combats de ce
     // type pour ce compte ».
     index('fights_user_fight_type_idx').on(table.userId, table.fightType),
+    // Invariants déjà imposés par `server/history/parse.ts`, doublés en base pour les écritures
+    // qui ne passent pas par l'API (scripts `server/import/*`, SQL manuel). Posés `NOT VALID`
+    // (migration 0038) : vérifiés pour toute nouvelle ligne, sans bloquer le déploiement.
+    check('fights_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -822,8 +850,14 @@ export const fightParticipants = pgTable(
      */
     xpGained: bigint('xp_gained', { mode: 'number' }).notNull().default(0),
   },
+  // Clé primaire (fight_id, name, instance_index) depuis la migration 0035 (audit du 2026-09-23) :
+  // le camp n'en fait plus partie. Un combattant change de camp quand la classification allié/
+  // ennemi évolue côté client ; avec `side` dans la clé, l'upsert insérait une SECONDE ligne au
+  // lieu de mettre à jour la première. (nom, instance) est unique dans un combat : les deux
+  // clients numérotent les instances d'un nom sur les deux camps confondus.
   (table) => [
-    primaryKey({ columns: [table.fightId, table.side, table.name, table.instanceIndex] }),
+    primaryKey({ columns: [table.fightId, table.name, table.instanceIndex] }),
+    check('fight_participants_side', sql`${table.side} in ('ally', 'enemy')`),
   ],
 );
 
@@ -896,6 +930,7 @@ export const purchases = pgTable(
   (table) => [
     uniqueIndex('purchases_user_client_key_uq').on(table.userId, table.clientKey),
     index('purchases_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('purchases_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -918,6 +953,7 @@ export const trades = pgTable(
   (table) => [
     uniqueIndex('trades_user_client_key_uq').on(table.userId, table.clientKey),
     index('trades_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('trades_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -937,7 +973,10 @@ export const tradeItems = pgTable(
     itemName: text('item_name'),
     quantity: integer('quantity').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],
+  (table) => [
+    primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] }),
+    check('trade_items_direction', sql`${table.direction} in ('acquired', 'given')`),
+  ],
 );
 
 /**
@@ -961,6 +1000,7 @@ export const pactExtractions = pgTable(
   (table) => [
     uniqueIndex('pact_extractions_user_client_key_uq').on(table.userId, table.clientKey),
     index('pact_extractions_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('pact_extractions_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -983,3 +1023,37 @@ export const pactExtractionItems = pgTable(
     index('pact_extraction_items_item_id_idx').on(table.itemId),
   ],
 );
+
+/**
+ * Pseudonymes de joueurs tiers retirés au titre du droit d'opposition (RGPD art. 21, script
+ * `server/import/erase-third-party-name.ts`). Le script renomme les lignes existantes ; cette liste
+ * est consultée à chaque ingestion (`server/history/erased-names.ts`) pour qu'un combat ou un
+ * échange envoyé plus tard ne réécrive pas le nom d'origine.
+ *
+ * `nameLower` : le pseudonyme en minuscules (même comparaison insensible à la casse que le
+ * script). Aucune donnée de compte : c'est la liste des personnes qui ont demandé à ne plus
+ * apparaître, conservée tant que le traitement existe (sinon la demande cesserait d'être
+ * respectée).
+ */
+export const erasedThirdPartyNames = pgTable('erased_third_party_names', {
+  nameLower: text('name_lower').primaryKey(),
+  erasedAt: timestamp('erased_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Volume d'historique stocké par compte, en octets (audit de sécurité du 2026-09-23, lot 6).
+ *
+ * Les quotas de `server/history/guards.ts` comptent des LIGNES (250 000 combats…) ; or un combat
+ * peut porter 128 participants et leurs sorts : un seul compte restait capable de remplir la base
+ * Neon en restant sous ces quotas. Ce compteur borne le VOLUME (`server/history/storage.ts`) :
+ * incrémenté à l'écriture d'événements NOUVEAUX (taille de leur JSON), jamais décrémenté — une
+ * suppression est rare (compte supprimé : la ligne part en cascade). Initialisé par la migration
+ * 0037 à la taille réelle des lignes déjà stockées.
+ */
+export const accountStorage = pgTable('account_storage', {
+  userId: uuid('user_id')
+    .primaryKey()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  historyBytes: bigint('history_bytes', { mode: 'number' }).notNull().default(0),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});

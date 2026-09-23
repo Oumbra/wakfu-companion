@@ -1,7 +1,9 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { AuthProvider } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { LegalPageService, type LegalPageKind } from '../../core/services/legal-page.service';
+import { IconComponent } from '../icon/icon.component';
 import { TranslatePipe } from '../translate.pipe';
 
 /** Segment de la phrase de consentement : texte brut, ou lien vers un texte légal. */
@@ -25,10 +27,17 @@ const CONSENT_LINKS: Record<string, LegalPageKind> = { terms: 'terms', privacy: 
  * l'omettre. La phrase est UNE clé i18n avec les placeholders `{{terms}}`/`{{privacy}}` (ordre
  * des mots libre par langue), découpée ici en segments pour que les deux liens soient de vrais
  * boutons ouvrant `LegalPageService` — pas du HTML injecté.
+ *
+ * `linkedProviders()` : fournisseurs déjà liés au compte connecté (vide en invité). Un compte ne
+ * se connecte qu'avec UN seul fournisseur (Discord OU Google, jamais les deux — choix produit) :
+ * dès qu'un fournisseur est lié, les deux boutons sont grisés et désactivés, et celui du
+ * fournisseur lié porte le badge « Lié ». Relancer le flux OAuth du fournisseur lié ne ferait que
+ * rouvrir la même session ; celui de l'autre fournisseur lierait une seconde identité. Le bouton
+ * lié porte en plus une bordure animée couleur accent (« comète », voir le CSS `.provider-ring`).
  */
 @Component({
   selector: 'app-auth-provider-buttons',
-  imports: [TranslatePipe],
+  imports: [IconComponent, NgTemplateOutlet, TranslatePipe],
   templateUrl: './auth-provider-buttons.component.html',
   styleUrl: './auth-provider-buttons.component.css',
 })
@@ -37,7 +46,18 @@ export class AuthProviderButtonsComponent {
   protected readonly legalPage = inject(LegalPageService);
 
   readonly disabled = input(false);
+  readonly linkedProviders = input<readonly AuthProvider[]>([]);
   readonly providerChosen = output<AuthProvider>();
+
+  protected readonly locked = computed(() => this.linkedProviders().length > 0);
+
+  /** Longueurs (en centièmes du périmètre) des tirets superposés de la bordure « comète » du
+   * bouton lié : les plus courts s'empilent près de la tête, d'où une traînée qui s'estompe. */
+  protected readonly ringTailLengths = [3, 6, 9, 12, 16, 20, 24, 28, 33, 38];
+
+  protected isLinked(provider: AuthProvider): boolean {
+    return this.linkedProviders().includes(provider);
+  }
 
   protected readonly consentParts = computed<ConsentPart[]>(() =>
     this.i18n

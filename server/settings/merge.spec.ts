@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   MAX_CLOCK_SKEW_MS,
   MAX_SETTING_DEPTH,
+  MAX_SETTING_VALUE_BYTES,
   jsonDepthExceeds,
+  oversizedSettingError,
   parsePatchBody,
   parsePutBody,
   resolveWrites,
+  settingValueBytes,
   type SettingWrite,
 } from './merge';
 
@@ -256,5 +259,73 @@ describe('profondeur des valeurs (audit 2026-09-23)', () => {
     expect(parsePutBody({ data: { watchlist: nested(MAX_SETTING_DEPTH + 1) } }).ok).toBe(false);
     expect(parsePutBody({ data: [] }).ok).toBe(false);
     expect(parsePutBody(null).ok).toBe(false);
+  });
+});
+
+describe('updatedAt borné (audit 2026-09-23, #13)', () => {
+  it('refuse une date antérieure à 2012, ou une chaîne de plus de 64 caractères', () => {
+    const at = (updatedAt: string) =>
+      parsePatchBody({ entries: [{ key: 'profile', value: 1, updatedAt }] }, NOW);
+    expect(at('1970-01-01T00:00:00.000Z').ok).toBe(false);
+    expect(at('2011-12-31T23:59:59.999Z').ok).toBe(false);
+    expect(at(`2026-08-10T11:00:00.000Z${' '.repeat(60)}`).ok).toBe(false);
+  });
+
+  it('non-régression : formats réels acceptés (site : toISOString, overlay : to_rfc3339)', () => {
+    for (const updatedAt of [
+      '2026-08-10T11:00:00.000Z',
+      '2026-08-10T11:00:00.123456789+00:00',
+      '2026-08-10T13:00:00+02:00',
+      '2012-01-01T00:00:00.000Z',
+    ]) {
+      const result = parsePatchBody({ entries: [{ key: 'profile', value: 1, updatedAt }] }, NOW);
+      expect(result.ok, updatedAt).toBe(true);
+    }
+  });
+
+  it('message d’erreur : jamais le corps brut (tronqué à 64 caractères)', () => {
+    const huge = 'x'.repeat(100_000);
+    for (const body of [
+      { entries: [{ key: 'profile', value: 1, updatedAt: huge }] },
+      { entries: [{ key: huge, value: 1, updatedAt: NOW.toISOString() }] },
+    ]) {
+      const result = parsePatchBody(body, NOW);
+      expect(result.ok).toBe(false);
+      if (result.ok) continue;
+      expect(result.error.length).toBeLessThan(120);
+    }
+    const put = parsePutBody({ data: { [huge]: 1 } });
+    expect(put.ok).toBe(false);
+    if (!put.ok) expect(put.error.length).toBeLessThan(120);
+  });
+});
+
+describe('taille d’une valeur de configuration après fusion (audit 2026-09-23, #3)', () => {
+  it('512 Kio par clé, mesurés en octets UTF-8 de la sérialisation JSON', () => {
+    expect(MAX_SETTING_VALUE_BYTES).toBe(512 * 1024);
+    expect(settingValueBytes({ a: 'é' })).toBe(new TextEncoder().encode('{"a":"é"}').length);
+    expect(settingValueBytes('é'.repeat(10))).toBe(22);
+  });
+
+  it('refuse une valeur fusionnée au-delà de la borne, message borné', () => {
+    const big = 'x'.repeat(MAX_SETTING_VALUE_BYTES);
+    const error = oversizedSettingError('roster', [{ id: 'a', note: big }]);
+    expect(error).toContain('roster');
+    expect(error).toContain(String(MAX_SETTING_VALUE_BYTES));
+    // Octets, pas unités UTF-16 : 300 000 « é » font 600 000 octets.
+    expect(oversizedSettingError('profile', { pseudo: 'é'.repeat(300_000) })).not.toBeNull();
+  });
+
+  it('non-régression : tailles réelles (1 à 4 Ko, réattributions ~100 Ko) acceptées', () => {
+    const profile = { pseudo: 'Oumbra', avatarIndex: 3, soundItems: Array(40).fill({ id: 1 }) };
+    expect(oversizedSettingError('profile', profile)).toBeNull();
+    const reassignments = Array.from({ length: 1500 }, (_, i) => ({
+      spell: `Sort ${i}`,
+      from: 'Anonyme-Iop1',
+      to: 'Anonyme-Cra2',
+      at: '2026-09-23T10:00:00.000Z',
+    }));
+    expect(settingValueBytes(reassignments)).toBeGreaterThan(100_000);
+    expect(oversizedSettingError('damageReassignments', reassignments)).toBeNull();
   });
 });

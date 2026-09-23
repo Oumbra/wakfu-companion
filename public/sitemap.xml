@@ -7,7 +7,7 @@
   — un grep sur `wakfu-companion.com` retrouve les 5 endroits.
 
   Une URL par langue pour l'accueil (/fr, /en, /es, /pt — voir app.routes.ts), pas plus :
-  /profile, /account, /legal-notice, /privacy-policy existent comme routes Angular mais n'ont
+  /profile, /legal-notice, /privacy-policy existent comme routes Angular mais n'ont
   aucune valeur de recherche propre pour les requêtes ciblées (wakfu tracker/companion/historique
   pointent toutes vers la page d'accueil) — voir core/services/seo.service.ts, qui canonicalise lui
   aussi ces sous-pages vers l'accueil de leur langue plutôt que de leur donner une URL indexée à

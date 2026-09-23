@@ -99,7 +99,14 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       }),
   });
 
-  if (!completion.ok) return fail(completion.error);
+  if (!completion.ok) {
+    // Un compte = un seul fournisseur : le fournisseur du compte existant voyage
+    // dans `reason` pour que l'application dise avec lequel se reconnecter.
+    if (completion.error === 'email_taken' && completion.existingProvider) {
+      return fail(`email_taken_${completion.existingProvider}`);
+    }
+    return fail(completion.error);
+  }
 
   const { result } = completion;
   // Nouveaux noms `__Host-`, ancien cookie de session effacé (voir cookies.ts, TRANSITION).

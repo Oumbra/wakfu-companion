@@ -16,6 +16,7 @@ import { SESSION_MAX_LIFETIME_MS, resolveSession } from './flow';
 import {
   MAX_REQUESTER_USER_AGENT_LENGTH,
   NATIVE_SESSION_ROTATION_GRACE_MS,
+  NativeRotationConflictError,
   PAIRING_TTL_MS,
   claimPairing,
   findPendingPairingInfo,
@@ -41,7 +42,7 @@ describe('pairing', () => {
     await startPairing(store, NOW);
 
     const claimed = await claimPairing(store, { userCode: 'NOPENOPE', user: USER, now: NOW });
-    expect(claimed).toBeNull();
+    expect(claimed).toBe(false);
   });
 
   it('rejette un poll pour un deviceCode inconnu', async () => {
@@ -63,12 +64,15 @@ describe('pairing', () => {
     const { deviceCode, userCode } = await startPairing(store, NOW);
 
     const claimed = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(claimed).not.toBeNull();
+    expect(claimed).toBe(true);
+    // Lot 13 : la confirmation ne crée aucune session, le jeton naît au `/poll`.
+    expect(store.sessions.size).toBe(0);
 
     const first = await pollPairing(store, deviceCode, NOW);
     expect(first.status).toBe('claimed');
     if (first.status !== 'claimed') throw new Error('unreachable');
-    expect(first.token).toBe(claimed?.token);
+    expect(store.sessions.size).toBe(1);
+    expect(await store.findSession(await sha256Hex(first.token))).not.toBeNull();
 
     // Rejeu du même poll : le jeton n'est plus là (déjà consommé).
     const second = await pollPairing(store, deviceCode, NOW);
@@ -80,10 +84,10 @@ describe('pairing', () => {
     const { userCode } = await startPairing(store, NOW);
 
     const first = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(first).not.toBeNull();
+    expect(first).toBe(true);
 
     const second = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(second).toBeNull();
+    expect(second).toBe(false);
   });
 
   it('rejette un claim après expiration', async () => {
@@ -92,7 +96,7 @@ describe('pairing', () => {
 
     const afterExpiry = new Date(NOW.getTime() + PAIRING_TTL_MS + 1000);
     const claimed = await claimPairing(store, { userCode, user: USER, now: afterExpiry });
-    expect(claimed).toBeNull();
+    expect(claimed).toBe(false);
   });
 
   it('rejette un poll après expiration, même sans avoir été réclamé', async () => {
@@ -246,19 +250,41 @@ describe('pairing — durcissement', () => {
     expect(expiresAt).toEqual(new Date(NOW.getTime() + 5 * 60 * 1000));
   });
 
-  it('efface la session créée quand la réclamation échoue (aucune session orpheline)', async () => {
+  it('aucune session n’est créée par une confirmation, réussie ou non', async () => {
     const store = createMemoryAuthStore();
     const { userCode } = await startPairing(store, NOW);
-    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).not.toBeNull();
-    expect(store.sessions.size).toBe(1);
+    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBe(true);
+    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBe(false);
+    expect(await claimPairing(store, { userCode: 'ZZZZZZZZ', user: USER, now: NOW })).toBe(false);
+    expect(store.sessions.size).toBe(0);
+  });
 
-    // Code déjà réclamé, puis code inconnu : aucune session ne doit rester derrière.
-    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBeNull();
-    expect(await claimPairing(store, { userCode: 'ZZZZZZZZ', user: USER, now: NOW })).toBeNull();
+  it('un /poll rejoué ou concurrent ne crée qu’une session', async () => {
+    const store = createMemoryAuthStore();
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user: USER, now: NOW });
+    const results = await Promise.all([
+      pollPairing(store, deviceCode, NOW),
+      pollPairing(store, deviceCode, NOW),
+    ]);
+    expect(results.filter((r) => r.status === 'claimed')).toHaveLength(1);
     expect(store.sessions.size).toBe(1);
   });
 
-  it('efface la session créée quand la réclamation lève', async () => {
+  it('remet tel quel le jeton d’un appairage confirmé par l’ancien flux', async () => {
+    const store = createMemoryAuthStore();
+    const legacy: AuthStore = {
+      ...store,
+      pollPairing: async () => ({ status: 'claimed', userId: null, legacyToken: 'ancien-jeton' }),
+    };
+    expect(await pollPairing(legacy, 'x', NOW)).toEqual({
+      status: 'claimed',
+      token: 'ancien-jeton',
+    });
+    expect(store.sessions.size).toBe(0);
+  });
+
+  it('ne crée aucune session quand la réclamation lève', async () => {
     const store = createMemoryAuthStore();
     const failing: AuthStore = {
       ...store,
@@ -450,5 +476,147 @@ describe('rotateNativeSession — plafond et rattrapage unique', () => {
     expect(await rotateNativeSession(store, { current: a2, now: t })).toBeNull();
 
     expect(await resolveSession(store, tokenB, t)).not.toBeNull();
+  });
+});
+
+/** Audit de sécurité du 2026-09-23, #7 : rotation conditionnelle (`superseded_at IS NULL`). */
+describe('rotateNativeSession — rotations concurrentes', () => {
+  async function pairedSession(store: AuthStore): Promise<SessionRecord> {
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    const polled = await pollPairing(store, deviceCode, NOW);
+    if (polled.status !== 'claimed') throw new Error('unreachable');
+    const session = await store.findSession(await sha256Hex(polled.token));
+    if (!session) throw new Error('unreachable');
+    return session;
+  }
+
+  it('la seconde de deux rotations du même jeton échoue en conflit, sans laisser de session', async () => {
+    const store = createMemoryAuthStore();
+    const session = await pairedSession(store);
+    const t = new Date(NOW.getTime() + 1000);
+    // Les deux requêtes ont lu la session AVANT que l'une ou l'autre ne l'ait remplacée.
+    const winner = await rotateNativeSession(store, { current: { ...session }, now: t });
+    expect(winner).not.toBeNull();
+    await expect(
+      rotateNativeSession(store, { current: { ...session }, now: t }),
+    ).rejects.toBeInstanceOf(NativeRotationConflictError);
+
+    // Seul le jeton du gagnant est une session active ; celle de la perdante a été effacée.
+    const active = await store.listSessions(session.userId, t);
+    expect(active).toHaveLength(1);
+    expect(active[0].idHash).toBe(await sha256Hex(winner!.token));
+  });
+
+  it('non-régression : une rotation isolée réussit, puis le nouveau jeton se renouvelle', async () => {
+    const store = createMemoryAuthStore();
+    const session = await pairedSession(store);
+    const first = await rotate(store, { current: session, now: NOW });
+    const t = new Date(NOW.getTime() + 10 * 60 * 1000);
+    const current = (await resolveSession(store, first.token, t))?.session;
+    if (!current) throw new Error('unreachable');
+    const second = await rotate(store, { current, now: t });
+    expect(await resolveSession(store, second.token, t)).not.toBeNull();
+  });
+});
+
+/** Audit #9 : purge des appairages expirés — sessions jamais remises effacées. */
+describe('purgeExpiredPairings — sessions d’appairages jamais sondés', () => {
+  const AFTER = new Date(NOW.getTime() + PAIRING_TTL_MS + 1000);
+
+  it('un appairage réclamé mais jamais sondé ne laisse aucune session, avant comme après purge', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    expect(await claimPairing(store, { userCode, user, now: NOW })).toBe(true);
+    expect(await store.listSessions(user.id, NOW)).toHaveLength(0);
+
+    await store.purgeExpiredPairings(AFTER);
+    expect(await store.listSessions(user.id, AFTER)).toHaveLength(0);
+    expect(await pollPairing(store, deviceCode, AFTER)).toEqual({ status: 'expired' });
+  });
+
+  it('la suppression du compte emporte ses confirmations en attente', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    await store.deleteUser(user.id);
+    expect(await pollPairing(store, deviceCode, NOW)).toEqual({ status: 'expired' });
+    expect(store.sessions.size).toBe(0);
+  });
+
+  it('non-régression : la session d’un appairage sondé (jeton remis) survit à la purge', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    const polled = await pollPairing(store, deviceCode, NOW);
+    if (polled.status !== 'claimed') throw new Error('unreachable');
+
+    await store.purgeExpiredPairings(AFTER);
+    expect(await resolveSession(store, polled.token, AFTER)).not.toBeNull();
+  });
+
+  it('non-régression : un appairage jamais réclamé est purgé sans toucher aux sessions', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode } = await startPairing(store, NOW);
+    const other = await startPairing(store, NOW);
+    await claimPairing(store, { userCode: other.userCode, user, now: NOW });
+    const polled = await pollPairing(store, other.deviceCode, NOW);
+    if (polled.status !== 'claimed') throw new Error('unreachable');
+
+    await store.purgeExpiredPairings(AFTER);
+    expect(await pollPairing(store, deviceCode, AFTER)).toEqual({ status: 'expired' });
+    expect(await store.listSessions(user.id, AFTER)).toHaveLength(1);
+  });
+});
+
+/**
+ * Point G (audit du 2026-09-23) : l'overlay ne fait JAMAIS de rotation. Une session native utilisée
+ * régulièrement doit voir son expiration glissante prolongée par `resolveSession` — sans rotation —
+ * jusqu'au plafond absolu de 180 jours, et pas au-delà.
+ */
+describe('session native sans rotation — expiration glissante jusqu’au plafond', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('reste valide 180 jours avec un usage quotidien, puis expire au plafond', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    const polled = await pollPairing(store, deviceCode, NOW);
+    if (polled.status !== 'claimed') throw new Error('unreachable');
+
+    const cap = NOW.getTime() + SESSION_MAX_LIFETIME_MS;
+    let lastExpiry = 0;
+    // Un usage tous les 2 jours pendant 179 jours : jamais refusée, expiration toujours repoussée
+    // (bornée par le plafond).
+    for (let day = 2; day < 180; day += 2) {
+      const at = new Date(NOW.getTime() + day * DAY);
+      const resolved = await resolveSession(store, polled.token, at);
+      expect(resolved, `jour ${day}`).not.toBeNull();
+      const expiry = resolved!.session.expiresAt.getTime();
+      expect(expiry).toBeGreaterThanOrEqual(lastExpiry);
+      expect(expiry).toBeLessThanOrEqual(cap);
+      expect(expiry).toBe(Math.min(at.getTime() + SESSION_TTL_MS, cap));
+      lastExpiry = expiry;
+    }
+    expect(lastExpiry).toBe(cap);
+    // Au plafond : refusée, même utilisée la veille.
+    expect(await resolveSession(store, polled.token, new Date(cap))).toBeNull();
+  });
+
+  it('sans usage pendant plus de 30 jours : expire (expiration glissante, pas de plafond atteint)', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    const polled = await pollPairing(store, deviceCode, NOW);
+    if (polled.status !== 'claimed') throw new Error('unreachable');
+    const late = new Date(NOW.getTime() + SESSION_TTL_MS + 1000);
+    expect(await resolveSession(store, polled.token, late)).toBeNull();
   });
 });

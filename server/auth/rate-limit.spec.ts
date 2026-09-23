@@ -5,7 +5,14 @@
 
 import { describe, expect, it } from 'vitest';
 import { MissingProductionSecretError, isPublicDeployment } from './environment';
-import { clientIpKey, pollTokenBucket, rateLimitIpSubject, rateLimitSecret } from './rate-limit';
+import {
+  checkRateLimit,
+  clientIpKey,
+  pollTokenBucket,
+  rateLimitIpSubject,
+  rateLimitSecret,
+} from './rate-limit';
+import { createMemoryAuthStore } from './memory-store';
 
 function from(ip: string, url = 'https://wakfu.example/api/v1/auth/native/pair'): Request {
   return new Request(url, { headers: { 'cf-connecting-ip': ip } });
@@ -91,5 +98,16 @@ describe('pollTokenBucket', () => {
     expect(bucket).toMatch(/^auth:native-poll:token:[0-9a-f]{32}$/);
     expect(await pollTokenBucket(token)).toBe(bucket);
     expect(await pollTokenBucket('y'.repeat(43))).not.toBe(bucket);
+  });
+});
+
+describe('checkRateLimit pondéré (budget en octets)', () => {
+  it('additionne le poids de chaque appel et refuse au-delà de la limite', async () => {
+    const store = createMemoryAuthStore();
+    const rule = { limit: 1000, windowMs: 10 * 60 * 1000 };
+    const now = new Date('2026-09-23T12:00:00Z');
+    expect((await checkRateLimit(store, 'bytes:user:1', rule, now, 600)).allowed).toBe(true);
+    expect((await checkRateLimit(store, 'bytes:user:1', rule, now, 400)).allowed).toBe(true);
+    expect((await checkRateLimit(store, 'bytes:user:1', rule, now, 1)).allowed).toBe(false);
   });
 });

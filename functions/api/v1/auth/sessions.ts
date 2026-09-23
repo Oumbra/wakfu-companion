@@ -1,6 +1,6 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
-import { runRetentionPurges } from '../../../../server/auth/flow';
+import { runRetentionPurges, sessionChainId } from '../../../../server/auth/flow';
 import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../server/auth/rate-limit';
 import {
   authenticate,
@@ -84,10 +84,13 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
     // user_id avant toute écriture, une empreinte appartenant à un autre
     // compte ne matche simplement pas.
     const own = await auth.store.listSessions(auth.user.id, now);
-    if (!own.some((session) => session.idHash === targetId)) {
-      return jsonError('session inconnue', 404);
-    }
+    const target = own.find((session) => session.idHash === targetId);
+    if (!target) return jsonError('session inconnue', 404);
+    // Toute la chaîne de rotation (audit du 2026-09-23, S7) : l'ancien jeton d'un overlay reste
+    // valable quelques minutes après une rotation (grâce), sans apparaître dans la liste. Ne
+    // révoquer que la session listée lui laissait ce délai, et un rattrapage de rotation.
     await auth.store.revokeSession(targetId, now);
+    await auth.store.revokeSessionChain(sessionChainId(target), now);
 
     const headers = new Headers();
     if (targetId === auth.sessionIdHash) {

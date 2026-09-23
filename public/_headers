@@ -25,13 +25,15 @@
 #               widget vit dans une iframe). Aucun inline (le script anti-flash du thème vit dans public/theme-init.js, voir
 #               src/index.html) ; les blocs JSON-LD ne sont pas exécutés, la CSP ne les concerne pas.
 #   styles    : 'unsafe-inline' requis — Angular injecte les styles de composants dans des <style>.
-#   connect   : API et service worker (ngsw.json) sur la même origine, PLUS toute origine tierce
-#               chargée par une balise (<img>, <script>) : le service worker Angular (ngsw-worker.js)
-#               intercepte TOUTES les requêtes GET de la page, y compris cross-origin, et les rejoue
-#               avec fetch() — soumis au `connect-src` de la CSP du worker (ces mêmes en-têtes), pas à
-#               `img-src`/`script-src`. Sans ça : « Fetch API cannot load ... violates the document's
-#               Content Security Policy » dans ngsw-worker.js, puis 504 renvoyé à la balise (constaté le
-#               2026-09-23 sur les avatars fan-art). Toute origine d'img-src/script-src se répète donc ici.
+#   connect   : API et service worker (ngsw.json) sur la même origine. Les origines tierces
+#               (static.ankama.com, challenges.cloudflare.com) n'y restent que pour une TRANSITION :
+#               le worker Angular brut (ngsw-worker.js) rejouait avec fetch() toutes les requêtes GET
+#               de la page, y compris cross-origin, sous le `connect-src` figé à son installation
+#               (504 sur les avatars fan-art, 2026-09-23). Depuis, l'application enregistre
+#               public/sw.js, qui retire au worker Angular toute requête cross-origin : il ne fait
+#               plus aucun fetch() hors de l'origine. Les deux origines tierces sont à retirer d'ici
+#               (retour à `connect-src 'self'`) une fois les anciens workers remplacés, soit après
+#               le 2026-10-23 (audit du 2026-09-23, S14).
 #   OAuth     : navigation complète (location.assign) vers /api/v1/auth/*, puis redirection serveur
 #               vers Discord/Google — hors du champ de la CSP de la page (pas un fetch, pas un form).
 #
@@ -39,13 +41,23 @@
 #   COOP same-origin : aucune fenêtre popup ni `window.opener` dans l'app — OAuth par navigation
 #               complète (pas de popup), Turnstile dans une iframe (non concernée par COOP).
 #   CORP same-origin : aucune autre origine n'a à embarquer nos assets (l'overlay de bureau est un
-#               client Rust, hors navigateur ; les icônes passent par l'API, non couverte ici).
+#               client Rust, hors navigateur) — icônes wakassets comprises depuis qu'elles sont des
+#               fichiers statiques (bloc /api/v1/icons/* plus bas) : une page tierce ne peut pas
+#               s'en servir de CDN, rôle que tenait `rejectUnknownCaller` dans le relais.
 #               Sans effet sur les robots (aperçus de liens, moteurs), qui ne l'appliquent pas.
 #   HSTS : 2 ans + includeSubDomains. PAS `preload` (inscription quasi irréversible, décision
 #               manuelle, voir server/README.md). Pas de `require-trusted-types-for 'script'` non
 #               plus : Angular n'est pas configuré pour Trusted Types, l'app serait bloquée — à
 #               évaluer d'abord en Report-Only avec un endpoint de rapport.
+#   Link (retiré) : Pages génère seul un `Link: <chunk-X.js>; rel="modulepreload"` (Early Hints)
+#               à partir des `<link rel="modulepreload" href="chunk-X.js">` d'index.html, en gardant
+#               l'URL RELATIVE — le navigateur la résout contre l'URL de la réponse, pas contre le
+#               `<base href="/">` du document : `/fr/profile` précharge `/fr/chunk-X.js`, et un
+#               repli SPA sous `/api/v1/auth/me` (Functions indisponibles, fail open) précharge
+#               `/api/v1/auth/chunk-X.js` — du HTML, « Failed to load module script » en console
+#               (constaté le 2026-09-23). Les balises modulepreload du HTML suffisent.
 /*
+  ! Link
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
@@ -54,3 +66,10 @@
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
   Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static.ankama.com; font-src 'self'; connect-src 'self' https://static.ankama.com https://challenges.cloudflare.com; frame-src https://challenges.cloudflare.com; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'
+
+# Icônes wakassets publiées en fichiers statiques par tools/bundle-wakassets-icons.mjs (déploiement
+# seulement) : même durée de cache navigateur qu'avec le relais (`HIT_MAX_AGE_SECONDS`,
+# server/icons/proxy.ts) — les `gfxId` sont stables. Sans ce bloc, Pages sert `max-age=0,
+# must-revalidate` : une revalidation par affichage. Une icône absente (404) garde `no-store`.
+/api/v1/icons/*
+  Cache-Control: public, max-age=604800

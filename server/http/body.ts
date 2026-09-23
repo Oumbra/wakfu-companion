@@ -19,7 +19,8 @@ export type BodyReadResult =
   { ok: true; text: string } | { ok: false; status: 400 | 413; error: string };
 
 export type JsonBodyResult =
-  { ok: true; value: unknown } | { ok: false; status: 400 | 413; error: string };
+  | { ok: true; value: unknown; /** Taille lue, en octets UTF-8. */ bytes: number }
+  | { ok: false; status: 400 | 413; error: string };
 
 const TOO_LARGE_ERROR = 'corps de requête trop volumineux';
 
@@ -69,7 +70,11 @@ export async function readJsonBodyLimited(
   const raw = await readBodyLimited(request, maxBytes);
   if (!raw.ok) return raw;
   try {
-    return { ok: true, value: JSON.parse(raw.text) as unknown };
+    return {
+      ok: true,
+      value: JSON.parse(raw.text) as unknown,
+      bytes: new TextEncoder().encode(raw.text).byteLength,
+    };
   } catch {
     return { ok: false, status: 400, error: 'corps JSON invalide' };
   }

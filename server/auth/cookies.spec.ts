@@ -8,11 +8,13 @@ import {
   CSRF_COOKIE,
   LEGACY_CSRF_COOKIE,
   LEGACY_SESSION_COOKIE,
+  LEGACY_SESSION_COOKIE_UNTIL,
   OAUTH_STATE_COOKIE,
   SESSION_COOKIE,
   clearedAuthCookies,
   clearedOauthStateCookies,
   csrfCookies,
+  emitLegacyCsrfCookie,
   hasCsrfCookie,
   oauthStateCookie,
   readCookie,
@@ -21,6 +23,9 @@ import {
   sessionCookie,
   sessionCookies,
 } from './cookies';
+
+const BEFORE_CUTOFF = new Date('2026-10-22T23:59:59Z');
+const AFTER_CUTOFF = new Date('2026-10-23T00:00:00Z');
 
 function withCookie(cookie: string): Request {
   return new Request('https://wakfu.example/api/v1/auth/me', { headers: { cookie } });
@@ -57,9 +62,15 @@ describe('noms préfixés et transition', () => {
     expect(csrf).not.toContain('HttpOnly');
   });
 
-  it('pose aussi l’ancien `wc_csrf` tant que le client le lit (même valeur)', () => {
-    const cookies = csrfCookies('valeur');
-    expect(cookies.some((c) => c.startsWith(`${LEGACY_CSRF_COOKIE}=valeur;`))).toBe(true);
+  it('pose aussi l’ancien `wc_csrf` jusqu’à la date butoir, plus après (horloge injectée)', () => {
+    const before = csrfCookies('valeur', undefined, BEFORE_CUTOFF);
+    expect(before.some((c) => c.startsWith(`${LEGACY_CSRF_COOKIE}=valeur;`))).toBe(true);
+    const after = csrfCookies('valeur', undefined, AFTER_CUTOFF);
+    expect(after).toHaveLength(1);
+    expect(after[0].startsWith(`${CSRF_COOKIE}=valeur;`)).toBe(true);
+    expect(emitLegacyCsrfCookie(BEFORE_CUTOFF)).toBe(true);
+    expect(emitLegacyCsrfCookie(AFTER_CUTOFF)).toBe(false);
+    expect(LEGACY_SESSION_COOKIE_UNTIL.toISOString()).toBe('2026-10-23T00:00:00.000Z');
   });
 
   it('connexion : nouveaux noms, ancien cookie de session effacé', () => {
@@ -71,16 +82,24 @@ describe('noms préfixés et transition', () => {
     );
   });
 
-  it('lit le nouveau nom en priorité, retombe sur l’ancien en le signalant', () => {
-    expect(readSessionCookie(withCookie('__Host-wc_session=neuf; wc_session=vieux'))).toEqual({
-      token: 'neuf',
-      legacy: false,
-    });
-    expect(readSessionCookie(withCookie('wc_session=vieux'))).toEqual({
+  it('lit le nouveau nom en priorité, retombe sur l’ancien en le signalant (avant la butoir)', () => {
+    expect(
+      readSessionCookie(withCookie('__Host-wc_session=neuf; wc_session=vieux'), BEFORE_CUTOFF),
+    ).toEqual({ token: 'neuf', legacy: false });
+    expect(readSessionCookie(withCookie('wc_session=vieux'), BEFORE_CUTOFF)).toEqual({
       token: 'vieux',
       legacy: true,
     });
-    expect(readSessionCookie(withCookie('autre=1'))).toBeNull();
+    expect(readSessionCookie(withCookie('autre=1'), BEFORE_CUTOFF)).toBeNull();
+  });
+
+  it('après la butoir : ancien `wc_session` ignoré, nouveau nom toujours lu', () => {
+    expect(readSessionCookie(withCookie('wc_session=vieux'), AFTER_CUTOFF)).toBeNull();
+    expect(
+      readSessionCookie(withCookie('__Host-wc_session=neuf; wc_session=vieux'), AFTER_CUTOFF),
+    ).toEqual({ token: 'neuf', legacy: false });
+    expect(hasCsrfCookie(withCookie('wc_csrf=a'), AFTER_CUTOFF)).toBe(false);
+    expect(hasCsrfCookie(withCookie('__Host-wc_csrf=a'), AFTER_CUTOFF)).toBe(true);
   });
 
   it('déconnexion : efface les deux noms de session et de CSRF', () => {
@@ -90,21 +109,41 @@ describe('noms préfixés et transition', () => {
     }
   });
 
-  it('state OAuth : `__Secure-` restreint à /api/v1/auth, ancien nom lu en repli', () => {
-    expect(OAUTH_STATE_COOKIE).toBe('__Secure-wc_oauth_state');
+  it('state OAuth : `__Host-`, Path=/, conforme au préfixe ; aucun ancien nom lu', () => {
+    expect(OAUTH_STATE_COOKIE).toBe('__Host-wc_oauth_state');
     const cookie = oauthStateCookie('etat');
-    expect(cookie).toContain('Path=/api/v1/auth');
-    expect(cookie).toContain('; Secure');
-    expect(readOauthStateCookie(withCookie('wc_oauth_state=ancien'))).toBe('ancien');
-    expect(readOauthStateCookie(withCookie('__Secure-wc_oauth_state=neuf; wc_oauth_state=x'))).toBe(
-      'neuf',
-    );
-    expect(clearedOauthStateCookies()).toHaveLength(2);
+    expectHostPrefixCompliant(cookie);
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('Max-Age=600');
+    // Flux légitime : le state posé par /start est relu tel quel par /callback.
+    expect(readOauthStateCookie(withCookie(cookie.split(';')[0]))).toBe('etat');
+    // Anciens noms : plus jamais lus (un state vit 10 min), et ne gênent pas le nouveau.
+    expect(readOauthStateCookie(withCookie('wc_oauth_state=ancien'))).toBeNull();
+    expect(readOauthStateCookie(withCookie('__Secure-wc_oauth_state=ancien'))).toBeNull();
+    expect(
+      readOauthStateCookie(
+        withCookie('__Secure-wc_oauth_state=ancien; __Host-wc_oauth_state=neuf; wc_oauth_state=x'),
+      ),
+    ).toBe('neuf');
   });
 
-  it('reconnaît un cookie CSRF sous l’un ou l’autre nom', () => {
-    expect(hasCsrfCookie(withCookie('__Host-wc_csrf=a'))).toBe(true);
-    expect(hasCsrfCookie(withCookie('wc_csrf=a'))).toBe(true);
-    expect(hasCsrfCookie(withCookie('x=1'))).toBe(false);
+  it('retour OAuth : efface le state courant (Path=/) et les anciens sous leur chemin d’origine', () => {
+    const cleared = clearedOauthStateCookies();
+    expect(cleared).toHaveLength(3);
+    const current = cleared.find((c) => c.startsWith('__Host-wc_oauth_state=;'));
+    expect(current).toBeDefined();
+    expectHostPrefixCompliant(current!);
+    expect(current).toContain('Max-Age=0');
+    for (const name of ['__Secure-wc_oauth_state', 'wc_oauth_state']) {
+      const stale = cleared.find((c) => c.startsWith(`${name}=;`));
+      expect(stale).toContain('Path=/api/v1/auth');
+      expect(stale).toContain('Max-Age=0');
+    }
+  });
+
+  it('reconnaît un cookie CSRF sous l’un ou l’autre nom avant la butoir', () => {
+    expect(hasCsrfCookie(withCookie('__Host-wc_csrf=a'), BEFORE_CUTOFF)).toBe(true);
+    expect(hasCsrfCookie(withCookie('wc_csrf=a'), BEFORE_CUTOFF)).toBe(true);
+    expect(hasCsrfCookie(withCookie('x=1'), BEFORE_CUTOFF)).toBe(false);
   });
 });

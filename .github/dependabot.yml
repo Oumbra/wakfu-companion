@@ -4,7 +4,8 @@
 #   que sur les mises à jour de version ; les mises à jour de SÉCURITÉ (alertes Dependabot)
 #   visent toujours la branche par défaut.
 # - Ce fichier n'est lu par GitHub QUE sur la branche par défaut (`main`) : inactif tant que
-#   `claude/dev` n'y est pas fusionnée.
+#   `claude/dev` n'y est pas fusionnée ; toute modification de ce fichier ne prend effet qu'après
+#   la mise en prod suivante. Les PR, elles, visent toujours `claude/dev`.
 # - Mineures et correctifs groupés en une PR par écosystème (moins de bruit) ; les majeures
 #   restent des PR individuelles, à relire une par une.
 # - Actions épinglées par SHA dans .github/workflows/ : Dependabot met à jour le SHA ET le
@@ -24,6 +25,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Même délai que npm (audit du 2026-09-23, S5) : une action compromise (tag déplacé, compte
+    # du mainteneur repris) est en général repérée et retirée en quelques jours.
+    cooldown:
+      default-days: 7
     commit-message:
       prefix: ci
     ignore:
@@ -48,6 +53,14 @@ updates:
     # (attaques de chaîne d'approvisionnement npm) sont en général retirés dans ce délai.
     cooldown:
       default-days: 7
+    ignore:
+      # Majeure Angular (et TypeScript qu'elle impose) : tous les paquets @angular/* doivent
+      # monter ensemble via `ng update` (migrations de code incluses). Proposées une par une,
+      # elles échouent en `npm ci` (ERESOLVE, PR #34 à #37 du 2026-09-23). À faire à la main.
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: chore
       prefix-development: chore

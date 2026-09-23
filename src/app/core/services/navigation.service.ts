@@ -1,6 +1,6 @@
 import { computed, Injectable, signal } from '@angular/core';
 
-export type AppView = 'main' | 'profile' | 'legal' | 'account';
+export type AppView = 'main' | 'profile' | 'legal';
 
 /** Onglets mobile du tableau de bord (voir `DashboardComponent`, sur `main`) — définis ici (plutôt
  * que dans le composant) pour que `NavigationService`/`RouteSyncService`/`app.routes.ts` puissent
@@ -71,8 +71,6 @@ export function pagePathFor(
       return profileTab && profileTab !== 'avatar'
         ? `/profile/${PROFILE_TAB_SEGMENT[profileTab]}`
         : '/profile';
-    case 'account':
-      return '/account';
     case 'legal':
       if (legalKind === 'privacy') return '/privacy-policy';
       if (legalKind === 'terms') return '/terms-of-service';
@@ -145,8 +143,8 @@ export class NavigationService {
 
   /** Consommé une seule fois par `ProfilePageComponent` : force l'onglet Connexion (section
    * Discord/Google, voir CLAUDE.md) à la prochaine ouverture de la page profil. Remplace l'ancienne
-   * vue de connexion dédiée (`AppView` 'login', supprimée) — la page compte (état invité) déclenche
-   * `requestProfileConnectionTab()` avant de naviguer vers `profile`. */
+   * vue de connexion dédiée (`AppView` 'login', supprimée) et l'ancienne page compte (`AppView`
+   * 'account', fusionnée dans cet onglet) — `openAccount()` le pose avant de naviguer vers `profile`. */
   readonly profileConnectionTabRequested = signal(false);
 
   readonly view = computed(() => {
@@ -188,9 +186,11 @@ export class NavigationService {
     this.profileCharactersTabRequested.set(true);
   }
 
-  /** Page compte (identité, sessions, données, suppression). */
+  /** Compte (identité, sessions, données, suppression) : depuis la fusion avec la connexion, c'est
+   * l'onglet Connexion de la page profil (voir `AccountSectionsComponent`). */
   openAccount(): void {
-    this.push('account');
+    this.requestProfileConnectionTab();
+    this.push('profile');
   }
 
   /** Remplace la vue courante par `view` sans empiler (le retour ramène donc là d'où l'on venait

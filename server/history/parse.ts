@@ -6,14 +6,13 @@
  * `server/settings/merge.ts` : les décisions vivent ici, et elles doivent être
  * testables sans base ni runtime Workers (`server/history/parse.spec.ts`).
  *
- * Le contrat est volontairement strict — un lot qui contient une entrée
- * invalide est refusé **en entier** (400), jamais partiellement ingéré : ces
- * charges utiles sont produites par un seul émetteur (la file de
- * synchronisation du client), une entrée mal formée y signale un bug, pas une
- * saisie utilisateur à rattraper. C'est l'inverse du choix fait pour
- * `/prices/ingest` (projet wakfu-companion-price, voir son README.md — ces
- * tables/endpoints ont été déplacés hors de ce dépôt), où un id inconnu isolé
- * ne doit pas faire perdre tout le scan du jour d'un skill externe.
+ * Contrat **par entrée** depuis le 2026-09-23 (voir `parseBatchLenient`) : une
+ * entrée invalide est ignorée et signalée dans `rejected`, le reste du lot est
+ * écrit. Le contrat « tout ou rien » d'origine (un lot contenant une entrée
+ * invalide refusé en entier, 400) s'est révélé bloquant en production : la
+ * file de l'overlay renvoie indéfiniment un lot refusé, si bien qu'UN
+ * événement mal formé (combat restauré daté de 1970) figeait tout son
+ * historique. Seul un corps globalement malformé reste refusé en 400.
  */
 
 export type ParseResult<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -205,9 +204,19 @@ export function parseBoundedDate(raw: unknown, field: string, now: Date): ParseR
   return { ok: true, value: parsed };
 }
 
+/**
+ * Caractère NUL (U+0000) : refusé par Postgres dans une colonne `text` comme dans une chaîne `jsonb`
+ * — l'`INSERT` échoue alors en 500, et avec lui tout le lot. Aucun log Wakfu n'en produit : une
+ * entrée qui en contient est ignorée (voir `parseBatchLenient`), jamais écrite.
+ */
+function hasNul(value: string): boolean {
+  return value.includes('\u0000');
+}
+
 function parseText(raw: unknown, field: string): ParseResult<string> {
   if (typeof raw !== 'string' || raw.length === 0) return { ok: false, error: `${field} manquant` };
   if (raw.length > MAX_NAME_LENGTH) return { ok: false, error: `${field} trop long` };
+  if (hasNul(raw)) return { ok: false, error: `${field} invalide` };
   return { ok: true, value: raw };
 }
 
@@ -247,7 +256,7 @@ function parseCount(
     return optional ? { ok: true, value: null } : { ok: false, error: `${field} manquant` };
   }
   if (typeof raw !== 'number' || !Number.isFinite(raw) || !Number.isInteger(raw) || raw < 0) {
-    return { ok: false, error: `${field} invalide : ${String(raw)}` };
+    return { ok: false, error: `${field} invalide : ${echoValue(raw)}` };
   }
   if (raw > max) {
     return { ok: false, error: `${field} trop grand : ${raw}` };
@@ -331,39 +340,104 @@ function parseGameServer(raw: unknown): ParseResult<string | null> {
   return { ok: true, value: raw };
 }
 
+/** Longueur maximale d'une valeur reprise telle quelle dans un message d'erreur renvoyé au client
+ * (audit du 2026-09-23) : jamais le corps brut, seulement un extrait borné. */
+export const MAX_ECHOED_VALUE_LENGTH = 64;
+
+/** Extrait borné d'une valeur reçue, pour un message d'erreur (voir `MAX_ECHOED_VALUE_LENGTH`). */
+export function echoValue(raw: unknown): string {
+  const text = String(raw);
+  return text.length > MAX_ECHOED_VALUE_LENGTH
+    ? `${text.slice(0, MAX_ECHOED_VALUE_LENGTH)}…`
+    : text;
+}
+
+/** Entrée d'un lot ignorée (non écrite) — renvoyée au client dans `rejected`, à titre informatif. */
+export interface RejectedEntry {
+  /** Position de l'entrée dans le tableau `entries` reçu. */
+  index: number;
+  /** `clientKey` de l'entrée quand elle était lisible (forme sha256 valide), absent sinon. */
+  clientKey?: string;
+  error: string;
+}
+
+/**
+ * Lot d'historique après validation **entrée par entrée** : les entrées valides (dans l'ordre reçu,
+ * `indices[i]` = position d'origine de `entries[i]`) et celles ignorées.
+ */
+export interface ParsedBatch<T> {
+  entries: T[];
+  indices: number[];
+  rejected: RejectedEntry[];
+}
+
 /**
  * Enveloppe commune `{ entries: [...] }`, bornée à `MAX_HISTORY_BATCH`.
- * Les doublons de `clientKey` **au sein d'un même lot** sont refusés : ils
- * feraient échouer l'`INSERT ... ON CONFLICT` de Postgres (« ON CONFLICT DO
- * UPDATE command cannot affect row a second time » sur un upsert, et une
- * insertion silencieusement partielle sinon) — mieux vaut le dire franchement
- * que de laisser passer une charge utile que la file cliente n'aurait jamais dû
- * produire.
+ *
+ * **Sémantique par entrée depuis le 2026-09-23** (régression en production) : une entrée invalide
+ * est IGNORÉE — non écrite, signalée dans `rejected` — au lieu de faire refuser le lot entier en
+ * 400. Cas réel : un combat restauré par l'overlay avec un `startedAt` à l'epoch (1970) faisait
+ * rejeter tout le lot, et l'overlay (qui traite tout 4xx comme un échec et renvoie le même lot
+ * indéfiniment) bloquait sa file d'envoi derrière. Seul un corps GLOBALEMENT malformé (pas de
+ * tableau `entries`, lot trop volumineux) reste une erreur (`ok: false`, 400).
+ *
+ * Les doublons de `clientKey` **au sein d'un même lot** : la PREMIÈRE occurrence est gardée, les
+ * suivantes ignorées (`rejected`). Les écrire toutes ferait échouer l'`INSERT ... ON CONFLICT` de
+ * Postgres (« ON CONFLICT DO UPDATE command cannot affect row a second time », donc un 500).
  */
-function parseBatch<T>(
+function parseBatchLenient<T>(
   body: unknown,
   parseEntry: (raw: Record<string, unknown>) => ParseResult<T>,
   keyOf: (value: T) => string,
-): ParseResult<T[]> {
+): ParseResult<ParsedBatch<T>> {
   const entries = (body as { entries?: unknown } | null)?.entries;
   if (!Array.isArray(entries)) return { ok: false, error: 'champ "entries" manquant ou invalide' };
   if (entries.length > MAX_HISTORY_BATCH) {
     return { ok: false, error: `lot trop volumineux (max ${MAX_HISTORY_BATCH})` };
   }
 
-  const values: T[] = [];
+  const batch: ParsedBatch<T> = { entries: [], indices: [], rejected: [] };
   const seen = new Set<string>();
-  for (const raw of entries) {
+  entries.forEach((raw, index) => {
     const record = asRecord(raw, 'entrée');
-    if (!record.ok) return record;
+    if (!record.ok) {
+      batch.rejected.push({ index, error: record.error });
+      return;
+    }
+    // `clientKey` lu à part : il identifie l'entrée dans `rejected` même quand un AUTRE champ est
+    // invalide (le client peut alors retrouver l'événement fautif).
+    const clientKey = parseClientKey(record.value['clientKey']);
     const parsed = parseEntry(record.value);
-    if (!parsed.ok) return parsed;
+    if (!parsed.ok) {
+      batch.rejected.push({
+        index,
+        ...(clientKey.ok ? { clientKey: clientKey.value } : {}),
+        error: parsed.error,
+      });
+      return;
+    }
     const key = keyOf(parsed.value);
-    if (seen.has(key)) return { ok: false, error: `clientKey en double dans le lot : ${key}` };
+    if (seen.has(key)) {
+      batch.rejected.push({ index, clientKey: key, error: 'clientKey en double dans le lot' });
+      return;
+    }
     seen.add(key);
-    values.push(parsed.value);
-  }
-  return { ok: true, value: values };
+    batch.entries.push(parsed.value);
+    batch.indices.push(index);
+  });
+  return { ok: true, value: batch };
+}
+
+/**
+ * Vue STRICTE d'un lot (tout ou rien) : la première entrée invalide rend `ok: false`. N'est plus
+ * utilisée par les routes (voir `parseBatchLenient`) ; conservée pour les tests de validation
+ * d'une entrée (`parse.spec.ts`) et pour tout script qui exige un lot entièrement valide.
+ */
+function strictBatch<T>(result: ParseResult<ParsedBatch<T>>): ParseResult<T[]> {
+  if (!result.ok) return result;
+  const [first] = result.value.rejected;
+  if (first) return { ok: false, error: first.error };
+  return { ok: true, value: result.value.entries };
 }
 
 /**
@@ -399,10 +473,15 @@ function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput
   }
   const byElement: Record<string, number> = {};
   for (const [element, amount] of elementEntries) {
-    if (element.length === 0 || element.length > MAX_NAME_LENGTH || FORBIDDEN_KEYS.has(element)) {
+    if (
+      element.length === 0 ||
+      element.length > MAX_NAME_LENGTH ||
+      FORBIDDEN_KEYS.has(element) ||
+      hasNul(element)
+    ) {
       return { ok: false, error: `${field}.byElement : élément invalide` };
     }
-    const parsed = parseCount(amount, `${field}.byElement.${element}`);
+    const parsed = parseCount(amount, `${field}.byElement.${echoValue(element)}`);
     if (!parsed.ok) return parsed;
     byElement[element] = parsed.value ?? 0;
   }
@@ -425,7 +504,7 @@ function parseSpellList(raw: unknown, field: string): ParseResult<FightSpellInpu
     const parsed = parseSpell(rawSpell, field);
     if (!parsed.ok) return parsed;
     if (seen.has(parsed.value.spell)) {
-      return { ok: false, error: `sort en double : ${parsed.value.spell}` };
+      return { ok: false, error: `sort en double : ${echoValue(parsed.value.spell)}` };
     }
     seen.add(parsed.value.spell);
     spells.push(parsed.value);
@@ -479,7 +558,11 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   const xpGained = parseCount(entry['xpGained'] ?? 0, 'participant.xpGained');
   if (!xpGained.ok) return xpGained;
   const className = entry['className'];
-  if (className !== null && className !== undefined && typeof className !== 'string') {
+  if (
+    className !== null &&
+    className !== undefined &&
+    (typeof className !== 'string' || hasNul(className))
+  ) {
     return { ok: false, error: 'participant.className invalide' };
   }
 
@@ -511,8 +594,11 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   };
 }
 
-export function parseFightsBody(body: unknown, now: Date = new Date()): ParseResult<FightInput[]> {
-  return parseBatch(
+export function parseFightsBatch(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<ParsedBatch<FightInput>> {
+  return parseBatchLenient(
     body,
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
@@ -558,15 +644,20 @@ export function parseFightsBody(body: unknown, now: Date = new Date()): ParseRes
         return { ok: false, error: `trop de participants (max ${MAX_PARTICIPANTS_PER_FIGHT})` };
       }
       const participants: FightParticipantInput[] = [];
-      // La clé primaire de `fight_participants` est (fight_id, side, name,
-      // instance_index) : deux lignes identiques dans le même combat feraient
-      // échouer l'insertion entière, on les refuse ici plutôt qu'en base.
+      // La clé primaire de `fight_participants` est (fight_id, name, instance_index) depuis la
+      // migration 0035 — le camp n'en fait plus partie : un participant change de camp (la
+      // classification allié/ennemi évolue côté client), il ne se dédouble pas. Deux lignes de même
+      // (nom, instance) dans un même combat feraient échouer l'upsert (500) : l'entrée est refusée
+      // ici. Les deux clients numérotent les instances par nom sur les DEUX camps confondus
+      // (`countNameInstances` côté web, `instance_seen` côté overlay) : jamais le cas en pratique.
       const seenSeats = new Set<string>();
       for (const rawParticipant of rawParticipants) {
         const parsed = parseParticipant(rawParticipant);
         if (!parsed.ok) return parsed;
-        const seat = `${parsed.value.side}|${parsed.value.name}|${parsed.value.instanceIndex}`;
-        if (seenSeats.has(seat)) return { ok: false, error: `participant en double : ${seat}` };
+        const seat = `${parsed.value.name}#${parsed.value.instanceIndex}`;
+        if (seenSeats.has(seat)) {
+          return { ok: false, error: `participant en double : ${echoValue(seat)}` };
+        }
         seenSeats.add(seat);
         participants.push(parsed.value);
       }
@@ -613,11 +704,11 @@ export function parseFightsBody(body: unknown, now: Date = new Date()): ParseRes
   );
 }
 
-export function parsePurchasesBody(
+export function parsePurchasesBatch(
   body: unknown,
   now: Date = new Date(),
-): ParseResult<PurchaseInput[]> {
-  return parseBatch(
+): ParseResult<ParsedBatch<PurchaseInput>> {
+  return parseBatchLenient(
     body,
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
@@ -649,8 +740,11 @@ export function parsePurchasesBody(
   );
 }
 
-export function parseTradesBody(body: unknown, now: Date = new Date()): ParseResult<TradeInput[]> {
-  return parseBatch(
+export function parseTradesBatch(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<ParsedBatch<TradeInput>> {
+  return parseBatchLenient(
     body,
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
@@ -717,11 +811,11 @@ export function parseTradesBody(body: unknown, now: Date = new Date()): ParseRes
   );
 }
 
-export function parsePactExtractionsBody(
+export function parsePactExtractionsBatch(
   body: unknown,
   now: Date = new Date(),
-): ParseResult<PactExtractionInput[]> {
-  return parseBatch(
+): ParseResult<ParsedBatch<PactExtractionInput>> {
+  return parseBatchLenient(
     body,
     (entry) => {
       const clientKey = parseClientKey(entry['clientKey']);
@@ -768,6 +862,29 @@ export function parsePactExtractionsBody(
   );
 }
 
+/** Vues strictes (tout ou rien) des quatre lots — voir `strictBatch`. */
+export function parseFightsBody(body: unknown, now: Date = new Date()): ParseResult<FightInput[]> {
+  return strictBatch(parseFightsBatch(body, now));
+}
+
+export function parsePurchasesBody(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<PurchaseInput[]> {
+  return strictBatch(parsePurchasesBatch(body, now));
+}
+
+export function parseTradesBody(body: unknown, now: Date = new Date()): ParseResult<TradeInput[]> {
+  return strictBatch(parseTradesBatch(body, now));
+}
+
+export function parsePactExtractionsBody(
+  body: unknown,
+  now: Date = new Date(),
+): ParseResult<PactExtractionInput[]> {
+  return strictBatch(parsePactExtractionsBatch(body, now));
+}
+
 /** Bornes de la lecture paginée (`GET /api/v1/history/*`). */
 export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 200;
@@ -781,6 +898,13 @@ export interface PageQuery {
    * au fil des insertions.
    */
   before: Date | null;
+  /**
+   * Départage des entrées de même horodatage que `before` (curseur composite `(date, id)`) : sans
+   * lui, les lignes partageant l'horodatage de la dernière ligne d'une page étaient sautées — et
+   * l'export RGPD, qui enchaîne les pages, était incomplet. `null` pour un curseur à l'ancien
+   * format (date seule), toujours accepté.
+   */
+  beforeId: number | null;
 }
 
 export function parsePageQuery(
@@ -798,8 +922,23 @@ export function parsePageQuery(
   }
 
   const rawBefore = params.get('before');
-  if (rawBefore === null) return { ok: true, value: { limit, before: null } };
-  const before = parseBoundedDate(rawBefore, 'before', now);
+  if (rawBefore === null) return { ok: true, value: { limit, before: null, beforeId: null } };
+  const separator = rawBefore.lastIndexOf(PAGE_CURSOR_SEPARATOR);
+  const rawDate = separator === -1 ? rawBefore : rawBefore.slice(0, separator);
+  const before = parseBoundedDate(rawDate, 'before', now);
   if (!before.ok) return before;
-  return { ok: true, value: { limit, before: before.value } };
+  if (separator === -1) return { ok: true, value: { limit, before: before.value, beforeId: null } };
+  const beforeId = Number(rawBefore.slice(separator + 1));
+  if (!Number.isSafeInteger(beforeId) || beforeId <= 0) {
+    return { ok: false, error: `before invalide : ${echoValue(rawBefore)}` };
+  }
+  return { ok: true, value: { limit, before: before.value, beforeId } };
+}
+
+/** Séparateur date/id du curseur de page (absent d'une date ISO 8601). */
+const PAGE_CURSOR_SEPARATOR = '~';
+
+/** Curseur `nextBefore` de la dernière ligne d'une page pleine : opaque pour les clients. */
+export function encodePageCursor(at: Date, id: number): string {
+  return `${at.toISOString()}${PAGE_CURSOR_SEPARATOR}${id}`;
 }

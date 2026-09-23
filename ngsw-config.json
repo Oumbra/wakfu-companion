@@ -22,7 +22,22 @@
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2|mp3)"]
+        "files": [
+          "/**/*.(svg|cur|jpg|jpeg|png|apng|webp|avif|gif|otf|ttf|woff|woff2|mp3)",
+          "!/api/**"
+        ]
+      }
+    }
+  ],
+  "dataGroups": [
+    {
+      "name": "icons",
+      "urls": ["/api/v1/icons/**"],
+      "version": 2,
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 5000,
+        "maxAge": "30d"
       }
     }
   ]

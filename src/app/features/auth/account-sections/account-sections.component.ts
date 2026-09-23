@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { AuthService, AuthSessionInfo } from '../../../core/auth/auth.service';
 import { AccountExportService } from '../../../core/services/account-export.service';
 import {
@@ -8,34 +8,32 @@ import {
 import { ConfirmDeleteService } from '../../../core/services/confirm-delete.service';
 import { PersistenceService } from '../../../core/services/persistence.service';
 import { I18nService } from '../../../core/services/i18n.service';
-import { NavigationService } from '../../../core/services/navigation.service';
-import { AppPageComponent } from '../../../shared/app-page/app-page.component';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { SwitchComponent } from '../../../shared/switch/switch.component';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
- * Page compte (lot 5, prompt 5.2) : identité, fournisseurs liés, sessions
- * actives avec révocation, export de configurations, suppression du compte, et
- * l'écran de migration des données locales à la première connexion.
+ * Blocs du compte affichés sous les boutons Discord/Google de l'onglet Connexion du profil
+ * (lot 5, prompt 5.2) : décision de migration des données locales, identité, appareils connectés
+ * avec révocation, mes données (synchronisation, export), déconnexion et suppression du compte.
  *
- * C'est aussi la page d'atterrissage après un retour OAuth réussi — voir
- * `App.ngOnInit` : c'est là que se prend, le cas échéant, la décision
+ * Remplace l'ancienne page « Mon compte » (vue `account`, supprimée) : tout ce qui concerne la
+ * connexion tient désormais sur un seul écran, sans navigation supplémentaire. L'ancienne URL
+ * `/account` redirige vers `/profile/connection` (voir app.routes.ts), et le retour OAuth atterrit
+ * sur cet onglet (voir `App.ngOnInit`) — c'est donc là que se prend, le cas échéant, la décision
  * « garder les données locales ou celles du compte ».
  *
- * Elle reste accessible en mode invité, où elle se contente d'inviter à se
- * connecter : aucune garde de route ne l'interdit (contrainte impérative du
- * prompt).
+ * En invité, seul le bloc « Cet appareil » reste : effacer toutes les données locales est promis
+ * par la politique de confidentialité (§5 et §6), connecté ou non.
  */
 @Component({
-  selector: 'app-account-page',
-  imports: [AppPageComponent, TranslatePipe, TooltipDirective, SwitchComponent],
-  templateUrl: './account-page.component.html',
-  styleUrl: './account-page.component.css',
+  selector: 'app-account-sections',
+  imports: [TranslatePipe, TooltipDirective, SwitchComponent],
+  templateUrl: './account-sections.component.html',
+  styleUrl: './account-sections.component.css',
 })
-export class AccountPageComponent implements OnInit {
+export class AccountSectionsComponent {
   protected readonly auth = inject(AuthService);
-  private readonly nav = inject(NavigationService);
   private readonly dataExport = inject(AppDataExportService);
   private readonly accountExport = inject(AccountExportService);
   private readonly confirmDelete = inject(ConfirmDeleteService);
@@ -48,20 +46,23 @@ export class AccountPageComponent implements OnInit {
   protected readonly exporting = signal(false);
   protected readonly exportFailed = signal(false);
 
-  ngOnInit(): void {
-    void this.refreshSessions();
-  }
+  /** Libellé du nombre d'appareils dans l'en-tête du bloc (singulier/pluriel : deux clés). */
+  protected readonly sessionsCountLabel = computed(() => {
+    const count = this.sessions().length;
+    return this.i18n.t(
+      count === 1 ? 'auth.account.sessionsCountOne' : 'auth.account.sessionsCountMany',
+      { count },
+    );
+  });
 
-  protected goBack(): void {
-    this.nav.pop();
-  }
-
-  /** Renvoie vers la page profil, onglet Connexion (section Discord/Google, voir CLAUDE.md) —
-   * `replace` plutôt que `push` : revenu en arrière depuis là, l'utilisateur ne doit pas retomber
-   * sur cette page compte en mode invité qui n'a plus de sens. */
-  protected openLogin(): void {
-    this.nav.requestProfileConnectionTab();
-    this.nav.replace('profile');
+  constructor() {
+    // Le composant vit dans l'onglet Connexion, monté dès l'ouverture du profil — souvent AVANT que
+    // `/auth/me` ait répondu (lien direct, F5, retour OAuth) : la liste des appareils suit donc
+    // l'état de connexion plutôt que d'être chargée une seule fois à l'initialisation.
+    effect(() => {
+      if (this.auth.isAuthenticated()) untracked(() => void this.refreshSessions());
+      else this.sessions.set([]);
+    });
   }
 
   protected async refreshSessions(): Promise<void> {
@@ -73,6 +74,32 @@ export class AccountPageComponent implements OnInit {
     const sessions = await this.auth.listSessions();
     this.sessionsLoading.set(false);
     this.sessions.set(sessions ?? []);
+  }
+
+  /**
+   * Toutes les actions destructives de cette page passent par la même popover de confirmation
+   * (`ConfirmDeleteService`) : révoquer un appareil, tous les appareils, se déconnecter, supprimer
+   * le compte ou effacer les données locales. Aucune ne part sur un simple clic.
+   */
+  protected confirmRevokeSession(session: AuthSessionInfo, event: Event): void {
+    this.confirm(event, 'auth.account.revokeConfirm', () => void this.revokeSession(session));
+  }
+
+  /** Révoque aussi la session courante : l'utilisateur se retrouve déconnecté (voir le message). */
+  protected confirmRevokeAll(event: Event): void {
+    this.confirm(event, 'auth.account.revokeAllConfirm', () => void this.revokeAll());
+  }
+
+  protected confirmLogout(event: Event): void {
+    const key = this.wipeLocalOnLogout()
+      ? 'auth.account.logoutWipeConfirm'
+      : 'auth.account.logoutConfirm';
+    this.confirm(event, key, () => void this.logout());
+  }
+
+  private confirm(event: Event, messageKey: string, onConfirm: () => void): void {
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t(messageKey), onConfirm);
   }
 
   protected async revokeSession(session: AuthSessionInfo): Promise<void> {
@@ -112,10 +139,7 @@ export class AccountPageComponent implements OnInit {
 
   /** Suppression irréversible : confirmée par la même popover que les autres actions destructives. */
   protected confirmDeleteAccount(event: Event): void {
-    const button = event.currentTarget as HTMLElement;
-    this.confirmDelete.open(button, this.i18n.t('auth.account.deleteConfirm'), () => {
-      void this.deleteAccount();
-    });
+    this.confirm(event, 'auth.account.deleteConfirm', () => void this.deleteAccount());
   }
 
   /**
@@ -126,8 +150,7 @@ export class AccountPageComponent implements OnInit {
    * de l'overlay.
    */
   protected confirmWipeLocal(event: Event): void {
-    const button = event.currentTarget as HTMLElement;
-    this.confirmDelete.open(button, this.i18n.t('auth.account.wipeLocalConfirm'), () => {
+    this.confirm(event, 'auth.account.wipeLocalConfirm', () => {
       void this.persistence.wipeLocalData().then(() => window.location.reload());
     });
   }

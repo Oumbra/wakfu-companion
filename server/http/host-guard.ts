@@ -33,6 +33,8 @@
  *    s'il a été rattaché au projet par le mainteneur.
  */
 
+import { isLoopbackHostname } from '../auth/environment';
+
 export interface HostGuardEnv {
   /** Liste d'hôtes autorisés (mode strict), séparés par des virgules — ex.
    * `wakfu-companion.com,www.wakfu-companion.com`. Absente : politique par défaut. */
@@ -47,16 +49,6 @@ export const DEFAULT_ALLOWED_PAGES_ALIASES: readonly string[] = ['claude-dev'];
 
 export type HostDecision = 'allow' | 'reject';
 
-function isLoopback(hostname: string): boolean {
-  return (
-    hostname === 'localhost' ||
-    hostname.endsWith('.localhost') ||
-    /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname) ||
-    hostname === '::1' ||
-    hostname === '[::1]'
-  );
-}
-
 function hostOf(url: string | undefined): string | null {
   if (!url) return null;
   try {
@@ -69,7 +61,7 @@ function hostOf(url: string | undefined): string | null {
 /** Décision pour `hostname` (tel que `new URL(request.url).hostname`, sans port). */
 export function decideHost(rawHostname: string, env: HostGuardEnv): HostDecision {
   const hostname = rawHostname.toLowerCase().replace(/\.$/, '');
-  if (isLoopback(hostname)) return 'allow';
+  if (isLoopbackHostname(hostname)) return 'allow';
   if (env.HOST_GUARD?.trim().toLowerCase() === 'off') return 'allow';
 
   const publicHost = hostOf(env.PUBLIC_BASE_URL);

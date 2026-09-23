@@ -59,4 +59,25 @@ describe('sanitizeUserDataValue — gardes de type des données utilisateur', ()
     expect(isAllowedAvatarExternalUrl('http://static.ankama.com/web-test/1101.png')).toBe(false);
     expect(isAllowedAvatarExternalUrl('javascript:alert(1)')).toBe(false);
   });
+
+  it('dashboardLayout : retire un champ scalaire inconnu sans jeter le reste de la disposition', () => {
+    const value = {
+      menuPos: 'right',
+      kpiPos: 'nulle-part',
+      bodyMode: 'focus',
+      focusTarget: 'combat',
+      focusSide: 'left',
+      historyGroup: { combats: true },
+    };
+    expect(sanitizeUserDataValue('dashboardLayout', value)).toEqual({
+      menuPos: 'right',
+      bodyMode: 'focus',
+      focusSide: 'left',
+      historyGroup: { combats: true },
+    });
+    expect(sanitizeUserDataValue('dashboardLayout', { focusTarget: 'recap' })).toEqual({
+      focusTarget: 'recap',
+    });
+    expect(sanitizeUserDataValue('dashboardLayout', { menuPos: 'hasOwnProperty' })).toEqual({});
+  });
 });

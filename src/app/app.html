@@ -41,16 +41,6 @@
         <app-legal-page />
       }
     </div>
-
-    <div
-      class="view-panel"
-      [class.no-transition]="nav.skipInitialTransition()"
-      [style.transform]="nav.panelTransform('account')"
-    >
-      @defer (when nav.hasVisited('account')) {
-        <app-account-page />
-      }
-    </div>
   </div>
 
   <app-loot-alert />

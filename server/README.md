@@ -145,6 +145,25 @@ DATABASE_URL=... npm run db:migrate
 `DATABASE_URL` doit pointer vers la branche Neon de l'environnement ciblé
 (jamais la production quand on teste en local).
 
+### Retour arrière : pas en deçà de la migration 0035
+
+Les migrations ne s'appliquent que vers l'avant ; elles sont faites pour que le code **précédent**
+tourne encore sur le schéma **suivant** (colonnes ajoutées nullables, contraintes `NOT VALID`).
+Exception : `0035_fight_participants_pk` change la clé primaire de `fight_participants`. Le code
+d'avant cette migration écrit ses participants avec `ON CONFLICT (fight_id, side, name,
+instance_index)`, qui n'existe plus : chaque envoi de combat échouerait en `42P10` (« there is no
+unique or exclusion constraint matching the ON CONFLICT specification »). Conséquences :
+
+- **ne jamais redéployer** un commit antérieur à 0035 sur une base qui l'a reçue (rollback
+  Cloudflare Pages compris) ; revenir en arrière = redéployer un commit postérieur qui annule la
+  régression ;
+- pendant le déploiement qui applique 0035, les anciennes Functions encore en service peuvent
+  répondre 500 aux envois de combats le temps de la bascule ; le client les garde en file et
+  les renvoie (aucune perte).
+
+Audit du 2026-09-23 (S9). Une prochaine migration de ce type se fera en deux temps (ajout de la
+nouvelle contrainte, déploiement du code, retrait de l'ancienne au déploiement suivant).
+
 ## Endpoints actuels
 
 - `GET /api/v1/health` — état du serveur + connectivité DB (`SELECT 1`). `no-store` ; depuis le
@@ -264,6 +283,20 @@ minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   amont), aucun en-tête amont recopié. Ajouter un dossier côté client sans
   l'ajouter à `ALLOWED_FOLDERS` = 400 silencieux, image jamais affichée.
   Logique pure dans `server/icons/proxy.ts` (testée).
+  **En production et en preview, ce n'est plus la Function qui répond**
+  (2026-09-23) : chaque icône coûtait une invocation, même servie depuis le
+  cache, et le quota quotidien du compte a été dépassé — projet en « Fail
+  open », toute l'API renvoyait alors `index.html`. Les workflows de
+  déploiement lancent `tools/bundle-wakassets-icons.mjs` après `ng build` :
+  les mêmes dossiers (et le même filtre de noms) sont copiés en fichiers
+  statiques sous `dist/.../api/v1/icons/`, un `_routes.json` exclut
+  `/api/v1/icons/*` des Functions, et un `404.html` imbriqué garde un vrai 404
+  pour une icône absente. Mêmes URLs pour le site et l'overlay ; la garde
+  `rejectUnknownCaller` est remplacée par `Cross-Origin-Resource-Policy:
+  same-origin` (`public/_headers`), cache navigateur d'une semaine. Nouvelles
+  icônes `wakassets` : visibles au déploiement suivant. La Function reste pour
+  `wrangler pages dev` sans ce script. Limite Pages : 20 000 fichiers par
+  déploiement (≈ 15 200 aujourd'hui, le script échoue au-delà de 19 500).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
 - `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
@@ -334,6 +367,37 @@ previousTokenValidUntil }`. Un jeton neuf de 30 jours glissants est émis
   trousseau). Le rythme est laissé à l'overlay : le serveur ne force rien, un
   jeton jamais renouvelé reste un jeton de 30 jours glissants. Logique pure
   dans `server/auth/pairing.ts::rotateNativeSession` (testée).
+  Depuis le 2026-09-23 (audit, #7/#8) : **403** si la session présentée n'est pas
+  une session d'appairage natif (`isNativeSession` — un jeton de navigateur
+  exfiltré et présenté en porteur ne s'échange plus contre des jetons neufs) ;
+  **409** quand deux rotations du même jeton se croisent — le remplacement de
+  l'ancienne session est conditionnel (`UPDATE ... WHERE superseded_at IS NULL
+RETURNING`), la perdante efface la session qu'elle venait de créer
+  (`NativeRotationConflictError`). Aucun effet sur l'overlay actuel, qui ne
+  lance aucune rotation.
+
+#### Échéance des sessions de l'overlay (plafond de 180 jours)
+
+L'overlay ne fait **jamais** de rotation et ne gère pas encore le 401 (correctif
+en cours côté overlay). Sa session vit donc par la seule **expiration glissante**
+de `resolveSession` : chaque requête authentifiée la repousse à
+`min(maintenant + 30 j, absolute_expires_at)` (au plus une écriture par jour),
+sans rotation — vérifié par `pairing.spec.ts` (« session native sans rotation »).
+Un overlay utilisé au moins une fois tous les 30 jours reste connecté jusqu'au
+**plafond absolu** (`SESSION_MAX_LIFETIME_MS`, 180 jours après l'appairage), puis
+reçoit 401 et doit être réappairé :
+
+- sessions natives créées à partir du déploiement du 2026-09-23 :
+  `absolute_expires_at` = appairage + 180 j → **2027-03-22 au plus tôt** ;
+- sessions antérieures : la migration `0032` a posé `absolute_expires_at =
+issued_at + 180 j`. L'appairage natif existe depuis le 2026-09-01 (premier
+  commit de `native/pair.ts` ; le déploiement en production est postérieur) →
+  **2027-02-28 au plus tôt** pour une session d'overlay (2027-02-06 pour une
+  session de navigateur, l'authentification datant du 2026-08-10). Échéance
+  réelle en base : `select min(absolute_expires_at) from sessions where
+user_agent = 'native-overlay' and revoked_at is null and superseded_at is null;`.
+
+L'overlay doit donc gérer le 401 (réappairage guidé) avant fin février 2027.
 
 Les endpoints `/api/v1/prices/*` (lot 4) ont été déplacés le 2026-08-18 vers
 le projet **wakfu-companion-price** (dépôt séparé, même base Neon — voir son
@@ -597,9 +661,29 @@ testé : `server/http/{body,api-guards,host-guard}.ts`, `server/history/guards.t
   sur la cadence réelle des clients (file d'historique : debounce 2 s, lots de 50 ; configuration :
   debounce 1,5 s). 429 + `Retry-After` au-delà : la file d'historique le traite comme réessayable
   (délai croissant 15 s → 5 min, aucune perte), la configuration garde ses clés en attente.
-- **Quota de combats** : 250 000 par compte (`MAX_FIGHTS_PER_ACCOUNT`), 403
-  `history_quota_exceeded` au-delà. Un lot ne contenant que des combats déjà stockés passe
-  toujours ; le comptage (`LIMIT quota + 1`) n'a lieu que si le lot apporte du neuf.
+- **Quotas d'historique** : 250 000 combats (`MAX_FIGHTS_PER_ACCOUNT`) et, depuis le 2026-09-23
+  (#2), 500 000 achats, 500 000 échanges et 500 000 extractions de pacte par compte
+  (`MAX_{PURCHASES,TRADES,PACT_EXTRACTIONS}_PER_ACCOUNT`, `checkHistoryQuota`) — 403
+  `history_quota_exceeded` au-delà, lot refusé en entier. Un lot ne contenant que des
+  événements déjà stockés passe toujours ; le comptage (`LIMIT quota + 1`) n'a lieu que si le
+  lot apporte du neuf, et seulement sur ses entrées valides.
+- **Volume d'historique en octets** (lot 6 de l'audit du 2026-09-23) : les quotas ci-dessus
+  comptent des lignes, qui peuvent chacune peser lourd. Quatre bornes complémentaires :
+  - `HISTORY_WRITE_BYTES_RULE` (`server/http/api-guards.ts`) : 8 Mio de corps de requête par
+    10 min et par compte, les quatre historiques confondus — 429 réessayable ;
+  - `MAX_HISTORY_ENTRY_BYTES` (`server/history/batch.ts`) : une entrée de plus de 64 Kio de JSON
+    est ignorée et listée dans `rejected` ;
+  - `MAX_HISTORY_BYTES_PER_ACCOUNT` (`server/history/storage.ts`) : 64 Mio par compte, comptés dans
+    `account_storage` à l'écriture des seules entrées NOUVELLES (un renvoi ne pèse rien) —
+    403 `history_quota_exceeded`. La migration 0037 initialise le compteur à la taille réelle
+    (`pg_column_size`) de ce que chaque compte stockait déjà ;
+  - coupe-circuit global : au-delà de `HISTORY_STORAGE_CEILING_MB` (variable Pages, 450 par
+    défaut pour le plan gratuit de 512 Mo), `pg_database_size` relue au plus une fois par minute
+    et par isolate, toute écriture d'historique nouvelle reçoit un 503
+    `history_storage_full` réessayable. Comptes, sessions et réglages continuent de fonctionner.
+  À relever avec le plan Neon : `MAX_HISTORY_BYTES_PER_ACCOUNT` et `HISTORY_STORAGE_CEILING_MB`.
+- **Validation par entrée** des lots d'historique (voir « Historiques serveur ») : une entrée
+  invalide est ignorée et listée dans `rejected`, jamais un 400 ni un 500 pour tout le lot.
 - **Validation renforcée** (`server/history/parse.ts`) : entiers bornés au type réel de la colonne
   (`PG_INT32_MAX` pour `integer`, `Number.MAX_SAFE_INTEGER` pour `bigint`/`jsonb` — `1e300` passait
   `Number.isInteger`), dates d'événement et curseur `before` dans [2012-01-01, maintenant + 1 j]
@@ -609,7 +693,12 @@ testé : `server/http/{body,api-guards,host-guard}.ts`, `server/history/guards.t
   violation de clé étrangère en 500) ; `INSERT` de lignes filles découpés en tranches de ≤ 30 000
   paramètres liés (limite protocole 65 535) ; erreurs d'écriture → 500 JSON générique, détail
   journalisé seulement. Configuration : profondeur JSON ≤ 32, clés de prototype filtrées des
-  correctifs, correctif roster ≤ 50 comptes, fusion indexée par `id`.
+  correctifs, correctif roster ≤ 50 comptes, fusion indexée par `id` ; depuis le 2026-09-23,
+  **valeur ≤ 512 Kio par clé APRÈS fusion** (`MAX_SETTING_VALUE_BYTES`, octets UTF-8 du JSON —
+  un correctif s'ajoute à la valeur en compte, la borne du corps ne suffisait pas) : 413 pour
+  toute la requête, rien n'est écrit (tailles réelles : 1 à 4 Ko, réattributions ≤ ~100 Ko) ;
+  `updatedAt` ≤ 64 caractères et ≥ 2012-01-01 (`parseBoundedDate`). Les messages d'erreur ne
+  recopient plus jamais une valeur reçue au-delà de 64 caractères (`echoValue`).
 - **Référentiel** : `items/{id}`/`monsters/{id}` exigent un entier décimal positif ≤ 2³¹−1 (400
   sinon) ; `catalog/index`, `dungeons`, `monster-families`, `monster-loot` passent de
   `public, max-age=300` à `private, max-age=300` (réservés au site et à l'overlay, un cache
@@ -671,20 +760,20 @@ façade.
 
 ### Organisation du code
 
-| Fichier                                                | Rôle                                                                                                                                     |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `server/auth/store.ts`                                 | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.                                                   |
-| `server/auth/flow.ts`                                  | Toute la logique : validation du `state`, usage unique du code, fusion de comptes, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
-| `server/auth/db-store.ts`                              | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                                                                           |
-| `server/auth/memory-store.ts`                          | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                                                              |
-| `server/auth/providers.ts`                             | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                                                                 |
-| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.                                                                 |
-| `functions/api/_auth.ts`                               | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.                                                          |
+| Fichier                                                | Rôle                                                                                                                                             |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `server/auth/store.ts`                                 | **Port** de persistance (interface). C'est lui qui rend la logique testable sans base.                                                           |
+| `server/auth/flow.ts`                                  | Toute la logique : validation du `state`, usage unique du code, un fournisseur par compte, sessions, CSRF. Ne connaît ni Postgres ni Cloudflare. |
+| `server/auth/db-store.ts`                              | Traduction SQL du port (drizzle/Neon). Aucune décision métier.                                                                                   |
+| `server/auth/memory-store.ts`                          | Même port, en mémoire — **tests uniquement**, jamais importé par une route.                                                                      |
+| `server/auth/providers.ts`                             | Discord/Google : URLs, scopes, échange de code, normalisation du profil.                                                                         |
+| `server/auth/cookies.ts`, `crypto.ts`, `rate-limit.ts` | Cookies, WebCrypto (aucune dépendance npm ajoutée), limitation de débit.                                                                         |
+| `functions/api/_auth.ts`                               | Colle runtime : résolution de session, 401, contrôle CSRF, lecture des secrets.                                                                  |
 
 Tests : `npm run test:server` (config `vitest.server.config.ts`, séparée de
 `npm test` qui passe par le builder Angular et ne voit que `src/`). Couvrent
 les quatre exigences du prompt — `state` invalide, code rejoué, session
-révoquée, fusion sur e-mail — plus redirection ouverte, CSRF, rotation,
+révoquée, e-mail déjà pris par un autre fournisseur — plus redirection ouverte, CSRF, rotation,
 expiration glissante et limitation de débit.
 
 ### Trois écarts par rapport au schéma d'origine
@@ -702,18 +791,27 @@ expiration glissante et limitation de débit.
    binding KV supplémentaire — même contrainte Cloudflare Pages que pour les
    rollups de prix).
 
-### Fusion de comptes : rattachement automatique sur e-mail vérifié
+### Un compte = un seul fournisseur (plus de fusion sur e-mail)
 
-Décision du §7, appliquée telle quelle : si l'e-mail **vérifié** renvoyé par
-le fournisseur correspond déjà à un compte, la nouvelle identité y est
-rattachée automatiquement (pas d'écran de liaison manuelle). Les deux
-fournisseurs vérifient l'adresse, ce qui rend le rattachement sûr.
+Décision du 2026-09-23, qui remplace le rattachement automatique du §7 : un
+compte s'ouvre et se rouvre avec **un seul** fournisseur, Discord OU Google.
+Si l'e-mail **vérifié** renvoyé par un fournisseur appartient déjà à un compte
+ouvert avec l'autre, la connexion est **refusée** (`email_taken`) : le callback
+redirige avec `?login=error&reason=email_taken_{fournisseur du compte}`, et
+l'application invite à se reconnecter avec ce fournisseur. Aucun second compte
+n'est créé à la place (`users.email` est unique). La session éventuellement
+ouverte dans le navigateur n'est pas révoquée (le refus intervient avant la
+rotation).
 
-Corollaire important : **un profil sans e-mail vérifié ne participe jamais à
-la fusion** (`providers.ts` normalise un e-mail non vérifié en `null`) — sans
-quoi une adresse non validée permettrait de s'approprier le compte d'un tiers.
-Un tel compte reste parfaitement utilisable, il est simplement isolé par
-fournisseur.
+Les comptes déjà liés aux deux fournisseurs avant cette décision restent tels
+quels : chaque identité connue retrouve son compte (première étape de
+`resolveAccount`), rien n'est supprimé.
+
+Corollaire : **un profil sans e-mail vérifié n'est jamais reconnu par son
+e-mail** (`providers.ts` normalise un e-mail non vérifié en `null`) — il ouvre
+un compte distinct, sans e-mail. Sans cette règle, une adresse non validée
+permettrait de bloquer ou de viser le compte d'un tiers. Même limite pour deux
+fournisseurs aux e-mails différents : rien ne les relie, ce sont deux comptes.
 
 ### CSRF : jeton double-submit dérivé, non stocké
 
@@ -733,6 +831,34 @@ URL propre (`<hash>.wakfu-companion.pages.dev`) : déduire l'origine de la
 requête ferait échouer l'échange sur ces URLs. `PUBLIC_BASE_URL` fixe donc
 l'origine publique stable ; l'origine de la requête n'est qu'un repli pour le
 développement local.
+
+### Cookies, environnement, appairage : durcissements du 2026-09-23
+
+- **Cookies** (`server/auth/cookies.ts`) : session et CSRF sous `__Host-wc_session` /
+  `__Host-wc_csrf`. Le cookie de `state` OAuth est passé de `__Secure-wc_oauth_state`
+  (`Path=/api/v1/auth`) à **`__Host-wc_oauth_state` (`Path=/`)** : un `__Secure-` peut être posé
+  par un sous-domaine (`Domain=` parent), un `__Host-` non. `start` le pose, `callback` le lit
+  (seul ce nom : **aucun repli** sur `wc_oauth_state` ni `__Secure-wc_oauth_state`, un `state`
+  vivant 10 minutes) et efface le courant ainsi que les deux anciens, chacun sous son chemin
+  d'origine — un ancien cookie encore présent ne gêne donc rien. Repli de lecture sur l'ancien
+  `wc_session` (et émission du `wc_csrf` pour les onglets ouverts avant le déploiement) **borné
+  par une date butoir codée en dur** : `LEGACY_SESSION_COOKIE_UNTIL = 2026-10-23T00:00:00Z`
+  (déploiement + `SESSION_TTL_MS`) ; au-delà, l'ancien cookie n'est plus lu ni posé, le code de
+  transition peut être supprimé. Horloge injectable (`now`) dans `readSessionCookie`,
+  `hasCsrfCookie`, `csrfCookies`, `readRequestCredential` — testé des deux côtés de la butoir.
+- **Déploiement public** (`server/auth/environment.ts::isPublicDeployment`) : est public tout
+  hôte **hors boucle locale** (`localhost`, `*.localhost`, `127.0.0.0/8`, `::1`) déclaré par
+  `PUBLIC_BASE_URL` ou servi, **quel que soit le schéma** (seul `https:` comptait). Les replis de
+  développement (secrets dérivés de `DATABASE_URL`, jeton d'application sans Turnstile) restent
+  donc fermés pour un hôte réel servi en `http:`. Un poste de développement joint par son IP de
+  réseau local est désormais traité comme public (il lui faut les vrais secrets) ; `localhost`
+  (wrangler + proxy Angular) ne change pas. Même définition de la boucle locale que le contrôle
+  d'hôte (`isLoopbackHostname`, partagé).
+- **Appairages expirés** (`purgeExpiredPairings`) : effacent aussi la session créée par un
+  appairage **réclamé mais jamais sondé** (jeton jamais remis à l'overlay : `session_token`
+  présent, `consumed_at` nul) — elle restait 30 jours rattachée au compte et listée dans
+  « Mon compte » sans que personne ne détienne son jeton. Passé l'expiration, `/poll` ne peut
+  plus la remettre.
 
 ### Vérification effectuée / restant à faire
 
@@ -756,7 +882,7 @@ déploiement et une vraie application OAuth permettent de conclure :
 | ---------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | `src/app/core/auth/auth.service.ts`      | État de session en signaux, connexion/déconnexion, sessions, suppression de compte, décision de migration. |
 | `src/app/features/auth/login-page/`      | Deux boutons (Discord, Google) + erreur explicite au retour d'un échec.                                    |
-| `src/app/features/auth/account-page/`    | Identité, fournisseurs liés, appareils connectés (révocation), export, suppression, écran de migration.    |
+| `src/app/features/auth/account-sections/` | Blocs du compte sous les boutons de l’onglet Connexion du profil : identité, appareils connectés (révocation), export, suppression, écran de migration. |
 | `src/app/core/api/api-client.service.ts` | `requestJson` (écritures + en-tête CSRF) et le point d'accroche global du `401`.                           |
 
 Trois points valent d'être retenus :
@@ -1229,9 +1355,45 @@ ces requêtes pénibles pour rien.
 
 ### Ce qui est immuable, ce qui se rafraîchit
 
-`fight_participants` est la **seule** table écrite en `ON CONFLICT DO UPDATE`
-(dégâts, classe, statut KO, ventilation par sort). Tout le reste — combats,
-achats, échanges, butin — est en `DO NOTHING`.
+`fight_participants` est écrite en `ON CONFLICT DO UPDATE` (camp, dégâts,
+classe, statut KO, ventilation par sort, soin, armure, XP) ; les combats
+(hors rattachement de donjon, `COALESCE`) et les échanges/extractions restent
+immuables, et l'identification des objets (butin, achats, lignes d'échange et
+d'extraction) se corrige en `DO UPDATE` sur `item_id`/`item_name` — plus
+`quantity` pour le butin depuis le 2026-09-23 (la ligne reflète le dernier
+envoi pour sa position `line_index` ; un renvoi identique réécrit les mêmes
+valeurs). `GET /history/fights` renvoie le butin trié par `line_index` et
+expose `lineIndex` (champ additif) : le client apparie les lignes par position.
+
+**Participants d'un combat déjà connu** (audit du 2026-09-23, #1,
+`selectWritableParticipants` dans `ingest.ts`) : seuls les sièges (nom,
+instance) déjà présents pour ce combat sont mis à jour ; un nom nouveau n'est
+jamais ajouté à un combat existant (renvoyer la même `clientKey` avec 128 noms
+neufs faisait grossir un combat sans limite, hors quota). Exception : un combat
+connu **sans aucun participant** (écriture interrompue) reçoit tout le lot — le
+renvoi répare. Les participants d'un combat sont toujours écrits par une seule
+requête (`chunkGroups`), donc jamais à moitié. Usage légitime inchangé : la
+`clientKey` d'un combat est dérivée des noms#instance triés de ses participants
+(site et overlay), un renvoi porte les mêmes sièges. Clé primaire
+`(fight_id, name, instance_index)` depuis la migration **0035** (le camp en est
+sorti) : un changement de classification allié/ennemi MET À JOUR la ligne au
+lieu d'en insérer une seconde (bug de données : dégâts et XP comptés deux
+fois). La migration a dédoublonné l'existant (ligne la plus riche, puis la plus
+récente) ; `npm run main:backfill:fight-type` recalcule ensuite `fight_type` des
+combats touchés (facultatif, fait de toute façon au prochain renvoi). Toutes
+les lectures (`stats`, `fight-type`, `dungeon-run`, `GET /history/fights`,
+export) filtrent déjà par `side` et n'ont pas eu à changer ; le script
+d'effacement d'un pseudonyme de tiers (`erase-third-party-name.ts`) teste
+désormais la collision de renommage sans le camp.
+
+**Doublons créés par l'ancien renvoi depuis l'archive** (bug client corrigé le
+2026-09-23 : `fightId` d'affichage négatif dans la signature → `clientKey` neuve,
+`fight_log_id` NULL) : `npm run {dev,main}:dedupe:archived-fights -- [--apply]
+[--user=<uuid>] [--verbose] [--no-transfer]` (`server/import/dedupe-archived-fights.ts`,
+dry-run par défaut). Mêmes compte, début, durée et participants ; seuls les
+combats à `fight_log_id` NULL sont effacés, l'original est gardé et reçoit les
+participants du doublon le plus récent (dernière correction) — pas le butin,
+apparié par position.
 
 Concrètement : après une réattribution manuelle, `StatsStoreService` remet le
 combat concerné en file (`applyReassign`). Même clé déterministe, donc pas de
@@ -1278,10 +1440,13 @@ NOTHING`) — ou ne se corrige pas.
 
 ### Endpoints
 
-- `POST /api/v1/history/{fights,purchases,trades}` — ingestion par lots
+- `POST /api/v1/history/{fights,purchases,trades,pacts}` — ingestion par lots
   (`{ entries: [...] }`, 100 max), session + CSRF requis. Réponse :
-  `{ accepted, inserted }` — `inserted: 0` signifie « tout était déjà là »,
-  c'est le cas normal d'un rejeu.
+  `{ accepted, inserted, rejected }` — `inserted: 0` signifie « tout était déjà
+  là », c'est le cas normal d'un rejeu ; `rejected: [{ index, clientKey?, error }]`
+  (champ **additif**, 2026-09-23) liste les entrées ignorées (voir plus bas).
+  Codes : 200 (y compris avec des entrées ignorées), 400 (corps globalement
+  malformé seulement), 403 `history_quota_exceeded`, 413 (corps trop gros), 429.
 - `GET /api/v1/history/{fights,purchases,trades}?limit=&before=` — lecture
   paginée par **curseur de date** (pas `OFFSET` : un historique s'écrit pendant
   qu'on le feuillette). `nextBefore: null` = fin de l'historique.
@@ -1301,10 +1466,21 @@ NOTHING`) — ou ne se corrige pas.
   signe de `total_cost`.
 
 Validation dans `server/history/parse.ts` (pure, testée sans base —
-`parse.spec.ts`). Un lot contenant une entrée invalide est refusé **en entier**,
-contrairement à `/prices/ingest` : ces charges utiles viennent d'un seul
-émetteur (la file cliente), une entrée mal formée y signale un bug, pas une
-saisie à rattraper.
+`parse.spec.ts`), déroulé commun des quatre `POST` dans `server/history/batch.ts`
+(`processHistoryBatch`, testé dans `batch.spec.ts`). **Validation par entrée
+depuis le 2026-09-23** (régression en production) : une entrée invalide (date
+hors [2012-01-01, maintenant + 1 j], nombre hors bornes, caractère NUL,
+référence `gameServer`/`dungeonId` inconnue, siège de participant en double...)
+est **ignorée** — jamais écrite — et signalée dans `rejected` ; le reste du lot
+est écrit et la réponse est un 200. Un doublon de `clientKey` dans un même lot :
+la première occurrence est gardée. Seul un corps globalement malformé (pas de
+tableau `entries`, plus de 100 entrées) reste un 400, et un dépassement de quota
+un 403 sur tout le lot. Jusque-là, un lot contenant une entrée invalide était
+refusé **en entier** : un combat restauré par l'overlay avec `startedAt` à
+l'epoch (1970) faisait refuser tout son lot, et l'overlay — qui traite tout 4xx
+comme un échec et renvoie le même lot indéfiniment — bloquait sa file derrière.
+Clients : le site ne lit que le statut, l'overlay que `inserted` (journal) ; le
+champ `rejected` n'est lu par aucun d'eux à ce jour.
 
 ### Côté client
 

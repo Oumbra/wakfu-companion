@@ -1,14 +1,22 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { pactExtractionItems, pactExtractions } from '../../../../server/db/schema';
 import {
   MAX_HISTORY_BATCH,
-  parsePactExtractionsBody,
+  parsePactExtractionsBatch,
+  encodePageCursor,
   parsePageQuery,
 } from '../../../../server/history/parse';
 import { ingestPactExtractions } from '../../../../server/history/ingest';
-import { checkHistoryReferences } from '../../../../server/history/guards';
+import {
+  MAX_PACT_EXTRACTIONS_PER_ACCOUNT,
+  checkHistoryQuota,
+  loadKnownReferences,
+} from '../../../../server/history/guards';
+import { processHistoryBatch } from '../../../../server/history/batch';
+import { beforeCursor } from '../../../../server/history/page-cursor';
+import { historyStorageDeps } from '../../../../server/history/storage';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
@@ -36,16 +44,42 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
 
     const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
     if (!body.ok) return jsonError(body.error, body.status);
-
-    const parsed = parsePactExtractionsBody(body.value);
-    if (!parsed.ok) return jsonError(parsed.error, 400);
-    if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
+    // Volume écrit par compte, en octets (lot 6 de l'audit du 2026-09-23) — voir api-guards.ts.
+    const heavy = await enforceUserRateLimit(
+      auth.store,
+      'history:write-bytes',
+      auth.user.id,
+      new Date(),
+      body.bytes,
+    );
+    if (heavy) return heavy;
 
     const db = createDb(context.env.DATABASE_URL);
-    // Références inconnues ⇒ 400 plutôt qu'une violation de clé étrangère en 500 (guards.ts).
-    const unknownReference = await checkHistoryReferences(db, parsed.value);
-    if (unknownReference) return jsonError(unknownReference, 400);
-    return json(await ingestPactExtractions(db, auth.user.id, parsed.value));
+    const userId = auth.user.id;
+    // Validation PAR ENTRÉE (entrées invalides ignorées, listées dans `rejected`), références,
+    // quota, écriture : voir server/history/batch.ts.
+    const outcome = await processHistoryBatch(
+      body.value,
+      new Date(),
+      {
+        parse: parsePactExtractionsBatch,
+        quotaLabel: "d'extractions de pacte",
+        quota: MAX_PACT_EXTRACTIONS_PER_ACCOUNT,
+      },
+      {
+        loadKnownReferences: (entries) => loadKnownReferences(db, entries),
+        withinQuota: (keys) =>
+          checkHistoryQuota(db, pactExtractions, userId, keys, MAX_PACT_EXTRACTIONS_PER_ACCOUNT),
+        ingest: (entries) => ingestPactExtractions(db, userId, entries),
+        storage: historyStorageDeps(
+          db,
+          pactExtractions,
+          userId,
+          context.env.HISTORY_STORAGE_CEILING_MB,
+        ),
+      },
+    );
+    return json(outcome.body, outcome.status);
   } catch (error) {
     // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
     return internalErrorResponse('history/pacts POST', error);
@@ -60,12 +94,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!query.ok) return jsonError(query.error, 400);
 
   const db = createDb(context.env.DATABASE_URL);
-  const where = query.value.before
-    ? and(
-        eq(pactExtractions.userId, auth.user.id),
-        lt(pactExtractions.occurredAt, query.value.before),
-      )
-    : eq(pactExtractions.userId, auth.user.id);
+  const where = and(
+    eq(pactExtractions.userId, auth.user.id),
+    beforeCursor(pactExtractions.occurredAt, pactExtractions.id, query.value),
+  );
 
   const rows = await db
     .select()
@@ -104,7 +136,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         .map((line) => ({ itemId: line.itemId, itemName: line.itemName, quantity: line.quantity })),
     })),
     nextBefore:
-      rows.length === query.value.limit ? rows[rows.length - 1].occurredAt.toISOString() : null,
+      rows.length === query.value.limit
+        ? encodePageCursor(rows[rows.length - 1].occurredAt, rows[rows.length - 1].id)
+        : null,
     maxBatch: MAX_HISTORY_BATCH,
   });
 };
