@@ -1,5 +1,5 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { runRetentionPurges } from '../../../../../server/auth/flow';
+import { runRetentionPurges, sessionChainId } from '../../../../../server/auth/flow';
 import {
   NativeRotationConflictError,
   isNativeSession,
@@ -145,6 +145,9 @@ export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const auth = await authenticateBearer(context, now);
   if (auth instanceof Response) return auth;
 
+  // Les autres jetons de la chaîne (ancien jeton encore en grâce après une rotation) sont révoqués
+  // avec elle (audit du 2026-09-23, S7) : une déconnexion ne laisse aucun jeton valable derrière.
+  await auth.store.revokeSessionChain(sessionChainId(auth.session), now, auth.sessionIdHash);
   const deleted = await auth.store.deleteSession(auth.sessionIdHash);
   await auth.store.purgeExpiredPairings(now);
   await runRetentionPurges(auth.store, now);
