@@ -10,9 +10,10 @@ on:
   # sur un push tout neuf.
   workflow_dispatch:
 
+# Permissions minimales au niveau du workflow ; `deployments: write` n'est
+# accordé qu'au job de déploiement (GitHub Deployments via wrangler-action).
 permissions:
   contents: read
-  deployments: write
 
 # Groupe de concurrence PROPRE au déploiement de production — jamais le même que
 # celui de `deploy-preview.yml`. Un groupe est un espace de noms à l'échelle du
@@ -26,19 +27,57 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Vérifications complètes (fixtures, format, tests front/serveur, build,
+  # type-check) rejouées via ci.yml en workflow réutilisable sur le commit à
+  # déployer : aucune migration de la base de production ni aucun déploiement
+  # si l'une échoue. Aucun secret transmis (pas de `secrets: inherit`).
+  ci:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   build-and-deploy:
+    needs: ci
+    # Garde de ref : un `workflow_dispatch` lancé depuis une autre branche ne
+    # touche jamais la production. La vraie barrière reste la règle de branche
+    # de l'environnement GitHub `production` (Settings → Environments), qui
+    # tient même si un commit malveillant retire cette ligne.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Secrets de production portés par l'environnement `production` (à y
+    # déplacer depuis les secrets de dépôt, procédure dans server/README.md).
+    environment: production
+    permissions:
+      contents: read
+      deployments: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Aucun push git dans ce job : ne pas laisser le GITHUB_TOKEN dans .git/config.
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
+      # `--ignore-scripts` : job porteur des secrets de production — aucun script
+      # d'installation d'une dépendance (transitive, potentiellement compromise)
+      # ne s'exécute à côté d'eux. Les seuls paquets du lockfile qui en déclarent
+      # (hasInstallScript) : esbuild (x3 versions), workerd, lmdb,
+      # msgpackr-extract, @parcel/watcher, fsevents. Tous résolvent leur binaire
+      # via un paquet optionnel par plateforme (@esbuild/linux-x64,
+      # @cloudflare/workerd-linux-64, @lmdb/..., prebuilds) : leur script ne fait
+      # que vérifier/optimiser. `npm rebuild` rejoue ceux d'esbuild (ng build,
+      # tsx, drizzle-kit, bundling des Functions par wrangler) et de workerd
+      # (wrangler) par prudence ; le `prepare` husky (hooks git locaux) est
+      # volontairement sauté, inutile en CI.
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild esbuild workerd
 
       - name: Generate data tables
         run: npm run generate
@@ -129,11 +168,13 @@ jobs:
       # cloudflare/wrangler-action, qui réutilise le wrangler du package.json.
       # --branch explicite : main = branche de production du projet Pages,
       # toute autre = déploiement preview. gitHubToken conserve la création
-      # des GitHub Deployments (permission deployments: write ci-dessus).
+      # des GitHub Deployments (permission deployments: write du job).
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v4
+        # --branch=main en dur (et non `github.ref_name`) : le job n'est de toute façon
+        # autorisé que sur main (garde `if:` + environnement), ceinture et bretelles.
+        uses: cloudflare/wrangler-action@4e88846969242f7752bcfdaf5511bfbb3985ca47 # v4.1.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          command: pages deploy dist/wakfu-companion/browser --project-name=wakfu-companion --branch=${{ github.ref_name }} --commit-dirty=true
+          command: pages deploy dist/wakfu-companion/browser --project-name=wakfu-companion --branch=main --commit-dirty=true

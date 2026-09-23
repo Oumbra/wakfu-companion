@@ -11,8 +11,10 @@
 /node_modules/
 /yarn.lock
 
-# Environment files
-/.env
+# Environment files (secrets) — tout `.env*` à n'importe quel niveau, sauf le modèle documenté
+.env
+.env.*
+!.env.example
 # Secrets locaux Wrangler (wrangler pages dev) — jamais commités
 .vars
 .vars.*

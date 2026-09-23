@@ -10,9 +10,10 @@ on:
   # sur un push tout neuf.
   workflow_dispatch:
 
+# Permissions minimales au niveau du workflow ; `deployments: write` n'est
+# accordé qu'au job de déploiement (GitHub Deployments via wrangler-action).
 permissions:
   contents: read
-  deployments: write
 
 # Groupe propre à la preview (voir le commentaire de `deploy-main.yml` : ne
 # jamais partager ce groupe avec la production).
@@ -22,18 +23,35 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    # Garde de ref : un `workflow_dispatch` lancé depuis une autre branche ne
+    # déploie rien. La vraie barrière reste la règle de branche de
+    # l'environnement GitHub `preview` (Settings → Environments).
+    if: github.ref == 'refs/heads/claude/dev'
     runs-on: ubuntu-latest
+    # Secrets *_PREVIEW portés par l'environnement `preview` (à y déplacer
+    # depuis les secrets de dépôt, procédure dans server/README.md).
+    environment: preview
+    permissions:
+      contents: read
+      deployments: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          # Aucun push git dans ce job : ne pas laisser le GITHUB_TOKEN dans .git/config.
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
+      # `--ignore-scripts` + `npm rebuild` ciblé : même raisonnement que
+      # deploy-main.yml (job porteur de secrets).
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild esbuild workerd
 
       - name: Generate data tables
         run: npm run generate
@@ -122,11 +140,12 @@ jobs:
       # cloudflare/wrangler-action, qui réutilise le wrangler du package.json.
       # --branch explicite : main = branche de production du projet Pages,
       # toute autre = déploiement preview. gitHubToken conserve la création
-      # des GitHub Deployments (permission deployments: write ci-dessus).
+      # des GitHub Deployments (permission deployments: write du job).
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/wrangler-action@v4
+        # --branch=claude/dev en dur (le job n'est autorisé que sur cette branche).
+        uses: cloudflare/wrangler-action@4e88846969242f7752bcfdaf5511bfbb3985ca47 # v4.1.1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          command: pages deploy dist/wakfu-companion/browser --project-name=wakfu-companion --branch=${{ github.ref_name }} --commit-dirty=true
+          command: pages deploy dist/wakfu-companion/browser --project-name=wakfu-companion --branch=claude/dev --commit-dirty=true

@@ -1,5 +1,8 @@
-# En-têtes de sécurité HTTP posés par Cloudflare Pages sur TOUTES les réponses (pages, assets,
-# Pages Functions) — voir docs/analyse-rgpd.md, écart 4.8 (RGPD art. 32, sécurité du traitement).
+# En-têtes de sécurité HTTP posés par Cloudflare Pages sur les réponses STATIQUES (pages, assets)
+# — voir docs/analyse-rgpd.md, écart 4.8 (RGPD art. 32, sécurité du traitement). Cloudflare
+# n'applique PAS `_headers` aux réponses des Pages Functions (documenté : « headers defined in the
+# _headers file are not applied to responses from Functions ») : l'API `/api/**` reçoit les siens
+# de `functions/_middleware.ts` — toute évolution ici est à répercuter là-bas, et inversement.
 # Non appliqués par `ng serve` : à vérifier avec `wrangler pages dev dist/wakfu-companion/browser`
 # (ou sur la preview claude/dev) — méthode décrite dans server/README.md.
 #
@@ -25,10 +28,23 @@
 #   connect   : API et service worker (ngsw.json) sur la même origine ; aucun appel tiers.
 #   OAuth     : navigation complète (location.assign) vers /api/v1/auth/*, puis redirection serveur
 #               vers Discord/Google — hors du champ de la CSP de la page (pas un fetch, pas un form).
+#
+# Isolation cross-origin (2026-09-23) :
+#   COOP same-origin : aucune fenêtre popup ni `window.opener` dans l'app — OAuth par navigation
+#               complète (pas de popup), Turnstile dans une iframe (non concernée par COOP).
+#   CORP same-origin : aucune autre origine n'a à embarquer nos assets (l'overlay de bureau est un
+#               client Rust, hors navigateur ; les icônes passent par l'API, non couverte ici).
+#               Sans effet sur les robots (aperçus de liens, moteurs), qui ne l'appliquent pas.
+#   HSTS : 2 ans + includeSubDomains. PAS `preload` (inscription quasi irréversible, décision
+#               manuelle, voir server/README.md). Pas de `require-trusted-types-for 'script'` non
+#               plus : Angular n'est pas configuré pour Trusted Types, l'app serait bloquée — à
+#               évaluer d'abord en Report-Only avec un endpoint de rapport.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
-  Strict-Transport-Security: max-age=31536000
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
   Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://static.ankama.com; font-src 'self'; connect-src 'self'; frame-src https://challenges.cloudflare.com; media-src 'self'; worker-src 'self'; manifest-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'

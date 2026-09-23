@@ -43,13 +43,18 @@ function matchesPrettierScope(filePath) {
 
 // `--diff-filter=ACMR` : fichiers ajoutés/copiés/modifiés/renommés (existent
 // forcément sur disque) — exclut les suppressions, qu'il n'y a rien à
-// reformater.
-const stagedFiles = execSync('git diff --cached --name-only --diff-filter=ACMR', {
-  cwd: projectRoot,
-})
+// reformater. `-z` : noms séparés par NUL et jamais entre guillemets ni
+// échappés (sans lui, Git « cite » les noms contenant des caractères
+// spéciaux ou non ASCII, qui ne correspondraient plus au fichier réel).
+const stagedFiles = execFileSync(
+  'git',
+  ['diff', '--cached', '--name-only', '-z', '--diff-filter=ACMR'],
+  {
+    cwd: projectRoot,
+  },
+)
   .toString()
-  .split('\n')
-  .map((line) => line.trim())
+  .split('\0')
   .filter(Boolean)
   .filter(matchesPrettierScope);
 
@@ -57,18 +62,44 @@ if (stagedFiles.length === 0) {
   process.exit(0);
 }
 
+// Les noms de fichiers stagés sont une entrée NON fiable (une branche tierce,
+// un patch appliqué ou un fichier généré peut porter un nom forgé) : ils ne
+// doivent jamais être interprétés par un shell.
+//  - Hors Windows : `execFileSync` + tableau d'arguments, aucun shell ; `--`
+//    empêche un nom commençant par `-` d'être lu comme une option de Prettier.
+//  - Sous Windows, `npx` est un shim `.cmd` que Node ne sait lancer qu'au
+//    travers de cmd.exe (même raison que pour `npm version` dans
+//    bump-version-from-commit.mjs) : on garde une chaîne pour `execSync`,
+//    mais tout nom contenant un métacaractère de cmd.exe (ou un guillemet,
+//    qui permettrait de sortir de la citation) est REFUSÉ — le commit échoue
+//    avec un message clair plutôt que d'exécuter quoi que ce soit.
+const WINDOWS_UNSAFE = /["$`%^&|<>!\r\n]/;
+
 console.log(`[pre-commit-format] Formatage de ${stagedFiles.length} fichier(s) stagé(s)...`);
 
-// `execSync` en chaîne (pas `execFileSync` + tableau) : sous Windows, `npx`
-// est un shim `.cmd` que Node ne sait spawn qu'au travers d'un shell — même
-// raison que pour `npm version` dans bump-version-from-commit.mjs.
-const quotedFiles = stagedFiles.map((f) => `"${f}"`).join(' ');
-execSync(`npx prettier --write ${quotedFiles}`, {
-  cwd: projectRoot,
-  stdio: 'inherit',
-});
+if (process.platform === 'win32') {
+  const unsafe = stagedFiles.filter((f) => WINDOWS_UNSAFE.test(f));
+  if (unsafe.length > 0) {
+    console.error(
+      '[pre-commit-format] Nom(s) de fichier refusé(s) (métacaractère shell) :\n' +
+        unsafe.map((f) => `  ${JSON.stringify(f)}`).join('\n') +
+        '\nRenommer le fichier, ou SKIP_PRECOMMIT_FORMAT=1 puis `npx prettier --write` à la main.',
+    );
+    process.exit(1);
+  }
+  const quotedFiles = stagedFiles.map((f) => `"${f}"`).join(' ');
+  execSync(`npx prettier --write -- ${quotedFiles}`, {
+    cwd: projectRoot,
+    stdio: 'inherit',
+  });
+} else {
+  execFileSync('npx', ['prettier', '--write', '--', ...stagedFiles], {
+    cwd: projectRoot,
+    stdio: 'inherit',
+  });
+}
 
-execFileSync('git', ['add', ...stagedFiles], {
+execFileSync('git', ['add', '--', ...stagedFiles], {
   cwd: projectRoot,
   stdio: 'inherit',
 });

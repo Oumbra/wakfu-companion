@@ -36,18 +36,29 @@ concurrency:
 
 jobs:
   purge:
+    # Base de PRODUCTION : jamais depuis une autre ref (un `workflow_dispatch` peut viser n'importe
+    # quelle branche ; `schedule` tourne toujours sur main). Même environnement que deploy-main.yml,
+    # dont la règle de branche est la vraie barrière.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: '22'
 
+      # `--ignore-scripts` : job porteur de DATABASE_URL (production), voir deploy-main.yml.
+      # `npm rebuild esbuild` : tsx s'appuie sur esbuild.
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci --ignore-scripts
+          npm rebuild esbuild
 
       # Base de PRODUCTION (même secret que deploy-main.yml). La branche Neon de preview n'a pas
       # de purge planifiée : ses données sont de test et sa branche est recréée à volonté.
