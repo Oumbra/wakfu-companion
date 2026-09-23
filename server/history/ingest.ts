@@ -11,6 +11,7 @@ import {
   trades,
 } from '../db/schema';
 import { loadCatalogFromDb, recomputeDungeonRunsForBatch } from './dungeon-run';
+import { loadErasedNames, redactParticipants, redactPeerName } from './erased-names';
 import {
   dungeonFightTypeUpdateSql,
   eventFightTypeUpdateSql,
@@ -230,11 +231,18 @@ export async function ingestFights(
     }
   }
 
+  // Pseudonymes retirés (droit d'opposition) : remplacés AVANT la sélection des sièges écrivables,
+  // pour qu'un combat déjà connu retombe sur le siège « Joueur retiré » renommé par le script, et
+  // qu'un combat nouveau ne soit jamais écrit avec le nom d'origine (voir erased-names.ts).
+  const erased = await loadErasedNames(
+    db,
+    batch.flatMap((fight) => fight.participants.map((participant) => participant.name)),
+  );
   const participantGroups = batch.map((fight) => {
     const fightId = idByKey.get(fight.clientKey);
     if (fightId === undefined) return [];
     const writable = selectWritableParticipants(
-      fight.participants,
+      redactParticipants(fight.participants, erased),
       newKeys.has(fight.clientKey) ? undefined : existingSeatsByFight.get(fightId),
     );
     return writable.map((participant) => ({
@@ -449,13 +457,17 @@ export async function ingestTrades(
   userId: string,
   batch: readonly TradeInput[],
 ): Promise<IngestResult> {
+  const erased = await loadErasedNames(
+    db,
+    batch.map((trade) => trade.peerName),
+  );
   const inserted = await db
     .insert(trades)
     .values(
       batch.map((trade) => ({
         userId,
         clientKey: trade.clientKey,
-        peerName: trade.peerName,
+        peerName: redactPeerName(trade.peerName, erased),
         selfName: trade.selfName,
         occurredAt: trade.occurredAt,
         kamasAcquired: trade.kamasAcquired,

@@ -989,3 +989,19 @@ export const pactExtractionItems = pgTable(
     index('pact_extraction_items_item_id_idx').on(table.itemId),
   ],
 );
+
+/**
+ * Pseudonymes de joueurs tiers retirés au titre du droit d'opposition (RGPD art. 21, script
+ * `server/import/erase-third-party-name.ts`). Le script renomme les lignes existantes ; cette liste
+ * est consultée à chaque ingestion (`server/history/erased-names.ts`) pour qu'un combat ou un
+ * échange envoyé plus tard ne réécrive pas le nom d'origine.
+ *
+ * `nameLower` : le pseudonyme en minuscules (même comparaison insensible à la casse que le
+ * script). Aucune donnée de compte : c'est la liste des personnes qui ont demandé à ne plus
+ * apparaître, conservée tant que le traitement existe (sinon la demande cesserait d'être
+ * respectée).
+ */
+export const erasedThirdPartyNames = pgTable('erased_third_party_names', {
+  nameLower: text('name_lower').primaryKey(),
+  erasedAt: timestamp('erased_at', { withTimezone: true }).notNull().defaultNow(),
+});
