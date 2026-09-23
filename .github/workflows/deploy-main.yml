@@ -47,7 +47,9 @@ jobs:
     runs-on: ubuntu-latest
     # Secrets de production portés par l'environnement `production` (à y
     # déplacer depuis les secrets de dépôt, procédure dans server/README.md).
-    environment: production
+    environment:
+      name: production
+      url: https://wakfu-companion.com
     permissions:
       contents: read
       deployments: write

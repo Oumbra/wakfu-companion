@@ -30,7 +30,9 @@ jobs:
     runs-on: ubuntu-latest
     # Secrets *_PREVIEW portés par l'environnement `preview` (à y déplacer
     # depuis les secrets de dépôt, procédure dans server/README.md).
-    environment: preview
+    environment:
+      name: preview
+      url: https://claude-dev.wakfu-companion.com
     permissions:
       contents: read
       deployments: write
