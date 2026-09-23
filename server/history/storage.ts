@@ -41,18 +41,21 @@ export function exceedsStorageBudget(
   return bytes > 0 && stored + bytes > budget;
 }
 
-export async function storedHistoryBytes(db: Db, userId: string): Promise<number> {
-  const [row] = await db
-    .select({ bytes: accountStorage.historyBytes })
-    .from(accountStorage)
-    .where(eq(accountStorage.userId, userId));
-  return row?.bytes ?? 0;
-}
-
-/** Ajoute `bytes` au volume du compte (upsert atomique, une requête). */
-export async function chargeHistoryBytes(db: Db, userId: string, bytes: number): Promise<void> {
-  if (bytes <= 0) return;
-  await db
+/**
+ * Réserve `bytes` sur le volume du compte : upsert CONDITIONNEL en une requête (la condition
+ * `setWhere` est évaluée sous le verrou de ligne de l'`ON CONFLICT`). `false` si le budget serait
+ * dépassé — rien n'est alors écrit. Première écriture du compte : acceptée si `bytes` tient seul
+ * dans le budget.
+ */
+export async function reserveHistoryBytes(
+  db: Db,
+  userId: string,
+  bytes: number,
+  budget: number = MAX_HISTORY_BYTES_PER_ACCOUNT,
+): Promise<boolean> {
+  if (bytes <= 0) return true;
+  if (bytes > budget) return false;
+  const rows = await db
     .insert(accountStorage)
     .values({ userId, historyBytes: bytes, updatedAt: new Date() })
     .onConflictDoUpdate({
@@ -61,7 +64,22 @@ export async function chargeHistoryBytes(db: Db, userId: string, bytes: number):
         historyBytes: sql`${accountStorage.historyBytes} + ${bytes}`,
         updatedAt: sql`now()`,
       },
-    });
+      setWhere: sql`${accountStorage.historyBytes} + ${bytes} <= ${budget}`,
+    })
+    .returning({ userId: accountStorage.userId });
+  return rows.length > 0;
+}
+
+/** Rend une réservation (écriture échouée). Jamais en dessous de zéro. */
+export async function releaseHistoryBytes(db: Db, userId: string, bytes: number): Promise<void> {
+  if (bytes <= 0) return;
+  await db
+    .update(accountStorage)
+    .set({
+      historyBytes: sql`greatest(${accountStorage.historyBytes} - ${bytes}, 0)`,
+      updatedAt: sql`now()`,
+    })
+    .where(eq(accountStorage.userId, userId));
 }
 
 /** Plafond effectif, en octets, lu dans l'environnement (valeur invalide ⇒ défaut). */
@@ -106,9 +124,9 @@ export function historyStorageDeps(
 ) {
   return {
     isFull: () => isHistoryStorageFull(db, storageCeilingBytes(ceilingMb)),
-    storedBytes: () => storedHistoryBytes(db, userId),
     knownClientKeys: (clientKeys: readonly string[]) =>
       findKnownClientKeys(db, table, userId, clientKeys),
-    charge: (bytes: number) => chargeHistoryBytes(db, userId, bytes),
+    reserve: (bytes: number) => reserveHistoryBytes(db, userId, bytes),
+    release: (bytes: number) => releaseHistoryBytes(db, userId, bytes),
   };
 }

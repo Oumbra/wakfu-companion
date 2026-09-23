@@ -1,7 +1,7 @@
 import type { IngestResult } from './ingest';
 import type { KnownReferences, HistoryReferences } from './guards';
 import { HISTORY_QUOTA_EXCEEDED_CODE, historyQuotaExceededBody, splitByReferences } from './guards';
-import { MAX_HISTORY_BYTES_PER_ACCOUNT, entryBytes, exceedsStorageBudget } from './storage';
+import { MAX_HISTORY_BYTES_PER_ACCOUNT, entryBytes } from './storage';
 import type { ParseResult, ParsedBatch, RejectedEntry } from './parse';
 
 /**
@@ -63,12 +63,16 @@ export interface HistoryBatchDeps<T> {
   storage?: {
     /** Vrai si la base a atteint son plafond global. */
     isFull: () => Promise<boolean>;
-    /** Volume déjà stocké par le compte, en octets. */
-    storedBytes: () => Promise<number>;
     /** `clientKey` du lot déjà stockées : leur renvoi n'ajoute rien au volume. */
     knownClientKeys: (clientKeys: readonly string[]) => Promise<ReadonlySet<string>>;
-    /** Ajoute au volume du compte la taille des entrées nouvelles réellement écrites. */
-    charge: (bytes: number) => Promise<void>;
+    /**
+     * Réserve `bytes` sur le volume du compte, en une écriture conditionnelle : `false` si cela
+     * dépasse le budget. Atomique (audit du 2026-09-23, S8) : deux lots concurrents ne peuvent
+     * plus lire le même volume puis le dépasser ensemble.
+     */
+    reserve: (bytes: number) => Promise<boolean>;
+    /** Rend une réservation dont l'écriture a échoué. */
+    release: (bytes: number) => Promise<void>;
   };
 }
 
@@ -112,7 +116,7 @@ export async function processHistoryBatch<T extends HistoryReferences & { client
           },
         };
       }
-      if (exceedsStorageBudget(await deps.storage.storedBytes(), newBytes)) {
+      if (!(await deps.storage.reserve(newBytes))) {
         return {
           status: 403,
           body: {
@@ -124,8 +128,13 @@ export async function processHistoryBatch<T extends HistoryReferences & { client
     }
   }
 
-  const result = await deps.ingest(batch.entries);
-  if (deps.storage && newBytes > 0) await deps.storage.charge(newBytes);
+  let result: IngestResult;
+  try {
+    result = await deps.ingest(batch.entries);
+  } catch (error) {
+    if (deps.storage && newBytes > 0) await deps.storage.release(newBytes).catch(() => undefined);
+    throw error;
+  }
   return { status: 200, body: { ...result, rejected: batch.rejected } };
 }
 

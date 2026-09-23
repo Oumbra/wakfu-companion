@@ -12,7 +12,6 @@ import {
   processHistoryBatch,
   type HistoryBatchDeps,
 } from './batch';
-import { MAX_HISTORY_BYTES_PER_ACCOUNT } from './storage';
 import {
   HISTORY_QUOTA_EXCEEDED_CODE,
   MAX_FIGHTS_PER_ACCOUNT,
@@ -213,9 +212,9 @@ describe('processHistoryBatch', () => {
     ) {
       return {
         isFull: vi.fn(async () => false),
-        storedBytes: vi.fn(async () => 0),
         knownClientKeys: vi.fn(async () => new Set<string>()),
-        charge: vi.fn(async () => undefined),
+        reserve: vi.fn(async (_bytes: number) => true),
+        release: vi.fn(async (_bytes: number) => undefined),
         ...overrides,
       };
     }
@@ -252,22 +251,31 @@ describe('processHistoryBatch', () => {
       }
     });
 
-    it('compte le volume des seules entrées nouvelles, après écriture', async () => {
+    it('réserve le volume des seules entrées nouvelles, avant écriture', async () => {
       const s = storage({ knownClientKeys: vi.fn(async () => new Set([KEY('a')])) });
       const d = deps<FightInput>({ storage: s });
       await processHistoryBatch({ entries: [fight(KEY('a')), fight(KEY('b'))] }, NOW, FIGHTS, d);
-      expect(s.charge).toHaveBeenCalledTimes(1);
-      const charged = (s.charge as ReturnType<typeof vi.fn>).mock.calls[0][0];
-      expect(charged).toBe(JSON.stringify(d.written[1]).length);
+      expect(s.reserve).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(s.reserve).mock.calls[0][0]).toBe(JSON.stringify(d.written[1]).length);
+      expect(s.release).not.toHaveBeenCalled();
     });
 
-    it('refuse en 403 un lot qui dépasse le volume du compte', async () => {
-      const s = storage({ storedBytes: vi.fn(async () => MAX_HISTORY_BYTES_PER_ACCOUNT) });
+    it('refuse en 403 un lot dont la réservation échoue (volume du compte)', async () => {
+      const s = storage({ reserve: vi.fn(async (_bytes: number) => false) });
       const d = deps<FightInput>({ storage: s });
       const outcome = await processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d);
       expect(outcome).toMatchObject({ status: 403, body: { code: HISTORY_QUOTA_EXCEEDED_CODE } });
       expect(d.ingest).not.toHaveBeenCalled();
-      expect(s.charge).not.toHaveBeenCalled();
+    });
+
+    it('rend la réservation quand l’écriture échoue', async () => {
+      const s = storage();
+      const d = deps<FightInput>({ storage: s });
+      vi.mocked(d.ingest).mockRejectedValueOnce(new Error('base indisponible'));
+      await expect(
+        processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d),
+      ).rejects.toThrow('base indisponible');
+      expect(s.release).toHaveBeenCalledWith(vi.mocked(s.reserve).mock.calls[0][0]);
     });
 
     it('refuse en 503 réessayable quand la base est pleine', async () => {
@@ -281,13 +289,13 @@ describe('processHistoryBatch', () => {
     it('laisse toujours passer un renvoi d’événements déjà stockés', async () => {
       const s = storage({
         isFull: vi.fn(async () => true),
-        storedBytes: vi.fn(async () => MAX_HISTORY_BYTES_PER_ACCOUNT),
+        reserve: vi.fn(async (_bytes: number) => false),
         knownClientKeys: vi.fn(async () => new Set([KEY('a')])),
       });
       const d = deps<FightInput>({ storage: s });
       const outcome = await processHistoryBatch({ entries: [fight(KEY('a'))] }, NOW, FIGHTS, d);
       expect(outcome.status).toBe(200);
-      expect(s.charge).not.toHaveBeenCalled();
+      expect(s.reserve).not.toHaveBeenCalled();
     });
   });
 });
