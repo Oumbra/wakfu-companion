@@ -25,8 +25,12 @@
 
 import { execFileSync } from 'node:child_process';
 import {
-  cpSync,
+  closeSync,
+  copyFileSync,
   existsSync,
+  lstatSync,
+  openSync,
+  readSync,
   mkdirSync,
   mkdtempSync,
   readdirSync,
@@ -38,6 +42,30 @@ import { join, resolve } from 'node:path';
 import { ALLOWED_FOLDERS, WAKASSETS_ORIGIN, upstreamUrl } from '../server/icons/proxy.ts';
 
 const REPO_URL = 'https://github.com/Vertylo/wakassets';
+// Commit amont ÉPINGLÉ (audit du 2026-09-23, S3) : le contenu du dépôt tiers est publié tel quel
+// sur notre domaine ; un commit malveillant (ou un compte compromis) ne doit pas partir en
+// production au déploiement suivant sans relecture. Pour prendre de nouvelles icônes :
+// `git ls-remote https://github.com/Vertylo/wakassets HEAD`, relire le diff amont, reporter le SHA.
+const WAKASSETS_COMMIT = '9159bb11d31c08c987059328f4a50cef7c1f1af7';
+// Une icône pèse quelques Ko : au-delà, ce n'est pas une icône.
+const MAX_ICON_BYTES = 512 * 1024;
+const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+/** Vrai pour un fichier ordinaire (jamais un lien symbolique) de taille bornée, signé PNG. */
+function isPlainPng(path) {
+  const stat = lstatSync(path);
+  if (!stat.isFile() || stat.size > MAX_ICON_BYTES || stat.size < PNG_SIGNATURE.length) {
+    return false;
+  }
+  const head = Buffer.alloc(PNG_SIGNATURE.length);
+  const fd = openSync(path, 'r');
+  try {
+    readSync(fd, head, 0, head.length, 0);
+  } finally {
+    closeSync(fd);
+  }
+  return head.equals(PNG_SIGNATURE);
+}
 const ICONS_PREFIX = 'api/v1/icons';
 const MAX_FILES = 19500;
 
@@ -59,13 +87,22 @@ const git = (...args) =>
   execFileSync('git', args, { cwd: work, stdio: ['ignore', 'pipe', 'inherit'] });
 
 try {
-  // Clone partiel : aucun blob au départ, puis uniquement ceux des dossiers relayés.
-  git('clone', '--quiet', '--depth=1', '--filter=blob:none', '--no-checkout', REPO_URL, '.');
+  // Clone partiel du commit épinglé : aucun blob au départ, puis uniquement ceux des dossiers
+  // relayés. `core.symlinks=false` : un lien symbolique de l'amont devient un fichier texte
+  // (écarté ensuite par `isPlainPng`), jamais un lien vers un fichier du runner.
+  git('init', '--quiet');
+  git('config', 'core.symlinks', 'false');
+  git('remote', 'add', 'origin', REPO_URL);
   git('sparse-checkout', 'set', '--no-cone', ...folders.map((f) => `/${f}/`));
-  git('checkout', '--quiet');
+  git('fetch', '--quiet', '--depth=1', '--filter=blob:none', 'origin', WAKASSETS_COMMIT);
+  git('checkout', '--quiet', 'FETCH_HEAD');
   const commit = git('rev-parse', 'HEAD').toString().trim();
+  if (commit !== WAKASSETS_COMMIT) {
+    throw new Error(`commit inattendu ${commit}, attendu ${WAKASSETS_COMMIT}`);
+  }
 
   let copied = 0;
+  let rejected = 0;
   for (const folder of folders) {
     const src = join(work, folder);
     if (!existsSync(src)) {
@@ -76,7 +113,11 @@ try {
     mkdirSync(dest, { recursive: true });
     for (const file of readdirSync(src)) {
       if (!upstreamUrl({ folder, file })) continue; // même filtre que le relais
-      cpSync(join(src, file), join(dest, file));
+      if (!isPlainPng(join(src, file))) {
+        rejected++;
+        continue;
+      }
+      copyFileSync(join(src, file), join(dest, file));
       copied++;
     }
   }
@@ -102,7 +143,8 @@ try {
       .filter(Boolean).length,
   );
   console.log(
-    `[wakassets] ${copied} icônes copiées (commit ${commit.slice(0, 12)}), ${total} fichiers publiés.`,
+    `[wakassets] ${copied} icônes copiées, ${rejected} écartées (pas un PNG ordinaire), ` +
+      `commit ${commit.slice(0, 12)}, ${total} fichiers publiés.`,
   );
   if (total > MAX_FILES) {
     console.error(`[wakassets] ${total} fichiers > ${MAX_FILES} (limite Pages : 20 000).`);
