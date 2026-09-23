@@ -7,7 +7,8 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideServiceWorker('ngsw-worker.js', {
+    // `sw.js` (public/) enveloppe `ngsw-worker.js` pour le tenir à l'écart des requêtes cross-origin.
+    provideServiceWorker('sw.js', {
       enabled: !isDevMode(),
       registrationStrategy: 'registerWhenStable:30000',
     }),
