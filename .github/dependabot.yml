@@ -61,6 +61,10 @@ updates:
         update-types: ['version-update:semver-major']
       - dependency-name: typescript
         update-types: ['version-update:semver-major']
+      # Majeure Vitest : @angular/build fixe vitest en peerOptional (^4 pour Angular 21), la
+      # majeure suivante échoue en `npm ci` (ERESOLVE, PR #39). Elle montera avec Angular.
+      - dependency-name: vitest
+        update-types: ['version-update:semver-major']
     commit-message:
       prefix: chore
       prefix-development: chore
