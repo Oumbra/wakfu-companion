@@ -5,6 +5,12 @@ on:
     branches:
       - main
       - claude/dev
+      # Branches de release (skill `release`, workflow release.yml) : la PR vers `main` est
+      # créée avec le GITHUB_TOKEN, qui ne déclenche pas l'événement `pull_request` — c'est ce
+      # run sur push, rattaché au même SHA, qui fournit le check requis `test` de la PR.
+      # Glob (les filtres GitHub n'acceptent pas de regex) : le format exact
+      # `release-AAAA-MM-JJ(-N)` est contrôlé par release.yml.
+      - 'release-*'
   pull_request:
   # Appelé aussi par deploy-main.yml (job `ci`) : la production ne se déploie
   # qu'après ces vérifications, rejouées sur le commit exact à déployer.
