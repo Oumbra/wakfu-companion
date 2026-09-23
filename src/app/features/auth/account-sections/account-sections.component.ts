@@ -76,6 +76,32 @@ export class AccountSectionsComponent {
     this.sessions.set(sessions ?? []);
   }
 
+  /**
+   * Toutes les actions destructives de cette page passent par la même popover de confirmation
+   * (`ConfirmDeleteService`) : révoquer un appareil, tous les appareils, se déconnecter, supprimer
+   * le compte ou effacer les données locales. Aucune ne part sur un simple clic.
+   */
+  protected confirmRevokeSession(session: AuthSessionInfo, event: Event): void {
+    this.confirm(event, 'auth.account.revokeConfirm', () => void this.revokeSession(session));
+  }
+
+  /** Révoque aussi la session courante : l'utilisateur se retrouve déconnecté (voir le message). */
+  protected confirmRevokeAll(event: Event): void {
+    this.confirm(event, 'auth.account.revokeAllConfirm', () => void this.revokeAll());
+  }
+
+  protected confirmLogout(event: Event): void {
+    const key = this.wipeLocalOnLogout()
+      ? 'auth.account.logoutWipeConfirm'
+      : 'auth.account.logoutConfirm';
+    this.confirm(event, key, () => void this.logout());
+  }
+
+  private confirm(event: Event, messageKey: string, onConfirm: () => void): void {
+    const button = event.currentTarget as HTMLElement;
+    this.confirmDelete.open(button, this.i18n.t(messageKey), onConfirm);
+  }
+
   protected async revokeSession(session: AuthSessionInfo): Promise<void> {
     await this.auth.revokeSession(session.id);
     await this.refreshSessions();
@@ -113,10 +139,7 @@ export class AccountSectionsComponent {
 
   /** Suppression irréversible : confirmée par la même popover que les autres actions destructives. */
   protected confirmDeleteAccount(event: Event): void {
-    const button = event.currentTarget as HTMLElement;
-    this.confirmDelete.open(button, this.i18n.t('auth.account.deleteConfirm'), () => {
-      void this.deleteAccount();
-    });
+    this.confirm(event, 'auth.account.deleteConfirm', () => void this.deleteAccount());
   }
 
   /**
@@ -127,8 +150,7 @@ export class AccountSectionsComponent {
    * de l'overlay.
    */
   protected confirmWipeLocal(event: Event): void {
-    const button = event.currentTarget as HTMLElement;
-    this.confirmDelete.open(button, this.i18n.t('auth.account.wipeLocalConfirm'), () => {
+    this.confirm(event, 'auth.account.wipeLocalConfirm', () => {
       void this.persistence.wipeLocalData().then(() => window.location.reload());
     });
   }

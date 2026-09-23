@@ -120,7 +120,7 @@
               type="button"
               class="account-btn danger small"
               [disabled]="auth.busy()"
-              (click)="revokeAll()"
+              (click)="confirmRevokeAll($event)"
             >
               {{ 'auth.account.revokeAll' | t }}
             </button>
@@ -162,7 +162,7 @@
                   [appTooltip]="'auth.account.revoke' | t"
                   [tooltipPosition]="i === 0 ? 'bottom' : 'top'"
                   [disabled]="auth.busy()"
-                  (click)="revokeSession(session)"
+                  (click)="confirmRevokeSession(session, $event)"
                 >
                   <span class="icon-btn-text">×</span>
                 </button>
@@ -223,7 +223,7 @@
           type="button"
           class="account-btn danger small"
           [disabled]="auth.busy()"
-          (click)="logout()"
+          (click)="confirmLogout($event)"
         >
           {{ 'auth.account.logout' | t }}
         </button>

@@ -619,6 +619,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.logout': 'Se déconnecter',
     'auth.account.delete': 'Supprimer mon compte',
     'auth.account.deleteConfirm': 'Supprimer définitivement le compte ?',
+    'auth.account.logoutConfirm': 'Se déconnecter de ce navigateur ?',
+    'auth.account.logoutWipeConfirm': 'Se déconnecter et effacer les données de ce navigateur ?',
+    'auth.account.revokeConfirm': 'Déconnecter cet appareil ?',
+    'auth.account.revokeAllConfirm': 'Déconnecter tous les appareils, y compris celui-ci ?',
     'auth.account.wipeLocal': 'Supprimer les données de cet appareil',
     'auth.account.wipeLocalConfirm': 'Effacer toutes les données de cet appareil ?',
     'auth.account.wipeLocalHint':
@@ -1311,6 +1315,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.logout': 'Sign out',
     'auth.account.delete': 'Delete my account',
     'auth.account.deleteConfirm': 'Permanently delete the account?',
+    'auth.account.logoutConfirm': 'Sign out of this browser?',
+    'auth.account.logoutWipeConfirm': 'Sign out and erase the data in this browser?',
+    'auth.account.revokeConfirm': 'Sign out this device?',
+    'auth.account.revokeAllConfirm': 'Sign out all devices, including this one?',
     'auth.account.wipeLocal': 'Delete the data on this device',
     'auth.account.wipeLocalConfirm': 'Erase all data on this device?',
     'auth.account.wipeLocalHint':
@@ -2005,6 +2013,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.logout': 'Cerrar sesión',
     'auth.account.delete': 'Eliminar mi cuenta',
     'auth.account.deleteConfirm': '¿Eliminar definitivamente la cuenta?',
+    'auth.account.logoutConfirm': '¿Cerrar sesión en este navegador?',
+    'auth.account.logoutWipeConfirm': '¿Cerrar sesión y borrar los datos de este navegador?',
+    'auth.account.revokeConfirm': '¿Cerrar sesión en este dispositivo?',
+    'auth.account.revokeAllConfirm': '¿Cerrar sesión en todos los dispositivos, incluido este?',
     'auth.account.wipeLocal': 'Eliminar los datos de este dispositivo',
     'auth.account.wipeLocalConfirm': '¿Borrar todos los datos de este dispositivo?',
     'auth.account.wipeLocalHint':
@@ -2701,6 +2713,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'auth.account.logout': 'Terminar sessão',
     'auth.account.delete': 'Eliminar a minha conta',
     'auth.account.deleteConfirm': 'Eliminar definitivamente a conta?',
+    'auth.account.logoutConfirm': 'Terminar sessão neste navegador?',
+    'auth.account.logoutWipeConfirm': 'Terminar sessão e apagar os dados deste navegador?',
+    'auth.account.revokeConfirm': 'Terminar sessão neste dispositivo?',
+    'auth.account.revokeAllConfirm': 'Terminar sessão em todos os dispositivos, incluindo este?',
     'auth.account.wipeLocal': 'Eliminar os dados deste dispositivo',
     'auth.account.wipeLocalConfirm': 'Apagar todos os dados deste dispositivo?',
     'auth.account.wipeLocalHint':
