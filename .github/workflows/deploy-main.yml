@@ -172,7 +172,7 @@ jobs:
       - name: Deploy to Cloudflare Pages
         # --branch=main en dur (et non `github.ref_name`) : le job n'est de toute façon
         # autorisé que sur main (garde `if:` + environnement), ceinture et bretelles.
-        uses: cloudflare/wrangler-action@4e88846969242f7752bcfdaf5511bfbb3985ca47 # v4.1.1
+        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0 (= tag v4 ; v4.1.x publiés sans dist/, inutilisables)
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
