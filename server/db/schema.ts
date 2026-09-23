@@ -621,6 +621,7 @@ export const userSettings = pgTable(
  *    combattants du même camp partagent un nom, ce qui est courant (voir
  *    `countNameInstances`/`InitiativeSeat` côté client, tout un mécanisme y est
  *    consacré). Sans lui, un combat contre 3 Bouftous perdrait 2 lignes sur 3.
+ *    Depuis la migration 0035, `side` est SORTI de cette clé (voir la table).
  * 3. **`trade_items` porte un `lineIndex`** et une vraie clé primaire, là où le
  *    schéma d'origine laissait la table sans contrainte : c'est ce qui permet
  *    de réinsérer les lignes filles en `ON CONFLICT DO NOTHING` sans jamais
@@ -824,9 +825,12 @@ export const fightParticipants = pgTable(
      */
     xpGained: bigint('xp_gained', { mode: 'number' }).notNull().default(0),
   },
-  (table) => [
-    primaryKey({ columns: [table.fightId, table.side, table.name, table.instanceIndex] }),
-  ],
+  // Clé primaire (fight_id, name, instance_index) depuis la migration 0035 (audit du 2026-09-23) :
+  // le camp n'en fait plus partie. Un combattant change de camp quand la classification allié/
+  // ennemi évolue côté client ; avec `side` dans la clé, l'upsert insérait une SECONDE ligne au
+  // lieu de mettre à jour la première. (nom, instance) est unique dans un combat : les deux
+  // clients numérotent les instances d'un nom sur les deux camps confondus.
+  (table) => [primaryKey({ columns: [table.fightId, table.name, table.instanceIndex] })],
 );
 
 /**

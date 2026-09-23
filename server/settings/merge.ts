@@ -1,5 +1,6 @@
 import { isSyncedSettingKey, type SyncedSettingKey } from './keys';
 import { isMergeableSettingKey, parseSettingPatch, type SettingPatch } from './patch';
+import { echoValue, parseBoundedDate } from '../history/parse';
 
 /**
  * Logique pure de la synchronisation par clé (lot 6, prompt 6.1) — validation
@@ -67,14 +68,36 @@ export function jsonDepthExceeds(value: unknown, maxDepth: number = MAX_SETTING_
   return false;
 }
 
+/**
+ * Taille maximale, en octets UTF-8 de sa sérialisation JSON, de la valeur d'UNE clé telle qu'elle
+ * sera écrite — donc APRÈS fusion d'un correctif (audit de sécurité du 2026-09-23, #3). Le corps de
+ * requête est déjà borné à 512 Kio, mais une fusion (`patch`, voir patch.ts) ajoute à la valeur en
+ * compte : des correctifs roster successifs, chacun sous la borne, faisaient grossir la clé sans
+ * limite. Valeurs réelles : 1 à 4 Ko par clé, jusqu'à ~100 Ko pour des réattributions nombreuses.
+ */
+export const MAX_SETTING_VALUE_BYTES = 512 * 1024;
+
+/** Taille en octets UTF-8 de la sérialisation JSON d'une valeur (celle que `jsonb` recevra). */
+export function settingValueBytes(value: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(value) ?? 'null').length;
+}
+
+/** Message d'erreur (413) si la valeur de `key` dépasse `MAX_SETTING_VALUE_BYTES`, sinon `null`. */
+export function oversizedSettingError(key: string, value: unknown): string | null {
+  return settingValueBytes(value) > MAX_SETTING_VALUE_BYTES
+    ? `valeur trop volumineuse : ${echoValue(key)} (max ${MAX_SETTING_VALUE_BYTES} octets)`
+    : null;
+}
+
+/**
+ * `updatedAt` d'une écriture : chaîne ISO d'au plus 64 caractères, dans [2012-01-01,
+ * maintenant + `MAX_CLOCK_SKEW_MS`] — même parseur borné que les dates d'historique
+ * (`parseBoundedDate`, dont la tolérance future est identique). Avant le 2026-09-23, la chaîne
+ * n'était pas bornée en longueur et était recopiée TELLE QUELLE dans le message d'erreur (le
+ * corps brut renvoyé au client) ; une date antérieure à 2012 passait (horloge client à l'epoch).
+ */
 function parseTimestamp(raw: unknown, now: Date): ParseResult<Date> {
-  if (typeof raw !== 'string') return { ok: false, error: 'updatedAt manquant' };
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return { ok: false, error: `updatedAt invalide : ${raw}` };
-  if (parsed.getTime() > now.getTime() + MAX_CLOCK_SKEW_MS) {
-    return { ok: false, error: `updatedAt trop dans le futur : ${raw}` };
-  }
-  return { ok: true, value: parsed };
+  return parseBoundedDate(raw, 'updatedAt', now);
 }
 
 /**
@@ -99,7 +122,7 @@ export function parsePatchBody(body: unknown, now: Date): ParseResult<SettingWri
     if (!raw || typeof raw !== 'object') return { ok: false, error: 'entrée non objet' };
     const entry = raw as { key?: unknown; value?: unknown; patch?: unknown; updatedAt?: unknown };
     if (typeof entry.key !== 'string' || !isSyncedSettingKey(entry.key)) {
-      return { ok: false, error: `clé inconnue : ${String(entry.key)}` };
+      return { ok: false, error: `clé inconnue : ${echoValue(entry.key)}` };
     }
     if (seen.has(entry.key)) return { ok: false, error: `clé en double : ${entry.key}` };
     seen.add(entry.key);
@@ -194,7 +217,7 @@ export function parsePutBody(body: unknown): ParseResult<[SyncedSettingKey, unkn
     if (value === undefined) continue;
     // Refuser franchement une clé inconnue plutôt que de laisser `user_settings` accumuler
     // n'importe quel nom envoyé par un client modifié.
-    if (!isSyncedSettingKey(key)) return { ok: false, error: `clé inconnue : ${key}` };
+    if (!isSyncedSettingKey(key)) return { ok: false, error: `clé inconnue : ${echoValue(key)}` };
     if (jsonDepthExceeds(value)) return { ok: false, error: `valeur trop imbriquée : ${key}` };
     entries.push([key, value]);
   }

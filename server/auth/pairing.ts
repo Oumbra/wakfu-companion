@@ -211,6 +211,20 @@ export async function claimPairing(
   return { token };
 }
 
+/**
+ * Levée par `rotateNativeSession` quand une AUTRE rotation du même jeton a gagné la course (audit
+ * du 2026-09-23, #7) : la session courante a été remplacée entre sa lecture et notre écriture. La
+ * session créée par cette tentative est déjà effacée quand l'erreur est levée ; la route répond 409.
+ * Jamais atteint par un client qui ne lance pas deux rotations en parallèle (l'overlay n'en lance
+ * aucune à ce jour).
+ */
+export class NativeRotationConflictError extends Error {
+  constructor() {
+    super('rotation concurrente du même jeton');
+    this.name = 'NativeRotationConflictError';
+  }
+}
+
 export interface RotatedNativeSession {
   /** Nouveau jeton porteur, à persister AVANT d'abandonner l'ancien. */
   token: string;
@@ -294,10 +308,21 @@ export async function rotateNativeSession(
   const previousTokenValidUntil = new Date(
     Math.min(current.expiresAt.getTime(), now.getTime() + NATIVE_SESSION_ROTATION_GRACE_MS),
   );
-  await store.supersedeSession(current.idHash, {
+  // Conditionnel pour une rotation ordinaire (`onlyIfCurrent`) : de deux rotations concurrentes du
+  // même jeton, une seule remplace la session courante ; la perdante efface la session qu'elle
+  // vient de créer (jamais remise à personne) et lève `NativeRotationConflictError` (409). Sans
+  // ce contrôle, les deux jetons neufs restaient valides 30 jours — un jeton copié pouvait ainsi
+  // « forker » la chaîne sans que l'overlay légitime s'en aperçoive. Un rattrapage (session déjà
+  // remplacée) est déjà sérialisé par `markGraceRotation` : écriture inconditionnelle.
+  const superseded = await store.supersedeSession(current.idHash, {
     supersededAt: current.supersededAt ?? now,
     expiresAt: previousTokenValidUntil,
+    onlyIfCurrent: current.supersededAt === null,
   });
+  if (!superseded) {
+    await store.deleteSession(idHash);
+    throw new NativeRotationConflictError();
+  }
   await runRetentionPurges(store, now);
   return { token, issuedAt: now, expiresAt, previousTokenValidUntil };
 }

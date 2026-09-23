@@ -4,7 +4,12 @@ import { createDb } from '../../../server/db/client';
 import { userSettings } from '../../../server/db/schema';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../server/http/api-guards';
 import { readJsonBodyLimited } from '../../../server/http/body';
-import { parsePatchBody, parsePutBody, resolveWrites } from '../../../server/settings/merge';
+import {
+  oversizedSettingError,
+  parsePatchBody,
+  parsePutBody,
+  resolveWrites,
+} from '../../../server/settings/merge';
 import { applySettingPatch } from '../../../server/settings/patch';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../_auth';
 import type { Env } from '../_types';
@@ -117,6 +122,21 @@ async function patchSettings(request: Request, env: Env): Promise<Response> {
     (entry) => ({ ...entry, value: remoteValues.get(entry.key) ?? null }),
   );
 
+  // Valeurs fusionnées calculées AVANT toute écriture, pour que la borne de taille par clé
+  // (`MAX_SETTING_VALUE_BYTES`, merge.ts) refuse la requête entière (413) sans rien avoir écrit :
+  // le client garde alors ses clés en attente, rien n'est perdu. Même borne pour un remplacement
+  // (déjà contenu par la taille du corps, vérifié par cohérence).
+  const mergedValues = new Map<string, unknown>();
+  for (const write of accepted) {
+    const value =
+      write.mode === 'merge'
+        ? applySettingPatch(write.patch, remoteValues.get(write.key))
+        : write.value;
+    if (write.mode === 'merge') mergedValues.set(write.key, value);
+    const oversized = oversizedSettingError(write.key, value);
+    if (oversized) return jsonError(oversized, 413);
+  }
+
   const replaces = accepted.filter((write) => write.mode === 'replace');
   if (replaces.length > 0) {
     await db
@@ -158,7 +178,7 @@ async function patchSettings(request: Request, env: Env): Promise<Response> {
   for (const write of accepted) {
     if (write.mode !== 'merge') continue;
     const readAt = remoteUpdatedAt.get(write.key);
-    const value = applySettingPatch(write.patch, remoteValues.get(write.key));
+    const value = mergedValues.get(write.key);
     const written = await db
       .insert(userSettings)
       .values({ userId: auth.user.id, key: write.key, value, updatedAt: write.updatedAt })
@@ -227,6 +247,10 @@ async function putSettings(request: Request, env: Env): Promise<Response> {
   const parsed = parsePutBody(body.value);
   if (!parsed.ok) return jsonError(parsed.error, 400);
   const entries = parsed.value;
+  for (const [key, value] of entries) {
+    const oversized = oversizedSettingError(key, value);
+    if (oversized) return jsonError(oversized, 413);
+  }
 
   const db = createDb(env.DATABASE_URL);
   const now = new Date();

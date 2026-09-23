@@ -5,15 +5,15 @@ import { fightLoot, fightParticipants, fights } from '../../../../server/db/sche
 import { ingestFights } from '../../../../server/history/ingest';
 import {
   MAX_HISTORY_BATCH,
-  parseFightsBody,
+  parseFightsBatch,
   parsePageQuery,
 } from '../../../../server/history/parse';
 import {
-  HISTORY_QUOTA_EXCEEDED_CODE,
   MAX_FIGHTS_PER_ACCOUNT,
-  checkFightQuota,
-  checkHistoryReferences,
+  checkHistoryQuota,
+  loadKnownReferences,
 } from '../../../../server/history/guards';
+import { processHistoryBatch } from '../../../../server/history/batch';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
@@ -46,30 +46,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
     if (!body.ok) return jsonError(body.error, body.status);
 
-    const parsed = parseFightsBody(body.value);
-    if (!parsed.ok) return jsonError(parsed.error, 400);
-    if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
-
     const db = createDb(context.env.DATABASE_URL);
-    // Références inconnues ⇒ 400 plutôt qu'une violation de clé étrangère en 500 (guards.ts).
-    const unknownReference = await checkHistoryReferences(db, parsed.value);
-    if (unknownReference) return jsonError(unknownReference, 400);
-    if (
-      !(await checkFightQuota(
-        db,
-        auth.user.id,
-        parsed.value.map((f) => f.clientKey),
-      ))
-    ) {
-      return json(
-        {
-          error: `quota de combats atteint (${MAX_FIGHTS_PER_ACCOUNT} par compte)`,
-          code: HISTORY_QUOTA_EXCEEDED_CODE,
-        },
-        403,
-      );
-    }
-    return json(await ingestFights(db, auth.user.id, parsed.value));
+    const userId = auth.user.id;
+    // Validation PAR ENTRÉE (entrées invalides ignorées, listées dans `rejected`), références,
+    // quota, écriture : voir server/history/batch.ts.
+    const outcome = await processHistoryBatch(
+      body.value,
+      new Date(),
+      { parse: parseFightsBatch, quotaLabel: 'de combats', quota: MAX_FIGHTS_PER_ACCOUNT },
+      {
+        loadKnownReferences: (entries) => loadKnownReferences(db, entries),
+        withinQuota: (keys) => checkHistoryQuota(db, fights, userId, keys, MAX_FIGHTS_PER_ACCOUNT),
+        ingest: (entries) => ingestFights(db, userId, entries),
+      },
+    );
+    return json(outcome.body, outcome.status);
   } catch (error) {
     // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
     return internalErrorResponse('history/fights POST', error);
@@ -108,6 +99,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
           )
       : [];
 
+  // Ordre DÉTERMINISTE par position (`line_index`) : le client apparie les lignes de butin par
+  // position quand il renvoie une correction depuis l'archive (voir `lineIndex` ci-dessous) —
+  // sans `ORDER BY`, Postgres ne garantit aucun ordre.
   const loot =
     rows.length > 0
       ? await db
@@ -119,6 +113,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
               rows.map((row) => row.id),
             ),
           )
+          .orderBy(fightLoot.fightId, fightLoot.lineIndex)
       : [];
 
   const participantsByFight = new Map<number, typeof participants>();
@@ -168,6 +163,8 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         xpGained: participant.xpGained,
       })),
       loot: (lootByFight.get(row.id) ?? []).map((line) => ({
+        // Champ additif (2026-09-23) : position stockée de la ligne, clé de l'upsert du butin.
+        lineIndex: line.lineIndex,
         itemId: line.itemId,
         itemName: line.itemName,
         quantity: line.quantity,

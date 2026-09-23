@@ -12,7 +12,7 @@
  * concurrentes.
  */
 
-import { and, eq, gt, isNull, lt, or, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray, isNotNull, isNull, lt, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import {
   authRateLimits,
@@ -22,6 +22,8 @@ import {
   userIdentities,
   users,
 } from '../db/schema';
+import { sha256Hex } from './crypto';
+import { NATIVE_SESSION_USER_AGENT } from './pairing';
 import type {
   AuthStore,
   AuthorizationRecord,
@@ -190,10 +192,18 @@ export function createDbAuthStore(db: Db): AuthStore {
     },
 
     async supersedeSession(idHash, patch) {
-      await db
+      // Une seule requête : `superseded_at IS NULL` fait échouer la seconde de deux rotations
+      // concurrentes (même principe que `consumeAuthorization`).
+      const rows = await db
         .update(sessions)
         .set({ supersededAt: patch.supersededAt, expiresAt: patch.expiresAt })
-        .where(eq(sessions.id, idHash));
+        .where(
+          patch.onlyIfCurrent
+            ? and(eq(sessions.id, idHash), isNull(sessions.supersededAt))
+            : eq(sessions.id, idHash),
+        )
+        .returning({ id: sessions.id });
+      return rows.length > 0;
     },
 
     async revokeSessionChain(chainId, now, exceptIdHash) {
@@ -329,6 +339,28 @@ export function createDbAuthStore(db: Db): AuthStore {
     },
 
     async purgeExpiredPairings(now: Date) {
+      // Jetons jamais remis (réclamés, pas consommés) des appairages expirés : leurs sessions
+      // partent AVANT les lignes d'appairage, qui sont le seul lien vers elles (voir le port).
+      const undelivered = await db
+        .select({ sessionToken: nativePairings.sessionToken })
+        .from(nativePairings)
+        .where(
+          and(
+            lt(nativePairings.expiresAt, now),
+            isNull(nativePairings.consumedAt),
+            isNotNull(nativePairings.sessionToken),
+          ),
+        );
+      const idHashes = await Promise.all(
+        undelivered.flatMap((row) => (row.sessionToken ? [sha256Hex(row.sessionToken)] : [])),
+      );
+      if (idHashes.length > 0) {
+        await db
+          .delete(sessions)
+          .where(
+            and(inArray(sessions.id, idHashes), eq(sessions.userAgent, NATIVE_SESSION_USER_AGENT)),
+          );
+      }
       await db.delete(nativePairings).where(lt(nativePairings.expiresAt, now));
     },
 

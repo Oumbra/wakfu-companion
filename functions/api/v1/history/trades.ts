@@ -5,10 +5,15 @@ import { tradeItems, trades } from '../../../../server/db/schema';
 import {
   MAX_HISTORY_BATCH,
   parsePageQuery,
-  parseTradesBody,
+  parseTradesBatch,
 } from '../../../../server/history/parse';
 import { ingestTrades } from '../../../../server/history/ingest';
-import { checkHistoryReferences } from '../../../../server/history/guards';
+import {
+  MAX_TRADES_PER_ACCOUNT,
+  checkHistoryQuota,
+  loadKnownReferences,
+} from '../../../../server/history/guards';
+import { processHistoryBatch } from '../../../../server/history/batch';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
 import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
@@ -43,15 +48,21 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
     const body = await readJsonBodyLimited(context.request, MAX_PAYLOAD_BYTES);
     if (!body.ok) return jsonError(body.error, body.status);
 
-    const parsed = parseTradesBody(body.value);
-    if (!parsed.ok) return jsonError(parsed.error, 400);
-    if (parsed.value.length === 0) return json({ accepted: [], inserted: 0 });
-
     const db = createDb(context.env.DATABASE_URL);
-    // Références inconnues ⇒ 400 plutôt qu'une violation de clé étrangère en 500 (guards.ts).
-    const unknownReference = await checkHistoryReferences(db, parsed.value);
-    if (unknownReference) return jsonError(unknownReference, 400);
-    return json(await ingestTrades(db, auth.user.id, parsed.value));
+    const userId = auth.user.id;
+    // Validation PAR ENTRÉE (entrées invalides ignorées, listées dans `rejected`), références,
+    // quota, écriture : voir server/history/batch.ts.
+    const outcome = await processHistoryBatch(
+      body.value,
+      new Date(),
+      { parse: parseTradesBatch, quotaLabel: "d'échanges", quota: MAX_TRADES_PER_ACCOUNT },
+      {
+        loadKnownReferences: (entries) => loadKnownReferences(db, entries),
+        withinQuota: (keys) => checkHistoryQuota(db, trades, userId, keys, MAX_TRADES_PER_ACCOUNT),
+        ingest: (entries) => ingestTrades(db, userId, entries),
+      },
+    );
+    return json(outcome.body, outcome.status);
   } catch (error) {
     // Jamais le message Postgres au client : journalisé côté serveur, 500 générique.
     return internalErrorResponse('history/trades POST', error);

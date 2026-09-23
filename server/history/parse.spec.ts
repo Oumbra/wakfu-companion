@@ -4,10 +4,15 @@ import {
   MAX_HISTORY_BATCH,
   MAX_PAGE_SIZE,
   PG_INT32_MAX,
+  echoValue,
+  parseFightsBatch,
   parseFightsBody,
+  parsePactExtractionsBatch,
   parsePactExtractionsBody,
   parsePageQuery,
+  parsePurchasesBatch,
   parsePurchasesBody,
+  parseTradesBatch,
   parseTradesBody,
 } from './parse';
 
@@ -685,5 +690,183 @@ describe('bornes de sécurité (audit 2026-09-23)', () => {
 
   it('expose PG_INT32_MAX à la valeur Postgres', () => {
     expect(PG_INT32_MAX).toBe(2 ** 31 - 1);
+  });
+});
+
+/**
+ * Correctif du 2026-09-23 (régression en production) : validation PAR ENTRÉE. Une entrée invalide
+ * est ignorée et signalée, le reste du lot passe ; seul un corps globalement malformé est refusé.
+ */
+describe('parse*Batch — entrées invalides ignorées, lot valide accepté', () => {
+  const NOW_BATCH = new Date('2026-09-23T12:00:00Z');
+
+  it('combat restauré daté de 1970 : ignoré, les autres combats du lot passent', () => {
+    const parsed = parseFightsBatch(
+      {
+        entries: [
+          fightEntry({ clientKey: KEY_A }),
+          fightEntry({ clientKey: KEY_B, startedAt: '1970-01-01T00:00:00.000Z' }),
+          fightEntry({ clientKey: 'c'.repeat(64) }),
+        ],
+      },
+      NOW_BATCH,
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.entries.map((f) => f.clientKey)).toEqual([KEY_A, 'c'.repeat(64)]);
+    expect(parsed.value.indices).toEqual([0, 2]);
+    expect(parsed.value.rejected).toEqual([
+      { index: 1, clientKey: KEY_B, error: expect.stringContaining('antérieur à 2012') },
+    ]);
+  });
+
+  it('non-régression : un lot entièrement valide passe tel quel, sans rejet', () => {
+    const parsed = parseFightsBatch(
+      { entries: [fightEntry({ clientKey: KEY_A }), fightEntry({ clientKey: KEY_B })] },
+      NOW_BATCH,
+    );
+    expect(parsed).toMatchObject({ ok: true, value: { indices: [0, 1], rejected: [] } });
+  });
+
+  it('entrée non objet ou clientKey illisible : ignorée, sans clientKey dans le rejet', () => {
+    const parsed = parsePurchasesBatch(
+      { entries: [42, purchaseEntry({ clientKey: 'pas-un-hash' }), purchaseEntry()] },
+      NOW_BATCH,
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.entries).toHaveLength(1);
+    expect(parsed.value.indices).toEqual([2]);
+    expect(parsed.value.rejected.map((r) => r.index)).toEqual([0, 1]);
+    expect(parsed.value.rejected.every((r) => r.clientKey === undefined)).toBe(true);
+  });
+
+  it('clientKey en double : la PREMIÈRE occurrence est gardée, les suivantes ignorées', () => {
+    const parsed = parseTradesBatch(
+      {
+        entries: [
+          tradeEntry({ peerName: 'Premier' }),
+          tradeEntry({ peerName: 'Second' }),
+          tradeEntry({ clientKey: KEY_B }),
+        ],
+      },
+      NOW_BATCH,
+    );
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.entries.map((t) => t.peerName)).toEqual(['Premier', 'Autre']);
+    expect(parsed.value.rejected).toEqual([
+      { index: 1, clientKey: KEY_A, error: 'clientKey en double dans le lot' },
+    ]);
+  });
+
+  it('extractions de pacte : même sémantique par entrée', () => {
+    const parsed = parsePactExtractionsBatch(
+      {
+        entries: [
+          { clientKey: KEY_A, occurredAt: '2026-09-01T10:00:00Z', items: [] },
+          { clientKey: KEY_B, occurredAt: '2099-01-01T00:00:00Z', items: [] },
+        ],
+      },
+      NOW_BATCH,
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: { indices: [0], rejected: [{ index: 1, clientKey: KEY_B }] },
+    });
+  });
+
+  it('corps globalement malformé : toujours refusé (400)', () => {
+    expect(parseFightsBatch({}, NOW_BATCH).ok).toBe(false);
+    expect(parseFightsBatch({ entries: 'x' }, NOW_BATCH).ok).toBe(false);
+    expect(parseFightsBatch(null, NOW_BATCH).ok).toBe(false);
+    const tooMany = Array.from({ length: MAX_HISTORY_BATCH + 1 }, () => fightEntry());
+    expect(parseFightsBatch({ entries: tooMany }, NOW_BATCH).ok).toBe(false);
+  });
+
+  it('lot vide : accepté, rien à écrire', () => {
+    expect(parseFightsBatch({ entries: [] }, NOW_BATCH)).toEqual({
+      ok: true,
+      value: { entries: [], indices: [], rejected: [] },
+    });
+  });
+
+  it('caractère NUL (refusé par Postgres, 500 sinon) : entrée ignorée', () => {
+    const parsed = parseFightsBatch(
+      {
+        entries: [
+          fightEntry({
+            participants: [{ side: 'ally', name: 'Oum\u0000bra', instanceIndex: 1 }],
+          }),
+          fightEntry({
+            clientKey: KEY_B,
+            participants: [
+              {
+                side: 'ally',
+                name: 'Oumbra',
+                instanceIndex: 1,
+                spells: [{ spell: 'Coup', total: 1, byElement: { 'Fe\u0000u': 1 } }],
+              },
+            ],
+          }),
+        ],
+      },
+      NOW_BATCH,
+    );
+    expect(parsed).toMatchObject({ ok: true, value: { entries: [], indices: [] } });
+    if (!parsed.ok) return;
+    expect(parsed.value.rejected.map((r) => r.index)).toEqual([0, 1]);
+  });
+
+  it('même (nom, instance) dans les deux camps : entrée ignorée (clé primaire sans camp)', () => {
+    const parsed = parseFightsBatch(
+      {
+        entries: [
+          fightEntry({
+            participants: [
+              { side: 'ally', name: 'Bouftou', instanceIndex: 1 },
+              { side: 'enemy', name: 'Bouftou', instanceIndex: 1 },
+            ],
+          }),
+        ],
+      },
+      NOW_BATCH,
+    );
+    expect(parsed).toMatchObject({
+      ok: true,
+      value: { entries: [], rejected: [{ index: 0, error: expect.stringContaining('double') }] },
+    });
+  });
+
+  it('non-régression : homonymes numérotés sur les deux camps (web : 1, 2 ; overlay : 0, 1)', () => {
+    for (const [first, second] of [
+      [1, 2],
+      [0, 1],
+    ]) {
+      const parsed = parseFightsBody(
+        {
+          entries: [
+            fightEntry({
+              participants: [
+                { side: 'ally', name: 'Bouftou', instanceIndex: first },
+                { side: 'enemy', name: 'Bouftou', instanceIndex: second },
+              ],
+            }),
+          ],
+        },
+        NOW_BATCH,
+      );
+      expect(parsed.ok).toBe(true);
+    }
+  });
+
+  it('message d’erreur : jamais la valeur brute au-delà de 64 caractères', () => {
+    const huge = 'x'.repeat(10_000);
+    const parsed = parseFightsBatch({ entries: [fightEntry({ durationMs: huge })] }, NOW_BATCH);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.rejected[0].error.length).toBeLessThan(120);
+    expect(echoValue(huge)).toHaveLength(65);
+    expect(echoValue('court')).toBe('court');
   });
 });

@@ -159,10 +159,19 @@ export interface AuthStore {
   deleteSession(idHash: string): Promise<boolean>;
   /**
    * Marque la session comme remplacée (rotation du jeton natif) : pose
-   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie. Sans
-   * effet si la ligne n'existe pas.
+   * `supersededAt` et RACCOURCIT `expiresAt` à la fin de grâce fournie.
+   *
+   * Avec `onlyIfCurrent` (rotation ordinaire), **atomiquement** et seulement si la session n'est
+   * pas déjà remplacée (`UPDATE ... WHERE superseded_at IS NULL RETURNING`, audit du 2026-09-23,
+   * #7) : de deux rotations concurrentes du même jeton, une seule peut réussir. Sans (rotation de
+   * rattrapage, déjà sérialisée par `markGraceRotation`), l'écriture est inconditionnelle.
+   *
+   * `false` si aucune ligne n'a été modifiée (inconnue, ou déjà remplacée avec `onlyIfCurrent`).
    */
-  supersedeSession(idHash: string, patch: { supersededAt: Date; expiresAt: Date }): Promise<void>;
+  supersedeSession(
+    idHash: string,
+    patch: { supersededAt: Date; expiresAt: Date; onlyIfCurrent: boolean },
+  ): Promise<boolean>;
   /**
    * Révoque toutes les sessions non révoquées d'une chaîne de rotation (`chain_id = chainId`, ou
    * `id = chainId` pour la racine d'une chaîne antérieure à la colonne), sauf éventuellement une.
@@ -210,6 +219,14 @@ export interface AuthStore {
    * second `poll` du même `deviceCode` ne revoit jamais le jeton.
    */
   pollPairing(deviceCode: string, now: Date): Promise<PollPairingResult>;
+  /**
+   * Efface les appairages expirés — ET les sessions nées d'un appairage réclamé mais jamais sondé
+   * (audit du 2026-09-23, #9) : `claimPairing` crée la session au moment de la confirmation dans le
+   * navigateur, mais son jeton n'est remis à l'overlay que par `/poll`. Un appairage expiré dont
+   * le jeton n'a jamais été remis (`session_token` encore présent, `consumed_at` nul) laissait une
+   * session vivante 30 jours, rattachée au compte, que personne ne détenait — et listée dans
+   * « Mon compte ». Passé l'expiration, `/poll` ne peut plus la remettre : elle est effacée.
+   */
   purgeExpiredPairings(now: Date): Promise<void>;
   /**
    * Appairage encore EN ATTENTE (ni réclamé, ni expiré) pour ce code — sert à la page `/pair`

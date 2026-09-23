@@ -60,6 +60,57 @@ export function chunkRows<T>(rows: readonly T[], columnsPerRow: number): T[][] {
   return chunks;
 }
 
+/**
+ * Comme `chunkRows`, mais sans jamais couper un GROUPE (les participants d'un même combat) entre
+ * deux tranches : chaque combat voit ses participants écrits par une seule requête, tout ou rien.
+ * C'est ce qui garantit qu'un combat déjà en base a soit TOUS ses participants, soit aucun (écriture
+ * interrompue, réparée au renvoi — voir `selectWritableParticipants`). Un groupe plus gros qu'une
+ * tranche (impossible : ≤ 128 participants × 15 colonnes) formerait sa propre tranche.
+ */
+export function chunkGroups<T>(groups: readonly (readonly T[])[], columnsPerRow: number): T[][] {
+  const size = Math.max(1, Math.floor(MAX_BIND_PARAMS_PER_QUERY / columnsPerRow));
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  for (const group of groups) {
+    if (group.length === 0) continue;
+    if (current.length > 0 && current.length + group.length > size) {
+      chunks.push(current);
+      current = [];
+    }
+    current.push(...group);
+  }
+  if (current.length > 0) chunks.push(current);
+  return chunks;
+}
+
+/** Siège d'un participant dans un combat : (nom, indice d'instance) — clé primaire de
+ * `fight_participants` avec `fight_id` depuis la migration 0035 (le camp n'en fait plus partie). */
+export function participantSeat(participant: { name: string; instanceIndex: number }): string {
+  return `${participant.name}#${participant.instanceIndex}`;
+}
+
+/**
+ * Participants d'un combat qu'un envoi a le droit d'écrire (audit de sécurité du 2026-09-23, #1).
+ *
+ * - Combat **créé par cet envoi**, ou combat déjà connu **sans aucun participant** en base (écriture
+ *   des participants interrompue lors d'un envoi précédent — le renvoi doit la réparer) : tous les
+ *   participants du lot (≤ 128, borné par `parse.ts`).
+ * - Combat **déjà connu avec ses participants** : seulement ceux dont le siège (nom, instance)
+ *   existe déjà — mise à jour de camp, `monsterId`, classe, dégâts, soin, armure, sorts, XP.
+ *   JAMAIS l'ajout d'un nom : sans cette règle, renvoyer indéfiniment la même `clientKey` avec
+ *   128 noms nouveaux à chaque fois faisait grossir un seul combat sans limite, hors de tout quota
+ *   (le quota compte les combats, pas leurs participants). Usage légitime inchangé : la `clientKey`
+ *   d'un combat est dérivée des noms#instance triés de ses participants (web et overlay), un renvoi
+ *   légitime porte donc exactement les mêmes sièges.
+ */
+export function selectWritableParticipants<T extends { name: string; instanceIndex: number }>(
+  participants: readonly T[],
+  existingSeats: ReadonlySet<string> | undefined,
+): T[] {
+  if (!existingSeats || existingSeats.size === 0) return [...participants];
+  return participants.filter((participant) => existingSeats.has(participantSeat(participant)));
+}
+
 /** Nombre de colonnes d'une ligne (toutes les lignes d'un même lot ont la même forme). */
 function columnCount(rows: readonly object[]): number {
   return rows.length > 0 ? Object.keys(rows[0]).length : 1;
@@ -80,7 +131,8 @@ function columnCount(rows: readonly object[]): number {
  * D'où la séquence retenue :
  *   1. `INSERT ... ON CONFLICT DO NOTHING` sur `fights` ;
  *   2. `SELECT id, client_key` pour **tout** le lot (nouvelles lignes comme lignes déjà connues) ;
- *   3. `INSERT ... ON CONFLICT DO NOTHING` sur `fight_participants`.
+ *   3. `INSERT ... ON CONFLICT DO UPDATE` sur `fight_participants` (pour un combat déjà connu,
+ *      seulement ses sièges existants — voir `selectWritableParticipants`).
  *
  * Une requête de plus, mais un rejeu répare alors n'importe quel état intermédiaire — ce qui est
  * exactement la propriété recherchée par ce lot.
@@ -148,6 +200,7 @@ export async function ingestFights(
     // renvoyé uniquement pour son rattachement de donjon.
     .returning({ clientKey: fights.clientKey, isNew: sql<boolean>`(xmax = 0)` });
   const inserted = insertedRows.filter((row) => row.isNew);
+  const newKeys = new Set(inserted.map((row) => row.clientKey));
 
   const keys = batch.map((fight) => fight.clientKey);
   const stored = await db
@@ -156,10 +209,35 @@ export async function ingestFights(
     .where(and(eq(fights.userId, userId), inArray(fights.clientKey, keys)));
   const idByKey = new Map(stored.map((row) => [row.clientKey, row.id]));
 
-  const participantRows = batch.flatMap((fight) => {
+  // Sièges (nom, instance) déjà en base pour les combats DÉJÀ connus de ce lot — voir
+  // `selectWritableParticipants`. Aucune lecture quand tout le lot est neuf (cas courant d'un envoi
+  // au fil de l'eau) ; au plus 100 combats × 128 participants sinon, par la clé primaire.
+  const knownFightIds = stored.filter((row) => !newKeys.has(row.clientKey)).map((row) => row.id);
+  const existingSeatsByFight = new Map<number, Set<string>>();
+  if (knownFightIds.length > 0) {
+    const seatRows = await db
+      .select({
+        fightId: fightParticipants.fightId,
+        name: fightParticipants.name,
+        instanceIndex: fightParticipants.instanceIndex,
+      })
+      .from(fightParticipants)
+      .where(inArray(fightParticipants.fightId, knownFightIds));
+    for (const row of seatRows) {
+      const seats = existingSeatsByFight.get(row.fightId) ?? new Set<string>();
+      seats.add(participantSeat(row));
+      existingSeatsByFight.set(row.fightId, seats);
+    }
+  }
+
+  const participantGroups = batch.map((fight) => {
     const fightId = idByKey.get(fight.clientKey);
     if (fightId === undefined) return [];
-    return fight.participants.map((participant) => ({
+    const writable = selectWritableParticipants(
+      fight.participants,
+      newKeys.has(fight.clientKey) ? undefined : existingSeatsByFight.get(fightId),
+    );
+    return writable.map((participant) => ({
       fightId,
       side: participant.side,
       name: participant.name,
@@ -177,23 +255,29 @@ export async function ingestFights(
       xpGained: participant.xpGained,
     }));
   });
+  const participantRows = participantGroups.flat();
 
-  for (const participantChunk of chunkRows(participantRows, columnCount(participantRows))) {
+  for (const participantChunk of chunkGroups(participantGroups, columnCount(participantRows))) {
     await db
       .insert(fightParticipants)
       .values(participantChunk)
-      // Seule table de l'historique écrite en `DO UPDATE` : une réattribution
-      // manuelle de dégâts (`reassignSpell` côté client) renvoie le combat avec
-      // sa ventilation corrigée, et c'est cette correction-là qui doit prendre.
-      // Le combat parent, lui, reste immuable (`DO NOTHING` plus haut).
+      // `DO UPDATE` : une réattribution manuelle de dégâts (`reassignSpell` côté client) renvoie le
+      // combat avec sa ventilation corrigée, et c'est cette correction-là qui doit prendre. Le
+      // combat parent, lui, reste immuable (hors rattachement de donjon, plus haut).
+      //
+      // Le CAMP est mis à jour lui aussi (correctif du 2026-09-23) : la classification allié/ennemi
+      // évolue côté client, et tant que `side` faisait partie de la clé primaire, un changement de
+      // camp INSÉRAIT une seconde ligne pour le même combattant (dégâts et XP comptés deux fois,
+      // un allié resté aussi « ennemi »). Clé primaire (fight_id, name, instance_index) depuis la
+      // migration 0035, qui a dédoublonné l'existant.
       .onConflictDoUpdate({
         target: [
           fightParticipants.fightId,
-          fightParticipants.side,
           fightParticipants.name,
           fightParticipants.instanceIndex,
         ],
         set: {
+          side: sql`excluded.side`,
           monsterId: sql`excluded.monster_id`,
           className: sql`excluded.class_name`,
           damage: sql`excluded.damage`,
@@ -285,16 +369,23 @@ export async function ingestFights(
   });
 
   for (const lootChunk of chunkRows(lootRows, columnCount(lootRows))) {
-    // Le CONTENU du butin d'un combat terminé ne bouge plus, mais son IDENTIFICATION, si (correction
-    // manuelle d'objet homonyme, voir ItemPickerService côté client) : `DO UPDATE` sur `item_id`/
-    // `item_name` plutôt que `DO NOTHING`, une relecture du même log réécrivant de toute façon les
-    // mêmes valeurs en l'absence de correction.
+    // L'IDENTIFICATION d'une ligne de butin se corrige après coup (objet homonyme, voir
+    // ItemPickerService côté client) : `DO UPDATE` plutôt que `DO NOTHING`. La QUANTITÉ suit
+    // (2026-09-23) : une correction partielle renvoyée depuis l'archive pouvait apparier une ligne
+    // à la position d'une autre et laisser l'ancienne quantité en place — la ligne reflète
+    // désormais entièrement le dernier envoi pour sa position. Une relecture du même log réécrit
+    // de toute façon les mêmes valeurs (même contenu, même ordre stable — `registerLoot`) : sans
+    // effet pour un renvoi identique.
     await db
       .insert(fightLoot)
       .values(lootChunk)
       .onConflictDoUpdate({
         target: [fightLoot.fightId, fightLoot.lineIndex],
-        set: { itemId: sql`excluded.item_id`, itemName: sql`excluded.item_name` },
+        set: {
+          itemId: sql`excluded.item_id`,
+          itemName: sql`excluded.item_name`,
+          quantity: sql`excluded.quantity`,
+        },
       });
   }
 

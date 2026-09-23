@@ -21,6 +21,8 @@ import type {
   SessionRecord,
   UserRecord,
 } from './store';
+import { sha256Hex } from './crypto';
+import { NATIVE_SESSION_USER_AGENT } from './pairing';
 
 interface StoredAuthorization extends AuthorizationRecord {
   consumedAt: Date | null;
@@ -185,9 +187,11 @@ export function createMemoryAuthStore(): MemoryAuthStore {
 
     async supersedeSession(idHash, patch) {
       const session = sessions.get(idHash);
-      if (!session) return;
+      if (!session) return false;
+      if (patch.onlyIfCurrent && session.supersededAt !== null) return false;
       session.supersededAt = patch.supersededAt;
       session.expiresAt = patch.expiresAt;
+      return true;
     },
 
     async revokeSessionChain(chainId, now, exceptIdHash) {
@@ -293,7 +297,15 @@ export function createMemoryAuthStore(): MemoryAuthStore {
 
     async purgeExpiredPairings(now) {
       for (const [deviceCode, row] of pairings) {
-        if (row.expiresAt.getTime() < now.getTime()) pairings.delete(deviceCode);
+        if (row.expiresAt.getTime() >= now.getTime()) continue;
+        // Jeton jamais remis à l'overlay : sa session part avec l'appairage (voir le port).
+        if (row.consumedAt === null && row.sessionToken) {
+          const idHash = await sha256Hex(row.sessionToken);
+          if (sessions.get(idHash)?.userAgent === NATIVE_SESSION_USER_AGENT) {
+            sessions.delete(idHash);
+          }
+        }
+        pairings.delete(deviceCode);
       }
     },
 

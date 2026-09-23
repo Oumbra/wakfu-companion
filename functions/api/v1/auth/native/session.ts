@@ -1,6 +1,10 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { runRetentionPurges } from '../../../../../server/auth/flow';
-import { rotateNativeSession } from '../../../../../server/auth/pairing';
+import {
+  NativeRotationConflictError,
+  isNativeSession,
+  rotateNativeSession,
+} from '../../../../../server/auth/pairing';
 import { readRequestCredential } from '../../../../../server/auth/request-auth';
 import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, unauthenticated } from '../../../_auth';
@@ -107,7 +111,23 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   const auth = await authenticateBearer(context, now);
   if (auth instanceof Response) return auth;
 
-  const rotated = await rotateNativeSession(auth.store, { current: auth.session, now });
+  // Seule une session émise par APPAIRAGE natif se renouvelle ici (audit du 2026-09-23, #8) : un
+  // jeton de session de navigateur présenté en porteur (cookie `HttpOnly` exfiltré) ne doit pas
+  // pouvoir s'échanger contre des jetons neufs, qui survivraient à la déconnexion du navigateur.
+  if (!isNativeSession(auth.session)) {
+    return jsonError('rotation réservée aux sessions de client natif', 403);
+  }
+
+  let rotated: Awaited<ReturnType<typeof rotateNativeSession>>;
+  try {
+    rotated = await rotateNativeSession(auth.store, { current: auth.session, now });
+  } catch (error) {
+    // Une autre rotation du même jeton a gagné la course (voir `NativeRotationConflictError`).
+    if (error instanceof NativeRotationConflictError) {
+      return jsonError('rotation concurrente, réessayer avec le jeton le plus récent', 409);
+    }
+    throw error;
+  }
   // Seconde rotation de rattrapage depuis une session déjà remplacée : toute la chaîne vient d'être
   // révoquée (voir `rotateNativeSession`) — l'overlay doit se réappairer.
   if (!rotated) return unauthenticated();

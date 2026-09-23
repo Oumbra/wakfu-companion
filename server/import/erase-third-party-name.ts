@@ -167,10 +167,11 @@ async function main(): Promise<void> {
   }
 
   // ── Application ────────────────────────────────────────────────────────────────────────────
-  // Renommage des participants : la clé primaire est (fight_id, side, name, instance_index), donc
-  // un combat où le placeholder existerait DÉJÀ avec le même camp et le même indice ferait échouer
-  // l'UPDATE global. Traité ligne par ligne, la collision — théorique, mais destructrice si on la
-  // laissait au hasard — étant résolue en poussant l'indice d'instance au-delà du maximum du camp.
+  // Renommage des participants : la clé primaire est (fight_id, name, instance_index) — sans le
+  // camp depuis la migration 0035 —, donc un combat où le placeholder existerait DÉJÀ avec le même
+  // indice (dans l'un OU l'autre camp) ferait échouer l'UPDATE global. Traité ligne par ligne, la
+  // collision — théorique, mais destructrice si on la laissait au hasard — étant résolue en
+  // poussant l'indice d'instance au-delà du maximum du combat.
   let renamedParticipants = 0;
   let shiftedParticipants = 0;
   const rows = (
@@ -183,7 +184,7 @@ async function main(): Promise<void> {
     const clash = (
       await sql`
         select 1 from fight_participants
-        where fight_id = ${row.fight_id} and side = ${row.side}
+        where fight_id = ${row.fight_id}
           and name = ${PLACEHOLDER} and instance_index = ${row.instance_index}
       `
     ).rows.length;
@@ -192,7 +193,7 @@ async function main(): Promise<void> {
       const max = (
         await sql`
           select coalesce(max(instance_index), 0)::int as m from fight_participants
-          where fight_id = ${row.fight_id} and side = ${row.side}
+          where fight_id = ${row.fight_id}
         `
       ).rows[0] as { m: number };
       instanceIndex = max.m + 1;

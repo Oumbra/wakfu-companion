@@ -40,14 +40,15 @@ export type RequestCredential =
  */
 const BEARER_PATTERN = /^Bearer ([A-Za-z0-9\-._~+/]{1,512}=*)$/i;
 
-export function readRequestCredential(request: Request): RequestCredential {
+export function readRequestCredential(request: Request, now: Date = new Date()): RequestCredential {
   const authorization = request.headers.get('authorization');
   if (authorization !== null) {
     const match = BEARER_PATTERN.exec(authorization);
     if (!match) return { kind: 'invalid' };
     return { kind: 'token', token: match[1], via: 'bearer', legacyCookie: false };
   }
-  const cookie = readSessionCookie(request);
+  // Repli sur l'ancien nom `wc_session` borné par une date butoir (voir cookies.ts, TRANSITION).
+  const cookie = readSessionCookie(request, now);
   if (!cookie) return { kind: 'none' };
   return { kind: 'token', token: cookie.token, via: 'cookie', legacyCookie: cookie.legacy };
 }

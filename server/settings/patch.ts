@@ -1,4 +1,5 @@
 import type { SyncedSettingKey } from './keys';
+import { echoValue } from '../history/parse';
 
 /**
  * Écriture **partielle** d'une clé de configuration (fusion côté serveur).
@@ -121,7 +122,7 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
   if (Object.keys(rest).length > 0) {
     return {
       ok: false,
-      error: `champ inattendu dans le correctif roster : ${Object.keys(rest)[0]}`,
+      error: `champ inattendu dans le correctif roster : ${echoValue(Object.keys(rest)[0])}`,
     };
   }
   if (!Array.isArray(accounts) || !Array.isArray(removedIds)) {
@@ -149,7 +150,10 @@ export function parseSettingPatch(key: MergeableSettingKey, raw: unknown): Patch
       return { ok: false, error: 'correctif roster : compte sans "id"' };
     }
     if (seen.has(account['id'])) {
-      return { ok: false, error: `correctif roster : compte en double : ${account['id']}` };
+      return {
+        ok: false,
+        error: `correctif roster : compte en double : ${echoValue(account['id'])}`,
+      };
     }
     seen.add(account['id']);
     cleanAccounts.push(withoutForbiddenKeys(account) as JsonObject & { id: string });

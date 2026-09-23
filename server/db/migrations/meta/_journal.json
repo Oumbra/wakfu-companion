@@ -246,6 +246,13 @@
       "when": 1790124957311,
       "tag": "0034_catalog_trgm_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1790179686071,
+      "tag": "0035_fight_participants_pk_without_side",
+      "breakpoints": true
     }
   ]
 }
