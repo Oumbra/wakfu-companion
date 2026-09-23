@@ -9,11 +9,13 @@
  *    codes : `userCode` (court, affiché à l'utilisateur, qu'il confirme
  *    dans son navigateur DÉJÀ connecté) et `deviceCode` (secret, gardé par
  *    l'overlay pour sonder l'état).
- * 2. `claimPairing` — le navigateur connecté associe une VRAIE session
- *    (créée ici comme n'importe quelle session, rotation exclue : un
- *    appairage natif s'ajoute à côté des sessions navigateur, il ne les
- *    remplace pas) au `userCode`.
- * 3. `pollPairing` — l'overlay récupère le jeton une seule fois.
+ * 2. `claimPairing` — le navigateur connecté associe son COMPTE au
+ *    `userCode`. Aucune session n'est créée à ce stade (audit du 2026-09-23,
+ *    lot 13) : aucun jeton n'est donc jamais stocké en base, et un appairage
+ *    confirmé mais jamais récupéré ne laisse aucune session derrière lui.
+ * 3. `pollPairing` — l'overlay consomme l'appairage, une seule fois ; la
+ *    session (rotation exclue : elle s'ajoute à côté des sessions navigateur)
+ *    est créée à cet instant et son jeton remis dans la même réponse.
  *
  * Puis, pendant la vie de la session : `rotateNativeSession` — l'overlay
  * échange son jeton contre un neuf (voir la doc de la fonction).
@@ -169,46 +171,19 @@ export async function findPendingPairingInfo(
   return record ? describePendingPairing(record, now) : null;
 }
 
-export interface ClaimedPairing {
-  token: string;
-}
-
-/** `null` si le code est inconnu, expiré, ou déjà réclamé — à traduire en 404 par la route. */
+/**
+ * `false` si le code est inconnu, expiré, ou déjà réclamé — à traduire en 404 par la route.
+ * N'enregistre que le compte : la session naît au `/poll` (voir l'en-tête du module).
+ */
 export async function claimPairing(
   store: AuthStore,
   params: { userCode: string; user: UserRecord; now: Date },
-): Promise<ClaimedPairing | null> {
-  const token = randomToken();
-  const idHash = await sha256Hex(token);
-  const absoluteExpiresAt = new Date(params.now.getTime() + SESSION_MAX_LIFETIME_MS);
-  // La session est créée AVANT l'association (le jeton ne doit jamais être remis par `/poll` sans
-  // que sa session existe). Si l'association échoue — code inconnu, expiré, ou réclamé entre-temps
-  // par une requête concurrente — ou lève, la session est EFFACÉE : avant l'audit du 2026-09-23
-  // elle restait active 30 jours, rattachée au compte, jamais remise à personne mais listée dans
-  // « Mon compte ».
-  await store.createSession({
-    idHash,
-    userId: params.user.id,
-    issuedAt: params.now,
-    expiresAt: new Date(params.now.getTime() + SESSION_TTL_MS),
-    lastUsedAt: params.now,
-    userAgent: NATIVE_SESSION_USER_AGENT,
-    revokedAt: null,
-    supersededAt: null,
-    chainId: idHash,
-    absoluteExpiresAt,
-    graceRotatedAt: null,
-  });
-  let claimed = false;
-  try {
-    claimed = await store.claimPairing(params.userCode, token, params.now);
-  } finally {
-    if (!claimed) await store.deleteSession(idHash);
-  }
-  if (!claimed) return null;
+): Promise<boolean> {
+  const claimed = await store.claimPairing(params.userCode, params.user.id, params.now);
+  if (!claimed) return false;
   // Un appareil qui s'appaire est une bonne occasion de ménage (voir flow.ts).
   await runRetentionPurges(store, params.now);
-  return { token };
+  return true;
 }
 
 /**
@@ -327,10 +302,36 @@ export async function rotateNativeSession(
   return { token, issuedAt: now, expiresAt, previousTokenValidUntil };
 }
 
-export function pollPairing(
+/**
+ * Remet le jeton d'un appairage confirmé, une seule fois. Le store consomme l'appairage de façon
+ * atomique (un `/poll` rejoué ou concurrent reçoit `expired`), puis la session est créée ici.
+ * Si sa création échoue, l'appairage reste consommé : l'overlay recommence l'appairage, ce qui
+ * vaut mieux qu'un jeton remis deux fois.
+ */
+export async function pollPairing(
   store: AuthStore,
   deviceCode: string,
   now: Date,
 ): Promise<PollPairingResult> {
-  return store.pollPairing(deviceCode, now);
+  const result = await store.pollPairing(deviceCode, now);
+  if (result.status !== 'claimed') return result;
+  // Appairage confirmé par l'ancien flux, juste avant le déploiement : sa session existe déjà.
+  if (result.legacyToken) return { status: 'claimed', token: result.legacyToken };
+  if (!result.userId) return { status: 'expired' };
+  const token = randomToken();
+  const idHash = await sha256Hex(token);
+  await store.createSession({
+    idHash,
+    userId: result.userId,
+    issuedAt: now,
+    expiresAt: new Date(now.getTime() + SESSION_TTL_MS),
+    lastUsedAt: now,
+    userAgent: NATIVE_SESSION_USER_AGENT,
+    revokedAt: null,
+    supersededAt: null,
+    chainId: idHash,
+    absoluteExpiresAt: new Date(now.getTime() + SESSION_MAX_LIFETIME_MS),
+    graceRotatedAt: null,
+  });
+  return { status: 'claimed', token };
 }

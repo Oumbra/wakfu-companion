@@ -30,6 +30,7 @@ interface StoredAuthorization extends AuthorizationRecord {
 
 interface StoredPairing extends PairingRecord {
   sessionToken: string | null;
+  claimedUserId: string | null;
   claimedAt: Date | null;
   consumedAt: Date | null;
 }
@@ -65,6 +66,10 @@ export function createMemoryAuthStore(): MemoryAuthStore {
     }
     for (const [key, session] of sessions) {
       if (session.userId === userId) sessions.delete(key);
+    }
+    // Miroir du `ON DELETE CASCADE` de `native_pairings.claimed_user_id`.
+    for (const [key, pairing] of pairings) {
+      if (pairing.claimedUserId === userId) pairings.delete(key);
     }
   };
 
@@ -276,17 +281,18 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       pairings.set(record.deviceCode, {
         ...record,
         sessionToken: null,
+        claimedUserId: null,
         claimedAt: null,
         consumedAt: null,
       });
     },
 
-    async claimPairing(userCode, sessionToken, now) {
+    async claimPairing(userCode, userId, now) {
       const row = [...pairings.values()].find((p) => p.userCode === userCode);
       if (!row) return false;
       if (row.claimedAt !== null) return false; // déjà réclamé
       if (row.expiresAt.getTime() <= now.getTime()) return false;
-      row.sessionToken = sessionToken;
+      row.claimedUserId = userId;
       row.claimedAt = now;
       return true;
     },
@@ -297,11 +303,11 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       // Vérifié AVANT le statut pending/claimed : une fois consommé, `sessionToken` est effacé,
       // donc indiscernable d'un appairage encore pending si on ne teste pas `consumedAt` en 1er.
       if (row.consumedAt !== null) return { status: 'expired' }; // déjà consommé par un poll précédent
-      if (!row.sessionToken || !row.claimedAt) return { status: 'pending' };
+      if (!row.claimedAt || (!row.claimedUserId && !row.sessionToken)) return { status: 'pending' };
       row.consumedAt = now;
-      const token = row.sessionToken;
+      const legacyToken = row.sessionToken;
       row.sessionToken = null;
-      return { status: 'claimed', token };
+      return { status: 'claimed', userId: row.claimedUserId, legacyToken };
     },
 
     async purgeExpiredPairings(now) {

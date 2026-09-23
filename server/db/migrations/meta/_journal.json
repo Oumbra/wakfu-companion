@@ -274,6 +274,13 @@
       "when": 1790187925374,
       "tag": "0038_integrity_indexes_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790188172741,
+      "tag": "0039_native_pairing_claimed_user",
+      "breakpoints": true
     }
   ]
 }

@@ -530,7 +530,14 @@ export const nativePairings = pgTable(
     deviceCode: text('device_code').primaryKey(),
     userCode: text('user_code').notNull().unique(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    // Jeton en clair d'un appairage confirmé par l'ANCIEN flux (session créée à la confirmation).
+    // Plus jamais écrit depuis l'audit du 2026-09-23 (lot 13) : lu seulement pour remettre les
+    // appairages confirmés juste avant le déploiement ; toujours nul ensuite.
     sessionToken: text('session_token'),
+    // Compte qui a confirmé l'appairage : la session n'est créée qu'au `/poll` qui la remet à
+    // l'overlay, donc aucun jeton n'est jamais stocké, et rien ne survit à un appairage jamais
+    // récupéré. `ON DELETE CASCADE` : un compte supprimé emporte ses confirmations en attente.
+    claimedUserId: uuid('claimed_user_id').references(() => users.id, { onDelete: 'cascade' }),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
     // Métadonnées de la demande, affichées sur la page `/pair` avant confirmation (audit du

@@ -317,12 +317,12 @@ export function createDbAuthStore(db: Db): AuthStore {
       });
     },
 
-    async claimPairing(userCode: string, sessionToken: string, now: Date) {
+    async claimPairing(userCode: string, userId: string, now: Date) {
       // Une seule requête : `claimed_at IS NULL` empêche deux `/claim` concurrents sur le même
       // code de réussir tous les deux (même principe que `consumeAuthorization`).
       const rows = await db
         .update(nativePairings)
-        .set({ sessionToken, claimedAt: now })
+        .set({ claimedUserId: userId, claimedAt: now })
         .where(
           and(
             eq(nativePairings.userCode, userCode),
@@ -341,21 +341,24 @@ export function createDbAuthStore(db: Db): AuthStore {
         .where(eq(nativePairings.deviceCode, deviceCode))
         .limit(1);
       if (!row || row.expiresAt.getTime() <= now.getTime()) return { status: 'expired' as const };
-      // Vérifié AVANT le statut pending/claimed : une fois consommé, `sessionToken` est effacé,
-      // donc indiscernable d'un appairage encore pending si on ne teste pas `consumedAt` en 1er.
+      // Vérifié AVANT le statut pending/claimed : un appairage consommé ne se remet jamais deux fois.
       if (row.consumedAt !== null) return { status: 'expired' as const };
-      if (!row.sessionToken || !row.claimedAt) return { status: 'pending' as const };
-      // Le jeton est déjà en main (row.sessionToken, lu ci-dessus) : cette 2ᵉ requête ne sert
-      // qu'à garantir qu'il n'est renvoyé qu'UNE fois — `consumed_at IS NULL` fait échouer tout
-      // second `/poll` concurrent ou rejoué (0 ligne affectée), même principe que
-      // `consumeAuthorization`.
+      if (!row.claimedAt || (!row.claimedUserId && !row.sessionToken)) {
+        return { status: 'pending' as const };
+      }
+      // `consumed_at IS NULL` fait échouer tout second `/poll` concurrent ou rejoué (0 ligne
+      // affectée) : la session n'est créée qu'une fois, par l'appelant de ce port.
       const rows = await db
         .update(nativePairings)
         .set({ sessionToken: null, consumedAt: now })
         .where(and(eq(nativePairings.deviceCode, deviceCode), isNull(nativePairings.consumedAt)))
         .returning({ deviceCode: nativePairings.deviceCode });
-      if (rows.length === 0) return { status: 'expired' as const }; // déjà consommé par un poll précédent
-      return { status: 'claimed' as const, token: row.sessionToken };
+      if (rows.length === 0) return { status: 'expired' as const };
+      return {
+        status: 'claimed' as const,
+        userId: row.claimedUserId,
+        legacyToken: row.sessionToken,
+      };
     },
 
     async purgeExpiredPairings(now: Date) {

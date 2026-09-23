@@ -42,7 +42,7 @@ describe('pairing', () => {
     await startPairing(store, NOW);
 
     const claimed = await claimPairing(store, { userCode: 'NOPENOPE', user: USER, now: NOW });
-    expect(claimed).toBeNull();
+    expect(claimed).toBe(false);
   });
 
   it('rejette un poll pour un deviceCode inconnu', async () => {
@@ -64,12 +64,15 @@ describe('pairing', () => {
     const { deviceCode, userCode } = await startPairing(store, NOW);
 
     const claimed = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(claimed).not.toBeNull();
+    expect(claimed).toBe(true);
+    // Lot 13 : la confirmation ne crée aucune session, le jeton naît au `/poll`.
+    expect(store.sessions.size).toBe(0);
 
     const first = await pollPairing(store, deviceCode, NOW);
     expect(first.status).toBe('claimed');
     if (first.status !== 'claimed') throw new Error('unreachable');
-    expect(first.token).toBe(claimed?.token);
+    expect(store.sessions.size).toBe(1);
+    expect(await store.findSession(await sha256Hex(first.token))).not.toBeNull();
 
     // Rejeu du même poll : le jeton n'est plus là (déjà consommé).
     const second = await pollPairing(store, deviceCode, NOW);
@@ -81,10 +84,10 @@ describe('pairing', () => {
     const { userCode } = await startPairing(store, NOW);
 
     const first = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(first).not.toBeNull();
+    expect(first).toBe(true);
 
     const second = await claimPairing(store, { userCode, user: USER, now: NOW });
-    expect(second).toBeNull();
+    expect(second).toBe(false);
   });
 
   it('rejette un claim après expiration', async () => {
@@ -93,7 +96,7 @@ describe('pairing', () => {
 
     const afterExpiry = new Date(NOW.getTime() + PAIRING_TTL_MS + 1000);
     const claimed = await claimPairing(store, { userCode, user: USER, now: afterExpiry });
-    expect(claimed).toBeNull();
+    expect(claimed).toBe(false);
   });
 
   it('rejette un poll après expiration, même sans avoir été réclamé', async () => {
@@ -247,19 +250,41 @@ describe('pairing — durcissement', () => {
     expect(expiresAt).toEqual(new Date(NOW.getTime() + 5 * 60 * 1000));
   });
 
-  it('efface la session créée quand la réclamation échoue (aucune session orpheline)', async () => {
+  it('aucune session n’est créée par une confirmation, réussie ou non', async () => {
     const store = createMemoryAuthStore();
     const { userCode } = await startPairing(store, NOW);
-    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).not.toBeNull();
-    expect(store.sessions.size).toBe(1);
+    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBe(true);
+    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBe(false);
+    expect(await claimPairing(store, { userCode: 'ZZZZZZZZ', user: USER, now: NOW })).toBe(false);
+    expect(store.sessions.size).toBe(0);
+  });
 
-    // Code déjà réclamé, puis code inconnu : aucune session ne doit rester derrière.
-    expect(await claimPairing(store, { userCode, user: USER, now: NOW })).toBeNull();
-    expect(await claimPairing(store, { userCode: 'ZZZZZZZZ', user: USER, now: NOW })).toBeNull();
+  it('un /poll rejoué ou concurrent ne crée qu’une session', async () => {
+    const store = createMemoryAuthStore();
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user: USER, now: NOW });
+    const results = await Promise.all([
+      pollPairing(store, deviceCode, NOW),
+      pollPairing(store, deviceCode, NOW),
+    ]);
+    expect(results.filter((r) => r.status === 'claimed')).toHaveLength(1);
     expect(store.sessions.size).toBe(1);
   });
 
-  it('efface la session créée quand la réclamation lève', async () => {
+  it('remet tel quel le jeton d’un appairage confirmé par l’ancien flux', async () => {
+    const store = createMemoryAuthStore();
+    const legacy: AuthStore = {
+      ...store,
+      pollPairing: async () => ({ status: 'claimed', userId: null, legacyToken: 'ancien-jeton' }),
+    };
+    expect(await pollPairing(legacy, 'x', NOW)).toEqual({
+      status: 'claimed',
+      token: 'ancien-jeton',
+    });
+    expect(store.sessions.size).toBe(0);
+  });
+
+  it('ne crée aucune session quand la réclamation lève', async () => {
     const store = createMemoryAuthStore();
     const failing: AuthStore = {
       ...store,
@@ -500,22 +525,26 @@ describe('rotateNativeSession — rotations concurrentes', () => {
 describe('purgeExpiredPairings — sessions d’appairages jamais sondés', () => {
   const AFTER = new Date(NOW.getTime() + PAIRING_TTL_MS + 1000);
 
-  it('efface la session d’un appairage réclamé mais jamais sondé, une fois expiré', async () => {
+  it('un appairage réclamé mais jamais sondé ne laisse aucune session, avant comme après purge', async () => {
     const store = createMemoryAuthStore();
     const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
-    const { userCode } = await startPairing(store, NOW);
-    const claimed = await claimPairing(store, { userCode, user, now: NOW });
-    if (!claimed) throw new Error('unreachable');
-    const idHash = await sha256Hex(claimed.token);
-    expect(await store.findSession(idHash)).not.toBeNull();
-
-    // Pas encore expiré : l'overlay peut encore sonder, la session reste.
-    await store.purgeExpiredPairings(NOW);
-    expect(await store.findSession(idHash)).not.toBeNull();
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    expect(await claimPairing(store, { userCode, user, now: NOW })).toBe(true);
+    expect(await store.listSessions(user.id, NOW)).toHaveLength(0);
 
     await store.purgeExpiredPairings(AFTER);
-    expect(await store.findSession(idHash)).toBeNull();
     expect(await store.listSessions(user.id, AFTER)).toHaveLength(0);
+    expect(await pollPairing(store, deviceCode, AFTER)).toEqual({ status: 'expired' });
+  });
+
+  it('la suppression du compte emporte ses confirmations en attente', async () => {
+    const store = createMemoryAuthStore();
+    const user = await store.createUser({ email: USER.email, displayName: USER.displayName });
+    const { deviceCode, userCode } = await startPairing(store, NOW);
+    await claimPairing(store, { userCode, user, now: NOW });
+    await store.deleteUser(user.id);
+    expect(await pollPairing(store, deviceCode, NOW)).toEqual({ status: 'expired' });
+    expect(store.sessions.size).toBe(0);
   });
 
   it('non-régression : la session d’un appairage sondé (jeton remis) survit à la purge', async () => {

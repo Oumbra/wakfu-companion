@@ -99,6 +99,15 @@ export interface PairingRecord {
 export type PollPairingResult =
   { status: 'claimed'; token: string } | { status: 'pending' | 'expired' };
 
+/**
+ * Ce que le store rend au `/poll` : l'appairage confirmé est consommé atomiquement, et
+ * `pairing.ts::pollPairing` crée alors la session du compte `userId`. `legacyToken` : appairage
+ * confirmé par l'ancien flux (jeton déjà créé et stocké), remis tel quel.
+ */
+export type StorePollPairingResult =
+  | { status: 'claimed'; userId: string | null; legacyToken: string | null }
+  | { status: 'pending' | 'expired' };
+
 export interface AuthStore {
   // ── Autorisations OAuth en cours ──────────────────────────────────────
   createAuthorization(record: AuthorizationRecord): Promise<void>;
@@ -223,13 +232,13 @@ export interface AuthStore {
    * connu, pas expiré et pas déjà réclamé. Renvoie `false` sinon (code
    * inconnu/expiré/déjà utilisé), à traduire en 404 par la route.
    */
-  claimPairing(userCode: string, sessionToken: string, now: Date): Promise<boolean>;
+  claimPairing(userCode: string, userId: string, now: Date): Promise<boolean>;
   /**
    * Renvoie le jeton et marque l'appairage consommé — **atomiquement**, une
    * seule fois (`UPDATE ... WHERE consumed_at IS NULL ... RETURNING`) : un
    * second `poll` du même `deviceCode` ne revoit jamais le jeton.
    */
-  pollPairing(deviceCode: string, now: Date): Promise<PollPairingResult>;
+  pollPairing(deviceCode: string, now: Date): Promise<StorePollPairingResult>;
   /**
    * Efface les appairages expirés — ET les sessions nées d'un appairage réclamé mais jamais sondé
    * (audit du 2026-09-23, #9) : `claimPairing` crée la session au moment de la confirmation dans le
