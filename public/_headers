@@ -45,7 +45,15 @@
 #               manuelle, voir server/README.md). Pas de `require-trusted-types-for 'script'` non
 #               plus : Angular n'est pas configuré pour Trusted Types, l'app serait bloquée — à
 #               évaluer d'abord en Report-Only avec un endpoint de rapport.
+#   Link (retiré) : Pages génère seul un `Link: <chunk-X.js>; rel="modulepreload"` (Early Hints)
+#               à partir des `<link rel="modulepreload" href="chunk-X.js">` d'index.html, en gardant
+#               l'URL RELATIVE — le navigateur la résout contre l'URL de la réponse, pas contre le
+#               `<base href="/">` du document : `/fr/profile` précharge `/fr/chunk-X.js`, et un
+#               repli SPA sous `/api/v1/auth/me` (Functions indisponibles, fail open) précharge
+#               `/api/v1/auth/chunk-X.js` — du HTML, « Failed to load module script » en console
+#               (constaté le 2026-09-23). Les balises modulepreload du HTML suffisent.
 /*
+  ! Link
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
   Referrer-Policy: strict-origin-when-cross-origin
