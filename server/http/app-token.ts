@@ -22,13 +22,14 @@
  * l'exigent PAS (voir `functions/api/_caller.ts`) : une image peut être demandée avant que le
  * jeton n'existe (premier chargement), et ces fichiers sont de toute façon publics sur wakassets.
  *
- * Secret : `APP_TOKEN_SECRET` (variable Pages) ; à défaut, `DATABASE_URL` sert de matière à clé —
- * même repli que `RATE_LIMIT_SALT` (`server/auth/rate-limit.ts`), pour ne jamais signer avec une
- * clé vide. Un secret dédié reste préférable (rotation indépendante ; le changer invalide
+ * Secret : `APP_TOKEN_SECRET` (variable Pages) ; à défaut, et en développement local seulement,
+ * `DATABASE_URL` sert de matière à clé — même repli que `RATE_LIMIT_SALT`
+ * (`server/auth/rate-limit.ts`). En production, pas de repli (voir `appTokenSecret`). Un secret dédié reste préférable (rotation indépendante ; le changer invalide
  * simplement tous les jetons en cours, chaque navigateur en redemande un).
  */
 
 import { serializeCookie } from '../auth/cookies';
+import { isPublicDeployment } from '../auth/environment';
 import { timingSafeEqual, toBase64Url } from '../auth/crypto';
 
 export const APP_TOKEN_COOKIE = 'wc_app';
@@ -47,10 +48,19 @@ const MAX_FUTURE_SKEW_MS = 60 * 1000;
 export interface AppTokenEnv {
   APP_TOKEN_SECRET?: string;
   DATABASE_URL?: string;
+  PUBLIC_BASE_URL?: string;
 }
 
-export function appTokenSecret(env: AppTokenEnv): string {
-  return env.APP_TOKEN_SECRET || env.DATABASE_URL || '';
+/**
+ * Secret HMAC du jeton. Repli sur `DATABASE_URL` en développement local SEULEMENT (audit du
+ * 2026-09-23) : sur un déploiement public (`server/auth/environment.ts`), l'absence
+ * d'`APP_TOKEN_SECRET` rend une chaîne vide — `signAppToken` lève alors, `verifyAppToken` refuse
+ * tout, et `POST /api/v1/app/token` répond 503 avec un message explicite (fail-closed).
+ */
+export function appTokenSecret(env: AppTokenEnv, requestUrl?: string | null): string {
+  if (env.APP_TOKEN_SECRET) return env.APP_TOKEN_SECRET;
+  if (isPublicDeployment(env, requestUrl)) return '';
+  return env.DATABASE_URL || '';
 }
 
 async function hmacBase64Url(secret: string, message: string): Promise<string> {

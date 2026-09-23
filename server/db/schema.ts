@@ -439,8 +439,18 @@ export const sessions = pgTable(
     // server/auth/pairing.ts) : encore acceptée jusqu'à `expires_at`, ramené
     // à quelques minutes, mais plus jamais prolongée ni listée.
     supersededAt: timestamp('superseded_at', { withTimezone: true }),
+    // Audit de sécurité du 2026-09-23 (voir server/auth/flow.ts) : chaîne de rotation (empreinte
+    // de la première session, recopiée à chaque rotation native), échéance absolue propagée aux
+    // rotations (`SESSION_MAX_LIFETIME_MS`), et rotation de rattrapage déjà consommée. Nullables :
+    // le code tolère une ligne écrite avant la migration (repli sur `id` / `issued_at`).
+    chainId: text('chain_id'),
+    absoluteExpiresAt: timestamp('absolute_expires_at', { withTimezone: true }),
+    graceRotatedAt: timestamp('grace_rotated_at', { withTimezone: true }),
   },
-  (table) => [index('sessions_user_id_idx').on(table.userId)],
+  (table) => [
+    index('sessions_user_id_idx').on(table.userId),
+    index('sessions_chain_id_idx').on(table.chainId),
+  ],
 );
 
 /**
@@ -499,6 +509,12 @@ export const nativePairings = pgTable(
     sessionToken: text('session_token'),
     claimedAt: timestamp('claimed_at', { withTimezone: true }),
     consumedAt: timestamp('consumed_at', { withTimezone: true }),
+    // Métadonnées de la demande, affichées sur la page `/pair` avant confirmation (audit du
+    // 2026-09-23) : pays Cloudflare (`cf-ipcountry`, jamais l'IP) et user-agent tronqué. Durée de
+    // vie = celle de la ligne (`PAIRING_TTL_MS`, puis purge des appairages expirés).
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    requesterCountry: text('requester_country'),
+    requesterUserAgent: text('requester_user_agent'),
   },
   (table) => [index('native_pairings_expires_at_idx').on(table.expiresAt)],
 );

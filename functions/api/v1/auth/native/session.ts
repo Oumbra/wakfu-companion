@@ -1,6 +1,7 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { runRetentionPurges } from '../../../../../server/auth/flow';
 import { rotateNativeSession } from '../../../../../server/auth/pairing';
+import { readRequestCredential } from '../../../../../server/auth/request-auth';
 import { SESSION_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authenticate, json, jsonError, unauthenticated } from '../../../_auth';
 import type { AuthenticatedContext } from '../../../_auth';
@@ -18,7 +19,9 @@ import type { Env } from '../../../_types';
  * (`NATIVE_SESSION_ROTATION_GRACE_MS` après l'appel). L'overlay persiste le nouveau jeton PUIS
  * bascule ; les requêtes déjà parties avec l'ancien aboutissent. Toute la sémantique (session
  * remplacée, grâce non prolongeable, cas du plantage entre réponse et écriture) est dans
- * `server/auth/pairing.ts::rotateNativeSession`. Le rythme est laissé à l'overlay : le serveur ne
+ * `server/auth/pairing.ts::rotateNativeSession` — dont, depuis l'audit du 2026-09-23, le plafond
+ * de 180 jours propagé d'une rotation à l'autre et le rattrapage depuis un jeton déjà remplacé
+ * admis UNE fois (une seconde fois : chaîne révoquée, 401). Le rythme est laissé à l'overlay : le serveur ne
  * force jamais une rotation, un jeton non renouvelé reste simplement un jeton de 30 jours
  * glissants comme avant.
  *
@@ -77,12 +80,15 @@ async function authenticateBearer(
   context: Parameters<PagesFunction<Env>>[0],
   now: Date,
 ): Promise<AuthenticatedContext | Response> {
-  if (!context.request.headers.get('authorization')?.startsWith('Bearer ')) {
+  // Décidé sur la source EFFECTIVE (audit du 2026-09-23) : un en-tête `Authorization` présent mais
+  // mal formé n'est plus un porteur, et `authenticate` ne retombe jamais sur le cookie dans ce cas.
+  const credential = readRequestCredential(context.request);
+  if (credential.kind !== 'token' || credential.via !== 'bearer') {
     return jsonError('porteur Authorization requis', 401);
   }
 
   const auth = await authenticate(context.request, context.env);
-  if (!auth) return unauthenticated();
+  if (!auth || auth.via !== 'bearer') return unauthenticated();
 
   const limit = await checkRateLimit(
     auth.store,
@@ -102,6 +108,9 @@ export const onRequestPost: PagesFunction<Env> = async (context) => {
   if (auth instanceof Response) return auth;
 
   const rotated = await rotateNativeSession(auth.store, { current: auth.session, now });
+  // Seconde rotation de rattrapage depuis une session déjà remplacée : toute la chaîne vient d'être
+  // révoquée (voir `rotateNativeSession`) — l'overlay doit se réappairer.
+  if (!rotated) return unauthenticated();
 
   return json({
     token: rotated.token,

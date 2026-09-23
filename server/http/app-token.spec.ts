@@ -61,3 +61,23 @@ describe('jeton d’application du site', () => {
     expect(cookie).toContain('HttpOnly');
   });
 });
+
+/** Audit de sécurité du 2026-09-23 : pas de repli sur DATABASE_URL en production. */
+describe('appTokenSecret — production', () => {
+  it('rend une chaîne vide (donc refus) sans APP_TOKEN_SECRET sur un déploiement public', async () => {
+    expect(
+      appTokenSecret({ DATABASE_URL: 'postgres://x', PUBLIC_BASE_URL: 'https://wakfu.example' }),
+    ).toBe('');
+    expect(appTokenSecret({ DATABASE_URL: 'postgres://x' }, 'https://wakfu.example/api')).toBe('');
+    await expect(signAppToken('', Date.now())).rejects.toThrow();
+  });
+
+  it('garde le repli en développement local, et le secret dédié partout', () => {
+    expect(appTokenSecret({ DATABASE_URL: 'postgres://x' }, 'http://localhost:8788/api')).toBe(
+      'postgres://x',
+    );
+    expect(
+      appTokenSecret({ APP_TOKEN_SECRET: 'dédié', PUBLIC_BASE_URL: 'https://wakfu.example' }),
+    ).toBe('dédié');
+  });
+});

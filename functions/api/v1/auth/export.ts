@@ -2,7 +2,7 @@ import type { PagesFunction } from '@cloudflare/workers-types';
 import { eq } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { sessions, userIdentities, userSettings, users } from '../../../../server/db/schema';
-import { authenticate, json, unauthenticated } from '../../_auth';
+import { authenticate, json, rejectNativeCaller, unauthenticated } from '../../_auth';
 import type { Env } from '../../_types';
 
 /**
@@ -30,10 +30,16 @@ import type { Env } from '../../_types';
  *
  * Aucune donnée d'un tiers autre que celles déjà visibles à l'utilisateur
  * (aucune adresse IP : le comptage anti-abus n'est jamais rattaché au compte).
+ *
+ * Session de navigateur exigée (audit du 2026-09-23) : un jeton d'overlay reçoit 403
+ * `browser_session_required` (voir `rejectNativeCaller`, `_auth.ts`) — l'export est un geste de
+ * l'utilisateur depuis « Mon compte », pas une capacité à laisser à un jeton posé sur un disque.
  */
 export const onRequestGet: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
+  const nativeRejection = rejectNativeCaller(auth);
+  if (nativeRejection) return nativeRejection;
 
   const db = createDb(context.env.DATABASE_URL);
   const userId = auth.user.id;
@@ -74,6 +80,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         issuedAt: session.issuedAt.toISOString(),
         lastUsedAt: session.lastUsedAt.toISOString(),
         expiresAt: session.expiresAt.toISOString(),
+        absoluteExpiresAt: session.absoluteExpiresAt?.toISOString() ?? null,
         userAgent: session.userAgent,
         revokedAt: session.revokedAt?.toISOString() ?? null,
         supersededAt: session.supersededAt?.toISOString() ?? null,

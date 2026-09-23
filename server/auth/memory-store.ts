@@ -190,6 +190,25 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       session.expiresAt = patch.expiresAt;
     },
 
+    async revokeSessionChain(chainId, now, exceptIdHash) {
+      let revoked = 0;
+      for (const session of sessions.values()) {
+        const inChain = session.chainId === chainId || session.idHash === chainId;
+        if (!inChain || session.revokedAt !== null) continue;
+        if (exceptIdHash && session.idHash === exceptIdHash) continue;
+        session.revokedAt = now;
+        revoked++;
+      }
+      return revoked;
+    },
+
+    async markGraceRotation(idHash, now) {
+      const session = sessions.get(idHash);
+      if (!session || session.graceRotatedAt !== null) return false;
+      session.graceRotatedAt = now;
+      return true;
+    },
+
     async revokeAllSessions(userId, now, exceptIdHash) {
       let revoked = 0;
       for (const session of sessions.values()) {
@@ -276,6 +295,19 @@ export function createMemoryAuthStore(): MemoryAuthStore {
       for (const [deviceCode, row] of pairings) {
         if (row.expiresAt.getTime() < now.getTime()) pairings.delete(deviceCode);
       }
+    },
+
+    async findPendingPairing(userCode, now) {
+      const row = [...pairings.values()].find((p) => p.userCode === userCode);
+      if (!row || row.claimedAt !== null || row.expiresAt.getTime() <= now.getTime()) return null;
+      return {
+        deviceCode: row.deviceCode,
+        userCode: row.userCode,
+        expiresAt: row.expiresAt,
+        createdAt: row.createdAt,
+        requesterCountry: row.requesterCountry,
+        requesterUserAgent: row.requesterUserAgent,
+      };
     },
   };
 }

@@ -1,14 +1,12 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import {
-  SESSION_COOKIE,
-  clearedOauthStateCookie,
-  csrfCookie,
-  readCookie,
-  sessionCookie,
-  OAUTH_STATE_COOKIE,
+  clearedOauthStateCookies,
+  readOauthStateCookie,
+  readSessionCookie,
+  sessionCookies,
 } from '../../../../../server/auth/cookies';
 import { sha256Hex } from '../../../../../server/auth/crypto';
-import { completeAuthorization } from '../../../../../server/auth/flow';
+import { completeAuthorization, sanitizeRedirectTo } from '../../../../../server/auth/flow';
 import { fetchOAuthProfile, isProviderId, redirectUri } from '../../../../../server/auth/providers';
 import { CALLBACK_RULE, checkRateLimit, clientIpKey } from '../../../../../server/auth/rate-limit';
 import { authStore, jsonError, providerCredentials, publicBaseUrl } from '../../../_auth';
@@ -21,7 +19,12 @@ import type { Env } from '../../../_types';
  * l'utilisateur doit atterrir dans l'application, pas sur une réponse d'API.
  */
 function appRedirect(baseUrl: string, path: string | null, params: Record<string, string>): URL {
-  const url = new URL(path ?? '/', `${baseUrl}/`);
+  const base = new URL(`${baseUrl}/`);
+  // Défense en profondeur (audit du 2026-09-23) : `redirectTo` a déjà été filtré à l'écriture
+  // (`startAuthorization`), mais une ligne écrite avant le correctif de `sanitizeRedirectTo`
+  // peut encore être en base — on refiltre, et on vérifie l'origine obtenue.
+  let url = new URL(sanitizeRedirectTo(path) ?? '/', base);
+  if (url.origin !== base.origin) url = new URL('/', base);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return url;
 }
@@ -48,7 +51,7 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   const now = new Date();
 
   const headers = new Headers({ 'cache-control': 'no-store' });
-  headers.append('set-cookie', clearedOauthStateCookie());
+  for (const cookie of clearedOauthStateCookies()) headers.append('set-cookie', cookie);
 
   const fail = (reason: string, status = 302): Response => {
     headers.set('location', appRedirect(baseUrl, null, { login: 'error', reason }).toString());
@@ -77,12 +80,12 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   // Rotation à la connexion : une session déjà ouverte dans ce navigateur
   // est révoquée au profit de la nouvelle, plutôt que laissée active en
   // parallèle.
-  const previousToken = readCookie(context.request, SESSION_COOKIE);
+  const previousToken = readSessionCookie(context.request)?.token ?? null;
 
   const completion = await completeAuthorization(store, {
     provider: rawProvider,
     state: url.searchParams.get('state') ?? '',
-    cookieState: readCookie(context.request, OAUTH_STATE_COOKIE),
+    cookieState: readOauthStateCookie(context.request),
     now,
     userAgent: context.request.headers.get('user-agent'),
     currentSessionIdHash: previousToken ? await sha256Hex(previousToken) : null,
@@ -99,8 +102,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!completion.ok) return fail(completion.error);
 
   const { result } = completion;
-  headers.append('set-cookie', sessionCookie(result.token));
-  headers.append('set-cookie', csrfCookie(result.csrfToken));
+  // Nouveaux noms `__Host-`, ancien cookie de session effacé (voir cookies.ts, TRANSITION).
+  for (const cookie of sessionCookies(result.token, result.csrfToken)) {
+    headers.append('set-cookie', cookie);
+  }
   headers.set(
     'location',
     appRedirect(baseUrl, result.redirectTo, {

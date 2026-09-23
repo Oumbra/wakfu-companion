@@ -1,7 +1,14 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
 import { clearedAuthCookies } from '../../../../server/auth/cookies';
 import { SESSION_RULE, checkRateLimit } from '../../../../server/auth/rate-limit';
-import { authenticate, json, jsonError, requireCsrf, unauthenticated } from '../../_auth';
+import {
+  authenticate,
+  json,
+  jsonError,
+  rejectNativeCaller,
+  requireCsrf,
+  unauthenticated,
+} from '../../_auth';
 import type { Env } from '../../_types';
 
 /**
@@ -16,10 +23,15 @@ import type { Env } from '../../_types';
  * Les données locales du navigateur ne sont PAS concernées : elles n'ont
  * jamais quitté la machine de l'utilisateur en mode invité, et le client
  * propose son propre effacement (page profil, déjà existante).
+ *
+ * Session de navigateur exigée (audit du 2026-09-23) : un jeton d'overlay reçoit 403
+ * `browser_session_required` (voir `rejectNativeCaller`, `_auth.ts`).
  */
 export const onRequestDelete: PagesFunction<Env> = async (context) => {
   const auth = await authenticate(context.request, context.env);
   if (!auth) return unauthenticated();
+  const nativeRejection = rejectNativeCaller(auth);
+  if (nativeRejection) return nativeRejection;
 
   if (!(await requireCsrf(context.request, auth))) return jsonError('jeton CSRF invalide', 403);
 

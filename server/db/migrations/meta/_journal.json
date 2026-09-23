@@ -225,6 +225,13 @@
       "when": 1790001282335,
       "tag": "0031_drop_users_default_game_server",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790124120779,
+      "tag": "0032_auth_hardening",
+      "breakpoints": true
     }
   ]
 }

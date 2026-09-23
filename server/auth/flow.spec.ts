@@ -18,6 +18,7 @@ import {
   openSession,
   purgeDeadSessions,
   purgeInactiveAccounts,
+  SESSION_MAX_LIFETIME_MS,
   resolveSession,
   runFullPurge,
   sanitizeRedirectTo,
@@ -411,11 +412,13 @@ describe('purgeInactiveAccounts', () => {
 
   it("l'usage quotidien d'une session (web ou overlay) tient le compte vivant sans reconnexion", async () => {
     const store = createMemoryAuthStore();
-    const logged = await login(store, { now: new Date(NOW.getTime() - 400 * DAY) });
+    // Depuis l'audit du 2026-09-23, une session vit au plus SESSION_MAX_LIFETIME_MS (180 j) : le
+    // scénario tient dans cette durée (voir « durée de vie absolue » pour ce qui se passe au-delà).
+    const logged = await login(store, { now: new Date(NOW.getTime() - 170 * DAY) });
     expect(logged.ok).toBe(true);
     if (!logged.ok) return;
     // L'overlay sert tous les jours : le rafraîchissement glissant marque l'activité.
-    for (let d = 399; d >= 0; d -= 10) {
+    for (let d = 169; d >= 0; d -= 10) {
       const at = new Date(NOW.getTime() - d * DAY);
       expect(await resolveSession(store, logged.result.token, at)).not.toBeNull();
     }
@@ -557,6 +560,35 @@ describe('sanitizeRedirectTo', () => {
     expect(sanitizeRedirectTo(null)).toBeNull();
   });
 
+  // Audit du 2026-09-23 : le parseur WHATWG lit `\` comme `/` et retire tabulations et sauts de
+  // ligne — chacune de ces formes se résolvait vers evil.example dans callback.ts::appRedirect.
+  it.each([
+    '/\\evil.example',
+    '/\\/evil.example',
+    '/\t/evil.example',
+    '/\n/evil.example',
+    '/\r/evil.example',
+    '/\u0000/evil.example',
+    '/\u007f/evil.example',
+    '/./\\evil.example',
+    '/.//evil.example',
+    '/x/..//evil.example',
+  ])('rejette %j (redirection ouverte via normalisation d’URL)', (raw) => {
+    const sanitized = sanitizeRedirectTo(raw);
+    if (sanitized !== null) {
+      // Si une forme passait, elle doit au moins rester sur NOTRE origine.
+      expect(new URL(sanitized, 'https://wakfu.example/').origin).toBe('https://wakfu.example');
+    }
+    expect(sanitized).toBeNull();
+  });
+
+  it('renvoie la forme normalisée d’un chemin interne légitime', () => {
+    expect(sanitizeRedirectTo('/pair?code=ABCD2345')).toBe('/pair?code=ABCD2345');
+    expect(sanitizeRedirectTo('/fr/profil#stats')).toBe('/fr/profil#stats');
+    expect(sanitizeRedirectTo('/a/../profil')).toBe('/profil');
+    expect(sanitizeRedirectTo(`/${'a'.repeat(3000)}`)).toBeNull();
+  });
+
   it('conserve la cible de retour à travers le flux', async () => {
     const store = createMemoryAuthStore();
     const result = await login(store, { redirectTo: '/profil' });
@@ -608,9 +640,13 @@ describe('clientIpKey', () => {
     const request = requestFrom('203.0.113.7');
     const salted = await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-A' });
     expect(await clientIpKey(request, { RATE_LIMIT_SALT: 'sel-B' })).not.toBe(salted);
-    // Repli sur DATABASE_URL quand aucun sel dédié n'est posé : jamais un hachage non salé.
-    expect(await clientIpKey(request, { DATABASE_URL: 'postgres://x' })).not.toBe(
-      await clientIpKey(request, { DATABASE_URL: 'postgres://y' }),
+    // Repli sur DATABASE_URL quand aucun sel dédié n'est posé — en développement local seulement
+    // (audit du 2026-09-23) : jamais un hachage non salé.
+    const local = new Request('http://localhost:8788/api/v1/auth/discord/start', {
+      headers: { 'cf-connecting-ip': '203.0.113.7' },
+    });
+    expect(await clientIpKey(local, { DATABASE_URL: 'postgres://x' })).not.toBe(
+      await clientIpKey(local, { DATABASE_URL: 'postgres://y' }),
     );
   });
 
@@ -679,5 +715,60 @@ describe('runFullPurge', () => {
     await runFullPurge(spied, NOW);
 
     expect(called).toEqual(['authorizations', 'pairings']);
+  });
+});
+
+/**
+ * Durée de vie absolue (audit du 2026-09-23) : l'expiration glissante ne prolonge jamais une
+ * session au-delà de SESSION_MAX_LIFETIME_MS après son ouverture.
+ */
+describe('durée de vie absolue des sessions', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+
+  it('refuse une session au-delà de 180 jours, même utilisée chaque jour', async () => {
+    const store = createMemoryAuthStore();
+    const logged = await login(store, { now: NOW });
+    expect(logged.ok).toBe(true);
+    if (!logged.ok) return;
+    let last: Date = NOW;
+    for (let d = 1; d * DAY < SESSION_MAX_LIFETIME_MS; d += 5) {
+      last = new Date(NOW.getTime() + d * DAY);
+      expect(await resolveSession(store, logged.result.token, last)).not.toBeNull();
+    }
+    const cap = new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS);
+    expect(await resolveSession(store, logged.result.token, cap)).toBeNull();
+  });
+
+  it('plafonne la prolongation glissante à l’échéance absolue', async () => {
+    const store = createMemoryAuthStore();
+    const opened = await openSession(store, 'user-x', { now: NOW, userAgent: null });
+    store.users.set('user-x', { id: 'user-x', email: null, displayName: null });
+    const nearCap = new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS - 10 * DAY);
+    // Session maintenue vivante jusque-là.
+    for (let d = 20; d * DAY < SESSION_MAX_LIFETIME_MS - 10 * DAY; d += 20) {
+      await resolveSession(store, opened.token, new Date(NOW.getTime() + d * DAY));
+    }
+    const resolved = await resolveSession(store, opened.token, nearCap);
+    expect(resolved).not.toBeNull();
+    expect(resolved?.session.expiresAt.getTime()).toBeLessThanOrEqual(
+      NOW.getTime() + SESSION_MAX_LIFETIME_MS,
+    );
+    const stored = await store.findSession(opened.idHash);
+    expect(stored?.absoluteExpiresAt).toEqual(new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS));
+    expect(stored?.chainId).toBe(opened.idHash);
+  });
+
+  it('applique aussi le plafond à une ligne antérieure à la colonne (repli sur issuedAt)', async () => {
+    const store = createMemoryAuthStore();
+    const opened = await openSession(store, 'user-x', { now: NOW, userAgent: null });
+    store.users.set('user-x', { id: 'user-x', email: null, displayName: null });
+    const row = store.sessions.get(opened.idHash);
+    if (!row) throw new Error('unreachable');
+    row.absoluteExpiresAt = null;
+    row.chainId = null;
+    row.expiresAt = new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS + DAY);
+    expect(
+      await resolveSession(store, opened.token, new Date(NOW.getTime() + SESSION_MAX_LIFETIME_MS)),
+    ).toBeNull();
   });
 });

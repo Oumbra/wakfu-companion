@@ -42,6 +42,26 @@ export interface SessionRecord {
    * sessions actives : la nouvelle session la représente.
    */
   supersededAt: Date | null;
+  /**
+   * Chaîne de rotation (audit du 2026-09-23) : empreinte de la PREMIÈRE session de la chaîne
+   * (connexion ou appairage), recopiée à chaque rotation native. Permet de révoquer d'un coup
+   * toutes les sessions issues d'un même appairage quand une rotation suspecte est détectée.
+   * `null` pour une ligne antérieure à la colonne : `sessionChainId` (flow.ts) retombe alors sur
+   * `idHash`.
+   */
+  chainId: string | null;
+  /**
+   * Échéance absolue (`SESSION_MAX_LIFETIME_MS` après l'ouverture de la chaîne), jamais dépassée
+   * par l'expiration glissante ni par une rotation. `null` pour une ligne antérieure à la colonne
+   * (voir `sessionAbsoluteExpiry`, flow.ts).
+   */
+  absoluteExpiresAt: Date | null;
+  /**
+   * Date à laquelle cette session, DÉJÀ remplacée, a servi à une rotation de rattrapage (overlay
+   * planté entre la réponse de rotation et l'écriture du nouveau jeton). Une seule fois : une
+   * seconde tentative révoque toute la chaîne (voir `rotateNativeSession`).
+   */
+  graceRotatedAt: Date | null;
 }
 
 export interface UserRecord {
@@ -63,6 +83,17 @@ export interface PairingRecord {
   deviceCode: string;
   userCode: string;
   expiresAt: Date;
+  /** Date de la demande (sert à afficher son âge sur la page `/pair`). */
+  createdAt: Date;
+  /**
+   * Pays de l'appareil demandeur tel que vu par Cloudflare (`cf-ipcountry`, code ISO à deux
+   * lettres) — jamais l'adresse IP. Affiché sur la page `/pair` pour que l'utilisateur repère une
+   * demande qui ne vient pas de chez lui (hameçonnage par code d'appairage). Vit le temps de
+   * l'appairage (`PAIRING_TTL_MS`), purgé avec la ligne.
+   */
+  requesterCountry: string | null;
+  /** User-agent de l'appareil demandeur, tronqué (`MAX_REQUESTER_USER_AGENT_LENGTH`, pairing.ts). */
+  requesterUserAgent: string | null;
 }
 
 export type PollPairingResult =
@@ -132,6 +163,18 @@ export interface AuthStore {
    * effet si la ligne n'existe pas.
    */
   supersedeSession(idHash: string, patch: { supersededAt: Date; expiresAt: Date }): Promise<void>;
+  /**
+   * Révoque toutes les sessions non révoquées d'une chaîne de rotation (`chain_id = chainId`, ou
+   * `id = chainId` pour la racine d'une chaîne antérieure à la colonne), sauf éventuellement une.
+   * Renvoie le nombre de sessions révoquées.
+   */
+  revokeSessionChain(chainId: string, now: Date, exceptIdHash?: string): Promise<number>;
+  /**
+   * Pose `graceRotatedAt` — **atomiquement**, seulement s'il est encore nul (`UPDATE ... WHERE
+   * grace_rotated_at IS NULL RETURNING`). `false` si la session a déjà servi à une rotation de
+   * rattrapage (ou n'existe pas) : deux rattrapages concurrents ne peuvent pas réussir tous les deux.
+   */
+  markGraceRotation(idHash: string, now: Date): Promise<boolean>;
   /** Révoque toutes les sessions actives d'un compte, sauf éventuellement une. */
   revokeAllSessions(userId: string, now: Date, exceptIdHash?: string): Promise<number>;
   /** Sessions actives d'un compte : ni révoquées, ni expirées, ni remplacées. */
@@ -168,4 +211,10 @@ export interface AuthStore {
    */
   pollPairing(deviceCode: string, now: Date): Promise<PollPairingResult>;
   purgeExpiredPairings(now: Date): Promise<void>;
+  /**
+   * Appairage encore EN ATTENTE (ni réclamé, ni expiré) pour ce code — sert à la page `/pair`
+   * (`GET /api/v1/auth/native/pairing`) à montrer d'où vient la demande avant confirmation.
+   * `null` sinon. Ne renvoie jamais le `deviceCode` à l'appelant de la route.
+   */
+  findPendingPairing(userCode: string, now: Date): Promise<PairingRecord | null>;
 }
