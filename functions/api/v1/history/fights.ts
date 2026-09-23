@@ -1,11 +1,12 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { fightLoot, fightParticipants, fights } from '../../../../server/db/schema';
 import { ingestFights } from '../../../../server/history/ingest';
 import {
   MAX_HISTORY_BATCH,
   parseFightsBatch,
+  encodePageCursor,
   parsePageQuery,
 } from '../../../../server/history/parse';
 import {
@@ -14,6 +15,7 @@ import {
   loadKnownReferences,
 } from '../../../../server/history/guards';
 import { processHistoryBatch } from '../../../../server/history/batch';
+import { beforeCursor } from '../../../../server/history/page-cursor';
 import { historyStorageDeps } from '../../../../server/history/storage';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
@@ -86,9 +88,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!query.ok) return jsonError(query.error, 400);
 
   const db = createDb(context.env.DATABASE_URL);
-  const where = query.value.before
-    ? and(eq(fights.userId, auth.user.id), lt(fights.startedAt, query.value.before))
-    : eq(fights.userId, auth.user.id);
+  const where = and(
+    eq(fights.userId, auth.user.id),
+    beforeCursor(fights.startedAt, fights.id, query.value),
+  );
 
   const rows = await db
     .select()
@@ -184,7 +187,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
     // Curseur de la page suivante : `null` quand la page n'est pas pleine, donc
     // qu'il n'y a plus rien derrière.
     nextBefore:
-      rows.length === query.value.limit ? rows[rows.length - 1].startedAt.toISOString() : null,
+      rows.length === query.value.limit
+        ? encodePageCursor(rows[rows.length - 1].startedAt, rows[rows.length - 1].id)
+        : null,
     maxBatch: MAX_HISTORY_BATCH,
   });
 };

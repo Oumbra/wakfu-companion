@@ -1,10 +1,11 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, inArray, lt } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { pactExtractionItems, pactExtractions } from '../../../../server/db/schema';
 import {
   MAX_HISTORY_BATCH,
   parsePactExtractionsBatch,
+  encodePageCursor,
   parsePageQuery,
 } from '../../../../server/history/parse';
 import { ingestPactExtractions } from '../../../../server/history/ingest';
@@ -14,6 +15,7 @@ import {
   loadKnownReferences,
 } from '../../../../server/history/guards';
 import { processHistoryBatch } from '../../../../server/history/batch';
+import { beforeCursor } from '../../../../server/history/page-cursor';
 import { historyStorageDeps } from '../../../../server/history/storage';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
@@ -92,12 +94,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!query.ok) return jsonError(query.error, 400);
 
   const db = createDb(context.env.DATABASE_URL);
-  const where = query.value.before
-    ? and(
-        eq(pactExtractions.userId, auth.user.id),
-        lt(pactExtractions.occurredAt, query.value.before),
-      )
-    : eq(pactExtractions.userId, auth.user.id);
+  const where = and(
+    eq(pactExtractions.userId, auth.user.id),
+    beforeCursor(pactExtractions.occurredAt, pactExtractions.id, query.value),
+  );
 
   const rows = await db
     .select()
@@ -136,7 +136,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
         .map((line) => ({ itemId: line.itemId, itemName: line.itemName, quantity: line.quantity })),
     })),
     nextBefore:
-      rows.length === query.value.limit ? rows[rows.length - 1].occurredAt.toISOString() : null,
+      rows.length === query.value.limit
+        ? encodePageCursor(rows[rows.length - 1].occurredAt, rows[rows.length - 1].id)
+        : null,
     maxBatch: MAX_HISTORY_BATCH,
   });
 };

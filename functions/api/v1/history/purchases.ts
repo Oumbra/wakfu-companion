@@ -1,9 +1,10 @@
 import type { PagesFunction } from '@cloudflare/workers-types';
-import { and, desc, eq, lt } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { createDb } from '../../../../server/db/client';
 import { purchases } from '../../../../server/db/schema';
 import {
   MAX_HISTORY_BATCH,
+  encodePageCursor,
   parsePageQuery,
   parsePurchasesBatch,
 } from '../../../../server/history/parse';
@@ -14,6 +15,7 @@ import {
   loadKnownReferences,
 } from '../../../../server/history/guards';
 import { processHistoryBatch } from '../../../../server/history/batch';
+import { beforeCursor } from '../../../../server/history/page-cursor';
 import { historyStorageDeps } from '../../../../server/history/storage';
 import { readJsonBodyLimited } from '../../../../server/http/body';
 import { enforceUserRateLimit, internalErrorResponse } from '../../../../server/http/api-guards';
@@ -80,9 +82,10 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
   if (!query.ok) return jsonError(query.error, 400);
 
   const db = createDb(context.env.DATABASE_URL);
-  const where = query.value.before
-    ? and(eq(purchases.userId, auth.user.id), lt(purchases.occurredAt, query.value.before))
-    : eq(purchases.userId, auth.user.id);
+  const where = and(
+    eq(purchases.userId, auth.user.id),
+    beforeCursor(purchases.occurredAt, purchases.id, query.value),
+  );
 
   const rows = await db
     .select()
@@ -102,7 +105,9 @@ export const onRequestGet: PagesFunction<Env> = async (context) => {
       gameServer: row.gameServer,
     })),
     nextBefore:
-      rows.length === query.value.limit ? rows[rows.length - 1].occurredAt.toISOString() : null,
+      rows.length === query.value.limit
+        ? encodePageCursor(rows[rows.length - 1].occurredAt, rows[rows.length - 1].id)
+        : null,
     maxBatch: MAX_HISTORY_BATCH,
   });
 };

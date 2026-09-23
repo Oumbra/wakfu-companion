@@ -898,6 +898,13 @@ export interface PageQuery {
    * au fil des insertions.
    */
   before: Date | null;
+  /**
+   * Départage des entrées de même horodatage que `before` (curseur composite `(date, id)`) : sans
+   * lui, les lignes partageant l'horodatage de la dernière ligne d'une page étaient sautées — et
+   * l'export RGPD, qui enchaîne les pages, était incomplet. `null` pour un curseur à l'ancien
+   * format (date seule), toujours accepté.
+   */
+  beforeId: number | null;
 }
 
 export function parsePageQuery(
@@ -915,8 +922,23 @@ export function parsePageQuery(
   }
 
   const rawBefore = params.get('before');
-  if (rawBefore === null) return { ok: true, value: { limit, before: null } };
-  const before = parseBoundedDate(rawBefore, 'before', now);
+  if (rawBefore === null) return { ok: true, value: { limit, before: null, beforeId: null } };
+  const separator = rawBefore.lastIndexOf(PAGE_CURSOR_SEPARATOR);
+  const rawDate = separator === -1 ? rawBefore : rawBefore.slice(0, separator);
+  const before = parseBoundedDate(rawDate, 'before', now);
   if (!before.ok) return before;
-  return { ok: true, value: { limit, before: before.value } };
+  if (separator === -1) return { ok: true, value: { limit, before: before.value, beforeId: null } };
+  const beforeId = Number(rawBefore.slice(separator + 1));
+  if (!Number.isSafeInteger(beforeId) || beforeId <= 0) {
+    return { ok: false, error: `before invalide : ${echoValue(rawBefore)}` };
+  }
+  return { ok: true, value: { limit, before: before.value, beforeId } };
+}
+
+/** Séparateur date/id du curseur de page (absent d'une date ISO 8601). */
+const PAGE_CURSOR_SEPARATOR = '~';
+
+/** Curseur `nextBefore` de la dernière ligne d'une page pleine : opaque pour les clients. */
+export function encodePageCursor(at: Date, id: number): string {
+  return `${at.toISOString()}${PAGE_CURSOR_SEPARATOR}${id}`;
 }

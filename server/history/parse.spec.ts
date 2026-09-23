@@ -9,6 +9,7 @@ import {
   parseFightsBody,
   parsePactExtractionsBatch,
   parsePactExtractionsBody,
+  encodePageCursor,
   parsePageQuery,
   parsePurchasesBatch,
   parsePurchasesBody,
@@ -547,7 +548,7 @@ describe('parsePageQuery', () => {
   it('applique les valeurs par défaut', () => {
     expect(parsePageQuery(new URLSearchParams())).toEqual({
       ok: true,
-      value: { limit: 50, before: null },
+      value: { limit: 50, before: null, beforeId: null },
     });
   });
 
@@ -555,6 +556,18 @@ describe('parsePageQuery', () => {
     const parsed = parsePageQuery(new URLSearchParams('limit=10&before=2026-08-11T10:00:00.000Z'));
     expect(parsed.ok && parsed.value.limit).toBe(10);
     expect(parsed.ok && parsed.value.before?.toISOString()).toBe('2026-08-11T10:00:00.000Z');
+  });
+
+  it('lit un curseur composite (date, id) et reste compatible avec l’ancien format', () => {
+    const cursor = encodePageCursor(new Date('2026-08-11T10:00:00.000Z'), 42);
+    const parsed = parsePageQuery(new URLSearchParams({ before: cursor }));
+    expect(parsed.ok && parsed.value.before?.toISOString()).toBe('2026-08-11T10:00:00.000Z');
+    expect(parsed.ok && parsed.value.beforeId).toBe(42);
+    const legacy = parsePageQuery(new URLSearchParams('before=2026-08-11T10:00:00.000Z'));
+    expect(legacy.ok && legacy.value.beforeId).toBeNull();
+    expect(parsePageQuery(new URLSearchParams({ before: '2026-08-11T10:00:00.000Z~x' })).ok).toBe(
+      false,
+    );
   });
 
   it('refuse une limite hors bornes', () => {
