@@ -25,13 +25,15 @@
 #               widget vit dans une iframe). Aucun inline (le script anti-flash du thème vit dans public/theme-init.js, voir
 #               src/index.html) ; les blocs JSON-LD ne sont pas exécutés, la CSP ne les concerne pas.
 #   styles    : 'unsafe-inline' requis — Angular injecte les styles de composants dans des <style>.
-#   connect   : API et service worker (ngsw.json) sur la même origine, PLUS toute origine tierce
-#               chargée par une balise (<img>, <script>) : le service worker Angular (ngsw-worker.js)
-#               intercepte TOUTES les requêtes GET de la page, y compris cross-origin, et les rejoue
-#               avec fetch() — soumis au `connect-src` de la CSP du worker (ces mêmes en-têtes), pas à
-#               `img-src`/`script-src`. Sans ça : « Fetch API cannot load ... violates the document's
-#               Content Security Policy » dans ngsw-worker.js, puis 504 renvoyé à la balise (constaté le
-#               2026-09-23 sur les avatars fan-art). Toute origine d'img-src/script-src se répète donc ici.
+#   connect   : API et service worker (ngsw.json) sur la même origine. Les origines tierces
+#               (static.ankama.com, challenges.cloudflare.com) n'y restent que pour une TRANSITION :
+#               le worker Angular brut (ngsw-worker.js) rejouait avec fetch() toutes les requêtes GET
+#               de la page, y compris cross-origin, sous le `connect-src` figé à son installation
+#               (504 sur les avatars fan-art, 2026-09-23). Depuis, l'application enregistre
+#               public/sw.js, qui retire au worker Angular toute requête cross-origin : il ne fait
+#               plus aucun fetch() hors de l'origine. Les deux origines tierces sont à retirer d'ici
+#               (retour à `connect-src 'self'`) une fois les anciens workers remplacés, soit après
+#               le 2026-10-23 (audit du 2026-09-23, S14).
 #   OAuth     : navigation complète (location.assign) vers /api/v1/auth/*, puis redirection serveur
 #               vers Discord/Google — hors du champ de la CSP de la page (pas un fetch, pas un form).
 #
