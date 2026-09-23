@@ -1,5 +1,6 @@
 import {
   bigint,
+  check,
   bigserial,
   boolean,
   index,
@@ -12,6 +13,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 /** Miroir de WakfuRarity (src/app/core/data/wakfu-item-rarity.data.ts) côté serveur — server/
  * reste indépendant de src/ (pas d'import cross-cible), voir server/README.md. `rarity` est
@@ -399,7 +401,12 @@ export const users = pgTable(
      */
     lastSeenAt: timestamp('last_seen_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex('users_email_key').on(table.email)],
+  (table) => [
+    uniqueIndex('users_email_key').on(table.email),
+    // Purge quotidienne des comptes inactifs (`purgeInactiveUsers`) : sans index, un parcours
+    // complet de `users` à chaque passe.
+    index('users_last_seen_at_idx').on(table.lastSeenAt),
+  ],
 );
 
 /**
@@ -465,6 +472,8 @@ export const sessions = pgTable(
   (table) => [
     index('sessions_user_id_idx').on(table.userId),
     index('sessions_chain_id_idx').on(table.chainId),
+    // Purge des sessions mortes (`purgeDeadSessions`), lancée aussi depuis des routes publiques.
+    index('sessions_expires_at_idx').on(table.expiresAt),
   ],
 );
 
@@ -554,7 +563,12 @@ export const authRateLimits = pgTable(
     windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
     count: integer('count').notNull().default(0),
   },
-  (table) => [primaryKey({ columns: [table.bucket, table.windowStart] })],
+  (table) => [
+    primaryKey({ columns: [table.bucket, table.windowStart] }),
+    // Purge opportuniste `window_start < …` à chaque première requête d'une fenêtre : la clé
+    // primaire commence par `bucket`, inutilisable pour ce filtre.
+    index('auth_rate_limits_window_start_idx').on(table.windowStart),
+  ],
 );
 
 /**
@@ -733,6 +747,10 @@ export const fights = pgTable(
     // Regroupements/filtres par type (carte Récap, voir FightTypeCode) : « tous les combats de ce
     // type pour ce compte ».
     index('fights_user_fight_type_idx').on(table.userId, table.fightType),
+    // Invariants déjà imposés par `server/history/parse.ts`, doublés en base pour les écritures
+    // qui ne passent pas par l'API (scripts `server/import/*`, SQL manuel). Posés `NOT VALID`
+    // (migration 0038) : vérifiés pour toute nouvelle ligne, sans bloquer le déploiement.
+    check('fights_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -830,7 +848,10 @@ export const fightParticipants = pgTable(
   // ennemi évolue côté client ; avec `side` dans la clé, l'upsert insérait une SECONDE ligne au
   // lieu de mettre à jour la première. (nom, instance) est unique dans un combat : les deux
   // clients numérotent les instances d'un nom sur les deux camps confondus.
-  (table) => [primaryKey({ columns: [table.fightId, table.name, table.instanceIndex] })],
+  (table) => [
+    primaryKey({ columns: [table.fightId, table.name, table.instanceIndex] }),
+    check('fight_participants_side', sql`${table.side} in ('ally', 'enemy')`),
+  ],
 );
 
 /**
@@ -902,6 +923,7 @@ export const purchases = pgTable(
   (table) => [
     uniqueIndex('purchases_user_client_key_uq').on(table.userId, table.clientKey),
     index('purchases_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('purchases_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -924,6 +946,7 @@ export const trades = pgTable(
   (table) => [
     uniqueIndex('trades_user_client_key_uq').on(table.userId, table.clientKey),
     index('trades_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('trades_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
@@ -943,7 +966,10 @@ export const tradeItems = pgTable(
     itemName: text('item_name'),
     quantity: integer('quantity').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] })],
+  (table) => [
+    primaryKey({ columns: [table.tradeId, table.direction, table.lineIndex] }),
+    check('trade_items_direction', sql`${table.direction} in ('acquired', 'given')`),
+  ],
 );
 
 /**
@@ -967,6 +993,7 @@ export const pactExtractions = pgTable(
   (table) => [
     uniqueIndex('pact_extractions_user_client_key_uq').on(table.userId, table.clientKey),
     index('pact_extractions_user_occurred_at_idx').on(table.userId, table.occurredAt),
+    check('pact_extractions_client_key_format', sql`${table.clientKey} ~ '^[0-9a-f]{64}$'`),
   ],
 );
 
