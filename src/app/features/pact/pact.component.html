@@ -39,7 +39,7 @@
                   <div
                     class="pact-item-row"
                     [class]="rarityClass(item)"
-                    [appTooltip]="canInteract(item) ? ('items.correctTooltip' | t) : null"
+                    [appTooltip]="canInteract(item) ? ('items.correctableTooltip' | t) : null"
                     tooltipPosition="top"
                     (contextmenu)="openInteractMenu($event, record, item)"
                   >

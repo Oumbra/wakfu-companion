@@ -167,7 +167,17 @@
           <div class="panel-body">
             <div class="profile-field profile-field-wide">
               <div class="profile-label-row">
-                <label class="profile-label">{{ 'profile.tabAvatar' | t }}</label>
+                <label class="profile-label">
+                  {{ 'profile.tabAvatar' | t }}
+                  <button
+                    type="button"
+                    class="icon-btn help-icon-btn"
+                    [appTooltip]="'help.tooltip' | t"
+                    (click)="helpModal.open('profileIdentity')"
+                  >
+                    ?
+                  </button>
+                </label>
               </div>
               <p class="profile-section-desc">{{ 'profile.avatarDesc' | t }}</p>
               <div class="identity-row">
