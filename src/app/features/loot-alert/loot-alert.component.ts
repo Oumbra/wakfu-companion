@@ -29,10 +29,10 @@ const CONFETTI_COLORS = [
 const CONFETTI_PIECE_COUNT = 28;
 
 /**
- * Toast affiché en haut de l'écran quand un objet suivi (son activé, voir
- * ProfileService) est ramassé — jamais déclenché par une mise KO. Écoute
- * LootAlertService plutôt que StatsStoreService directement pour ne pas
- * coupler l'affichage au store de stats.
+ * Toast affiché en haut de l'écran quand un objet de la liste d'alertes (voir
+ * ProfileService) est ramassé, son coupé compris (seul le son est alors omis)
+ * — jamais déclenché par une mise KO. Écoute LootAlertService plutôt que
+ * StatsStoreService directement pour ne pas coupler l'affichage au store de stats.
  */
 @Component({
   selector: 'app-loot-alert',
@@ -74,7 +74,7 @@ export class LootAlertComponent {
     effect(() => {
       const event = this.lootAlertService.current();
       if (!event) return;
-      this.show(event.name, event.id, event.quantity, event.kind, event.reason);
+      this.show(event.name, event.id, event.quantity, event.kind, event.reason, event.muted);
     });
   }
 
@@ -84,6 +84,7 @@ export class LootAlertComponent {
     quantity: number,
     kind: 'item' | 'enemy',
     reason: LootAlertReason,
+    muted: boolean,
   ): void {
     this.itemName.set(name);
     this.itemId.set(id);
@@ -95,7 +96,7 @@ export class LootAlertComponent {
     // Décompte à 0 et objectif atteint partagent le même son : les deux disent « le suivi est
     // arrivé au bout », seul le titre de la carte les distingue (voir template).
     if (reason === 'countdown' || reason === 'goal') this.alertSound.playCountdown();
-    else this.alertSound.playLoot();
+    else if (!muted) this.alertSound.playLoot();
     if (this.hideTimer !== null) clearTimeout(this.hideTimer);
     this.hideTimer = null;
     // Fermeture manuelle (voir close()) : pas de minuterie du tout.

@@ -252,6 +252,15 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
    affichés. Le flag est aussi remis à `false` sur tout `client-lifecycle` (voir ci-dessous) — un
    `Lancement de l'occupation MARKET` suivi d'une fermeture du jeu le laissait armé jusqu'au
    lendemain.
+   - **3ᵉ cas, corrigé le 2026-09-24** (`tests/wakfu.log`) : `Lancement de l'occupation MARKET`
+     à 20:33:04 sans AUCUNE fermeture (ni `On arrête`, ni `On annule`, ni arrêt du client) — le
+     joueur quitte la zone (`on quitte le monde`) et entre en combat 58 s plus tard. Butin de 1
+     combat sur 19 seulement. Plutôt que de chercher un nouveau marqueur de sortie (ambigu en
+     multi-compte : le fichier est partagé), la session HDV expire après `MARKET_IDLE_MS` (60 s)
+     sans activité marchande (ouverture, perte de kamas, ramassage compté comme achat — voir
+     `isMarketOccupationActive`). Les ramassages orphelins d'un achat groupé suivent l'achat
+     précédent de quelques secondes ; le butin de combat n'arrive qu'en fin de combat. Résultat
+     sur le fichier : 18 combats sur 19 avec butin.
 2. **Un combat actif à la fermeture du client n'a JAMAIS de `[FIGHT] End fight`** (`Stopping cFC...`,
    `Sending DisconnectionMessage ... {UI Closed}`) — cas typique du mannequin quitté en fermant le
    jeu (quitter par « abandonner » émet bien le `End fight`). Le combat fantôme restait le « seul

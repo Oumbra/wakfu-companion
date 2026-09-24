@@ -10,6 +10,7 @@ import {
 import { LogFileAccessService } from './log-file-access.service';
 import { CharacterRosterService } from './character-roster.service';
 import { LootAlertService } from './loot-alert.service';
+import { ProfileService } from './profile.service';
 import { ApiClientService, type ApiResult } from '../api/api-client.service';
 import { HistorySyncService } from '../sync/history-sync.service';
 
@@ -952,6 +953,23 @@ describe('StatsStoreService', () => {
       expect(fights).toHaveLength(1);
       expect(fights[0].loot.map((l) => l.name)).toEqual(['Laine de Bouftou']);
     });
+
+    it("n'exclut plus le butin de combat quand une session marchand/HDV jamais refermée est inactive depuis plus d'une minute (cas réel tests/wakfu.log : zone quittée sans « On arrête »)", () => {
+      const stats = TestBed.inject(StatsStoreService);
+      const access = TestBed.inject(LogFileAccessService);
+      feed(access, [
+        " INFO 20:33:04,638 [T] (bmI:41) - Lancement de l'occupation MARKET sur la board [bDk id=31546]{P}",
+        ' INFO 20:33:58,219 [T] (chP:397) - on quitte le monde 1135',
+        ' INFO 20:34:02,842 [T] (faw:1405) - [_FL_] fightId=3 Tikoko breed : 4730 [-18] isControlledByAI=true obstacleId : -1 join the fight at {P}',
+        ' INFO 20:34:02,850 [T] (faw:1405) - [_FL_] fightId=3 Oumbra breed : 4 [1] isControlledByAI=false obstacleId : -1 join the fight at {P}',
+        ' INFO 20:35:30,000 [T] (aPV:174) - [Information (jeu)] Vous avez ramassé 3x Plume de Tikoko .',
+        ' INFO 20:35:31,000 [T] (aWF:91) - [FIGHT] End fight with id 3',
+      ]);
+      const fights = stats.fightHistory();
+      expect(fights).toHaveLength(1);
+      expect(fights[0].loot.map((l) => l.name)).toEqual(['Plume de Tikoko']);
+      expect(stats.purchaseHistory()).toEqual([]);
+    });
   });
 
   describe('Ventilation des dégâts par tour (SpellBreakdownRow.byTurn, switch Total/Tour)', () => {
@@ -1191,7 +1209,31 @@ describe('StatsStoreService', () => {
         kind: 'item',
         reason: 'countdown',
         id: null,
+        muted: false,
       });
+    });
+
+    it("garde le message d'alerte d'un objet dont le son est coupé : seul le son est omis (muted)", () => {
+      const access = TestBed.inject(LogFileAccessService);
+      const lootAlert = TestBed.inject(LootAlertService);
+      const profile = TestBed.inject(ProfileService);
+      TestBed.inject(StatsStoreService);
+      profile.addSoundItem('Laine de Bouftou');
+      feed(access, [' INFO 12:00:00,000 [T] (a:1) - Démarrage']);
+
+      feedMore(access, [
+        'INFO 12:00:01,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+        'INFO 12:00:02,000 [thread] (a:1) - fin',
+      ]);
+      expect(lootAlert.current()?.muted).toBe(false);
+
+      profile.toggleSoundItem('Laine de Bouftou');
+      lootAlert.current.set(null);
+      feedMore(access, [
+        'INFO 12:00:03,000 [thread] (a:1) - [Information (jeu)] Vous avez ramassé 1x Laine de Bouftou.',
+        'INFO 12:00:04,000 [thread] (a:1) - fin',
+      ]);
+      expect(lootAlert.current()).toMatchObject({ name: 'Laine de Bouftou', muted: true });
     });
 
     it("resetWatchedCount restaure countdownTarget (pas 0) pour une entrée en mode 'down'", () => {
@@ -1284,6 +1326,7 @@ describe('StatsStoreService', () => {
         kind: 'item',
         reason: 'goal',
         id: null,
+        muted: false,
       });
 
       lootAlert.current.set(null);

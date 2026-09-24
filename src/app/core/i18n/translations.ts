@@ -347,8 +347,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.testSound': "Tester le son de l'alerte",
     'profile.soundItemPlaceholder': 'Ajouter un objet à surveiller…',
     'profile.followedItemsLabel': 'Objets suivis',
-    'profile.soundOn': 'Alerte activée',
-    'profile.soundOff': 'Alerte désactivée',
+    'profile.soundOn': 'Son activé',
+    'profile.soundOff': 'Son coupé (message conservé)',
     'profile.lootAlertTitle': 'Objet obtenu !',
     'profile.closeToast': 'Fermer',
     'profile.lootAlertSoundBlocked':
@@ -480,7 +480,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes recherches personnalisées (texte + canal, ou Global pour tous les canaux) peuvent être ajoutées : elles portent sur le message ET sur le nom de son auteur. Un message qui correspond est mis en surbrillance et déclenche une alerte sonore — les recherches ne masquent aucun message, elles se contentent de le signaler.\n\nQuand le chat est réduit dans le menu, un compteur y indique le nombre de messages correspondant à vos recherches.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique ; le bouton « ↓ » y revient.",
     'help.profileAlerts.title': 'Profil > Alertes',
     'help.profileAlerts.body':
-      "Choisissez les objets qui déclenchent une alerte (son + message + confettis) à leur ramassage. La recherche « + » permet d'en ajouter d'autres que les 10 objets par défaut, ensuite retirables individuellement (croix sur la vignette) — contrairement aux objets par défaut, jamais supprimables.\n\nL'icône haut-parleur de chaque vignette active ou coupe l'alerte de cet objet (son, message et confettis). Le bouton test rejoue le son pour vérifier le réglage sans attendre un vrai ramassage.\n\nLe message se ferme automatiquement après le délai réglé ici (mode Auto), ou reste affiché jusqu'à fermeture manuelle (mode Manuelle).",
+      "Choisissez les objets qui déclenchent une alerte (son + message + confettis) à leur ramassage. La recherche « + » permet d'en ajouter d'autres que les 10 objets par défaut, ensuite retirables individuellement (croix sur la vignette) — contrairement aux objets par défaut, jamais supprimables.\n\nL'icône haut-parleur de chaque vignette active ou coupe le son de cet objet : son coupé, le message et les confettis s'affichent quand même. Le bouton test rejoue le son pour vérifier le réglage sans attendre un vrai ramassage.\n\nLe message se ferme automatiquement après le délai réglé ici (mode Auto), ou reste affiché jusqu'à fermeture manuelle (mode Manuelle).",
     'help.profileTheme.title': 'Profil > Accessibilité > Thème',
     'help.profileTheme.body':
       "Choisissez l'apparence de l'application : le thème sombre d'origine, ou l'une des 4 variantes claires (Ardoise, Parchemin, Nordique, Contraste élevé), chacune calibrée pour rester lisible sur fond clair.\n\nCe choix est indépendant du mode daltonien juste en dessous, mais les deux se combinent : les couleurs adaptées au daltonisme s'appliquent par-dessus le thème actif, sombre ou clair.",
@@ -720,7 +720,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.alerts.b2': '<b>Fermeture</b> : Auto (délai en secondes) ou Manuelle.',
     'onboarding.alerts.b3': "<b>Ajouter</b> : n'importe quel objet, en plus des 10 par défaut.",
     'onboarding.alerts.b4':
-      "<b>Haut-parleur</b> : coupe l'alerte de cet objet (son et message). La croix retire un objet ajouté.",
+      "<b>Haut-parleur</b> : coupe le son de cet objet ; le message s'affiche quand même. La croix retire un objet ajouté.",
     'onboarding.identity.toc': 'Avatar & pseudo',
     'onboarding.identity.title': 'Votre avatar, votre pseudo',
     'onboarding.identity.lede': "Ils s'affichent dans l'en-tête et sur votre profil.",
@@ -1310,8 +1310,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.testSound': 'Test the alert sound',
     'profile.soundItemPlaceholder': 'Add an item to watch…',
     'profile.followedItemsLabel': 'Watched items',
-    'profile.soundOn': 'Alert on',
-    'profile.soundOff': 'Alert off',
+    'profile.soundOn': 'Sound on',
+    'profile.soundOff': 'Sound off (message kept)',
     'profile.lootAlertTitle': 'Item obtained!',
     'profile.closeToast': 'Close',
     'profile.lootAlertSoundBlocked': 'Sound blocked by the browser: click the page to enable it.',
@@ -1439,7 +1439,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Shows chat messages read from wakfu.log, sorted by channel (Proximity, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you show only some channels.\n\nCustom searches (text + channel, or Global for every channel) can be added: they match the message AND its author\'s name. A matching message is highlighted and plays a sound alert — searches never hide any message, they only flag it.\n\nWhen the chat is collapsed into the menu, a counter there shows the number of messages matching your searches.\n\nAuto-scroll stops as soon as you scroll up manually; the "↓" button brings you back.',
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
-      'Choose the items that trigger an alert (sound + message + confetti) when picked up. The "+" search adds items beyond the 10 defaults, which can then be removed individually (cross on the tile) — unlike the default items, which can never be removed.\n\nThe speaker icon on each tile turns this item\'s alert on or off (sound, message and confetti). The test button replays the sound to check the setting without waiting for a real pickup.\n\nThe message closes automatically after the delay set here (Auto mode), or stays until closed manually (Manual mode).',
+      'Choose the items that trigger an alert (sound + message + confetti) when picked up. The "+" search adds items beyond the 10 defaults, which can then be removed individually (cross on the tile) — unlike the default items, which can never be removed.\n\nThe speaker icon on each tile turns this item\'s sound on or off: with the sound off, the message and confetti still show. The test button replays the sound to check the setting without waiting for a real pickup.\n\nThe message closes automatically after the delay set here (Auto mode), or stays until closed manually (Manual mode).',
     'help.profileTheme.title': 'Profile > Accessibility > Theme',
     'help.profileTheme.body':
       "Choose the app's appearance: the original dark theme, or one of 4 light variants (Slate, Parchment, Nordic, High Contrast), each tuned to stay readable on a light background.\n\nThis choice is independent from the colorblind mode just below, but the two combine: colorblind-adjusted colors apply on top of whichever theme is active, dark or light.",
@@ -1673,7 +1673,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.alerts.b2': '<b>Closing</b>: Auto (delay in seconds) or Manual.',
     'onboarding.alerts.b3': '<b>Add</b>: any item, on top of the 10 defaults.',
     'onboarding.alerts.b4':
-      "<b>Speaker</b>: turns off this item's alert (sound and message). The cross removes an added item.",
+      '<b>Speaker</b>: mutes this item; the message still shows. The cross removes an added item.',
     'onboarding.identity.toc': 'Avatar & nickname',
     'onboarding.identity.title': 'Your avatar, your nickname',
     'onboarding.identity.lede': 'They show in the header and on your profile.',
@@ -2259,8 +2259,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.testSound': 'Probar el sonido de la alerta',
     'profile.soundItemPlaceholder': 'Añadir un objeto para vigilar…',
     'profile.followedItemsLabel': 'Objetos vigilados',
-    'profile.soundOn': 'Alerta activada',
-    'profile.soundOff': 'Alerta desactivada',
+    'profile.soundOn': 'Sonido activado',
+    'profile.soundOff': 'Sonido desactivado (mensaje conservado)',
     'profile.lootAlertTitle': '¡Objeto obtenido!',
     'profile.closeToast': 'Cerrar',
     'profile.lootAlertSoundBlocked':
@@ -2389,7 +2389,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Muestra los mensajes del chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo algunos canales.\n\nSe pueden añadir búsquedas personalizadas (texto + canal, o Global para todos los canales): buscan en el mensaje Y en el nombre de su autor. Un mensaje que coincide se resalta y lanza una alerta sonora — las búsquedas no ocultan ningún mensaje, solo lo señalan.\n\nCuando el chat está plegado en el menú, un contador indica allí el número de mensajes que coinciden con tus búsquedas.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente; el botón «↓» vuelve abajo.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Elige los objetos que lanzan una alerta (sonido + mensaje + confeti) al recogerlos. La búsqueda «+» permite añadir otros además de los 10 objetos predeterminados, que luego se pueden quitar uno a uno (cruz en la casilla) — a diferencia de los objetos predeterminados, que nunca se pueden eliminar.\n\nEl icono de altavoz de cada casilla activa o desactiva la alerta de ese objeto (sonido, mensaje y confeti). El botón de prueba reproduce el sonido para comprobar el ajuste sin esperar una recogida real.\n\nEl mensaje se cierra automáticamente tras el tiempo ajustado aquí (modo Auto), o permanece hasta cerrarlo a mano (modo Manual).',
+      'Elige los objetos que lanzan una alerta (sonido + mensaje + confeti) al recogerlos. La búsqueda «+» permite añadir otros además de los 10 objetos predeterminados, que luego se pueden quitar uno a uno (cruz en la casilla) — a diferencia de los objetos predeterminados, que nunca se pueden eliminar.\n\nEl icono de altavoz de cada casilla activa o desactiva el sonido de ese objeto: sin sonido, el mensaje y el confeti se siguen mostrando. El botón de prueba reproduce el sonido para comprobar el ajuste sin esperar una recogida real.\n\nEl mensaje se cierra automáticamente tras el tiempo ajustado aquí (modo Auto), o permanece hasta cerrarlo a mano (modo Manual).',
     'help.profileTheme.title': 'Perfil > Accesibilidad > Tema',
     'help.profileTheme.body':
       'Elige la apariencia de la aplicación: el tema oscuro original, o una de las 4 variantes claras (Pizarra, Pergamino, Nórdico, Alto contraste), cada una calibrada para seguir siendo legible sobre fondo claro.\n\nEsta elección es independiente del modo daltónico justo debajo, pero ambos se combinan: los colores adaptados al daltonismo se aplican sobre el tema activo, oscuro o claro.',
@@ -2626,7 +2626,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.alerts.b2': '<b>Cierre</b>: Auto (tiempo en segundos) o Manual.',
     'onboarding.alerts.b3': '<b>Añadir</b>: cualquier objeto, además de los 10 predeterminados.',
     'onboarding.alerts.b4':
-      '<b>Altavoz</b>: desactiva la alerta de este objeto (sonido y mensaje). La cruz quita un objeto añadido.',
+      '<b>Altavoz</b>: silencia este objeto; el mensaje se sigue mostrando. La cruz quita un objeto añadido.',
     'onboarding.identity.toc': 'Avatar y apodo',
     'onboarding.identity.title': 'Tu avatar, tu apodo',
     'onboarding.identity.lede': 'Se muestran en la cabecera y en tu perfil.',
@@ -3218,8 +3218,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.testSound': 'Testar o som do alerta',
     'profile.soundItemPlaceholder': 'Adicionar um item para monitorar…',
     'profile.followedItemsLabel': 'Itens monitorados',
-    'profile.soundOn': 'Alerta ativado',
-    'profile.soundOff': 'Alerta desativado',
+    'profile.soundOn': 'Som ativado',
+    'profile.soundOff': 'Som desativado (mensagem mantida)',
     'profile.lootAlertTitle': 'Item obtido!',
     'profile.closeToast': 'Fechar',
     'profile.lootAlertSoundBlocked':
@@ -3348,7 +3348,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Exibe as mensagens do chat lidas no wakfu.log, classificadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir só alguns canais.\n\nBuscas personalizadas (texto + canal, ou Global para todos os canais) podem ser adicionadas: elas olham a mensagem E o nome do autor. Uma mensagem correspondente é destacada e dispara um alerta sonoro — as buscas não ocultam nenhuma mensagem, só a sinalizam.\n\nQuando o chat está recolhido no menu, um contador ali indica o número de mensagens que correspondem às suas buscas.\n\nA rolagem automática para assim que você sobe manualmente; o botão "↓" volta para baixo.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Escolha os itens que disparam um alerta (som + mensagem + confete) ao serem coletados. A busca "+" permite adicionar outros além dos 10 itens padrão, que depois podem ser removidos um a um (cruz no bloco) — ao contrário dos itens padrão, que nunca podem ser excluídos.\n\nO ícone de alto-falante de cada bloco ativa ou desativa o alerta desse item (som, mensagem e confete). O botão de teste toca o som para verificar a configuração sem esperar uma coleta real.\n\nA mensagem fecha automaticamente após o tempo definido aqui (modo Auto), ou fica até ser fechada manualmente (modo Manual).',
+      'Escolha os itens que disparam um alerta (som + mensagem + confete) ao serem coletados. A busca "+" permite adicionar outros além dos 10 itens padrão, que depois podem ser removidos um a um (cruz no bloco) — ao contrário dos itens padrão, que nunca podem ser excluídos.\n\nO ícone de alto-falante de cada bloco ativa ou desativa o som desse item: sem som, a mensagem e o confete continuam aparecendo. O botão de teste toca o som para verificar a configuração sem esperar uma coleta real.\n\nA mensagem fecha automaticamente após o tempo definido aqui (modo Auto), ou fica até ser fechada manualmente (modo Manual).',
     'help.profileTheme.title': 'Perfil > Acessibilidade > Tema',
     'help.profileTheme.body':
       'Escolha a aparência do aplicativo: o tema escuro original, ou uma das 4 variantes claras (Ardósia, Pergaminho, Nórdico, Alto contraste), cada uma calibrada para continuar legível em fundo claro.\n\nEssa escolha é independente do modo daltônico logo abaixo, mas os dois se combinam: as cores adaptadas ao daltonismo se aplicam sobre o tema ativo, escuro ou claro.',
@@ -3583,7 +3583,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.alerts.b2': '<b>Fechamento</b>: Auto (tempo em segundos) ou Manual.',
     'onboarding.alerts.b3': '<b>Adicionar</b>: qualquer item, além dos 10 padrões.',
     'onboarding.alerts.b4':
-      '<b>Alto-falante</b>: desativa o alerta desse item (som e mensagem). A cruz remove um item adicionado.',
+      '<b>Alto-falante</b>: silencia este item; a mensagem continua aparecendo. A cruz remove um item adicionado.',
     'onboarding.identity.toc': 'Avatar e apelido',
     'onboarding.identity.title': 'Seu avatar, seu apelido',
     'onboarding.identity.lede': 'Eles aparecem no cabeçalho e no seu perfil.',

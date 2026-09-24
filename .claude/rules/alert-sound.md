@@ -24,3 +24,12 @@ clé `profile.lootAlertSoundBlocked`) et rejoue le dernier son au premier `point
 Non reproductible via Playwright (`navigator.userActivation.hasBeenActive` vaut déjà `true` sur une
 page pilotée par CDP, même avec `--autoplay-policy=user-gesture-required`) : testé en stubbant
 `HTMLMediaElement.prototype.play` pour rejeter `NotAllowedError` avant le premier clic.
+
+## Haut-parleur d'un objet : coupe le son, jamais le message
+
+Corrigé le 2026-09-24 (signalé par l'utilisateur) : `SoundItemEntry.enabled` faisait disparaître
+toute l'alerte (`findEnabledSoundItem` ignorait l'objet). Il ne commande plus que le son :
+`ProfileService.findSoundItem` renvoie l'entrée même coupée (l'entrée active en priorité entre
+homonymes), `LootAlertEvent.muted` est transmis et `LootAlertComponent` affiche toast et confettis
+sans appeler `playLoot()`. Libellés `profile.soundOn/Off`, aide `help.profileAlerts.body` et pas-à-pas
+(`onboarding.alerts.b4`) alignés dans les 4 locales.
