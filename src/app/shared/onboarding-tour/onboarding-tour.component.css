@@ -1,14 +1,19 @@
 :host {
   display: contents;
+  /* Orange des annotations : même teinte que les encadrés et pastilles posés sur les captures
+     (script de capture, voir onboarding-slides.data.ts). Fixe quel que soit le thème : il doit
+     rester identique à celui déjà « cuit » dans les images, et ne jamais se confondre avec
+     --accent. */
+  --ob-callout: #e8590c;
 }
 
 /* z-index aligné sur .help-modal (600/601), voir CLAUDE.md. Pas de gestionnaire de clic : le fond
-   ne ferme plus la modale (voir la doc de classe du composant). */
+   ne ferme pas la modale (voir la doc de classe du composant). */
 .onboarding-backdrop {
   position: fixed;
   inset: 0;
   z-index: 600;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
 }
 
 /* Proportionnelle au viewport de l'utilisateur (min(%, plafond px)) plutôt qu'une largeur fixe :
@@ -19,14 +24,14 @@
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 601;
-  width: min(92vw, 1200px);
-  height: min(88vh, 820px);
-  display: flex;
-  flex-direction: column;
+  width: min(94vw, 1280px);
+  height: min(90vh, 860px);
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
   background: var(--panel-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
   overflow: hidden;
   outline: none;
   animation: onboardingFadeIn 0.15s;
@@ -43,143 +48,526 @@
   }
 }
 
-.onboarding-top {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 1;
+/* Les boutons de ce composant ne sont pas des boutons « pilule » : on neutralise le gabarit global
+   `button` de styles.css (hauteur fixe 28px, contenu centré), qui écraserait les éléments de
+   sommaire sur plusieurs lignes, les cartes de chapitre et les captures cliquables. */
+.ob-toc-chapter-title,
+.ob-toc-item,
+.ob-chapter-card,
+.ob-shot-btn,
+.ob-zoom {
+  height: auto;
+  justify-content: flex-start;
+  line-height: 1.35;
 }
 
-.onboarding-body {
+/* ---------- Sommaire ---------- */
+.ob-toc {
+  background: var(--surface-well);
+  border-right: 1px solid var(--border);
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.ob-toc-chapter {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ob-toc-chapter-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 0;
+  padding: 6px 8px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ob-toc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.ob-toc-chapter.done .ob-toc-dot {
+  background: var(--accent);
+}
+
+.ob-toc-chapter.current .ob-toc-chapter-title {
+  color: var(--accent);
+}
+
+.ob-toc-chapter.current .ob-toc-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.ob-toc-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: none;
+  border: 0;
+  border-radius: 5px;
+  padding: 5px 8px 5px 24px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ob-toc-item:hover {
+  background: var(--tint-weak);
+  color: var(--text-color);
+}
+
+.ob-toc-item[aria-current='step'] {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.ob-toc-num {
+  font-family: monospace;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  min-width: 1.6em;
+}
+
+/* ---------- Scène ---------- */
+.ob-stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ob-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.ob-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-right: auto;
+}
+
+.ob-eyebrow-sep {
+  color: var(--text-muted);
+  margin-inline: 4px;
+}
+
+.ob-track-switch {
+  height: 28px;
+  min-width: 220px;
+}
+
+.ob-track-switch .icon-switch-option {
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.ob-track-count {
+  font-family: monospace;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.ob-skip {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 5px;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.ob-skip:hover {
+  color: var(--text-color);
+}
+
+.ob-progress {
+  height: 3px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.ob-progress i {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.ob-slide {
   flex: 1;
   min-height: 0;
-  display: flex;
-  /* Centré (pas stretch) : la boîte média garde un format portrait raisonnable (aspect-ratio
-     ci-dessous) même quand la modale grandit avec le viewport, plutôt que de s'étirer sur toute la
-     hauteur disponible et laisser un vide en haut/bas des GIF au format plus carré. */
-  align-items: center;
-  gap: clamp(20px, 3vw, 32px);
-  padding: clamp(48px, 7vh, 60px) clamp(24px, 3.5vw, 36px) clamp(20px, 3vh, 28px);
   overflow-y: auto;
+  padding: 22px 26px 24px;
 }
 
-.onboarding-media {
-  position: relative;
-  width: 60%;
-  height: 100%;
-  aspect-ratio: 3 / 4;
-  flex-shrink: 0;
-  border-radius: 6px;
-  background: var(--surface-well);
-  border: 1px solid var(--border);
-  overflow: hidden;
-}
-
-.onboarding-media-poster,
-.onboarding-media-real {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  background: var(--surface-well);
-}
-
-/* Fondu enchaîné : l'aperçu statique (léger) reste visible tant que le média réel (potentiellement
-   un GIF non recompressé, lourd) n'a pas fini de charger. */
-.onboarding-media-real {
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.onboarding-media-real.loaded {
-  opacity: 1;
-}
-
-.onboarding-media-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent);
-}
-
-.onboarding-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Diapositive avec illustration au-dessus du texte (voir OnboardingSlide.mediaPosition) : format
-   large et plat plutôt que la colonne latérale standard. */
-.onboarding-body-top {
-  flex-direction: column;
-  align-items: stretch;
-  /* La boîte média garde une hauteur fixe (clamp) même quand la modale grandit avec le viewport — sans
-     ça, le bloc média+texte resterait collé en haut avec un grand vide en dessous. */
-  justify-content: center;
-}
-
-.onboarding-body-top .onboarding-media {
-  width: 100%;
-  max-width: none;
-  min-width: 0;
-  aspect-ratio: auto;
-  height: clamp(140px, 26vh, 260px);
-  max-height: none;
-}
-
-.onboarding-body-top .onboarding-text {
-  /* `flex: 0 0 auto` (pas le `flex: 1` de base) : sans ça le texte s'étire pour occuper tout
-     l'espace vertical restant de la colonne et neutralise le `justify-content: center` du parent
-     (plus aucun espace disponible à répartir). */
-  flex: 0 0 auto;
-  margin-top: clamp(16px, 2.5vh, 24px);
-}
-
-.onboarding-heading {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.onboarding-heading-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
-  color: var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.onboarding-title {
-  font-size: 1.15rem;
+.ob-title {
+  margin: 0 0 6px;
+  font-size: 1.4rem;
   font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-bright);
+  text-wrap: balance;
+}
+
+.ob-lede {
+  margin: 0 0 18px;
+  max-width: 72ch;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+/* ---------- Captures ---------- */
+.ob-shot-wrap {
+  position: relative;
+}
+
+.ob-shot-btn {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.ob-shot-wrap-natural .ob-shot-btn {
+  width: auto;
+  max-width: 100%;
+}
+
+.ob-shot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 7px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-well);
+}
+
+.ob-shot-natural {
+  width: auto;
+  max-width: 100%;
+}
+
+/* Loupe : la même capture agrandie dans un médaillon (voir OnboardingLens). */
+.ob-lens {
+  position: absolute;
+  top: 6%;
+  right: -3%;
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 3px solid var(--ob-callout);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    0 0 0 6px color-mix(in srgb, var(--ob-callout) 18%, transparent);
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.ob-lens-left {
+  right: auto;
+  left: -3%;
+}
+
+/* ---------- Pastilles et légendes ---------- */
+.ob-badge,
+.ob-badge-gap {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ob-badge {
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--ob-callout);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 24px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.ob-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ob-legend li {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* Légende d'un héros : le titre (`<b>` en tête de la clé HTML) passe sur sa propre ligne. */
+.ob-legend-text ::ng-deep b {
+  display: block;
+  color: var(--text-bright);
+  font-size: 0.9rem;
+}
+
+.ob-legend ::ng-deep b,
+.ob-cell-text ::ng-deep b,
+.ob-bullets ::ng-deep b,
+.ob-zigzag-text p ::ng-deep b,
+.ob-tip ::ng-deep b {
   color: var(--text-bright);
 }
 
-.onboarding-desc {
-  margin: 14px 0 0 0;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: var(--text-color);
-  /* Certaines diapositives (ex. Tracker) ont une description à plusieurs paragraphes, séparés par
-     des \n\n littéraux dans la clé i18n — même convention que help-modal (voir CLAUDE.md). */
-  white-space: pre-line;
+.ob-legend-inline {
+  gap: 9px;
 }
 
-.onboarding-footer {
-  margin-top: auto;
-  padding: 14px 28px;
-  border-top: 1px solid var(--border);
+/* ---------- Gabarits ---------- */
+.ob-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(240px, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-bottom: 22px;
+}
+
+.ob-zigzag {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.ob-zigzag-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: 22px;
+  align-items: center;
+}
+
+.ob-zigzag-row:nth-child(even) .ob-zigzag-media {
+  order: 2;
+}
+
+.ob-zigzag-extra {
+  margin-top: 10px;
+}
+
+.ob-zigzag-text h3 {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
+  color: var(--text-bright);
+}
+
+.ob-zigzag-text p {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.ob-bullets {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.ob-bullets li + li {
+  margin-top: 4px;
+}
+
+.ob-mosaic {
+  display: grid;
+  grid-template-columns: repeat(var(--ob-cols, 3), minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 20px;
+}
+
+.ob-mosaic-single {
+  max-width: 720px;
+}
+
+.ob-mosaic-phones .ob-shot {
+  width: auto;
+  max-height: 440px;
+  margin-inline: auto;
+}
+
+.ob-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ob-cell-text {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.ob-cell-text ::ng-deep b {
+  margin-right: 4px;
+}
+
+.ob-single {
+  margin-bottom: 16px;
+}
+
+.ob-tip {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 7px;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--text-color);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.ob-tip app-onboarding-icon {
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.ob-tip-note {
+  background: color-mix(in srgb, #f1b83a 10%, transparent);
+  border-color: color-mix(in srgb, #f1b83a 40%, transparent);
+}
+
+.ob-tip-note app-onboarding-icon {
+  color: #f1b83a;
+}
+
+/* ---------- Diapositives de bord ---------- */
+.ob-cover {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 32px;
+  align-items: center;
+  min-height: 100%;
+}
+
+.ob-cover-art {
+  display: grid;
+  place-items: center;
+}
+
+.ob-cover-eyebrow {
+  margin-bottom: 10px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.ob-cover-title {
+  font-size: 1.8rem;
+}
+
+.ob-cover-outro {
+  margin-top: 18px;
+}
+
+.ob-chapter-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ob-chapter-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 7px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.ob-chapter-card:hover {
+  border-color: var(--accent);
+}
+
+.ob-chapter-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.ob-chapter-card-text b {
+  display: block;
+  font-size: 0.86rem;
+}
+
+.ob-chapter-card-text small {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Pied de page ---------- */
+.ob-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
   flex-shrink: 0;
 }
 
@@ -187,11 +575,11 @@
   background: transparent;
   border: 1px solid var(--border-strong);
   color: var(--text-muted);
-  height: 28px;
+  height: 30px;
   padding: 0 14px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -211,82 +599,158 @@
   color: var(--on-accent);
 }
 
-.onboarding-nav-primary:hover {
+.onboarding-nav-primary:hover:not(:disabled) {
   color: var(--on-accent);
   filter: brightness(1.08);
 }
 
-.onboarding-dots {
+.ob-dots {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
+  margin-inline: auto;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.onboarding-dot {
-  width: 6px;
-  height: 6px;
+.ob-dot-group {
+  display: flex;
+  gap: 3px;
+}
+
+.ob-dot {
+  width: 7px;
+  height: 7px;
   padding: 0;
-  border: none;
-  border-radius: 999px;
+  border: 0;
+  border-radius: 50%;
   background: var(--border-strong);
   cursor: pointer;
 }
 
-.onboarding-dot.active {
-  width: 20px;
+.ob-dot.passed {
+  background: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.ob-dot.active {
   background: var(--accent);
+  transform: scale(1.4);
 }
 
-.onboarding-nav-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.onboarding-progress {
-  font-size: 0.7rem;
-  color: var(--text-muted);
+.ob-counter {
   font-family: monospace;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* ---------- Visionneuse ---------- */
+.ob-zoom {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  height: 100%;
+  justify-content: center;
+  place-items: center;
+  padding: 24px;
+  border: 0;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: zoom-out;
+}
+
+.ob-zoom img {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* ---------- Écrans étroits ---------- */
+@media (max-width: 980px) {
+  .onboarding-modal {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .ob-toc {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 10px;
+    gap: 6px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ob-toc-chapter {
+    flex-direction: row;
+    flex-shrink: 0;
+  }
+
+  .ob-toc-item {
+    display: none;
+  }
+
+  .ob-toc-chapter-title {
+    white-space: nowrap;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
+  }
+
+  .ob-hero,
+  .ob-zigzag-row,
+  .ob-cover {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ob-zigzag-row:nth-child(even) .ob-zigzag-media {
+    order: 0;
+  }
+
+  .ob-mosaic {
+    grid-template-columns: repeat(min(var(--ob-cols, 3), 2), minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 640px) {
   .onboarding-modal {
-    width: min(96vw, 1200px);
-    height: min(94vh, 820px);
+    width: 96vw;
+    height: 94vh;
   }
 
-  .onboarding-body {
-    flex-direction: column;
-    align-items: center;
-    padding-top: 46px;
+  .ob-slide {
+    padding: 16px;
   }
 
-  .onboarding-media {
+  .ob-mosaic,
+  .ob-chapter-cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ob-track-switch {
+    min-width: 0;
     width: 100%;
-    max-width: 320px;
-    aspect-ratio: auto;
-    height: clamp(160px, 30vh, 260px);
-    max-height: none;
-  }
-
-  .onboarding-text {
-    width: 100%;
-  }
-
-  .onboarding-body-top .onboarding-text {
-    margin-top: 16px;
-  }
-
-  .onboarding-footer {
-    flex-wrap: wrap;
-    justify-content: center;
-  }
-
-  .onboarding-dots {
     order: 3;
-    width: 100%;
+  }
+
+  .ob-dots {
+    display: none;
+  }
+
+  .ob-counter {
+    margin-inline: auto;
+  }
+
+  .ob-footer {
+    padding: 10px 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .onboarding-modal,
+  .ob-progress i {
+    animation: none;
+    transition: none;
   }
 }

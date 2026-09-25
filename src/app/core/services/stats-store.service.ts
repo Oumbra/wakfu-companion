@@ -50,6 +50,17 @@ const MAX_ITEM_REASSIGNMENT_HISTORY = 500;
 /** Fenêtre de rapprochement entre une perte de kamas et le ramassage d'objet qui suit : signature d'un achat (marchand/HDV). Au-delà, on considère qu'il s'agit de deux événements sans rapport. Réutilisée telle quelle pour rapprocher un gain de kamas hors combat d'un échange conclu au même moment (voir considerHdvKamaGain) — même principe, même ordre de grandeur. */
 const PURCHASE_WINDOW_MS = 2000;
 /**
+ * Inactivité au-delà de laquelle une session marchand/HDV encore « ouverte » n'exclut plus le butin
+ * de combat (voir marketActivityAtMs). Le jeu n'écrit pas toujours la fermeture : dans le fichier de
+ * test `tests/wakfu.log`, un « Lancement de l'occupation MARKET » à 20:33:04 n'est suivi ni d'un
+ * « On arrête », ni d'un « On annule », ni d'un arrêt du client — le joueur quitte la zone et entre en
+ * combat 58 s plus tard, et TOUT le butin des combats de la soirée était compté comme achats HDV.
+ * Les ramassages orphelins d'un achat groupé (raison d'être de inMarketOccupation) suivent l'achat
+ * précédent de quelques secondes (10 s dans le cas réel des tests) : 60 s les couvre largement
+ * tout en restant sous la durée d'un combat, dont le butin n'arrive qu'à la fin.
+ */
+const MARKET_IDLE_MS = 60_000;
+/**
  * Délai de grâce, en ms, prolongé à chaque ligne `interactive-walkon` (élément interactif du décor
  * — le pacte notamment) ET à chaque ramassage qui rejoint le lot d'extraction courant, au-delà
  * duquel la fenêtre d'extraction de pacte se ferme (voir pactWindowExpiresAtMs). Calibré sur un vrai
@@ -691,6 +702,10 @@ export class StatsStoreService {
    * ramassages orphelins dans le butin de combat (cas réel : achat multiple à l'Hôtel des ventes
    * pendant un combat en cours ailleurs sur le compte). */
   private inMarketOccupation = false;
+  /** Heure (ms dans la journée, voir timeToMs) de la dernière activité marchand/HDV : ouverture de
+   * la session, perte de kamas ou ramassage compté comme achat. Au-delà de MARKET_IDLE_MS sans
+   * activité, la session est considérée comme abandonnée (fermeture jamais écrite dans le log). */
+  private marketActivityAtMs = 0;
   /** Horodatage (ms) au-delà duquel la fenêtre d'extraction de pacte courante est considérée
    * expirée — posé/prolongé à chaque `interactive-walkon` ET à chaque ramassage qui rejoint le lot
    * (voir PACT_EXTRACTION_WINDOW_MS, checkPactWindowExpiry). `null` = aucune fenêtre ouverte. */
@@ -1139,7 +1154,10 @@ export class StatsStoreService {
       // (plusieurs objets achetés à la suite) ne déduit pas systématiquement les kamas juste avant
       // chaque ramassage individuel — la seule fenêtre `priceKnown` ci-dessus laisserait passer ces
       // ramassages orphelins dans le butin de combat (cas réel, voir tests).
-      isPurchaseLoot = priceKnown || this.inMarketOccupation;
+      isPurchaseLoot = priceKnown || this.isMarketOccupationActive(entry.time);
+      if (isPurchaseLoot && this.inMarketOccupation) {
+        this.marketActivityAtMs = this.timeToMs(entry.time);
+      }
       if (!isPurchaseLoot && this.pactWindowExpiresAtMs !== null) {
         isPacteLoot = true;
         this.addToPactBatch(entry.item, entry.quantity, entry.time);
@@ -1182,6 +1200,7 @@ export class StatsStoreService {
       case 'kama-loss':
         this.kamasLost.update((v) => v + entry.amount);
         this.pendingPurchase = { amount: entry.amount, timeMs: this.timeToMs(entry.time) };
+        if (this.inMarketOccupation) this.marketActivityAtMs = this.pendingPurchase.timeMs;
         break;
       case 'item-loss':
         this.pendingItemLoss = { timeMs: this.timeToMs(entry.time) };
@@ -1313,6 +1332,7 @@ export class StatsStoreService {
         break;
       case 'market-occupation':
         this.inMarketOccupation = entry.active;
+        this.marketActivityAtMs = this.timeToMs(entry.time);
         break;
       case 'client-lifecycle': {
         // Voir INTERRUPTED_FIGHT_FILE_GRACE_MS : rien n'est clôturé ici, seulement marqué. Un
@@ -2039,6 +2059,16 @@ export class StatsStoreService {
     this.lastSessionActivityMs = fullMs;
   }
 
+  /** Session marchand/HDV ouverte ET active depuis moins de MARKET_IDLE_MS (voir
+   * marketActivityAtMs). Un écart négatif (passage de minuit) vaut abandon : prudence côté butin. */
+  private isMarketOccupationActive(time: string): boolean {
+    if (!this.inMarketOccupation) return false;
+    const idle = this.timeToMs(time) - this.marketActivityAtMs;
+    if (idle >= 0 && idle <= MARKET_IDLE_MS) return true;
+    this.inMarketOccupation = false;
+    return false;
+  }
+
   private timeToMs(time: string): number {
     const match = /^(\d{2}):(\d{2}):(\d{2}),(\d{3})$/.exec(time);
     if (!match) return 0;
@@ -2121,8 +2151,13 @@ export class StatsStoreService {
   private registerLoot(item: string, quantity: number): void {
     if (this.currentBatchIsInitialLoad) return;
     this.incrementWatched(item, quantity);
-    const soundEntry = this.profile.findEnabledSoundItem(item);
-    if (soundEntry) this.lootAlert.trigger(item, quantity, { id: soundEntry.catalogId });
+    const soundEntry = this.profile.findSoundItem(item);
+    if (soundEntry) {
+      this.lootAlert.trigger(item, quantity, {
+        id: soundEntry.catalogId,
+        muted: !soundEntry.enabled,
+      });
+    }
   }
 
   /** Ajoute un objet au butin d'UN combat précis déjà résolu avec certitude (voir

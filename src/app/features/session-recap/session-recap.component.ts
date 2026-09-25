@@ -43,6 +43,7 @@ import { dungeonStoneItemIdForType } from '../../core/utils/dungeon-run-grouping
 import { normalizeWakfuName } from '../../core/utils/wakfu-name.util';
 import { UNKNOWN_ENTITY_ICON_DATA_URI } from '../../core/data/class-icons.data';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
+import { HelpModalService } from '../../core/services/help-modal.service';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   HistoryStatsService,
@@ -197,6 +198,7 @@ export class SessionRecapComponent implements OnInit, OnDestroy {
   protected readonly unknownEntityIcon = UNKNOWN_ENTITY_ICON_DATA_URI;
 
   protected readonly stats = inject(StatsStoreService);
+  protected readonly helpModal = inject(HelpModalService);
   private readonly catalog = inject(CatalogService);
   protected readonly i18n = inject(I18nService);
   protected readonly layout = inject(DashboardLayoutService);

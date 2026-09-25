@@ -26,11 +26,11 @@ fan-art de la page profil restent hotlinkées depuis `static.ankama.com/web-test
 
 ## Production propre
 
-| Fichiers                                                       | Origine                                                                                                                       | Ajouté le  |
-| -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| `icons-*.svg` (sprite d'icônes génériques, voir `shared/icon`) | généré par IA pour ce projet                                                                                                  | 2026-09-17 |
-| `onboarding/*.gif`, `onboarding/*-poster.jpg`                  | captures d'écran du site wakfu-companion (données factices, voir le commit « GIF d'onboarding du chat sans données réelles ») | 2026-08-19 |
-| `setup-hint-dark.png`, `setup-hint-light.png`                  | captures d'écran de l'Explorateur Windows (emplacement de `wakfu.log`)                                                        | 2026-08-23 |
+| Fichiers                                                                              | Origine                                                                                                                                                                                                                                                    | Ajouté le  |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| `icons-*.svg` (sprite d'icônes génériques, voir `shared/icon`)                        | généré par IA pour ce projet                                                                                                                                                                                                                               | 2026-09-17 |
+| `onboarding/*.jpg` (captures annotées du pas-à-pas, voir `onboarding-slides.data.ts`) | captures d'écran de l'application générées par script Playwright sur `tests/wakfu.log` (pseudonymisé) + lignes synthétiques aux noms inventés ; catalogue simulé depuis les données publiques du jeu (`wakfu.cdn.ankama.com/gamedata`) et icônes wakassets | 2026-09-24 |
+| `setup-hint-dark.png`, `setup-hint-light.png`                                         | captures d'écran de l'Explorateur Windows (emplacement de `wakfu.log`)                                                                                                                                                                                     | 2026-08-23 |
 
 ## Sons
 

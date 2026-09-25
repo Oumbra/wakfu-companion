@@ -85,10 +85,10 @@ export class DashboardComponent {
     hist_purchases: 'purchases',
     hist_trades: 'trades',
     hist_pacts: 'pacts',
+    recap: 'recap',
     // Pas d'entrée pour 'hist_group' : son sous-onglet (voir HistoryComponent) porte déjà son
     // propre bouton d'aide par volet regroupé, indépendant de `.panel-header` (masqué en mobile,
-    // voir dashboard.component.css/styles.css). Pas d'entrée pour 'recap' non plus : aucune
-    // `HelpSection` ne lui correspond (pas de bouton d'aide sur la carte elle-même).
+    // voir dashboard.component.css/styles.css).
   };
 
   /** Ordre FIXE des onglets mobile (demande explicite de l'utilisateur, 2026-08-31) — contrairement

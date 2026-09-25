@@ -240,10 +240,13 @@ export class ProfileService {
     this.persist();
   }
 
-  /** Entrée dont le nom (FR, tel que dans les logs) correspond et dont le son est activé, si trouvée. */
-  findEnabledSoundItem(itemName: string): SoundItemEntry | undefined {
+  /** Entrée dont le nom (FR, tel que dans les logs) correspond, si trouvée — celle au son activé en
+   * priorité quand deux homonymes coexistent. `enabled` ne commande que le son : un objet au son
+   * coupé déclenche toujours le message et les confettis (voir LootAlertEvent.muted). */
+  findSoundItem(itemName: string): SoundItemEntry | undefined {
     const normalized = itemName.toLowerCase().trim();
-    return this.soundItems().find((e) => e.enabled && e.name.toLowerCase() === normalized);
+    const matches = this.soundItems().filter((e) => e.name.toLowerCase() === normalized);
+    return matches.find((e) => e.enabled) ?? matches[0];
   }
 
   private persist(): void {
