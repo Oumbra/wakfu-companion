@@ -1,6 +1,16 @@
 <div class="profile-field profile-field-wide">
   <div class="profile-label-row">
-    <label class="profile-label">{{ 'profile.dashboardLayout.title' | t }}</label>
+    <label class="profile-label">
+      {{ 'profile.dashboardLayout.title' | t }}
+      <button
+        type="button"
+        class="icon-btn help-icon-btn"
+        [appTooltip]="'help.tooltip' | t"
+        (click)="helpModal.open('profileLayout')"
+      >
+        ?
+      </button>
+    </label>
   </div>
   <p class="profile-section-desc">{{ 'profile.dashboardLayout.desc' | t }}</p>
 

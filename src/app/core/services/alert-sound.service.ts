@@ -26,7 +26,7 @@ export class AlertSoundService {
   private pendingUrl: string | null = null;
   private unlockListening = false;
 
-  /** Ramassage d'un objet suivi avec son activé (voir ProfileService) — aussi rejoué par le bouton "Tester" de la page profil. */
+  /** Ramassage d'un objet de la liste d'alertes dont le son est activé (voir ProfileService) — aussi rejoué par le bouton "Tester" de la page profil. */
   playLoot(): void {
     this.play(ALERT_SOUND_DATA_URI);
   }

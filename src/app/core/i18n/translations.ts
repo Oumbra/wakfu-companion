@@ -266,7 +266,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.right.desc': 'Même liste verticale, le long du bord droit.',
     'profile.dashboardLayout.historyTitle': "Regroupement de l'historique",
     'profile.dashboardLayout.historyDesc':
-      'Par défaut, Combats, Achats et Échanges ont chacun leur propre carte. Coche-en au moins deux pour les regrouper dans un seul bloc Historique.',
+      'Par défaut, Achats, Échanges et Pacte sont regroupés dans « Historique » et Combats a sa propre carte. Coche-en au moins deux pour former un bloc Historique.',
     'profile.dashboardLayout.historyOn': 'Regroupée dans « Historique ».',
     'profile.dashboardLayout.historyOff': 'Sa propre carte.',
     'profile.dashboardLayout.historyGroupNeedsTwo': 'Coche au moins 2 éléments pour les regrouper.',
@@ -348,7 +348,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundItemPlaceholder': 'Ajouter un objet à surveiller…',
     'profile.followedItemsLabel': 'Objets suivis',
     'profile.soundOn': 'Son activé',
-    'profile.soundOff': 'Son désactivé',
+    'profile.soundOff': 'Son coupé (message conservé)',
     'profile.lootAlertTitle': 'Objet obtenu !',
     'profile.closeToast': 'Fermer',
     'profile.lootAlertSoundBlocked':
@@ -459,32 +459,32 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'Comment ça marche ?',
     'help.combat.title': 'Combat en cours',
     'help.combat.body':
-      "Ce panneau affiche en temps réel les dégâts infligés par chaque allié et chaque ennemi, lus directement dans wakfu.log au fil du combat. Une barre colorée sous chaque nom représente sa part des dégâts, et plusieurs combattants portant le même nom (ex. plusieurs ennemis identiques) sont numérotés #1, #2… pour rester distincts.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets permettent de choisir lequel afficher.\n\nLe switch Total/Tour bascule entre les dégâts cumulés sur tout le combat et le détail d'un tour précis, navigable au pas-à-pas.\n\nCliquer sur un nom déplie le détail des dégâts par sort et par élément.\n\nGlisser-déposer un nom d'un côté à l'autre permet de corriger un allié/ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi (Suivi).\nClic droit sur une ligne de sort (détail déplié) : réattribuer cette attaque et ses dégâts à un autre combattant, en cas d'erreur d'attribution automatique.\n\nLe bouton de réduction (coin supérieur droit) replie ce panneau en un petit onglet flottant sur le bord de l'écran — toujours accessible en un clic pendant que vous jouez, avec un badge indiquant le nombre de combats en cours.",
+      "Le combat en cours s'affiche en tête de la carte Combats, lu en temps réel dans wakfu.log. Plusieurs combattants du même nom (ex. plusieurs ennemis identiques) sont numérotés #1, #2… pour rester distincts.\n\nEn cas de combats simultanés (plusieurs comptes), des onglets « Combat 1, Combat 2… » permettent de choisir lequel afficher.\n\nLe switch Cumulé/Tour bascule entre le total du combat et le détail d'un tour précis, navigable avec ‹ › ou les flèches du clavier. Le switch Dommage/Armure/Soin change la statistique affichée. La barre colorée sous chaque nom représente sa part du total.\n\nCliquer sur un nom déplie le détail par sort et par élément.\n\nGlisser-déposer un nom d'une liste à l'autre corrige un allié ou un ennemi mal classé.\n\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur un ennemi : l'ajouter au suivi.\nClic droit sur une ligne de sort (statistique Dommage) : réattribuer cette attaque et ses dégâts à un autre combattant, en cas d'erreur d'attribution automatique.\n\nUn clic sur l'en-tête « Combat en cours » le replie ; son badge indique le nombre de combats actifs.",
     'help.tracker.title': 'Suivi',
     'help.tracker.body':
-      "Suit un compteur pour chaque objet ou ennemi ajouté : nombre ramassé/vaincu depuis la connexion, incrémenté automatiquement à chaque ramassage/victoire.\n\nLe bouton + ouvre une recherche (objets ET ennemis) pour ajouter une nouvelle entrée à suivre.\n\nLe switch de mode choisit entre comptage incrémental (part de 0, monte sans limite), décompte (part d'une cible que vous saisissez, descend jusqu'à 0 puis déclenche une alerte) et objectif (part de 0, monte jusqu'à la cible que vous saisissez puis déclenche une alerte).\n\nL'icône recette (objets ayant une recette de métier connue) crée en un clic un décompte pour chaque ingrédient, multiplié par la quantité souhaitée — y compris pour les ingrédients ayant eux-mêmes une recette, imbricable en cascade.\n\nCliquer sur une tuile la déplie pour voir son nom complet et un bouton de réinitialisation ; glisser-déposer une tuile permet de réordonner le suivi. Le bouton − active un mode de sélection multiple pour supprimer plusieurs entrées en une fois.",
+      "Suit un compteur pour chaque objet ou ennemi ajouté, avancé automatiquement à chaque ramassage ou victoire. Le chargement initial du fichier ne compte pas : seules les nouvelles lignes font avancer les compteurs.\n\nLe bouton + ouvre une recherche (objets ET ennemis) ; sur mobile, elle est toujours visible.\n\nLe switch de mode choisit entre incrémental (part de 0, monte sans limite), décompte (part de la cible, descend jusqu'à 0 puis déclenche une alerte) et objectif (part de 0, monte jusqu'à la cible puis déclenche une alerte). Les puces 10 à 1000 s'ajoutent à la cible (Alt+clic pour retirer). La cible est fixée à la création.\n\nL'icône recette (objets ayant une recette de métier connue) crée en un clic un décompte pour chaque ingrédient, multiplié par la quantité souhaitée — y compris pour les ingrédients ayant eux-mêmes une recette, imbricable en cascade. Un ingrédient déjà suivi voit sa cible s'additionner.\n\nSur ordinateur, cliquer sur une tuile la déplie (nom complet, valeur courante modifiable à la main, bouton de remise à zéro) et le glisser-déposer réordonne le suivi.\n\nÀ partir de 3 entrées, le bouton − active la sélection multiple. Sans sélection, « Supprimer tout » vide le suivi sans demander de confirmation.",
     'help.fightHistory.title': 'Historique > Combats',
     'help.fightHistory.body':
-      "Conserve les 30 derniers combats de la session en mémoire : résultat (victoire/défaite), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP. Connecté à un compte, l'historique complet est en plus sauvegardé sans limite et rechargeable au-delà via le bouton « Charger plus » ; en invité, seuls ces 30 derniers combats restent consultables.\n\nLes combats se regroupent selon trois modes, au choix (boutons au-dessus de la liste) : Jour, Origine (session en cours séparée de l'historique du compte, connecté uniquement) et Type (par donjon/brèche, ou par famille de monstre).\n\nLes combats d'un même donjon (salles successives et tentative(s) de boss) sont automatiquement rassemblés sous une seule entrée repliée, pour ne pas noyer le boss au milieu des salles — nombre de combats et durée totale du run remplacent le détail individuel tant qu'elle reste repliée. Quand la pierre de ce donjon figure dans le butin du combat de boss, un badge s'affiche sur son illustration.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nUn combat déplié propose le même switch Total/Tour que le combat en cours pour revoir les dégâts tour par tour, et le butin se trie par nom, quantité ou rareté.\n\nClic droit sur un objet du butin : l'ajouter au suivi.\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur une ligne de sort du détail d'un combattant : réattribuer cette attaque à un autre combattant.",
+      "Conserve les 30 derniers combats de la session en mémoire : résultat (victoire, défaite ou interrompu), nombre de tours, durée, dégâts par personnage/ennemi, butin et XP. Connecté à un compte, l'historique complet est en plus sauvegardé sans limite et rechargeable au-delà via le bouton « Charger plus » (la flèche voisine choisit la portée : 1 semaine, 1 mois ou 1 an) ; en invité, seuls ces 30 derniers combats restent consultables.\n\nLe champ de recherche filtre les combats par ennemi, allié ou objet de butin.\n\nLes combats se regroupent selon trois modes, au choix (boutons au-dessus de la liste) : Jour, Origine (session en cours séparée de l'historique du compte, connecté uniquement) et Donjons & familles (par donjon/brèche, ou par famille de monstre). Le bouton voisin replie ou déplie tous les groupes.\n\nLes combats d'un même donjon (salles successives et tentative(s) de boss) sont automatiquement rassemblés sous une seule entrée repliée, pour ne pas noyer le boss au milieu des salles — nombre de combats et durée totale du run remplacent le détail individuel tant qu'elle reste repliée. Quand la pierre de ce donjon figure dans le butin du combat de boss, un badge s'affiche sur son illustration.\n\nL'illustration du combat priorise un boss de donjon, puis un archimonstre, un dominant, ou à défaut le monstre ayant infligé le plus de dégâts.\n\nUn combat déplié propose les mêmes switchs Cumulé/Tour et Dommage/Armure/Soin que le combat en cours. Son butin (victoires uniquement) se trie par nom, quantité ou rareté.\n\nClic droit sur un objet du butin (ou clic sur sa clé) : corriger son identité quand plusieurs objets portent ce nom.\nClic droit sur un allié : changer sa classe/son sexe affiché.\nClic droit sur une ligne de sort du détail d'un combattant : réattribuer cette attaque à un autre combattant.",
     'help.purchases.title': 'Historique > Achats',
     'help.purchases.body':
-      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet. Une récupération de kamas à l'Hôtel de Vente (gain de kamas hors combat et hors échange) est elle aussi enregistrée ici, sous la source « Hôtel de vente », sans objet ni quantité.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » ; en invité, seuls les achats de la session en cours sont visibles.\n\nClic droit sur un objet : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
+      "Détecte automatiquement un achat (marchand ou Hôtel de Vente) quand une perte de kamas est immédiatement suivie du ramassage d'un objet. Une récupération de kamas à l'Hôtel de Vente (gain de kamas hors combat et hors échange) est elle aussi enregistrée ici, sous la source « Hôtel de vente », sans objet ni quantité.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable jour par jour via le bouton « Charger plus » (la flèche voisine choisit la portée : 1 semaine, 1 mois ou 1 an) ; en invité, seuls les achats de la session en cours sont visibles.\n\nClic droit sur un objet : l'ajouter au suivi en un clic (« + Suivre ») et, quand plusieurs objets portent ce nom, corriger son identité.",
     'help.trades.title': 'Historique > Échanges',
     'help.trades.body':
-      "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (personnage, objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seuls les échanges de la session en cours sont visibles.\n\nClic droit sur un objet donné ou reçu : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
+      "Enregistre les échanges de la fenêtre de troc avec un AUTRE joueur : objets et kamas donnés/reçus.\n\nLes échanges entre deux personnages de votre propre roster (déclarés en Profil > Personnages) ne sont PAS historisés : ce ne sont pas de vrais échanges avec un autre joueur.\n\nRegroupés par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (personnage, objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » (la flèche voisine choisit la portée : 1 semaine, 1 mois ou 1 an) ; en invité, seuls les échanges de la session en cours sont visibles.\n\nClic droit sur un objet donné ou reçu : corriger son identité quand plusieurs objets portent ce nom.",
     'help.pacts.title': 'Historique > Pacte',
     'help.pacts.body':
-      "La feature « Pacte » du jeu détourne le butin de vos combats vers une dimension séparée : vos combats n'affichent alors plus aucun butin propre, les objets accumulés ne redevenant visibles qu'au moment d'une extraction manuelle en jeu.\n\nCette carte n'apparaît que si au moins une extraction a été détectée dans le fichier de log actuellement connecté. Chaque extraction garde sa propre ligne, horodatée, avec la liste complète des objets récupérés à ce moment-là — jamais fusionnée avec une autre extraction.\n\nRegroupées par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » ; en invité, seules les extractions de la session en cours sont visibles.\n\nClic droit sur un objet extrait : corriger son identité si elle a été mal reconnue, et l'ajouter au suivi en un clic.",
+      "La feature « Pacte » du jeu détourne le butin de vos combats vers une dimension séparée : vos combats n'affichent alors plus aucun butin propre, les objets accumulés ne redevenant visibles qu'au moment d'une extraction manuelle en jeu.\n\nSans compte, cette carte n'apparaît qu'après une première extraction détectée dans le fichier de log ; avec un compte, elle est toujours visible. Chaque extraction garde sa propre ligne, horodatée, avec la liste complète des objets récupérés à ce moment-là — jamais fusionnée avec une autre extraction.\n\nRegroupées par jour, triables du plus récent au plus ancien (ou l'inverse) et filtrables par une recherche (nom d'objet ou date). Connecté à un compte, l'historique complet est sauvegardé sans limite et rechargeable via le bouton « Charger plus » (la flèche voisine choisit la portée : 1 semaine, 1 mois ou 1 an) ; en invité, seules les extractions de la session en cours sont visibles.\n\nClic droit sur un objet extrait : corriger son identité quand plusieurs objets portent ce nom.",
     'help.chat.title': 'Chat',
     'help.chat.body':
-      "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes recherches textuelles personnalisées (mot-clé + canal, ou tous canaux) peuvent être ajoutées : un message qui correspond est mis en surbrillance et déclenche une alerte sonore — les recherches ne masquent plus aucun message, elles se contentent de le signaler.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique.",
+      "Affiche les messages du chat lus dans wakfu.log, classés par canal (Proximité, Groupe, Guilde, Recrutement, Commerce, Communauté).\n\nLes boutons de canal permettent de n'afficher que certains canaux.\n\nDes recherches personnalisées (texte + canal, ou Global pour tous les canaux) peuvent être ajoutées : elles portent sur le message ET sur le nom de son auteur. Un message qui correspond est mis en surbrillance et déclenche une alerte sonore — les recherches ne masquent aucun message, elles se contentent de le signaler.\n\nQuand le chat est réduit dans le menu, un compteur y indique le nombre de messages correspondant à vos recherches.\n\nLe défilement automatique s'arrête dès que vous remontez manuellement dans l'historique ; le bouton « ↓ » y revient.",
     'help.profileAlerts.title': 'Profil > Alertes',
     'help.profileAlerts.body':
-      "Choisissez les objets qui déclenchent une alerte (son + toast + confettis) à leur ramassage. La recherche « + » permet d'en ajouter d'autres que les objets par défaut, ensuite retirables individuellement (croix sur la vignette) — contrairement aux objets par défaut, jamais supprimables.\n\nActivez/désactivez le son par objet grâce à l'icône haut-parleur de chaque vignette ; le bouton test rejoue l'alerte sonore pour vérifier le réglage sans attendre un vrai ramassage.\n\nLe toast se ferme automatiquement après le délai réglé ici, ou reste affiché jusqu'à fermeture manuelle si l'option est activée.",
-    'help.profileTheme.title': 'Profil > Thème',
+      "Choisissez les objets qui déclenchent une alerte (son + message + confettis) à leur ramassage. La recherche « + » permet d'en ajouter d'autres que les 10 objets par défaut, ensuite retirables individuellement (croix sur la vignette) — contrairement aux objets par défaut, jamais supprimables.\n\nL'icône haut-parleur de chaque vignette active ou coupe le son de cet objet : son coupé, le message et les confettis s'affichent quand même. Le bouton test rejoue le son pour vérifier le réglage sans attendre un vrai ramassage.\n\nLe message se ferme automatiquement après le délai réglé ici (mode Auto), ou reste affiché jusqu'à fermeture manuelle (mode Manuelle).",
+    'help.profileTheme.title': 'Profil > Accessibilité > Thème',
     'help.profileTheme.body':
       "Choisissez l'apparence de l'application : le thème sombre d'origine, ou l'une des 4 variantes claires (Ardoise, Parchemin, Nordique, Contraste élevé), chacune calibrée pour rester lisible sur fond clair.\n\nCe choix est indépendant du mode daltonien juste en dessous, mais les deux se combinent : les couleurs adaptées au daltonisme s'appliquent par-dessus le thème actif, sombre ou clair.",
-    'help.profileColorblind.title': 'Profil > Daltonisme',
+    'help.profileColorblind.title': 'Profil > Accessibilité > Daltonisme',
     'help.profileColorblind.body':
       "Adapte les couleurs les plus sensibles de l'application (victoire/défaite, dégâts élémentaires, rareté d'objet, canaux de chat) au type de daltonisme choisi, pour qu'elles restent distinguables.\n\nProtanopie et deutéranopie sont regroupées sous une seule option : les deux se traduisent par la même confusion rouge-vert, donc la même correction s'applique.\n\nL'aperçu avant/après sous le sélecteur montre exactement les couleurs qui changent avec le profil actuellement choisi.",
     'help.profileCharacters.title': 'Profil > Personnages',
@@ -492,50 +492,311 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "Déclarez ici les personnages de vos comptes : cela permet à l'application de vous reconnaître dans les logs et de bien distinguer vos échanges internes (entre vos propres personnages, jamais historisés) des échanges avec d'autres joueurs.\n\nPlusieurs comptes peuvent être ajoutés (multi-compte), chacun renommable ; le bouton « Ajouter un personnage » ouvre un formulaire (nom, classe, sexe) pour déclarer chaque personnage, et le glisser-déposer permet ensuite de réordonner les personnages d'un compte.\n\nChaque compte peut recevoir un serveur de jeu : utilisé pour associer l'historique et le badge serveur de l'en-tête au bon monde si vous jouez sur plusieurs serveurs.",
     'help.profileConnection.title': 'Profil > Connexion',
     'help.profileConnection.body':
-      "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nUn compte n'utilise qu'un seul fournisseur : connectez-vous toujours avec celui (Discord ou Google) qui a servi à le créer.\n\nUne fois connecté, la page Compte (accessible depuis ce panneau) permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter vos données ou de supprimer votre compte.",
+      "Connectez-vous avec Discord ou Google pour retrouver vos réglages, vos personnages et votre suivi sur tous vos appareils.\n\nLa connexion est facultative : sans compte, l'application fonctionne exactement de la même façon et toutes vos données restent dans ce navigateur.\n\nNous ne gérons aucun mot de passe. Seule votre adresse e-mail vérifiée est conservée, pour reconnaître votre compte. Le contenu du chat de jeu n'est jamais envoyé.\n\nÀ la première connexion, si des données existent déjà localement et/ou sur le compte, vous choisissez vous-même quoi en faire : rien n'est jamais fusionné automatiquement.\n\nUn compte n'utilise qu'un seul fournisseur : connectez-vous toujours avec celui (Discord ou Google) qui a servi à le créer.\n\nUne fois connecté, ce même onglet permet de gérer vos appareils connectés (révocation), de forcer une synchronisation immédiate, d'exporter toutes vos données ou de supprimer votre compte.\n\nAvec ou sans compte, les boutons ↓ Exporter et ↑ Importer en haut du profil sauvegardent et restaurent vos réglages dans un fichier JSON.",
 
     'onboarding.helpButton': 'Pas-à-pas',
-    'onboarding.jumpToEnd': 'Aller à la fin',
     'onboarding.prev': 'Précédent',
     'onboarding.next': 'Suivant',
     'onboarding.finish': 'Commencer à jouer',
     'onboarding.help.replay': 'Revoir tout le pas-à-pas',
-    'onboarding.help.replayDesc': 'Depuis le début, 9 étapes',
+    'onboarding.help.replayDesc': 'Depuis le début, {{count}} étapes',
     'onboarding.help.jumpTo': 'Aller directement à…',
     'onboarding.welcome.title': 'Bienvenue sur Wakfu Companion',
     'onboarding.welcome.desc':
-      "Ce pas-à-pas vous présente, en quelques diapositives, les grandes fonctionnalités de l'application. Vous pourrez le relire à tout moment depuis le bouton d'aide de l'en-tête.",
-    'onboarding.tracker.title': 'Suivez vos progrès en un coup d’œil',
-    'onboarding.tracker.desc':
-      "Kamas, XP/h, ravitaillement, objectifs personnalisés : les tuiles du Tracker se mettent à jour en direct à chaque ligne du journal, sans rien à saisir à la main.\n\nVous pouvez aussi y suivre un objet ou un monstre précis : le compteur s'incrémente automatiquement à chaque ramassage ou victoire.\n\nTrois modes au choix : incrémental (part de 0 et monte), décompte (part d'une cible que vous fixez et redescend jusqu'à 0) ou objectif (part de 0 et monte jusqu'à la cible que vous fixez).\n\nLe champ de recherche filtre aussitôt les résultats par type pour trouver la bonne entrée en un instant.\n\nPour un objet de recette, un clic crée le décompte de tous ses ingrédients — même ceux qui ont eux-mêmes une recette, imbriqués en cascade.",
-    'onboarding.tracker.label': 'Tracker',
-    'onboarding.damage.title': 'Qui tape le plus fort ?',
-    'onboarding.damage.desc':
-      'Le compteur de dégâts détaille chaque combattant, allié comme ennemi, tour par tour — avec réattribution manuelle si la détection se trompe.',
-    'onboarding.damage.label': 'Dégâts',
-    'onboarding.history.title': 'Tout votre historique, filtrable',
-    'onboarding.history.desc':
-      'Combats, achats et échanges sont archivés automatiquement et consultables à tout moment, avec tri et filtres par jour, origine ou type.',
-    'onboarding.history.label': 'Historique',
-    'onboarding.chat.title': 'Tous les canaux réunis',
-    'onboarding.chat.desc':
-      "Le chat du jeu s'affiche en direct, filtrable par canal, avec des alertes sur des mots-clés personnalisés — sans jamais quitter l'application.",
-    'onboarding.chat.label': 'Chat',
-    'onboarding.watchlist.title': 'Ne ratez plus jamais un objet',
-    'onboarding.watchlist.desc':
-      "Ajoutez un objet à votre liste de suivi : dès qu'il tombe en butin, une alerte sonore et visuelle vous prévient.",
-    'onboarding.watchlist.label': 'Alertes & suivi',
-    'onboarding.sessionRecap.title': 'Le résumé de votre session',
-    'onboarding.sessionRecap.desc':
-      "Kamas gagnés, combats gagnés ou perdus, butin récolté : le récap de session compile tout, accessible en un clic depuis l'en-tête.",
-    'onboarding.sessionRecap.label': 'Récap de session',
-    'onboarding.profile.title': 'Personnalisez votre expérience',
-    'onboarding.profile.desc':
-      "Thème, accessibilité, sons d'alerte, comptes et personnages : tout se configure depuis votre profil.",
-    'onboarding.profile.label': 'Profil & personnages',
+      "Votre compagnon de jeu lit le journal de Wakfu en direct : dégâts, butin, kamas, chat, alertes. Six chapitres pour en faire le tour, à parcourir dans l'ordre ou à la carte.",
+    'onboarding.chat.title': 'Le chat du jeu, filtré pour vous',
     'onboarding.done.title': 'Vous êtes prêt !',
-    'onboarding.done.desc':
-      "Retrouvez ce pas-à-pas à tout moment via le bouton d'aide dans l'en-tête. Bon jeu !",
+
+    'onboarding.toc': 'Sommaire',
+    'onboarding.skip': 'Passer au résumé',
+    'onboarding.intro': 'Introduction',
+    'onboarding.outro': 'Conclusion',
+    'onboarding.chapterNumber': 'Chapitre {{n}}',
+    'onboarding.chapterStep': '{{count}} étape',
+    'onboarding.chapterSteps': '{{count}} étapes',
+    'onboarding.track.label': 'Parcours',
+    'onboarding.track.full': 'Complet',
+    'onboarding.track.essential': 'Essentiel',
+    'onboarding.zoomHint': 'Cliquer pour agrandir',
+    'onboarding.chapter.start.label': 'Démarrer',
+    'onboarding.chapter.start.desc': 'Fichier de log, en-tête',
+    'onboarding.chapter.tracker.label': 'Suivi',
+    'onboarding.chapter.tracker.desc': 'Compteurs, modes, recettes',
+    'onboarding.chapter.fight.label': 'Combats',
+    'onboarding.chapter.fight.desc': 'Direct, corrections, historique',
+    'onboarding.chapter.history.label': 'Historique & récap',
+    'onboarding.chapter.history.desc': 'Achats, échanges, pacte, bilan',
+    'onboarding.chapter.chat.label': 'Chat & alertes',
+    'onboarding.chapter.chat.desc': 'Canaux, recherches, butin',
+    'onboarding.chapter.custom.label': 'Personnaliser',
+    'onboarding.chapter.custom.desc': 'Profil, disposition, thèmes, compte',
+    'onboarding.welcome.eyebrow': 'Pas-à-pas · {{count}} étapes',
+    'onboarding.done.eyebrow': "C'est parti",
+    'onboarding.done.intro': 'Deux réflexes pour la suite :',
+    'onboarding.done.help1':
+      '<b>Le « ? » de chaque panneau</b> explique en détail ses règles et ses limites.',
+    'onboarding.done.help2':
+      "<b>Le bouton Pas-à-pas de l'en-tête</b> rejoue ce guide ou saute directement à un chapitre. Sur mobile, il se trouve dans le menu ☰.",
+    'onboarding.done.outro':
+      'Lancez Wakfu, entrez en combat : vos chiffres arrivent tout seuls. Bon jeu !',
+    'onboarding.setup.toc': 'Connecter wakfu.log',
+    'onboarding.setup.title': 'Branchez votre fichier de log, une seule fois',
+    'onboarding.setup.lede':
+      "L'application lit wakfu.log en continu, en local dans votre navigateur. Aucune donnée de jeu ne part sur Internet.",
+    'onboarding.setup.l1':
+      "<b>Déposez le fichier</b>Glissez wakfu.log dans la zone ou cliquez pour l'ouvrir. Seul wakfu.log est accepté : wakfu_chat.log est refusé.",
+    'onboarding.setup.l2':
+      "<b>Astuce</b>Une capture de l'explorateur montre où se trouve le fichier.",
+    'onboarding.setup.l3':
+      "<b>Chemin par défaut</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ : copiez-le dans la barre d'adresse de l'explorateur.",
+    'onboarding.setup.l4':
+      '<b>Pourquoi ?</b>Explique pourquoi seuls Chrome, Edge et Opera savent suivre le fichier en direct.',
+    'onboarding.setup.m1':
+      '<b>Au retour</b> Le navigateur redemande une confirmation. Un clic sur « Reconnecter » suffit.',
+    'onboarding.setup.m2':
+      '<b>Navigateur incompatible</b> Firefox et Safari ne savent pas suivre un fichier en direct. Des liens vers les navigateurs compatibles sont proposés.',
+    'onboarding.setup.m3':
+      '<b>Sur mobile</b> « Continuer sans fichier de log » donne accès à vos personnages et à votre suivi via votre compte Discord ou Google, sans lecture en direct.',
+    'onboarding.header.toc': "L'en-tête",
+    'onboarding.header.title': "L'en-tête, votre tableau de commande",
+    'onboarding.header.lede':
+      'Tout ce qui concerne la session et vos préférences globales tient sur une seule ligne.',
+    'onboarding.header.r1': 'Côté gauche : la session',
+    'onboarding.header.r2': 'Côté droit : vos préférences',
+    'onboarding.header.n1':
+      '<b>Serveur</b> : déduit du dernier de vos personnages vu dans le log. « Non renseigné » ouvre Profil › Personnages.',
+    'onboarding.header.n2':
+      "<b>Changer de fichier</b> : oublie le fichier connecté et revient à l'écran de connexion.",
+    'onboarding.header.n3':
+      '<b>Réinitialiser</b> : remet la session à zéro, y compris les compteurs du suivi et vos corrections manuelles.',
+    'onboarding.header.n4':
+      '<b>Pas-à-pas</b> : rejouer ce guide ou sauter directement à un chapitre.',
+    'onboarding.header.n5': '<b>Thème</b> : bascule sombre / clair.',
+    'onboarding.header.n6': '<b>Langue</b> : français, anglais, espagnol ou portugais.',
+    'onboarding.header.n7':
+      '<b>Profil</b> : votre avatar. La pastille « NEW » signale une section de profil pas encore visitée.',
+    'onboarding.trackAdd.toc': 'Ajouter un suivi',
+    'onboarding.trackAdd.title': 'Suivez un objet ou un monstre en deux clics',
+    'onboarding.trackAdd.lede':
+      'Le suivi compte automatiquement vos ramassages et vos victoires à chaque nouvelle ligne du log.',
+    'onboarding.trackAdd.l1':
+      '<b>Choisissez le mode</b>Incrémental, Décompte ou Objectif. Le mode choisi devient celui par défaut.',
+    'onboarding.trackAdd.l2':
+      '<b>Cherchez</b>Objets et monstres dans la même recherche. Filtrez par catégorie, validez avec Entrée.',
+    'onboarding.trackAdd.l3':
+      "<b>Cible rapide</b>Chaque puce 10 / 50 / 100 / 500 / 1000 s'ajoute à la cible. Alt+clic retranche ce montant.",
+    'onboarding.trackAdd.l4': "<b>Cible précise</b>Saisissez n'importe quelle valeur de 1 à 9 999.",
+    'onboarding.trackAdd.m1':
+      "<b>Résultats</b> Les entrées déjà suivies sont grisées. L'icône parchemin signale un objet qui a une recette.",
+    'onboarding.trackModes.toc': 'Les trois modes',
+    'onboarding.trackModes.title': 'Trois façons de compter',
+    'onboarding.trackModes.lede':
+      'Chaque tuile affiche son mode : un nombre seul, ou un compteur « x / cible » avec son icône.',
+    'onboarding.trackModes.m1':
+      '<b>Incrémental</b> Part de 0 et monte sans limite. Idéal pour mesurer une session de farm.',
+    'onboarding.trackModes.m2':
+      "<b>Décompte</b> Part de la cible et descend jusqu'à 0. À 0 : alerte « Compteur épuisé ! ».",
+    'onboarding.trackModes.m3':
+      "<b>Objectif</b> Part de 0 et monte jusqu'à la cible. Atteinte : alerte « Objectif atteint ! ».",
+    'onboarding.trackModes.tip':
+      'Le chargement initial du fichier ne compte jamais : seules les lignes écrites après la connexion font avancer vos compteurs.',
+    'onboarding.trackManage.toc': 'Gérer ses tuiles',
+    'onboarding.trackManage.title': 'Corrigez, remettez à zéro, rangez',
+    'onboarding.trackManage.lede':
+      'Un clic sur une tuile la déplie. Vous y trouvez le nom complet et les actions.',
+    'onboarding.trackManage.r1': 'Une tuile dépliée',
+    'onboarding.trackManage.a1':
+      '<b>Valeur courante</b> : corrigez le compteur à la main. La cible, elle, est fixée à la création.',
+    'onboarding.trackManage.a2':
+      '<b>Remettre à zéro</b> : revient à 0, ou à la cible pour un décompte.',
+    'onboarding.trackManage.a3': '<b>Retirer</b> : confirmation « Oui / Non ».',
+    'onboarding.trackManage.a4': "Glissez-déposez une tuile pour changer l'ordre (sur ordinateur).",
+    'onboarding.trackManage.r2': 'Nettoyage en série',
+    'onboarding.trackManage.b1':
+      '<b>Bouton −</b> : apparaît à partir de 3 entrées. Il active la sélection multiple.',
+    'onboarding.trackManage.b2':
+      '<b>Supprimer (n)</b> : retire la sélection. Sans sélection, le bouton devient « Supprimer tout ».',
+    'onboarding.trackManage.b3': "Attention : la suppression en série n'a pas de confirmation.",
+    'onboarding.recipe.toc': 'Recettes',
+    'onboarding.recipe.title': 'Toute une recette en un clic',
+    'onboarding.recipe.lede':
+      'Pour un objet craftable, le suivi crée un décompte pour chaque ingrédient.',
+    'onboarding.recipe.r1': 'Dans la recherche',
+    'onboarding.recipe.a1':
+      "<b>Icône parchemin</b> : ouvre la fenêtre de recette au lieu d'ajouter l'objet lui-même. Elle n'apparaît que pour un objet craftable.",
+    'onboarding.recipe.r2': 'Quantité et ingrédients',
+    'onboarding.recipe.b1': "<b>Quantité</b> : les ingrédients sont multipliés d'autant.",
+    'onboarding.recipe.b2':
+      '<b>Ingrédients</b> : un ingrédient qui a sa propre recette peut être remplacé par ses sous-ingrédients, en cascade.',
+    'onboarding.recipe.b3':
+      "<b>Valider</b> : crée des décomptes. Si un ingrédient est déjà suivi, sa cible s'additionne.",
+    'onboarding.fightLive.toc': 'Combat en direct',
+    'onboarding.fightLive.title': 'Qui tape le plus fort, en direct',
+    'onboarding.fightLive.lede':
+      "Le combat en cours s'affiche en tête de la carte Combats, alimenté ligne par ligne.",
+    'onboarding.fightLive.l1':
+      "<b>Cumulé / Tour</b>Le total du combat, ou le détail d'un tour. Naviguez avec ‹ › ou les flèches du clavier.",
+    'onboarding.fightLive.l2':
+      '<b>Dommage · Armure · Soin</b>Change la statistique affichée par les deux listes.',
+    'onboarding.fightLive.l3':
+      '<b>Ennemis</b>Avec leur total. Les homonymes sont numérotés #1, #2…',
+    'onboarding.fightLive.l4':
+      '<b>Alliés</b>La barre sous chaque nom montre sa part du total. Un clic déplie le détail par sort et par élément.',
+    'onboarding.fightLive.tip':
+      'Plusieurs comptes en combat en même temps ? Un onglet « Combat 1, Combat 2… » apparaît pour chacun.',
+    'onboarding.fightViews.toc': 'Tour par tour & statistiques',
+    'onboarding.fightViews.title': "Trois lectures d'un même combat",
+    'onboarding.fightViews.m1':
+      '<b>Détail par sort</b> Cliquez un combattant : chaque sort avec ses dégâts, coloré par élément.',
+    'onboarding.fightViews.m2':
+      '<b>Tour par tour</b> Le switch « Tour » isole un tour. Les flèches parcourent le combat.',
+    'onboarding.fightViews.m3':
+      "<b>Armure et soins</b> Les mêmes listes, pour l'armure donnée ou les PV rendus.",
+    'onboarding.fightFix.toc': 'Corriger une attribution',
+    'onboarding.fightFix.title': 'Le log se trompe ? Corrigez-le',
+    'onboarding.fightFix.lede':
+      'Le clic droit ouvre les corrections. Elles restent mémorisées pour la suite.',
+    'onboarding.fightFix.r1': 'Clic droit sur un sort',
+    'onboarding.fightFix.a1':
+      'Réattribuez ce sort et ses dégâts à un autre combattant, allié ou ennemi. Disponible sur la statistique Dommage.',
+    'onboarding.fightFix.r2': 'Clic droit sur un allié',
+    'onboarding.fightFix.b1':
+      'Choisissez sa classe et son sexe, en petites icônes ou en grands portraits.',
+    'onboarding.fightFix.tip':
+      "Deux autres gestes : <b>glisser un nom</b> d'une liste à l'autre pour corriger un allié classé en ennemi (combat en cours uniquement), et <b>clic droit sur un ennemi</b> pour l'ajouter au suivi.",
+    'onboarding.fightHistory.toc': 'Historique des combats',
+    'onboarding.fightHistory.title': 'Chaque combat, archivé et fouillable',
+    'onboarding.fightHistory.lede':
+      "Les 30 derniers combats restent en mémoire. Avec un compte, l'historique complet est conservé sans limite.",
+    'onboarding.fightHistory.l1': '<b>Recherche</b>Filtrez par ennemi, allié ou objet de butin.',
+    'onboarding.fightHistory.l2':
+      '<b>Regrouper</b>Par Jour, par Origine (session ou compte, connecté) ou par Donjons & familles.',
+    'onboarding.fightHistory.l3': "<b>Tout replier</b>Replie ou déplie tous les groupes d'un coup.",
+    'onboarding.fightHistory.l4':
+      "<b>Issue</b>Victoire, Défaite ou Interrompu. Les salles d'un donjon se regroupent derrière le boss.",
+    'onboarding.fightHistory.m1':
+      '<b>Un combat déplié</b> Mêmes switchs que le direct, butin triable par nom, quantité ou rareté (victoires seulement), XP par personnage.',
+    'onboarding.fightHistory.m2':
+      "<b>Connecté : trois regroupements</b> Le mode Origine sépare la session en cours de l'historique du compte.",
+    'onboarding.ledger.toc': 'Achats, échanges, pacte',
+    'onboarding.ledger.title': 'Vos kamas, suivis à la trace',
+    'onboarding.ledger.lede':
+      'Trois journaux automatiques, regroupés par jour, avec recherche et tri. Connecté : « Charger plus » remonte le temps par semaine, mois ou année.',
+    'onboarding.ledger.m1':
+      "<b>Achats</b> Une perte de kamas suivie d'un ramassage devient un achat. Les ventes HDV encaissées s'y ajoutent. Clic droit : « + Suivre » ou corriger l'objet.",
+    'onboarding.ledger.m2':
+      '<b>Échanges</b> Kamas et objets donnés ou reçus avec un autre joueur. Les échanges entre vos propres personnages sont ignorés.',
+    'onboarding.ledger.m3':
+      '<b>Pacte</b> Chaque extraction de pacte, horodatée avec la liste des objets récupérés.',
+    'onboarding.recap.toc': 'Récap',
+    'onboarding.recap.title': "Le bilan, de la session à l'année",
+    'onboarding.recap.lede':
+      'La carte Récap est repliée par défaut dans le menu. Un clic sur « Récap de session » la déploie.',
+    'onboarding.recap.r1': 'Session',
+    'onboarding.recap.a1':
+      "XP, kamas nets (le détail s'affiche au survol), victoires-défaites, challenges, durée, puis XP par personnage et butin.",
+    'onboarding.recap.r2': 'Jour, Mois, Année',
+    'onboarding.recap.b1': '<b>Période</b> : avec un compte, agrège tout votre historique.',
+    'onboarding.recap.b2': '<b>Navigation</b> : ‹ › ou le calendrier pour choisir la période.',
+    'onboarding.recap.b3': '<b>Détail</b> : cumulé, par donjon et famille, ou par type.',
+    'onboarding.chat.toc': 'Chat',
+    'onboarding.chat.lede':
+      'Les messages arrivent en direct. Le défilement se met en pause dès que vous remontez.',
+    'onboarding.chat.l1': "<b>Canaux</b>Cliquez un canal pour l'afficher ou le masquer.",
+    'onboarding.chat.l2':
+      "<b>Recherche</b>Un mot + un canal (ou Global). La recherche porte sur le message et sur l'auteur.",
+    'onboarding.chat.l3':
+      "<b>Vos recherches</b>Un message qui correspond est surligné et déclenche un son. Rien n'est masqué.",
+    'onboarding.chat.m1':
+      '<b>Chat réduit</b> Réduit dans le menu, le chat affiche un compteur des messages qui correspondent à vos recherches.',
+    'onboarding.alerts.toc': 'Alertes de butin',
+    'onboarding.alerts.title': 'Ne ratez plus jamais un drop',
+    'onboarding.alerts.lede': 'Un objet de votre liste tombe : son, message et confettis.',
+    'onboarding.alerts.r1': "L'alerte",
+    'onboarding.alerts.a1':
+      "Elle se ferme seule après le délai choisi, ou reste affichée jusqu'à ce que vous la fermiez.",
+    'onboarding.alerts.r2': 'Profil › Alertes sonores',
+    'onboarding.alerts.b1': '<b>Tester</b> : rejoue le son sans attendre un vrai drop.',
+    'onboarding.alerts.b2': '<b>Fermeture</b> : Auto (délai en secondes) ou Manuelle.',
+    'onboarding.alerts.b3': "<b>Ajouter</b> : n'importe quel objet, en plus des 10 par défaut.",
+    'onboarding.alerts.b4':
+      "<b>Haut-parleur</b> : coupe le son de cet objet ; le message s'affiche quand même. La croix retire un objet ajouté.",
+    'onboarding.identity.toc': 'Avatar & pseudo',
+    'onboarding.identity.title': 'Votre avatar, votre pseudo',
+    'onboarding.identity.lede': "Ils s'affichent dans l'en-tête et sur votre profil.",
+    'onboarding.identity.l1': '<b>Pseudo</b>Crayon pour modifier, Entrée pour valider.',
+    'onboarding.identity.l2':
+      '<b>Galerie</b>Galerie MMO (portraits de classe) ou fan-arts Barbottine, Hoopyon, Papetona.',
+    'onboarding.identity.l3':
+      '<b>Mosaïque</b>Cliquez un portrait. Le survol indique la classe et le sexe.',
+    'onboarding.layout.toc': 'Disposition du tableau de bord',
+    'onboarding.layout.title': 'Un tableau de bord à votre main',
+    'onboarding.layout.lede':
+      "Profil › Personnalisation. Le schéma se met à jour à chaque réglage, et « Réinitialiser » revient à la disposition d'origine.",
+    'onboarding.layout.m1': "<b>Position du menu</b> Gauche, droite, ou en bandeau sous l'en-tête.",
+    'onboarding.layout.m2':
+      '<b>Position des objectifs</b> Ligne en haut ou en bas, colonne à gauche ou à droite.',
+    'onboarding.layout.m3':
+      "<b>Regroupement de l'historique</b> Combats, Achats, Échanges, Pacte : chacun sa carte, ou regroupés en onglets (2 au minimum).",
+    'onboarding.layout.m4':
+      '<b>Composition</b> Répartition égale, ou une carte mise en avant avec les autres empilées à côté.',
+    'onboarding.layout.m5': '<b>Exemple</b> Menu et objectifs à gauche.',
+    'onboarding.layout.m6': '<b>Exemple</b> Répartition égale, objectifs en bas.',
+    'onboarding.layout.tip':
+      'Chaque carte a un bouton de réduction en haut à droite : elle passe dans le menu, un clic la rouvre.',
+    'onboarding.themes.toc': 'Thèmes & accessibilité',
+    'onboarding.themes.title': 'Cinq ambiances, trois profils de couleur',
+    'onboarding.themes.lede': 'Profil › Accessibilité. Le thème et le mode daltonien se combinent.',
+    'onboarding.themes.m1': '<b>Sombre</b>',
+    'onboarding.themes.m2': '<b>Ardoise</b>',
+    'onboarding.themes.m3': '<b>Parchemin</b>',
+    'onboarding.themes.m4': '<b>Nordique</b>',
+    'onboarding.themes.m5': '<b>Contraste élevé</b>',
+    'onboarding.themes.m6':
+      "<b>Mode daltonien</b> Protanopie/deutéranopie ou tritanopie : l'aperçu montre chaque couleur avant → après (victoire/défaite, éléments, raretés, canaux).",
+    'onboarding.roster.toc': 'Personnages & comptes',
+    'onboarding.roster.title': 'Déclarez vos personnages',
+    'onboarding.roster.lede':
+      "L'application vous reconnaît dans le log et ignore les échanges entre vos propres personnages.",
+    'onboarding.roster.r1': 'Comptes et serveur',
+    'onboarding.roster.a1': 'Plusieurs comptes possibles, chacun renommable (sauf « Principal »).',
+    'onboarding.roster.a2':
+      "Choisissez le serveur de chaque compte : il alimente le badge de l'en-tête.",
+    'onboarding.roster.a3': 'Glissez-déposez les personnages pour changer leur ordre.',
+    'onboarding.roster.r2': 'Ajouter un personnage',
+    'onboarding.roster.b1':
+      'Nom, classe et sexe. La classe ne se modifie plus après la création : supprimez puis recréez le personnage si besoin.',
+    'onboarding.account.toc': 'Compte & synchronisation',
+    'onboarding.account.title': 'Vos données, sur tous vos appareils',
+    'onboarding.account.lede':
+      'La connexion est facultative. Sans compte, tout reste dans ce navigateur.',
+    'onboarding.account.r1': 'Invité',
+    'onboarding.account.a1':
+      'Connexion avec Discord ou Google, sans mot de passe. « Supprimer les données de cet appareil » repart de zéro.',
+    'onboarding.account.r2': 'Connecté',
+    'onboarding.account.b1': 'Appareils connectés : révoquez-en un ou tous.',
+    'onboarding.account.b2':
+      '« Synchroniser maintenant » et « Exporter (fichier) » : toutes vos données, historique serveur compris.',
+    'onboarding.account.b3': 'Se déconnecter, ou supprimer le compte.',
+    'onboarding.account.b4': "Le contenu du chat de jeu n'est jamais envoyé.",
+    'onboarding.account.tip':
+      'Sans compte aussi, <b>↓ Exporter</b> et <b>↑ Importer</b> (en haut du profil) sauvegardent vos réglages dans un fichier JSON.',
+    'onboarding.mobile.toc': 'Sur mobile',
+    'onboarding.mobile.title': 'Dans la poche aussi',
+    'onboarding.mobile.lede': 'Sur un petit écran, le tableau de bord passe en onglets.',
+    'onboarding.mobile.m1': '<b>Onglets</b> Suivi, Combats, Historique, Chat, Récap.',
+    'onboarding.mobile.m2': '<b>Suivi</b> Mode et recherche toujours visibles.',
+    'onboarding.mobile.m3': '<b>Menu ☰</b> Thème, langue, serveur, pas-à-pas, profil.',
+    'onboarding.mobile.m4': '<b>Tous les onglets</b> Une feuille liste chaque carte.',
+    'help.recap.title': 'Récap',
+    'help.recap.body':
+      "Résume votre activité : XP gagnée, kamas nets (le survol détaille combats, ventes HDV, achats et échanges), victoires-défaites, challenges réussis-échoués et durée, puis XP par personnage et butin.\n\nLa carte est repliée par défaut dans le menu du tableau de bord : un clic la déploie, son bouton de réduction la replie.\n\nSans compte, seule la session en cours (depuis la connexion du fichier) est disponible.\n\nConnecté à un compte, le switch Session/Jour/Mois/Année agrège tout votre historique sur la période choisie. Les flèches ‹ › passent à la période précédente ou suivante, le calendrier permet d'en choisir une directement. Le switch voisin affiche le détail cumulé, par donjon et famille de monstre, ou par type.",
+    'help.profileIdentity.title': 'Profil > Identité',
+    'help.profileIdentity.body':
+      "Choisissez le pseudo et l'avatar affichés dans l'en-tête et sur votre profil.\n\nLe pseudo se modifie avec le crayon : Entrée valide, Échap annule.\n\nLa « Galerie MMO » propose le portrait de chaque classe, en version masculine et féminine. Les galeries fan-art (Barbottine, Hoopyon, Papetona) sont chargées depuis le site d'Ankama.\n\nCliquez un portrait pour le choisir ; le survol indique la classe et le sexe.",
+    'help.profileLayout.title': 'Profil > Personnalisation',
+    'help.profileLayout.body':
+      "Organisez le tableau de bord : le schéma se met à jour à chaque réglage et « Réinitialiser » revient à la disposition d'origine.\n\nPosition du menu : rail vertical à gauche ou à droite, ou bandeau sous l'en-tête. Le menu liste les cartes réduites : un clic en rouvre une.\n\nPosition des objectifs (vos suivis) : ligne en haut ou en bas, colonne à gauche ou à droite.\n\nRegroupement de l'historique : Combats, Achats, Échanges et Pacte ont chacun leur carte, ou se regroupent en onglets dans une carte « Historique » (au moins deux cochés). Par défaut, Achats, Échanges et Pacte sont regroupés.\n\nComposition : répartition égale des cartes, ou une carte mise en avant avec les autres empilées à côté, du côté de votre choix.\n\nOrdre des blocs : glissez une carte du schéma sur une autre pour échanger leur place, ou utilisez les flèches qui apparaissent au survol.\n\nConnecté à un compte, cette disposition est synchronisée entre vos appareils. Sur mobile, les cartes deviennent des onglets.",
 
     'footer.copyright':
       "WAKFU MMORPG : © 2012-{{year}} Ankama Studio. Tous droits réservés. WAKFU et ANKAMA sont des marques ou des marques déposées d'Ankama en France et/ou dans d'autres pays.\nLe site WAKFU-COMPANION est un site non-officiel sans aucun lien avec Ankama.",
@@ -971,7 +1232,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.right.desc': 'Same vertical list, along the right edge.',
     'profile.dashboardLayout.historyTitle': 'History grouping',
     'profile.dashboardLayout.historyDesc':
-      'By default, Combat, Purchases and Trades each get their own card. Check at least two to group them into a single History block.',
+      'By default, Purchases, Trades and Pact are grouped under "History" and Fights get their own card. Check at least two to form a History block.',
     'profile.dashboardLayout.historyOn': "Grouped under 'History'.",
     'profile.dashboardLayout.historyOff': 'Its own card.',
     'profile.dashboardLayout.historyGroupNeedsTwo': 'Check at least 2 to group them.',
@@ -1050,7 +1311,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundItemPlaceholder': 'Add an item to watch…',
     'profile.followedItemsLabel': 'Watched items',
     'profile.soundOn': 'Sound on',
-    'profile.soundOff': 'Sound off',
+    'profile.soundOff': 'Sound off (message kept)',
     'profile.lootAlertTitle': 'Item obtained!',
     'profile.closeToast': 'Close',
     'profile.lootAlertSoundBlocked': 'Sound blocked by the browser: click the page to enable it.',
@@ -1157,83 +1418,336 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'How does this work?',
     'help.combat.title': 'Current Fight',
     'help.combat.body':
-      'This panel shows, in real time, the damage dealt by each ally and enemy, read directly from wakfu.log as the fight unfolds. A colored bar under each name shows its share of the damage, and several combatants sharing the same name (e.g. identical enemies) are numbered #1, #2… to stay distinct.\n\nWhen several fights run at once (multi-account), tabs let you pick which one to display.\n\nThe Total/Turn switch toggles between damage summed over the whole fight and the detail of a specific turn, navigable step by step.\n\nClick a name to expand the damage breakdown by spell and element.\n\nDrag a name from one side to the other to fix a misclassified ally/enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add them to tracking (Tracker).\nRight-click a spell line (expanded detail): reassign that attack and its damage to another combatant, in case of a wrong automatic attribution.\n\nThe collapse button (top-right corner) folds this panel into a small floating tab on the edge of the screen — always one click away while you play, with a badge showing the number of ongoing fights.',
+      'The current fight shows at the top of the Fights card, read live from wakfu.log. Several fighters with the same name (e.g. identical enemies) are numbered #1, #2… to stay distinct.\n\nWith simultaneous fights (several accounts), "Fight 1, Fight 2…" tabs let you pick which one to show.\n\nThe Cumulative/Turn switch toggles between the whole-fight total and one specific turn, navigable with ‹ › or the arrow keys. The Damage/Armor/Heal switch changes the statistic shown. The colored bar under each name is its share of the total.\n\nClicking a name expands the breakdown by spell and element.\n\nDragging a name from one list to the other fixes a misclassified ally or enemy.\n\nRight-click an ally: change their displayed class/gender.\nRight-click an enemy: add it to tracking.\nRight-click a spell line (Damage statistic): reassign that attack and its damage to another fighter, when automatic attribution got it wrong.\n\nClicking the "Current Fight" header collapses it; its badge shows the number of active fights.',
     'help.tracker.title': 'Tracker',
     'help.tracker.body':
-      'Tracks a counter for each added item or enemy: number picked up/defeated since connecting, incremented automatically on each pickup/win.\n\nThe + button opens a search (items AND enemies) to add a new entry to track.\n\nThe mode switch picks between count-up mode (starts at 0, goes up without limit), countdown mode (starts from a target you enter, goes down to 0 then triggers an alert) and goal mode (starts at 0, goes up to the target you enter then triggers an alert).\n\nThe recipe icon (items with a known crafting recipe) creates a countdown for each ingredient in one click, multiplied by the desired quantity — including ingredients that have their own recipe, nestable in cascade.\n\nClick a tile to expand it and see its full name plus a reset button; drag a tile to reorder the tracker. The − button turns on a multi-select mode to delete several entries at once.',
+      'Keeps a counter for each item or enemy added, moved automatically on every pickup or victory. The initial load of the file does not count: only new lines move the counters.\n\nThe + button opens a search (items AND enemies); on mobile, it is always visible.\n\nThe mode switch picks incremental (starts at 0, goes up without limit), countdown (starts at the target, goes down to 0 then triggers an alert) or goal (starts at 0, goes up to the target then triggers an alert). The 10 to 1000 chips add to the target (Alt+click to subtract). The target is set at creation.\n\nThe recipe icon (items with a known crafting recipe) creates in one click a countdown for each ingredient, multiplied by the desired quantity — including ingredients that have a recipe themselves, nestable recursively. An ingredient already tracked gets its target added up.\n\nOn desktop, clicking a tile expands it (full name, current value editable by hand, reset button) and drag and drop reorders the tracking.\n\nFrom 3 entries, the − button turns on multiple selection. With nothing selected, "Delete all" clears the tracking without asking for confirmation.',
     'help.fightHistory.title': 'History > Fights',
     'help.fightHistory.body':
-      "Keeps the last 30 fights of the session in memory: result (win/loss), number of turns, duration, damage per character/enemy, loot and XP. Signed in, the full history is also saved with no limit and can be loaded further back with the \"Load more\" button; as a guest, only these last 30 fights stay available.\n\nFights can be grouped three ways (buttons above the list): Day, Origin (current session kept apart from the account's history, signed-in only) and Type (by dungeon/breach, or by monster family).\n\nFights from the same dungeon (successive rooms and boss attempt(s)) are automatically gathered under a single collapsed entry, so the boss doesn't get lost among the rooms — the number of fights and the run's total duration replace the individual detail while it stays collapsed. When that dungeon's stone is part of the boss fight's loot, a badge appears on its illustration.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or otherwise the monster that dealt the most damage.\n\nAn expanded fight offers the same Total/Turn switch as the current fight, to review damage turn by turn, and loot can be sorted by name, quantity or rarity.\n\nRight-click a loot item: add it to tracking.\nRight-click an ally: change their displayed class/gender.\nRight-click a spell line in a combatant's detail: reassign that attack to another combatant.",
+      "Keeps the session's last 30 fights in memory: outcome (victory, defeat or interrupted), number of turns, duration, damage per character/enemy, loot and XP. Signed in to an account, the full history is also saved with no limit and can be loaded further back with the \"Load more\" button (the arrow next to it picks the range: 1 week, 1 month or 1 year); as a guest, only these last 30 fights remain available.\n\nThe search field filters fights by enemy, ally or loot item.\n\nFights can be grouped in three ways (buttons above the list): Day, Origin (current session separated from the account history, signed in only) and Dungeons & families (by dungeon/breach, or by monster family). The button next to it collapses or expands every group.\n\nFights from the same dungeon (successive rooms and boss attempt(s)) are automatically gathered under a single collapsed entry, so the boss isn't lost among the rooms — the number of fights and total run duration replace the individual details while it stays collapsed. When this dungeon's stone is in the boss fight's loot, a badge shows on its illustration.\n\nThe fight illustration prioritizes a dungeon boss, then an archmonster, a dominant, or failing that the monster that dealt the most damage.\n\nAn expanded fight offers the same Cumulative/Turn and Damage/Armor/Heal switches as the current fight. Its loot (victories only) sorts by name, quantity or rarity.\n\nRight-click a loot item (or click its key): fix its identity when several items share that name.\nRight-click an ally: change their displayed class/gender.\nRight-click a spell line in a fighter's details: reassign that attack to another fighter.",
     'help.purchases.title': 'History > Purchases',
     'help.purchases.body':
-      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item. A kamas payout collected from the Auction House (a kamas gain outside combat and outside a trade) is also recorded here, under the source “Auction House”, with no item or quantity.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button; as a guest, only purchases from the current session are visible.\n\nRight-click an item: fix its identity if it was misidentified, and add it to tracking in one click.',
+      'Automatically detects a purchase (shop or Auction House) when a kamas loss is immediately followed by picking up an item. A kamas payout collected from the Auction House (a kamas gain outside combat and outside a trade) is also recorded here, under the source “Auction House”, with no item or quantity.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded day by day with the "Load more" button (the arrow next to it picks the range: 1 week, 1 month or 1 year); as a guest, only purchases from the current session are visible.\n\nRight-click an item: add it to tracking in one click ("+ Track") and, when several items share that name, fix its identity.',
     'help.trades.title': 'History > Trades',
     'help.trades.body':
-      'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (character, item or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only trades from the current session are visible.\n\nRight-click a given or received item: fix its identity if it was misidentified, and add it to tracking in one click.',
+      'Records trade-window exchanges with ANOTHER player: items and kamas given/received.\n\nTrades between two characters of your own roster (declared in Profile > Characters) are NOT recorded: they aren\'t real trades with another player.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (character, item or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button (the arrow next to it picks the range: 1 week, 1 month or 1 year); as a guest, only trades from the current session are visible.\n\nRight-click a given or received item: fix its identity when several items share that name.',
     'help.pacts.title': 'History > Pact',
     'help.pacts.body':
-      'The game\'s "Pact" feature diverts your combat loot into a separate dimension: your fights then show no loot of their own, items only becoming visible again once manually extracted in-game.\n\nThis card only appears once at least one extraction has been detected in the currently connected log file. Each extraction keeps its own timestamped line, with the full list of items collected at that moment — never merged with another extraction.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button; as a guest, only extractions from the current session are visible.\n\nRight-click an extracted item: fix its identity if it was misidentified, and add it to tracking in one click.',
+      'The game\'s "Pact" feature diverts your combat loot into a separate dimension: your fights then show no loot of their own, items only becoming visible again once manually extracted in-game.\n\nWithout an account, this card only appears after a first extraction is detected in the log file; with an account, it is always visible. Each extraction keeps its own timestamped line, with the full list of items collected at that moment — never merged with another extraction.\n\nGrouped by day, sortable from newest to oldest (or the reverse) and filterable with a search (item name or date). Signed in, the full history is saved with no limit and can be loaded further back with the "Load more" button (the arrow next to it picks the range: 1 week, 1 month or 1 year); as a guest, only extractions from the current session are visible.\n\nRight-click an extracted item: fix its identity when several items share that name.',
     'help.chat.title': 'Chat',
     'help.chat.body':
-      'Shows chat messages read from wakfu.log, sorted by channel (Nearby, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you display only certain channels.\n\nCustom text filters (keyword + channel, or all channels) can be added: a matching message is highlighted and triggers a sound alert — filters no longer hide any message, they only flag it.\n\nAuto-scroll stops as soon as you manually scroll back up through the history.',
+      'Shows chat messages read from wakfu.log, sorted by channel (Proximity, Group, Guild, Recruitment, Trade, Community).\n\nChannel buttons let you show only some channels.\n\nCustom searches (text + channel, or Global for every channel) can be added: they match the message AND its author\'s name. A matching message is highlighted and plays a sound alert — searches never hide any message, they only flag it.\n\nWhen the chat is collapsed into the menu, a counter there shows the number of messages matching your searches.\n\nAuto-scroll stops as soon as you scroll up manually; the "↓" button brings you back.',
     'help.profileAlerts.title': 'Profile > Alerts',
     'help.profileAlerts.body':
-      'Choose which items trigger an alert (sound + toast + confetti) when picked up. The "+" search lets you add more beyond the default items, which can then be removed individually (the tile\'s × button) — unlike the default items, which can never be removed.\n\nToggle the sound per item using each tile\'s speaker icon; the test button replays the alert sound to check the setting without waiting for a real pickup.\n\nThe toast closes automatically after the delay set here, or stays until manually closed if that option is enabled.',
-    'help.profileTheme.title': 'Profile > Theme',
+      'Choose the items that trigger an alert (sound + message + confetti) when picked up. The "+" search adds items beyond the 10 defaults, which can then be removed individually (cross on the tile) — unlike the default items, which can never be removed.\n\nThe speaker icon on each tile turns this item\'s sound on or off: with the sound off, the message and confetti still show. The test button replays the sound to check the setting without waiting for a real pickup.\n\nThe message closes automatically after the delay set here (Auto mode), or stays until closed manually (Manual mode).',
+    'help.profileTheme.title': 'Profile > Accessibility > Theme',
     'help.profileTheme.body':
       "Choose the app's appearance: the original dark theme, or one of 4 light variants (Slate, Parchment, Nordic, High Contrast), each tuned to stay readable on a light background.\n\nThis choice is independent from the colorblind mode just below, but the two combine: colorblind-adjusted colors apply on top of whichever theme is active, dark or light.",
-    'help.profileColorblind.title': 'Profile > Colorblindness',
+    'help.profileColorblind.title': 'Profile > Accessibility > Colorblindness',
     'help.profileColorblind.body':
       "Adapts the app's most sensitive colors (win/loss, elemental damage, item rarity, chat channels) to the colorblindness type you choose, so they stay distinguishable.\n\nProtanopia and deuteranopia are grouped under a single option: both cause the same red-green confusion, so the same correction applies to both.\n\nThe before/after preview under the selector shows exactly which colors change with the currently chosen profile.",
     'help.profileConnection.title': 'Profile > Sign in',
     'help.profileConnection.body':
-      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nAn account uses a single provider: always sign in with the one (Discord or Google) you created it with.\n\nOnce signed in, the Account page (reachable from this panel) lets you manage your connected devices (revoke access), force an immediate sync, export your data, or delete your account.',
+      'Sign in with Discord or Google to find your settings, characters and tracking on all your devices.\n\nSigning in is optional: without an account the app works exactly the same way and all your data stays in this browser.\n\nWe never handle passwords. Only your verified email address is kept, to recognise your account. Game chat content is never sent.\n\nOn your first sign-in, if data already exists locally and/or on the account, you choose what to do with it yourself: nothing is ever merged automatically.\n\nAn account uses a single provider: always sign in with the one (Discord or Google) you created it with.\n\nOnce signed in, this same tab lets you manage your connected devices (revoke access), force an immediate sync, export all your data, or delete your account.\n\nWith or without an account, the ↓ Export and ↑ Import buttons at the top of the profile save and restore your settings as a JSON file.',
     'help.profileCharacters.title': 'Profile > Characters',
     'help.profileCharacters.body':
       "Declare your accounts' characters here: this lets the app recognize you in the logs and correctly tell apart your internal exchanges (between your own characters, never recorded) from trades with other players.\n\nMultiple accounts can be added (multi-account), each renameable; the \"Add character\" button opens a form (name, class, gender) to declare each character, and drag and drop then reorders an account's characters.\n\nEach account can be assigned a game server: used to tag history and the header's server badge with the right world when you play on several servers.",
 
     'onboarding.helpButton': 'Walkthrough',
-    'onboarding.jumpToEnd': 'Jump to the end',
     'onboarding.prev': 'Previous',
     'onboarding.next': 'Next',
     'onboarding.finish': 'Start playing',
     'onboarding.help.replay': 'Replay the whole walkthrough',
-    'onboarding.help.replayDesc': 'From the start, 9 steps',
+    'onboarding.help.replayDesc': 'From the start, {{count}} steps',
     'onboarding.help.jumpTo': 'Jump straight to…',
     'onboarding.welcome.title': 'Welcome to Wakfu Companion',
     'onboarding.welcome.desc':
-      "This short walkthrough introduces the app's main features in a few slides. You can replay it anytime from the help button in the header.",
-    'onboarding.tracker.title': 'Track your progress at a glance',
-    'onboarding.tracker.desc':
-      'Kamas, XP/h, supplies, custom goals: the Tracker tiles update live with every line of the log, with nothing to enter by hand.\n\nYou can also track a specific item or monster there: the counter updates automatically with every pickup or win.\n\nThree modes to choose from: count-up (starts at 0, goes up), countdown (starts from a target you set, counts down to 0) or goal (starts at 0, goes up to the target you set).\n\nThe search field instantly filters results by type, so you find the right entry in a second.\n\nFor a recipe item, one click creates a countdown for every ingredient — including ingredients that have their own recipe, nestable in cascade.',
-    'onboarding.tracker.label': 'Tracker',
-    'onboarding.damage.title': "Who's hitting hardest?",
-    'onboarding.damage.desc':
-      'The damage meter breaks down every combatant, ally or enemy, turn by turn — with manual reassignment if detection gets it wrong.',
-    'onboarding.damage.label': 'Damage',
-    'onboarding.history.title': 'Your whole history, filterable',
-    'onboarding.history.desc':
-      'Fights, purchases and trades are archived automatically and available anytime, sortable and filterable by day, origin or type.',
-    'onboarding.history.label': 'History',
-    'onboarding.chat.title': 'Every channel in one place',
-    'onboarding.chat.desc':
-      'The game chat streams live, filterable by channel, with alerts on custom keywords — without ever leaving the app.',
-    'onboarding.chat.label': 'Chat',
-    'onboarding.watchlist.title': 'Never miss an item again',
-    'onboarding.watchlist.desc':
-      'Add an item to your watchlist: the moment it drops as loot, a sound and visual alert lets you know.',
-    'onboarding.watchlist.label': 'Alerts & tracking',
-    'onboarding.sessionRecap.title': 'Your session, summed up',
-    'onboarding.sessionRecap.desc':
-      'Kamas earned, fights won or lost, loot collected: the session recap gathers it all, one click away from the header.',
-    'onboarding.sessionRecap.label': 'Session recap',
-    'onboarding.profile.title': 'Make it yours',
-    'onboarding.profile.desc':
-      'Theme, accessibility, alert sounds, accounts and characters: everything is configured from your profile.',
-    'onboarding.profile.label': 'Profile & characters',
+      "Your game companion reads Wakfu's log live: damage, loot, kamas, chat, alerts. Six chapters cover it all — go through them in order or pick what you need.",
+    'onboarding.chat.title': 'The game chat, filtered for you',
     'onboarding.done.title': "You're all set!",
-    'onboarding.done.desc':
-      'Find this walkthrough again anytime from the help button in the header. Have fun!',
+
+    'onboarding.toc': 'Contents',
+    'onboarding.skip': 'Skip to summary',
+    'onboarding.intro': 'Introduction',
+    'onboarding.outro': 'Wrap-up',
+    'onboarding.chapterNumber': 'Chapter {{n}}',
+    'onboarding.chapterStep': '{{count}} step',
+    'onboarding.chapterSteps': '{{count}} steps',
+    'onboarding.track.label': 'Tour',
+    'onboarding.track.full': 'Full',
+    'onboarding.track.essential': 'Essentials',
+    'onboarding.zoomHint': 'Click to enlarge',
+    'onboarding.chapter.start.label': 'Getting started',
+    'onboarding.chapter.start.desc': 'Log file, header',
+    'onboarding.chapter.tracker.label': 'Tracking',
+    'onboarding.chapter.tracker.desc': 'Counters, modes, recipes',
+    'onboarding.chapter.fight.label': 'Fights',
+    'onboarding.chapter.fight.desc': 'Live, fixes, history',
+    'onboarding.chapter.history.label': 'History & recap',
+    'onboarding.chapter.history.desc': 'Purchases, trades, pact, totals',
+    'onboarding.chapter.chat.label': 'Chat & alerts',
+    'onboarding.chapter.chat.desc': 'Channels, searches, loot',
+    'onboarding.chapter.custom.label': 'Personalize',
+    'onboarding.chapter.custom.desc': 'Profile, layout, themes, account',
+    'onboarding.welcome.eyebrow': 'Walkthrough · {{count}} steps',
+    'onboarding.done.eyebrow': "Let's go",
+    'onboarding.done.intro': 'Two habits for later:',
+    'onboarding.done.help1':
+      '<b>The "?" on each panel</b> explains its rules and limits in detail.',
+    'onboarding.done.help2':
+      '<b>The Walkthrough button in the header</b> replays this guide or jumps straight to a chapter. On mobile, it is in the ☰ menu.',
+    'onboarding.done.outro':
+      'Launch Wakfu and start a fight: your numbers show up on their own. Have fun!',
+    'onboarding.setup.toc': 'Connect wakfu.log',
+    'onboarding.setup.title': 'Connect your log file, just once',
+    'onboarding.setup.lede':
+      'The app reads wakfu.log continuously, locally in your browser. No game data is sent over the Internet.',
+    'onboarding.setup.l1':
+      '<b>Drop the file</b>Drag wakfu.log onto the area or click to open it. Only wakfu.log is accepted: wakfu_chat.log is rejected.',
+    'onboarding.setup.l2': '<b>Hint</b>A screenshot of the file explorer shows where the file is.',
+    'onboarding.setup.l3':
+      "<b>Default path</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — paste it into the explorer's address bar.",
+    'onboarding.setup.l4':
+      '<b>Why?</b>Explains why only Chrome, Edge and Opera can follow the file live.',
+    'onboarding.setup.m1':
+      '<b>When you come back</b> The browser asks for confirmation again. One click on "Reconnect" is enough.',
+    'onboarding.setup.m2':
+      '<b>Unsupported browser</b> Firefox and Safari cannot follow a file live. Links to compatible browsers are offered.',
+    'onboarding.setup.m3':
+      '<b>On mobile</b> "Continue without a log file" gives access to your characters and tracking through your Discord or Google account, without live reading.',
+    'onboarding.header.toc': 'The header',
+    'onboarding.header.title': 'The header, your control bar',
+    'onboarding.header.lede':
+      'Everything about the session and your global preferences fits on a single line.',
+    'onboarding.header.r1': 'Left side: the session',
+    'onboarding.header.r2': 'Right side: your preferences',
+    'onboarding.header.n1':
+      '<b>Server</b>: inferred from the last of your characters seen in the log. "Not set" opens Profile › Characters.',
+    'onboarding.header.n2':
+      '<b>Change file</b>: forgets the connected file and goes back to the connection screen.',
+    'onboarding.header.n3':
+      '<b>Reset</b>: resets the session, including tracking counters and your manual fixes.',
+    'onboarding.header.n4': '<b>Walkthrough</b>: replay this guide or jump straight to a chapter.',
+    'onboarding.header.n5': '<b>Theme</b>: switch dark / light.',
+    'onboarding.header.n6': '<b>Language</b>: French, English, Spanish or Portuguese.',
+    'onboarding.header.n7':
+      '<b>Profile</b>: your avatar. The "NEW" badge flags a profile section you have not visited yet.',
+    'onboarding.trackAdd.toc': 'Add a tracker',
+    'onboarding.trackAdd.title': 'Track an item or a monster in two clicks',
+    'onboarding.trackAdd.lede':
+      'Tracking automatically counts your pickups and victories with every new log line.',
+    'onboarding.trackAdd.l1':
+      '<b>Pick the mode</b>Incremental, Countdown or Goal. The chosen mode becomes the default.',
+    'onboarding.trackAdd.l2':
+      '<b>Search</b>Items and monsters in the same search. Filter by category, confirm with Enter.',
+    'onboarding.trackAdd.l3':
+      '<b>Quick target</b>Each 10 / 50 / 100 / 500 / 1000 chip adds to the target. Alt+click subtracts it.',
+    'onboarding.trackAdd.l4': '<b>Exact target</b>Type any value from 1 to 9,999.',
+    'onboarding.trackAdd.m1':
+      '<b>Results</b> Entries already tracked are greyed out. The scroll icon marks an item that has a recipe.',
+    'onboarding.trackModes.toc': 'The three modes',
+    'onboarding.trackModes.title': 'Three ways to count',
+    'onboarding.trackModes.lede':
+      'Each tile shows its mode: a plain number, or an "x / target" counter with its icon.',
+    'onboarding.trackModes.m1':
+      '<b>Incremental</b> Starts at 0 and goes up without limit. Great for measuring a farming session.',
+    'onboarding.trackModes.m2':
+      '<b>Countdown</b> Starts at the target and goes down to 0. At 0: "Counter depleted!" alert.',
+    'onboarding.trackModes.m3':
+      '<b>Goal</b> Starts at 0 and goes up to the target. Reached: "Goal reached!" alert.',
+    'onboarding.trackModes.tip':
+      'The initial load of the file never counts: only lines written after connecting move your counters.',
+    'onboarding.trackManage.toc': 'Manage tiles',
+    'onboarding.trackManage.title': 'Fix, reset, tidy up',
+    'onboarding.trackManage.lede':
+      'Click a tile to expand it. It shows the full name and the actions.',
+    'onboarding.trackManage.r1': 'An expanded tile',
+    'onboarding.trackManage.a1':
+      '<b>Current value</b>: fix the counter by hand. The target itself is set at creation.',
+    'onboarding.trackManage.a2': '<b>Reset</b>: back to 0, or to the target for a countdown.',
+    'onboarding.trackManage.a3': '<b>Remove</b>: "Yes / No" confirmation.',
+    'onboarding.trackManage.a4': 'Drag and drop a tile to change the order (on desktop).',
+    'onboarding.trackManage.r2': 'Bulk cleanup',
+    'onboarding.trackManage.b1':
+      '<b>− button</b>: appears from 3 entries. It turns on multiple selection.',
+    'onboarding.trackManage.b2':
+      '<b>Delete (n)</b>: removes the selection. With nothing selected, the button becomes "Delete all".',
+    'onboarding.trackManage.b3': 'Careful: bulk deletion has no confirmation.',
+    'onboarding.recipe.toc': 'Recipes',
+    'onboarding.recipe.title': 'A whole recipe in one click',
+    'onboarding.recipe.lede':
+      'For a craftable item, tracking creates a countdown for each ingredient.',
+    'onboarding.recipe.r1': 'In the search',
+    'onboarding.recipe.a1':
+      '<b>Scroll icon</b>: opens the recipe window instead of adding the item itself. It only appears for a craftable item.',
+    'onboarding.recipe.r2': 'Quantity and ingredients',
+    'onboarding.recipe.b1': '<b>Quantity</b>: ingredients are multiplied accordingly.',
+    'onboarding.recipe.b2':
+      '<b>Ingredients</b>: an ingredient with its own recipe can be replaced by its sub-ingredients, recursively.',
+    'onboarding.recipe.b3':
+      '<b>Confirm</b>: creates countdowns. If an ingredient is already tracked, its target adds up.',
+    'onboarding.fightLive.toc': 'Live fight',
+    'onboarding.fightLive.title': 'Who hits the hardest, live',
+    'onboarding.fightLive.lede':
+      'The current fight shows at the top of the Fights card, fed line by line.',
+    'onboarding.fightLive.l1':
+      '<b>Cumulative / Turn</b>The whole-fight total, or one turn in detail. Navigate with ‹ › or the arrow keys.',
+    'onboarding.fightLive.l2':
+      '<b>Damage · Armor · Heal</b>Changes the statistic shown by both lists.',
+    'onboarding.fightLive.l3':
+      '<b>Enemies</b>With their total. Same-name fighters are numbered #1, #2…',
+    'onboarding.fightLive.l4':
+      '<b>Allies</b>The bar under each name shows their share of the total. Click to expand the breakdown by spell and element.',
+    'onboarding.fightLive.tip':
+      'Several accounts fighting at the same time? A "Fight 1, Fight 2…" tab appears for each.',
+    'onboarding.fightViews.toc': 'Turn by turn & stats',
+    'onboarding.fightViews.title': 'Three ways to read a fight',
+    'onboarding.fightViews.m1':
+      '<b>By spell</b> Click a fighter: each spell with its damage, colored by element.',
+    'onboarding.fightViews.m2':
+      '<b>Turn by turn</b> The "Turn" switch isolates one turn. The arrows step through the fight.',
+    'onboarding.fightViews.m3':
+      '<b>Armor and heals</b> The same lists, for armor given or HP restored.',
+    'onboarding.fightFix.toc': 'Fix an attribution',
+    'onboarding.fightFix.title': 'The log got it wrong? Fix it',
+    'onboarding.fightFix.lede': 'Right-click opens the fixes. They are remembered afterwards.',
+    'onboarding.fightFix.r1': 'Right-click a spell',
+    'onboarding.fightFix.a1':
+      'Reassign this spell and its damage to another fighter, ally or enemy. Available on the Damage statistic.',
+    'onboarding.fightFix.r2': 'Right-click an ally',
+    'onboarding.fightFix.b1': 'Pick their class and gender, as small icons or large portraits.',
+    'onboarding.fightFix.tip':
+      'Two more gestures: <b>drag a name</b> from one list to the other to fix an ally classified as an enemy (current fight only), and <b>right-click an enemy</b> to add it to tracking.',
+    'onboarding.fightHistory.toc': 'Fight history',
+    'onboarding.fightHistory.title': 'Every fight, archived and searchable',
+    'onboarding.fightHistory.lede':
+      'The last 30 fights stay in memory. With an account, the full history is kept with no limit.',
+    'onboarding.fightHistory.l1': '<b>Search</b>Filter by enemy, ally or loot item.',
+    'onboarding.fightHistory.l2':
+      '<b>Group</b>By Day, by Origin (session or account, signed in) or by Dungeons & families.',
+    'onboarding.fightHistory.l3': '<b>Collapse all</b>Collapses or expands every group at once.',
+    'onboarding.fightHistory.l4':
+      "<b>Outcome</b>Victory, Defeat or Interrupted. A dungeon's rooms are grouped behind the boss.",
+    'onboarding.fightHistory.m1':
+      '<b>An expanded fight</b> Same switches as live, loot sortable by name, quantity or rarity (victories only), XP per character.',
+    'onboarding.fightHistory.m2':
+      "<b>Signed in: three groupings</b> Origin mode separates the current session from the account's history.",
+    'onboarding.ledger.toc': 'Purchases, trades, pact',
+    'onboarding.ledger.title': 'Your kamas, tracked',
+    'onboarding.ledger.lede':
+      'Three automatic logs, grouped by day, with search and sorting. Signed in: "Load more" goes back by week, month or year.',
+    'onboarding.ledger.m1':
+      '<b>Purchases</b> A kamas loss followed by a pickup becomes a purchase. Collected Auction House sales are added too. Right-click: "+ Track" or fix the item.',
+    'onboarding.ledger.m2':
+      '<b>Trades</b> Kamas and items given to or received from another player. Trades between your own characters are ignored.',
+    'onboarding.ledger.m3':
+      '<b>Pact</b> Each pact extraction, timestamped with the list of items retrieved.',
+    'onboarding.recap.toc': 'Recap',
+    'onboarding.recap.title': 'Your totals, from session to year',
+    'onboarding.recap.lede':
+      'The Recap card is collapsed in the menu by default. Click "Session recap" to expand it.',
+    'onboarding.recap.r1': 'Session',
+    'onboarding.recap.a1':
+      'XP, net kamas (hover for the details), wins-losses, challenges, duration, then XP per character and loot.',
+    'onboarding.recap.r2': 'Day, Month, Year',
+    'onboarding.recap.b1': '<b>Period</b>: with an account, aggregates your whole history.',
+    'onboarding.recap.b2': '<b>Navigation</b>: ‹ › or the calendar to pick the period.',
+    'onboarding.recap.b3': '<b>Detail</b>: cumulative, by dungeon and family, or by type.',
+    'onboarding.chat.toc': 'Chat',
+    'onboarding.chat.lede': 'Messages arrive live. Auto-scroll pauses as soon as you scroll up.',
+    'onboarding.chat.l1': '<b>Channels</b>Click a channel to show or hide it.',
+    'onboarding.chat.l2':
+      '<b>Search</b>A word + a channel (or Global). It matches both the message and the author.',
+    'onboarding.chat.l3':
+      '<b>Your searches</b>A matching message is highlighted and plays a sound. Nothing is hidden.',
+    'onboarding.chat.m1':
+      '<b>Collapsed chat</b> When collapsed into the menu, the chat shows a count of messages matching your searches.',
+    'onboarding.alerts.toc': 'Loot alerts',
+    'onboarding.alerts.title': 'Never miss a drop again',
+    'onboarding.alerts.lede': 'An item from your list drops: sound, message and confetti.',
+    'onboarding.alerts.r1': 'The alert',
+    'onboarding.alerts.a1':
+      'It closes on its own after the chosen delay, or stays until you close it.',
+    'onboarding.alerts.r2': 'Profile › Sound alerts',
+    'onboarding.alerts.b1': '<b>Test</b>: replays the sound without waiting for a real drop.',
+    'onboarding.alerts.b2': '<b>Closing</b>: Auto (delay in seconds) or Manual.',
+    'onboarding.alerts.b3': '<b>Add</b>: any item, on top of the 10 defaults.',
+    'onboarding.alerts.b4':
+      '<b>Speaker</b>: mutes this item; the message still shows. The cross removes an added item.',
+    'onboarding.identity.toc': 'Avatar & nickname',
+    'onboarding.identity.title': 'Your avatar, your nickname',
+    'onboarding.identity.lede': 'They show in the header and on your profile.',
+    'onboarding.identity.l1': '<b>Nickname</b>Pencil to edit, Enter to confirm.',
+    'onboarding.identity.l2':
+      '<b>Gallery</b>MMO gallery (class portraits) or Barbottine, Hoopyon, Papetona fan art.',
+    'onboarding.identity.l3': '<b>Mosaic</b>Click a portrait. Hover shows the class and gender.',
+    'onboarding.layout.toc': 'Dashboard layout',
+    'onboarding.layout.title': 'A dashboard that fits you',
+    'onboarding.layout.lede':
+      'Profile › Customization. The diagram updates with every setting, and "Reset" restores the original layout.',
+    'onboarding.layout.m1': '<b>Menu position</b> Left, right, or as a strip under the header.',
+    'onboarding.layout.m2':
+      '<b>Goals position</b> Row at the top or bottom, column on the left or right.',
+    'onboarding.layout.m3':
+      '<b>History grouping</b> Fights, Purchases, Trades, Pact: one card each, or grouped as tabs (at least 2).',
+    'onboarding.layout.m4':
+      '<b>Composition</b> Equal split, or one featured card with the others stacked beside it.',
+    'onboarding.layout.m5': '<b>Example</b> Menu and goals on the left.',
+    'onboarding.layout.m6': '<b>Example</b> Equal split, goals at the bottom.',
+    'onboarding.layout.tip':
+      'Each card has a collapse button at the top right: it moves into the menu, and one click reopens it.',
+    'onboarding.themes.toc': 'Themes & accessibility',
+    'onboarding.themes.title': 'Five looks, three color profiles',
+    'onboarding.themes.lede': 'Profile › Accessibility. Theme and colorblind mode combine.',
+    'onboarding.themes.m1': '<b>Dark</b>',
+    'onboarding.themes.m2': '<b>Slate</b>',
+    'onboarding.themes.m3': '<b>Parchment</b>',
+    'onboarding.themes.m4': '<b>Nordic</b>',
+    'onboarding.themes.m5': '<b>High contrast</b>',
+    'onboarding.themes.m6':
+      '<b>Colorblind mode</b> Protanopia/deuteranopia or tritanopia: the preview shows each color before → after (win/loss, elements, rarities, channels).',
+    'onboarding.roster.toc': 'Characters & accounts',
+    'onboarding.roster.title': 'Declare your characters',
+    'onboarding.roster.lede':
+      'The app recognizes you in the log and ignores trades between your own characters.',
+    'onboarding.roster.r1': 'Accounts and server',
+    'onboarding.roster.a1': 'Several accounts possible, each renameable (except "Main").',
+    'onboarding.roster.a2': "Pick each account's server: it feeds the header badge.",
+    'onboarding.roster.a3': 'Drag and drop characters to change their order.',
+    'onboarding.roster.r2': 'Add a character',
+    'onboarding.roster.b1':
+      'Name, class and gender. The class cannot be changed after creation: delete and recreate the character if needed.',
+    'onboarding.account.toc': 'Account & sync',
+    'onboarding.account.title': 'Your data, on all your devices',
+    'onboarding.account.lede':
+      'Signing in is optional. Without an account, everything stays in this browser.',
+    'onboarding.account.r1': 'Guest',
+    'onboarding.account.a1':
+      'Sign in with Discord or Google, no password. "Delete this device\'s data" starts from scratch.',
+    'onboarding.account.r2': 'Signed in',
+    'onboarding.account.b1': 'Connected devices: revoke one or all.',
+    'onboarding.account.b2':
+      '"Sync now" and "Export (file)": all your data, server history included.',
+    'onboarding.account.b3': 'Sign out, or delete the account.',
+    'onboarding.account.b4': 'Game chat content is never sent.',
+    'onboarding.account.tip':
+      'Without an account too, <b>↓ Export</b> and <b>↑ Import</b> (at the top of the profile) save your settings to a JSON file.',
+    'onboarding.mobile.toc': 'On mobile',
+    'onboarding.mobile.title': 'In your pocket too',
+    'onboarding.mobile.lede': 'On a small screen, the dashboard switches to tabs.',
+    'onboarding.mobile.m1': '<b>Tabs</b> Tracking, Fights, History, Chat, Recap.',
+    'onboarding.mobile.m2': '<b>Tracking</b> Mode and search always visible.',
+    'onboarding.mobile.m3': '<b>☰ menu</b> Theme, language, server, walkthrough, profile.',
+    'onboarding.mobile.m4': '<b>All tabs</b> A sheet lists every card.',
+    'help.recap.title': 'Recap',
+    'help.recap.body':
+      'Sums up your activity: XP gained, net kamas (hover for fights, Auction House sales, purchases and trades), wins-losses, challenges passed-failed and duration, then XP per character and loot.\n\nThe card is collapsed in the dashboard menu by default: one click expands it, its collapse button folds it back.\n\nWithout an account, only the current session (since the file was connected) is available.\n\nSigned in to an account, the Session/Day/Month/Year switch aggregates your whole history over the chosen period. The ‹ › arrows move to the previous or next period, and the calendar lets you pick one directly. The switch next to it shows the cumulative detail, by dungeon and monster family, or by type.',
+    'help.profileIdentity.title': 'Profile > Identity',
+    'help.profileIdentity.body':
+      'Choose the nickname and avatar shown in the header and on your profile.\n\nEdit the nickname with the pencil: Enter confirms, Escape cancels.\n\nThe "MMO gallery" offers each class\'s portrait, male and female. The fan-art galleries (Barbottine, Hoopyon, Papetona) are loaded from Ankama\'s website.\n\nClick a portrait to pick it; hover shows the class and gender.',
+    'help.profileLayout.title': 'Profile > Customization',
+    'help.profileLayout.body':
+      'Arrange the dashboard: the diagram updates with every setting and "Reset" restores the original layout.\n\nMenu position: vertical rail on the left or right, or a strip under the header. The menu lists collapsed cards: one click reopens one.\n\nGoals position (your trackers): row at the top or bottom, column on the left or right.\n\nHistory grouping: Fights, Purchases, Trades and Pact each get their own card, or are grouped as tabs in a "History" card (at least two checked). By default, Purchases, Trades and Pact are grouped.\n\nComposition: equal split of the cards, or one featured card with the others stacked beside it, on the side of your choice.\n\nBlock order: drag a card of the diagram onto another to swap them, or use the arrows that appear on hover.\n\nSigned in to an account, this layout syncs across your devices. On mobile, cards become tabs.',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-{{year}} Ankama Studio. All rights reserved. WAKFU and ANKAMA are trademarks or registered trademarks of Ankama in France and/or other countries.\nWAKFU-COMPANION is an unofficial site with no affiliation to Ankama.',
@@ -1664,7 +2178,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'La misma lista vertical, a lo largo del borde derecho.',
     'profile.dashboardLayout.historyTitle': 'Agrupación del historial',
     'profile.dashboardLayout.historyDesc':
-      'Por defecto, Combates, Compras e Intercambios tienen cada uno su propia tarjeta. Marca al menos dos para agruparlas en un solo bloque Historial.',
+      'Por defecto, Compras, Intercambios y Pacto están agrupados en «Historial» y Combates tiene su propia tarjeta. Marca al menos dos para formar un bloque Historial.',
     'profile.dashboardLayout.historyOn': 'Agrupada en «Historial».',
     'profile.dashboardLayout.historyOff': 'Su propia tarjeta.',
     'profile.dashboardLayout.historyGroupNeedsTwo': 'Marca al menos 2 para agruparlas.',
@@ -1746,7 +2260,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundItemPlaceholder': 'Añadir un objeto para vigilar…',
     'profile.followedItemsLabel': 'Objetos vigilados',
     'profile.soundOn': 'Sonido activado',
-    'profile.soundOff': 'Sonido desactivado',
+    'profile.soundOff': 'Sonido desactivado (mensaje conservado)',
     'profile.lootAlertTitle': '¡Objeto obtenido!',
     'profile.closeToast': 'Cerrar',
     'profile.lootAlertSoundBlocked':
@@ -1854,32 +2368,32 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': '¿Cómo funciona?',
     'help.combat.title': 'Combate en curso',
     'help.combat.body':
-      'Este panel muestra en tiempo real el daño infligido por cada aliado y enemigo, leído directamente de wakfu.log durante el combate. Una barra de color bajo cada nombre representa su parte del daño, y varios combatientes con el mismo nombre (ej. varios enemigos idénticos) se numeran #1, #2… para seguir siendo distinguibles.\n\nCuando hay varios combates simultáneos (multicuenta), unas pestañas permiten elegir cuál mostrar.\n\nEl interruptor Total/Turno alterna entre el daño acumulado de todo el combate y el detalle de un turno concreto, navegable paso a paso.\n\nHaz clic en un nombre para desplegar el detalle de daño por hechizo y elemento.\n\nArrastra un nombre de un lado a otro para corregir un aliado/enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento (Seguimiento).\nClic derecho en una línea de hechizo (detalle desplegado): reasignar ese ataque y su daño a otro combatiente, en caso de un error de atribución automática.\n\nEl botón de repliegue (esquina superior derecha) reduce este panel a una pequeña pestaña flotante en el borde de la pantalla — siempre accesible con un clic mientras juegas, con una insignia que indica el número de combates en curso.',
+      'El combate en curso aparece al principio de la tarjeta Combates, leído en tiempo real en wakfu.log. Varios combatientes con el mismo nombre (p. ej. enemigos idénticos) se numeran #1, #2… para distinguirlos.\n\nCon combates simultáneos (varias cuentas), las pestañas «Combate 1, Combate 2…» permiten elegir cuál mostrar.\n\nEl interruptor Acumulado/Turno alterna entre el total del combate y el detalle de un turno concreto, navegable con ‹ › o las flechas del teclado. El interruptor Daño/Armadura/Curación cambia la estadística mostrada. La barra de color bajo cada nombre representa su parte del total.\n\nHacer clic en un nombre despliega el detalle por hechizo y elemento.\n\nArrastrar y soltar un nombre de una lista a otra corrige un aliado o enemigo mal clasificado.\n\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en un enemigo: añadirlo al seguimiento.\nClic derecho en una línea de hechizo (estadística Daño): reasignar ese ataque y su daño a otro combatiente, si la atribución automática falló.\n\nUn clic en la cabecera «Combate en curso» la pliega; su insignia indica el número de combates activos.',
     'help.tracker.title': 'Seguimiento',
     'help.tracker.body':
-      'Sigue un contador para cada objeto o enemigo añadido: cantidad recogida/derrotada desde la conexión, incrementada automáticamente en cada recogida/victoria.\n\nEl botón + abre una búsqueda (objetos Y enemigos) para añadir una nueva entrada al seguimiento.\n\nEl selector de modo elige entre conteo incremental (empieza en 0, sube sin límite), cuenta atrás (empieza desde un objetivo que introduces, baja hasta 0 y entonces dispara una alerta) y objetivo (empieza en 0, sube hasta la cantidad que introduces y entonces dispara una alerta).\n\nEl icono de receta (objetos con una receta de oficio conocida) crea con un clic una cuenta atrás para cada ingrediente, multiplicada por la cantidad deseada — incluidos los ingredientes que tienen su propia receta, anidable en cascada.\n\nHaz clic en una casilla para desplegarla y ver su nombre completo y un botón de reinicio; arrástrala para reordenar el seguimiento. El botón − activa un modo de selección múltiple para eliminar varias entradas a la vez.',
+      'Lleva un contador por cada objeto o enemigo añadido, que avanza automáticamente con cada recogida o victoria. La carga inicial del archivo no cuenta: solo las líneas nuevas hacen avanzar los contadores.\n\nEl botón + abre una búsqueda (objetos Y enemigos); en móvil, está siempre visible.\n\nEl interruptor de modo elige entre incremental (empieza en 0, sube sin límite), cuenta atrás (empieza en el objetivo, baja hasta 0 y luego lanza una alerta) y objetivo (empieza en 0, sube hasta el objetivo y luego lanza una alerta). Las fichas de 10 a 1000 se suman al objetivo (Alt+clic para restar). El objetivo se fija al crearlo.\n\nEl icono de receta (objetos con una receta de oficio conocida) crea en un clic una cuenta atrás por cada ingrediente, multiplicada por la cantidad deseada — incluidos los ingredientes que tienen a su vez receta, anidables en cascada. Un ingrediente ya seguido suma su objetivo.\n\nEn ordenador, hacer clic en una casilla la despliega (nombre completo, valor actual editable a mano, botón de reinicio) y arrastrar y soltar reordena el seguimiento.\n\nA partir de 3 entradas, el botón − activa la selección múltiple. Sin selección, «Eliminar todo» vacía el seguimiento sin pedir confirmación.',
     'help.fightHistory.title': 'Historial > Combates',
     'help.fightHistory.body':
-      'Conserva los últimos 30 combates de la sesión en memoria: resultado (victoria/derrota), número de turnos, duración, daño por personaje/enemigo, botín y XP. Conectado a una cuenta, el historial completo se guarda además sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo quedan disponibles estos últimos 30 combates.\n\nLos combates se pueden agrupar de tres formas (botones encima de la lista): Día, Origen (sesión actual separada del historial de la cuenta, solo conectado) y Tipo (por mazmorra/brecha, o por familia de monstruo).\n\nLos combates de una misma mazmorra (salas sucesivas e intento(s) de jefe) se agrupan automáticamente en una sola entrada plegada, para que el jefe no se pierda entre las salas — el número de combates y la duración total de la carrera sustituyen el detalle individual mientras permanece plegada. Cuando la piedra de esa mazmorra figura en el botín del combate del jefe, aparece una insignia sobre su ilustración.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante, o en su defecto el monstruo que más daño infligió.\n\nUn combate desplegado ofrece el mismo interruptor Total/Turno que el combate en curso para repasar el daño turno a turno, y el botín se puede ordenar por nombre, cantidad o rareza.\n\nClic derecho en un objeto del botín: añadirlo al seguimiento.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en una línea de hechizo del detalle de un combatiente: reasignar ese ataque a otro combatiente.',
+      'Conserva en memoria los 30 últimos combates de la sesión: resultado (victoria, derrota o interrumpido), número de turnos, duración, daño por personaje/enemigo, botín y XP. Conectado a una cuenta, el historial completo además se guarda sin límite y se puede cargar más atrás con el botón «Cargar más» (la flecha contigua elige el alcance: 1 semana, 1 mes o 1 año); como invitado, solo siguen disponibles esos 30 últimos combates.\n\nEl campo de búsqueda filtra los combates por enemigo, aliado u objeto de botín.\n\nLos combates se agrupan de tres formas (botones sobre la lista): Día, Origen (sesión en curso separada del historial de la cuenta, solo conectado) y Mazmorras y familias (por mazmorra/brecha, o por familia de monstruo). El botón contiguo pliega o despliega todos los grupos.\n\nLos combates de una misma mazmorra (salas sucesivas e intento(s) de jefe) se reúnen automáticamente en una sola entrada plegada, para no perder al jefe entre las salas — el número de combates y la duración total sustituyen al detalle individual mientras siga plegada. Cuando la piedra de esa mazmorra está en el botín del combate de jefe, aparece una insignia en su ilustración.\n\nLa ilustración del combate prioriza un jefe de mazmorra, luego un archimonstruo, un dominante o, en su defecto, el monstruo que más daño hizo.\n\nUn combate desplegado ofrece los mismos interruptores Acumulado/Turno y Daño/Armadura/Curación que el combate en curso. Su botín (solo victorias) se ordena por nombre, cantidad o rareza.\n\nClic derecho en un objeto del botín (o clic en su llave): corregir su identidad cuando varios objetos comparten ese nombre.\nClic derecho en un aliado: cambiar su clase/sexo mostrado.\nClic derecho en una línea de hechizo del detalle de un combatiente: reasignar ese ataque a otro combatiente.',
     'help.purchases.title': 'Historial > Compras',
     'help.purchases.body':
-      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto. Una recuperación de kamas de la Casa de Subastas (una ganancia de kamas fuera de combate y fuera de un intercambio) también se registra aquí, bajo la fuente «Casa de Subastas», sin objeto ni cantidad.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más»; como invitado, solo son visibles las compras de la sesión actual.\n\nClic derecho en un objeto: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
+      'Detecta automáticamente una compra (comerciante o Casa de Subastas) cuando una pérdida de kamas va seguida inmediatamente de la recogida de un objeto. Una recuperación de kamas de la Casa de Subastas (una ganancia de kamas fuera de combate y fuera de un intercambio) también se registra aquí, bajo la fuente «Casa de Subastas», sin objeto ni cantidad.\n\nAgrupadas por día, ordenables de más reciente a más antigua (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar día a día con el botón «Cargar más» (la flecha contigua elige el alcance: 1 semana, 1 mes o 1 año); como invitado, solo son visibles las compras de la sesión actual.\n\nClic derecho en un objeto: añadirlo al seguimiento con un clic («+ Seguir») y, cuando varios objetos comparten ese nombre, corregir su identidad.',
     'help.trades.title': 'Historial > Intercambios',
     'help.trades.body':
-      'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (personaje, objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles los intercambios de la sesión actual.\n\nClic derecho en un objeto dado o recibido: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
+      'Registra los intercambios de la ventana de trueque con OTRO jugador: objetos y kamas dados/recibidos.\n\nLos intercambios entre dos personajes de tu propio roster (declarados en Perfil > Personajes) NO se registran: no son intercambios reales con otro jugador.\n\nAgrupados por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (personaje, objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más» (la flecha contigua elige el alcance: 1 semana, 1 mes o 1 año); como invitado, solo son visibles los intercambios de la sesión actual.\n\nClic derecho en un objeto dado o recibido: corregir su identidad cuando varios objetos comparten ese nombre.',
     'help.pacts.title': 'Historial > Pacto',
     'help.pacts.body':
-      'La función «Pacto» del juego desvía el botín de tus combates hacia una dimensión separada: tus combates ya no muestran ningún botín propio, los objetos acumulados solo vuelven a ser visibles al extraerlos manualmente en el juego.\n\nEsta tarjeta solo aparece si se ha detectado al menos una extracción en el archivo de registro actualmente conectado. Cada extracción conserva su propia línea con fecha y hora, con la lista completa de objetos recogidos en ese momento — nunca fusionada con otra extracción.\n\nAgrupadas por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más»; como invitado, solo son visibles las extracciones de la sesión actual.\n\nClic derecho en un objeto extraído: corregir su identidad si se reconoció mal, y añadirlo al seguimiento con un clic.',
+      'La función «Pacto» del juego desvía el botín de tus combates hacia una dimensión separada: tus combates ya no muestran ningún botín propio, los objetos acumulados solo vuelven a ser visibles al extraerlos manualmente en el juego.\n\nSin cuenta, esta tarjeta solo aparece tras detectar una primera extracción en el archivo de registro; con una cuenta, siempre está visible. Cada extracción conserva su propia línea con fecha y hora, con la lista completa de objetos recogidos en ese momento — nunca fusionada con otra extracción.\n\nAgrupadas por día, ordenables de más reciente a más antiguo (o al revés) y filtrables con una búsqueda (nombre de objeto o fecha). Conectado a una cuenta, el historial completo se guarda sin límite y se puede cargar más allá con el botón «Cargar más» (la flecha contigua elige el alcance: 1 semana, 1 mes o 1 año); como invitado, solo son visibles las extracciones de la sesión actual.\n\nClic derecho en un objeto extraído: corregir su identidad cuando varios objetos comparten ese nombre.',
     'help.chat.title': 'Chat',
     'help.chat.body':
-      'Muestra los mensajes de chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo ciertos canales.\n\nSe pueden añadir filtros de texto personalizados (palabra clave + canal, o todos los canales): un mensaje que coincide se resalta y dispara una alerta sonora — los filtros ya no ocultan ningún mensaje, solo lo señalan.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente por el historial.',
+      'Muestra los mensajes del chat leídos en wakfu.log, clasificados por canal (Proximidad, Grupo, Gremio, Reclutamiento, Comercio, Comunidad).\n\nLos botones de canal permiten mostrar solo algunos canales.\n\nSe pueden añadir búsquedas personalizadas (texto + canal, o Global para todos los canales): buscan en el mensaje Y en el nombre de su autor. Un mensaje que coincide se resalta y lanza una alerta sonora — las búsquedas no ocultan ningún mensaje, solo lo señalan.\n\nCuando el chat está plegado en el menú, un contador indica allí el número de mensajes que coinciden con tus búsquedas.\n\nEl desplazamiento automático se detiene en cuanto subes manualmente; el botón «↓» vuelve abajo.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Elige qué objetos activan una alerta (sonido + aviso + confeti) al recogerlos. La búsqueda «+» permite añadir otros además de los objetos por defecto, que luego se pueden quitar individualmente (la × de la casilla) — a diferencia de los objetos por defecto, que nunca se pueden eliminar.\n\nActiva/desactiva el sonido por objeto con el icono de altavoz de cada casilla; el botón de prueba reproduce la alerta sonora para comprobar el ajuste sin esperar a una recogida real.\n\nEl aviso se cierra automáticamente tras el tiempo configurado aquí, o permanece hasta cerrarlo manualmente si esa opción está activada.',
-    'help.profileTheme.title': 'Perfil > Tema',
+      'Elige los objetos que lanzan una alerta (sonido + mensaje + confeti) al recogerlos. La búsqueda «+» permite añadir otros además de los 10 objetos predeterminados, que luego se pueden quitar uno a uno (cruz en la casilla) — a diferencia de los objetos predeterminados, que nunca se pueden eliminar.\n\nEl icono de altavoz de cada casilla activa o desactiva el sonido de ese objeto: sin sonido, el mensaje y el confeti se siguen mostrando. El botón de prueba reproduce el sonido para comprobar el ajuste sin esperar una recogida real.\n\nEl mensaje se cierra automáticamente tras el tiempo ajustado aquí (modo Auto), o permanece hasta cerrarlo a mano (modo Manual).',
+    'help.profileTheme.title': 'Perfil > Accesibilidad > Tema',
     'help.profileTheme.body':
       'Elige la apariencia de la aplicación: el tema oscuro original, o una de las 4 variantes claras (Pizarra, Pergamino, Nórdico, Alto contraste), cada una calibrada para seguir siendo legible sobre fondo claro.\n\nEsta elección es independiente del modo daltónico justo debajo, pero ambos se combinan: los colores adaptados al daltonismo se aplican sobre el tema activo, oscuro o claro.',
-    'help.profileColorblind.title': 'Perfil > Daltonismo',
+    'help.profileColorblind.title': 'Perfil > Accesibilidad > Daltonismo',
     'help.profileColorblind.body':
       'Adapta los colores más sensibles de la aplicación (victoria/derrota, daño elemental, rareza de objeto, canales de chat) al tipo de daltonismo elegido, para que sigan siendo distinguibles.\n\nProtanopia y deuteranopia se agrupan en una sola opción: ambas provocan la misma confusión rojo-verde, así que se aplica la misma corrección.\n\nLa vista previa antes/después bajo el selector muestra exactamente qué colores cambian con el perfil elegido.',
     'help.profileCharacters.title': 'Perfil > Personajes',
@@ -1887,50 +2401,309 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declara aquí los personajes de tus cuentas: esto permite que la aplicación te reconozca en los registros y distinga bien tus intercambios internos (entre tus propios personajes, nunca registrados) de los intercambios con otros jugadores.\n\nSe pueden añadir varias cuentas (multicuenta), cada una renombrable; el botón «Añadir personaje» abre un formulario (nombre, clase, sexo) para declarar cada personaje, y luego arrastra y suelta para reordenar los personajes de una cuenta.\n\nCada cuenta puede recibir un servidor de juego: se usa para asociar el historial y la insignia de servidor de la cabecera con el mundo correcto si juegas en varios servidores.',
     'help.profileConnection.title': 'Perfil > Inicio de sesión',
     'help.profileConnection.body':
-      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nUna cuenta usa un solo proveedor: inicia sesión siempre con el que usaste para crearla (Discord o Google).\n\nUna vez conectado, la página Cuenta (accesible desde este panel) permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar tus datos o eliminar tu cuenta.',
+      'Inicia sesión con Discord o Google para recuperar tus ajustes, personajes y seguimiento en todos tus dispositivos.\n\nIniciar sesión es opcional: sin cuenta la aplicación funciona exactamente igual y todos tus datos permanecen en este navegador.\n\nNo gestionamos ninguna contraseña. Solo se conserva tu correo verificado, para reconocer tu cuenta. El contenido del chat del juego nunca se envía.\n\nEn tu primer inicio de sesión, si ya existen datos localmente y/o en la cuenta, decides tú mismo qué hacer con ellos: nada se fusiona nunca automáticamente.\n\nUna cuenta usa un solo proveedor: inicia sesión siempre con el que usaste para crearla (Discord o Google).\n\nUna vez conectado, esta misma pestaña permite gestionar tus dispositivos conectados (revocación), forzar una sincronización inmediata, exportar todos tus datos o eliminar tu cuenta.\n\nCon o sin cuenta, los botones ↓ Exportar e ↑ Importar arriba del perfil guardan y restauran tus ajustes en un archivo JSON.',
 
     'onboarding.helpButton': 'Tutorial',
-    'onboarding.jumpToEnd': 'Ir al final',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Siguiente',
     'onboarding.finish': 'Empezar a jugar',
     'onboarding.help.replay': 'Repetir todo el tutorial',
-    'onboarding.help.replayDesc': 'Desde el principio, 9 pasos',
+    'onboarding.help.replayDesc': 'Desde el principio, {{count}} pasos',
     'onboarding.help.jumpTo': 'Ir directamente a…',
     'onboarding.welcome.title': 'Bienvenido a Wakfu Companion',
     'onboarding.welcome.desc':
-      'Este breve tutorial presenta, en unas pocas diapositivas, las principales funciones de la aplicación. Puedes volver a verlo en cualquier momento desde el botón de ayuda de la cabecera.',
-    'onboarding.tracker.title': 'Sigue tu progreso de un vistazo',
-    'onboarding.tracker.desc':
-      'Kamas, XP/h, suministros, objetivos personalizados: las tarjetas del Seguimiento se actualizan en directo con cada línea del registro, sin nada que escribir a mano.\n\nTambién puedes seguir allí un objeto o un monstruo concreto: el contador se actualiza automáticamente con cada recogida o victoria.\n\nTres modos a elegir: incremental (empieza en 0 y sube), cuenta atrás (empieza desde un objetivo que defines y baja hasta 0) u objetivo (empieza en 0 y sube hasta la cantidad que defines).\n\nEl campo de búsqueda filtra al instante los resultados por tipo, para encontrar la entrada correcta en un segundo.\n\nPara un objeto de receta, un clic crea la cuenta atrás de todos sus ingredientes — incluidos los que tienen su propia receta, anidables en cascada.',
-    'onboarding.tracker.label': 'Seguimiento',
-    'onboarding.damage.title': '¿Quién pega más fuerte?',
-    'onboarding.damage.desc':
-      'El contador de daño detalla cada combatiente, aliado o enemigo, turno a turno — con reasignación manual si la detección se equivoca.',
-    'onboarding.damage.label': 'Daño',
-    'onboarding.history.title': 'Todo tu historial, filtrable',
-    'onboarding.history.desc':
-      'Combates, compras e intercambios se archivan automáticamente y quedan disponibles en cualquier momento, ordenables y filtrables por día, origen o tipo.',
-    'onboarding.history.label': 'Historial',
-    'onboarding.chat.title': 'Todos los canales reunidos',
-    'onboarding.chat.desc':
-      'El chat del juego se muestra en directo, filtrable por canal, con alertas sobre palabras clave personalizadas — sin salir nunca de la aplicación.',
-    'onboarding.chat.label': 'Chat',
-    'onboarding.watchlist.title': 'No te pierdas ningún objeto',
-    'onboarding.watchlist.desc':
-      'Añade un objeto a tu lista de seguimiento: en cuanto caiga como botín, una alerta sonora y visual te avisará.',
-    'onboarding.watchlist.label': 'Alertas y seguimiento',
-    'onboarding.sessionRecap.title': 'El resumen de tu sesión',
-    'onboarding.sessionRecap.desc':
-      'Kamas ganados, combates ganados o perdidos, botín recogido: el resumen de sesión lo reúne todo, a un clic desde la cabecera.',
-    'onboarding.sessionRecap.label': 'Resumen de sesión',
-    'onboarding.profile.title': 'Personalízalo a tu gusto',
-    'onboarding.profile.desc':
-      'Tema, accesibilidad, sonidos de alerta, cuentas y personajes: todo se configura desde tu perfil.',
-    'onboarding.profile.label': 'Perfil y personajes',
-    'onboarding.done.title': '¡Ya estás listo!',
-    'onboarding.done.desc':
-      'Vuelve a encontrar este tutorial en cualquier momento desde el botón de ayuda de la cabecera. ¡Que te diviertas!',
+      'Tu compañero de juego lee el registro de Wakfu en directo: daño, botín, kamas, chat, alertas. Seis capítulos para recorrerlo todo, en orden o a la carta.',
+    'onboarding.chat.title': 'El chat del juego, filtrado para ti',
+    'onboarding.done.title': '¡Todo listo!',
+
+    'onboarding.toc': 'Índice',
+    'onboarding.skip': 'Ir al resumen',
+    'onboarding.intro': 'Introducción',
+    'onboarding.outro': 'Conclusión',
+    'onboarding.chapterNumber': 'Capítulo {{n}}',
+    'onboarding.chapterStep': '{{count}} paso',
+    'onboarding.chapterSteps': '{{count}} pasos',
+    'onboarding.track.label': 'Recorrido',
+    'onboarding.track.full': 'Completo',
+    'onboarding.track.essential': 'Esencial',
+    'onboarding.zoomHint': 'Clic para ampliar',
+    'onboarding.chapter.start.label': 'Empezar',
+    'onboarding.chapter.start.desc': 'Archivo de registro, cabecera',
+    'onboarding.chapter.tracker.label': 'Seguimiento',
+    'onboarding.chapter.tracker.desc': 'Contadores, modos, recetas',
+    'onboarding.chapter.fight.label': 'Combates',
+    'onboarding.chapter.fight.desc': 'En directo, correcciones, historial',
+    'onboarding.chapter.history.label': 'Historial y resumen',
+    'onboarding.chapter.history.desc': 'Compras, intercambios, pacto, balance',
+    'onboarding.chapter.chat.label': 'Chat y alertas',
+    'onboarding.chapter.chat.desc': 'Canales, búsquedas, botín',
+    'onboarding.chapter.custom.label': 'Personalizar',
+    'onboarding.chapter.custom.desc': 'Perfil, disposición, temas, cuenta',
+    'onboarding.welcome.eyebrow': 'Tutorial · {{count}} pasos',
+    'onboarding.done.eyebrow': '¡Vamos!',
+    'onboarding.done.intro': 'Dos reflejos para después:',
+    'onboarding.done.help1':
+      '<b>El «?» de cada panel</b> explica en detalle sus reglas y sus límites.',
+    'onboarding.done.help2':
+      '<b>El botón Tutorial de la cabecera</b> repite esta guía o salta directamente a un capítulo. En móvil, está en el menú ☰.',
+    'onboarding.done.outro': 'Abre Wakfu y entra en combate: tus cifras llegan solas. ¡Buen juego!',
+    'onboarding.setup.toc': 'Conectar wakfu.log',
+    'onboarding.setup.title': 'Conecta tu archivo de registro, una sola vez',
+    'onboarding.setup.lede':
+      'La aplicación lee wakfu.log de forma continua, en local en tu navegador. Ningún dato del juego sale a Internet.',
+    'onboarding.setup.l1':
+      '<b>Suelta el archivo</b>Arrastra wakfu.log a la zona o haz clic para abrirlo. Solo se acepta wakfu.log: wakfu_chat.log se rechaza.',
+    'onboarding.setup.l2':
+      '<b>Consejo</b>Una captura del explorador muestra dónde está el archivo.',
+    'onboarding.setup.l3':
+      '<b>Ruta por defecto</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — pégala en la barra de direcciones del explorador.',
+    'onboarding.setup.l4':
+      '<b>¿Por qué?</b>Explica por qué solo Chrome, Edge y Opera pueden seguir el archivo en directo.',
+    'onboarding.setup.m1':
+      '<b>Al volver</b> El navegador pide confirmación de nuevo. Basta un clic en «Reconectar».',
+    'onboarding.setup.m2':
+      '<b>Navegador incompatible</b> Firefox y Safari no pueden seguir un archivo en directo. Se ofrecen enlaces a navegadores compatibles.',
+    'onboarding.setup.m3':
+      '<b>En móvil</b> «Continuar sin archivo de registro» da acceso a tus personajes y a tu seguimiento con tu cuenta de Discord o Google, sin lectura en directo.',
+    'onboarding.header.toc': 'La cabecera',
+    'onboarding.header.title': 'La cabecera, tu panel de mando',
+    'onboarding.header.lede':
+      'Todo lo relativo a la sesión y a tus preferencias generales cabe en una sola línea.',
+    'onboarding.header.r1': 'Lado izquierdo: la sesión',
+    'onboarding.header.r2': 'Lado derecho: tus preferencias',
+    'onboarding.header.n1':
+      '<b>Servidor</b>: deducido del último de tus personajes visto en el registro. «Sin definir» abre Perfil › Personajes.',
+    'onboarding.header.n2':
+      '<b>Cambiar archivo</b>: olvida el archivo conectado y vuelve a la pantalla de conexión.',
+    'onboarding.header.n3':
+      '<b>Reiniciar</b>: pone la sesión a cero, incluidos los contadores del seguimiento y tus correcciones manuales.',
+    'onboarding.header.n4':
+      '<b>Tutorial</b>: repetir esta guía o saltar directamente a un capítulo.',
+    'onboarding.header.n5': '<b>Tema</b>: cambia entre oscuro y claro.',
+    'onboarding.header.n6': '<b>Idioma</b>: francés, inglés, español o portugués.',
+    'onboarding.header.n7':
+      '<b>Perfil</b>: tu avatar. La insignia «NEW» señala una sección del perfil aún no visitada.',
+    'onboarding.trackAdd.toc': 'Añadir un seguimiento',
+    'onboarding.trackAdd.title': 'Sigue un objeto o un monstruo en dos clics',
+    'onboarding.trackAdd.lede':
+      'El seguimiento cuenta automáticamente tus recogidas y victorias con cada nueva línea del registro.',
+    'onboarding.trackAdd.l1':
+      '<b>Elige el modo</b>Incremental, Cuenta atrás u Objetivo. El modo elegido pasa a ser el predeterminado.',
+    'onboarding.trackAdd.l2':
+      '<b>Busca</b>Objetos y monstruos en la misma búsqueda. Filtra por categoría, confirma con Intro.',
+    'onboarding.trackAdd.l3':
+      '<b>Objetivo rápido</b>Cada ficha 10 / 50 / 100 / 500 / 1000 se suma al objetivo. Alt+clic la resta.',
+    'onboarding.trackAdd.l4': '<b>Objetivo exacto</b>Escribe cualquier valor de 1 a 9 999.',
+    'onboarding.trackAdd.m1':
+      '<b>Resultados</b> Las entradas ya seguidas aparecen en gris. El icono de pergamino indica un objeto con receta.',
+    'onboarding.trackModes.toc': 'Los tres modos',
+    'onboarding.trackModes.title': 'Tres formas de contar',
+    'onboarding.trackModes.lede':
+      'Cada casilla muestra su modo: un número solo, o un contador «x / objetivo» con su icono.',
+    'onboarding.trackModes.m1':
+      '<b>Incremental</b> Empieza en 0 y sube sin límite. Ideal para medir una sesión de farmeo.',
+    'onboarding.trackModes.m2':
+      '<b>Cuenta atrás</b> Empieza en el objetivo y baja hasta 0. En 0: alerta «¡Contador agotado!».',
+    'onboarding.trackModes.m3':
+      '<b>Objetivo</b> Empieza en 0 y sube hasta el objetivo. Alcanzado: alerta «¡Objetivo alcanzado!».',
+    'onboarding.trackModes.tip':
+      'La carga inicial del archivo nunca cuenta: solo las líneas escritas después de la conexión hacen avanzar tus contadores.',
+    'onboarding.trackManage.toc': 'Gestionar las casillas',
+    'onboarding.trackManage.title': 'Corrige, reinicia, ordena',
+    'onboarding.trackManage.lede':
+      'Un clic en una casilla la despliega. Muestra el nombre completo y las acciones.',
+    'onboarding.trackManage.r1': 'Una casilla desplegada',
+    'onboarding.trackManage.a1':
+      '<b>Valor actual</b>: corrige el contador a mano. El objetivo se fija al crearla.',
+    'onboarding.trackManage.a2': '<b>Reiniciar</b>: vuelve a 0, o al objetivo en una cuenta atrás.',
+    'onboarding.trackManage.a3': '<b>Quitar</b>: confirmación «Sí / No».',
+    'onboarding.trackManage.a4':
+      'Arrastra y suelta una casilla para cambiar el orden (en ordenador).',
+    'onboarding.trackManage.r2': 'Limpieza en serie',
+    'onboarding.trackManage.b1':
+      '<b>Botón −</b>: aparece a partir de 3 entradas. Activa la selección múltiple.',
+    'onboarding.trackManage.b2':
+      '<b>Eliminar (n)</b>: quita la selección. Sin selección, el botón pasa a «Eliminar todo».',
+    'onboarding.trackManage.b3': 'Atención: la eliminación en serie no pide confirmación.',
+    'onboarding.recipe.toc': 'Recetas',
+    'onboarding.recipe.title': 'Toda una receta en un clic',
+    'onboarding.recipe.lede':
+      'Para un objeto fabricable, el seguimiento crea una cuenta atrás por cada ingrediente.',
+    'onboarding.recipe.r1': 'En la búsqueda',
+    'onboarding.recipe.a1':
+      '<b>Icono de pergamino</b>: abre la ventana de receta en lugar de añadir el propio objeto. Solo aparece para un objeto fabricable.',
+    'onboarding.recipe.r2': 'Cantidad e ingredientes',
+    'onboarding.recipe.b1': '<b>Cantidad</b>: los ingredientes se multiplican en consecuencia.',
+    'onboarding.recipe.b2':
+      '<b>Ingredientes</b>: un ingrediente con su propia receta puede sustituirse por sus subingredientes, en cascada.',
+    'onboarding.recipe.b3':
+      '<b>Validar</b>: crea cuentas atrás. Si un ingrediente ya se sigue, su objetivo se suma.',
+    'onboarding.fightLive.toc': 'Combate en directo',
+    'onboarding.fightLive.title': 'Quién pega más fuerte, en directo',
+    'onboarding.fightLive.lede':
+      'El combate en curso aparece al principio de la tarjeta Combates, alimentado línea a línea.',
+    'onboarding.fightLive.l1':
+      '<b>Acumulado / Turno</b>El total del combate, o el detalle de un turno. Navega con ‹ › o las flechas del teclado.',
+    'onboarding.fightLive.l2':
+      '<b>Daño · Armadura · Curación</b>Cambia la estadística que muestran las dos listas.',
+    'onboarding.fightLive.l3': '<b>Enemigos</b>Con su total. Los homónimos se numeran #1, #2…',
+    'onboarding.fightLive.l4':
+      '<b>Aliados</b>La barra bajo cada nombre muestra su parte del total. Un clic despliega el detalle por hechizo y elemento.',
+    'onboarding.fightLive.tip':
+      '¿Varias cuentas en combate a la vez? Aparece una pestaña «Combate 1, Combate 2…» para cada una.',
+    'onboarding.fightViews.toc': 'Turno a turno y estadísticas',
+    'onboarding.fightViews.title': 'Tres lecturas de un mismo combate',
+    'onboarding.fightViews.m1':
+      '<b>Por hechizo</b> Haz clic en un combatiente: cada hechizo con su daño, coloreado por elemento.',
+    'onboarding.fightViews.m2':
+      '<b>Turno a turno</b> El interruptor «Turno» aísla un turno. Las flechas recorren el combate.',
+    'onboarding.fightViews.m3':
+      '<b>Armadura y curaciones</b> Las mismas listas, para la armadura dada o los PV devueltos.',
+    'onboarding.fightFix.toc': 'Corregir una atribución',
+    'onboarding.fightFix.title': '¿El registro se equivoca? Corrígelo',
+    'onboarding.fightFix.lede': 'El clic derecho abre las correcciones. Se recuerdan para después.',
+    'onboarding.fightFix.r1': 'Clic derecho en un hechizo',
+    'onboarding.fightFix.a1':
+      'Reasigna este hechizo y su daño a otro combatiente, aliado o enemigo. Disponible en la estadística Daño.',
+    'onboarding.fightFix.r2': 'Clic derecho en un aliado',
+    'onboarding.fightFix.b1': 'Elige su clase y su sexo, en iconos pequeños o en retratos grandes.',
+    'onboarding.fightFix.tip':
+      'Dos gestos más: <b>arrastrar un nombre</b> de una lista a otra para corregir un aliado clasificado como enemigo (solo combate en curso), y <b>clic derecho en un enemigo</b> para añadirlo al seguimiento.',
+    'onboarding.fightHistory.toc': 'Historial de combates',
+    'onboarding.fightHistory.title': 'Cada combate, archivado y consultable',
+    'onboarding.fightHistory.lede':
+      'Los 30 últimos combates quedan en memoria. Con una cuenta, el historial completo se conserva sin límite.',
+    'onboarding.fightHistory.l1': '<b>Búsqueda</b>Filtra por enemigo, aliado u objeto de botín.',
+    'onboarding.fightHistory.l2':
+      '<b>Agrupar</b>Por Día, por Origen (sesión o cuenta, conectado) o por Mazmorras y familias.',
+    'onboarding.fightHistory.l3':
+      '<b>Plegar todo</b>Pliega o despliega todos los grupos de una vez.',
+    'onboarding.fightHistory.l4':
+      '<b>Resultado</b>Victoria, Derrota o Interrumpido. Las salas de una mazmorra se agrupan tras el jefe.',
+    'onboarding.fightHistory.m1':
+      '<b>Un combate desplegado</b> Los mismos interruptores que en directo, botín ordenable por nombre, cantidad o rareza (solo victorias), XP por personaje.',
+    'onboarding.fightHistory.m2':
+      '<b>Conectado: tres agrupaciones</b> El modo Origen separa la sesión en curso del historial de la cuenta.',
+    'onboarding.ledger.toc': 'Compras, intercambios, pacto',
+    'onboarding.ledger.title': 'Tus kamas, bajo control',
+    'onboarding.ledger.lede':
+      'Tres registros automáticos, agrupados por día, con búsqueda y orden. Conectado: «Cargar más» retrocede por semana, mes o año.',
+    'onboarding.ledger.m1':
+      '<b>Compras</b> Una pérdida de kamas seguida de una recogida se convierte en compra. Las ventas cobradas de la Casa de Subastas se añaden. Clic derecho: «+ Seguir» o corregir el objeto.',
+    'onboarding.ledger.m2':
+      '<b>Intercambios</b> Kamas y objetos dados o recibidos con otro jugador. Los intercambios entre tus propios personajes se ignoran.',
+    'onboarding.ledger.m3':
+      '<b>Pacto</b> Cada extracción de pacto, con fecha y hora y la lista de objetos recuperados.',
+    'onboarding.recap.toc': 'Resumen',
+    'onboarding.recap.title': 'El balance, de la sesión al año',
+    'onboarding.recap.lede':
+      'La tarjeta Resumen está plegada en el menú por defecto. Un clic en «Resumen de sesión» la despliega.',
+    'onboarding.recap.r1': 'Sesión',
+    'onboarding.recap.a1':
+      'XP, kamas netos (el detalle aparece al pasar el ratón), victorias-derrotas, desafíos, duración, y luego XP por personaje y botín.',
+    'onboarding.recap.r2': 'Día, Mes, Año',
+    'onboarding.recap.b1': '<b>Periodo</b>: con una cuenta, agrega todo tu historial.',
+    'onboarding.recap.b2': '<b>Navegación</b>: ‹ › o el calendario para elegir el periodo.',
+    'onboarding.recap.b3': '<b>Detalle</b>: acumulado, por mazmorra y familia, o por tipo.',
+    'onboarding.chat.toc': 'Chat',
+    'onboarding.chat.lede':
+      'Los mensajes llegan en directo. El desplazamiento se pausa en cuanto subes.',
+    'onboarding.chat.l1': '<b>Canales</b>Haz clic en un canal para mostrarlo u ocultarlo.',
+    'onboarding.chat.l2':
+      '<b>Búsqueda</b>Una palabra + un canal (o Global). Busca en el mensaje y en el autor.',
+    'onboarding.chat.l3':
+      '<b>Tus búsquedas</b>Un mensaje que coincide se resalta y suena. No se oculta nada.',
+    'onboarding.chat.m1':
+      '<b>Chat plegado</b> Plegado en el menú, el chat muestra un contador de mensajes que coinciden con tus búsquedas.',
+    'onboarding.alerts.toc': 'Alertas de botín',
+    'onboarding.alerts.title': 'No te pierdas nunca más un drop',
+    'onboarding.alerts.lede': 'Cae un objeto de tu lista: sonido, mensaje y confeti.',
+    'onboarding.alerts.r1': 'La alerta',
+    'onboarding.alerts.a1':
+      'Se cierra sola tras el tiempo elegido, o permanece hasta que la cierres.',
+    'onboarding.alerts.r2': 'Perfil › Alertas sonoras',
+    'onboarding.alerts.b1': '<b>Probar</b>: reproduce el sonido sin esperar un drop real.',
+    'onboarding.alerts.b2': '<b>Cierre</b>: Auto (tiempo en segundos) o Manual.',
+    'onboarding.alerts.b3': '<b>Añadir</b>: cualquier objeto, además de los 10 predeterminados.',
+    'onboarding.alerts.b4':
+      '<b>Altavoz</b>: silencia este objeto; el mensaje se sigue mostrando. La cruz quita un objeto añadido.',
+    'onboarding.identity.toc': 'Avatar y apodo',
+    'onboarding.identity.title': 'Tu avatar, tu apodo',
+    'onboarding.identity.lede': 'Se muestran en la cabecera y en tu perfil.',
+    'onboarding.identity.l1': '<b>Apodo</b>Lápiz para editar, Intro para validar.',
+    'onboarding.identity.l2':
+      '<b>Galería</b>Galería MMO (retratos de clase) o fan-arts de Barbottine, Hoopyon, Papetona.',
+    'onboarding.identity.l3':
+      '<b>Mosaico</b>Haz clic en un retrato. Al pasar el ratón se indican la clase y el sexo.',
+    'onboarding.layout.toc': 'Disposición del panel',
+    'onboarding.layout.title': 'Un panel a tu medida',
+    'onboarding.layout.lede':
+      'Perfil › Personalización. El esquema se actualiza con cada ajuste y «Restablecer» vuelve a la disposición original.',
+    'onboarding.layout.m1':
+      '<b>Posición del menú</b> Izquierda, derecha, o en franja bajo la cabecera.',
+    'onboarding.layout.m2':
+      '<b>Posición de los objetivos</b> Fila arriba o abajo, columna a la izquierda o a la derecha.',
+    'onboarding.layout.m3':
+      '<b>Agrupación del historial</b> Combates, Compras, Intercambios, Pacto: una tarjeta cada uno, o agrupados en pestañas (2 como mínimo).',
+    'onboarding.layout.m4':
+      '<b>Composición</b> Reparto igual, o una tarjeta destacada con las demás apiladas al lado.',
+    'onboarding.layout.m5': '<b>Ejemplo</b> Menú y objetivos a la izquierda.',
+    'onboarding.layout.m6': '<b>Ejemplo</b> Reparto igual, objetivos abajo.',
+    'onboarding.layout.tip':
+      'Cada tarjeta tiene un botón de plegado arriba a la derecha: pasa al menú, y un clic la vuelve a abrir.',
+    'onboarding.themes.toc': 'Temas y accesibilidad',
+    'onboarding.themes.title': 'Cinco ambientes, tres perfiles de color',
+    'onboarding.themes.lede': 'Perfil › Accesibilidad. El tema y el modo daltónico se combinan.',
+    'onboarding.themes.m1': '<b>Oscuro</b>',
+    'onboarding.themes.m2': '<b>Pizarra</b>',
+    'onboarding.themes.m3': '<b>Pergamino</b>',
+    'onboarding.themes.m4': '<b>Nórdico</b>',
+    'onboarding.themes.m5': '<b>Alto contraste</b>',
+    'onboarding.themes.m6':
+      '<b>Modo daltónico</b> Protanopia/deuteranopia o tritanopia: la vista previa muestra cada color antes → después (victoria/derrota, elementos, rarezas, canales).',
+    'onboarding.roster.toc': 'Personajes y cuentas',
+    'onboarding.roster.title': 'Declara tus personajes',
+    'onboarding.roster.lede':
+      'La aplicación te reconoce en el registro e ignora los intercambios entre tus propios personajes.',
+    'onboarding.roster.r1': 'Cuentas y servidor',
+    'onboarding.roster.a1': 'Varias cuentas posibles, cada una renombrable (salvo «Principal»).',
+    'onboarding.roster.a2':
+      'Elige el servidor de cada cuenta: alimenta la insignia de la cabecera.',
+    'onboarding.roster.a3': 'Arrastra y suelta los personajes para cambiar su orden.',
+    'onboarding.roster.r2': 'Añadir un personaje',
+    'onboarding.roster.b1':
+      'Nombre, clase y sexo. La clase ya no se puede cambiar tras la creación: elimina y vuelve a crear el personaje si hace falta.',
+    'onboarding.account.toc': 'Cuenta y sincronización',
+    'onboarding.account.title': 'Tus datos, en todos tus dispositivos',
+    'onboarding.account.lede':
+      'Iniciar sesión es opcional. Sin cuenta, todo se queda en este navegador.',
+    'onboarding.account.r1': 'Invitado',
+    'onboarding.account.a1':
+      'Inicio de sesión con Discord o Google, sin contraseña. «Eliminar los datos de este dispositivo» empieza de cero.',
+    'onboarding.account.r2': 'Conectado',
+    'onboarding.account.b1': 'Dispositivos conectados: revoca uno o todos.',
+    'onboarding.account.b2':
+      '«Sincronizar ahora» y «Exportar (archivo)»: todos tus datos, historial del servidor incluido.',
+    'onboarding.account.b3': 'Cerrar sesión, o eliminar la cuenta.',
+    'onboarding.account.b4': 'El contenido del chat del juego nunca se envía.',
+    'onboarding.account.tip':
+      'También sin cuenta, <b>↓ Exportar</b> e <b>↑ Importar</b> (arriba del perfil) guardan tus ajustes en un archivo JSON.',
+    'onboarding.mobile.toc': 'En móvil',
+    'onboarding.mobile.title': 'También en tu bolsillo',
+    'onboarding.mobile.lede': 'En una pantalla pequeña, el panel pasa a pestañas.',
+    'onboarding.mobile.m1': '<b>Pestañas</b> Seguimiento, Combates, Historial, Chat, Resumen.',
+    'onboarding.mobile.m2': '<b>Seguimiento</b> Modo y búsqueda siempre visibles.',
+    'onboarding.mobile.m3': '<b>Menú ☰</b> Tema, idioma, servidor, tutorial, perfil.',
+    'onboarding.mobile.m4': '<b>Todas las pestañas</b> Una hoja lista cada tarjeta.',
+    'help.recap.title': 'Resumen',
+    'help.recap.body':
+      'Resume tu actividad: XP ganada, kamas netos (al pasar el ratón se detallan combates, ventas en la Casa de Subastas, compras e intercambios), victorias-derrotas, desafíos superados-fallidos y duración, y luego XP por personaje y botín.\n\nLa tarjeta está plegada por defecto en el menú del panel: un clic la despliega, su botón de plegado la vuelve a plegar.\n\nSin cuenta, solo está disponible la sesión en curso (desde la conexión del archivo).\n\nConectado a una cuenta, el interruptor Sesión/Día/Mes/Año agrega todo tu historial en el periodo elegido. Las flechas ‹ › pasan al periodo anterior o siguiente, y el calendario permite elegir uno directamente. El interruptor contiguo muestra el detalle acumulado, por mazmorra y familia de monstruo, o por tipo.',
+    'help.profileIdentity.title': 'Perfil > Identidad',
+    'help.profileIdentity.body':
+      'Elige el apodo y el avatar que se muestran en la cabecera y en tu perfil.\n\nEl apodo se edita con el lápiz: Intro valida, Escape cancela.\n\nLa «Galería MMO» ofrece el retrato de cada clase, en versión masculina y femenina. Las galerías de fan-art (Barbottine, Hoopyon, Papetona) se cargan desde el sitio de Ankama.\n\nHaz clic en un retrato para elegirlo; al pasar el ratón se indican la clase y el sexo.',
+    'help.profileLayout.title': 'Perfil > Personalización',
+    'help.profileLayout.body':
+      'Organiza el panel: el esquema se actualiza con cada ajuste y «Restablecer» vuelve a la disposición original.\n\nPosición del menú: barra vertical a la izquierda o a la derecha, o franja bajo la cabecera. El menú lista las tarjetas plegadas: un clic vuelve a abrir una.\n\nPosición de los objetivos (tus seguimientos): fila arriba o abajo, columna a la izquierda o a la derecha.\n\nAgrupación del historial: Combates, Compras, Intercambios y Pacto tienen cada uno su tarjeta, o se agrupan en pestañas en una tarjeta «Historial» (al menos dos marcados). Por defecto, Compras, Intercambios y Pacto están agrupados.\n\nComposición: reparto igual de las tarjetas, o una tarjeta destacada con las demás apiladas al lado, en el lado que elijas.\n\nOrden de los bloques: arrastra una tarjeta del esquema sobre otra para intercambiarlas, o usa las flechas que aparecen al pasar el ratón.\n\nConectado a una cuenta, esta disposición se sincroniza entre tus dispositivos. En móvil, las tarjetas pasan a ser pestañas.',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-{{year}} Ankama Studio. Todos los derechos reservados. WAKFU y ANKAMA son marcas o marcas registradas de Ankama en Francia y/o en otros países.\nEl sitio WAKFU-COMPANION es un sitio no oficial sin ningún vínculo con Ankama.',
@@ -2364,7 +3137,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.dashboardLayout.kpi.right.desc': 'A mesma lista vertical, ao longo da borda direita.',
     'profile.dashboardLayout.historyTitle': 'Agrupamento do histórico',
     'profile.dashboardLayout.historyDesc':
-      'Por padrão, Combates, Compras e Trocas têm cada um seu próprio cartão. Marque pelo menos dois para agrupá-los em um único bloco Histórico.',
+      'Por padrão, Compras, Trocas e Pacto ficam agrupados em «Histórico» e Combates tem seu próprio cartão. Marque pelo menos dois para formar um bloco Histórico.',
     'profile.dashboardLayout.historyOn': 'Agrupada em «Histórico».',
     'profile.dashboardLayout.historyOff': 'Seu próprio cartão.',
     'profile.dashboardLayout.historyGroupNeedsTwo': 'Marque pelo menos 2 para agrupá-las.',
@@ -2446,7 +3219,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.soundItemPlaceholder': 'Adicionar um item para monitorar…',
     'profile.followedItemsLabel': 'Itens monitorados',
     'profile.soundOn': 'Som ativado',
-    'profile.soundOff': 'Som desativado',
+    'profile.soundOff': 'Som desativado (mensagem mantida)',
     'profile.lootAlertTitle': 'Item obtido!',
     'profile.closeToast': 'Fechar',
     'profile.lootAlertSoundBlocked':
@@ -2554,32 +3327,32 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'help.tooltip': 'Como funciona?',
     'help.combat.title': 'Combate em curso',
     'help.combat.body':
-      'Este painel mostra em tempo real o dano causado por cada aliado e inimigo, lido diretamente do wakfu.log durante o combate. Uma barra colorida sob cada nome representa sua parte do dano, e vários combatentes com o mesmo nome (ex. vários inimigos idênticos) são numerados #1, #2… para continuarem distinguíveis.\n\nQuando há vários combates simultâneos (multiconta), abas permitem escolher qual exibir.\n\nO interruptor Total/Turno alterna entre o dano acumulado de todo o combate e o detalhe de um turno específico, navegável passo a passo.\n\nClique em um nome para expandir o detalhe de dano por feitiço e elemento.\n\nArraste um nome de um lado para o outro para corrigir um aliado/inimigo mal classificado.\n\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em um inimigo: adicioná-lo ao acompanhamento (Acompanhamento).\nClique com o botão direito em uma linha de feitiço (detalhe expandido): reatribuir esse ataque e seu dano a outro combatente, em caso de erro de atribuição automática.\n\nO botão de recolher (canto superior direito) reduz este painel a uma pequena aba flutuante na borda da tela — sempre acessível com um clique enquanto você joga, com um selo indicando o número de combates em andamento.',
+      'O combate em curso aparece no topo do cartão Combates, lido em tempo real no wakfu.log. Vários combatentes com o mesmo nome (ex. inimigos idênticos) são numerados #1, #2… para continuarem distintos.\n\nCom combates simultâneos (várias contas), as abas "Combate 1, Combate 2…" permitem escolher qual exibir.\n\nO seletor Acumulado/Turno alterna entre o total do combate e o detalhe de um turno específico, navegável com ‹ › ou as setas do teclado. O seletor Dano/Armadura/Cura muda a estatística exibida. A barra colorida sob cada nome representa sua parte do total.\n\nClicar em um nome expande o detalhe por feitiço e elemento.\n\nArrastar e soltar um nome de uma lista para a outra corrige um aliado ou inimigo mal classificado.\n\nClique direito em um aliado: mudar a classe/sexo exibido.\nClique direito em um inimigo: adicioná-lo ao acompanhamento.\nClique direito em uma linha de feitiço (estatística Dano): reatribuir esse ataque e seu dano a outro combatente, quando a atribuição automática errou.\n\nUm clique no cabeçalho "Combate em curso" o recolhe; seu selo indica o número de combates ativos.',
     'help.tracker.title': 'Acompanhamento',
     'help.tracker.body':
-      'Acompanha um contador para cada item ou inimigo adicionado: quantidade coletada/derrotada desde a conexão, incrementada automaticamente a cada coleta/vitória.\n\nO botão + abre uma busca (itens E inimigos) para adicionar uma nova entrada ao acompanhamento.\n\nO seletor de modo escolhe entre contagem crescente (começa em 0, sobe sem limite), contagem regressiva (começa de um alvo que você define, desce até 0 e então dispara um alerta) e meta (começa em 0, sobe até o alvo que você define e então dispara um alerta).\n\nO ícone de receita (itens com uma receita de profissão conhecida) cria com um clique uma contagem regressiva para cada ingrediente, multiplicada pela quantidade desejada — incluindo ingredientes que têm sua própria receita, aninhável em cascata.\n\nClique em um bloco para expandi-lo e ver seu nome completo e um botão de redefinição; arraste um bloco para reordenar o acompanhamento. O botão − ativa um modo de seleção múltipla para excluir várias entradas de uma vez.',
+      'Mantém um contador para cada item ou inimigo adicionado, que avança automaticamente a cada coleta ou vitória. O carregamento inicial do arquivo não conta: só as novas linhas fazem os contadores avançar.\n\nO botão + abre uma busca (itens E inimigos); no celular, ela fica sempre visível.\n\nO seletor de modo escolhe entre incremental (começa em 0, sobe sem limite), contagem regressiva (começa na meta, desce até 0 e então dispara um alerta) e meta (começa em 0, sobe até a meta e então dispara um alerta). As fichas de 10 a 1000 se somam à meta (Alt+clique para subtrair). A meta é fixada na criação.\n\nO ícone de receita (itens com uma receita de profissão conhecida) cria em um clique uma contagem regressiva para cada ingrediente, multiplicada pela quantidade desejada — incluindo ingredientes que também têm receita, aninháveis em cascata. Um ingrediente já acompanhado tem sua meta somada.\n\nNo computador, clicar em um bloco o expande (nome completo, valor atual editável à mão, botão de zerar) e arrastar e soltar reordena o acompanhamento.\n\nA partir de 3 entradas, o botão − ativa a seleção múltipla. Sem seleção, "Excluir tudo" esvazia o acompanhamento sem pedir confirmação.',
     'help.fightHistory.title': 'Histórico > Combates',
     'help.fightHistory.body':
-      'Guarda os últimos 30 combates da sessão em memória: resultado (vitória/derrota), número de turnos, duração, dano por personagem/inimigo, butim e XP. Conectado a uma conta, o histórico completo também é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas esses últimos 30 combates ficam disponíveis.\n\nOs combates podem ser agrupados de três formas (botões acima da lista): Dia, Origem (sessão atual separada do histórico da conta, apenas conectado) e Tipo (por masmorra/brecha, ou por família de monstro).\n\nOs combates de uma mesma masmorra (salas sucessivas e tentativa(s) de chefe) são automaticamente reunidos em uma única entrada recolhida, para o chefe não se perder no meio das salas — o número de combates e a duração total da corrida substituem o detalhe individual enquanto ela permanece recolhida. Quando a pedra dessa masmorra está no butim do combate do chefe, um selo aparece sobre sua ilustração.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante, ou senão o monstro que causou mais dano.\n\nUm combate expandido oferece o mesmo interruptor Total/Turno do combate em curso para rever o dano turno a turno, e o butim pode ser ordenado por nome, quantidade ou raridade.\n\nClique com o botão direito em um item do butim: adicioná-lo ao acompanhamento.\nClique com o botão direito em um aliado: mudar a classe/sexo exibidos.\nClique com o botão direito em uma linha de feitiço no detalhe de um combatente: reatribuir esse ataque a outro combatente.',
+      'Guarda na memória os 30 últimos combates da sessão: resultado (vitória, derrota ou interrompido), número de turnos, duração, dano por personagem/inimigo, butim e XP. Conectado a uma conta, o histórico completo também é salvo sem limite e pode ser carregado mais para trás com o botão "Carregar mais" (a seta ao lado escolhe o alcance: 1 semana, 1 mês ou 1 ano); como convidado, só esses 30 últimos combates continuam disponíveis.\n\nO campo de busca filtra os combates por inimigo, aliado ou item de butim.\n\nOs combates se agrupam de três formas (botões acima da lista): Dia, Origem (sessão em curso separada do histórico da conta, só conectado) e Masmorras e famílias (por masmorra/brecha, ou por família de monstro). O botão ao lado recolhe ou expande todos os grupos.\n\nOs combates de uma mesma masmorra (salas sucessivas e tentativa(s) de chefe) são reunidos automaticamente em uma única entrada recolhida, para não perder o chefe no meio das salas — o número de combates e a duração total substituem o detalhe individual enquanto ela ficar recolhida. Quando a pedra dessa masmorra está no butim do combate de chefe, um selo aparece na sua ilustração.\n\nA ilustração do combate prioriza um chefe de masmorra, depois um arquimonstro, um dominante ou, na falta, o monstro que causou mais dano.\n\nUm combate expandido oferece os mesmos seletores Acumulado/Turno e Dano/Armadura/Cura do combate em curso. Seu butim (só vitórias) se ordena por nome, quantidade ou raridade.\n\nClique direito em um item do butim (ou clique na sua chave): corrigir sua identidade quando vários itens têm esse nome.\nClique direito em um aliado: mudar a classe/sexo exibido.\nClique direito em uma linha de feitiço do detalhe de um combatente: reatribuir esse ataque a outro combatente.',
     'help.purchases.title': 'Histórico > Compras',
     'help.purchases.body':
-      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item. Um recebimento de kamas do Leilão (um ganho de kamas fora de combate e fora de uma troca) também é registrado aqui, na fonte «Leilão», sem item nem quantidade.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais"; como convidado, apenas as compras da sessão atual ficam visíveis.\n\nClique com o botão direito em um item: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
+      'Detecta automaticamente uma compra (comerciante ou Leilão) quando uma perda de kamas é imediatamente seguida da coleta de um item. Um recebimento de kamas do Leilão (um ganho de kamas fora de combate e fora de uma troca) também é registrado aqui, na fonte «Leilão», sem item nem quantidade.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado dia a dia com o botão "Carregar mais" (a seta ao lado escolhe o alcance: 1 semana, 1 mês ou 1 ano); como convidado, apenas as compras da sessão atual ficam visíveis.\n\nClique com o botão direito em um item: adicioná-lo ao acompanhamento em um clique ("+ Acompanhar") e, quando vários itens têm esse nome, corrigir sua identidade.',
     'help.trades.title': 'Histórico > Trocas',
     'help.trades.body':
-      'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (personagem, item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as trocas da sessão atual ficam visíveis.\n\nClique com o botão direito em um item dado ou recebido: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
+      'Registra as trocas da janela de negociação com OUTRO jogador: itens e kamas dados/recebidos.\n\nTrocas entre dois personagens do seu próprio roster (declarados em Perfil > Personagens) NÃO são registradas: não são trocas reais com outro jogador.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (personagem, item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais" (a seta ao lado escolhe o alcance: 1 semana, 1 mês ou 1 ano); como convidado, apenas as trocas da sessão atual ficam visíveis.\n\nClique com o botão direito em um item dado ou recebido: corrigir sua identidade quando vários itens têm esse nome.',
     'help.pacts.title': 'Histórico > Pacto',
     'help.pacts.body':
-      'A feature "Pacto" do jogo desvia o butim dos seus combates para uma dimensão separada: seus combates deixam então de mostrar qualquer butim próprio, os itens acumulados só voltam a ficar visíveis no momento de uma extração manual no jogo.\n\nEste cartão só aparece se pelo menos uma extração foi detectada no arquivo de log atualmente conectado. Cada extração mantém sua própria linha, com data e hora, com a lista completa dos itens coletados naquele momento — nunca fundida com outra extração.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais"; como convidado, apenas as extrações da sessão atual ficam visíveis.\n\nClique com o botão direito em um item extraído: corrigir sua identidade se foi mal reconhecido, e adicioná-lo ao acompanhamento em um clique.',
+      'A feature "Pacto" do jogo desvia o butim dos seus combates para uma dimensão separada: seus combates deixam então de mostrar qualquer butim próprio, os itens acumulados só voltam a ficar visíveis no momento de uma extração manual no jogo.\n\nSem conta, este cartão só aparece depois de uma primeira extração detectada no arquivo de log; com uma conta, ele fica sempre visível. Cada extração mantém sua própria linha, com data e hora, com a lista completa dos itens coletados naquele momento — nunca fundida com outra extração.\n\nAgrupadas por dia, ordenáveis da mais recente à mais antiga (ou o inverso) e filtráveis por uma busca (nome do item ou data). Conectado a uma conta, o histórico completo é salvo sem limite e pode ser carregado além disso com o botão "Carregar mais" (a seta ao lado escolhe o alcance: 1 semana, 1 mês ou 1 ano); como convidado, apenas as extrações da sessão atual ficam visíveis.\n\nClique com o botão direito em um item extraído: corrigir sua identidade quando vários itens têm esse nome.',
     'help.chat.title': 'Chat',
     'help.chat.body':
-      'Mostra as mensagens de chat lidas no wakfu.log, organizadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir apenas alguns canais.\n\nFiltros de texto personalizados (palavra-chave + canal, ou todos os canais) podem ser adicionados: uma mensagem correspondente é destacada e dispara um alerta sonoro — os filtros não ocultam mais nenhuma mensagem, apenas a sinalizam.\n\nA rolagem automática para assim que você rola manualmente para cima no histórico.',
+      'Exibe as mensagens do chat lidas no wakfu.log, classificadas por canal (Proximidade, Grupo, Guilda, Recrutamento, Comércio, Comunidade).\n\nOs botões de canal permitem exibir só alguns canais.\n\nBuscas personalizadas (texto + canal, ou Global para todos os canais) podem ser adicionadas: elas olham a mensagem E o nome do autor. Uma mensagem correspondente é destacada e dispara um alerta sonoro — as buscas não ocultam nenhuma mensagem, só a sinalizam.\n\nQuando o chat está recolhido no menu, um contador ali indica o número de mensagens que correspondem às suas buscas.\n\nA rolagem automática para assim que você sobe manualmente; o botão "↓" volta para baixo.',
     'help.profileAlerts.title': 'Perfil > Alertas',
     'help.profileAlerts.body':
-      'Escolha quais itens disparam um alerta (som + toast + confete) ao serem coletados. A busca "+" permite adicionar outros além dos itens padrão, que depois podem ser removidos individualmente (o × do bloco) — diferente dos itens padrão, que nunca podem ser removidos.\n\nAtive/desative o som por item usando o ícone de alto-falante de cada bloco; o botão de teste reproduz o alerta sonoro para verificar o ajuste sem esperar uma coleta real.\n\nO toast fecha automaticamente após o tempo definido aqui, ou permanece até ser fechado manualmente se essa opção estiver ativada.',
-    'help.profileTheme.title': 'Perfil > Tema',
+      'Escolha os itens que disparam um alerta (som + mensagem + confete) ao serem coletados. A busca "+" permite adicionar outros além dos 10 itens padrão, que depois podem ser removidos um a um (cruz no bloco) — ao contrário dos itens padrão, que nunca podem ser excluídos.\n\nO ícone de alto-falante de cada bloco ativa ou desativa o som desse item: sem som, a mensagem e o confete continuam aparecendo. O botão de teste toca o som para verificar a configuração sem esperar uma coleta real.\n\nA mensagem fecha automaticamente após o tempo definido aqui (modo Auto), ou fica até ser fechada manualmente (modo Manual).',
+    'help.profileTheme.title': 'Perfil > Acessibilidade > Tema',
     'help.profileTheme.body':
       'Escolha a aparência do aplicativo: o tema escuro original, ou uma das 4 variantes claras (Ardósia, Pergaminho, Nórdico, Alto contraste), cada uma calibrada para continuar legível em fundo claro.\n\nEssa escolha é independente do modo daltônico logo abaixo, mas os dois se combinam: as cores adaptadas ao daltonismo se aplicam sobre o tema ativo, escuro ou claro.',
-    'help.profileColorblind.title': 'Perfil > Daltonismo',
+    'help.profileColorblind.title': 'Perfil > Acessibilidade > Daltonismo',
     'help.profileColorblind.body':
       'Adapta as cores mais sensíveis do aplicativo (vitória/derrota, dano elemental, raridade de item, canais de chat) ao tipo de daltonismo escolhido, para que continuem distinguíveis.\n\nProtanopia e deuteranopia são agrupadas em uma única opção: ambas causam a mesma confusão vermelho-verde, logo a mesma correção se aplica.\n\nA pré-visualização antes/depois abaixo do seletor mostra exatamente quais cores mudam com o perfil escolhido.',
     'help.profileCharacters.title': 'Perfil > Personagens',
@@ -2587,50 +3360,305 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'Declare aqui os personagens das suas contas: isso permite que o aplicativo te reconheça nos logs e distinga corretamente suas trocas internas (entre seus próprios personagens, nunca registradas) das trocas com outros jogadores.\n\nVárias contas podem ser adicionadas (multiconta), cada uma renomeável; o botão "Adicionar personagem" abre um formulário (nome, classe, sexo) para declarar cada personagem, e depois arraste e solte para reordenar os personagens de uma conta.\n\nCada conta pode receber um servidor de jogo: usado para associar o histórico e o selo de servidor do cabeçalho ao mundo correto quando você joga em vários servidores.',
     'help.profileConnection.title': 'Perfil > Iniciar sessão',
     'help.profileConnection.body':
-      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nUma conta usa um único fornecedor: inicie sessão sempre com aquele que usou para criá-la (Discord ou Google).\n\nDepois de conectado, a página Conta (acessível a partir deste painel) permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar os seus dados ou eliminar a sua conta.',
+      'Inicie sessão com Discord ou Google para recuperar as suas definições, personagens e acompanhamento em todos os seus dispositivos.\n\nIniciar sessão é opcional: sem conta a aplicação funciona exatamente da mesma forma e todos os seus dados ficam neste navegador.\n\nNão gerimos qualquer palavra-passe. Apenas o seu e-mail verificado é guardado, para reconhecer a sua conta. O conteúdo do chat do jogo nunca é enviado.\n\nNo seu primeiro início de sessão, se já existirem dados localmente e/ou na conta, é você quem decide o que fazer com eles: nada é fundido automaticamente.\n\nUma conta usa um único fornecedor: inicie sessão sempre com aquele que usou para criá-la (Discord ou Google).\n\nDepois de conectado, este mesmo separador permite gerir os seus dispositivos conectados (revogação), forçar uma sincronização imediata, exportar todos os seus dados ou eliminar a sua conta.\n\nCom ou sem conta, os botões ↓ Exportar e ↑ Importar no topo do perfil guardam e restauram as suas definições num ficheiro JSON.',
 
     'onboarding.helpButton': 'Tutorial',
-    'onboarding.jumpToEnd': 'Ir para o fim',
     'onboarding.prev': 'Anterior',
     'onboarding.next': 'Seguinte',
     'onboarding.finish': 'Começar a jogar',
     'onboarding.help.replay': 'Rever todo o tutorial',
-    'onboarding.help.replayDesc': 'Desde o início, 9 etapas',
+    'onboarding.help.replayDesc': 'Desde o início, {{count}} etapas',
     'onboarding.help.jumpTo': 'Ir diretamente para…',
     'onboarding.welcome.title': 'Bem-vindo ao Wakfu Companion',
     'onboarding.welcome.desc':
-      'Este pequeno tutorial apresenta, em algumas diapositivas, as principais funcionalidades da aplicação. Pode revê-lo a qualquer momento a partir do botão de ajuda no cabeçalho.',
-    'onboarding.tracker.title': 'Acompanhe o seu progresso de relance',
-    'onboarding.tracker.desc':
-      'Kamas, XP/h, suprimentos, objetivos personalizados: os blocos do Acompanhamento atualizam-se em direto a cada linha do registo, sem nada para escrever à mão.\n\nTambém pode acompanhar ali um item ou monstro específico: o contador atualiza-se automaticamente a cada coleta ou vitória.\n\nTrês modos à escolha: crescente (começa em 0 e sobe), regressivo (começa de um alvo que você define e desce até 0) ou meta (começa em 0 e sobe até o alvo que você define).\n\nO campo de busca filtra na hora os resultados por tipo, para encontrar a entrada certa em segundos.\n\nPara um item de receita, um clique cria a contagem regressiva de todos os ingredientes — incluindo os que têm sua própria receita, aninháveis em cascata.',
-    'onboarding.tracker.label': 'Acompanhamento',
-    'onboarding.damage.title': 'Quem bate mais forte?',
-    'onboarding.damage.desc':
-      'O contador de dano detalha cada combatente, aliado ou inimigo, turno a turno — com reatribuição manual caso a deteção se engane.',
-    'onboarding.damage.label': 'Dano',
-    'onboarding.history.title': 'Todo o seu histórico, filtrável',
-    'onboarding.history.desc':
-      'Combates, compras e trocas são arquivados automaticamente e ficam disponíveis a qualquer momento, ordenáveis e filtráveis por dia, origem ou tipo.',
-    'onboarding.history.label': 'Histórico',
-    'onboarding.chat.title': 'Todos os canais reunidos',
-    'onboarding.chat.desc':
-      'O chat do jogo é exibido em direto, filtrável por canal, com alertas sobre palavras-chave personalizadas — sem nunca sair da aplicação.',
-    'onboarding.chat.label': 'Chat',
-    'onboarding.watchlist.title': 'Nunca mais perca um item',
-    'onboarding.watchlist.desc':
-      'Adicione um item à sua lista de acompanhamento: assim que ele cair como saque, um alerta sonoro e visual avisa-o.',
-    'onboarding.watchlist.label': 'Alertas e acompanhamento',
-    'onboarding.sessionRecap.title': 'O resumo da sua sessão',
-    'onboarding.sessionRecap.desc':
-      'Kamas ganhos, combates vencidos ou perdidos, saque recolhido: o resumo de sessão reúne tudo, a um clique do cabeçalho.',
-    'onboarding.sessionRecap.label': 'Resumo da sessão',
-    'onboarding.profile.title': 'Personalize a sua experiência',
-    'onboarding.profile.desc':
-      'Tema, acessibilidade, sons de alerta, contas e personagens: tudo se configura a partir do seu perfil.',
-    'onboarding.profile.label': 'Perfil e personagens',
-    'onboarding.done.title': 'Está tudo pronto!',
-    'onboarding.done.desc':
-      'Reencontre este tutorial a qualquer momento através do botão de ajuda no cabeçalho. Bom jogo!',
+      'Seu companheiro de jogo lê o log do Wakfu ao vivo: dano, butim, kamas, chat, alertas. Seis capítulos para conhecer tudo, na ordem ou à la carte.',
+    'onboarding.chat.title': 'O chat do jogo, filtrado para você',
+    'onboarding.done.title': 'Tudo pronto!',
+
+    'onboarding.toc': 'Sumário',
+    'onboarding.skip': 'Ir para o resumo',
+    'onboarding.intro': 'Introdução',
+    'onboarding.outro': 'Conclusão',
+    'onboarding.chapterNumber': 'Capítulo {{n}}',
+    'onboarding.chapterStep': '{{count}} etapa',
+    'onboarding.chapterSteps': '{{count}} etapas',
+    'onboarding.track.label': 'Percurso',
+    'onboarding.track.full': 'Completo',
+    'onboarding.track.essential': 'Essencial',
+    'onboarding.zoomHint': 'Clique para ampliar',
+    'onboarding.chapter.start.label': 'Começar',
+    'onboarding.chapter.start.desc': 'Arquivo de log, cabeçalho',
+    'onboarding.chapter.tracker.label': 'Acompanhamento',
+    'onboarding.chapter.tracker.desc': 'Contadores, modos, receitas',
+    'onboarding.chapter.fight.label': 'Combates',
+    'onboarding.chapter.fight.desc': 'Ao vivo, correções, histórico',
+    'onboarding.chapter.history.label': 'Histórico e resumo',
+    'onboarding.chapter.history.desc': 'Compras, trocas, pacto, balanço',
+    'onboarding.chapter.chat.label': 'Chat e alertas',
+    'onboarding.chapter.chat.desc': 'Canais, buscas, butim',
+    'onboarding.chapter.custom.label': 'Personalizar',
+    'onboarding.chapter.custom.desc': 'Perfil, disposição, temas, conta',
+    'onboarding.welcome.eyebrow': 'Tutorial · {{count}} etapas',
+    'onboarding.done.eyebrow': 'Vamos lá',
+    'onboarding.done.intro': 'Dois reflexos para depois:',
+    'onboarding.done.help1':
+      '<b>O "?" de cada painel</b> explica em detalhe as suas regras e limites.',
+    'onboarding.done.help2':
+      '<b>O botão Tutorial do cabeçalho</b> repete este guia ou vai direto a um capítulo. No celular, ele fica no menu ☰.',
+    'onboarding.done.outro':
+      'Abra o Wakfu e entre em combate: seus números chegam sozinhos. Bom jogo!',
+    'onboarding.setup.toc': 'Conectar o wakfu.log',
+    'onboarding.setup.title': 'Conecte seu arquivo de log, uma única vez',
+    'onboarding.setup.lede':
+      'O aplicativo lê o wakfu.log continuamente, localmente no seu navegador. Nenhum dado do jogo sai para a Internet.',
+    'onboarding.setup.l1':
+      '<b>Solte o arquivo</b>Arraste o wakfu.log para a área ou clique para abri-lo. Só o wakfu.log é aceito: o wakfu_chat.log é recusado.',
+    'onboarding.setup.l2': '<b>Dica</b>Uma captura do explorador mostra onde fica o arquivo.',
+    'onboarding.setup.l3':
+      '<b>Caminho padrão</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — cole-o na barra de endereço do explorador.',
+    'onboarding.setup.l4':
+      '<b>Por quê?</b>Explica por que só o Chrome, o Edge e o Opera conseguem acompanhar o arquivo ao vivo.',
+    'onboarding.setup.m1':
+      '<b>Ao voltar</b> O navegador pede confirmação de novo. Basta um clique em "Reconectar".',
+    'onboarding.setup.m2':
+      '<b>Navegador incompatível</b> Firefox e Safari não conseguem acompanhar um arquivo ao vivo. Links para navegadores compatíveis são oferecidos.',
+    'onboarding.setup.m3':
+      '<b>No celular</b> "Continuar sem arquivo de log" dá acesso aos seus personagens e ao seu acompanhamento pela sua conta Discord ou Google, sem leitura ao vivo.',
+    'onboarding.header.toc': 'O cabeçalho',
+    'onboarding.header.title': 'O cabeçalho, seu painel de comando',
+    'onboarding.header.lede':
+      'Tudo o que diz respeito à sessão e às suas preferências gerais cabe em uma única linha.',
+    'onboarding.header.r1': 'Lado esquerdo: a sessão',
+    'onboarding.header.r2': 'Lado direito: suas preferências',
+    'onboarding.header.n1':
+      '<b>Servidor</b>: deduzido do último dos seus personagens visto no log. "Não definido" abre Perfil › Personagens.',
+    'onboarding.header.n2':
+      '<b>Trocar arquivo</b>: esquece o arquivo conectado e volta à tela de conexão.',
+    'onboarding.header.n3':
+      '<b>Reiniciar</b>: zera a sessão, incluindo os contadores de acompanhamento e suas correções manuais.',
+    'onboarding.header.n4': '<b>Tutorial</b>: repetir este guia ou ir direto a um capítulo.',
+    'onboarding.header.n5': '<b>Tema</b>: alterna entre escuro e claro.',
+    'onboarding.header.n6': '<b>Idioma</b>: francês, inglês, espanhol ou português.',
+    'onboarding.header.n7':
+      '<b>Perfil</b>: seu avatar. O selo "NEW" indica uma seção do perfil ainda não visitada.',
+    'onboarding.trackAdd.toc': 'Adicionar um acompanhamento',
+    'onboarding.trackAdd.title': 'Acompanhe um item ou um monstro em dois cliques',
+    'onboarding.trackAdd.lede':
+      'O acompanhamento conta automaticamente suas coletas e vitórias a cada nova linha do log.',
+    'onboarding.trackAdd.l1':
+      '<b>Escolha o modo</b>Incremental, Contagem regressiva ou Meta. O modo escolhido passa a ser o padrão.',
+    'onboarding.trackAdd.l2':
+      '<b>Busque</b>Itens e monstros na mesma busca. Filtre por categoria, confirme com Enter.',
+    'onboarding.trackAdd.l3':
+      '<b>Meta rápida</b>Cada ficha 10 / 50 / 100 / 500 / 1000 se soma à meta. Alt+clique a subtrai.',
+    'onboarding.trackAdd.l4': '<b>Meta exata</b>Digite qualquer valor de 1 a 9 999.',
+    'onboarding.trackAdd.m1':
+      '<b>Resultados</b> As entradas já acompanhadas aparecem em cinza. O ícone de pergaminho indica um item com receita.',
+    'onboarding.trackModes.toc': 'Os três modos',
+    'onboarding.trackModes.title': 'Três maneiras de contar',
+    'onboarding.trackModes.lede':
+      'Cada bloco mostra seu modo: um número sozinho, ou um contador "x / meta" com seu ícone.',
+    'onboarding.trackModes.m1':
+      '<b>Incremental</b> Começa em 0 e sobe sem limite. Ideal para medir uma sessão de farm.',
+    'onboarding.trackModes.m2':
+      '<b>Contagem regressiva</b> Começa na meta e desce até 0. Em 0: alerta "Contador esgotado!".',
+    'onboarding.trackModes.m3':
+      '<b>Meta</b> Começa em 0 e sobe até a meta. Atingida: alerta "Meta atingida!".',
+    'onboarding.trackModes.tip':
+      'O carregamento inicial do arquivo nunca conta: só as linhas escritas depois da conexão fazem seus contadores avançar.',
+    'onboarding.trackManage.toc': 'Gerenciar os blocos',
+    'onboarding.trackManage.title': 'Corrija, zere, organize',
+    'onboarding.trackManage.lede':
+      'Um clique em um bloco o expande. Ele mostra o nome completo e as ações.',
+    'onboarding.trackManage.r1': 'Um bloco expandido',
+    'onboarding.trackManage.a1':
+      '<b>Valor atual</b>: corrija o contador à mão. A meta é fixada na criação.',
+    'onboarding.trackManage.a2': '<b>Zerar</b>: volta a 0, ou à meta numa contagem regressiva.',
+    'onboarding.trackManage.a3': '<b>Remover</b>: confirmação "Sim / Não".',
+    'onboarding.trackManage.a4': 'Arraste e solte um bloco para mudar a ordem (no computador).',
+    'onboarding.trackManage.r2': 'Limpeza em série',
+    'onboarding.trackManage.b1':
+      '<b>Botão −</b>: aparece a partir de 3 entradas. Ativa a seleção múltipla.',
+    'onboarding.trackManage.b2':
+      '<b>Excluir (n)</b>: remove a seleção. Sem seleção, o botão vira "Excluir tudo".',
+    'onboarding.trackManage.b3': 'Atenção: a exclusão em série não pede confirmação.',
+    'onboarding.recipe.toc': 'Receitas',
+    'onboarding.recipe.title': 'Uma receita inteira em um clique',
+    'onboarding.recipe.lede':
+      'Para um item fabricável, o acompanhamento cria uma contagem regressiva para cada ingrediente.',
+    'onboarding.recipe.r1': 'Na busca',
+    'onboarding.recipe.a1':
+      '<b>Ícone de pergaminho</b>: abre a janela de receita em vez de adicionar o próprio item. Só aparece para um item fabricável.',
+    'onboarding.recipe.r2': 'Quantidade e ingredientes',
+    'onboarding.recipe.b1':
+      '<b>Quantidade</b>: os ingredientes são multiplicados na mesma proporção.',
+    'onboarding.recipe.b2':
+      '<b>Ingredientes</b>: um ingrediente com receita própria pode ser substituído pelos seus subingredientes, em cascata.',
+    'onboarding.recipe.b3':
+      '<b>Validar</b>: cria contagens regressivas. Se um ingrediente já é acompanhado, sua meta é somada.',
+    'onboarding.fightLive.toc': 'Combate ao vivo',
+    'onboarding.fightLive.title': 'Quem bate mais forte, ao vivo',
+    'onboarding.fightLive.lede':
+      'O combate em curso aparece no topo do cartão Combates, alimentado linha a linha.',
+    'onboarding.fightLive.l1':
+      '<b>Acumulado / Turno</b>O total do combate, ou o detalhe de um turno. Navegue com ‹ › ou as setas do teclado.',
+    'onboarding.fightLive.l2':
+      '<b>Dano · Armadura · Cura</b>Muda a estatística exibida pelas duas listas.',
+    'onboarding.fightLive.l3': '<b>Inimigos</b>Com seu total. Os homônimos são numerados #1, #2…',
+    'onboarding.fightLive.l4':
+      '<b>Aliados</b>A barra sob cada nome mostra sua parte do total. Um clique expande o detalhe por feitiço e elemento.',
+    'onboarding.fightLive.tip':
+      'Várias contas em combate ao mesmo tempo? Uma aba "Combate 1, Combate 2…" aparece para cada uma.',
+    'onboarding.fightViews.toc': 'Turno a turno e estatísticas',
+    'onboarding.fightViews.title': 'Três leituras de um mesmo combate',
+    'onboarding.fightViews.m1':
+      '<b>Por feitiço</b> Clique em um combatente: cada feitiço com seu dano, colorido por elemento.',
+    'onboarding.fightViews.m2':
+      '<b>Turno a turno</b> O seletor "Turno" isola um turno. As setas percorrem o combate.',
+    'onboarding.fightViews.m3':
+      '<b>Armadura e curas</b> As mesmas listas, para a armadura concedida ou os PV restaurados.',
+    'onboarding.fightFix.toc': 'Corrigir uma atribuição',
+    'onboarding.fightFix.title': 'O log errou? Corrija',
+    'onboarding.fightFix.lede': 'O clique direito abre as correções. Elas ficam memorizadas.',
+    'onboarding.fightFix.r1': 'Clique direito em um feitiço',
+    'onboarding.fightFix.a1':
+      'Reatribua esse feitiço e seu dano a outro combatente, aliado ou inimigo. Disponível na estatística Dano.',
+    'onboarding.fightFix.r2': 'Clique direito em um aliado',
+    'onboarding.fightFix.b1':
+      'Escolha sua classe e seu sexo, em ícones pequenos ou retratos grandes.',
+    'onboarding.fightFix.tip':
+      'Mais dois gestos: <b>arrastar um nome</b> de uma lista para a outra para corrigir um aliado classificado como inimigo (só no combate em curso), e <b>clique direito em um inimigo</b> para adicioná-lo ao acompanhamento.',
+    'onboarding.fightHistory.toc': 'Histórico de combates',
+    'onboarding.fightHistory.title': 'Cada combate, arquivado e pesquisável',
+    'onboarding.fightHistory.lede':
+      'Os 30 últimos combates ficam na memória. Com uma conta, o histórico completo é guardado sem limite.',
+    'onboarding.fightHistory.l1': '<b>Busca</b>Filtre por inimigo, aliado ou item de butim.',
+    'onboarding.fightHistory.l2':
+      '<b>Agrupar</b>Por Dia, por Origem (sessão ou conta, conectado) ou por Masmorras e famílias.',
+    'onboarding.fightHistory.l3':
+      '<b>Recolher tudo</b>Recolhe ou expande todos os grupos de uma vez.',
+    'onboarding.fightHistory.l4':
+      '<b>Resultado</b>Vitória, Derrota ou Interrompido. As salas de uma masmorra se agrupam atrás do chefe.',
+    'onboarding.fightHistory.m1':
+      '<b>Um combate expandido</b> Os mesmos seletores do ao vivo, butim ordenável por nome, quantidade ou raridade (só vitórias), XP por personagem.',
+    'onboarding.fightHistory.m2':
+      '<b>Conectado: três agrupamentos</b> O modo Origem separa a sessão em curso do histórico da conta.',
+    'onboarding.ledger.toc': 'Compras, trocas, pacto',
+    'onboarding.ledger.title': 'Seus kamas, sob controle',
+    'onboarding.ledger.lede':
+      'Três registros automáticos, agrupados por dia, com busca e ordenação. Conectado: "Carregar mais" volta no tempo por semana, mês ou ano.',
+    'onboarding.ledger.m1':
+      '<b>Compras</b> Uma perda de kamas seguida de uma coleta vira uma compra. As vendas recebidas do Leilão também entram. Clique direito: "+ Acompanhar" ou corrigir o item.',
+    'onboarding.ledger.m2':
+      '<b>Trocas</b> Kamas e itens dados ou recebidos de outro jogador. As trocas entre seus próprios personagens são ignoradas.',
+    'onboarding.ledger.m3':
+      '<b>Pacto</b> Cada extração de pacto, com data e hora e a lista dos itens recuperados.',
+    'onboarding.recap.toc': 'Resumo',
+    'onboarding.recap.title': 'O balanço, da sessão ao ano',
+    'onboarding.recap.lede':
+      'O cartão Resumo fica recolhido no menu por padrão. Um clique em "Resumo da sessão" o expande.',
+    'onboarding.recap.r1': 'Sessão',
+    'onboarding.recap.a1':
+      'XP, kamas líquidos (o detalhe aparece ao passar o mouse), vitórias-derrotas, desafios, duração, e depois XP por personagem e butim.',
+    'onboarding.recap.r2': 'Dia, Mês, Ano',
+    'onboarding.recap.b1': '<b>Período</b>: com uma conta, agrega todo o seu histórico.',
+    'onboarding.recap.b2': '<b>Navegação</b>: ‹ › ou o calendário para escolher o período.',
+    'onboarding.recap.b3': '<b>Detalhe</b>: acumulado, por masmorra e família, ou por tipo.',
+    'onboarding.chat.toc': 'Chat',
+    'onboarding.chat.lede': 'As mensagens chegam ao vivo. A rolagem pausa assim que você sobe.',
+    'onboarding.chat.l1': '<b>Canais</b>Clique em um canal para mostrá-lo ou ocultá-lo.',
+    'onboarding.chat.l2':
+      '<b>Busca</b>Uma palavra + um canal (ou Global). A busca olha a mensagem e o autor.',
+    'onboarding.chat.l3':
+      '<b>Suas buscas</b>Uma mensagem correspondente é destacada e toca um som. Nada é ocultado.',
+    'onboarding.chat.m1':
+      '<b>Chat recolhido</b> Recolhido no menu, o chat mostra um contador das mensagens que correspondem às suas buscas.',
+    'onboarding.alerts.toc': 'Alertas de butim',
+    'onboarding.alerts.title': 'Nunca mais perca um drop',
+    'onboarding.alerts.lede': 'Um item da sua lista cai: som, mensagem e confete.',
+    'onboarding.alerts.r1': 'O alerta',
+    'onboarding.alerts.a1': 'Ele fecha sozinho após o tempo escolhido, ou fica até você fechá-lo.',
+    'onboarding.alerts.r2': 'Perfil › Alertas sonoros',
+    'onboarding.alerts.b1': '<b>Testar</b>: toca o som sem esperar um drop real.',
+    'onboarding.alerts.b2': '<b>Fechamento</b>: Auto (tempo em segundos) ou Manual.',
+    'onboarding.alerts.b3': '<b>Adicionar</b>: qualquer item, além dos 10 padrões.',
+    'onboarding.alerts.b4':
+      '<b>Alto-falante</b>: silencia este item; a mensagem continua aparecendo. A cruz remove um item adicionado.',
+    'onboarding.identity.toc': 'Avatar e apelido',
+    'onboarding.identity.title': 'Seu avatar, seu apelido',
+    'onboarding.identity.lede': 'Eles aparecem no cabeçalho e no seu perfil.',
+    'onboarding.identity.l1': '<b>Apelido</b>Lápis para editar, Enter para validar.',
+    'onboarding.identity.l2':
+      '<b>Galeria</b>Galeria MMO (retratos de classe) ou fan-arts de Barbottine, Hoopyon, Papetona.',
+    'onboarding.identity.l3':
+      '<b>Mosaico</b>Clique em um retrato. Ao passar o mouse, aparecem a classe e o sexo.',
+    'onboarding.layout.toc': 'Disposição do painel',
+    'onboarding.layout.title': 'Um painel do seu jeito',
+    'onboarding.layout.lede':
+      'Perfil › Personalização. O esquema se atualiza a cada ajuste, e "Redefinir" volta à disposição original.',
+    'onboarding.layout.m1':
+      '<b>Posição do menu</b> Esquerda, direita, ou em faixa sob o cabeçalho.',
+    'onboarding.layout.m2':
+      '<b>Posição das metas</b> Linha em cima ou embaixo, coluna à esquerda ou à direita.',
+    'onboarding.layout.m3':
+      '<b>Agrupamento do histórico</b> Combates, Compras, Trocas, Pacto: um cartão cada, ou agrupados em abas (no mínimo 2).',
+    'onboarding.layout.m4':
+      '<b>Composição</b> Divisão igual, ou um cartão em destaque com os outros empilhados ao lado.',
+    'onboarding.layout.m5': '<b>Exemplo</b> Menu e metas à esquerda.',
+    'onboarding.layout.m6': '<b>Exemplo</b> Divisão igual, metas embaixo.',
+    'onboarding.layout.tip':
+      'Cada cartão tem um botão de recolher no canto superior direito: ele vai para o menu, e um clique o reabre.',
+    'onboarding.themes.toc': 'Temas e acessibilidade',
+    'onboarding.themes.title': 'Cinco ambientes, três perfis de cor',
+    'onboarding.themes.lede': 'Perfil › Acessibilidade. O tema e o modo daltônico se combinam.',
+    'onboarding.themes.m1': '<b>Escuro</b>',
+    'onboarding.themes.m2': '<b>Ardósia</b>',
+    'onboarding.themes.m3': '<b>Pergaminho</b>',
+    'onboarding.themes.m4': '<b>Nórdico</b>',
+    'onboarding.themes.m5': '<b>Alto contraste</b>',
+    'onboarding.themes.m6':
+      '<b>Modo daltônico</b> Protanopia/deuteranopia ou tritanopia: a pré-visualização mostra cada cor antes → depois (vitória/derrota, elementos, raridades, canais).',
+    'onboarding.roster.toc': 'Personagens e contas',
+    'onboarding.roster.title': 'Declare seus personagens',
+    'onboarding.roster.lede':
+      'O aplicativo reconhece você no log e ignora as trocas entre seus próprios personagens.',
+    'onboarding.roster.r1': 'Contas e servidor',
+    'onboarding.roster.a1': 'Várias contas possíveis, cada uma renomeável (exceto "Principal").',
+    'onboarding.roster.a2': 'Escolha o servidor de cada conta: ele alimenta o selo do cabeçalho.',
+    'onboarding.roster.a3': 'Arraste e solte os personagens para mudar a ordem.',
+    'onboarding.roster.r2': 'Adicionar um personagem',
+    'onboarding.roster.b1':
+      'Nome, classe e sexo. A classe não pode mais ser alterada depois da criação: exclua e recrie o personagem se necessário.',
+    'onboarding.account.toc': 'Conta e sincronização',
+    'onboarding.account.title': 'Seus dados, em todos os seus dispositivos',
+    'onboarding.account.lede': 'Iniciar sessão é opcional. Sem conta, tudo fica neste navegador.',
+    'onboarding.account.r1': 'Convidado',
+    'onboarding.account.a1':
+      'Sessão com Discord ou Google, sem senha. "Excluir os dados deste dispositivo" recomeça do zero.',
+    'onboarding.account.r2': 'Conectado',
+    'onboarding.account.b1': 'Dispositivos conectados: revogue um ou todos.',
+    'onboarding.account.b2':
+      '"Sincronizar agora" e "Exportar (arquivo)": todos os seus dados, histórico do servidor incluído.',
+    'onboarding.account.b3': 'Encerrar sessão, ou excluir a conta.',
+    'onboarding.account.b4': 'O conteúdo do chat do jogo nunca é enviado.',
+    'onboarding.account.tip':
+      'Também sem conta, <b>↓ Exportar</b> e <b>↑ Importar</b> (no topo do perfil) salvam suas configurações em um arquivo JSON.',
+    'onboarding.mobile.toc': 'No celular',
+    'onboarding.mobile.title': 'No bolso também',
+    'onboarding.mobile.lede': 'Numa tela pequena, o painel passa a abas.',
+    'onboarding.mobile.m1': '<b>Abas</b> Acompanhamento, Combates, Histórico, Chat, Resumo.',
+    'onboarding.mobile.m2': '<b>Acompanhamento</b> Modo e busca sempre visíveis.',
+    'onboarding.mobile.m3': '<b>Menu ☰</b> Tema, idioma, servidor, tutorial, perfil.',
+    'onboarding.mobile.m4': '<b>Todas as abas</b> Uma folha lista cada cartão.',
+    'help.recap.title': 'Resumo',
+    'help.recap.body':
+      'Resume sua atividade: XP ganha, kamas líquidos (ao passar o mouse, detalha combates, vendas no Leilão, compras e trocas), vitórias-derrotas, desafios concluídos-falhados e duração, e depois XP por personagem e butim.\n\nO cartão fica recolhido por padrão no menu do painel: um clique o expande, seu botão de recolher o fecha de novo.\n\nSem conta, só a sessão em curso (desde a conexão do arquivo) está disponível.\n\nConectado a uma conta, o seletor Sessão/Dia/Mês/Ano agrega todo o seu histórico no período escolhido. As setas ‹ › passam para o período anterior ou seguinte, e o calendário permite escolher um diretamente. O seletor ao lado mostra o detalhe acumulado, por masmorra e família de monstro, ou por tipo.',
+    'help.profileIdentity.title': 'Perfil > Identidade',
+    'help.profileIdentity.body':
+      'Escolha o apelido e o avatar exibidos no cabeçalho e no seu perfil.\n\nO apelido se edita com o lápis: Enter valida, Esc cancela.\n\nA "Galeria MMO" oferece o retrato de cada classe, em versão masculina e feminina. As galerias de fan-art (Barbottine, Hoopyon, Papetona) são carregadas do site da Ankama.\n\nClique em um retrato para escolhê-lo; ao passar o mouse, aparecem a classe e o sexo.',
+    'help.profileLayout.title': 'Perfil > Personalização',
+    'help.profileLayout.body':
+      'Organize o painel: o esquema se atualiza a cada ajuste e "Redefinir" volta à disposição original.\n\nPosição do menu: barra vertical à esquerda ou à direita, ou faixa sob o cabeçalho. O menu lista os cartões recolhidos: um clique reabre um deles.\n\nPosição das metas (seus acompanhamentos): linha em cima ou embaixo, coluna à esquerda ou à direita.\n\nAgrupamento do histórico: Combates, Compras, Trocas e Pacto têm cada um seu cartão, ou se agrupam em abas em um cartão "Histórico" (pelo menos dois marcados). Por padrão, Compras, Trocas e Pacto ficam agrupados.\n\nComposição: divisão igual dos cartões, ou um cartão em destaque com os outros empilhados ao lado, do lado que você escolher.\n\nOrdem dos blocos: arraste um cartão do esquema sobre outro para trocá-los de lugar, ou use as setas que aparecem ao passar o mouse.\n\nConectado a uma conta, essa disposição é sincronizada entre seus dispositivos. No celular, os cartões viram abas.',
 
     'footer.copyright':
       'WAKFU MMORPG: © 2012-{{year}} Ankama Studio. Todos os direitos reservados. WAKFU e ANKAMA são marcas ou marcas registradas da Ankama na França e/ou em outros países.\nO site WAKFU-COMPANION é um site não oficial sem qualquer vínculo com a Ankama.',

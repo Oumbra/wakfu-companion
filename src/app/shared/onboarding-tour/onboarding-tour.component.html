@@ -5,87 +5,306 @@
     class="onboarding-modal"
     role="dialog"
     aria-modal="true"
-    [attr.aria-label]="slide().titleKey | t"
+    [attr.aria-label]="'onboarding.helpButton' | t"
     tabindex="-1"
     (keydown)="onKeydown($event)"
   >
-    <div class="onboarding-top">
-      <button
-        type="button"
-        class="icon-btn onboarding-close"
-        [disabled]="isLast()"
-        [appTooltip]="'onboarding.jumpToEnd' | t"
-        tooltipPosition="top"
-        (click)="jumpToEnd()"
-      >
-        ×
-      </button>
-    </div>
-
-    <div class="onboarding-body" [class.onboarding-body-top]="slide().mediaPosition === 'top'">
-      @if (slide().media; as media) {
-        <div class="onboarding-media">
-          <img class="onboarding-media-poster" [src]="media.poster" alt="" />
-          @if (media.kind === 'gif') {
-            <img
-              class="onboarding-media-real"
-              [class.loaded]="mediaLoaded()"
-              [src]="media.src"
-              alt=""
-              (load)="mediaLoaded.set(true)"
-            />
-          } @else {
-            <video
-              class="onboarding-media-real"
-              [class.loaded]="mediaLoaded()"
-              [src]="media.src"
-              autoplay
-              muted
-              loop
-              playsinline
-              (loadeddata)="mediaLoaded.set(true)"
-            ></video>
-          }
-        </div>
-      } @else {
-        <div class="onboarding-media onboarding-media-icon">
-          <app-onboarding-icon [name]="slide().icon" [size]="192" [strokeWidth]="1.3" />
-        </div>
-      }
-
-      <div class="onboarding-text">
-        <div class="onboarding-heading">
-          @if (slide().media) {
-            <span class="onboarding-heading-icon">
-              <app-onboarding-icon [name]="slide().icon" [size]="18" />
-            </span>
-          }
-          <span class="onboarding-title">{{ slide().titleKey | t }}</span>
-        </div>
-        <p class="onboarding-desc">{{ slide().descKey | t }}</p>
-      </div>
-    </div>
-
-    <div class="onboarding-footer">
-      <button type="button" class="onboarding-nav-btn" [disabled]="isFirst()" (click)="tour.prev()">
-        ‹ {{ 'onboarding.prev' | t }}
-      </button>
-
-      <div class="onboarding-dots">
-        @for (i of dotIndexes; track i) {
+    <nav class="ob-toc" [attr.aria-label]="'onboarding.toc' | t">
+      @for (group of toc(); track group.chapter.id; let ci = $index) {
+        <div
+          class="ob-toc-chapter"
+          [class.current]="group.chapter.id === slide().chapter"
+          [class.done]="slide().id === 'done' || (chapterIndex() >= 0 && ci < chapterIndex())"
+        >
           <button
             type="button"
-            class="onboarding-dot"
-            [class.active]="i === tour.currentIndex()"
-            [attr.aria-current]="i === tour.currentIndex() ? 'step' : null"
-            (click)="tour.goTo(i)"
-          ></button>
+            class="ob-toc-chapter-title"
+            (click)="tour.goTo(group.items[0].index)"
+          >
+            <span class="ob-toc-dot"></span>{{ group.chapter.labelKey | t }}
+          </button>
+          @for (item of group.items; track item.slide.id) {
+            <button
+              type="button"
+              class="ob-toc-item"
+              [attr.aria-current]="item.index === tour.currentIndex() ? 'step' : null"
+              (click)="tour.goTo(item.index)"
+            >
+              <span class="ob-toc-num">{{ item.index < 10 ? '0' + item.index : item.index }}</span>
+              {{ 'onboarding.' + item.slide.id + '.toc' | t }}
+            </button>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="ob-stage">
+      <div class="ob-top">
+        <span class="ob-eyebrow">
+          @if (chapter(); as ch) {
+            {{ 'onboarding.chapterNumber' | t: { n: chapterIndex() + 1 } }}
+            <span class="ob-eyebrow-sep">/</span>
+            {{ ch.labelKey | t }}
+          } @else {
+            {{ (slide().id === 'welcome' ? 'onboarding.intro' : 'onboarding.outro') | t }}
+          }
+        </span>
+        <div class="icon-switch ob-track-switch" [attr.aria-label]="'onboarding.track.label' | t">
+          <span
+            class="icon-switch-highlight"
+            [class.is-right]="tour.track() === 'essential'"
+          ></span>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="tour.track() === 'full'"
+            [attr.aria-pressed]="tour.track() === 'full'"
+            (click)="tour.setTrack('full')"
+          >
+            {{ 'onboarding.track.full' | t }}
+            <span class="ob-track-count">{{ tour.fullCount }}</span>
+          </button>
+          <button
+            type="button"
+            class="icon-switch-option"
+            [class.selected]="tour.track() === 'essential'"
+            [attr.aria-pressed]="tour.track() === 'essential'"
+            (click)="tour.setTrack('essential')"
+          >
+            {{ 'onboarding.track.essential' | t }}
+            <span class="ob-track-count">{{ tour.essentialCount }}</span>
+          </button>
+        </div>
+        @if (!tour.isLast()) {
+          <button type="button" class="ob-skip" (click)="tour.goToEnd()">
+            {{ 'onboarding.skip' | t }}
+          </button>
         }
       </div>
+      <div class="ob-progress"><i [style.width.%]="progressPercent()"></i></div>
 
-      <div class="onboarding-nav-right">
-        <span class="onboarding-progress">{{ tour.currentIndex() + 1 }} / {{ total }}</span>
-        @if (isLast()) {
+      <article #slideEl class="ob-slide" aria-live="polite">
+        @switch (slide().id) {
+          @case ('welcome') {
+            <div class="ob-cover">
+              <div class="ob-cover-art">
+                <app-onboarding-icon name="logo" [size]="168" />
+              </div>
+              <div>
+                <div class="ob-cover-eyebrow">
+                  {{ 'onboarding.welcome.eyebrow' | t: { count: total() } }}
+                </div>
+                <h2 class="ob-title ob-cover-title">{{ 'onboarding.welcome.title' | t }}</h2>
+                <p class="ob-lede">{{ 'onboarding.welcome.desc' | t }}</p>
+                <div class="ob-chapter-cards">
+                  @for (c of tour.chapters; track c.id) {
+                    <button type="button" class="ob-chapter-card" (click)="goToChapter(c.id)">
+                      <span class="ob-chapter-card-icon">
+                        <app-onboarding-icon [name]="c.icon" [size]="18" />
+                      </span>
+                      <span class="ob-chapter-card-text">
+                        <b>{{ c.labelKey | t }}</b>
+                        <small>
+                          {{ c.descKey | t }} ·
+                          {{
+                            (chapterSizes[c.id] > 1
+                              ? 'onboarding.chapterSteps'
+                              : 'onboarding.chapterStep'
+                            ) | t: { count: chapterSizes[c.id] }
+                          }}
+                        </small>
+                      </span>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+          @case ('done') {
+            <div class="ob-cover">
+              <div class="ob-cover-art">
+                <img
+                  class="ob-shot ob-shot-natural"
+                  src="assets/onboarding/header-right.jpg"
+                  width="440"
+                  height="132"
+                  alt=""
+                />
+              </div>
+              <div>
+                <div class="ob-cover-eyebrow">{{ 'onboarding.done.eyebrow' | t }}</div>
+                <h2 class="ob-title ob-cover-title">{{ 'onboarding.done.title' | t }}</h2>
+                <p class="ob-lede">{{ 'onboarding.done.intro' | t }}</p>
+                <ol class="ob-legend">
+                  <li>
+                    <span class="ob-badge">?</span>
+                    <span [innerHTML]="'onboarding.done.help1' | tHtml"></span>
+                  </li>
+                  <li>
+                    <span class="ob-badge">4</span>
+                    <span [innerHTML]="'onboarding.done.help2' | tHtml"></span>
+                  </li>
+                </ol>
+                <p class="ob-lede ob-cover-outro">{{ 'onboarding.done.outro' | t }}</p>
+              </div>
+            </div>
+          }
+          @default {
+            <h2 class="ob-title">{{ 'onboarding.' + slide().id + '.title' | t }}</h2>
+            @if (slide().hasLede) {
+              <p class="ob-lede">{{ 'onboarding.' + slide().id + '.lede' | t }}</p>
+            }
+            @for (block of slide().blocks; track $index) {
+              @switch (block.kind) {
+                @case ('hero') {
+                  @if (block.kind === 'hero') {
+                    <div class="ob-hero">
+                      <ng-container
+                        [ngTemplateOutlet]="shot"
+                        [ngTemplateOutletContext]="{ $implicit: block.image }"
+                      />
+                      <ol class="ob-legend">
+                        @for (key of block.legend; track key; let i = $index) {
+                          <li>
+                            <span class="ob-badge">{{ i + 1 }}</span>
+                            <span class="ob-legend-text" [innerHTML]="key | tHtml"></span>
+                          </li>
+                        }
+                      </ol>
+                    </div>
+                  }
+                }
+                @case ('zigzag') {
+                  @if (block.kind === 'zigzag') {
+                    <div class="ob-zigzag">
+                      @for (row of block.rows; track row.titleKey) {
+                        <div class="ob-zigzag-row">
+                          <div class="ob-zigzag-media">
+                            <ng-container
+                              [ngTemplateOutlet]="shot"
+                              [ngTemplateOutletContext]="{ $implicit: row.image }"
+                            />
+                            @if (row.extra) {
+                              <div class="ob-zigzag-extra">
+                                <ng-container
+                                  [ngTemplateOutlet]="shot"
+                                  [ngTemplateOutletContext]="{ $implicit: row.extra }"
+                                />
+                              </div>
+                            }
+                          </div>
+                          <div class="ob-zigzag-text">
+                            <h3>{{ row.titleKey | t }}</h3>
+                            @if (hasBadges(row.lines)) {
+                              <ul class="ob-legend ob-legend-inline">
+                                @for (l of row.lines; track l.key) {
+                                  <li>
+                                    @if (l.badge !== undefined) {
+                                      <span class="ob-badge">{{ l.badge }}</span>
+                                    } @else {
+                                      <span class="ob-badge-gap"></span>
+                                    }
+                                    <span [innerHTML]="l.key | tHtml"></span>
+                                  </li>
+                                }
+                              </ul>
+                            } @else if (row.lines.length === 1) {
+                              <p [innerHTML]="row.lines[0].key | tHtml"></p>
+                            } @else {
+                              <ul class="ob-bullets">
+                                @for (l of row.lines; track l.key) {
+                                  <li [innerHTML]="l.key | tHtml"></li>
+                                }
+                              </ul>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+                @case ('mosaic') {
+                  @if (block.kind === 'mosaic') {
+                    <div
+                      class="ob-mosaic"
+                      [class.ob-mosaic-phones]="block.phones"
+                      [class.ob-mosaic-single]="block.columns === 1"
+                      [style.--ob-cols]="block.columns"
+                    >
+                      @for (c of block.cells; track c.key) {
+                        <div class="ob-cell">
+                          @if (c.image) {
+                            <ng-container
+                              [ngTemplateOutlet]="shot"
+                              [ngTemplateOutletContext]="{ $implicit: c.image }"
+                            />
+                          }
+                          <div class="ob-cell-text">
+                            @if (c.badge !== undefined) {
+                              <span class="ob-badge">{{ c.badge }}</span>
+                            }
+                            <span [innerHTML]="c.key | tHtml"></span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                }
+                @case ('image') {
+                  @if (block.kind === 'image') {
+                    <div class="ob-single" [style.max-width.px]="block.maxWidth">
+                      <ng-container
+                        [ngTemplateOutlet]="shot"
+                        [ngTemplateOutletContext]="{ $implicit: block.image }"
+                      />
+                    </div>
+                  }
+                }
+                @case ('tip') {
+                  @if (block.kind === 'tip') {
+                    <div class="ob-tip" [class.ob-tip-note]="block.tone === 'note'">
+                      <app-onboarding-icon
+                        [name]="block.tone === 'note' ? 'target' : 'check'"
+                        [size]="16"
+                      />
+                      <span [innerHTML]="block.key | tHtml"></span>
+                    </div>
+                  }
+                }
+              }
+            }
+          }
+        }
+      </article>
+
+      <div class="ob-footer">
+        <button
+          type="button"
+          class="onboarding-nav-btn"
+          [disabled]="tour.isFirst()"
+          (click)="tour.prev()"
+        >
+          ‹ {{ 'onboarding.prev' | t }}
+        </button>
+        <div class="ob-dots">
+          @for (group of dotGroups(); track group.key) {
+            <span class="ob-dot-group">
+              @for (i of group.indexes; track i) {
+                <button
+                  type="button"
+                  class="ob-dot"
+                  [class.passed]="i < tour.currentIndex()"
+                  [class.active]="i === tour.currentIndex()"
+                  [attr.aria-current]="i === tour.currentIndex() ? 'step' : null"
+                  [attr.aria-label]="i + 1"
+                  (click)="tour.goTo(i)"
+                ></button>
+              }
+            </span>
+          }
+        </div>
+        <span class="ob-counter">{{ tour.currentIndex() + 1 }} / {{ total() }}</span>
+        @if (tour.isLast()) {
           <button
             type="button"
             class="onboarding-nav-btn onboarding-nav-primary"
@@ -104,5 +323,40 @@
         }
       </div>
     </div>
+
+    @if (zoomed(); as z) {
+      <button type="button" class="ob-zoom" (click)="zoomed.set(null)">
+        <img [src]="z.src" [attr.width]="z.width" [attr.height]="z.height" alt="" />
+      </button>
+    }
   </div>
 }
+
+<ng-template #shot let-image>
+  <div class="ob-shot-wrap" [class.ob-shot-wrap-natural]="image.natural">
+    <button
+      type="button"
+      class="ob-shot-btn"
+      [appTooltip]="'onboarding.zoomHint' | t"
+      (click)="zoomed.set(image)"
+    >
+      <img
+        class="ob-shot"
+        [class.ob-shot-natural]="image.natural"
+        [src]="image.src"
+        [attr.width]="image.width"
+        [attr.height]="image.height"
+        [style.max-width.px]="image.natural ? image.width / 2 : null"
+        loading="lazy"
+        alt=""
+      />
+    </button>
+    @if (image.lens) {
+      <div
+        class="ob-lens"
+        [class.ob-lens-left]="image.lens.side === 'left'"
+        [style]="lensStyle(image)"
+      ></div>
+    }
+  </div>
+</ng-template>

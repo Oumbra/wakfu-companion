@@ -1,6 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { TranslatePipe } from '../../../shared/translate.pipe';
 import { IconComponent } from '../../../shared/icon/icon.component';
+import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
+import { HelpModalService } from '../../../core/services/help-modal.service';
 import { SwitchComponent } from '../../../shared/switch/switch.component';
 import {
   DashboardLayoutSchemaCell,
@@ -66,12 +68,19 @@ const THUMB_FOCUS: DashboardLayoutSchemaFocus = {
  */
 @Component({
   selector: 'app-dashboard-layout-picker',
-  imports: [TranslatePipe, IconComponent, SwitchComponent, DashboardLayoutSchemaComponent],
+  imports: [
+    TranslatePipe,
+    TooltipDirective,
+    IconComponent,
+    SwitchComponent,
+    DashboardLayoutSchemaComponent,
+  ],
   templateUrl: './dashboard-layout-picker.component.html',
   styleUrl: './dashboard-layout-picker.component.css',
 })
 export class DashboardLayoutPickerComponent {
   protected readonly layout = inject(DashboardLayoutService);
+  protected readonly helpModal = inject(HelpModalService);
   protected readonly i18n = inject(I18nService);
   private readonly auth = inject(AuthService);
 

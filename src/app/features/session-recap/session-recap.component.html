@@ -11,6 +11,15 @@
           <span class="recap-new-badge" aria-hidden="true">NEW</span>
         }
       </span>
+      <button
+        type="button"
+        class="icon-btn help-icon-btn"
+        [appTooltip]="'help.tooltip' | t"
+        tooltipPosition="top-right"
+        (click)="helpModal.open('recap')"
+      >
+        ?
+      </button>
     </span>
     <button
       class="collapse-btn"
