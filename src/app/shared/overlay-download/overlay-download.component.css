@@ -100,7 +100,7 @@
 .od-btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06232b;
+  color: var(--on-accent);
   font-weight: 600;
 }
 .od-btn.primary:hover {

@@ -210,7 +210,7 @@ fixe (`--session-row-h`) pour que la hauteur maximale tombe pile sur la 5e. */
 .account-btn.primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #06232b;
+  color: var(--on-accent);
   font-weight: 600;
 }
 /* Actions destructives en rouge : contour pour ce qui se rattrape (déconnexions, effacement
