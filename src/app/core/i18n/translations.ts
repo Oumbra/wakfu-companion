@@ -831,7 +831,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.action': 'Découvrir',
     'overlay.download.title': 'Overlay de bureau',
     'overlay.download.intro':
-      'Une petite application à installer sur votre ordinateur, qui affiche le compteur de dégâts et votre suivi directement par-dessus le jeu, reliée à ce compte.',
+      'Une petite application à télécharger sur votre ordinateur, qui affiche le compteur de dégâts et votre suivi directement par-dessus le jeu, reliée à ce compte.',
     'overlay.download.unsupportedMac':
       "L'overlay ne fonctionne que sous Windows et Linux : il n'existe pas de version pour macOS.",
     'overlay.download.unsupportedOther':
@@ -1841,7 +1841,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.action': 'Check it out',
     'overlay.download.title': 'Desktop overlay',
     'overlay.download.intro':
-      'A small app to install on your computer that shows the damage meter and your tracking right on top of the game, linked to this account.',
+      'A small app to download to your computer that shows the damage meter and your tracking right on top of the game, linked to this account.',
     'overlay.download.unsupportedMac':
       'The overlay only runs on Windows and Linux: there is no macOS version.',
     'overlay.download.unsupportedOther':
@@ -2855,7 +2855,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.action': 'Descubrir',
     'overlay.download.title': 'Overlay de escritorio',
     'overlay.download.intro':
-      'Una pequeña aplicación para instalar en tu ordenador, que muestra el medidor de daños y tu seguimiento directamente encima del juego, vinculada a esta cuenta.',
+      'Una pequeña aplicación para descargar en tu ordenador, que muestra el medidor de daños y tu seguimiento directamente encima del juego, vinculada a esta cuenta.',
     'overlay.download.unsupportedMac':
       'El overlay solo funciona en Windows y Linux: no existe versión para macOS.',
     'overlay.download.unsupportedOther':
@@ -3870,7 +3870,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.action': 'Conhecer',
     'overlay.download.title': 'Overlay de desktop',
     'overlay.download.intro':
-      'Um pequeno aplicativo para instalar no seu computador, que mostra o medidor de dano e seu acompanhamento direto por cima do jogo, vinculado a esta conta.',
+      'Um pequeno aplicativo para baixar no seu computador, que mostra o medidor de dano e seu acompanhamento direto por cima do jogo, vinculado a esta conta.',
     'overlay.download.unsupportedMac':
       'O overlay só funciona no Windows e no Linux: não existe versão para macOS.',
     'overlay.download.unsupportedOther':
