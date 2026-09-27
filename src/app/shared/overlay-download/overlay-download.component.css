@@ -59,6 +59,12 @@
   color: var(--text-bright);
   font-weight: 600;
 }
+.od-os-logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: none;
+}
 .od-platform-mine {
   font-size: 0.75rem;
   font-weight: 400;
@@ -105,6 +111,16 @@
   flex-shrink: 0;
   padding: 5px 11px;
   font-size: 0.82rem;
+}
+/* Logo de l'overlay (celui du site) devant le libellé du bouton, légèrement plus grand que le
+texte pour animer le bouton. */
+.od-btn-logo {
+  width: 22px;
+  height: 22px;
+  margin: -3px 0;
+  object-fit: contain;
+  flex: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
 }
 .od-btn-size {
   font-size: 0.78rem;

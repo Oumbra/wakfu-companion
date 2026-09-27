@@ -17,6 +17,7 @@
         [attr.aria-pressed]="platform() === option"
         (click)="platform.set(option)"
       >
+        <img class="od-os-logo" [src]="osLogos[option]" alt="" />
         {{ 'overlay.download.platform.' + option | t }}
         @if (overlay.clientOs === option) {
           <span class="od-platform-mine">{{ 'overlay.download.yourSystem' | t }}</span>
@@ -34,6 +35,7 @@
           download="wakfu-companion-overlay.exe"
           (click)="onDownload()"
         >
+          <img class="od-btn-logo" [src]="overlayLogo" alt="" />
           {{ 'overlay.download.windowsAction' | t }}
           @if (sizeLabel('windows'); as size) {
             <span class="od-btn-size">{{ size }}</span>
@@ -74,6 +76,7 @@
           [tooltipMultiline]="true"
           (click)="onDownload()"
         >
+          <img class="od-btn-logo" [src]="overlayLogo" alt="" />
           {{ 'overlay.download.linuxScriptAction' | t }}
         </a>
         <a
