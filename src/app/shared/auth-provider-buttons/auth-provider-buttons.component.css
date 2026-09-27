@@ -39,9 +39,10 @@
   transform: translateY(1px);
   box-shadow: none;
 }
+/* Logos à 26px : proportionnés aux boutons de 48px de haut. */
 .provider-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   flex: none;
 }
 .provider-btn.discord {
