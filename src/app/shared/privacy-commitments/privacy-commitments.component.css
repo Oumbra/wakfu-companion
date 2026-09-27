@@ -76,7 +76,7 @@
 .privacy-panel-list strong {
   font-weight: 600;
 }
-.privacy-panel-list span {
+.privacy-panel-body {
   display: block;
   color: var(--text-muted);
 }
