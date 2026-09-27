@@ -805,6 +805,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.terms': "Conditions d'utilisation",
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'footer.privacyCommitments.pill': 'Vie privée : nos engagements',
+    'footer.privacyCommitments.title': 'Ce que Wakfu Companion fait de vos données',
+    'footer.privacyCommitments.noTracker.title': 'Aucun traceur',
+    'footer.privacyCommitments.noTracker.body':
+      "Ni publicité, ni mesure d'audience : les seuls cookies servent au fonctionnement du site.",
+    'footer.privacyCommitments.noAccount.title': 'Sans compte par défaut',
+    'footer.privacyCommitments.noAccount.body':
+      "Vos données restent dans votre navigateur. Le fichier wakfu.log n'est jamais envoyé.",
+    'footer.privacyCommitments.export.title': 'Export en un clic',
+    'footer.privacyCommitments.export.body':
+      "Toutes vos données en un fichier, depuis l'onglet « Connexion » du profil.",
+    'footer.privacyCommitments.erase.title': 'Suppression complète',
+    'footer.privacyCommitments.erase.body': 'Votre compte et tout son historique, à tout moment.',
+    'footer.privacyCommitments.readPolicy': 'Lire la politique de confidentialité ›',
     'update.available': 'Une nouvelle version est disponible.',
     'update.reload': 'Recharger',
     'update.dismiss': 'Plus tard',
@@ -1798,6 +1812,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.terms': 'Terms of use',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'footer.privacyCommitments.pill': 'Privacy: our commitments',
+    'footer.privacyCommitments.title': 'What Wakfu Companion does with your data',
+    'footer.privacyCommitments.noTracker.title': 'No trackers',
+    'footer.privacyCommitments.noTracker.body':
+      'No ads, no audience measurement: the only cookies are the ones the site needs to work.',
+    'footer.privacyCommitments.noAccount.title': 'No account by default',
+    'footer.privacyCommitments.noAccount.body':
+      'Your data stays in your browser. The wakfu.log file is never uploaded.',
+    'footer.privacyCommitments.export.title': 'One-click export',
+    'footer.privacyCommitments.export.body':
+      'All your data in one file, from the "Sign in" tab of your profile.',
+    'footer.privacyCommitments.erase.title': 'Full deletion',
+    'footer.privacyCommitments.erase.body': 'Your account and its whole history, at any time.',
+    'footer.privacyCommitments.readPolicy': 'Read the privacy policy ›',
     'update.available': 'A new version is available.',
     'update.reload': 'Reload',
     'update.dismiss': 'Later',
@@ -2795,6 +2823,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.terms': 'Condiciones de uso',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'footer.privacyCommitments.pill': 'Privacidad: nuestros compromisos',
+    'footer.privacyCommitments.title': 'Qué hace Wakfu Companion con tus datos',
+    'footer.privacyCommitments.noTracker.title': 'Sin rastreadores',
+    'footer.privacyCommitments.noTracker.body':
+      'Ni publicidad ni medición de audiencia: las únicas cookies sirven para el funcionamiento del sitio.',
+    'footer.privacyCommitments.noAccount.title': 'Sin cuenta por defecto',
+    'footer.privacyCommitments.noAccount.body':
+      'Tus datos se quedan en tu navegador. El archivo wakfu.log nunca se envía.',
+    'footer.privacyCommitments.export.title': 'Exportación en un clic',
+    'footer.privacyCommitments.export.body':
+      'Todos tus datos en un archivo, desde la pestaña «Inicio de sesión» del perfil.',
+    'footer.privacyCommitments.erase.title': 'Eliminación completa',
+    'footer.privacyCommitments.erase.body': 'Tu cuenta y todo su historial, en cualquier momento.',
+    'footer.privacyCommitments.readPolicy': 'Leer la política de privacidad ›',
     'update.available': 'Hay una nueva versión disponible.',
     'update.reload': 'Recargar',
     'update.dismiss': 'Más tarde',
@@ -3792,6 +3834,21 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'footer.terms': 'Termos de utilização',
     'footer.build.prefix': 'Build',
     'footer.build': '{{version}} • {{date}}',
+    'footer.privacyCommitments.pill': 'Privacidade: os nossos compromissos',
+    'footer.privacyCommitments.title': 'O que o Wakfu Companion faz com os seus dados',
+    'footer.privacyCommitments.noTracker.title': 'Nenhum rastreador',
+    'footer.privacyCommitments.noTracker.body':
+      'Sem publicidade nem medição de audiência: os únicos cookies servem ao funcionamento do site.',
+    'footer.privacyCommitments.noAccount.title': 'Sem conta por predefinição',
+    'footer.privacyCommitments.noAccount.body':
+      'Os seus dados ficam no seu navegador. O ficheiro wakfu.log nunca é enviado.',
+    'footer.privacyCommitments.export.title': 'Exportação num clique',
+    'footer.privacyCommitments.export.body':
+      'Todos os seus dados num ficheiro, a partir do separador «Iniciar sessão» do perfil.',
+    'footer.privacyCommitments.erase.title': 'Eliminação completa',
+    'footer.privacyCommitments.erase.body':
+      'A sua conta e todo o seu histórico, a qualquer momento.',
+    'footer.privacyCommitments.readPolicy': 'Ler a política de privacidade ›',
     'update.available': 'Uma nova versão está disponível.',
     'update.reload': 'Recarregar',
     'update.dismiss': 'Mais tarde',

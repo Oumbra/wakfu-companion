@@ -1,0 +1,43 @@
+<button
+  type="button"
+  class="privacy-pill"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="panelId"
+  (click)="toggle()"
+>
+  <span class="privacy-pill-icon"
+    ><app-icon name="shield-check" [size]="13" [strokeWidth]="2"
+  /></span>
+  <span>{{ 'footer.privacyCommitments.pill' | t }}</span>
+  <span class="privacy-pill-caret" [class.open]="open()">
+    <app-icon name="chevron-left" [size]="11" [strokeWidth]="2.4" />
+  </span>
+</button>
+
+@if (open()) {
+  <div
+    [id]="panelId"
+    class="privacy-panel"
+    role="region"
+    [attr.aria-label]="'footer.privacyCommitments.title' | t"
+    (appEscapeClose)="close()"
+  >
+    <h2 class="privacy-panel-title">{{ 'footer.privacyCommitments.title' | t }}</h2>
+    <ul class="privacy-panel-list">
+      @for (commitment of commitments; track commitment.icon) {
+        <li>
+          <span class="privacy-panel-icon">
+            <app-icon [name]="commitment.icon" [size]="14" [strokeWidth]="2" />
+          </span>
+          <div>
+            <strong>{{ commitment.titleKey | t }}</strong>
+            <span>{{ commitment.bodyKey | t }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+    <button type="button" class="privacy-panel-link" (click)="readPolicy()">
+      {{ 'footer.privacyCommitments.readPolicy' | t }}
+    </button>
+  </div>
+}
