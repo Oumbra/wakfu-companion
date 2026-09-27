@@ -823,8 +823,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.reload': 'Recharger',
     'update.dismiss': 'Plus tard',
     'overlay.announcement.badge': 'Nouveau',
+    'overlay.announcement.title': "L'overlay est arrivé !",
     'overlay.announcement.text':
-      "L'overlay de bureau est disponible : vos dégâts et votre suivi par-dessus le jeu.",
+      'Vos dégâts et votre suivi en direct, par-dessus le jeu. Disponible sur Windows et Linux.',
     'overlay.announcement.action': 'Découvrir',
     'overlay.download.title': 'Overlay de bureau',
     'overlay.download.intro':
@@ -1830,8 +1831,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.reload': 'Reload',
     'update.dismiss': 'Later',
     'overlay.announcement.badge': 'New',
+    'overlay.announcement.title': 'The overlay is here!',
     'overlay.announcement.text':
-      'The desktop overlay is available: your damage and tracking right on top of the game.',
+      'Your damage and tracking live, right on top of the game. Available on Windows and Linux.',
     'overlay.announcement.action': 'Check it out',
     'overlay.download.title': 'Desktop overlay',
     'overlay.download.intro':
@@ -2841,8 +2843,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.reload': 'Recargar',
     'update.dismiss': 'Más tarde',
     'overlay.announcement.badge': 'Nuevo',
+    'overlay.announcement.title': '¡Llegó el overlay!',
     'overlay.announcement.text':
-      'El overlay de escritorio ya está disponible: tus daños y tu seguimiento encima del juego.',
+      'Tus daños y tu seguimiento en directo, encima del juego. Disponible en Windows y Linux.',
     'overlay.announcement.action': 'Descubrir',
     'overlay.download.title': 'Overlay de escritorio',
     'overlay.download.intro':
@@ -3853,8 +3856,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.reload': 'Recarregar',
     'update.dismiss': 'Mais tarde',
     'overlay.announcement.badge': 'Novo',
+    'overlay.announcement.title': 'O overlay chegou!',
     'overlay.announcement.text':
-      'O overlay de desktop está disponível: seus danos e seu acompanhamento por cima do jogo.',
+      'Seus danos e seu acompanhamento ao vivo, por cima do jogo. Disponível para Windows e Linux.',
     'overlay.announcement.action': 'Conhecer',
     'overlay.download.title': 'Overlay de desktop',
     'overlay.download.intro':

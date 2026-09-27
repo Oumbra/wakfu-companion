@@ -1,15 +1,22 @@
 @if (overlay.showAnnouncement() && !updateService.updateReady()) {
   <div class="overlay-announcement" role="status">
+    <!-- Doublon souris de la zone de texte cliquable : le clavier passe par le bouton principal. -->
+    <div class="overlay-announcement-brand" (click)="open()">
+      <app-overlay-brand />
+    </div>
     <button type="button" class="overlay-announcement-main" (click)="open()">
-      <span class="overlay-announcement-badge">{{ 'overlay.announcement.badge' | t }}</span>
+      <span class="overlay-announcement-heading">
+        <span class="overlay-announcement-badge">{{ 'overlay.announcement.badge' | t }}</span>
+        <span class="overlay-announcement-title">{{ 'overlay.announcement.title' | t }}</span>
+      </span>
       <span class="overlay-announcement-text">{{ 'overlay.announcement.text' | t }}</span>
     </button>
     <div class="overlay-announcement-actions">
-      <button type="button" class="overlay-announcement-open" (click)="open()">
-        {{ 'overlay.announcement.action' | t }}
-      </button>
       <button type="button" class="overlay-announcement-dismiss" (click)="dismiss()">
         {{ 'update.dismiss' | t }}
+      </button>
+      <button type="button" class="overlay-announcement-open" (click)="open()">
+        {{ 'overlay.announcement.action' | t }}
       </button>
     </div>
   </div>

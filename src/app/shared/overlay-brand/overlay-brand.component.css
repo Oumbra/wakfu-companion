@@ -1,0 +1,65 @@
+:host {
+  --overlay-brand-logo-size: 52px;
+  --overlay-brand-font-size: 0.78rem;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  line-height: 1;
+}
+
+/* Halo couleur accent derrière le logo, décliné par thème via color-mix. */
+.overlay-brand-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--overlay-brand-logo-size) * 1.5);
+  height: calc(var(--overlay-brand-logo-size) * 1.5);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--accent) 22%, transparent) 0%,
+    transparent 68%
+  );
+}
+
+.overlay-brand-logo {
+  width: var(--overlay-brand-logo-size);
+  height: var(--overlay-brand-logo-size);
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+}
+
+/* Même typographie que `.app-title` (header) ; badge « beta » ancré en haut à droite comme
+   `.app-title-badge`. */
+.overlay-brand-title {
+  position: relative;
+  display: inline-flex;
+  gap: 0.4em;
+  font-size: var(--overlay-brand-font-size);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.overlay-brand-name {
+  color: var(--accent);
+}
+
+.overlay-brand-product {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.overlay-brand-badge {
+  position: absolute;
+  top: -11px;
+  right: 0;
+  color: var(--text-bright);
+  text-transform: lowercase;
+  font-size: 9px;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0;
+}
