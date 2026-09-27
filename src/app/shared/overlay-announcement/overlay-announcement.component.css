@@ -1,0 +1,96 @@
+/* Même ancrage que `.update-notice` (app-update-notice.component.css, voir le pourquoi du `top`
+   plutôt que `bottom`) : rendue au niveau racine, sous le header, z-index 550. Les deux bannières
+   ne s'affichent jamais ensemble (voir le composant). */
+.overlay-announcement {
+  position: fixed;
+  left: 50%;
+  top: 65px;
+  transform: translateX(-50%);
+  z-index: 550;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 12px 8px 8px;
+  background: var(--panel-header-bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+}
+
+/* Gabarit global `button` (hauteur fixe 28px) neutralisé : le texte peut passer sur 2 lignes. */
+.overlay-announcement-main {
+  height: auto;
+  justify-content: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 2px 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.overlay-announcement-badge {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.overlay-announcement-text {
+  line-height: 1.35;
+}
+
+.overlay-announcement-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.overlay-announcement-open {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.overlay-announcement-open:hover {
+  filter: brightness(1.1);
+}
+
+.overlay-announcement-dismiss {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.overlay-announcement-dismiss:hover {
+  color: var(--text-color);
+}
+
+/* Mobile : le bouton « Voir » double la zone de texte cliquable, on ne garde que « Plus tard ». */
+@media (max-width: 600px) {
+  .overlay-announcement {
+    gap: 8px;
+  }
+  .overlay-announcement-open {
+    display: none;
+  }
+}

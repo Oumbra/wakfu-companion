@@ -808,6 +808,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.available': 'Une nouvelle version est disponible.',
     'update.reload': 'Recharger',
     'update.dismiss': 'Plus tard',
+    'overlay.announcement.badge': 'Nouveau',
+    'overlay.announcement.text':
+      "L'overlay de bureau est disponible : vos dégâts et votre suivi par-dessus le jeu.",
+    'overlay.announcement.action': 'Découvrir',
+    'overlay.download.title': 'Overlay de bureau',
+    'overlay.download.intro':
+      'Une petite application à installer sur votre ordinateur, qui affiche le compteur de dégâts et votre suivi directement par-dessus le jeu, reliée à ce compte.',
+    'overlay.download.unsupportedMac':
+      "L'overlay ne fonctionne que sous Windows et Linux : il n'existe pas de version pour macOS.",
+    'overlay.download.unsupportedOther':
+      "L'overlay ne fonctionne que sous Windows et Linux, sur ordinateur : ouvrez cette page depuis le PC sur lequel vous jouez.",
+    'overlay.download.platformLabel': 'Système :',
+    'overlay.download.platform.windows': 'Windows',
+    'overlay.download.platform.linux': 'Linux',
+    'overlay.download.yourSystem': '(le vôtre)',
+    'overlay.download.windowsAction': 'Télécharger pour Windows',
+    'overlay.download.windowsStep1':
+      'Lancez wakfu-companion-overlay.exe, rien à installer ni à décompresser.',
+    'overlay.download.windowsStep2':
+      'Si Windows affiche « Windows a protégé votre ordinateur », cliquez sur « Informations complémentaires » puis « Exécuter quand même ».',
+    'overlay.download.pairStep':
+      "Au premier lancement, l'overlay affiche un code : confirmez-le sur ce site pour le relier à votre compte.",
+    'overlay.download.linuxCommandLabel':
+      'Installation en une commande, à coller dans un terminal :',
+    'overlay.download.copy': 'Copier',
+    'overlay.download.copied': 'Copié !',
+    'overlay.download.copyTooltip': 'Copier la commande',
+    'overlay.download.linuxStep1':
+      "Le script télécharge la dernière version, vérifie son intégrité, l'installe dans ~/.local/bin et l'ajoute au menu des applications, sans droits administrateur.",
+    'overlay.download.linuxStep2':
+      "L'overlay se lance ensuite tout seul ; plus tard, retrouvez-le dans le menu des applications (« Wakfu Companion Overlay »).",
+    'overlay.download.linuxScriptAction': "Télécharger le script d'installation",
+    'overlay.download.linuxScriptTooltip':
+      'Le même script que la commande ci-dessus, à lancer avec : sh install-wakfu-companion-overlay.sh',
+    'overlay.download.linuxBinaryAction': 'Binaire seul',
+    'overlay.download.linuxBinaryTooltip':
+      "Le programme sans installation : rendez-le exécutable (chmod +x wakfu-companion-overlay, ou Propriétés → Autoriser l'exécution) puis lancez-le.",
+    'overlay.download.size': '{{n}} Mo',
+    'overlay.download.version': 'Version {{version}}',
+    'overlay.download.versionDated': 'Version {{version}} du {{date}}',
+    'overlay.download.versionUnavailable': 'Numéro de version indisponible pour le moment',
+    'overlay.download.notes': 'nouveautés',
+    'overlay.download.autoUpdate': "L'overlay se met ensuite à jour seul.",
     'auth.login.panelTitle': 'Connectez-vous',
     'auth.login.panelTitleConnected': 'Connexion',
     'auth.login.intro':
@@ -1759,6 +1802,48 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.available': 'A new version is available.',
     'update.reload': 'Reload',
     'update.dismiss': 'Later',
+    'overlay.announcement.badge': 'New',
+    'overlay.announcement.text':
+      'The desktop overlay is available: your damage and tracking right on top of the game.',
+    'overlay.announcement.action': 'Check it out',
+    'overlay.download.title': 'Desktop overlay',
+    'overlay.download.intro':
+      'A small app to install on your computer that shows the damage meter and your tracking right on top of the game, linked to this account.',
+    'overlay.download.unsupportedMac':
+      'The overlay only runs on Windows and Linux: there is no macOS version.',
+    'overlay.download.unsupportedOther':
+      'The overlay only runs on Windows and Linux computers: open this page on the PC you play on.',
+    'overlay.download.platformLabel': 'System:',
+    'overlay.download.platform.windows': 'Windows',
+    'overlay.download.platform.linux': 'Linux',
+    'overlay.download.yourSystem': '(yours)',
+    'overlay.download.windowsAction': 'Download for Windows',
+    'overlay.download.windowsStep1':
+      'Run wakfu-companion-overlay.exe, nothing to install or unzip.',
+    'overlay.download.windowsStep2':
+      'If Windows shows "Windows protected your PC", click "More info" then "Run anyway".',
+    'overlay.download.pairStep':
+      'On first launch, the overlay shows a code: confirm it on this site to link it to your account.',
+    'overlay.download.linuxCommandLabel': 'One-command install, paste it into a terminal:',
+    'overlay.download.copy': 'Copy',
+    'overlay.download.copied': 'Copied!',
+    'overlay.download.copyTooltip': 'Copy the command',
+    'overlay.download.linuxStep1':
+      'The script downloads the latest version, checks its integrity, installs it in ~/.local/bin and adds it to the applications menu, without admin rights.',
+    'overlay.download.linuxStep2':
+      'The overlay then starts on its own; later, find it in the applications menu ("Wakfu Companion Overlay").',
+    'overlay.download.linuxScriptAction': 'Download the install script',
+    'overlay.download.linuxScriptTooltip':
+      'The same script as the command above, run it with: sh install-wakfu-companion-overlay.sh',
+    'overlay.download.linuxBinaryAction': 'Binary only',
+    'overlay.download.linuxBinaryTooltip':
+      'The program without installation: make it executable (chmod +x wakfu-companion-overlay, or Properties → Allow executing) then run it.',
+    'overlay.download.size': '{{n}} MB',
+    'overlay.download.version': 'Version {{version}}',
+    'overlay.download.versionDated': 'Version {{version}}, {{date}}',
+    'overlay.download.versionUnavailable': 'Version number unavailable right now',
+    'overlay.download.notes': "what's new",
+    'overlay.download.autoUpdate': 'The overlay then updates itself.',
     'auth.login.panelTitle': 'Sign in',
     'auth.login.panelTitleConnected': 'Sign-in',
     'auth.login.intro':
@@ -2715,6 +2800,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.available': 'Hay una nueva versión disponible.',
     'update.reload': 'Recargar',
     'update.dismiss': 'Más tarde',
+    'overlay.announcement.badge': 'Nuevo',
+    'overlay.announcement.text':
+      'El overlay de escritorio ya está disponible: tus daños y tu seguimiento encima del juego.',
+    'overlay.announcement.action': 'Descubrir',
+    'overlay.download.title': 'Overlay de escritorio',
+    'overlay.download.intro':
+      'Una pequeña aplicación para instalar en tu ordenador, que muestra el medidor de daños y tu seguimiento directamente encima del juego, vinculada a esta cuenta.',
+    'overlay.download.unsupportedMac':
+      'El overlay solo funciona en Windows y Linux: no existe versión para macOS.',
+    'overlay.download.unsupportedOther':
+      'El overlay solo funciona en ordenadores con Windows y Linux: abre esta página desde el PC en el que juegas.',
+    'overlay.download.platformLabel': 'Sistema:',
+    'overlay.download.platform.windows': 'Windows',
+    'overlay.download.platform.linux': 'Linux',
+    'overlay.download.yourSystem': '(el tuyo)',
+    'overlay.download.windowsAction': 'Descargar para Windows',
+    'overlay.download.windowsStep1':
+      'Ejecuta wakfu-companion-overlay.exe, no hay nada que instalar ni descomprimir.',
+    'overlay.download.windowsStep2':
+      'Si Windows muestra «Windows protegió su PC», haz clic en «Más información» y luego en «Ejecutar de todas formas».',
+    'overlay.download.pairStep':
+      'En el primer inicio, el overlay muestra un código: confírmalo en este sitio para vincularlo a tu cuenta.',
+    'overlay.download.linuxCommandLabel':
+      'Instalación en un solo comando, para pegar en un terminal:',
+    'overlay.download.copy': 'Copiar',
+    'overlay.download.copied': '¡Copiado!',
+    'overlay.download.copyTooltip': 'Copiar el comando',
+    'overlay.download.linuxStep1':
+      'El script descarga la última versión, comprueba su integridad, la instala en ~/.local/bin y la añade al menú de aplicaciones, sin permisos de administrador.',
+    'overlay.download.linuxStep2':
+      'Después, el overlay se inicia solo; más adelante, encuéntralo en el menú de aplicaciones («Wakfu Companion Overlay»).',
+    'overlay.download.linuxScriptAction': 'Descargar el script de instalación',
+    'overlay.download.linuxScriptTooltip':
+      'El mismo script que el comando de arriba, ejecútalo con: sh install-wakfu-companion-overlay.sh',
+    'overlay.download.linuxBinaryAction': 'Solo el binario',
+    'overlay.download.linuxBinaryTooltip':
+      'El programa sin instalación: hazlo ejecutable (chmod +x wakfu-companion-overlay, o Propiedades → Permitir ejecutar) y luego ejecútalo.',
+    'overlay.download.size': '{{n}} MB',
+    'overlay.download.version': 'Versión {{version}}',
+    'overlay.download.versionDated': 'Versión {{version}} del {{date}}',
+    'overlay.download.versionUnavailable': 'Número de versión no disponible por ahora',
+    'overlay.download.notes': 'novedades',
+    'overlay.download.autoUpdate': 'Después, el overlay se actualiza solo.',
     'auth.login.panelTitle': 'Iniciar sesión',
     'auth.login.panelTitleConnected': 'Inicio de sesión',
     'auth.login.intro':
@@ -3670,6 +3798,49 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'update.available': 'Uma nova versão está disponível.',
     'update.reload': 'Recarregar',
     'update.dismiss': 'Mais tarde',
+    'overlay.announcement.badge': 'Novo',
+    'overlay.announcement.text':
+      'O overlay de desktop está disponível: seus danos e seu acompanhamento por cima do jogo.',
+    'overlay.announcement.action': 'Conhecer',
+    'overlay.download.title': 'Overlay de desktop',
+    'overlay.download.intro':
+      'Um pequeno aplicativo para instalar no seu computador, que mostra o medidor de dano e seu acompanhamento direto por cima do jogo, vinculado a esta conta.',
+    'overlay.download.unsupportedMac':
+      'O overlay só funciona no Windows e no Linux: não existe versão para macOS.',
+    'overlay.download.unsupportedOther':
+      'O overlay só funciona em computadores com Windows e Linux: abra esta página no PC em que você joga.',
+    'overlay.download.platformLabel': 'Sistema:',
+    'overlay.download.platform.windows': 'Windows',
+    'overlay.download.platform.linux': 'Linux',
+    'overlay.download.yourSystem': '(o seu)',
+    'overlay.download.windowsAction': 'Baixar para Windows',
+    'overlay.download.windowsStep1':
+      'Execute wakfu-companion-overlay.exe, nada para instalar nem descompactar.',
+    'overlay.download.windowsStep2':
+      'Se o Windows mostrar "O Windows protegeu o computador", clique em "Mais informações" e depois em "Executar assim mesmo".',
+    'overlay.download.pairStep':
+      'Na primeira execução, o overlay mostra um código: confirme-o neste site para vinculá-lo à sua conta.',
+    'overlay.download.linuxCommandLabel':
+      'Instalação em um único comando, para colar em um terminal:',
+    'overlay.download.copy': 'Copiar',
+    'overlay.download.copied': 'Copiado!',
+    'overlay.download.copyTooltip': 'Copiar o comando',
+    'overlay.download.linuxStep1':
+      'O script baixa a versão mais recente, verifica sua integridade, instala em ~/.local/bin e adiciona ao menu de aplicativos, sem permissões de administrador.',
+    'overlay.download.linuxStep2':
+      'Depois, o overlay inicia sozinho; mais tarde, encontre-o no menu de aplicativos ("Wakfu Companion Overlay").',
+    'overlay.download.linuxScriptAction': 'Baixar o script de instalação',
+    'overlay.download.linuxScriptTooltip':
+      'O mesmo script do comando acima, execute-o com: sh install-wakfu-companion-overlay.sh',
+    'overlay.download.linuxBinaryAction': 'Só o binário',
+    'overlay.download.linuxBinaryTooltip':
+      'O programa sem instalação: torne-o executável (chmod +x wakfu-companion-overlay, ou Propriedades → Permitir execução) e depois execute-o.',
+    'overlay.download.size': '{{n}} MB',
+    'overlay.download.version': 'Versão {{version}}',
+    'overlay.download.versionDated': 'Versão {{version}} de {{date}}',
+    'overlay.download.versionUnavailable': 'Número de versão indisponível no momento',
+    'overlay.download.notes': 'novidades',
+    'overlay.download.autoUpdate': 'Depois, o overlay se atualiza sozinho.',
     'auth.login.panelTitle': 'Iniciar sessão',
     'auth.login.panelTitleConnected': 'Sessão',
     'auth.login.intro':

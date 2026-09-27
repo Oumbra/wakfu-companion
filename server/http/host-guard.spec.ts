@@ -100,6 +100,15 @@ describe('withSecurityHeaders', () => {
     expect(await response.text()).toBe('{"ok":true}');
   });
 
+  it('renvoie la réponse de la route elle-même quand ses en-têtes sont modifiables', () => {
+    // Une copie perdrait `encodeBody: 'manual'` (Workers) : un corps déjà gzip relayé tel quel
+    // (téléchargement de l'overlay) serait recompressé par le runtime.
+    const original = new Response('x', { headers: { 'content-encoding': 'gzip' } });
+    const response = withSecurityHeaders(original);
+    expect(response).toBe(original);
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
   it('fonctionne sur une réponse aux en-têtes immuables (redirection OAuth)', () => {
     const redirect = Response.redirect('https://discord.com/oauth2/authorize', 302);
     const response = withSecurityHeaders(redirect);

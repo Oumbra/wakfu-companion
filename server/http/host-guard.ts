@@ -108,15 +108,30 @@ export const API_SECURITY_HEADERS: Readonly<Record<string, string>> = {
 };
 
 /**
- * `response` avec les en-têtes de sécurité manquants. Toujours une NOUVELLE `Response` : celles
- * que renvoient `fetch`, `caches.default.match` ou `Response.redirect` ont des en-têtes
- * immuables (les modifier lèverait une exception).
+ * `response` avec les en-têtes de sécurité manquants.
+ *
+ * Posés EN PLACE quand les en-têtes sont modifiables (réponse construite par une route) : la même
+ * `Response` est renvoyée, avec ses options d'origine. Une copie perdrait `encodeBody: 'manual'`
+ * (Workers) — le runtime recompresserait alors en gzip un corps DÉJÀ gzip qu'une route relaie tel
+ * quel avec son `Content-Encoding` (téléchargement de l'overlay, `server/overlay/release.ts`) : le
+ * navigateur n'en retirait qu'une couche et enregistrait un fichier encore compressé (constaté le
+ * 2026-09-27 sous `wrangler pages dev`).
+ *
+ * Sinon, une NOUVELLE `Response` : celles que renvoient `fetch`, `caches.default.match` ou
+ * `Response.redirect` ont des en-têtes immuables (les modifier lève une exception).
  */
 export function withSecurityHeaders(response: Response): Response {
-  const headers = new Headers(response.headers);
-  for (const [name, value] of Object.entries(API_SECURITY_HEADERS)) {
-    if (!headers.has(name)) headers.set(name, value);
+  const missing = Object.entries(API_SECURITY_HEADERS).filter(
+    ([name]) => !response.headers.has(name),
+  );
+  try {
+    for (const [name, value] of missing) response.headers.set(name, value);
+    return response;
+  } catch {
+    // En-têtes immuables : copie ci-dessous.
   }
+  const headers = new Headers(response.headers);
+  for (const [name, value] of missing) headers.set(name, value);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
