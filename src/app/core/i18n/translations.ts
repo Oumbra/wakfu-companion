@@ -825,7 +825,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.badge': 'Nouveau',
     'overlay.announcement.title': "L'overlay est arrivé !",
     'overlay.announcement.text':
-      'Vos dégâts et votre suivi en direct, par-dessus le jeu. Disponible sur Windows et Linux.',
+      'Vos dégâts, vos suivis, votre récap en direct et bien plus encore, par-dessus le jeu.',
+    'overlay.announcement.availableOn': 'Disponible sur',
+    'overlay.announcement.and': 'et',
     'overlay.announcement.action': 'Découvrir',
     'overlay.download.title': 'Overlay de bureau',
     'overlay.download.intro':
@@ -1833,7 +1835,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.badge': 'New',
     'overlay.announcement.title': 'The overlay is here!',
     'overlay.announcement.text':
-      'Your damage and tracking live, right on top of the game. Available on Windows and Linux.',
+      'Your damage, your tracking, your live recap and much more, right on top of the game.',
+    'overlay.announcement.availableOn': 'Available on',
+    'overlay.announcement.and': 'and',
     'overlay.announcement.action': 'Check it out',
     'overlay.download.title': 'Desktop overlay',
     'overlay.download.intro':
@@ -2845,7 +2849,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.badge': 'Nuevo',
     'overlay.announcement.title': '¡Llegó el overlay!',
     'overlay.announcement.text':
-      'Tus daños y tu seguimiento en directo, encima del juego. Disponible en Windows y Linux.',
+      'Tus daños, tus seguimientos, tu resumen en directo y mucho más, encima del juego.',
+    'overlay.announcement.availableOn': 'Disponible en',
+    'overlay.announcement.and': 'y',
     'overlay.announcement.action': 'Descubrir',
     'overlay.download.title': 'Overlay de escritorio',
     'overlay.download.intro':
@@ -3858,7 +3864,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.badge': 'Novo',
     'overlay.announcement.title': 'O overlay chegou!',
     'overlay.announcement.text':
-      'Seus danos e seu acompanhamento ao vivo, por cima do jogo. Disponível para Windows e Linux.',
+      'Seus danos, seus acompanhamentos, seu resumo ao vivo e muito mais, por cima do jogo.',
+    'overlay.announcement.availableOn': 'Disponível para',
+    'overlay.announcement.and': 'e',
     'overlay.announcement.action': 'Conhecer',
     'overlay.download.title': 'Overlay de desktop',
     'overlay.download.intro':

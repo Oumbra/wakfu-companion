@@ -1,29 +1,22 @@
 /* Même ancrage que `.update-notice` (app-update-notice.component.css, voir le pourquoi du `top`
    plutôt que `bottom`) : rendue au niveau racine, sous le header, z-index 550. Les deux bannières
    ne s'affichent jamais ensemble (voir le composant).
-   Carte en deux colonnes : marque de l'overlay à gauche (sur les deux rangées), titre + texte puis
-   actions à droite. */
+   Carte : bandeau de marque (logo + « Wakfu Companion Overlay » + pastille), puis titre, texte,
+   systèmes pris en charge et actions. */
 .overlay-announcement {
   position: fixed;
   left: 50%;
   top: 65px;
   transform: translateX(-50%);
   z-index: 550;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas:
-    'brand main'
-    'brand actions';
-  column-gap: 18px;
-  row-gap: 10px;
-  padding: 12px 14px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 32px));
   background: var(--panel-header-bg);
   border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
   border-radius: 12px;
-  box-shadow:
-    0 8px 28px rgba(0, 0, 0, 0.45),
-    0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent) inset;
-  width: min(600px, calc(100vw - 32px));
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
   animation: overlay-announcement-in 320ms ease-out both;
 }
 
@@ -44,75 +37,89 @@
   }
 }
 
-.overlay-announcement-brand {
-  grid-area: brand;
+.overlay-announcement-band {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
-  padding: 14px 16px 12px;
-  border-radius: 8px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--surface-well);
-  border: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
 
-/* Gabarit global `button` (hauteur fixe 28px) neutralisé : le texte peut passer sur 2 lignes. */
+.overlay-announcement-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Gabarit global `button` (hauteur fixe 28px, contenu centré, gras) neutralisé : le texte passe
+   sur plusieurs lignes, aligné à gauche. */
 .overlay-announcement-main {
-  grid-area: main;
   height: auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 6px;
-  min-width: 0;
-  padding: 2px 0 0;
+  padding: 14px 16px 4px;
   background: transparent;
   border: none;
+  border-radius: 0;
   color: var(--text-bright);
+  font-weight: 400;
   text-align: left;
   cursor: pointer;
 }
 
-.overlay-announcement-heading {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.overlay-announcement-badge {
-  flex-shrink: 0;
-  padding: 2px 8px;
-  border-radius: 10px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
 .overlay-announcement-title {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
-.overlay-announcement-text {
+.overlay-announcement-text,
+.overlay-announcement-platforms {
   color: var(--text-color);
-  font-size: 0.86rem;
-  font-weight: 400;
-  line-height: 1.4;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.overlay-announcement-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.overlay-announcement-os {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.overlay-announcement-os img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
 }
 
 .overlay-announcement-actions {
-  grid-area: actions;
-  align-self: end;
   display: flex;
-  align-items: center;
   justify-content: flex-end;
+  align-items: center;
   gap: 8px;
+  padding: 8px 14px 12px;
 }
 
 .overlay-announcement-open {
@@ -141,27 +148,23 @@
   color: var(--text-color);
 }
 
-/* Mobile : une seule colonne, marque compacte en bandeau au-dessus du texte ; le bouton
-   « Découvrir » double la zone de texte cliquable, on ne garde que « Plus tard ». */
+/* Mobile : marque plus petite ; le bouton « Découvrir » double la zone de texte cliquable, on ne
+   garde que « Plus tard ». */
 @media (max-width: 600px) {
-  .overlay-announcement {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'brand'
-      'main'
-      'actions';
-    row-gap: 8px;
-    padding: 10px;
+  .overlay-announcement-band {
+    padding: 10px 12px;
   }
-  .overlay-announcement-brand {
-    padding: 8px 12px;
+  .overlay-announcement-band app-overlay-brand {
+    --overlay-brand-font-size: 0.7rem;
   }
-  .overlay-announcement-brand app-overlay-brand {
-    --overlay-brand-logo-size: 34px;
-    --overlay-brand-font-size: 0.68rem;
+  .overlay-announcement-main {
+    padding: 12px 12px 2px;
   }
   .overlay-announcement-title {
-    font-size: 0.95rem;
+    font-size: 0.98rem;
+  }
+  .overlay-announcement-actions {
+    padding: 6px 12px 10px;
   }
   .overlay-announcement-open {
     display: none;

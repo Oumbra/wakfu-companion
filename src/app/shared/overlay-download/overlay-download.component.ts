@@ -4,16 +4,10 @@ import {
   type OverlayPlatform,
 } from '../../core/services/overlay-release.service';
 import { APP_LOGO_PURPLE_DATA_URI } from '../../core/data/app-logo.data';
+import { OS_LOGOS } from '../../core/data/os-logos.data';
 import { I18nService } from '../../core/services/i18n.service';
 import { TranslatePipe } from '../translate.pipe';
 import { TooltipDirective } from '../tooltip/tooltip.directive';
-
-/** Logos des systèmes (PNG transparents, `public/assets/ui/`, nom hashé : régénérer le hash si
- * le fichier change — provenance dans `public/assets/SOURCES.md`). */
-const OS_LOGOS: Record<OverlayPlatform, string> = {
-  windows: 'assets/ui/os-windows-b0ca3239.png',
-  linux: 'assets/ui/os-linux-490667e8.png',
-};
 
 /**
  * Téléchargement de l'overlay de bureau (onglet Connexion du profil, bloc « Overlay de bureau ») :
