@@ -819,10 +819,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "L'overlay ne fonctionne que sous Windows et Linux : il n'existe pas de version pour macOS.",
     'overlay.download.unsupportedOther':
       "L'overlay ne fonctionne que sous Windows et Linux, sur ordinateur : ouvrez cette page depuis le PC sur lequel vous jouez.",
-    'overlay.download.platformLabel': 'Système :',
+    'overlay.download.platformLabel': 'Système',
     'overlay.download.platform.windows': 'Windows',
     'overlay.download.platform.linux': 'Linux',
-    'overlay.download.yourSystem': '(le vôtre)',
     'overlay.download.windowsAction': 'Télécharger pour Windows',
     'overlay.download.windowsStep1':
       'Lancez wakfu-companion-overlay.exe, rien à installer ni à décompresser.',
@@ -1813,10 +1812,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'The overlay only runs on Windows and Linux: there is no macOS version.',
     'overlay.download.unsupportedOther':
       'The overlay only runs on Windows and Linux computers: open this page on the PC you play on.',
-    'overlay.download.platformLabel': 'System:',
+    'overlay.download.platformLabel': 'System',
     'overlay.download.platform.windows': 'Windows',
     'overlay.download.platform.linux': 'Linux',
-    'overlay.download.yourSystem': '(yours)',
     'overlay.download.windowsAction': 'Download for Windows',
     'overlay.download.windowsStep1':
       'Run wakfu-companion-overlay.exe, nothing to install or unzip.',
@@ -2811,10 +2809,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'El overlay solo funciona en Windows y Linux: no existe versión para macOS.',
     'overlay.download.unsupportedOther':
       'El overlay solo funciona en ordenadores con Windows y Linux: abre esta página desde el PC en el que juegas.',
-    'overlay.download.platformLabel': 'Sistema:',
+    'overlay.download.platformLabel': 'Sistema',
     'overlay.download.platform.windows': 'Windows',
     'overlay.download.platform.linux': 'Linux',
-    'overlay.download.yourSystem': '(el tuyo)',
     'overlay.download.windowsAction': 'Descargar para Windows',
     'overlay.download.windowsStep1':
       'Ejecuta wakfu-companion-overlay.exe, no hay nada que instalar ni descomprimir.',
@@ -3809,10 +3806,9 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'O overlay só funciona no Windows e no Linux: não existe versão para macOS.',
     'overlay.download.unsupportedOther':
       'O overlay só funciona em computadores com Windows e Linux: abra esta página no PC em que você joga.',
-    'overlay.download.platformLabel': 'Sistema:',
+    'overlay.download.platformLabel': 'Sistema',
     'overlay.download.platform.windows': 'Windows',
     'overlay.download.platform.linux': 'Linux',
-    'overlay.download.yourSystem': '(o seu)',
     'overlay.download.windowsAction': 'Baixar para Windows',
     'overlay.download.windowsStep1':
       'Execute wakfu-companion-overlay.exe, nada para instalar nem descompactar.',

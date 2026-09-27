@@ -35,19 +35,23 @@
 
 .od-platforms {
   display: flex;
-  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 12px;
+  margin: 8px 0;
 }
 
+/* Deux boutons de même taille, centrés. Gabarit global `button` (hauteur 28px) remplacé. */
 .od-platform {
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 14px;
+  width: min(160px, calc(50% - 6px));
+  height: 40px;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 20px;
   border: 1px solid var(--border);
   background: transparent;
   color: var(--text-color);
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   cursor: pointer;
 }
 .od-platform:hover {
@@ -60,15 +64,10 @@
   font-weight: 600;
 }
 .od-os-logo {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   object-fit: contain;
   flex: none;
-}
-.od-platform-mine {
-  font-size: 0.75rem;
-  font-weight: 400;
-  color: var(--text-muted);
 }
 
 .od-actions {
