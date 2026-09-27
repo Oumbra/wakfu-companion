@@ -23,6 +23,7 @@
 }
 
 .app-footer-left {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -35,7 +36,18 @@
   white-space: pre-line;
 }
 
+/* Pastilles « Vie privée » et « Build » groupées sur une seule ligne : elles ne rétrécissent pas,
+   c'est le bloc de gauche (copyright) qui se replie quand la largeur manque — sinon la pastille
+   Build passait sur 2 lignes vers 1300px de large. */
+.app-footer-badges {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
 .app-footer-build {
+  white-space: nowrap;
   padding: 6px 12px;
   border: 1px solid var(--text-muted);
   border-radius: 16px;
@@ -49,10 +61,13 @@
 
 .app-footer-links {
   display: flex;
-  gap: 14px;
+  flex-wrap: wrap;
+  gap: 4px 14px;
 }
 
 .app-footer-link {
+  white-space: nowrap;
+  height: auto;
   background: none;
   border: none;
   padding: 0;
@@ -65,7 +80,9 @@
   color: var(--accent);
 }
 
-@media (max-width: 640px) {
+/* Empilement vertical dès 900px (et non plus 640px) : les deux pastilles restant désormais sur une
+   seule ligne (~430px), le bloc de gauche serait trop étroit en dessous et ses liens se replieraient. */
+@media (max-width: 900px) {
   .app-footer {
     padding: 8px 10px;
     flex-direction: column;
@@ -76,11 +93,11 @@
     border-right: 0;
   }
 
-  .app-footer-build {
-    border: 0;
-    border-radius: unset;
-    padding: 0;
-    background-color: unset;
+  .app-footer-badges {
+    flex-wrap: wrap;
+    justify-content: center;
+    flex-shrink: 1;
+    min-width: 0;
   }
 }
 

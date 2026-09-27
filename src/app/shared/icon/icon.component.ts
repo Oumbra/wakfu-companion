@@ -34,10 +34,15 @@ export type AppIconName =
   | 'dungeon'
   | 'flee'
   | 'wrench'
-  | 'pouch';
+  | 'pouch'
+  | 'shield-check'
+  | 'eye-off'
+  | 'monitor'
+  | 'download'
+  | 'trash';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-cfde50b4.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-ab06fbc2.svg';
 
 @Component({
   selector: 'app-icon',

@@ -1,0 +1,120 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Même gabarit que la pastille Build voisine (app-footer.component.css), bordure verte pour
+   signaler un engagement plutôt qu'une information technique. */
+.privacy-pill {
+  height: auto;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--btn-active-green);
+  border-radius: 16px;
+  background-color: var(--surface-raised);
+  color: var(--text-color);
+  font-size: 0.68rem;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.privacy-pill:hover {
+  border-color: var(--accent);
+}
+.privacy-pill-icon {
+  display: inline-flex;
+  color: var(--btn-active-green);
+}
+.privacy-pill-caret {
+  display: inline-flex;
+  color: var(--text-muted);
+  transform: rotate(90deg);
+  transition: transform 0.15s;
+}
+.privacy-pill-caret.open {
+  transform: rotate(-90deg);
+}
+
+.privacy-panel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  z-index: 5;
+  width: min(340px, calc(100vw - 20px));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.5);
+  color: var(--text-color);
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.privacy-panel-title {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.privacy-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.privacy-panel-list li {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 8px;
+  align-items: start;
+}
+.privacy-panel-list strong {
+  font-weight: 600;
+}
+.privacy-panel-body {
+  display: block;
+  color: var(--text-muted);
+}
+.privacy-panel-icon {
+  display: inline-flex;
+  margin-top: 2px;
+  color: var(--btn-active-green);
+}
+
+/* Lien textuel : neutralise le gabarit global `button` (hauteur fixe, contenu centré). */
+.privacy-panel-link {
+  height: auto;
+  justify-content: flex-start;
+  align-self: flex-start;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.privacy-panel-link:hover {
+  text-decoration: underline;
+}
+
+/* Pied de page empilé sur mobile (app-footer.component.css) : la pastille y est centrée, le
+   panneau aussi. */
+@media (max-width: 640px) {
+  .privacy-panel {
+    right: auto;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .privacy-pill-caret {
+    transition: none;
+  }
+}

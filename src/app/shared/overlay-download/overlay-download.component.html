@@ -1,0 +1,110 @@
+<div class="overlay-download">
+  <p class="od-text">{{ 'overlay.download.intro' | t }}</p>
+
+  @if (overlay.clientOs === 'mac') {
+    <p class="od-notice" role="status">{{ 'overlay.download.unsupportedMac' | t }}</p>
+  } @else if (overlay.clientOs === 'other') {
+    <p class="od-notice" role="status">{{ 'overlay.download.unsupportedOther' | t }}</p>
+  }
+
+  <div class="od-platforms" role="group" [attr.aria-label]="'overlay.download.platformLabel' | t">
+    @for (option of platforms; track option) {
+      <button
+        type="button"
+        class="od-platform"
+        [class.active]="platform() === option"
+        [attr.aria-pressed]="platform() === option"
+        (click)="platform.set(option)"
+      >
+        <img class="od-os-logo" [src]="osLogos[option]" alt="" />
+        {{ 'overlay.download.platform.' + option | t }}
+      </button>
+    }
+  </div>
+
+  @switch (platform()) {
+    @case ('windows') {
+      <div class="od-actions">
+        <a
+          class="od-btn primary"
+          [href]="overlay.downloadUrl('windows')"
+          download="wakfu-companion-overlay.exe"
+          (click)="onDownload()"
+        >
+          <img class="od-btn-logo" [src]="overlayLogo" alt="" />
+          {{ 'overlay.download.windowsAction' | t }}
+          @if (sizeLabel('windows'); as size) {
+            <span class="od-btn-size">{{ size }}</span>
+          }
+        </a>
+      </div>
+      <ol class="od-steps">
+        <li>{{ 'overlay.download.windowsStep1' | t }}</li>
+        <li>{{ 'overlay.download.windowsStep2' | t }}</li>
+        <li>{{ 'overlay.download.pairStep' | t }}</li>
+      </ol>
+    }
+    @case ('linux') {
+      <p class="od-hint">{{ 'overlay.download.linuxCommandLabel' | t }}</p>
+      <div class="od-command">
+        <code class="od-command-text">{{ overlay.linuxInstallCommand }}</code>
+        <button
+          type="button"
+          class="od-btn small"
+          [appTooltip]="'overlay.download.copyTooltip' | t"
+          tooltipPosition="top-right"
+          (click)="copyCommand()"
+        >
+          {{ (copied() ? 'overlay.download.copied' : 'overlay.download.copy') | t }}
+        </button>
+      </div>
+      <ol class="od-steps">
+        <li>{{ 'overlay.download.linuxStep1' | t }}</li>
+        <li>{{ 'overlay.download.linuxStep2' | t }}</li>
+        <li>{{ 'overlay.download.pairStep' | t }}</li>
+      </ol>
+      <div class="od-actions">
+        <a
+          class="od-btn"
+          [href]="overlay.linuxInstallScriptPath"
+          download="install-wakfu-companion-overlay.sh"
+          [appTooltip]="'overlay.download.linuxScriptTooltip' | t"
+          [tooltipMultiline]="true"
+          (click)="onDownload()"
+        >
+          <img class="od-btn-logo" [src]="overlayLogo" alt="" />
+          {{ 'overlay.download.linuxScriptAction' | t }}
+        </a>
+        <a
+          class="od-btn"
+          [href]="overlay.downloadUrl('linux')"
+          download="wakfu-companion-overlay"
+          [appTooltip]="'overlay.download.linuxBinaryTooltip' | t"
+          [tooltipMultiline]="true"
+          (click)="onDownload()"
+        >
+          {{ 'overlay.download.linuxBinaryAction' | t }}
+          @if (sizeLabel('linux'); as size) {
+            <span class="od-btn-size">{{ size }}</span>
+          }
+        </a>
+      </div>
+    }
+  }
+
+  <p class="od-hint">
+    @if (versionLabel(); as version) {
+      {{ version }}
+      @if (overlay.release()?.notesUrl; as notesUrl) {
+        ·
+        <a class="od-link" [href]="notesUrl" target="_blank" rel="noopener noreferrer">{{
+          'overlay.download.notes' | t
+        }}</a>
+      }
+      ·
+    } @else if (overlay.releaseState() === 'error') {
+      {{ 'overlay.download.versionUnavailable' | t }} ·
+    }
+    {{ 'overlay.download.autoUpdate' | t }}
+  </p>
+</div>

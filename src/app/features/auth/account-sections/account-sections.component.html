@@ -71,6 +71,15 @@
       </section>
     }
 
+    <!-- En tête des blocs du compte : c'est là que mène la bannière d'annonce de l'overlay
+           (OverlayAnnouncementComponent), le bouton doit être visible sans défiler. -->
+    <section class="account-panel">
+      <div class="account-panel-header">{{ 'overlay.download.title' | t }}</div>
+      <div class="account-body">
+        <app-overlay-download />
+      </div>
+    </section>
+
     <section class="account-panel">
       <div class="account-panel-header">{{ 'auth.account.identity' | t }}</div>
       <div class="account-body">
