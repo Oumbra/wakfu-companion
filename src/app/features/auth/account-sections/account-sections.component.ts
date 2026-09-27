@@ -9,13 +9,14 @@ import { ConfirmDeleteService } from '../../../core/services/confirm-delete.serv
 import { PersistenceService } from '../../../core/services/persistence.service';
 import { I18nService } from '../../../core/services/i18n.service';
 import { TranslatePipe } from '../../../shared/translate.pipe';
+import { OverlayDownloadComponent } from '../../../shared/overlay-download/overlay-download.component';
 import { SwitchComponent } from '../../../shared/switch/switch.component';
 import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
 
 /**
  * Blocs du compte affichés sous les boutons Discord/Google de l'onglet Connexion du profil
- * (lot 5, prompt 5.2) : décision de migration des données locales, identité, appareils connectés
- * avec révocation, mes données (synchronisation, export), déconnexion et suppression du compte.
+ * (lot 5, prompt 5.2) : décision de migration des données locales, téléchargement de l'overlay de
+ * bureau, identité, appareils connectés avec révocation, mes données (synchronisation, export), déconnexion et suppression du compte.
  *
  * Remplace l'ancienne page « Mon compte » (vue `account`, supprimée) : tout ce qui concerne la
  * connexion tient désormais sur un seul écran, sans navigation supplémentaire. L'ancienne URL
@@ -28,7 +29,7 @@ import { TooltipDirective } from '../../../shared/tooltip/tooltip.directive';
  */
 @Component({
   selector: 'app-account-sections',
-  imports: [TranslatePipe, TooltipDirective, SwitchComponent],
+  imports: [TranslatePipe, TooltipDirective, SwitchComponent, OverlayDownloadComponent],
   templateUrl: './account-sections.component.html',
   styleUrl: './account-sections.component.css',
 })

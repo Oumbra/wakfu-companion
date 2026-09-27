@@ -12,8 +12,13 @@
 // Ce listener est enregistré AVANT celui d'Angular : pour une requête d'une autre origine,
 // `stopImmediatePropagation()` empêche Angular de la voir, et l'absence de `respondWith()` rend la
 // main au navigateur, qui la charge normalement (CSP et referrer-policy de la page).
+//
+// Même traitement pour le téléchargement de l'overlay de bureau (`/api/v1/overlay/download/*`,
+// plusieurs dizaines de Mo relayés en `Content-Encoding: gzip`) : le navigateur le télécharge
+// lui-même, sans que le worker Angular le rejoue et le fasse transiter par son propre `fetch()`.
 self.addEventListener('fetch', (event) => {
-  if (new URL(event.request.url).origin !== self.location.origin) {
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/v1/overlay/download/')) {
     event.stopImmediatePropagation();
   }
 });

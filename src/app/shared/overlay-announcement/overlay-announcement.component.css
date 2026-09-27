@@ -1,0 +1,172 @@
+/* Même ancrage que `.update-notice` (app-update-notice.component.css, voir le pourquoi du `top`
+   plutôt que `bottom`) : rendue au niveau racine, sous le header, z-index 550. Les deux bannières
+   ne s'affichent jamais ensemble (voir le composant).
+   Carte : bandeau de marque (logo + « Wakfu Companion Overlay » + pastille), puis titre, texte,
+   systèmes pris en charge et actions. */
+.overlay-announcement {
+  position: fixed;
+  left: 50%;
+  top: 65px;
+  transform: translateX(-50%);
+  z-index: 550;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, calc(100vw - 32px));
+  background: var(--panel-header-bg);
+  border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  animation: overlay-announcement-in 320ms ease-out both;
+}
+
+@keyframes overlay-announcement-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay-announcement {
+    animation: none;
+  }
+}
+
+.overlay-announcement-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-well);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+
+.overlay-announcement-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Gabarit global `button` (hauteur fixe 28px, contenu centré, gras) neutralisé : le texte passe
+   sur plusieurs lignes, aligné à gauche. */
+.overlay-announcement-main {
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 14px 16px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--text-bright);
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+.overlay-announcement-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.overlay-announcement-text,
+.overlay-announcement-platforms {
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.overlay-announcement-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.overlay-announcement-os {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--text-bright);
+}
+
+.overlay-announcement-os img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.overlay-announcement-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 12px;
+}
+
+.overlay-announcement-open {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.overlay-announcement-open:hover {
+  filter: brightness(1.1);
+}
+
+.overlay-announcement-dismiss {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.overlay-announcement-dismiss:hover {
+  color: var(--text-color);
+}
+
+/* Mobile : marque plus petite ; le bouton « Découvrir » double la zone de texte cliquable, on ne
+   garde que « Plus tard ». */
+@media (max-width: 600px) {
+  .overlay-announcement-band {
+    padding: 10px 12px;
+  }
+  .overlay-announcement-band app-overlay-brand {
+    --overlay-brand-font-size: 0.7rem;
+  }
+  .overlay-announcement-main {
+    padding: 12px 12px 2px;
+  }
+  .overlay-announcement-title {
+    font-size: 0.98rem;
+  }
+  .overlay-announcement-actions {
+    padding: 6px 12px 10px;
+  }
+  .overlay-announcement-open {
+    display: none;
+  }
+}

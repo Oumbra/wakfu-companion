@@ -3,6 +3,7 @@ import { LegalPageService } from '../../core/services/legal-page.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { BUILD_TIMESTAMP, BUILD_VERSION } from '../../core/data/build-info.data';
 import { TranslatePipe } from '../translate.pipe';
+import { PrivacyCommitmentsComponent } from '../privacy-commitments/privacy-commitments.component';
 
 /**
  * Pied de page global — rendu une fois par panneau de navigation (voir AppPageComponent), donc
@@ -15,7 +16,7 @@ import { TranslatePipe } from '../translate.pipe';
  */
 @Component({
   selector: 'app-footer',
-  imports: [TranslatePipe],
+  imports: [TranslatePipe, PrivacyCommitmentsComponent],
   templateUrl: './app-footer.component.html',
   styleUrl: './app-footer.component.css',
 })

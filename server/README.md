@@ -318,6 +318,27 @@ minuscules>.png` (`default.png`, `di.png`) — tout le reste est un 400.
   icônes `wakassets` : visibles au déploiement suivant. La Function reste pour
   `wrangler pages dev` sans ce script. Limite Pages : 20 000 fichiers par
   déploiement (≈ 15 200 aujourd'hui, le script échoue au-delà de 19 500).
+- `GET /api/v1/overlay/latest` — **dernière version de l'overlay de bureau**
+  (2026-09-27) : numéro, date, lien des notes et tailles par plateforme, lus
+  dans le manifeste `latest.json` que le workflow `release.yml` du dépôt
+  `wakfu-companion-overlay` publie à chaque Release (URL stable
+  `releases/latest/download/latest.json`, hors API GitHub, donc sans quota —
+  le même manifeste que l'overlay lit pour se mettre à jour). Public, gardé
+  5 minutes en cache périphérique. Aucune modification à faire ici à chaque
+  Release.
+- `GET /api/v1/overlay/download/{windows|linux}` — **binaire de la dernière
+  version, prêt à lancer** : l'asset gzip de la Release (`….exe.gz`, `….gz`,
+  que l'Explorateur Windows n'ouvre pas) est relayé TEL QUEL avec
+  `Content-Encoding: gzip` et `encodeBody: 'manual'` ; le navigateur le
+  décompresse et enregistre `wakfu-companion-overlay.exe` /
+  `wakfu-companion-overlay` (aucun coût CPU côté Worker, simple flux).
+  Réservé aux comptes connectés (302 vers `/account` sinon), asset mis en cache
+  un jour à la périphérie. Utilisé par l'encart « Overlay de bureau » de
+  l'onglet Connexion ; sous Linux, l'encart propose surtout
+  `public/overlay/install-linux.sh` (`curl … | sh` : lit le même manifeste chez
+  GitHub, vérifie le SHA-256, installe dans `~/.local/bin` avec un raccourci
+  dans le menu des applications). Logique pure dans `server/overlay/release.ts`
+  (testée).
 - `GET /api/v1/auth/{discord|google}/start` — démarre le flux OAuth
   (redirection 302, `state` + PKCE), `?redirect_to=/chemin` optionnel.
 - `GET /api/v1/auth/{discord|google}/callback` — retour du fournisseur,
@@ -564,6 +585,17 @@ et en laissant l'edge Cloudflare appliquer sa propre compression
 automatique (gzip/brotli selon `Accept-Encoding`) — **ne jamais** compresser
 manuellement une `Response` de Pages Function/Worker destinée à un
 navigateur ; laisser Cloudflare le faire.
+
+**Cause réelle, identifiée le 2026-09-27** (relais de l'overlay, qui a
+besoin de poser `Content-Encoding` sur des octets déjà gzip) : avec
+`encodeBody: 'automatic'` (le défaut), le runtime Workers compresse LUI-MÊME
+tout corps dont la réponse annonce `Content-Encoding: gzip` — un corps déjà
+compressé l'était donc deux fois, et le navigateur n'en retirait qu'une
+couche. `encodeBody: 'manual'` transmet le corps tel quel. Encore faut-il
+que la réponse ne soit pas recopiée en route : `withSecurityHeaders`
+(`server/http/host-guard.ts`, middleware `/api/*`) pose désormais ses
+en-têtes en place quand c'est possible, une copie perdant l'option. Pour un
+JSON, la règle ci-dessus reste la bonne : laisser l'edge compresser.
 
 ### Bilan bundle client (lot 3.1, prompt 3.1 — étape 9/9)
 

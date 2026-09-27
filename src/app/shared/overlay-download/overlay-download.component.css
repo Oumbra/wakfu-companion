@@ -1,0 +1,160 @@
+:host {
+  display: block;
+}
+
+.overlay-download {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.od-text {
+  margin: 0;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.od-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+/* macOS / mobile : l'overlay n'y existe pas — encadré d'information, pas une erreur. */
+.od-notice {
+  margin: 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.od-platforms {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+/* Deux boutons de même taille, centrés. Gabarit global `button` (hauteur 28px) remplacé. */
+.od-platform {
+  width: min(160px, calc(50% - 6px));
+  height: 40px;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+.od-platform:hover {
+  border-color: var(--accent);
+}
+.od-platform.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--text-bright);
+  font-weight: 600;
+}
+.od-os-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex: none;
+}
+
+.od-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Liens de téléchargement habillés en boutons — même rendu que `.account-btn` (onglet Connexion),
+   à reporter si celui-ci change. */
+.od-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-header-bg);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.od-btn:hover {
+  border-color: var(--accent);
+}
+.od-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+.od-btn.primary:hover {
+  filter: brightness(1.1);
+}
+.od-btn.small {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  font-size: 0.82rem;
+}
+/* Logo de l'overlay (celui du site) devant le libellé du bouton, légèrement plus grand que le
+texte pour animer le bouton. */
+.od-btn-logo {
+  width: 22px;
+  height: 22px;
+  margin: -3px 0;
+  object-fit: contain;
+  flex: none;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
+}
+.od-btn-size {
+  font-size: 0.78rem;
+  font-weight: 400;
+  opacity: 0.8;
+}
+
+.od-command {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-header-bg);
+  min-width: 0;
+}
+.od-command-text {
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  color: var(--text-bright);
+}
+
+.od-steps {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.od-link {
+  color: var(--accent);
+}
