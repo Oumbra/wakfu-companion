@@ -1,0 +1,167 @@
+/* Même ancrage que `.update-notice` (app-update-notice.component.css, voir le pourquoi du `top`
+   plutôt que `bottom`) : rendue au niveau racine, sous le header, z-index 550. Les bannières qui
+   utilisent cette carte ne s'affichent jamais ensemble (voir leurs composants).
+   Carte : bandeau de marque (logo + « Wakfu Companion Overlay » + pastille), puis titre, contenu
+   projeté et actions. Largeur ajustable via `--announcement-card-width` posée sur la balise. */
+.announcement-card {
+  --announcement-card-tone: var(--accent);
+  --announcement-card-on-tone: var(--on-accent);
+  position: fixed;
+  left: 50%;
+  top: 65px;
+  transform: translateX(-50%);
+  z-index: 550;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--announcement-card-width, 520px), calc(100vw - 32px));
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+  background: var(--panel-header-bg);
+  border: 1px solid color-mix(in srgb, var(--announcement-card-tone) 55%, transparent);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  animation: announcement-card-in 320ms ease-out both;
+}
+
+/* Orange des pastilles du pas-à-pas (`--ob-callout`, onboarding-tour.component.css) : lisible sur
+   les thèmes sombre et clair, texte blanc. */
+.announcement-card-important {
+  --announcement-card-tone: #e8590c;
+  --announcement-card-on-tone: #ffffff;
+}
+
+@keyframes announcement-card-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-card {
+    animation: none;
+  }
+}
+
+.announcement-card-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-well);
+  border-bottom: 1px solid var(--border);
+}
+
+.announcement-card-clickable .announcement-card-band,
+.announcement-card-clickable .announcement-card-main {
+  cursor: pointer;
+}
+
+.announcement-card-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--announcement-card-tone);
+  color: var(--announcement-card-on-tone);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Gabarit global `button` (hauteur fixe 28px, contenu centré, gras) neutralisé : le texte passe
+   sur plusieurs lignes, aligné à gauche. */
+.announcement-card-main {
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 6px;
+  padding: 14px 16px 4px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  color: var(--text-bright);
+  font-weight: 400;
+  text-align: left;
+}
+
+.announcement-card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.announcement-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.announcement-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px 12px;
+}
+
+.announcement-card-action {
+  background: var(--announcement-card-tone);
+  color: var(--announcement-card-on-tone);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.announcement-card-action:hover {
+  filter: brightness(1.1);
+}
+
+.announcement-card-dismiss {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.announcement-card-dismiss:hover {
+  color: var(--text-color);
+}
+
+/* Mobile : marque plus petite ; quand la zone de texte est cliquable, elle double l'action
+   principale, on ne garde que « Plus tard ». */
+@media (max-width: 600px) {
+  .announcement-card-band {
+    padding: 10px 12px;
+  }
+  .announcement-card-band app-overlay-brand {
+    --overlay-brand-font-size: 0.7rem;
+  }
+  .announcement-card-main {
+    padding: 12px 12px 2px;
+  }
+  .announcement-card-title {
+    font-size: 0.98rem;
+  }
+  .announcement-card-actions {
+    padding: 6px 12px 10px;
+  }
+  .announcement-card-clickable .announcement-card-action {
+    display: none;
+  }
+}

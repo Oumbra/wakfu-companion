@@ -1,6 +1,6 @@
 {
   "name": "wakfu-companion",
-  "version": "1.161.0",
+  "version": "1.162.0",
   "scripts": {
     "ng": "ng",
     "generate:build-info": "node tools/generate-build-info.mjs",

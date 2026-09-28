@@ -35,6 +35,12 @@ const MAX_TRANSIENT_READ_FAILURES = 5;
 export class LogFileAccessService {
   readonly status = signal<LogFileStatus>('idle');
   readonly fileName = signal<string | null>(null);
+  /**
+   * Vrai quand `connected` vient de `simulateConnected()` (« Continuer sans fichier de log ») :
+   * aucun `wakfu.log` réel n'est lu. Faux pour une vraie connexion fichier — cas que surveille
+   * `OverlayConflictService` (fichier lu par le site ET par un overlay appairé).
+   */
+  readonly simulated = signal(false);
   readonly fileSize = signal<number>(0);
   readonly errorMessage = signal<string | null>(null);
 
@@ -224,6 +230,7 @@ export class LogFileAccessService {
     this.errorMessage.set(null);
     this.fileName.set(displayName);
     this.fileSize.set(0);
+    this.simulated.set(true);
     this.status.set('connected');
   }
 
@@ -237,6 +244,7 @@ export class LogFileAccessService {
     this.isFirstRead = true;
     this.consecutiveTransientReadFailures = 0;
     this.status.set('idle');
+    this.simulated.set(false);
     this.fileName.set(null);
     this.fileSize.set(0);
     this.errorMessage.set(null);
@@ -245,6 +253,7 @@ export class LogFileAccessService {
   private async connect(handle: FileSystemFileHandle): Promise<void> {
     this.handle = handle;
     this.fileName.set(handle.name);
+    this.simulated.set(false);
     this.lastOffset = 0;
     this.carry = '';
     this.isFirstRead = true;
