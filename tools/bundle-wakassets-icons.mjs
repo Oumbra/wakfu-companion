@@ -122,6 +122,27 @@ try {
     }
   }
 
+  // Compléments versionnés : `tools/game-icons/{folder}/{file}.png`.
+  const localDir = resolve('tools/game-icons');
+  let local = 0;
+  if (existsSync(localDir)) {
+    for (const folder of readdirSync(localDir)) {
+      const src = join(localDir, folder);
+      if (!lstatSync(src).isDirectory()) continue;
+      const dest = join(outDir, ICONS_PREFIX, folder);
+      mkdirSync(dest, { recursive: true });
+      for (const file of readdirSync(src)) {
+        if (!upstreamUrl({ folder, file }) || existsSync(join(dest, file))) continue;
+        if (!isPlainPng(join(src, file))) {
+          rejected++;
+          continue;
+        }
+        copyFileSync(join(src, file), join(dest, file));
+        local++;
+      }
+    }
+  }
+
   // Icône absente : Pages sert le `404.html` le plus proche avec un statut 404 (vérifié sous
   // `wrangler pages dev`) au lieu du repli SPA (`index.html`, 200) — l'overlay et les `<img>` du
   // site voient un vrai échec, comme avec le relais. Une règle `_redirects` en 404 n'est pas
@@ -143,7 +164,7 @@ try {
       .filter(Boolean).length,
   );
   console.log(
-    `[wakassets] ${copied} icônes copiées, ${rejected} écartées (pas un PNG ordinaire), ` +
+    `[wakassets] ${copied} icônes copiées (+ ${local} versionnées), ${rejected} écartées (pas un PNG ordinaire), ` +
       `commit ${commit.slice(0, 12)}, ${total} fichiers publiés.`,
   );
   if (total > MAX_FILES) {
