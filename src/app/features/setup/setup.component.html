@@ -102,13 +102,27 @@
       </div>
     }
 
-    <!-- Fichier wakfu.log injoignable depuis un navigateur mobile (aucun n'implémente l'API File
-         System Access, voir isSupported()) : propose de rejoindre directement le tableau de bord
-         avec les seules données de compte déjà synchronisées, plutôt qu'une impasse. -->
-    <div class="mobile-only mobile-skip-block">
-      <button type="button" class="link-btn" (click)="skipLogFile()">
-        {{ 'setup.mobileSkip.button' | t }}
-      </button>
+    <!-- « Continuer sans fichier de log » (desktop comme mobile, voir SetupComponent.skipLogFile) :
+         sur mobile le fichier est injoignable (aucun navigateur mobile n'implémente l'API File
+         System Access) ; sur desktop, un overlay appairé le lit déjà à la place du site. Le badge
+         de marque de l'overlay (desktop seulement), sous le bouton à sa gauche, remonte vers lui
+         par une flèche pour le dire — en absolu, pour ne pas décentrer le bouton. -->
+    <div class="skip-block">
+      <div class="skip-row">
+        <div
+          class="desktop-only overlay-callout"
+          [appTooltip]="'setup.overlaySkip.calloutTooltip' | t"
+        >
+          <span class="overlay-callout-bubble"><app-overlay-brand /></span>
+          <svg class="overlay-callout-arrow" viewBox="0 0 44 34" fill="none" aria-hidden="true">
+            <path d="M4 31c4-14 16-22 34-22" />
+            <path d="M31 3l7 6-7 6" />
+          </svg>
+        </div>
+        <button type="button" class="primary-btn skip-btn" (click)="skipLogFile()">
+          {{ 'setup.mobileSkip.button' | t }}
+        </button>
+      </div>
       @if (showSkipLoginPrompt() && !auth.isAuthenticated()) {
         <div class="mobile-skip-login">
           <p class="mobile-skip-login-desc">{{ 'setup.mobileSkip.loginPrompt' | t }}</p>
