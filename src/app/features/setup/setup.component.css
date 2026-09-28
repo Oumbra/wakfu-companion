@@ -318,6 +318,11 @@ a.browser-item:hover .browser-item-name {
   gap: 12px;
   text-align: center;
 }
+.overlay-skip-btn {
+  height: 40px;
+  padding: 0 20px;
+  font-size: 0.95rem;
+}
 .mobile-skip-login {
   width: 100%;
   max-width: 320px;

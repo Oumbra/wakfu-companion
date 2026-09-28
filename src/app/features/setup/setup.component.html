@@ -107,7 +107,7 @@
          mobile, le bouton « passer cette étape » ci-dessous fait déjà la même chose. -->
     @if (overlayPaired()) {
       <div class="desktop-only skip-block">
-        <button type="button" class="link-btn" (click)="continueWithOverlay()">
+        <button type="button" class="primary-btn overlay-skip-btn" (click)="continueWithOverlay()">
           {{ 'setup.overlaySkip.button' | t }}
         </button>
       </div>
