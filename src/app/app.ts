@@ -33,6 +33,7 @@ import { AppHeaderComponent } from './shared/app-header/app-header.component';
 import { AppPageComponent } from './shared/app-page/app-page.component';
 import { TabSheetComponent } from './shared/tab-sheet/tab-sheet.component';
 import { AuthService } from './core/auth/auth.service';
+import { connectWithoutFile } from './core/auth/connect-without-file';
 import { GameServerService } from './core/services/game-server.service';
 import { Gender } from './core/data/class-icons.data';
 import { TooltipComponent } from './shared/tooltip/tooltip.component';
@@ -142,14 +143,14 @@ export class App implements OnInit {
         return;
       }
       if (outcome?.status !== 'ok') return;
-      // Retour du bouton mobile "passer cette étape" (voir SetupComponent/
+      // Retour du bouton "continuer sans fichier de log" (voir SetupComponent/
       // LogFileAccessService.simulateConnected) : la connexion vient d'aboutir pour cette seule
       // raison, direction le tableau de bord plutôt que l'onglet Connexion — SAUF si une décision sur
       // les données locales est en attente (voir AuthService.evaluateDataMigration, appelé juste
       // avant ce `.then`) : cette décision ne doit jamais être prise en silence, elle reste
       // affichée dans l'onglet Connexion comme pour toute autre connexion.
       if (mobileSkipPending && !this.auth.migrationPrompt()) {
-        this.logFileAccess.simulateConnected(this.i18n.t('setup.mobileSkip.simulatedFileName'));
+        void connectWithoutFile(this.auth, this.logFileAccess, this.i18n);
         return;
       }
       // Au retour d'une connexion réussie, on atterrit sur l'onglet Connexion du profil :
