@@ -1,0 +1,34 @@
+<ng-template #body>
+  <span class="announcement-card-title">{{ cardTitle() }}</span>
+  <div class="announcement-card-body"><ng-content /></div>
+</ng-template>
+
+<div
+  class="announcement-card"
+  [class.announcement-card-important]="tone() === 'important'"
+  [class.announcement-card-clickable]="clickable()"
+  role="status"
+>
+  <!-- Doublon souris de la zone de texte cliquable : le clavier passe par le bouton principal. -->
+  <div class="announcement-card-band" (click)="onOpen()">
+    <app-overlay-brand />
+    <span class="announcement-card-badge">{{ badge() }}</span>
+  </div>
+  @if (clickable()) {
+    <button type="button" class="announcement-card-main" (click)="onOpen()">
+      <ng-container [ngTemplateOutlet]="body" />
+    </button>
+  } @else {
+    <div class="announcement-card-main">
+      <ng-container [ngTemplateOutlet]="body" />
+    </div>
+  }
+  <div class="announcement-card-actions">
+    <button type="button" class="announcement-card-dismiss" (click)="dismiss.emit()">
+      {{ dismissLabel() }}
+    </button>
+    <button type="button" class="announcement-card-action" (click)="action.emit()">
+      {{ actionLabel() }}
+    </button>
+  </div>
+</div>

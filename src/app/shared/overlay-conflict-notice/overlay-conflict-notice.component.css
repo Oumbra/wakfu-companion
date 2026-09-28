@@ -1,0 +1,65 @@
+/* Mise en forme de la carte : `app-announcement-card` (shared/announcement-card), plus large ici
+   pour les captures du pas-à-pas. */
+app-announcement-card {
+  --announcement-card-width: 600px;
+}
+
+.overlay-conflict-text {
+  margin: 0;
+}
+
+.overlay-conflict-steps {
+  counter-reset: overlay-conflict-step;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Numéro en pastille orange (teinte de la pastille « Important »), texte puis capture à droite. */
+.overlay-conflict-step {
+  counter-increment: overlay-conflict-step;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.overlay-conflict-step::before {
+  content: counter(overlay-conflict-step);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #e8590c;
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* Captures prises en 2x sur 44 px CSS de haut : affichées à cette hauteur (46 px bordure comprise,
+   `box-sizing: border-box` global), nettes en haute densité. */
+.overlay-conflict-shot {
+  display: block;
+  height: 46px;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  object-position: left center;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+/* Étroit : la capture passe sous le texte. */
+@media (max-width: 600px) {
+  .overlay-conflict-step {
+    grid-template-columns: 22px minmax(0, 1fr);
+  }
+  .overlay-conflict-shot {
+    grid-column: 2;
+  }
+}
