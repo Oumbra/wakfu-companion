@@ -32,7 +32,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Connectez-vous avec Discord ou Google pour continuer sans fichier de log — vos personnages et votre suivi resteront accessibles depuis votre compte.',
     'setup.mobileSkip.simulatedFileName': 'Sans fichier de log',
-    'setup.overlaySkip.callout': 'Wakfu Overlay',
     'setup.overlaySkip.calloutTooltip':
       'Vous utilisez Wakfu Overlay ? Il lit déjà wakfu.log pour vous : continuez sans fichier.',
     'setup.overlaySkip.simulatedFileName': 'Overlay',
@@ -1060,7 +1059,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Sign in with Discord or Google to continue without a log file — your characters and tracking will stay accessible from your account.',
     'setup.mobileSkip.simulatedFileName': 'No log file',
-    'setup.overlaySkip.callout': 'Wakfu Overlay',
     'setup.overlaySkip.calloutTooltip':
       'Using Wakfu Overlay? It already reads wakfu.log for you: continue without a file.',
     'setup.overlaySkip.simulatedFileName': 'Overlay',
@@ -2067,7 +2065,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Inicia sesión con Discord o Google para continuar sin archivo de log — tus personajes y tu seguimiento seguirán accesibles desde tu cuenta.',
     'setup.mobileSkip.simulatedFileName': 'Sin archivo de log',
-    'setup.overlaySkip.callout': 'Wakfu Overlay',
     'setup.overlaySkip.calloutTooltip':
       '¿Usas Wakfu Overlay? Ya lee wakfu.log por ti: continúa sin archivo.',
     'setup.overlaySkip.simulatedFileName': 'Overlay',
@@ -3090,7 +3087,6 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Conecte-se com Discord ou Google para continuar sem arquivo de log — seus personagens e seu histórico continuarão acessíveis pela sua conta.',
     'setup.mobileSkip.simulatedFileName': 'Sem arquivo de log',
-    'setup.overlaySkip.callout': 'Wakfu Overlay',
     'setup.overlaySkip.calloutTooltip':
       'Usa o Wakfu Overlay? Ele já lê o wakfu.log por você: continue sem arquivo.',
     'setup.overlaySkip.simulatedFileName': 'Overlay',

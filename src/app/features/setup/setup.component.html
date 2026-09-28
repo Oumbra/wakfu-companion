@@ -104,19 +104,19 @@
 
     <!-- « Continuer sans fichier de log » (desktop comme mobile, voir SetupComponent.skipLogFile) :
          sur mobile le fichier est injoignable (aucun navigateur mobile n'implémente l'API File
-         System Access) ; sur desktop, un overlay appairé le lit déjà à la place du site. La bulle
-         « Wakfu Overlay » (desktop seulement) pointe vers le bouton pour le dire, positionnée en
-         absolu à sa gauche pour ne pas décentrer le bouton. -->
+         System Access) ; sur desktop, un overlay appairé le lit déjà à la place du site. Le badge
+         de marque de l'overlay (desktop seulement), sous le bouton à sa gauche, remonte vers lui
+         par une flèche pour le dire — en absolu, pour ne pas décentrer le bouton. -->
     <div class="skip-block">
       <div class="skip-row">
         <div
           class="desktop-only overlay-callout"
           [appTooltip]="'setup.overlaySkip.calloutTooltip' | t"
         >
-          <span class="overlay-callout-bubble">{{ 'setup.overlaySkip.callout' | t }}</span>
-          <svg class="overlay-callout-arrow" viewBox="0 0 44 30" fill="none" aria-hidden="true">
-            <path d="M3 6c10 0 22 4 33 16" />
-            <path d="M28 22l9 1 1-9" />
+          <span class="overlay-callout-bubble"><app-overlay-brand /></span>
+          <svg class="overlay-callout-arrow" viewBox="0 0 44 34" fill="none" aria-hidden="true">
+            <path d="M4 31c4-14 16-22 34-22" />
+            <path d="M31 3l7 6-7 6" />
           </svg>
         </div>
         <button type="button" class="primary-btn skip-btn" (click)="skipLogFile()">

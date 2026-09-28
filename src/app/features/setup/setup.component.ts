@@ -12,6 +12,7 @@ import { TranslatePipe } from '../../shared/translate.pipe';
 import { TranslateHtmlPipe } from '../../shared/translate-html.pipe';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
+import { OverlayBrandComponent } from '../../shared/overlay-brand/overlay-brand.component';
 
 interface CompatibleBrowser {
   kind: BrowserKind;
@@ -33,6 +34,7 @@ const COMPATIBLE_BROWSERS: readonly CompatibleBrowser[] = [
     BrowserIconComponent,
     TooltipDirective,
     AuthProviderButtonsComponent,
+    OverlayBrandComponent,
   ],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',

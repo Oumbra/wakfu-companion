@@ -343,32 +343,33 @@ a.browser-item:hover .browser-item-name {
   padding: 0 22px;
   font-size: 0.95rem;
 }
-/* Bulle « Wakfu Overlay » + flèche courbe vers le bouton, à sa gauche en absolu (le bouton reste
-   centré). Même trait que `.hint-arrow`. */
+/* Badge de marque de l'overlay + flèche courbe qui remonte vers le bouton, à sa gauche en absolu
+   (le bouton reste centré) : le badge sous le milieu du bouton, la pointe de la flèche à sa
+   hauteur (`top` = milieu du bouton moins l'ordonnée de la pointe dans le viewBox). Même trait
+   que `.hint-arrow`. */
 .overlay-callout {
   position: absolute;
   right: 100%;
-  bottom: 55%;
-  margin-right: 4px;
-  align-items: flex-end;
-  gap: 2px;
+  top: calc(50% - 7px);
+  margin-right: 6px;
+  align-items: flex-start;
+  gap: 0;
   cursor: help;
 }
 .overlay-callout-bubble {
-  white-space: nowrap;
+  display: inline-flex;
+  margin-top: 26px;
   padding: 5px 10px;
-  border-radius: 12px;
+  border-radius: 14px;
   border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
-  background: color-mix(in srgb, var(--accent) 15%, transparent);
-  color: var(--accent);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.overlay-callout-bubble app-overlay-brand {
+  --overlay-brand-font-size: 0.66rem;
 }
 .overlay-callout-arrow {
   width: 40px;
-  height: 28px;
-  margin-bottom: -18px;
+  height: 31px;
   color: var(--accent);
   flex-shrink: 0;
 }
@@ -401,5 +402,12 @@ a.browser-item:hover .browser-item-name {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Entre 801 et 900 px, le badge (≈ 280 px avec sa flèche) déborderait à gauche de l'écran. */
+@media (max-width: 900px) {
+  .overlay-callout {
+    display: none !important;
   }
 }
