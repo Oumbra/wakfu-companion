@@ -11,10 +11,12 @@ import { NavigationService } from './navigation.service';
  * site fait lire le même fichier deux fois — l'overlay et le site envoient chacun les combats au
  * serveur, d'où des doublons dans les données synchronisées et affichées.
  *
- * Réévalué à chaque nouvelle connexion réelle du fichier (ou connexion au compte pendant qu'un
- * fichier est lu) : l'avertissement réapparaît donc à chaque fois, « Plus tard » ne le masque que
- * jusqu'à la connexion suivante. Jamais affiché en mode « Continuer sans fichier de log »
- * (`LogFileAccessService.simulated`), qui est précisément la solution proposée.
+ * Présence d'un overlay appairé (`pairedOverlay`) vérifiée à chaque connexion au tableau de bord
+ * d'un compte connecté, avec ou sans fichier : elle masque aussi la bannière « Nouveau »
+ * (`OverlayReleaseService.showAnnouncement`). L'avertissement réapparaît à chaque nouvelle
+ * connexion réelle du fichier, « Plus tard » ne le masque que jusqu'à la connexion suivante.
+ * Jamais affiché en mode « Continuer sans fichier de log » (`LogFileAccessService.simulated`),
+ * qui est précisément la solution proposée.
  */
 @Injectable({ providedIn: 'root' })
 export class OverlayConflictService {
@@ -23,31 +25,40 @@ export class OverlayConflictService {
   private readonly i18n = inject(I18nService);
   private readonly nav = inject(NavigationService);
 
-  private readonly pairedOverlay = signal(false);
+  /**
+   * Overlay appairé au compte : `null` tant que la vérification n'a pas répondu (ou hors du
+   * tableau de bord, ou en invité), puis `true`/`false`.
+   */
+  private readonly _pairedOverlay = signal<boolean | null>(null);
+  readonly pairedOverlay = this._pairedOverlay.asReadonly();
   private readonly dismissed = signal(false);
   /** Incrémenté à chaque changement de situation : ignore la réponse d'une vérification périmée. */
   private generation = 0;
 
+  private readonly onDashboard = computed(
+    () => this.auth.isAuthenticated() && this.logFileAccess.status() === 'connected',
+  );
+
   private readonly readingRealFile = computed(
-    () =>
-      this.auth.isAuthenticated() &&
-      this.logFileAccess.status() === 'connected' &&
-      !this.logFileAccess.simulated(),
+    () => this.onDashboard() && !this.logFileAccess.simulated(),
   );
 
   readonly show = computed(
-    () => this.readingRealFile() && this.pairedOverlay() && !this.dismissed(),
+    () => this.readingRealFile() && this.pairedOverlay() === true && !this.dismissed(),
   );
 
   constructor() {
     effect(() => {
-      const active = this.readingRealFile();
+      const active = this.onDashboard();
       untracked(() => {
         const generation = ++this.generation;
-        this.pairedOverlay.set(false);
-        this.dismissed.set(false);
+        this._pairedOverlay.set(null);
         if (active) void this.check(generation);
       });
+    });
+    effect(() => {
+      this.readingRealFile();
+      untracked(() => this.dismissed.set(false));
     });
   }
 
@@ -69,6 +80,6 @@ export class OverlayConflictService {
 
   private async check(generation: number): Promise<void> {
     const paired = await this.auth.hasPairedOverlay();
-    if (generation === this.generation) this.pairedOverlay.set(paired);
+    if (generation === this.generation) this._pairedOverlay.set(paired);
   }
 }

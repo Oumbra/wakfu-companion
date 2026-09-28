@@ -3,6 +3,7 @@ import { ApiClientService } from '../api/api-client.service';
 import { AuthService } from '../auth/auth.service';
 import { detectClientOs, type ClientOs } from '../utils/client-os.util';
 import { LogFileAccessService } from './log-file-access.service';
+import { OverlayConflictService } from './overlay-conflict.service';
 import { PersistenceService } from './persistence.service';
 
 /** Plateformes pour lesquelles l'overlay de bureau est publié. */
@@ -37,6 +38,7 @@ export class OverlayReleaseService {
   private readonly auth = inject(AuthService);
   private readonly persistence = inject(PersistenceService);
   private readonly logFileAccess = inject(LogFileAccessService);
+  private readonly overlayConflict = inject(OverlayConflictService);
 
   /** Système détecté au chargement de la page. */
   readonly clientOs: ClientOs = detectClientOs(
@@ -54,12 +56,15 @@ export class OverlayReleaseService {
    * Bannière d'annonce : connecté, sur un système où l'overlay tourne, pas encore fermée — et
    * `wakfu.log` connecté : la bannière mène à l'onglet Connexion du profil, page que
    * `fileConnectedGuard` réserve à ce cas (le bouton profil de l'en-tête est lui aussi masqué avant).
+   * Jamais pour un compte qui a déjà un overlay appairé : attend la réponse de la vérification
+   * (`OverlayConflictService.pairedOverlay` à `false`) pour ne pas apparaître un instant à tort.
    */
   readonly showAnnouncement = computed(
     () =>
       this.auth.isAuthenticated() &&
       this.logFileAccess.status() === 'connected' &&
       !this.announcementDismissed() &&
+      this.overlayConflict.pairedOverlay() === false &&
       (this.clientOs === 'windows' || this.clientOs === 'linux'),
   );
 
