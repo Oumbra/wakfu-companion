@@ -21,10 +21,12 @@
   animation: fadeIn 0.4s;
 }
 
+/* La zone de dépôt occupe toute la largeur de la carte (même largeur que `.path-hint`) : le bloc
+   « astuce » gravite à sa droite en absolu, hors du flux, sans lui prendre de place. */
 .drop-zone-row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 16px;
 }
 
 .drop-zone {
@@ -66,8 +68,11 @@
    `CharacterAddFormComponent`), la rangée passe en colonne pour laisser toute la largeur à la
    zone de dépôt. */
 .hint-block {
-  position: relative;
-  flex-shrink: 0;
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  transform: translateY(-50%);
+  margin-left: 16px;
 }
 .hint-trigger {
   display: flex;
@@ -129,8 +134,15 @@ button.hint-btn {
 @media (max-width: 800px) {
   .drop-zone-row {
     flex-direction: column;
+    gap: 16px;
+  }
+  .drop-zone {
+    align-self: stretch;
   }
   .hint-block {
+    position: static;
+    transform: none;
+    margin-left: 0;
     align-self: center;
   }
   .hint-trigger {
@@ -318,10 +330,53 @@ a.browser-item:hover .browser-item-name {
   gap: 12px;
   text-align: center;
 }
-.overlay-skip-btn {
+.skip-block {
+  display: flex;
+}
+.skip-row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+.skip-btn {
   height: 40px;
-  padding: 0 20px;
+  padding: 0 22px;
   font-size: 0.95rem;
+}
+/* Bulle « Wakfu Overlay » + flèche courbe vers le bouton, à sa gauche en absolu (le bouton reste
+   centré). Même trait que `.hint-arrow`. */
+.overlay-callout {
+  position: absolute;
+  right: 100%;
+  bottom: 55%;
+  margin-right: 4px;
+  align-items: flex-end;
+  gap: 2px;
+  cursor: help;
+}
+.overlay-callout-bubble {
+  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.overlay-callout-arrow {
+  width: 40px;
+  height: 28px;
+  margin-bottom: -18px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.overlay-callout-arrow path {
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .mobile-skip-login {
   width: 100%;

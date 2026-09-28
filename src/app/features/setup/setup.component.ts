@@ -1,6 +1,7 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { LogFileAccessService } from '../../core/services/log-file-access.service';
 import { AuthProvider, AuthService } from '../../core/auth/auth.service';
+import { connectWithoutFile } from '../../core/auth/connect-without-file';
 import { I18nService } from '../../core/services/i18n.service';
 import { ThemeService } from '../../core/services/theme.service';
 import {
@@ -52,31 +53,9 @@ export class SetupComponent {
   protected readonly hintImageSrc = computed(() =>
     this.theme.theme() === 'light' ? 'assets/setup-hint-light.png' : 'assets/setup-hint-dark.png',
   );
-  /** Affiche les boutons Discord/Google en dessous du bouton "passer cette étape" (mobile) — voir
+  /** Affiche les boutons Discord/Google en dessous du bouton « continuer sans fichier » — voir
    * `skipLogFile()` : uniquement quand l'utilisateur n'est pas encore connecté. */
   protected readonly showSkipLoginPrompt = signal(false);
-  /** Compte connecté avec au moins un overlay appairé (voir `AuthService.hasPairedOverlay`) :
-   * révèle le bouton « Continuer avec l'overlay », qui se passe du fichier `wakfu.log`. */
-  protected readonly overlayPaired = signal(false);
-  /** Numéro de la dernière vérification : une réponse plus ancienne est ignorée. */
-  private overlayCheck = 0;
-
-  constructor() {
-    // Réévalué à chaque changement d'état de connexion (le `/auth/me` initial se résout souvent
-    // après le premier rendu de la page) — jamais d'appel réseau en invité.
-    effect(() => {
-      const authenticated = this.auth.isAuthenticated();
-      const check = ++this.overlayCheck;
-      if (!authenticated) {
-        this.overlayPaired.set(false);
-        return;
-      }
-      void this.auth.hasPairedOverlay().then((paired) => {
-        if (check === this.overlayCheck) this.overlayPaired.set(paired);
-      });
-    });
-  }
-
   protected toggleWhy(): void {
     this.showWhy.update((value) => !value);
   }
@@ -86,10 +65,11 @@ export class SetupComponent {
   }
 
   /**
-   * Bouton mobile "passer cette étape" (voir CLAUDE.md/tâche associée) : l'API File System Access
-   * n'existe sur aucun navigateur mobile, un fichier `wakfu.log` réel n'y est donc jamais
-   * atteignable. Déjà connecté (Discord/Google) → simule directement une connexion fichier
-   * (`LogFileAccessService.simulateConnected`), ce qui bascule immédiatement sur le tableau de
+   * Bouton « Continuer sans fichier de log » (desktop comme mobile) : sur mobile, l'API File
+   * System Access n'existe pas, un fichier `wakfu.log` réel n'y est donc jamais atteignable ; sur
+   * desktop, un overlay appairé lit déjà le fichier et synchronise le compte (d'où la bulle
+   * « Wakfu Overlay » qui pointe vers le bouton). Déjà connecté (Discord/Google) → simule
+   * directement une connexion fichier (`connectWithoutFile`), ce qui bascule sur le tableau de
    * bord (voir app.html, `@if (logFileAccess.status() === 'connected')`) sans quitter la page.
    * Pas encore connecté → révèle les boutons de connexion ; la simulation + redirection a alors
    * lieu au retour du flux OAuth (voir `App.ngOnInit`, qui consomme
@@ -97,19 +77,10 @@ export class SetupComponent {
    */
   protected skipLogFile(): void {
     if (this.auth.isAuthenticated()) {
-      this.logFileAccess.simulateConnected(this.i18n.t('setup.mobileSkip.simulatedFileName'));
+      void connectWithoutFile(this.auth, this.logFileAccess, this.i18n);
       return;
     }
     this.showSkipLoginPrompt.set(true);
-  }
-
-  /**
-   * Bouton « Continuer avec l'overlay » (desktop, compte avec un overlay appairé) : l'overlay lit
-   * lui-même `wakfu.log` et synchronise le compte, le site se contente des données du compte —
-   * même simulation de connexion que le mode mobile, étiquetée « Overlay » dans l'en-tête.
-   */
-  protected continueWithOverlay(): void {
-    this.logFileAccess.simulateConnected(this.i18n.t('setup.overlaySkip.simulatedFileName'));
   }
 
   protected loginForSkip(provider: AuthProvider): void {
