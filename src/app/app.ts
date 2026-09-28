@@ -44,6 +44,7 @@ import { OnboardingTourService } from './core/services/onboarding-tour.service';
 import { AppUpdateService } from './core/services/app-update.service';
 import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-notice.component';
 import { OverlayAnnouncementComponent } from './shared/overlay-announcement/overlay-announcement.component';
+import { OverlayConflictNoticeComponent } from './shared/overlay-conflict-notice/overlay-conflict-notice.component';
 import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-more-scope-menu.component';
 
 @Component({
@@ -72,6 +73,7 @@ import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-m
     OnboardingHelpMenuComponent,
     AppUpdateNoticeComponent,
     OverlayAnnouncementComponent,
+    OverlayConflictNoticeComponent,
     LoadMoreScopeMenuComponent,
   ],
   templateUrl: './app.html',

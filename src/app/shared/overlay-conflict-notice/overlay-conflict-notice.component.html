@@ -1,0 +1,49 @@
+@if (conflict.show() && !updateService.updateReady()) {
+  <app-announcement-card
+    tone="important"
+    [badge]="'overlay.conflict.badge' | t"
+    [cardTitle]="'overlay.conflict.title' | t"
+    [dismissLabel]="'update.dismiss' | t"
+    [actionLabel]="'overlay.conflict.action' | t"
+    (dismiss)="conflict.dismiss()"
+    (action)="switchToOverlay()"
+  >
+    <p class="overlay-conflict-text" [innerHTML]="'overlay.conflict.text' | tHtml"></p>
+    <p class="overlay-conflict-text" [innerHTML]="'overlay.conflict.solution' | tHtml"></p>
+    <ol class="overlay-conflict-steps">
+      <li class="overlay-conflict-step">
+        <span
+          class="overlay-conflict-step-text"
+          [innerHTML]="'overlay.conflict.step1' | tHtml"
+        ></span>
+        <img
+          class="overlay-conflict-shot"
+          [src]="headerFileSrc()"
+          [alt]="'overlay.conflict.step1Alt' | t"
+        />
+      </li>
+      <li class="overlay-conflict-step">
+        <span
+          class="overlay-conflict-step-text"
+          [innerHTML]="'overlay.conflict.step2' | tHtml"
+        ></span>
+        <img
+          class="overlay-conflict-shot"
+          [src]="skipButtonSrc()"
+          [alt]="'overlay.conflict.step2Alt' | t"
+        />
+      </li>
+      <li class="overlay-conflict-step">
+        <span
+          class="overlay-conflict-step-text"
+          [innerHTML]="'overlay.conflict.step3' | tHtml"
+        ></span>
+        <img
+          class="overlay-conflict-shot"
+          [src]="headerOverlaySrc()"
+          [alt]="'overlay.conflict.step3Alt' | t"
+        />
+      </li>
+    </ol>
+  </app-announcement-card>
+}

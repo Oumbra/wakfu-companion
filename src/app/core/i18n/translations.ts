@@ -832,6 +832,23 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.availableOn': 'Disponible sur',
     'overlay.announcement.and': 'et',
     'overlay.announcement.action': 'Découvrir',
+    'overlay.conflict.badge': 'Important',
+    'overlay.conflict.title': 'wakfu.log lu en double : vos données sont faussées',
+    'overlay.conflict.text':
+      'Un overlay Wakfu Companion est appairé à votre compte, et ce site lit lui aussi votre <b>wakfu.log</b>. Chacun envoie alors les mêmes combats au serveur : ils sont comptés en double, ce qui fausse les données enregistrées sur votre compte, et donc celles affichées sur le site.',
+    'overlay.conflict.solution':
+      "L'overlay lit déjà le fichier pour vous : vous pouvez dès maintenant utiliser le site <b>sans wakfu.log</b>.",
+    'overlay.conflict.step1':
+      "Cliquez sur <b>⇄</b> à côté de <b>wakfu.log</b>, en haut de l'écran.",
+    'overlay.conflict.step1Alt':
+      'En-tête du site : wakfu.log suivi du bouton ⇄ (changer de fichier)',
+    'overlay.conflict.step2':
+      "Sur l'écran d'accueil, cliquez sur <b>Continuer sans fichier de log</b>.",
+    'overlay.conflict.step2Alt': "Bouton « Continuer sans fichier de log » de l'écran d'accueil",
+    'overlay.conflict.step3':
+      "L'en-tête affiche alors <b>Overlay</b> : seul l'overlay lit le fichier.",
+    'overlay.conflict.step3Alt': 'En-tête du site : Overlay à la place de wakfu.log',
+    'overlay.conflict.action': 'Passer en mode overlay',
     'overlay.download.title': 'Overlay de bureau',
     'overlay.download.intro':
       'Une petite application à télécharger sur votre ordinateur, qui affiche le compteur de dégâts et votre suivi directement par-dessus le jeu, reliée à ce compte.',
@@ -1845,6 +1862,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.availableOn': 'Available on',
     'overlay.announcement.and': 'and',
     'overlay.announcement.action': 'Check it out',
+    'overlay.conflict.badge': 'Important',
+    'overlay.conflict.title': 'wakfu.log read twice: your data is skewed',
+    'overlay.conflict.text':
+      'A Wakfu Companion overlay is paired with your account, and this site is also reading your <b>wakfu.log</b>. Both then send the same fights to the server: they are counted twice, which skews the data saved to your account, and therefore what the site shows you.',
+    'overlay.conflict.solution':
+      'The overlay already reads the file for you: you can use the site <b>without wakfu.log</b> right now.',
+    'overlay.conflict.step1': 'Click <b>⇄</b> next to <b>wakfu.log</b>, at the top of the screen.',
+    'overlay.conflict.step1Alt': 'Site header: wakfu.log followed by the ⇄ button (change file)',
+    'overlay.conflict.step2': 'On the home screen, click <b>Continue without a log file</b>.',
+    'overlay.conflict.step2Alt': '“Continue without a log file” button on the home screen',
+    'overlay.conflict.step3':
+      'The header then shows <b>Overlay</b>: only the overlay reads the file.',
+    'overlay.conflict.step3Alt': 'Site header: Overlay instead of wakfu.log',
+    'overlay.conflict.action': 'Switch to overlay mode',
     'overlay.download.title': 'Desktop overlay',
     'overlay.download.intro':
       'A small app to download to your computer that shows the damage meter and your tracking right on top of the game, linked to this account.',
@@ -2862,6 +2893,23 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.availableOn': 'Disponible en',
     'overlay.announcement.and': 'y',
     'overlay.announcement.action': 'Descubrir',
+    'overlay.conflict.badge': 'Importante',
+    'overlay.conflict.title': 'wakfu.log leído dos veces: tus datos están falseados',
+    'overlay.conflict.text':
+      'Un overlay de Wakfu Companion está emparejado con tu cuenta, y este sitio también lee tu <b>wakfu.log</b>. Ambos envían entonces los mismos combates al servidor: se cuentan dos veces, lo que falsea los datos guardados en tu cuenta y, por tanto, los que muestra el sitio.',
+    'overlay.conflict.solution':
+      'El overlay ya lee el archivo por ti: desde ahora puedes usar el sitio <b>sin wakfu.log</b>.',
+    'overlay.conflict.step1':
+      'Haz clic en <b>⇄</b> junto a <b>wakfu.log</b>, en la parte superior de la pantalla.',
+    'overlay.conflict.step1Alt':
+      'Cabecera del sitio: wakfu.log seguido del botón ⇄ (cambiar de archivo)',
+    'overlay.conflict.step2':
+      'En la pantalla de inicio, haz clic en <b>Continuar sin archivo de log</b>.',
+    'overlay.conflict.step2Alt': 'Botón «Continuar sin archivo de log» de la pantalla de inicio',
+    'overlay.conflict.step3':
+      'La cabecera muestra entonces <b>Overlay</b>: solo el overlay lee el archivo.',
+    'overlay.conflict.step3Alt': 'Cabecera del sitio: Overlay en lugar de wakfu.log',
+    'overlay.conflict.action': 'Pasar al modo overlay',
     'overlay.download.title': 'Overlay de escritorio',
     'overlay.download.intro':
       'Una pequeña aplicación para descargar en tu ordenador, que muestra el medidor de daños y tu seguimiento directamente encima del juego, vinculada a esta cuenta.',
@@ -3880,6 +3928,20 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'overlay.announcement.availableOn': 'Disponível para',
     'overlay.announcement.and': 'e',
     'overlay.announcement.action': 'Conhecer',
+    'overlay.conflict.badge': 'Importante',
+    'overlay.conflict.title': 'wakfu.log lido em dobro: seus dados estão distorcidos',
+    'overlay.conflict.text':
+      'Um overlay Wakfu Companion está pareado com a sua conta, e este site também lê o seu <b>wakfu.log</b>. Os dois enviam então os mesmos combates ao servidor: eles são contados em dobro, o que distorce os dados salvos na sua conta e, portanto, os exibidos no site.',
+    'overlay.conflict.solution':
+      'O overlay já lê o arquivo por você: a partir de agora você pode usar o site <b>sem wakfu.log</b>.',
+    'overlay.conflict.step1': 'Clique em <b>⇄</b> ao lado de <b>wakfu.log</b>, no topo da tela.',
+    'overlay.conflict.step1Alt': 'Cabeçalho do site: wakfu.log seguido do botão ⇄ (trocar arquivo)',
+    'overlay.conflict.step2': 'Na tela inicial, clique em <b>Continuar sem arquivo de log</b>.',
+    'overlay.conflict.step2Alt': 'Botão “Continuar sem arquivo de log” da tela inicial',
+    'overlay.conflict.step3':
+      'O cabeçalho passa a mostrar <b>Overlay</b>: só o overlay lê o arquivo.',
+    'overlay.conflict.step3Alt': 'Cabeçalho do site: Overlay no lugar de wakfu.log',
+    'overlay.conflict.action': 'Mudar para o modo overlay',
     'overlay.download.title': 'Overlay de desktop',
     'overlay.download.intro':
       'Um pequeno aplicativo para baixar no seu computador, que mostra o medidor de dano e seu acompanhamento direto por cima do jogo, vinculado a esta conta.',

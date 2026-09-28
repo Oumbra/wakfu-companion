@@ -1,33 +1,26 @@
-@if (overlay.showAnnouncement() && !updateService.updateReady()) {
-  <div class="overlay-announcement" role="status">
-    <!-- Doublon souris de la zone de texte cliquable : le clavier passe par le bouton principal. -->
-    <div class="overlay-announcement-band" (click)="open()">
-      <app-overlay-brand />
-      <span class="overlay-announcement-badge">{{ 'overlay.announcement.badge' | t }}</span>
-    </div>
-    <button type="button" class="overlay-announcement-main" (click)="open()">
-      <span class="overlay-announcement-title">{{ 'overlay.announcement.title' | t }}</span>
-      <span class="overlay-announcement-text">{{ 'overlay.announcement.text' | t }}</span>
-      <span class="overlay-announcement-platforms">
-        {{ 'overlay.announcement.availableOn' | t }}
-        @for (platform of platforms; track platform; let last = $last) {
-          <span class="overlay-announcement-os">
-            <img [src]="osLogos[platform]" alt="" />
-            {{ 'overlay.download.platform.' + platform | t }}
-          </span>
-          @if (!last) {
-            {{ 'overlay.announcement.and' | t }}
-          }
+@if (overlay.showAnnouncement() && !updateService.updateReady() && !conflict.show()) {
+  <app-announcement-card
+    [badge]="'overlay.announcement.badge' | t"
+    [cardTitle]="'overlay.announcement.title' | t"
+    [dismissLabel]="'update.dismiss' | t"
+    [actionLabel]="'overlay.announcement.action' | t"
+    [clickable]="true"
+    (open)="open()"
+    (action)="open()"
+    (dismiss)="dismiss()"
+  >
+    <span>{{ 'overlay.announcement.text' | t }}</span>
+    <span class="overlay-announcement-platforms">
+      {{ 'overlay.announcement.availableOn' | t }}
+      @for (platform of platforms; track platform; let last = $last) {
+        <span class="overlay-announcement-os">
+          <img [src]="osLogos[platform]" alt="" />
+          {{ 'overlay.download.platform.' + platform | t }}
+        </span>
+        @if (!last) {
+          {{ 'overlay.announcement.and' | t }}
         }
-      </span>
-    </button>
-    <div class="overlay-announcement-actions">
-      <button type="button" class="overlay-announcement-dismiss" (click)="dismiss()">
-        {{ 'update.dismiss' | t }}
-      </button>
-      <button type="button" class="overlay-announcement-open" (click)="open()">
-        {{ 'overlay.announcement.action' | t }}
-      </button>
-    </div>
-  </div>
+      }
+    </span>
+  </app-announcement-card>
 }
