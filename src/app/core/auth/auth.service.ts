@@ -45,6 +45,9 @@ export interface AuthSessionInfo {
   userAgent: string | null;
 }
 
+/** Libellé des sessions d'overlay (miroir de `NATIVE_SESSION_USER_AGENT`, server/auth/pairing.ts). */
+const NATIVE_OVERLAY_USER_AGENT = 'native-overlay';
+
 export type AuthProvider = 'discord' | 'google';
 
 /** Résultat du retour OAuth lu dans l'URL (`?login=ok|error`), voir functions/api/v1/auth/…/callback.ts. */
@@ -222,6 +225,19 @@ export class AuthService {
     });
     // Un 401 est déjà traité globalement (voir le constructeur).
     return result.ok ? result.data.sessions : null;
+  }
+
+  /**
+   * Vrai si le compte a au moins un overlay appairé encore actif : les sessions ouvertes par
+   * appairage natif portent le libellé `native-overlay` à la place d'un user-agent
+   * (`NATIVE_SESSION_USER_AGENT`, server/auth/pairing.ts), recopié à chaque rotation. Sert au
+   * bouton « Continuer avec l'overlay » de la page setup — l'overlay lit `wakfu.log` et synchronise
+   * lui-même, le site n'a alors pas besoin du fichier. `false` en invité ou si la liste échoue.
+   */
+  async hasPairedOverlay(): Promise<boolean> {
+    if (!this.isAuthenticated()) return false;
+    const sessions = await this.listSessions();
+    return sessions?.some((session) => session.userAgent === NATIVE_OVERLAY_USER_AGENT) ?? false;
   }
 
   /** Révoque une session précise, ou toutes (`id` omis) — voir functions/api/v1/auth/sessions.ts. */

@@ -32,6 +32,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Connectez-vous avec Discord ou Google pour continuer sans fichier de log — vos personnages et votre suivi resteront accessibles depuis votre compte.',
     'setup.mobileSkip.simulatedFileName': 'Mode mobile (sans fichier)',
+    'setup.overlaySkip.button': 'Continuer sans fichier (overlay appairé)',
+    'setup.overlaySkip.simulatedFileName': 'Overlay',
 
     'app.goHome': "Retour à l'accueil",
     'app.reset': 'Réinitialiser',
@@ -1056,6 +1058,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Sign in with Discord or Google to continue without a log file — your characters and tracking will stay accessible from your account.',
     'setup.mobileSkip.simulatedFileName': 'Mobile mode (no file)',
+    'setup.overlaySkip.button': 'Continue without a file (paired overlay)',
+    'setup.overlaySkip.simulatedFileName': 'Overlay',
 
     'app.goHome': 'Back to home',
     'app.reset': 'Reset',
@@ -2059,6 +2063,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Inicia sesión con Discord o Google para continuar sin archivo de log — tus personajes y tu seguimiento seguirán accesibles desde tu cuenta.',
     'setup.mobileSkip.simulatedFileName': 'Modo móvil (sin archivo)',
+    'setup.overlaySkip.button': 'Continuar sin archivo (overlay vinculado)',
+    'setup.overlaySkip.simulatedFileName': 'Overlay',
 
     'app.goHome': 'Volver al inicio',
     'app.reset': 'Reiniciar',
@@ -3078,6 +3084,8 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'setup.mobileSkip.loginPrompt':
       'Conecte-se com Discord ou Google para continuar sem arquivo de log — seus personagens e seu histórico continuarão acessíveis pela sua conta.',
     'setup.mobileSkip.simulatedFileName': 'Modo mobile (sem arquivo)',
+    'setup.overlaySkip.button': 'Continuar sem arquivo (overlay pareado)',
+    'setup.overlaySkip.simulatedFileName': 'Overlay',
 
     'app.goHome': 'Voltar ao início',
     'app.reset': 'Reiniciar',

@@ -311,7 +311,7 @@ a.browser-item:hover .browser-item-name {
   filter: brightness(1.15);
 }
 
-.mobile-skip-block {
+.skip-block {
   margin-top: 18px;
   flex-direction: column;
   align-items: center;
