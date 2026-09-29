@@ -1,6 +1,7 @@
 ---
 paths:
   - 'src/app/core/services/log-parser*.ts'
+  - 'src/app/core/services/combat-mechanics/**'
   - 'src/app/core/services/stats-store.service*.ts'
   - 'src/app/core/services/entity-classifier.service*.ts'
   - 'src/app/core/services/log-file-access.service*.ts'
@@ -309,6 +310,28 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
      des lignes fausses dans `fights` n'est PAS rattrapable par le client — d'où l'importance de
      la validation en navigateur sur fichier réel AVANT mise en production d'un changement du
      parseur ou du store.
+
+## Règles propres à une mécanique de combat (`combat-mechanics/`)
+
+Introduit le 2026-09-29 avec la 1ʳᵉ règle, « Protection pourpre » du boss d'intervention
+Ignemikhal. Une règle liée à UN boss/donjon précis ne s'écrit jamais dans le code générique de
+`LogParser` : elle vit dans `src/app/core/services/combat-mechanics/` (un fichier
+`<boss>.mechanic.ts` par règle, enregistrée dans `COMBAT_MECHANICS` de `combat-mechanics.ts`).
+
+- Activation : `triggerFighterNames` — la règle ne s'active que dans un combat où l'un de ces
+  combattants a rejoint (`parseFighterJoin` → `FightParseState.activeMechanics`, index O(1)
+  `mechanicsTriggeredBy`). Hors de ces combats le parseur est strictement générique.
+- Point d'appel unique : `resolveEffectTail` (dégâts seulement, `combatMechanics: true`), AVANT les
+  règles génériques ; `null` = la règle s'abstient. La réattribution des invocations reste appliquée
+  ensuite.
+- Ignemikhal : chaque dégât d'un allié (même sur un autre monstre) est répercuté par
+  `Ignemikhal: -N PV (Élément) (Protection pourpre)`. Le générique créditait le porteur du statut
+  dans `effectOwners` — le dernier allié à avoir reçu le passif en début de combat. La règle
+  crédite le lanceur du sort précédent (`lastCast`), libellé « Protection pourpre ». Écrite sans
+  fichier réel (format déduit de la description utilisateur) : à recalibrer au 1ᵉʳ `wakfu.log`
+  contenant ce combat.
+- Vendue telle quelle dans l'overlay (`crates/overlay-engine/engine-js/src/combat-mechanics/`) :
+  toute modification se reporte dans les deux dépôts.
 
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 
