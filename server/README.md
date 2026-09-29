@@ -441,10 +441,6 @@ user_agent = 'native-overlay' and revoked_at is null and superseded_at is null;`
 
 L'overlay doit donc gérer le 401 (réappairage guidé) avant fin février 2027.
 
-Les endpoints `/api/v1/prices/*` (lot 4) ont été déplacés le 2026-08-18 vers
-le projet **wakfu-companion-price** (dépôt séparé, même base Neon — voir son
-README.md) ; ne plus les chercher ici, ni dans `functions/api/v1/`.
-
 ## Catalogue Ankama (objets/monstres/donjons/recettes)
 
 ### Le référentiel est un fichier local, pas un fetch
@@ -784,19 +780,11 @@ la barre d'adresse, ce qui explique qu'il ne casse rien côté client une fois
 l'app codée normalement, mais reste un piège pour tout futur endpoint sans
 extension.
 
-## Prix — déplacé vers wakfu-companion-price (2026-08-18)
+## Prix — supprimé
 
-Les tables `item_prices_daily`/`item_prices_monthly`/`price_scan_runs`/
-`price_trends` et les endpoints `/api/v1/prices/*` (lot 4, prompt 4.2 ;
-`priceMax`/scan mémoire HDV ajoutés ensuite) ont été extraits vers un projet
-séparé, **wakfu-companion-price**, pour permettre un Cloudflare Worker
-autonome avec Cron Trigger (indisponible sur Cloudflare Pages, ce qui avait
-motivé l'architecture "calcul par skill local" décrite à l'origine dans
-cette section). Les tables restent physiquement dans la MÊME base Neon
-(partagée entre les deux projets) — voir le README.md de
-wakfu-companion-price pour l'architecture actuelle, le détail historique
-(jeton de service, rejet des `itemId` inconnus, migration `priceMax`...) et
-l'état du déploiement.
+Le suivi de prix d'Hôtel de Vente (lot 4) n'est plus d'actualité : ses tables,
+ses endpoints et le dépôt séparé qui l'avait repris ont été supprimés. Retrait
+motivé par la conformité aux CGU Ankama (voir `docs/analyse-cgu-2026-09-21.md`).
 
 ## Authentification (lot 5, prompt 5.1)
 
@@ -841,8 +829,7 @@ expiration glissante et limitation de débit.
    `code_verifier` PKCE ne doit jamais atteindre le navigateur, et
    `consumed_at` rend le `state`/`code` à usage unique) et `auth_rate_limits`
    (limitation de débit en base, faute de Cron Trigger et pour éviter un
-   binding KV supplémentaire — même contrainte Cloudflare Pages que pour les
-   rollups de prix).
+   binding KV supplémentaire).
 
 ### Un compte = un seul fournisseur (plus de fusion sur e-mail)
 
@@ -918,7 +905,7 @@ développement local.
 Vérifié dans cette session : `npm run test:server` (tous verts, aucune base ni
 réseau requis) et `npx tsc -p tsconfig.server.json --noEmit`.
 
-**Restant à faire** — comme pour le catalogue et les prix, seuls un
+**Restant à faire** — comme pour le catalogue, seuls un
 déploiement et une vraie application OAuth permettent de conclure :
 
 1. appliquer la migration `0004_auth_tables.sql` sur la branche Neon preview ;
@@ -1223,8 +1210,7 @@ jamais touché Neon depuis ce sandbox, qui ne peut atteindre ni la base ni
 ## Serveur de jeu (lot 7, prompt 7.1)
 
 Objectif : pouvoir taguer l'historique personnel du lot 8 (combats, achats,
-échanges) par serveur de jeu. **Sans aucun lien avec le monitoring de prix**
-(lot 4), dont la source est un scan opéré côté serveur.
+échanges) par serveur de jeu.
 
 ### Rien de nouveau côté serveur
 
