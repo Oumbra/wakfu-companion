@@ -5,6 +5,11 @@ import {
   LogEntry,
   TradeSide,
 } from '../models/log-entry.model';
+import {
+  CombatMechanic,
+  mechanicsTriggeredBy,
+  resolveMechanicDamage,
+} from './combat-mechanics/combat-mechanics';
 
 /** Liste ordonnée des canaux de chat affichés dans le panneau Chat. */
 export const CHAT_CHANNELS: ChatChannelInfo[] = [
@@ -409,6 +414,10 @@ interface FightParseState {
    * simple resynchronisation ("[_FL_] ... join the fight" est réémis de nombreuses fois par
    * combattant au fil d'un même combat, pas seulement à son arrivée). */
   seenFighterIds: Set<number>;
+  /** Règles propres à une mécanique de combat actives dans CE combat (voir
+   * `combat-mechanics/`) — activées par la jointure d'un combattant déclencheur (ex. boss
+   * « Ignemikhal »), vide dans l'immense majorité des combats. */
+  activeMechanics: CombatMechanic[];
 }
 
 function createFightParseState(): FightParseState {
@@ -420,6 +429,7 @@ function createFightParseState(): FightParseState {
     summonOwners: new Map(),
     pendingSummonCasters: [],
     seenFighterIds: new Set(),
+    activeMechanics: [],
   };
 }
 
@@ -665,6 +675,9 @@ export class LogParser {
     const state = this.getFightState(fightId);
     const isNewFighter = !state.seenFighterIds.has(fighterId);
     state.seenFighterIds.add(fighterId);
+    for (const mechanic of mechanicsTriggeredBy(name)) {
+      if (!state.activeMechanics.includes(mechanic)) state.activeMechanics.push(mechanic);
+    }
     const joinTimeMs = this.timeToMs(time);
     while (
       state.pendingSummonCasters.length > 0 &&
@@ -998,6 +1011,7 @@ export class LogParser {
         const { attacker, spell, element } = this.resolveEffectTail(target, tail, state, {
           selfFallback: false,
           riposteFallback: true,
+          combatMechanics: true,
         });
         state.lastDamage = { attacker, target };
         return { kind: 'damage', time, target, attacker, spell, element, amount, fightId };
@@ -1056,6 +1070,10 @@ export class LogParser {
    *   adversaire pour le passif défensif propre de sa cible (ex. armure gagnée par la cible d'une
    *   attaque, taguée du nom du sort qui vient de la toucher — cas réel constaté, voir tests).
    *
+   * - `combatMechanics: true` (dégâts uniquement) : une règle propre à une mécanique de combat
+   *   active dans ce combat (voir `combat-mechanics/`, `FightParseState.activeMechanics`) peut
+   *   imposer l'attribution avant toute règle générique ci-dessus.
+   *
    * Dernière étape, commune à tous les appelants : si l'`attacker` résolu ci-dessus est le nom d'une
    * invocation connue de ce combat (voir FightParseState.summonOwners), l'action est réattribuée à
    * son invocateur avec le nom de l'invocation comme libellé de "sort" — ex. le Sadida "Anonyme-Eniripsa2"
@@ -1067,7 +1085,7 @@ export class LogParser {
     target: string,
     tail: string,
     state: FightParseState,
-    options: { selfFallback: boolean; riposteFallback: boolean },
+    options: { selfFallback: boolean; riposteFallback: boolean; combatMechanics?: boolean },
   ): { attacker: string; spell: string; element: DamageElement } {
     let element: DamageElement = 'Inconnu';
     let effectTag: string | null = null;
@@ -1082,7 +1100,18 @@ export class LogParser {
 
     let attacker = state.lastCast?.caster ?? (options.selfFallback ? target : 'Inconnu');
     let spell = state.lastCast?.spell ?? 'Autre';
-    if (effectTag) {
+    const mechanicAttribution =
+      options.combatMechanics && state.activeMechanics.length > 0
+        ? resolveMechanicDamage(state.activeMechanics, {
+            target,
+            effectTag,
+            lastCast: state.lastCast,
+          })
+        : null;
+    if (mechanicAttribution) {
+      attacker = mechanicAttribution.attacker;
+      spell = mechanicAttribution.spell;
+    } else if (effectTag) {
       const owner = state.effectOwners.get(effectTag.toLowerCase());
       if (owner) {
         // Un effet porté par la cible elle-même (ex. Hachure) crédite celui
