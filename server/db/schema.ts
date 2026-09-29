@@ -343,8 +343,8 @@ export const catalogMeta = pgTable('catalog_meta', {
   indexHash: text('index_hash').notNull(),
 });
 
-// Suivi de prix d'Hôtel de Vente (lot 4) : supprimé (tables, endpoints et dépôt séparé, ce dernier
-// le 2026-09-23), voir docs/analyse-cgu-2026-09-21.md.
+// Suivi de prix d'Hôtel de Vente (lot 4) : tables, endpoints et dépôt séparé supprimés le
+// 2026-09-23, voir docs/analyse-cgu-2026-09-21.md.
 
 /**
  * Authentification (lot 5, prompt 5.1) — voir server/README.md.
