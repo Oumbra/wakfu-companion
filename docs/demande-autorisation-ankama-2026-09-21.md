@@ -96,11 +96,15 @@ reste. Je vous demande donc l'autorisation, pour cet usage personnel et non comm
    et des portraits de classe issus du jeu. Comme le site, il ne se connecte pas à vos serveurs, ne
    lit pas la mémoire du client et n'en modifie aucun fichier. Deux fonctions optionnelles vont
    au-delà de la lecture, et je préfère vous les exposer plutôt que de vous laisser les découvrir :
-   - une frappe clavier simulée dans le chat, déclenchée par le joueur à chaque fois : les
-     raccourcis « Inviter » et « Suivre » (désactivés par défaut) tapent `/i "Nom"` ou
-     `/fol "Nom"` ; un clic sur une alerte de chat prépare `/w "Nom" ` sans l'envoyer ;
-   - une notification de fin de tour (Windows, désactivée par défaut) qui lit l'image de la
-     fenêtre du jeu pendant un combat pour y reconnaître le nom du personnage.
+   - une frappe clavier simulée dans le chat, déclenchée par le joueur à chaque fois. Elle sert
+     au joueur qui joue deux personnages à la fois, chacun dans sa fenêtre de jeu. Les raccourcis
+     « Inviter » et « Suivre » (désactivés par défaut) tapent `/i "Nom"` ou `/fol "Nom"` dans la
+     fenêtre de jeu active, et « Nom » est toujours le personnage de **la seconde fenêtre de jeu
+     du même joueur** : l'overlay le lit dans le titre de cette fenêtre (« Nom - WAKFU »). Le
+     joueur ne peut donc ni saisir un autre nom, ni viser un autre joueur, et rien n'est tapé si
+     la fenêtre active n'est pas une fenêtre de jeu. Par ailleurs, un clic sur une alerte de chat
+     prépare `/w "Nom" ` pour répondre à l'auteur du message, sans l'envoyer ;
+   - une notification de fin de tour (Windows, désactivée par défaut), qui prévient le joueur quand vient le tour d'un de ses personnages, utile lorsque sa fenêtre est en arrière-plan. Elle ne lit pas toute la fenêtre du jeu : seulement une bande en bas de la fenêtre, où se trouve le bouton « Fin du tour », et elle n'analyse que la zone juste au-dessus de ce bouton, où le jeu affiche le nom du personnage dont c'est le tour. Ce nom n'est pas lu comme du texte : son image est comparée à celles que l'overlay a mémorisées pour les personnages du joueur. Cette lecture n'a lieu que pendant les combats, et rien ne quitte l'ordinateur.
 
    Je sais que l'article 5.2.5 et vos Règles de conduite visent les logiciels d'automatisation.
    Pouvez-vous m'indiquer si ces deux fonctions sont acceptables ? Si ce n'est pas le cas, je les
