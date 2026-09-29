@@ -4,6 +4,7 @@
   "scripts": {
     "ng": "ng",
     "generate:build-info": "node tools/generate-build-info.mjs",
+    "docs:pdf": "node tools/markdown-to-pdf.mjs",
     "generate": "npm run generate:build-info",
     "start": "npm run generate && concurrently -n ng,api -c blue,magenta \"ng serve\" \"npm run functions:dev\"",
     "functions:dev": "wrangler pages dev public --port 8788 --compatibility-date 2026-08-07 --compatibility-flags nodejs_compat",
@@ -66,6 +67,8 @@
     "drizzle-kit": "^0.31.11",
     "husky": "^9.1.7",
     "jsdom": "^30.1.0",
+    "marked": "^18.0.14",
+    "playwright-core": "^1.63.0",
     "prettier": "^3.9.8",
     "tsx": "^4.23.15",
     "typescript": "~5.9.2",
