@@ -120,7 +120,7 @@ export type FightTypeCode =
 /**
  * Serveurs de jeu Wakfu (Pandora, Rubilax, Ogrest). Table de référence, très
  * peu de lignes, quasi jamais modifiée — sert de clé étrangère à tout ce qui
- * doit être ventilé par serveur (prix, futurs combats/achats côté compte).
+ * doit être ventilé par serveur (combats/achats côté compte).
  *
  * `label` est le nom propre du serveur : ni traduit ni localisé (Ankama ne
  * traduit pas les noms de serveurs dans ses 4 locales fr/en/es/pt), donc pas
@@ -343,16 +343,8 @@ export const catalogMeta = pgTable('catalog_meta', {
   indexHash: text('index_hash').notNull(),
 });
 
-// Prix (item_prices_daily, item_prices_monthly, price_scan_runs, price_trends) — déplacées le
-// 2026-08-18 vers le projet wakfu-companion-price (voir son README.md), pour permettre un
-// Cloudflare Worker autonome avec Cron Trigger (indisponible sur Cloudflare Pages, voir
-// server/README.md). Les 4 tables restent physiquement dans CETTE base Neon (partagée entre les
-// deux projets — items/game_servers ci-dessus/ci-dessous restent la propriété exclusive de ce
-// dépôt) : ce commit retire uniquement leurs déclarations Drizzle et les endpoints
-// functions/api/v1/prices/* d'ici, SANS migration de suppression (aucun `DROP TABLE` n'a été
-// exécuté — les données et les tables existent toujours, gérées désormais par
-// wakfu-companion-price/server/db/schema.ts et external-tables.ts pour la lecture croisée
-// items/game_servers).
+// Suivi de prix d'Hôtel de Vente (lot 4) : tables, endpoints et dépôt séparé supprimés le
+// 2026-09-23, voir docs/analyse-cgu-2026-09-21.md.
 
 /**
  * Authentification (lot 5, prompt 5.1) — voir server/README.md.
@@ -365,7 +357,7 @@ export const catalogMeta = pgTable('catalog_meta', {
  * correct n'y tient pas.
  *
  * Rappel structurant : la connexion est OPTIONNELLE. Aucune des tables
- * ci-dessus (catalogue, prix) ne référence `users` ; le mode invité continue
+ * ci-dessus (catalogue) ne référence `users` ; le mode invité continue
  * de fonctionner sans jamais toucher ces tables.
  */
 
@@ -908,9 +900,6 @@ export const fightLoot = pgTable(
  *
  * `itemId`/`itemName` mutuellement exclusifs — voir `fightLoot`, même invariant, même raison d'être
  * corrigeable après coup (`ON CONFLICT DO UPDATE`, voir `functions/api/v1/history/purchases.ts`).
- *
- * **Aucun rapport avec le monitoring de prix (lot 4)** : celui-ci vient d'un
- * scan de l'hôtel des ventes, jamais des achats des joueurs.
  */
 export const purchases = pgTable(
   'purchases',

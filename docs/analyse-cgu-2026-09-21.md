@@ -529,6 +529,19 @@ depuis le code :
    service, que lirait Ankama en premier, annonçait donc un traitement de données de jeu que ce
    dépôt ne fait plus. Corrigé, avec le renvoi au projet qui le porte.
 
+   **Mise à jour du 2026-09-29** : le suivi de prix d'Hôtel de Vente n'existe plus nulle part. Toutes
+   ses pièces ont été supprimées le **2026-09-23** :
+   - les 4 tables `item_prices_daily`, `item_prices_monthly`, `price_scan_runs` et `price_trends`
+     de la base Neon, avec leurs données ;
+   - les endpoints `/api/v1/prices/*` ;
+   - le dépôt `Oumbra/wakfu-companion-price` (privé), qui portait tout ce code, à 23:34:19
+     (+02:00). Preuve : entrée `repo.destroy` du journal de sécurité du compte GitHub
+     (Settings → Archives → Security log), capturée dans
+     [`docs/preuves/2026-09-23-suppression-wakfu-companion-price.png`](preuves/2026-09-23-suppression-wakfu-companion-price.png).
+
+   Les mentions techniques de ces tables et endpoints ont été retirées de `server/README.md` et
+   `server/db/schema.ts` le 2026-09-29 ; seule une note de retrait datée y subsiste.
+
 **Ajout au rappel annuel** : `.github/workflows/rgpd-revision-annuelle.yml` ouvrait une issue
 couvrant le RGPD seul. Un volet « Conformité CGU Ankama » y est ajouté (re-télécharger CGU, Règles
 de conduite et licence de données ; rejouer l'audit article par article ; état de la demande
