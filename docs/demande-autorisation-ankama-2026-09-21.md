@@ -108,6 +108,7 @@ reste. Je vous demande donc l'autorisation, pour cet usage personnel et non comm
      Code correspondant :
      - choix du personnage de l'autre fenêtre, et refus si la fenêtre active n'est pas une fenêtre de jeu : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/chat_command.rs#L180-L198
      - reconnaissance d'une fenêtre de jeu par son titre « Nom - WAKFU » : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/game_window.rs#L96-L99
+
    - une notification de fin de tour (Windows, désactivée par défaut), qui prévient le joueur quand
      vient le tour d'un de ses personnages, utile lorsque sa fenêtre est en arrière-plan. Elle ne
      lit pas toute la fenêtre du jeu : seulement une bande en bas de la fenêtre, où se trouve le
