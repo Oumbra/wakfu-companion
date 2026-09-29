@@ -272,6 +272,21 @@ const STATUS_EFFECT_RE = new RegExp(`^(.+?): (.+?) \\((?:Niv\\. ${NUM}|\\+${NUM}
 const STATUS_REMOVE_RE = /^(.+?): n'est plus sous l'emprise de '(.+?)'\.?$/;
 /** Purement informatif (le coup a été paré) : jamais une source de dégâts. */
 const IGNORED_TAG = 'Parade !';
+/**
+ * Tags (en minuscules) d'une perte de PV que le combattant s'inflige LUI-MÊME via un passif — ex. le
+ * passif Sacrieur « Retour de flamme » ("Sacrieur: -N PV (Feu) (Retour de flamme)"). Ce n'est pas un
+ * dégât infligé : sans filtre, `resolveEffectTail` le créditait au dernier lanceur de sort (souvent le
+ * Sacrieur lui-même), qui se retrouvait avec ses propres PV perdus comptés dans ses dégâts. La ligne
+ * est donc ignorée entièrement (aucun « dégâts reçus » n'est suivi, ni sur le site ni dans l'overlay).
+ */
+const SELF_INFLICTED_DAMAGE_TAGS = new Set<string>(['retour de flamme']);
+
+function hasSelfInflictedDamageTag(tail: string): boolean {
+  for (const tagMatch of tail.matchAll(TAG_RE)) {
+    if (SELF_INFLICTED_DAMAGE_TAGS.has(tagMatch[1].trim().toLowerCase())) return true;
+  }
+  return false;
+}
 /** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
 const TRADE_DONNE_RE =
   /le joueur (.+?) donne\s*:\s*(\d+)\s*K\s*;\s*(.*?)(?=le joueur .+? donne\s*:|$)/g;
@@ -977,6 +992,9 @@ export class LogParser {
       const state = this.getFightState(fightId);
 
       if (sign === '-') {
+        // Perte de PV auto-infligée par un passif (voir SELF_INFLICTED_DAMAGE_TAGS) : jamais un
+        // dégât infligé, ni la « victime du coup précédent » d'une future riposte.
+        if (hasSelfInflictedDamageTag(tail)) return null;
         const { attacker, spell, element } = this.resolveEffectTail(target, tail, state, {
           selfFallback: false,
           riposteFallback: true,

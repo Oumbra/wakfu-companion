@@ -600,6 +600,23 @@ describe('LogParser — soin donné (onglet Soin)', () => {
   });
 });
 
+describe('LogParser — perte de PV auto-infligée par un passif', () => {
+  it('ignore le passif Sacrieur « Retour de flamme » : jamais un dégât infligé, même juste après un sort du Sacrieur', () => {
+    const parser = new LogParser();
+    const entries = parseAll(parser, [
+      ' INFO 10:58:09,100 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur1 lance le sort Assaut',
+      ' INFO 10:58:09,286 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Merkator: -188 PV (Feu)',
+      ' INFO 10:58:09,301 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur1: -94 PV (Feu) (Retour de flamme)',
+      ' INFO 10:58:09,302 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur2: -12 PV (Retour de Flamme)',
+    ]);
+    const damages = entries.filter((e) => e.kind === 'damage');
+    expect(damages.length).toBe(1);
+    expect(damages[0]).toEqual(
+      expect.objectContaining({ target: 'Merkator', attacker: 'Anonyme-Sacrieur1', amount: 188 }),
+    );
+  });
+});
+
 describe('LogParser — armure donnée (onglet Armure)', () => {
   it("ignore une perte d'armure (signe négatif) : seule l'armure donnée est suivie", () => {
     const parser = new LogParser();
