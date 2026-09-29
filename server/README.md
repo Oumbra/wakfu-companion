@@ -786,6 +786,11 @@ Le suivi de prix d'Hôtel de Vente (lot 4) n'est plus d'actualité : ses tables,
 ses endpoints et le dépôt séparé qui l'avait repris ont été supprimés. Retrait
 motivé par la conformité aux CGU Ankama (voir `docs/analyse-cgu-2026-09-21.md`).
 
+Le dépôt `Oumbra/wakfu-companion-price` (privé) a été supprimé le
+2026-09-23 à 23:34:19 (+02:00) : entrée `repo.destroy` du journal de
+sécurité du compte GitHub, capturée dans
+[`docs/preuves/2026-09-23-suppression-wakfu-companion-price.png`](../docs/preuves/2026-09-23-suppression-wakfu-companion-price.png).
+
 ## Authentification (lot 5, prompt 5.1)
 
 Cadre retenu : OAuth uniquement, cookie opaque, mode invité intact. Cette

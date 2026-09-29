@@ -529,6 +529,13 @@ depuis le code :
    service, que lirait Ankama en premier, annonçait donc un traitement de données de jeu que ce
    dépôt ne fait plus. Corrigé, avec le renvoi au projet qui le porte.
 
+   **Mise à jour du 2026-09-29** : le projet `wakfu-companion-price` n'existe plus. Le dépôt
+   `Oumbra/wakfu-companion-price` (privé) a été supprimé le 2026-09-23 à 23:34:19 (+02:00). Preuve :
+   entrée `repo.destroy` du journal de sécurité du compte GitHub (Settings → Archives → Security
+   log), capturée dans [`docs/preuves/2026-09-23-suppression-wakfu-companion-price.png`](preuves/2026-09-23-suppression-wakfu-companion-price.png). Les
+   mentions techniques des tables et endpoints de prix ont été retirées de `server/README.md` et
+   `server/db/schema.ts` ; seule une note de retrait subsiste.
+
 **Ajout au rappel annuel** : `.github/workflows/rgpd-revision-annuelle.yml` ouvrait une issue
 couvrant le RGPD seul. Un volet « Conformité CGU Ankama » y est ajouté (re-télécharger CGU, Règles
 de conduite et licence de données ; rejouer l'audit article par article ; état de la demande

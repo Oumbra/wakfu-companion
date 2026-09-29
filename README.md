@@ -63,6 +63,7 @@ le catalogue d'objets/monstres/donjons et l'authentification
 Discord/Google permettant de synchroniser les données entre appareils.
 Le suivi de prix d'Hôtel de Vente ne fait plus partie de ce dépôt : ses
 tables ont été déplacées le 2026-08-18 vers le projet
-`wakfu-companion-price` (voir `server/db/schema.ts`). L'application reste pleinement fonctionnelle sans
+`wakfu-companion-price` (voir `server/db/schema.ts`), lui-même supprimé
+le 2026-09-23 ([preuve](docs/preuves/2026-09-23-suppression-wakfu-companion-price.png)). L'application reste pleinement fonctionnelle sans
 elle (mode invité, tout en local). Voir [`server/README.md`](server/README.md)
 pour l'architecture, les endpoints et la mise en route.
