@@ -103,8 +103,24 @@ reste. Je vous demande donc l'autorisation, pour cet usage personnel et non comm
      du même joueur** : l'overlay le lit dans le titre de cette fenêtre (« Nom - WAKFU »). Le
      joueur ne peut donc ni saisir un autre nom, ni viser un autre joueur, et rien n'est tapé si
      la fenêtre active n'est pas une fenêtre de jeu. Par ailleurs, un clic sur une alerte de chat
-     prépare `/w "Nom" ` pour répondre à l'auteur du message, sans l'envoyer ;
-   - une notification de fin de tour (Windows, désactivée par défaut), qui prévient le joueur quand vient le tour d'un de ses personnages, utile lorsque sa fenêtre est en arrière-plan. Elle ne lit pas toute la fenêtre du jeu : seulement une bande en bas de la fenêtre, où se trouve le bouton « Fin du tour », et elle n'analyse que la zone juste au-dessus de ce bouton, où le jeu affiche le nom du personnage dont c'est le tour. Ce nom n'est pas lu comme du texte : son image est comparée à celles que l'overlay a mémorisées pour les personnages du joueur. Cette lecture n'a lieu que pendant les combats, et rien ne quitte l'ordinateur.
+     prépare `/w "Nom" ` pour répondre à l'auteur du message, sans l'envoyer.
+
+     Code correspondant :
+     - choix du personnage de l'autre fenêtre, et refus si la fenêtre active n'est pas une fenêtre de jeu : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/chat_command.rs#L180-L198
+     - reconnaissance d'une fenêtre de jeu par son titre « Nom - WAKFU » : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/game_window.rs#L96-L99
+   - une notification de fin de tour (Windows, désactivée par défaut), qui prévient le joueur quand
+     vient le tour d'un de ses personnages, utile lorsque sa fenêtre est en arrière-plan. Elle ne
+     lit pas toute la fenêtre du jeu : seulement une bande en bas de la fenêtre, où se trouve le
+     bouton « Fin du tour », et elle n'analyse que la zone juste au-dessus de ce bouton, où le jeu
+     affiche le nom du personnage dont c'est le tour. Ce nom n'est pas lu comme du texte : son image
+     est comparée à celles que l'overlay a mémorisées pour les personnages du joueur. Cette lecture
+     n'a lieu que pendant les combats, et rien ne quitte l'ordinateur.
+
+     Code correspondant :
+     - hauteur de la bande lue en bas de la fenêtre : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/turn_watch/capture.rs#L31-L33
+     - copie des seules dernières lignes de la fenêtre : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/turn_watch/capture.rs#L64-L91
+     - zone du nom, juste au-dessus du bouton « Fin du tour » : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/turn_watch/vision.rs#L191-L215
+     - comparaison d'images, sans lecture du texte : https://github.com/Oumbra/wakfu-companion-overlay/blob/32756ad0c4d5e907aa4c408b9412ed8e68d8c15e/crates/overlay-ui/src/turn_watch/vision.rs#L380-L386
 
    Je sais que l'article 5.2.5 et vos Règles de conduite visent les logiciels d'automatisation.
    Pouvez-vous m'indiquer si ces deux fonctions sont acceptables ? Si ce n'est pas le cas, je les
