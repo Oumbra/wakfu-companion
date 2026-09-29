@@ -185,9 +185,12 @@ export class HistorySyncService {
         // qui n'en gagnent jamais.
         xpGained: row.instanceIndex === 1 ? (xpByName.get(row.name) ?? 0) : 0,
         spells: HistorySyncService.spellPayload(row.spells),
-        heal: Math.max(0, Math.round(healRow?.total ?? 0)),
+        // Soin SIGNÉ, contrairement aux deux autres grandeurs : une perte de PV auto-infligée par
+        // un passif (ex. « Retour de flamme » du Sacrieur) est un soin négatif (voir
+        // HealEntry.amount), que le total comme sa ligne de ventilation doivent conserver.
+        heal: Math.round(healRow?.total ?? 0),
         armor: Math.max(0, Math.round(armorRow?.total ?? 0)),
-        healSpells: HistorySyncService.spellPayload(healRow?.spells ?? []),
+        healSpells: HistorySyncService.spellPayload(healRow?.spells ?? [], true),
         armorSpells: HistorySyncService.spellPayload(armorRow?.spells ?? []),
       };
     });
@@ -201,17 +204,23 @@ export class HistorySyncService {
     return new Map(rows.map((row) => [`${row.name}#${row.instanceIndex}`, row]));
   }
 
-  /** Ventilation par sort telle que le serveur l'attend — arrondie et jamais négative, pour les
-   * trois grandeurs (dégâts, soin, armure), dont c'est exactement la même forme. `byTurn` n'est
-   * volontairement pas transmis (le serveur ne le stocke pas, voir HistoryArchiveService). */
-  private static spellPayload(spells: readonly SpellBreakdownRow[]): FightSpellPayload[] {
+  /** Ventilation par sort telle que le serveur l'attend — arrondie, pour les trois grandeurs
+   * (dégâts, soin, armure), dont c'est exactement la même forme. Jamais négative, sauf `signed`
+   * (soin uniquement : soin négatif, voir HealEntry.amount). `byTurn` n'est volontairement pas
+   * transmis (le serveur ne le stocke pas, voir HistoryArchiveService). */
+  private static spellPayload(
+    spells: readonly SpellBreakdownRow[],
+    signed = false,
+  ): FightSpellPayload[] {
+    const amountOf = (amount: number): number =>
+      signed ? Math.round(amount) : Math.max(0, Math.round(amount));
     return spells.map((spell) => ({
       spell: spell.spell,
-      total: Math.max(0, Math.round(spell.total)),
+      total: amountOf(spell.total),
       byElement: Object.fromEntries(
         Object.entries(spell.byElement).map(([element, amount]) => [
           element,
-          Math.max(0, Math.round(amount ?? 0)),
+          amountOf(amount ?? 0),
         ]),
       ),
     }));

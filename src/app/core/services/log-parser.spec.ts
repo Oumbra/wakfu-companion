@@ -601,7 +601,7 @@ describe('LogParser — soin donné (onglet Soin)', () => {
 });
 
 describe('LogParser — perte de PV auto-infligée par un passif', () => {
-  it('ignore le passif Sacrieur « Retour de flamme » : jamais un dégât infligé, même juste après un sort du Sacrieur', () => {
+  it('émet le passif Sacrieur « Retour de flamme » en soin négatif du Sacrieur, jamais en dégât infligé', () => {
     const parser = new LogParser();
     const entries = parseAll(parser, [
       ' INFO 10:58:09,100 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur1 lance le sort Assaut',
@@ -614,6 +614,28 @@ describe('LogParser — perte de PV auto-infligée par un passif', () => {
     expect(damages[0]).toEqual(
       expect.objectContaining({ target: 'Merkator', attacker: 'Anonyme-Sacrieur1', amount: 188 }),
     );
+    expect(entries.filter((e) => e.kind === 'heal')).toEqual([
+      {
+        kind: 'heal',
+        time: '10:58:09,301',
+        target: 'Anonyme-Sacrieur1',
+        attacker: 'Anonyme-Sacrieur1',
+        spell: 'Retour de flamme',
+        element: 'Feu',
+        amount: -94,
+        fightId: null,
+      },
+      {
+        kind: 'heal',
+        time: '10:58:09,302',
+        target: 'Anonyme-Sacrieur2',
+        attacker: 'Anonyme-Sacrieur2',
+        spell: 'Retour de Flamme',
+        element: 'Inconnu',
+        amount: -12,
+        fightId: null,
+      },
+    ]);
   });
 });
 

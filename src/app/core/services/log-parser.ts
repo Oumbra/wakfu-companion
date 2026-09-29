@@ -280,17 +280,21 @@ const IGNORED_TAG = 'Parade !';
 /**
  * Tags (en minuscules) d'une perte de PV que le combattant s'inflige LUI-MÊME via un passif — ex. le
  * passif Sacrieur « Retour de flamme » ("Sacrieur: -N PV (Feu) (Retour de flamme)"). Ce n'est pas un
- * dégât infligé : sans filtre, `resolveEffectTail` le créditait au dernier lanceur de sort (souvent le
- * Sacrieur lui-même), qui se retrouvait avec ses propres PV perdus comptés dans ses dégâts. La ligne
- * est donc ignorée entièrement (aucun « dégâts reçus » n'est suivi, ni sur le site ni dans l'overlay).
+ * dégât infligé : sans règle dédiée, `resolveEffectTail` le créditait au dernier lanceur de sort
+ * (souvent le Sacrieur lui-même), qui se retrouvait avec ses propres PV perdus comptés dans ses
+ * dégâts. La ligne est émise en SOIN NÉGATIF (`HealEntry.amount < 0`) crédité au combattant qui la
+ * subit, libellé du nom du passif : consultable dans l'onglet Soin, jamais compté en dégâts.
  */
 const SELF_INFLICTED_DAMAGE_TAGS = new Set<string>(['retour de flamme']);
 
-function hasSelfInflictedDamageTag(tail: string): boolean {
+/** Tag de passif auto-infligé (voir SELF_INFLICTED_DAMAGE_TAGS) présent en fin de ligne, tel qu'écrit
+ * dans le log — `null` s'il n'y en a pas. */
+function selfInflictedDamageTag(tail: string): string | null {
   for (const tagMatch of tail.matchAll(TAG_RE)) {
-    if (SELF_INFLICTED_DAMAGE_TAGS.has(tagMatch[1].trim().toLowerCase())) return true;
+    const tag = tagMatch[1].trim();
+    if (SELF_INFLICTED_DAMAGE_TAGS.has(tag.toLowerCase())) return tag;
   }
-  return false;
+  return null;
 }
 /** "le joueur X donne : NK ; 1xObjet (refId=I) 2xAutre (refId=J) " — répété une fois par participant dans le résumé final d'un échange. */
 const TRADE_DONNE_RE =
@@ -1005,9 +1009,26 @@ export class LogParser {
       const state = this.getFightState(fightId);
 
       if (sign === '-') {
-        // Perte de PV auto-infligée par un passif (voir SELF_INFLICTED_DAMAGE_TAGS) : jamais un
-        // dégât infligé, ni la « victime du coup précédent » d'une future riposte.
-        if (hasSelfInflictedDamageTag(tail)) return null;
+        // Perte de PV auto-infligée par un passif (voir SELF_INFLICTED_DAMAGE_TAGS) : soin négatif
+        // du combattant qui la subit — jamais un dégât infligé, ni la « victime du coup précédent »
+        // d'une future riposte (`lastDamage` inchangé).
+        const selfTag = selfInflictedDamageTag(tail);
+        if (selfTag) {
+          const { element } = this.resolveEffectTail(target, tail, state, {
+            selfFallback: true,
+            riposteFallback: false,
+          });
+          return {
+            kind: 'heal',
+            time,
+            target,
+            attacker: target,
+            spell: selfTag,
+            element,
+            amount: -amount,
+            fightId,
+          };
+        }
         const { attacker, spell, element } = this.resolveEffectTail(target, tail, state, {
           selfFallback: false,
           riposteFallback: true,
