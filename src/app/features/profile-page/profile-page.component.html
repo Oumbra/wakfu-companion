@@ -25,6 +25,15 @@
       style="display: none"
       (change)="onImportFileSelected($event)"
     />
+    <button
+      class="icon-btn"
+      type="button"
+      [appTooltip]="'bugReport.open' | t"
+      tooltipPosition="bottom-right"
+      (click)="bugReportModal.open()"
+    >
+      <app-icon name="bug" [size]="16" />
+    </button>
   </ng-container>
 
   <div class="profile-page-content">

@@ -1,0 +1,143 @@
+:host {
+  display: contents;
+}
+
+.bug-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 600;
+}
+
+.bug-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 601;
+  width: 460px;
+  max-width: calc(100vw - 32px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--panel-bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+  animation: fadeIn 0.15s;
+}
+
+/* Même géométrie mobile que .recipe-modal : le panneau occupe la zone disponible sous le header. */
+@media (max-width: 800px) {
+  .bug-modal {
+    top: 60px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    transform: none;
+  }
+}
+
+.bug-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 15px;
+  background: var(--panel-header-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.bug-modal-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bug-modal-body {
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+/* Colonne flex qui défile : sans ça, les enfants (dont le bouton, hauteur fixe) rétrécissent au
+   lieu de faire défiler le corps. */
+.bug-modal-body > * {
+  flex-shrink: 0;
+}
+
+.bug-modal-body p,
+.bug-modal-body ol,
+.bug-modal-body ul {
+  margin: 0;
+}
+
+.bug-modal-steps {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bug-modal-email {
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.bug-modal-removed {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--tint-medium);
+}
+
+.bug-modal-removed-title {
+  font-weight: bold;
+}
+
+.bug-modal-removed ul {
+  margin-top: 4px;
+  padding-left: 20px;
+}
+
+.bug-modal-local {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.bug-modal-pick {
+  align-self: center;
+  height: 34px;
+  padding: 0 18px;
+  font-size: 0.82rem;
+}
+
+.bug-modal-status {
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.bug-modal-status.is-success {
+  border: 1px solid var(--highlight-green-border);
+  color: var(--highlight-green-border);
+}
+
+.bug-modal-status.is-error {
+  border: 1px solid var(--btn-active-red);
+  color: var(--btn-active-red);
+}

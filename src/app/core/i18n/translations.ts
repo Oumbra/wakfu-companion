@@ -218,6 +218,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.back': 'Retour',
     'profile.exportData': 'Exporter mes données',
     'profile.importData': 'Importer des données',
+    'bugReport.open': 'Signaler un bug',
+    'bugReport.title': 'Signaler un bug',
+    'bugReport.intro':
+      "Pour nous aider à corriger un bug, envoyez-nous votre fichier wakfu.log anonymisé. Il contient tout ce qu'il faut pour reproduire le problème, sans vos données personnelles.",
+    'bugReport.step1':
+      'Choisissez votre fichier wakfu.log ci-dessous : une copie anonymisée, « {{fileName}} », est téléchargée automatiquement.',
+    'bugReport.step2':
+      "Joignez-la à un e-mail décrivant le problème (ce que vous faisiez, ce qui était attendu, l'heure approximative) et envoyez-le à",
+    'bugReport.removedTitle': 'Ce qui est retiré ou remplacé :',
+    'bugReport.removedPrivate': 'les messages privés, supprimés entièrement ;',
+    'bugReport.removedNames':
+      'les pseudonymes, identifiants de personnage et comptes Ankama, remplacés par « Anonyme-… » ;',
+    'bugReport.removedChat':
+      'le contenu des messages de chat public, remplacé par du texte neutre ;',
+    'bugReport.removedTechnical':
+      "le jeton de connexion, le nom d'utilisateur de votre ordinateur, votre adresse IP locale et les adresses e-mail.",
+    'bugReport.localOnly':
+      "L'anonymisation se fait entièrement dans votre navigateur : votre fichier n'est envoyé nulle part.",
+    'bugReport.pickFile': 'Choisir wakfu.log et anonymiser',
+    'bugReport.done':
+      '« {{fileName}} » téléchargé : {{players}} joueur(s) anonymisé(s), {{privateMessages}} message(s) privé(s) supprimé(s).',
+    'bugReport.failed':
+      "Impossible de lire ce fichier. Vérifiez qu'il s'agit bien de wakfu.log et réessayez.",
     'profile.importError': "Fichier invalide : ce n'est pas un export Wakfu Companion.",
     'profile.noPseudo': 'Aucun pseudo défini',
     'profile.editPseudo': 'Modifier le pseudo',
@@ -1262,6 +1285,27 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.back': 'Back',
     'profile.exportData': 'Export my data',
     'profile.importData': 'Import data',
+    'bugReport.open': 'Report a bug',
+    'bugReport.title': 'Report a bug',
+    'bugReport.intro':
+      'To help us fix a bug, send us your anonymized wakfu.log file. It holds everything needed to reproduce the issue, without your personal data.',
+    'bugReport.step1':
+      'Choose your wakfu.log file below: an anonymized copy, "{{fileName}}", is downloaded automatically.',
+    'bugReport.step2':
+      'Attach it to an email describing the issue (what you were doing, what you expected, the approximate time) and send it to',
+    'bugReport.removedTitle': 'What is removed or replaced:',
+    'bugReport.removedPrivate': 'private messages, removed entirely;',
+    'bugReport.removedNames':
+      'player names, character IDs and Ankama accounts, replaced with "Anonyme-…";',
+    'bugReport.removedChat': 'public chat message content, replaced with neutral text;',
+    'bugReport.removedTechnical':
+      "the login token, your computer's user name, your local IP address and email addresses.",
+    'bugReport.localOnly':
+      'Anonymization runs entirely in your browser: your file is never sent anywhere.',
+    'bugReport.pickFile': 'Choose wakfu.log and anonymize',
+    'bugReport.done':
+      '"{{fileName}}" downloaded: {{players}} player(s) anonymized, {{privateMessages}} private message(s) removed.',
+    'bugReport.failed': 'Could not read this file. Make sure it is wakfu.log and try again.',
     'profile.importError': 'Invalid file: this is not a Wakfu Companion export.',
     'profile.noPseudo': 'No nickname set',
     'profile.editPseudo': 'Edit nickname',
@@ -2282,6 +2326,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.back': 'Volver',
     'profile.exportData': 'Exportar mis datos',
     'profile.importData': 'Importar datos',
+    'bugReport.open': 'Informar de un error',
+    'bugReport.title': 'Informar de un error',
+    'bugReport.intro':
+      'Para ayudarnos a corregir un error, envíanos tu archivo wakfu.log anonimizado. Contiene todo lo necesario para reproducir el problema, sin tus datos personales.',
+    'bugReport.step1':
+      'Elige tu archivo wakfu.log a continuación: se descarga automáticamente una copia anonimizada, «{{fileName}}».',
+    'bugReport.step2':
+      'Adjúntala a un correo que describa el problema (qué estabas haciendo, qué esperabas, la hora aproximada) y envíalo a',
+    'bugReport.removedTitle': 'Qué se elimina o se sustituye:',
+    'bugReport.removedPrivate': 'los mensajes privados, eliminados por completo;',
+    'bugReport.removedNames':
+      'los nombres de jugador, identificadores de personaje y cuentas Ankama, sustituidos por «Anonyme-…»;',
+    'bugReport.removedChat':
+      'el contenido de los mensajes de chat público, sustituido por texto neutro;',
+    'bugReport.removedTechnical':
+      'el token de conexión, el nombre de usuario de tu ordenador, tu dirección IP local y las direcciones de correo.',
+    'bugReport.localOnly':
+      'La anonimización se hace por completo en tu navegador: tu archivo no se envía a ningún sitio.',
+    'bugReport.pickFile': 'Elegir wakfu.log y anonimizar',
+    'bugReport.done':
+      '«{{fileName}}» descargado: {{players}} jugador(es) anonimizado(s), {{privateMessages}} mensaje(s) privado(s) eliminado(s).',
+    'bugReport.failed':
+      'No se puede leer este archivo. Comprueba que sea wakfu.log e inténtalo de nuevo.',
     'profile.importError': 'Archivo inválido: no es una exportación de Wakfu Companion.',
     'profile.noPseudo': 'Ningún apodo definido',
     'profile.editPseudo': 'Editar apodo',
@@ -3321,6 +3388,29 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'profile.back': 'Voltar',
     'profile.exportData': 'Exportar meus dados',
     'profile.importData': 'Importar dados',
+    'bugReport.open': 'Relatar um bug',
+    'bugReport.title': 'Relatar um bug',
+    'bugReport.intro':
+      'Para nos ajudar a corrigir um bug, envie-nos o seu arquivo wakfu.log anonimizado. Ele contém tudo o que é preciso para reproduzir o problema, sem os seus dados pessoais.',
+    'bugReport.step1':
+      'Escolha o seu arquivo wakfu.log abaixo: uma cópia anonimizada, «{{fileName}}», é baixada automaticamente.',
+    'bugReport.step2':
+      'Anexe-a a um e-mail descrevendo o problema (o que você fazia, o que esperava, o horário aproximado) e envie para',
+    'bugReport.removedTitle': 'O que é removido ou substituído:',
+    'bugReport.removedPrivate': 'as mensagens privadas, removidas por completo;',
+    'bugReport.removedNames':
+      'os nomes de jogador, identificadores de personagem e contas Ankama, substituídos por «Anonyme-…»;',
+    'bugReport.removedChat':
+      'o conteúdo das mensagens de chat público, substituído por texto neutro;',
+    'bugReport.removedTechnical':
+      'o token de conexão, o nome de usuário do seu computador, o seu endereço IP local e os endereços de e-mail.',
+    'bugReport.localOnly':
+      'A anonimização é feita inteiramente no seu navegador: o seu arquivo não é enviado a lugar nenhum.',
+    'bugReport.pickFile': 'Escolher wakfu.log e anonimizar',
+    'bugReport.done':
+      '«{{fileName}}» baixado: {{players}} jogador(es) anonimizado(s), {{privateMessages}} mensagem(ns) privada(s) removida(s).',
+    'bugReport.failed':
+      'Não foi possível ler este arquivo. Verifique se é o wakfu.log e tente novamente.',
     'profile.importError': 'Arquivo inválido: isto não é uma exportação do Wakfu Companion.',
     'profile.noPseudo': 'Nenhum apelido definido',
     'profile.editPseudo': 'Editar apelido',
