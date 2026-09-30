@@ -346,7 +346,7 @@
         [src]="image.src"
         [attr.width]="image.width"
         [attr.height]="image.height"
-        [style.max-width.px]="image.natural ? image.width / 2 : null"
+        [style.max-width]="image.natural ? 'min(100%, ' + image.width / 2 + 'px)' : null"
         loading="lazy"
         alt=""
       />
