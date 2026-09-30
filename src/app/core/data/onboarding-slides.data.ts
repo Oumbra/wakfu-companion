@@ -564,6 +564,30 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     ],
   },
   {
+    id: 'bugReport',
+    chapter: 'custom',
+    essential: false,
+    hasLede: true,
+    blocks: [
+      {
+        kind: 'zigzag',
+        rows: [
+          {
+            image: img('bug-header', 292, 140, { natural: true }),
+            titleKey: 'onboarding.bugReport.r1',
+            lines: numbered('bugReport', 'n', 1, 3),
+          },
+          {
+            image: img('bug-modal', 920, 290, { natural: true }),
+            titleKey: 'onboarding.bugReport.r2',
+            lines: [...numbered('bugReport', 'n', 4, 5), line('bugReport', 'b1')],
+          },
+        ],
+      },
+      tip('bugReport'),
+    ],
+  },
+  {
     id: 'mobile',
     chapter: 'custom',
     essential: false,

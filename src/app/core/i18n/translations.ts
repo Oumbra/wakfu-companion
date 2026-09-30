@@ -806,7 +806,23 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Se déconnecter, ou supprimer le compte.',
     'onboarding.account.b4': "Le contenu du chat de jeu n'est jamais envoyé.",
     'onboarding.account.tip':
-      "Sans compte aussi, <b>↓ Exporter</b> et <b>↑ Importer</b> (en haut du profil) sauvegardent vos réglages dans un fichier JSON. À côté, l'insecte (<b>Signaler un bug</b>) anonymise votre wakfu.log (pseudos, messages privés retirés) pour l'envoyer par e-mail.",
+      'Sans compte aussi, <b>↓ Exporter</b> et <b>↑ Importer</b> (en haut du profil) sauvegardent vos réglages dans un fichier JSON.',
+    'onboarding.bugReport.toc': 'Signaler un bug',
+    'onboarding.bugReport.title': 'Un bug ? Envoyez-nous votre log',
+    'onboarding.bugReport.lede':
+      'Votre wakfu.log est anonymisé dans le navigateur avant de quitter votre ordinateur.',
+    'onboarding.bugReport.r1': 'En haut du profil',
+    'onboarding.bugReport.n1': '<b>↓ Exporter</b> vos réglages dans un fichier JSON.',
+    'onboarding.bugReport.n2': '<b>↑ Importer</b> un fichier exporté.',
+    'onboarding.bugReport.n3': "<b>Signaler un bug</b> ouvre la fenêtre d'anonymisation.",
+    'onboarding.bugReport.r2': 'Anonymiser, puis envoyer',
+    'onboarding.bugReport.n4':
+      '<b>Choisissez wakfu.log</b> : la copie « wakfu-anonymous.log » se télécharge toute seule.',
+    'onboarding.bugReport.n5': '<b>Bilan</b> : joueurs anonymisés, messages privés supprimés.',
+    'onboarding.bugReport.b1':
+      'Joignez le fichier à un e-mail décrivant le problème, envoyé à contact@wakfu-companion.com.',
+    'onboarding.bugReport.tip':
+      "Messages privés retirés ; pseudos, comptes, chat public, IP et chemins remplacés. Le fichier ne part que si vous l'envoyez vous-même.",
     'onboarding.mobile.toc': 'Sur mobile',
     'onboarding.mobile.title': 'Dans la poche aussi',
     'onboarding.mobile.lede': 'Sur un petit écran, le tableau de bord passe en onglets.',
@@ -1857,7 +1873,23 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Sign out, or delete the account.',
     'onboarding.account.b4': 'Game chat content is never sent.',
     'onboarding.account.tip':
-      'Without an account too, <b>↓ Export</b> and <b>↑ Import</b> (at the top of the profile) save your settings to a JSON file. Next to them, the bug icon (<b>Report a bug</b>) anonymizes your wakfu.log (names and private messages removed) so you can send it by e-mail.',
+      'Without an account too, <b>↓ Export</b> and <b>↑ Import</b> (at the top of the profile) save your settings to a JSON file.',
+    'onboarding.bugReport.toc': 'Report a bug',
+    'onboarding.bugReport.title': 'A bug? Send us your log',
+    'onboarding.bugReport.lede':
+      'Your wakfu.log is anonymized in the browser before it leaves your computer.',
+    'onboarding.bugReport.r1': 'At the top of the profile',
+    'onboarding.bugReport.n1': '<b>↓ Export</b> your settings to a JSON file.',
+    'onboarding.bugReport.n2': '<b>↑ Import</b> an exported file.',
+    'onboarding.bugReport.n3': '<b>Report a bug</b> opens the anonymization window.',
+    'onboarding.bugReport.r2': 'Anonymize, then send',
+    'onboarding.bugReport.n4':
+      '<b>Choose wakfu.log</b>: the “wakfu-anonymous.log” copy downloads automatically.',
+    'onboarding.bugReport.n5': '<b>Summary</b>: players anonymized, private messages removed.',
+    'onboarding.bugReport.b1':
+      'Attach the file to an e-mail describing the problem, sent to contact@wakfu-companion.com.',
+    'onboarding.bugReport.tip':
+      'Private messages removed; names, accounts, public chat, IPs and paths replaced. The file only leaves your computer if you send it yourself.',
     'onboarding.mobile.toc': 'On mobile',
     'onboarding.mobile.title': 'In your pocket too',
     'onboarding.mobile.lede': 'On a small screen, the dashboard switches to tabs.',
@@ -2911,7 +2943,24 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Cerrar sesión, o eliminar la cuenta.',
     'onboarding.account.b4': 'El contenido del chat del juego nunca se envía.',
     'onboarding.account.tip':
-      'También sin cuenta, <b>↓ Exportar</b> e <b>↑ Importar</b> (arriba del perfil) guardan tus ajustes en un archivo JSON. Al lado, el insecto (<b>Informar de un error</b>) anonimiza tu wakfu.log (nombres y mensajes privados eliminados) para enviarlo por correo.',
+      'También sin cuenta, <b>↓ Exportar</b> e <b>↑ Importar</b> (arriba del perfil) guardan tus ajustes en un archivo JSON.',
+    'onboarding.bugReport.toc': 'Informar de un error',
+    'onboarding.bugReport.title': '¿Un error? Envíanos tu log',
+    'onboarding.bugReport.lede':
+      'Tu wakfu.log se anonimiza en el navegador antes de salir de tu ordenador.',
+    'onboarding.bugReport.r1': 'Arriba del perfil',
+    'onboarding.bugReport.n1': '<b>↓ Exportar</b> tus ajustes a un archivo JSON.',
+    'onboarding.bugReport.n2': '<b>↑ Importar</b> un archivo exportado.',
+    'onboarding.bugReport.n3': '<b>Informar de un error</b> abre la ventana de anonimización.',
+    'onboarding.bugReport.r2': 'Anonimizar y luego enviar',
+    'onboarding.bugReport.n4':
+      '<b>Elige wakfu.log</b>: la copia «wakfu-anonymous.log» se descarga sola.',
+    'onboarding.bugReport.n5':
+      '<b>Resumen</b>: jugadores anonimizados, mensajes privados eliminados.',
+    'onboarding.bugReport.b1':
+      'Adjunta el archivo a un correo que describa el problema, enviado a contact@wakfu-companion.com.',
+    'onboarding.bugReport.tip':
+      'Mensajes privados eliminados; nombres, cuentas, chat público, IP y rutas reemplazados. El archivo solo sale si lo envías tú.',
     'onboarding.mobile.toc': 'En móvil',
     'onboarding.mobile.title': 'También en tu bolsillo',
     'onboarding.mobile.lede': 'En una pantalla pequeña, el panel pasa a pestañas.',
@@ -3968,7 +4017,24 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Encerrar sessão, ou excluir a conta.',
     'onboarding.account.b4': 'O conteúdo do chat do jogo nunca é enviado.',
     'onboarding.account.tip':
-      'Também sem conta, <b>↓ Exportar</b> e <b>↑ Importar</b> (no topo do perfil) salvam suas configurações em um arquivo JSON. Ao lado, o inseto (<b>Relatar um bug</b>) anonimiza seu wakfu.log (nomes e mensagens privadas removidos) para enviá-lo por e-mail.',
+      'Também sem conta, <b>↓ Exportar</b> e <b>↑ Importar</b> (no topo do perfil) salvam suas configurações em um arquivo JSON.',
+    'onboarding.bugReport.toc': 'Relatar um bug',
+    'onboarding.bugReport.title': 'Um bug? Envie-nos seu log',
+    'onboarding.bugReport.lede':
+      'Seu wakfu.log é anonimizado no navegador antes de sair do seu computador.',
+    'onboarding.bugReport.r1': 'No topo do perfil',
+    'onboarding.bugReport.n1': '<b>↓ Exportar</b> suas configurações para um arquivo JSON.',
+    'onboarding.bugReport.n2': '<b>↑ Importar</b> um arquivo exportado.',
+    'onboarding.bugReport.n3': '<b>Relatar um bug</b> abre a janela de anonimização.',
+    'onboarding.bugReport.r2': 'Anonimizar e depois enviar',
+    'onboarding.bugReport.n4':
+      '<b>Escolha wakfu.log</b>: a cópia “wakfu-anonymous.log” é baixada sozinha.',
+    'onboarding.bugReport.n5':
+      '<b>Resumo</b>: jogadores anonimizados, mensagens privadas removidas.',
+    'onboarding.bugReport.b1':
+      'Anexe o arquivo a um e-mail descrevendo o problema, enviado para contact@wakfu-companion.com.',
+    'onboarding.bugReport.tip':
+      'Mensagens privadas removidas; nomes, contas, chat público, IPs e caminhos substituídos. O arquivo só sai se você mesmo o enviar.',
     'onboarding.mobile.toc': 'No celular',
     'onboarding.mobile.title': 'No bolso também',
     'onboarding.mobile.lede': 'Numa tela pequena, o painel passa a abas.',
