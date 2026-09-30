@@ -66,6 +66,10 @@ export interface OnboardingHeroBlock {
   readonly image: OnboardingImage;
   /** Légende numérotée : l'élément i porte la pastille i+1, comme sur la capture. */
   readonly legend: readonly string[];
+  /** Nombre d'éléments de légende posés à côté de la capture ; les suivants passent dessous, en
+   * colonnes sur toute la largeur. Absent = toute la légende à côté. Pour une capture plus large
+   * que haute avec une longue légende, qui laisserait sinon un grand vide sous l'image. */
+  readonly aside?: number;
 }
 
 export interface OnboardingZigzagRow {
@@ -188,7 +192,12 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     essential: true,
     hasLede: true,
     blocks: [
-      { kind: 'hero', image: img('setup-annot', 2300, 828), legend: legend('setup', 6) },
+      {
+        kind: 'hero',
+        image: img('setup-annot', 2300, 828),
+        legend: legend('setup', 6),
+        aside: 3,
+      },
       {
         kind: 'mosaic',
         columns: 3,

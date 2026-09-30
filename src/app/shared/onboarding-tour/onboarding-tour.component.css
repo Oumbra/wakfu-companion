@@ -381,6 +381,14 @@
   margin-bottom: 22px;
 }
 
+/* Suite de la légende sous la capture (OnboardingHeroBlock.aside), en colonnes. */
+.ob-legend-below {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px 22px;
+}
+
 .ob-zigzag {
   display: flex;
   flex-direction: column;
