@@ -586,7 +586,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.setup.m2':
       '<b>Navigateur incompatible</b> Firefox et Safari ne savent pas suivre un fichier en direct. Des liens vers les navigateurs compatibles sont proposés.',
     'onboarding.setup.m3':
-      '<b>Sur mobile</b> « Continuer sans fichier de log » donne accès à vos personnages et à votre suivi via votre compte Discord ou Google, sans lecture en direct.',
+      '<b>Sur mobile</b> Aucun navigateur ne lit le fichier : passez par « Continuer sans fichier de log » (5).',
     'onboarding.header.toc': "L'en-tête",
     'onboarding.header.title': "L'en-tête, votre tableau de commande",
     'onboarding.header.lede':
@@ -1664,7 +1664,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.setup.m2':
       '<b>Unsupported browser</b> Firefox and Safari cannot follow a file live. Links to compatible browsers are offered.',
     'onboarding.setup.m3':
-      '<b>On mobile</b> "Continue without a log file" gives access to your characters and tracking through your Discord or Google account, without live reading.',
+      '<b>On mobile</b> No browser can read the file: use "Continue without a log file" (5).',
     'onboarding.header.toc': 'The header',
     'onboarding.header.title': 'The header, your control bar',
     'onboarding.header.lede':
@@ -2732,7 +2732,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.setup.m2':
       '<b>Navegador incompatible</b> Firefox y Safari no pueden seguir un archivo en directo. Se ofrecen enlaces a navegadores compatibles.',
     'onboarding.setup.m3':
-      '<b>En móvil</b> «Continuar sin archivo de registro» da acceso a tus personajes y a tu seguimiento con tu cuenta de Discord o Google, sin lectura en directo.',
+      '<b>En móvil</b> Ningún navegador lee el archivo: usa «Continuar sin archivo de registro» (5).',
     'onboarding.header.toc': 'La cabecera',
     'onboarding.header.title': 'La cabecera, tu panel de mando',
     'onboarding.header.lede':
@@ -3814,7 +3814,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.setup.m2':
       '<b>Navegador incompatível</b> Firefox e Safari não conseguem acompanhar um arquivo ao vivo. Links para navegadores compatíveis são oferecidos.',
     'onboarding.setup.m3':
-      '<b>No celular</b> "Continuar sem arquivo de log" dá acesso aos seus personagens e ao seu acompanhamento pela sua conta Discord ou Google, sem leitura ao vivo.',
+      '<b>No celular</b> Nenhum navegador lê o arquivo: use "Continuar sem arquivo de log" (5).',
     'onboarding.header.toc': 'O cabeçalho',
     'onboarding.header.title': 'O cabeçalho, seu painel de comando',
     'onboarding.header.lede':
