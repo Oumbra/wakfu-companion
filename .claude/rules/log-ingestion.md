@@ -335,14 +335,35 @@ Ignemikhal. Une règle liée à UN boss/donjon précis ne s'écrit jamais dans l
   « Marque eting » de l'Eniripsa) ; sinon elle s'abstient. Monstre = jointure
   `isControlledByAI=true` hors invocation (`FightParseState.monsterNames`, exposé en `isMonster`).
   Résultat sur la fixture : 108 dégâts répercutés, tous crédités à des joueurs.
-- Constaté au passage sur ce fichier, hors périmètre de la règle : le dégât réel sur le monstre
-  protégé est parfois crédité à un autre monstre par le générique (`Bombe collante` du Roublard,
-  `Hémorragie` du Sram : le porteur du statut n'est pas la cible → `carrier` crédité), et sur le
-  fichier complet (chat compris), 111 lignes sont émises au lieu de 108 : 3 copies d'un second
-  client échappent au dédoublonnage multi-compte (cause non vérifiée — probablement la purge
-  `pruneSignatures` déclenchée par les signatures du chat).
+- Constaté au passage sur ce fichier : sur le fichier complet (chat compris), 111 lignes sont
+  émises au lieu de 108 — 3 copies d'un second client échappent au dédoublonnage multi-compte
+  (cause non vérifiée — probablement la purge `pruneSignatures` déclenchée par les signatures du
+  chat).
 - Vendue telle quelle dans l'overlay (`crates/overlay-engine/engine-js/src/combat-mechanics/`) :
   toute modification se reporte dans les deux dépôts.
+
+## Effets suivis (`effectOwners`) : un porteur par combattant, pas par nom d'effet
+
+Corrigé le 2026-09-30 (combat Ignemikhal + `tests/wakfu.log`). `effectOwners` associe à chaque
+nom d'effet ses porteurs actuels → applicateur (`EffectCarriers`, ordre d'application), résolus par
+`LogParser.resolveEffectOwner` :
+
+- **Plusieurs porteurs** : l'ancienne map à une entrée par nom d'effet faisait qu'une nouvelle pose
+  écrasait la précédente (`Hachure` de l'Ouginak sur Grokoko écrasée par la pose sur Grokokolantha :
+  les dégâts de Grokoko crédités à Grokokolantha) et que l'expiration chez un porteur (`n'est plus
+  sous l'emprise`) effaçait l'effet de tous (`Marque eting` du Pandawa : soin crédité au Pandawa).
+- Effet porté par la **cible** : l'applicateur (inchangé).
+- Effet porté par un **tiers**, soin/armure : l'applicateur (`Marque unt` de l'Eniripsa posée sur
+  l'Ecaflip qui soigne ses voisins ; `Saignée mortelle` du Sram était créditée à un monstre).
+- Effet porté par un tiers, dégât : le porteur le plus récent (cas Enflammé), SAUF porteur et cible
+  tous deux monstres avec un applicateur qui n'en est pas un — statut posé par un joueur qui se
+  propage (`Bombe collante`, `Hémorragie`) : crédité au joueur. « Monstre » =
+  `FightParseState.monsterNames` (jointure `isControlledByAI=true` hors invocation).
+- Limite connue : la `Bombe collante` qui touche le Roublard lui-même (porteur monstre, cible
+  joueur) reste créditée au monstre porteur.
+- Méthode de vérification réutilisable : rejouer toutes les fixtures avant/après et comparer
+  chaque attribution (`fichier|heure|type|cible|attaquant|sort|montant`) — ici ~280 lignes
+  modifiées, toutes relues par famille d'effet avant validation.
 
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 
