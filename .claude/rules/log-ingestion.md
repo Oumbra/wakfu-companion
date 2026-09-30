@@ -324,12 +324,23 @@ Ignemikhal. Une règle liée à UN boss/donjon précis ne s'écrit jamais dans l
 - Point d'appel unique : `resolveEffectTail` (dégâts seulement, `combatMechanics: true`), AVANT les
   règles génériques ; `null` = la règle s'abstient. La réattribution des invocations reste appliquée
   ensuite.
-- Ignemikhal : chaque dégât d'un allié (même sur un autre monstre) est répercuté par
-  `Ignemikhal: -N PV (Élément) (Protection pourpre)`. Le générique créditait le porteur du statut
-  dans `effectOwners` — le dernier allié à avoir reçu le passif en début de combat. La règle
-  crédite le lanceur du sort précédent (`lastCast`), libellé « Protection pourpre ». Écrite sans
-  fichier réel (format déduit de la description utilisateur) : à recalibrer au 1ᵉʳ `wakfu.log`
-  contenant ce combat.
+- Ignemikhal (calibré le 2026-09-30 sur `tests/logs/fr/fight_single-account_ignemikhal_protection-pourpre.log`,
+  extrait anonymisé d'un vrai combat) : ce sont les **monstres** du combat qui portent le passif
+  (`Elitir: Protection pourpre (Niv. 1)`, un par monstre). Tout dégât d'un allié sur l'un d'eux est
+  aussi infligé au boss : `Ignemikhal: -N PV (Neutre) (Protection pourpre)` précède de 0 à 5 ms le
+  dégât réel sur le monstre protégé, même montant à ±1 près. Le générique créditait le porteur du
+  statut dans `effectOwners` — le dernier MONSTRE à avoir reçu le passif (~324 000 dégâts d'un
+  combat crédités à « Elitendard »). La règle crédite le lanceur du dernier sort s'il n'est pas un
+  monstre ; sinon, si un monstre vient de frapper un allié, cet allié (sa riposte/son passif, ex.
+  « Marque eting » de l'Eniripsa) ; sinon elle s'abstient. Monstre = jointure
+  `isControlledByAI=true` hors invocation (`FightParseState.monsterNames`, exposé en `isMonster`).
+  Résultat sur la fixture : 108 dégâts répercutés, tous crédités à des joueurs.
+- Constaté au passage sur ce fichier, hors périmètre de la règle : le dégât réel sur le monstre
+  protégé est parfois crédité à un autre monstre par le générique (`Bombe collante` du Roublard,
+  `Hémorragie` du Sram : le porteur du statut n'est pas la cible → `carrier` crédité), et sur le
+  fichier complet (chat compris), 111 lignes sont émises au lieu de 108 : 3 copies d'un second
+  client échappent au dédoublonnage multi-compte (cause non vérifiée — probablement la purge
+  `pruneSignatures` déclenchée par les signatures du chat).
 - Vendue telle quelle dans l'overlay (`crates/overlay-engine/engine-js/src/combat-mechanics/`) :
   toute modification se reporte dans les deux dépôts.
 
