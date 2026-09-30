@@ -17,6 +17,11 @@ export interface MechanicDamageContext {
   effectTag: string | null;
   /** Dernier sort lancé dans CE combat (voir `FightParseState.lastCast`). */
   lastCast: { caster: string; spell: string } | null;
+  /** Dernier dégât résolu dans CE combat (voir `FightParseState.lastDamage`). */
+  lastDamage: { attacker: string; target: string } | null;
+  /** Vrai pour un monstre de CE combat : jointure `isControlledByAI=true` qui n'est pas une
+   * invocation. Un personnage joueur et les invocations des joueurs renvoient `false`. */
+  isMonster(name: string): boolean;
 }
 
 /** Attribution imposée par une règle : remplace la résolution générique. */

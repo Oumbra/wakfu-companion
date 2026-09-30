@@ -1,8 +1,17 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { LogParser } from '../log-parser';
-import { LogEntry } from '../../models/log-entry.model';
+import { DamageEntry, LogEntry } from '../../models/log-entry.model';
 import { mechanicsTriggeredBy } from './combat-mechanics';
 import { IGNEMIKHAL_PROTECTION_POURPRE } from './ignemikhal.mechanic';
+
+/** Combat réel contre Ignemikhal (fichier de test anonymisé du 2026-09-29, lignes de chat,
+ * WARN/ERROR et traces Java retirées). */
+const FIXTURE = join(
+  process.cwd(),
+  'tests/logs/fr/fight_single-account_ignemikhal_protection-pourpre.log',
+);
 
 function parseAll(parser: LogParser, lines: string[]): LogEntry[] {
   const entries: LogEntry[] = [];
@@ -15,100 +24,112 @@ function parseAll(parser: LogParser, lines: string[]): LogEntry[] {
   return entries;
 }
 
-const join = (time: string, name: string, id: number, ai: boolean) =>
-  ` INFO ${time} [AWT-EventQueue-0] (faw:1405) - [_FL_] fightId=42 ${name} breed : 100 [${id}] isControlledByAI=${ai} obstacleId : -1 join the fight at {P}`;
+const join_ = (time: string, name: string, id: number, ai: boolean) =>
+  ` INFO ${time} [AWT-EventQueue-0] (fcb:1399) - [_FL_] fightId=1568078169 ${name} breed : 4534 [${id}] isControlledByAI=${ai} obstacleId : -1 join the fight at {Point3 : (-2, -60, 0)}`;
 const combat = (time: string, text: string) =>
-  ` INFO ${time} [AWT-EventQueue-0] (aPV:174) - [Information (combat)] ${text}`;
+  ` INFO ${time} [AWT-EventQueue-0] (aNZ:174) - [Information (combat)] ${text}`;
 
-/** Début de combat : deux alliés reçoivent le passif, Anonyme-Iop2 en dernier. */
+/** Début de combat réel : ce sont les MONSTRES qui reçoivent le passif. */
 function fightStart(boss: string): string[] {
   return [
-    join('20:00:00,000', 'Anonyme-Cra1', 1, false),
-    join('20:00:00,001', 'Anonyme-Iop2', 2, false),
-    join('20:00:00,002', boss, -1, true),
-    join('20:00:00,003', 'Flamiche', -2, true),
-    combat('20:00:01,000', 'Anonyme-Cra1: Protection pourpre (Niv. 1)'),
-    combat('20:00:01,001', 'Anonyme-Iop2: Protection pourpre (Niv. 1)'),
+    join_('21:36:50,460', 'Magilite', -20, true),
+    join_('21:36:50,461', 'Elitendard', -18, true),
+    join_('21:36:50,462', boss, -21, true),
+    join_('21:36:50,463', 'Anonyme-Roublard1', 90000002, false),
+    join_('21:36:50,464', 'Anonyme-Eniripsa1', 90000003, false),
+    combat('21:37:50,592', 'Magilite: Protection pourpre (Niv. 1)'),
+    combat('21:37:50,594', 'Elitendard: Protection pourpre (Niv. 1)'),
   ];
 }
 
-function damages(entries: LogEntry[]) {
-  return entries.filter((e) => e.kind === 'damage');
+function damages(entries: LogEntry[]): DamageEntry[] {
+  return entries.filter((e): e is DamageEntry => e.kind === 'damage');
 }
 
 describe('Mécanique Ignemikhal — Protection pourpre', () => {
-  it("crédite le lanceur du sort précédent, pas le dernier porteur du passif, même s'il vise un autre monstre", () => {
-    const parser = new LogParser();
-    const entries = parseAll(parser, [
+  it('crédite le lanceur du sort qui a touché le monstre protégé, pas le dernier porteur du passif', () => {
+    const entries = parseAll(new LogParser(), [
       ...fightStart('Ignemikhal'),
-      combat('20:00:05,000', 'Anonyme-Cra1 lance le sort Flèche ardente'),
-      combat('20:00:05,100', 'Flamiche: -300 PV (Feu)'),
-      combat('20:00:05,101', 'Ignemikhal: -150 PV (Feu) (Protection pourpre)'),
-      combat('20:00:09,000', 'Anonyme-Iop2 lance le sort Épée divine'),
-      combat('20:00:09,100', 'Ignemikhal: -80 PV (Air) (Protection pourpre)'),
+      combat('21:41:45,700', 'Anonyme-Roublard1 lance le sort Coup rapide (Critiques)'),
+      combat('21:41:45,722', 'Ignemikhal: -1 048 PV (Neutre) (Protection pourpre)'),
+      combat('21:41:45,723', 'Magilite: -1 048 PV  (Air)'),
     ]);
     expect(damages(entries)).toEqual([
-      expect.objectContaining({ target: 'Flamiche', attacker: 'Anonyme-Cra1', amount: 300 }),
       expect.objectContaining({
         target: 'Ignemikhal',
-        attacker: 'Anonyme-Cra1',
+        attacker: 'Anonyme-Roublard1',
         spell: 'Protection pourpre',
-        element: 'Feu',
-        amount: 150,
-        fightId: 42,
+        element: 'Neutre',
+        amount: 1048,
+        fightId: 1568078169,
       }),
-      expect.objectContaining({
-        target: 'Ignemikhal',
-        attacker: 'Anonyme-Iop2',
-        spell: 'Protection pourpre',
-        amount: 80,
-      }),
+      expect.objectContaining({ target: 'Magilite', attacker: 'Anonyme-Roublard1', amount: 1048 }),
     ]);
   });
 
+  it("crédite l'allié frappé quand c'est sa riposte/son passif qui touche un monstre protégé", () => {
+    const entries = parseAll(new LogParser(), [
+      ...fightStart('Ignemikhal'),
+      combat('21:43:44,480', 'Ignemikhal lance le sort Incinération'),
+      combat('21:43:46,808', 'Anonyme-Eniripsa1: -1 100 PV (Feu)'),
+      combat('21:43:47,207', 'Ignemikhal: -100 PV (Neutre) (Protection pourpre)'),
+    ]);
+    expect(damages(entries)[1]).toEqual(
+      expect.objectContaining({
+        target: 'Ignemikhal',
+        attacker: 'Anonyme-Eniripsa1',
+        spell: 'Protection pourpre',
+        amount: 100,
+      }),
+    );
+  });
+
   it("reste inactive dans un combat sans Ignemikhal : résolution générique (porteur de l'effet)", () => {
-    const parser = new LogParser();
-    const entries = parseAll(parser, [
+    const entries = parseAll(new LogParser(), [
       ...fightStart('Autre Boss'),
-      combat('20:00:05,000', 'Anonyme-Cra1 lance le sort Flèche ardente'),
-      combat('20:00:05,101', 'Autre Boss: -150 PV (Feu) (Protection pourpre)'),
+      combat('21:41:45,700', 'Anonyme-Roublard1 lance le sort Coup rapide (Critiques)'),
+      combat('21:41:45,722', 'Autre Boss: -1 048 PV (Neutre) (Protection pourpre)'),
     ]);
     expect(damages(entries)).toEqual([
-      expect.objectContaining({ target: 'Autre Boss', attacker: 'Anonyme-Iop2' }),
+      expect.objectContaining({ target: 'Autre Boss', attacker: 'Elitendard' }),
     ]);
   });
 
   it("ne touche pas aux autres dégâts d'un combat contre Ignemikhal", () => {
-    const parser = new LogParser();
-    const entries = parseAll(parser, [
+    const entries = parseAll(new LogParser(), [
       ...fightStart('Ignemikhal'),
-      combat('20:00:05,000', 'Anonyme-Cra1 lance le sort Flèche ardente'),
-      combat('20:00:05,100', 'Ignemikhal: -300 PV (Feu)'),
-      combat('20:00:06,000', 'Ignemikhal lance le sort Souffle'),
-      combat('20:00:06,100', 'Anonyme-Cra1: -120 PV (Feu)'),
+      combat('21:41:45,700', 'Anonyme-Roublard1 lance le sort Coup rapide'),
+      combat('21:41:45,722', 'Ignemikhal: -300 PV (Air)'),
+      combat('21:43:44,480', 'Ignemikhal lance le sort Incinération'),
+      combat('21:43:46,808', 'Anonyme-Eniripsa1: -1 100 PV (Feu)'),
     ]);
     expect(damages(entries)).toEqual([
-      expect.objectContaining({
-        target: 'Ignemikhal',
-        attacker: 'Anonyme-Cra1',
-        spell: 'Flèche ardente',
-      }),
-      expect.objectContaining({ target: 'Anonyme-Cra1', attacker: 'Ignemikhal', spell: 'Souffle' }),
+      expect.objectContaining({ attacker: 'Anonyme-Roublard1', spell: 'Coup rapide' }),
+      expect.objectContaining({ attacker: 'Ignemikhal', spell: 'Incinération' }),
     ]);
   });
 
-  it("s'abstient si le dernier sort est celui d'Ignemikhal", () => {
-    expect(
-      IGNEMIKHAL_PROTECTION_POURPRE.resolveDamage?.({
-        target: 'Ignemikhal',
-        effectTag: 'Protection pourpre',
-        lastCast: { caster: 'Ignemikhal', spell: 'Souffle' },
-      }),
-    ).toBeNull();
+  it('sur le combat réel, crédite tous les dégâts répercutés à des joueurs, jamais à un monstre', () => {
+    const lines = readFileSync(FIXTURE, 'utf-8').split(/\r?\n/);
+    const pourpre = damages(parseAll(new LogParser(), lines)).filter(
+      (e) => e.target === 'Ignemikhal' && e.spell === 'Protection pourpre',
+    );
+    const byAttacker: Record<string, number> = {};
+    for (const e of pourpre) byAttacker[e.attacker] = (byAttacker[e.attacker] ?? 0) + e.amount;
+    // 111 lignes dans le fichier, dont 3 copies d'un second client (multi-compte) dédoublonnées.
+    expect(pourpre.length).toBe(108);
+    expect(byAttacker).toEqual({
+      'Anonyme-Roublard1': 177799,
+      'Anonyme-Sram1': 133513,
+      'Anonyme-Pandawa1': 3380,
+      'Anonyme-Ecaflip1': 1063,
+      'Anonyme-Feca1': 452,
+      'Anonyme-Eniripsa1': 100,
+    });
   });
 
   it("n'est activée que par le nom Ignemikhal (casse indifférente)", () => {
     expect(mechanicsTriggeredBy('ignemikhal ')).toEqual([IGNEMIKHAL_PROTECTION_POURPRE]);
-    expect(mechanicsTriggeredBy('Flamiche')).toEqual([]);
+    expect(mechanicsTriggeredBy('Magilite')).toEqual([]);
   });
 });

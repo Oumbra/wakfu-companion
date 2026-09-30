@@ -6,23 +6,32 @@ const PROTECTION_POURPRE = 'protection pourpre';
 /**
  * Boss d'intervention « Ignemikhal » — passif « Protection pourpre ».
  *
- * Les alliés portent le passif dès le début du combat (`Allié: Protection pourpre (Niv. N)`). Tout
- * dégât qu'un allié inflige, même à un AUTRE monstre, est répercuté sur Ignemikhal par une ligne
- * `Ignemikhal: -N PV (Élément) (Protection pourpre)`. La résolution générique trouvait le statut
- * dans `effectOwners` et créditait son porteur — le dernier allié à avoir reçu le passif au
- * début du combat, sans rapport avec le coup. L'auteur réel est l'allié qui vient de lancer le
- * sort : c'est lui qui est crédité, sous le libellé « Protection pourpre ».
+ * Ce sont les MONSTRES du combat qui portent le passif dès le début (`Elitir: Protection pourpre
+ * (Niv. 1)`, un par monstre). Tout dégât qu'un allié inflige à l'un d'eux est aussi infligé à
+ * Ignemikhal : la ligne `Ignemikhal: -N PV (Neutre) (Protection pourpre)` précède de 0 à 5 ms le
+ * dégât réel sur le monstre protégé, du même montant à ±1 près (111 cas relevés sur le fichier de
+ * test anonymisé du 2026-09-29). La résolution générique trouvait le statut dans `effectOwners`
+ * et créditait son porteur — le dernier monstre à avoir reçu le passif, donc un ennemi.
  *
- * Si le dernier sort connu est celui d'Ignemikhal lui-même (ou qu'aucun sort n'a encore été
- * lancé), la règle s'abstient et la résolution générique s'applique.
+ * Attribution retenue, dans l'ordre :
+ * 1. le lanceur du dernier sort, s'il n'est pas un monstre (cas de loin le plus fréquent : 110 sur
+ *    111 sur le fichier de test, bombes et poisons posés plus tôt compris) ;
+ * 2. sinon, si un monstre vient de frapper un allié : cet allié — c'est sa riposte ou son passif
+ *    (ex. « Marque eting » de l'Eniripsa) qui a touché un monstre protégé ;
+ * 3. sinon la règle s'abstient et la résolution générique s'applique.
  */
 export const IGNEMIKHAL_PROTECTION_POURPRE: CombatMechanic = {
   id: 'ignemikhal-protection-pourpre',
   triggerFighterNames: ['Ignemikhal'],
-  resolveDamage({ target, effectTag, lastCast }) {
+  resolveDamage({ target, effectTag, lastCast, lastDamage, isMonster }) {
     if (!effectTag || normalizeMechanicName(effectTag) !== PROTECTION_POURPRE) return null;
     if (normalizeMechanicName(target) !== IGNEMIKHAL) return null;
-    if (!lastCast || normalizeMechanicName(lastCast.caster) === IGNEMIKHAL) return null;
-    return { attacker: lastCast.caster, spell: effectTag };
+    if (lastCast && !isMonster(lastCast.caster)) {
+      return { attacker: lastCast.caster, spell: effectTag };
+    }
+    if (lastDamage && isMonster(lastDamage.attacker) && !isMonster(lastDamage.target)) {
+      return { attacker: lastDamage.target, spell: effectTag };
+    }
+    return null;
   },
 };
