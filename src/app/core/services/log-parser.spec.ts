@@ -600,6 +600,147 @@ describe('LogParser — soin donné (onglet Soin)', () => {
   });
 });
 
+describe('LogParser — perte de PV auto-infligée par un passif', () => {
+  it('émet le passif Sacrieur « Retour de flamme » en soin négatif du Sacrieur, jamais en dégât infligé', () => {
+    const parser = new LogParser();
+    const entries = parseAll(parser, [
+      ' INFO 10:58:09,100 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur1 lance le sort Assaut',
+      ' INFO 10:58:09,286 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Merkator: -188 PV (Feu)',
+      ' INFO 10:58:09,301 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur1: -94 PV (Feu) (Retour de flamme)',
+      ' INFO 10:58:09,302 [AWT-EventQueue-0] (aPV:174) - [Information (combat)] Anonyme-Sacrieur2: -12 PV (Retour de Flamme)',
+    ]);
+    const damages = entries.filter((e) => e.kind === 'damage');
+    expect(damages.length).toBe(1);
+    expect(damages[0]).toEqual(
+      expect.objectContaining({ target: 'Merkator', attacker: 'Anonyme-Sacrieur1', amount: 188 }),
+    );
+    expect(entries.filter((e) => e.kind === 'heal')).toEqual([
+      {
+        kind: 'heal',
+        time: '10:58:09,301',
+        target: 'Anonyme-Sacrieur1',
+        attacker: 'Anonyme-Sacrieur1',
+        spell: 'Retour de flamme',
+        element: 'Feu',
+        amount: -94,
+        fightId: null,
+      },
+      {
+        kind: 'heal',
+        time: '10:58:09,302',
+        target: 'Anonyme-Sacrieur2',
+        attacker: 'Anonyme-Sacrieur2',
+        spell: 'Retour de Flamme',
+        element: 'Inconnu',
+        amount: -12,
+        fightId: null,
+      },
+    ]);
+  });
+});
+
+const effectJoin = (time: string, name: string, id: number, ai: boolean) =>
+  ` INFO ${time} [AWT-EventQueue-0] (fcb:1399) - [_FL_] fightId=1568078169 ${name} breed : 4534 [${id}] isControlledByAI=${ai} obstacleId : -1 join the fight at {Point3 : (0, 0, 0)}`;
+const effectLine = (time: string, text: string) =>
+  ` INFO ${time} [AWT-EventQueue-0] (aNZ:174) - [Information (combat)] ${text}`;
+
+describe('LogParser — effets suivis par porteur (plusieurs porteurs, propagation entre monstres)', () => {
+  it("un même effet porté par plusieurs combattants : l'expiration chez l'un n'efface pas les autres (Marque eting)", () => {
+    const entries = parseAll(new LogParser(), [
+      effectJoin('21:36:50,460', 'Anonyme-Eniripsa1', 90000003, false),
+      effectJoin('21:36:50,461', 'Anonyme-Pandawa1', 90000005, false),
+      effectJoin('21:36:50,462', 'Anonyme-Sram1', 90000001, false),
+      effectLine('21:48:34,553', 'Anonyme-Eniripsa1 lance le sort Feu gardien'),
+      effectLine('21:48:36,368', 'Anonyme-Pandawa1: Marque eting (Niv. 170)'),
+      effectLine('21:52:37,000', 'Anonyme-Eniripsa1 lance le sort Feu gardien'),
+      effectLine('21:52:37,959', 'Anonyme-Sram1: Marque eting (Niv. 170)'),
+      effectLine('21:53:01,093', 'Anonyme-Sram1: +856 PV (Feu) (Marque eting)'),
+      effectLine('21:53:01,100', "Anonyme-Sram1: n'est plus sous l'emprise de 'Marque eting'"),
+      effectLine('21:58:00,000', 'Anonyme-Pandawa1 lance le sort Chamrak'),
+      effectLine('22:01:51,471', 'Anonyme-Pandawa1: +2 638 PV (Feu) (Marque eting)'),
+    ]);
+    const heals = entries.filter((e) => e.kind === 'heal');
+    expect(heals).toEqual([
+      expect.objectContaining({ target: 'Anonyme-Sram1', attacker: 'Anonyme-Eniripsa1' }),
+      expect.objectContaining({
+        target: 'Anonyme-Pandawa1',
+        attacker: 'Anonyme-Eniripsa1',
+        amount: 2638,
+      }),
+    ]);
+  });
+
+  it("une nouvelle pose de l'effet sur un autre combattant n'écrase pas la précédente (Hachure)", () => {
+    const entries = parseAll(new LogParser(), [
+      effectJoin('20:42:00,000', 'Anonyme-Ouginak1', 90000001, false),
+      effectJoin('20:42:00,001', 'Grokoko', -1, true),
+      effectJoin('20:42:00,002', 'Grokokolantha', -2, true),
+      effectLine('20:43:26,452', 'Anonyme-Ouginak1 lance le sort Hachure'),
+      effectLine('20:43:27,271', 'Grokoko: Hachure (Niv. 8)'),
+      effectLine('20:43:34,161', 'Grokokolantha lance le sort Divine Koko'),
+      effectLine('20:43:34,958', 'Grokokolantha: Hachure (Niv. 8)'),
+      effectLine('20:43:35,701', 'Grokoko: -188 PV (Terre) (Hachure)'),
+    ]);
+    expect(entries.find((e) => e.kind === 'damage')).toEqual(
+      expect.objectContaining({
+        target: 'Grokoko',
+        attacker: 'Anonyme-Ouginak1',
+        spell: 'Hachure',
+      }),
+    );
+  });
+
+  it("un soin issu d'un effet porté par un tiers est crédité à celui qui l'a posé (Marque unt)", () => {
+    const entries = parseAll(new LogParser(), [
+      effectJoin('21:10:00,000', 'Anonyme-Eniripsa1', 90000003, false),
+      effectJoin('21:10:00,001', 'Anonyme-Ecaflip1', 90000006, false),
+      effectJoin('21:10:00,002', 'Anonyme-Feca1', 90000004, false),
+      effectLine(
+        '21:20:49,391',
+        'Anonyme-Eniripsa1 lance le sort Flamme purificatrice (Critiques)',
+      ),
+      effectLine('21:20:51,216', 'Anonyme-Ecaflip1: Marque unt (Niv. 39)'),
+      effectLine('21:21:03,488', 'Anonyme-Feca1: +122 PV (Feu) (Marque unt)'),
+    ]);
+    expect(entries.find((e) => e.kind === 'heal')).toEqual(
+      expect.objectContaining({ target: 'Anonyme-Feca1', attacker: 'Anonyme-Eniripsa1' }),
+    );
+  });
+
+  it('un statut posé par un joueur sur un monstre qui touche un autre monstre est crédité au joueur (Bombe collante)', () => {
+    const entries = parseAll(new LogParser(), [
+      effectJoin('21:36:50,460', 'Epélite', -16, true),
+      effectJoin('21:36:50,461', 'Elitendard', -18, true),
+      effectJoin('21:36:50,462', 'Anonyme-Roublard1', 90000002, false),
+      effectLine('21:51:16,828', 'Anonyme-Roublard1 lance le sort Bombe collante (Critiques)'),
+      effectLine('21:51:17,237', 'Epélite: Bombe collante (Niv. 98)'),
+      effectLine('21:51:20,000', 'Epélite lance le sort Pièges Riktus'),
+      effectLine('21:51:27,909', 'Elitendard: -1 585 PV (Feu) (Bombe collante)'),
+    ]);
+    expect(entries.find((e) => e.kind === 'damage')).toEqual(
+      expect.objectContaining({
+        target: 'Elitendard',
+        attacker: 'Anonyme-Roublard1',
+        amount: 1585,
+      }),
+    );
+  });
+
+  it('un effet porté par un monstre qui frappe un joueur reste crédité à ce monstre (porteur)', () => {
+    const entries = parseAll(new LogParser(), [
+      effectJoin('10:00:00,000', 'Anonyme-Iop1', 90000001, false),
+      effectJoin('10:00:00,001', 'Bouftou', -1, true),
+      effectLine('10:00:01,000', 'Bouftou lance le sort Rage'),
+      effectLine('10:00:01,100', 'Bouftou: Enflammé (Niv. 3)'),
+      effectLine('10:00:02,000', 'Anonyme-Iop1 lance le sort Épée divine'),
+      effectLine('10:00:03,000', 'Anonyme-Iop1: -50 PV (Feu) (Enflammé)'),
+    ]);
+    expect(entries.filter((e) => e.kind === 'damage').at(-1)).toEqual(
+      expect.objectContaining({ target: 'Anonyme-Iop1', attacker: 'Bouftou' }),
+    );
+  });
+});
+
 describe('LogParser — armure donnée (onglet Armure)', () => {
   it("ignore une perte d'armure (signe négatif) : seule l'armure donnée est suivie", () => {
     const parser = new LogParser();

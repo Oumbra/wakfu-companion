@@ -1,6 +1,7 @@
 ---
 paths:
   - 'src/app/core/services/log-parser*.ts'
+  - 'src/app/core/services/combat-mechanics/**'
   - 'src/app/core/services/stats-store.service*.ts'
   - 'src/app/core/services/entity-classifier.service*.ts'
   - 'src/app/core/services/log-file-access.service*.ts'
@@ -309,6 +310,60 @@ entraînement sur mannequin affiché « en cours » depuis 12h). Deux causes ind
      des lignes fausses dans `fights` n'est PAS rattrapable par le client — d'où l'importance de
      la validation en navigateur sur fichier réel AVANT mise en production d'un changement du
      parseur ou du store.
+
+## Règles propres à une mécanique de combat (`combat-mechanics/`)
+
+Introduit le 2026-09-29 avec la 1ʳᵉ règle, « Protection pourpre » du boss d'intervention
+Ignemikhal. Une règle liée à UN boss/donjon précis ne s'écrit jamais dans le code générique de
+`LogParser` : elle vit dans `src/app/core/services/combat-mechanics/` (un fichier
+`<boss>.mechanic.ts` par règle, enregistrée dans `COMBAT_MECHANICS` de `combat-mechanics.ts`).
+
+- Activation : `triggerFighterNames` — la règle ne s'active que dans un combat où l'un de ces
+  combattants a rejoint (`parseFighterJoin` → `FightParseState.activeMechanics`, index O(1)
+  `mechanicsTriggeredBy`). Hors de ces combats le parseur est strictement générique.
+- Point d'appel unique : `resolveEffectTail` (dégâts seulement, `combatMechanics: true`), AVANT les
+  règles génériques ; `null` = la règle s'abstient. La réattribution des invocations reste appliquée
+  ensuite.
+- Ignemikhal (calibré le 2026-09-30 sur `tests/logs/fr/fight_single-account_ignemikhal_protection-pourpre.log`,
+  extrait anonymisé d'un vrai combat) : ce sont les **monstres** du combat qui portent le passif
+  (`Elitir: Protection pourpre (Niv. 1)`, un par monstre). Tout dégât d'un allié sur l'un d'eux est
+  aussi infligé au boss : `Ignemikhal: -N PV (Neutre) (Protection pourpre)` précède de 0 à 5 ms le
+  dégât réel sur le monstre protégé, même montant à ±1 près. Le générique créditait le porteur du
+  statut dans `effectOwners` — le dernier MONSTRE à avoir reçu le passif (~324 000 dégâts d'un
+  combat crédités à « Elitendard »). La règle crédite le lanceur du dernier sort s'il n'est pas un
+  monstre ; sinon, si un monstre vient de frapper un allié, cet allié (sa riposte/son passif, ex.
+  « Marque eting » de l'Eniripsa) ; sinon elle s'abstient. Monstre = jointure
+  `isControlledByAI=true` hors invocation (`FightParseState.monsterNames`, exposé en `isMonster`).
+  Résultat sur la fixture : 108 dégâts répercutés, tous crédités à des joueurs.
+- Constaté au passage sur ce fichier : sur le fichier complet (chat compris), 111 lignes sont
+  émises au lieu de 108 — 3 copies d'un second client échappent au dédoublonnage multi-compte
+  (cause non vérifiée — probablement la purge `pruneSignatures` déclenchée par les signatures du
+  chat).
+- Vendue telle quelle dans l'overlay (`crates/overlay-engine/engine-js/src/combat-mechanics/`) :
+  toute modification se reporte dans les deux dépôts.
+
+## Effets suivis (`effectOwners`) : un porteur par combattant, pas par nom d'effet
+
+Corrigé le 2026-09-30 (combat Ignemikhal + `tests/wakfu.log`). `effectOwners` associe à chaque
+nom d'effet ses porteurs actuels → applicateur (`EffectCarriers`, ordre d'application), résolus par
+`LogParser.resolveEffectOwner` :
+
+- **Plusieurs porteurs** : l'ancienne map à une entrée par nom d'effet faisait qu'une nouvelle pose
+  écrasait la précédente (`Hachure` de l'Ouginak sur Grokoko écrasée par la pose sur Grokokolantha :
+  les dégâts de Grokoko crédités à Grokokolantha) et que l'expiration chez un porteur (`n'est plus
+  sous l'emprise`) effaçait l'effet de tous (`Marque eting` du Pandawa : soin crédité au Pandawa).
+- Effet porté par la **cible** : l'applicateur (inchangé).
+- Effet porté par un **tiers**, soin/armure : l'applicateur (`Marque unt` de l'Eniripsa posée sur
+  l'Ecaflip qui soigne ses voisins ; `Saignée mortelle` du Sram était créditée à un monstre).
+- Effet porté par un tiers, dégât : le porteur le plus récent (cas Enflammé), SAUF porteur et cible
+  tous deux monstres avec un applicateur qui n'en est pas un — statut posé par un joueur qui se
+  propage (`Bombe collante`, `Hémorragie`) : crédité au joueur. « Monstre » =
+  `FightParseState.monsterNames` (jointure `isControlledByAI=true` hors invocation).
+- Limite connue : la `Bombe collante` qui touche le Roublard lui-même (porteur monstre, cible
+  joueur) reste créditée au monstre porteur.
+- Méthode de vérification réutilisable : rejouer toutes les fixtures avant/après et comparer
+  chaque attribution (`fichier|heure|type|cible|attaquant|sort|montant`) — ici ~280 lignes
+  modifiées, toutes relues par famille d'effet avant validation.
 
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 

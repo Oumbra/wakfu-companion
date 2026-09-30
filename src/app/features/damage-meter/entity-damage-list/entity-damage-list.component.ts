@@ -109,8 +109,10 @@ export class EntityDamageListComponent {
   protected readonly total = computed(() =>
     this.displayRows().reduce((sum, r) => sum + r.total, 0),
   );
+  /** En valeur absolue : un total peut être négatif (soin négatif, voir HealEntry.amount — ex.
+   * « Retour de flamme » du Sacrieur), sa barre mesure alors l'ampleur de la perte. */
   private readonly maxTotal = computed(
-    () => this.displayRows().reduce((max, r) => Math.max(max, r.total), 0) || 1,
+    () => this.displayRows().reduce((max, r) => Math.max(max, Math.abs(r.total)), 0) || 1,
   );
 
   /** Ne garde, pour ce tour, que les sorts ayant effectivement fait des dégâts (voir
@@ -145,8 +147,15 @@ export class EntityDamageListComponent {
     return row.instanceCount > 1 ? `${base} #${row.instanceIndex}` : base;
   }
 
+  /** Ligne dépliable : au moins un sort à détailler. Pas `total > 0` : un total négatif (soin
+   * négatif) ou nul par compensation (soins et « Retour de flamme » qui s'annulent) a lui aussi un
+   * détail à consulter. */
+  protected hasDetail(row: EntityDamageRow): boolean {
+    return row.spells.length > 0;
+  }
+
   protected toggle(row: EntityDamageRow): void {
-    if (row.total === 0) return;
+    if (!this.hasDetail(row)) return;
     const next = new Set(this.expandedNames());
     if (next.has(row.name)) next.delete(row.name);
     else next.add(row.name);
@@ -168,7 +177,7 @@ export class EntityDamageListComponent {
 
   protected barWidth(total: number): string {
     if (total === 0) return '0%';
-    return `${Math.max(2, (total / this.maxTotal()) * 100)}%`;
+    return `${Math.max(2, (Math.abs(total) / this.maxTotal()) * 100)}%`;
   }
 
   protected elementClass(element: DamageElement): string {

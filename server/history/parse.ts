@@ -265,6 +265,23 @@ function parseCount(
 }
 
 /**
+ * Entier fini SIGNÉ, borné à ±`Number.MAX_SAFE_INTEGER` — réservé au soin (`participant.heal`,
+ * `healSpells`) : une perte de PV qu'un combattant s'inflige via un passif (ex. « Retour de flamme »
+ * du Sacrieur) y est un soin négatif, jamais un dégât (voir `HealEntry.amount` côté client).
+ */
+function parseSignedCount(raw: unknown, field: string): ParseResult<number> {
+  if (
+    typeof raw !== 'number' ||
+    !Number.isFinite(raw) ||
+    !Number.isInteger(raw) ||
+    Math.abs(raw) > Number.MAX_SAFE_INTEGER
+  ) {
+    return { ok: false, error: `${field} invalide : ${echoValue(raw)}` };
+  }
+  return { ok: true, value: raw };
+}
+
+/**
  * `itemId`/`itemName` : mutuellement exclusifs (voir `server/db/schema.ts`, `fightLoot`/`purchases`/
  * `tradeItems`) — id résolu ⇒ nom `null` (redondant, résolu à l'affichage via le catalogue) ;
  * sinon nom requis (seule donnée qui identifie encore la ligne). Invariant renforcé ICI plutôt que
@@ -450,14 +467,17 @@ function strictBatch<T>(result: ParseResult<ParsedBatch<T>>): ParseResult<T[]> {
 /** Clés qui, une fois relues côté client dans un objet ordinaire, pollueraient son prototype. */
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput> {
+/** `signed` : ventilation du soin uniquement (voir parseSignedCount). */
+function parseSpell(raw: unknown, field = 'spells', signed = false): ParseResult<FightSpellInput> {
+  const parseAmount = (value: unknown, name: string): ParseResult<number | null> =>
+    signed ? parseSignedCount(value, name) : parseCount(value, name);
   const record = asRecord(raw, 'sort');
   if (!record.ok) return record;
   const entry = record.value;
 
   const spell = parseText(entry['spell'], `${field}.spell`);
   if (!spell.ok) return spell;
-  const total = parseCount(entry['total'] ?? 0, `${field}.total`);
+  const total = parseAmount(entry['total'] ?? 0, `${field}.total`);
   if (!total.ok) return total;
 
   const rawByElement = entry['byElement'] ?? {};
@@ -481,7 +501,7 @@ function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput
     ) {
       return { ok: false, error: `${field}.byElement : élément invalide` };
     }
-    const parsed = parseCount(amount, `${field}.byElement.${echoValue(element)}`);
+    const parsed = parseAmount(amount, `${field}.byElement.${echoValue(element)}`);
     if (!parsed.ok) return parsed;
     byElement[element] = parsed.value ?? 0;
   }
@@ -492,7 +512,11 @@ function parseSpell(raw: unknown, field = 'spells'): ParseResult<FightSpellInput
 /** Une des trois ventilations par sort d'un participant (dégâts, soin, armure) — mêmes règles pour
  * les trois : bornée en nombre d'entrées, jamais deux fois le même sort (le client agrège déjà, un
  * doublon signalerait une ventilation incohérente, pas deux lancers distincts). */
-function parseSpellList(raw: unknown, field: string): ParseResult<FightSpellInput[]> {
+function parseSpellList(
+  raw: unknown,
+  field: string,
+  signed = false,
+): ParseResult<FightSpellInput[]> {
   const rawSpells = raw ?? [];
   if (!Array.isArray(rawSpells)) return { ok: false, error: `participant.${field} invalide` };
   if (rawSpells.length > MAX_SPELLS_PER_PARTICIPANT) {
@@ -501,7 +525,7 @@ function parseSpellList(raw: unknown, field: string): ParseResult<FightSpellInpu
   const spells: FightSpellInput[] = [];
   const seen = new Set<string>();
   for (const rawSpell of rawSpells) {
-    const parsed = parseSpell(rawSpell, field);
+    const parsed = parseSpell(rawSpell, field, signed);
     if (!parsed.ok) return parsed;
     if (seen.has(parsed.value.spell)) {
       return { ok: false, error: `sort en double : ${echoValue(parsed.value.spell)}` };
@@ -551,7 +575,8 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
   if (!damage.ok) return damage;
   // `?? 0` : un client antérieur au 2026-09-14 n'envoie ni l'un ni l'autre — son lot reste valide,
   // il s'archive simplement sans détail de soin/armure.
-  const heal = parseCount(entry['heal'] ?? 0, 'participant.heal');
+  // Signé : voir parseSignedCount (soin négatif d'un passif auto-infligé).
+  const heal = parseSignedCount(entry['heal'] ?? 0, 'participant.heal');
   if (!heal.ok) return heal;
   const armor = parseCount(entry['armor'] ?? 0, 'participant.armor');
   if (!armor.ok) return armor;
@@ -568,7 +593,7 @@ function parseParticipant(raw: unknown): ParseResult<FightParticipantInput> {
 
   const spells = parseSpellList(entry['spells'], 'spells');
   if (!spells.ok) return spells;
-  const healSpells = parseSpellList(entry['healSpells'], 'healSpells');
+  const healSpells = parseSpellList(entry['healSpells'], 'healSpells', true);
   if (!healSpells.ok) return healSpells;
   const armorSpells = parseSpellList(entry['armorSpells'], 'armorSpells');
   if (!armorSpells.ok) return armorSpells;

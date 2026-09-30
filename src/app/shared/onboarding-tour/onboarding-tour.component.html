@@ -163,14 +163,25 @@
                         [ngTemplateOutlet]="shot"
                         [ngTemplateOutletContext]="{ $implicit: block.image }"
                       />
+                      @let aside = block.aside ?? block.legend.length;
                       <ol class="ob-legend">
-                        @for (key of block.legend; track key; let i = $index) {
+                        @for (key of block.legend.slice(0, aside); track key; let i = $index) {
                           <li>
                             <span class="ob-badge">{{ i + 1 }}</span>
                             <span class="ob-legend-text" [innerHTML]="key | tHtml"></span>
                           </li>
                         }
                       </ol>
+                      @if (aside < block.legend.length) {
+                        <ol class="ob-legend ob-legend-below">
+                          @for (key of block.legend.slice(aside); track key; let i = $index) {
+                            <li>
+                              <span class="ob-badge">{{ aside + i + 1 }}</span>
+                              <span class="ob-legend-text" [innerHTML]="key | tHtml"></span>
+                            </li>
+                          }
+                        </ol>
+                      }
                     </div>
                   }
                 }
@@ -346,7 +357,7 @@
         [src]="image.src"
         [attr.width]="image.width"
         [attr.height]="image.height"
-        [style.max-width.px]="image.natural ? image.width / 2 : null"
+        [style.max-width]="image.natural ? 'min(100%, ' + image.width / 2 + 'px)' : null"
         loading="lazy"
         alt=""
       />

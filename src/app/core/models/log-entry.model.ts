@@ -72,7 +72,9 @@ export interface DamageEntry {
 
 /** Soin donné ("<cible>: +<valeur> PV (<élément>)") — même ligne que DamageEntry (signe `+` plutôt
  * que `-`), mais `attacker` (celui à créditer du soin) est résolu différemment pour le cas passif
- * non rattaché à un sort récent : voir LogParser.resolveEffectTail. */
+ * non rattaché à un sort récent : voir LogParser.resolveEffectTail. `amount` est NÉGATIF pour une
+ * perte de PV qu'un combattant s'inflige lui-même via un passif (ex. « Retour de flamme » du
+ * Sacrieur, voir LogParser SELF_INFLICTED_DAMAGE_TAGS) : un soin négatif, jamais un dégât. */
 export interface HealEntry {
   kind: 'heal';
   time: string;

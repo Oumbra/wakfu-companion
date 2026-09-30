@@ -27,6 +27,7 @@ import { PurchaseReassignPickerComponent } from './shared/purchase-reassign-pick
 import { PurchaseReassignService } from './core/services/purchase-reassign.service';
 import { ConfirmDeletePopoverComponent } from './shared/confirm-delete-popover/confirm-delete-popover.component';
 import { HelpModalComponent } from './shared/help-modal/help-modal.component';
+import { BugReportModalComponent } from './shared/bug-report-modal/bug-report-modal.component';
 import { RecipeQuantityModalComponent } from './shared/recipe-quantity-modal/recipe-quantity-modal.component';
 import { LegalPageComponent } from './shared/legal-page/legal-page.component';
 import { AppHeaderComponent } from './shared/app-header/app-header.component';
@@ -62,6 +63,7 @@ import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-m
     PurchaseReassignPickerComponent,
     ConfirmDeletePopoverComponent,
     HelpModalComponent,
+    BugReportModalComponent,
     RecipeQuantityModalComponent,
     LegalPageComponent,
     AppHeaderComponent,

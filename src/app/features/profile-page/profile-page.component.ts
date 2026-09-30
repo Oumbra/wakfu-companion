@@ -20,6 +20,7 @@ import { I18nService } from '../../core/services/i18n.service';
 import { AlertSoundService } from '../../core/services/alert-sound.service';
 import { ConfirmDeleteService } from '../../core/services/confirm-delete.service';
 import { HelpModalService } from '../../core/services/help-modal.service';
+import { BugReportModalService } from '../../core/services/bug-report-modal.service';
 import { TabBarComponent, TabBarItem } from '../../shared/tab-bar/tab-bar.component';
 import { AvatarIconComponent } from '../../shared/avatar-icon/avatar-icon.component';
 import { ClassPortraitComponent } from '../../shared/class-portrait/class-portrait.component';
@@ -170,6 +171,7 @@ export class ProfilePageComponent implements OnDestroy {
   protected readonly colorblind = inject(ColorblindService);
   protected readonly theme = inject(ThemeService);
   protected readonly helpModal = inject(HelpModalService);
+  protected readonly bugReportModal = inject(BugReportModalService);
   protected readonly auth = inject(AuthService);
   /** Fournisseurs déjà liés au compte (vide en invité) : leur bouton de connexion est grisé. */
   protected readonly linkedProviders = computed(() =>
