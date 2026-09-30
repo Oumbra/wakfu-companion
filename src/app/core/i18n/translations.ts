@@ -806,7 +806,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Se déconnecter, ou supprimer le compte.',
     'onboarding.account.b4': "Le contenu du chat de jeu n'est jamais envoyé.",
     'onboarding.account.tip':
-      'Sans compte aussi, <b>↓ Exporter</b> et <b>↑ Importer</b> (en haut du profil) sauvegardent vos réglages dans un fichier JSON.',
+      "Sans compte aussi, <b>↓ Exporter</b> et <b>↑ Importer</b> (en haut du profil) sauvegardent vos réglages dans un fichier JSON. À côté, l'insecte (<b>Signaler un bug</b>) anonymise votre wakfu.log (pseudos, messages privés retirés) pour l'envoyer par e-mail.",
     'onboarding.mobile.toc': 'Sur mobile',
     'onboarding.mobile.title': 'Dans la poche aussi',
     'onboarding.mobile.lede': 'Sur un petit écran, le tableau de bord passe en onglets.',
@@ -1857,7 +1857,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Sign out, or delete the account.',
     'onboarding.account.b4': 'Game chat content is never sent.',
     'onboarding.account.tip':
-      'Without an account too, <b>↓ Export</b> and <b>↑ Import</b> (at the top of the profile) save your settings to a JSON file.',
+      'Without an account too, <b>↓ Export</b> and <b>↑ Import</b> (at the top of the profile) save your settings to a JSON file. Next to them, the bug icon (<b>Report a bug</b>) anonymizes your wakfu.log (names and private messages removed) so you can send it by e-mail.',
     'onboarding.mobile.toc': 'On mobile',
     'onboarding.mobile.title': 'In your pocket too',
     'onboarding.mobile.lede': 'On a small screen, the dashboard switches to tabs.',
@@ -2911,7 +2911,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Cerrar sesión, o eliminar la cuenta.',
     'onboarding.account.b4': 'El contenido del chat del juego nunca se envía.',
     'onboarding.account.tip':
-      'También sin cuenta, <b>↓ Exportar</b> e <b>↑ Importar</b> (arriba del perfil) guardan tus ajustes en un archivo JSON.',
+      'También sin cuenta, <b>↓ Exportar</b> e <b>↑ Importar</b> (arriba del perfil) guardan tus ajustes en un archivo JSON. Al lado, el insecto (<b>Informar de un error</b>) anonimiza tu wakfu.log (nombres y mensajes privados eliminados) para enviarlo por correo.',
     'onboarding.mobile.toc': 'En móvil',
     'onboarding.mobile.title': 'También en tu bolsillo',
     'onboarding.mobile.lede': 'En una pantalla pequeña, el panel pasa a pestañas.',
@@ -3968,7 +3968,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'onboarding.account.b3': 'Encerrar sessão, ou excluir a conta.',
     'onboarding.account.b4': 'O conteúdo do chat do jogo nunca é enviado.',
     'onboarding.account.tip':
-      'Também sem conta, <b>↓ Exportar</b> e <b>↑ Importar</b> (no topo do perfil) salvam suas configurações em um arquivo JSON.',
+      'Também sem conta, <b>↓ Exportar</b> e <b>↑ Importar</b> (no topo do perfil) salvam suas configurações em um arquivo JSON. Ao lado, o inseto (<b>Relatar um bug</b>) anonimiza seu wakfu.log (nomes e mensagens privadas removidos) para enviá-lo por e-mail.',
     'onboarding.mobile.toc': 'No celular',
     'onboarding.mobile.title': 'No bolso também',
     'onboarding.mobile.lede': 'Numa tela pequena, o painel passa a abas.',
