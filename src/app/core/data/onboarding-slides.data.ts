@@ -66,6 +66,10 @@ export interface OnboardingHeroBlock {
   readonly image: OnboardingImage;
   /** Légende numérotée : l'élément i porte la pastille i+1, comme sur la capture. */
   readonly legend: readonly string[];
+  /** Nombre d'éléments de légende posés à côté de la capture ; les suivants passent dessous, en
+   * colonnes sur toute la largeur. Absent = toute la légende à côté. Pour une capture plus large
+   * que haute avec une longue légende, qui laisserait sinon un grand vide sous l'image. */
+  readonly aside?: number;
 }
 
 export interface OnboardingZigzagRow {
@@ -188,7 +192,12 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     essential: true,
     hasLede: true,
     blocks: [
-      { kind: 'hero', image: img('setup-annot', 2120, 840), legend: legend('setup', 4) },
+      {
+        kind: 'hero',
+        image: img('setup-annot', 2300, 828),
+        legend: legend('setup', 6),
+        aside: 3,
+      },
       {
         kind: 'mosaic',
         columns: 3,
@@ -561,6 +570,30 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
         ],
       },
       tip('account'),
+    ],
+  },
+  {
+    id: 'bugReport',
+    chapter: 'custom',
+    essential: false,
+    hasLede: true,
+    blocks: [
+      {
+        kind: 'zigzag',
+        rows: [
+          {
+            image: img('bug-header', 292, 140, { natural: true }),
+            titleKey: 'onboarding.bugReport.r1',
+            lines: numbered('bugReport', 'n', 1, 3),
+          },
+          {
+            image: img('bug-modal', 920, 290, { natural: true }),
+            titleKey: 'onboarding.bugReport.r2',
+            lines: [...numbered('bugReport', 'n', 4, 5), line('bugReport', 'b1')],
+          },
+        ],
+      },
+      tip('bugReport'),
     ],
   },
   {

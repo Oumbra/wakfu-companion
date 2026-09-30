@@ -1,0 +1,66 @@
+@if (modal.isOpen()) {
+  <div class="bug-modal-backdrop" (click)="close()" appEscapeClose (appEscapeClose)="close()"></div>
+  <div class="bug-modal" role="dialog" aria-modal="true" aria-labelledby="bug-modal-title">
+    <div class="bug-modal-header">
+      <span class="bug-modal-title" id="bug-modal-title">
+        <app-icon name="bug" [size]="16" />
+        {{ 'bugReport.title' | t }}
+      </span>
+      <button
+        class="icon-btn bug-modal-close"
+        type="button"
+        [appTooltip]="'profile.closeToast' | t"
+        tooltipPosition="top"
+        (click)="close()"
+      >
+        ×
+      </button>
+    </div>
+    <div class="bug-modal-body">
+      <p>{{ 'bugReport.intro' | t }}</p>
+
+      <ol class="bug-modal-steps">
+        <li>{{ 'bugReport.step1' | t: { fileName } }}</li>
+        <li>
+          {{ 'bugReport.step2' | t }}
+          <a class="bug-modal-email" [href]="'mailto:' + email">{{ email }}</a>
+        </li>
+      </ol>
+
+      <div class="bug-modal-removed">
+        <span class="bug-modal-removed-title">{{ 'bugReport.removedTitle' | t }}</span>
+        <ul>
+          <li>{{ 'bugReport.removedPrivate' | t }}</li>
+          <li>{{ 'bugReport.removedNames' | t }}</li>
+          <li>{{ 'bugReport.removedChat' | t }}</li>
+          <li>{{ 'bugReport.removedTechnical' | t }}</li>
+        </ul>
+      </div>
+
+      <p class="bug-modal-local">{{ 'bugReport.localOnly' | t }}</p>
+
+      <button class="primary-btn bug-modal-pick" type="button" (click)="pickFile(logFileInput)">
+        {{ 'bugReport.pickFile' | t }}
+      </button>
+      <input
+        #logFileInput
+        type="file"
+        accept=".log,.txt,text/plain"
+        style="display: none"
+        (change)="onFileSelected($event)"
+      />
+
+      @if (result(); as r) {
+        <p class="bug-modal-status is-success" role="status">
+          {{
+            'bugReport.done'
+              | t: { fileName, players: r.playerCount, privateMessages: r.privateMessagesRemoved }
+          }}
+        </p>
+      }
+      @if (failed()) {
+        <p class="bug-modal-status is-error" role="alert">{{ 'bugReport.failed' | t }}</p>
+      }
+    </div>
+  </div>
+}

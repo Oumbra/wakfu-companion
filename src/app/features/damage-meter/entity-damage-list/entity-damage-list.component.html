@@ -28,10 +28,10 @@
       <div class="empty-state">{{ emptyMessage() }}</div>
     } @else {
       @for (row of displayRows(); track row.name + '#' + row.instanceIndex; let first = $first) {
-        <div class="entity-block" [class.expanded]="row.total > 0 && isExpanded(row.name)">
+        <div class="entity-block" [class.expanded]="hasDetail(row) && isExpanded(row.name)">
           <div
             class="entity-row"
-            [class.no-toggle]="row.total === 0"
+            [class.no-toggle]="!hasDetail(row)"
             [class.ko-zero]="row.total === 0 && row.defeated"
             [class.fled-zero]="row.total === 0 && row.fled"
             [appTooltip]="
@@ -72,14 +72,14 @@
             }
             <app-entity-icon [name]="row.name" [side]="side()" />
             <span class="entity-name">
-              @if (row.total > 0) {
+              @if (hasDetail(row)) {
                 <span class="caret">▸</span>
               }
               {{ displayName(row) }}
             </span>
             <span class="entity-total">{{ row.total | localeNumber }}</span>
           </div>
-          @if (row.total > 0 && isExpanded(row.name)) {
+          @if (hasDetail(row) && isExpanded(row.name)) {
             <div class="spell-list">
               @for (spell of row.spells; track spell.spell) {
                 <div

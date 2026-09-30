@@ -39,10 +39,11 @@ export type AppIconName =
   | 'eye-off'
   | 'monitor'
   | 'download'
-  | 'trash';
+  | 'trash'
+  | 'bug';
 
 /** Nom de fichier du sprite — seul endroit à modifier si le sprite est régénéré. */
-export const ICONS_SPRITE_URL = 'assets/icons-ab06fbc2.svg';
+export const ICONS_SPRITE_URL = 'assets/icons-2bfebd8d.svg';
 
 @Component({
   selector: 'app-icon',

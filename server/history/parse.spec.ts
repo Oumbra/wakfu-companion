@@ -124,11 +124,47 @@ describe('parseFightsBody', () => {
     ]);
   });
 
-  it('refuse un soin négatif comme il refuse un dégât négatif', () => {
+  it('refuse une armure négative comme il refuse un dégât négatif', () => {
     const parsed = parseFightsBody({
       entries: [
         fightEntry({
-          participants: [{ side: 'ally', name: 'Anonyme-Eniripsa2', instanceIndex: 1, heal: -1 }],
+          participants: [{ side: 'ally', name: 'Anonyme-Eniripsa2', instanceIndex: 1, armor: -1 }],
+        }),
+      ],
+    });
+    expect(parsed.ok).toBe(false);
+  });
+
+  it('accepte un soin négatif (« Retour de flamme » du Sacrieur), total et ventilation', () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [
+            {
+              side: 'ally',
+              name: 'Anonyme-Sacrieur1',
+              instanceIndex: 1,
+              heal: -94,
+              healSpells: [{ spell: 'Retour de flamme', total: -94, byElement: { Feu: -94 } }],
+            },
+          ],
+        }),
+      ],
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const participant = parsed.value[0].participants[0];
+    expect(participant.heal).toBe(-94);
+    expect(participant.healSpells).toEqual([
+      { spell: 'Retour de flamme', total: -94, byElement: { Feu: -94 } },
+    ]);
+  });
+
+  it('refuse un soin non entier', () => {
+    const parsed = parseFightsBody({
+      entries: [
+        fightEntry({
+          participants: [{ side: 'ally', name: 'Anonyme-Eniripsa2', instanceIndex: 1, heal: -1.5 }],
         }),
       ],
     });
