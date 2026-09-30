@@ -577,6 +577,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "<b>Chemin par défaut</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ : copiez-le dans la barre d'adresse de l'explorateur.",
     'onboarding.setup.l4':
       '<b>Pourquoi ?</b>Explique pourquoi seuls Chrome, Edge et Opera savent suivre le fichier en direct.',
+    'onboarding.setup.l5':
+      '<b>Sans fichier</b>Connectez-vous avec Discord ou Google : personnages et suivi restent accessibles, sans lecture en direct.',
+    'onboarding.setup.l6':
+      "<b>Wakfu Overlay</b>Vous l'utilisez déjà ? Il lit wakfu.log à votre place : continuez sans fichier.",
     'onboarding.setup.m1':
       '<b>Au retour</b> Le navigateur redemande une confirmation. Un clic sur « Reconnecter » suffit.',
     'onboarding.setup.m2':
@@ -1651,6 +1655,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "<b>Default path</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — paste it into the explorer's address bar.",
     'onboarding.setup.l4':
       '<b>Why?</b>Explains why only Chrome, Edge and Opera can follow the file live.',
+    'onboarding.setup.l5':
+      '<b>Without a file</b>Sign in with Discord or Google: characters and tracking stay available, without live reading.',
+    'onboarding.setup.l6':
+      '<b>Wakfu Overlay</b>Already using it? It reads wakfu.log for you: continue without a file.',
     'onboarding.setup.m1':
       '<b>When you come back</b> The browser asks for confirmation again. One click on "Reconnect" is enough.',
     'onboarding.setup.m2':
@@ -2715,6 +2723,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       '<b>Ruta por defecto</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — pégala en la barra de direcciones del explorador.',
     'onboarding.setup.l4':
       '<b>¿Por qué?</b>Explica por qué solo Chrome, Edge y Opera pueden seguir el archivo en directo.',
+    'onboarding.setup.l5':
+      '<b>Sin archivo</b>Inicia sesión con Discord o Google: personajes y seguimiento siguen disponibles, sin lectura en directo.',
+    'onboarding.setup.l6':
+      '<b>Wakfu Overlay</b>¿Ya lo usas? Lee wakfu.log por ti: continúa sin archivo.',
     'onboarding.setup.m1':
       '<b>Al volver</b> El navegador pide confirmación de nuevo. Basta un clic en «Reconectar».',
     'onboarding.setup.m2':
@@ -3793,6 +3805,10 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       '<b>Caminho padrão</b>%AppData%\\zaap\\gamesLogs\\wakfu\\logs\\ — cole-o na barra de endereço do explorador.',
     'onboarding.setup.l4':
       '<b>Por quê?</b>Explica por que só o Chrome, o Edge e o Opera conseguem acompanhar o arquivo ao vivo.',
+    'onboarding.setup.l5':
+      '<b>Sem arquivo</b>Entre com Discord ou Google: personagens e acompanhamento continuam disponíveis, sem leitura ao vivo.',
+    'onboarding.setup.l6':
+      '<b>Wakfu Overlay</b>Já usa? Ele lê o wakfu.log por você: continue sem arquivo.',
     'onboarding.setup.m1':
       '<b>Ao voltar</b> O navegador pede confirmação de novo. Basta um clique em "Reconectar".',
     'onboarding.setup.m2':

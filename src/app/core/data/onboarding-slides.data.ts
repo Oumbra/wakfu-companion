@@ -188,7 +188,7 @@ export const ONBOARDING_SLIDES: readonly OnboardingSlide[] = [
     essential: true,
     hasLede: true,
     blocks: [
-      { kind: 'hero', image: img('setup-annot', 2120, 840), legend: legend('setup', 4) },
+      { kind: 'hero', image: img('setup-annot', 2300, 828), legend: legend('setup', 6) },
       {
         kind: 'mosaic',
         columns: 3,
