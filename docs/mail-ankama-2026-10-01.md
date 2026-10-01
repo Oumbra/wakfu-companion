@@ -3,8 +3,7 @@
 Version mail de `demande-autorisation-ankama-2026-09-21.md`, restructurée pour l'adresse
 officielle `contact@ankama.com` : objectif, fonctionnement, mesures prises (CGU, confidentialité,
 sécurité), points soumis à autorisation, puis fonctions soumises à leur jugement. Les crochets sont
-à compléter avant envoi. Archiver ici la réponse reçue. Version texte enrichi à copier-coller dans
-un éditeur de mail : `mail-ankama-2026-10-01.html` (ouvrir dans un navigateur, Ctrl+A, Ctrl+C).
+à compléter avant envoi. Archiver ici la réponse reçue.
 
 ---
 
