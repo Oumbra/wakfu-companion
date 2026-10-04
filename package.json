@@ -49,7 +49,7 @@
     "@angular/core": "^21.2.23",
     "@angular/forms": "^21.2.23",
     "@angular/platform-browser": "^21.2.23",
-    "@angular/router": "^21.2.23",
+    "@angular/router": "^21.2.24",
     "@angular/service-worker": "^21.2.23",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.3",
