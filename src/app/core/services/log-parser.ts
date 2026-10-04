@@ -1278,7 +1278,10 @@ export class LogParser {
     const previous = this.recentSignatures.get(signature);
     this.recentSignatures.set(signature, nowMs);
     if (this.recentSignatures.size > 500) this.pruneSignatures(nowMs);
-    return previous !== undefined && nowMs - previous >= 0 && nowMs - previous <= DEDUPE_WINDOW_MS;
+    // Écart pris en valeur absolue : la copie d'un 2ᵉ client peut arriver APRÈS celle du 1ᵉʳ tout
+    // en portant une heure légèrement antérieure (fichier partagé, voir LogLineTracker — les
+    // lignes d'un client en retard sont lues après celles du client en tête).
+    return previous !== undefined && Math.abs(nowMs - previous) <= DEDUPE_WINDOW_MS;
   }
 
   private pruneSignatures(nowMs: number): void {
