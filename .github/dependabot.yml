@@ -13,6 +13,12 @@
 # - npm : Dependabot régénère package-lock.json avec SA version de npm, pas celle de la CI
 #   (`packageManager`, `npm run install:ci`) — si `npm ci` échoue en CI sur une PR Dependabot
 #   (« Missing: X from lock file »), régénérer le lockfile avec `npm run install:ci`.
+# - PR de SÉCURITÉ vers `main` touchant un paquet `@angular/*` (ou une dépendance figée par l'un
+#   d'eux) : toujours en échec ERESOLVE, Dependabot ne monte qu'un paquet du jeu à versions
+#   exactes (PR #52/#53, 2026-10-04). Corriger sur `claude/dev` : tout `@angular/*` d'un coup
+#   (supprimer leurs entrées de package-lock.json puis `npm run install:ci`, sinon npm reste
+#   bloqué sur l'ancien jeu de pairs), `overrides` pour une sous-dépendance figée ; les PR se
+#   ferment seules à la release suivante.
 # - Préfixes Conventional Commits `chore`/`ci` : aucun bump de version (voir
 #   .claude/rules/versioning.md — de toute façon, le hook post-commit ne tourne pas sur un commit
 #   créé par GitHub).

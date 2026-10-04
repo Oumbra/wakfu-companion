@@ -1,6 +1,6 @@
 {
   "name": "wakfu-companion",
-  "version": "1.165.4",
+  "version": "1.165.5",
   "scripts": {
     "ng": "ng",
     "generate:build-info": "node tools/generate-build-info.mjs",
@@ -44,22 +44,22 @@
   "private": true,
   "packageManager": "npm@10.9.8",
   "dependencies": {
-    "@angular/common": "^21.2.23",
-    "@angular/compiler": "^21.2.23",
-    "@angular/core": "^21.2.23",
-    "@angular/forms": "^21.2.23",
-    "@angular/platform-browser": "^21.2.23",
-    "@angular/router": "^21.2.23",
-    "@angular/service-worker": "^21.2.23",
+    "@angular/common": "^21.2.25",
+    "@angular/compiler": "^21.2.25",
+    "@angular/core": "^21.2.25",
+    "@angular/forms": "^21.2.25",
+    "@angular/platform-browser": "^21.2.25",
+    "@angular/router": "^21.2.25",
+    "@angular/service-worker": "^21.2.25",
     "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/build": "^21.2.23",
-    "@angular/cli": "^21.2.23",
-    "@angular/compiler-cli": "^21.2.23",
+    "@angular/build": "^21.2.24",
+    "@angular/cli": "^21.2.24",
+    "@angular/compiler-cli": "^21.2.25",
     "@cloudflare/workers-types": "^5.20260804.1",
     "@types/node": "^26.6.2",
     "@types/wicg-file-system-access": "^2023.10.7",
@@ -74,5 +74,8 @@
     "typescript": "~5.9.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.143.1"
+  },
+  "overrides": {
+    "piscina": "^5.3.2"
   }
 }
