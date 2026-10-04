@@ -13,7 +13,14 @@ name: Dependabot auto-merge
 # - Squash : un commit par PR sur `claude/dev`, titré par le titre Conventional Commits de la PR
 #   (`chore`/`ci` : aucun bump de version).
 
-on: pull_request
+# Filtre `branches` (branche de BASE de la PR) : sans lui, chaque PR de release vers `main`
+# (ouverte par le GITHUB_TOKEN dans release.yml) créait un run « en échec » à 0 job — GitHub
+# enregistre le run puis refuse de l'exécuter (anti-récursion GITHUB_TOKEN) avant même
+# d'évaluer le `if` du job. Le job ne vise de toute façon que `claude/dev`.
+on:
+  pull_request:
+    branches:
+      - claude/dev
 
 permissions:
   contents: write
