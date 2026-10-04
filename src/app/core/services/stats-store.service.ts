@@ -2056,7 +2056,10 @@ export class StatsStoreService {
         this.sessionActiveDurationMs.update((v) => v + gap);
       }
     }
-    this.lastSessionActivityMs = fullMs;
+    // Jamais en arrière : une ligne d'un autre client multi-compte, lue en retard (voir
+    // LogLineTracker), ne doit pas faire passer la ligne suivante pour une reprise après coupure.
+    this.lastSessionActivityMs =
+      this.lastSessionActivityMs === null ? fullMs : Math.max(this.lastSessionActivityMs, fullMs);
   }
 
   /** Session marchand/HDV ouverte ET active depuis moins de MARKET_IDLE_MS (voir

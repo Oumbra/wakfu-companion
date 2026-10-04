@@ -116,11 +116,13 @@ describe('Mécanique Ignemikhal — Protection pourpre', () => {
     );
     const byAttacker: Record<string, number> = {};
     for (const e of pourpre) byAttacker[e.attacker] = (byAttacker[e.attacker] ?? 0) + e.amount;
-    // 111 lignes dans le fichier, dont 3 copies d'un second client (multi-compte) dédoublonnées.
-    expect(pourpre.length).toBe(108);
+    // 111 lignes dans le fichier, dont 9 copies d'un second client (multi-compte) dédoublonnées —
+    // 6 d'entre elles portent une heure antérieure (10 à 113 ms) à la copie déjà lue, d'où le
+    // dédoublonnage sur l'écart absolu (voir LogParser.isDuplicate).
+    expect(pourpre.length).toBe(102);
     expect(byAttacker).toEqual({
-      'Anonyme-Roublard1': 177799,
-      'Anonyme-Sram1': 133513,
+      'Anonyme-Roublard1': 169742,
+      'Anonyme-Sram1': 110747,
       'Anonyme-Pandawa1': 3380,
       'Anonyme-Ecaflip1': 1063,
       'Anonyme-Feca1': 452,
