@@ -334,11 +334,12 @@ Ignemikhal. Une règle liée à UN boss/donjon précis ne s'écrit jamais dans l
   monstre ; sinon, si un monstre vient de frapper un allié, cet allié (sa riposte/son passif, ex.
   « Marque eting » de l'Eniripsa) ; sinon elle s'abstient. Monstre = jointure
   `isControlledByAI=true` hors invocation (`FightParseState.monsterNames`, exposé en `isMonster`).
-  Résultat sur la fixture : 108 dégâts répercutés, tous crédités à des joueurs.
-- Constaté au passage sur ce fichier : sur le fichier complet (chat compris), 111 lignes sont
-  émises au lieu de 108 — 3 copies d'un second client échappent au dédoublonnage multi-compte
-  (cause non vérifiée — probablement la purge `pruneSignatures` déclenchée par les signatures du
-  chat).
+  Résultat sur la fixture : 102 dégâts répercutés, tous crédités à des joueurs (108 avant le
+  2026-10-04, voir ci-dessous).
+- Le fichier contient 111 répercussions dont 9 copies d'un second client. Jusqu'au 2026-10-04, 6
+  d'entre elles échappaient au dédoublonnage : elles portent une heure ANTÉRIEURE (10 à 113 ms) à la
+  copie déjà lue, et `isDuplicate` n'acceptait qu'un écart positif. Corrigé par l'écart absolu (voir
+  la section « `wakfu.log` partagé par plusieurs clients »).
 - Vendue telle quelle dans l'overlay (`crates/overlay-engine/engine-js/src/combat-mechanics/`) :
   toute modification se reporte dans les deux dépôts.
 
@@ -351,7 +352,7 @@ nom d'effet ses porteurs actuels → applicateur (`EffectCarriers`, ordre d'appl
 - **Plusieurs porteurs** : l'ancienne map à une entrée par nom d'effet faisait qu'une nouvelle pose
   écrasait la précédente (`Hachure` de l'Ouginak sur Grokoko écrasée par la pose sur Grokokolantha :
   les dégâts de Grokoko crédités à Grokokolantha) et que l'expiration chez un porteur (`n'est plus
-  sous l'emprise`) effaçait l'effet de tous (`Marque eting` du Pandawa : soin crédité au Pandawa).
+sous l'emprise`) effaçait l'effet de tous (`Marque eting` du Pandawa : soin crédité au Pandawa).
 - Effet porté par la **cible** : l'applicateur (inchangé).
 - Effet porté par un **tiers**, soin/armure : l'applicateur (`Marque unt` de l'Eniripsa posée sur
   l'Ecaflip qui soigne ses voisins ; `Saignée mortelle` du Sram était créditée à un monstre).
@@ -368,6 +369,47 @@ nom d'effet ses porteurs actuels → applicateur (`EffectCarriers`, ordre d'appl
 ## Ligne `[_FL_] ... join the fight` : signal de référence allié/ennemi
 
 - Le log `[_FL_] fightId=... Nom breed : B [id] isControlledByAI=true/false obstacleId : O join the fight` (un par combattant, à chaque combat) est le signal le plus fiable pour classer allié/ennemi — plus fiable que l'heuristique par dégâts subis, dernier repli d'`EntityClassifierService` (la détection de classe par sorts lancés et la liste statique d'invocations alliées ont été retirées le 2026-09-21 : le `breed` de cette ligne suffit). **`obstacleId` ne dit RIEN sur la nature de l'entité** (voir la section Invocations ci-dessus : l'ancien filtre « `obstacleId != -1` = décor » était faux et supprimait la majorité des ennemis réels — ne jamais le réintroduire).
+
+## `wakfu.log` partagé par plusieurs clients : lecture ligne à ligne, pas par offset
+
+Corrigé le 2026-10-04 (rapport utilisateur, fichier
+`tests/logs/fr/fight_multi-account_parallel-fights_shared-file.log` : six personnages sur Excarnus
+répartis sur deux clients, un Ouginak sur un troisième client en combat Troolk en parallèle). Symptôme :
+les compteurs de suivi (Excarnus, Corne d'Excarnus...) ne bougeaient plus pendant des combats en
+parallèle, site ET overlay.
+
+- **Comment les clients écrivent** : chaque client ouvre `wakfu.log` en écrasement avec SON propre
+  pointeur d'écriture ; le dernier lancé tronque le fichier et réécrit depuis l'octet 0, les autres
+  continuent plus loin (trou d'octets nuls entre les deux tant que le premier ne l'a pas recouvert).
+  Le fichier final juxtapose donc des blocs de clients différents : dans cette fixture, lignes
+  1-5017 = client A (le dernier lancé, seul à avoir un en-tête de démarrage, en tête de fichier),
+  5018-5506 = ce qui survit du client B, 5507-fin = client C (ligne 5507 coupée). Les horodatages y
+  reculent de 6 à 7 minutes à chaque jonction. Même motif dans `tests/wakfu.log` (ligne 9516).
+- **Conséquence en direct** : une lecture « depuis le dernier offset » ne voit que le client en tête
+  (celui dont le pointeur est le plus loin). Les autres réécrivent DERRIÈRE l'offset déjà lu : leurs
+  lignes ne sont jamais lues en direct, et n'apparaissent qu'au rechargement suivant — qui, à raison
+  (`isInitialLoad`), n'incrémente pas le suivi. Tant que tous les clients sont dans le même combat,
+  le client en tête en loggue une copie et rien ne se voit ; en combats parallèles, le combat des
+  clients en retard disparaît.
+- **Correctif** (`LogLineTracker`, `core/utils/log-line-tracker.util.ts`) : chaque ligne complète
+  lue est mémorisée par (début, fin, empreinte FNV-1a), 20 octets par ligne. Une relecture complète
+  du fichier émet toute ligne absente de la table à sa position — ajoutée en fin ou réécrite par un
+  client en retard — et rien d'autre. Le reste de l'ancienne ligne qu'un client en retard vient de
+  recouvrir (fragment sans en-tête juste avant une ligne inchangée) n'est pas émis. Une plage
+  d'octets nuls sépare les lignes comme un `\n`. `LogFileAccessService` lit la fin du fichier à
+  chaque sondage et intercale une relecture complète au plus une fois par seconde jusqu'à 4 Mo
+  (`FULL_SCAN_BYTES_PER_SECOND`, puis une toutes les `taille / 4 Mo` secondes) ; une troncature
+  n'est plus qu'un cas particulier (seules les lignes réellement réécrites sont rejouées).
+- **Lignes hors ordre en direct** : celles d'un client en retard arrivent après celles du client en
+  tête, avec une heure antérieure. `LogParser.isDuplicate` compare donc l'écart **absolu** (la copie
+  d'un même événement par un 2ᵉ client peut être antérieure de quelques centaines de ms), et
+  `accumulateSessionDuration` ne fait jamais reculer `lastSessionActivityMs`.
+- Vérifié par simulation (spec de `LogLineTracker`) : les trois flux de la fixture réécrits avec des
+  pointeurs indépendants, relus par lots de 40 lignes. Lecture par offset : Excarnus 2/3, Corne
+  d'Excarnus 6/12, Archive Pelle 3/6, un combat sur quatre manquant ; `LogLineTracker` : identique à
+  la lecture chronologique idéale.
+- Miroir overlay : `crates/overlay-ingest/src/tailer.rs` (même algorithme) — tout changement se
+  reporte dans les deux dépôts.
 
 ## Accès au fichier (File System Access) : gotchas navigateur
 
