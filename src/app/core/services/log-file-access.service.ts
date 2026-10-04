@@ -2,6 +2,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { PersistenceService } from './persistence.service';
 import { LoadingOverlayService } from './loading-overlay.service';
+import { LogLineTracker } from '../utils/log-line-tracker.util';
 
 export type LogFileStatus =
   'idle' | 'unsupported' | 'needs-reconnect' | 'connecting' | 'connected' | 'error';
@@ -11,6 +12,13 @@ const POLL_INTERVAL_MS = 1000;
 const EXPECTED_FILE_NAME_RE = /^wakfu\.log$/i;
 /** Nombre de sondages consécutifs en échec « NotReadableError » tolérés avant de basculer en erreur visible. */
 const MAX_TRANSIENT_READ_FAILURES = 5;
+/**
+ * Débit de relecture complète du fichier (voir `LogLineTracker`) : une relecture au plus par
+ * sondage tant que le fichier fait moins de 4 Mo, puis une toutes les `taille / 4 Mo` secondes —
+ * un client multi-compte en retard apparaît avec quelques secondes de délai au pire, sans relire
+ * un très gros fichier chaque seconde.
+ */
+const FULL_SCAN_BYTES_PER_SECOND = 4 * 1024 * 1024;
 
 /**
  * Ouvre `wakfu.log` via la File System Access API (Chrome/Edge/Opera) et le
@@ -67,10 +75,12 @@ export class LogFileAccessService {
   readonly initialReadPending = signal(false);
 
   private handle: FileSystemFileHandle | null = null;
-  private lastOffset = 0;
-  private carry = '';
+  /** Lignes déjà lues (position + empreinte) : détecte aussi celles qu'un autre client réécrit
+   * DERRIÈRE la fin déjà lue — voir `LogLineTracker` (multi-compte, combats en parallèle). */
+  private readonly tracker = new LogLineTracker();
+  private lastSize = 0;
+  private lastFullScanAtMs = 0;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
-  private readonly decoder = new TextDecoder('utf-8');
   private isFirstRead = true;
   private consecutiveTransientReadFailures = 0;
 
@@ -223,8 +233,8 @@ export class LogFileAccessService {
   simulateConnected(displayName: string): void {
     this.stopPolling();
     this.handle = null;
-    this.lastOffset = 0;
-    this.carry = '';
+    this.tracker.reset();
+    this.lastSize = 0;
     this.isFirstRead = true;
     this.consecutiveTransientReadFailures = 0;
     this.errorMessage.set(null);
@@ -239,8 +249,8 @@ export class LogFileAccessService {
     this.stopPolling();
     await this.persistence.clearFileHandle(STORAGE_KEY);
     this.handle = null;
-    this.lastOffset = 0;
-    this.carry = '';
+    this.tracker.reset();
+    this.lastSize = 0;
     this.isFirstRead = true;
     this.consecutiveTransientReadFailures = 0;
     this.status.set('idle');
@@ -254,8 +264,8 @@ export class LogFileAccessService {
     this.handle = handle;
     this.fileName.set(handle.name);
     this.simulated.set(false);
-    this.lastOffset = 0;
-    this.carry = '';
+    this.tracker.reset();
+    this.lastSize = 0;
     this.isFirstRead = true;
     this.consecutiveTransientReadFailures = 0;
     this.errorMessage.set(null);
@@ -295,51 +305,62 @@ export class LogFileAccessService {
     return err instanceof DOMException && err.name === 'NotReadableError';
   }
 
-  /** Découpe/décode la portion nouvellement écrite d'un fichier (depuis `lastOffset`) et publie les lignes complètes. */
+  /**
+   * Publie les lignes complètes nouvellement apparues dans le fichier. Chemin courant : lecture de
+   * la seule fin du fichier, depuis la dernière ligne connue. À cadence bornée (voir
+   * `FULL_SCAN_BYTES_PER_SECOND`), ou dès que la fin connue ne tient plus (fichier raccourci,
+   * jonction réécrite), relecture complète comparée ligne à ligne à ce qui a déjà été lu : c'est ce
+   * qui rattrape les lignes d'un client multi-compte écrivant derrière la fin déjà lue (voir
+   * `LogLineTracker`). Une troncature (nouveau client lancé, rotation) n'est qu'un cas particulier :
+   * les lignes réécrites depuis le début sont neuves, celles encore intactes ne sont pas rejouées.
+   */
   private async processFile(file: File): Promise<void> {
     const isInitialLoad = this.isFirstRead;
     this.isFirstRead = false;
 
-    if (file.size < this.lastOffset) {
-      // Fichier tronqué ou remplacé (rotation du log) : on repart de zéro.
-      this.lastOffset = 0;
-      this.carry = '';
+    const nowMs = Date.now();
+    const fullScanDue =
+      nowMs - this.lastFullScanAtMs >=
+      Math.max(POLL_INTERVAL_MS, (file.size / FULL_SCAN_BYTES_PER_SECOND) * 1000);
+    if (!isInitialLoad && file.size === this.lastSize && !fullScanDue) return;
+    this.lastSize = file.size;
+    this.fileSize.set(file.size);
+
+    let lines: string[] | null = null;
+    const tail = this.tracker.tailOffset;
+    if (!isInitialLoad && !fullScanDue && file.size >= tail) {
+      const from = Math.max(0, tail - 1);
+      const bytes = new Uint8Array(await file.slice(from, file.size).arrayBuffer());
+      lines = this.tracker.scanTail(bytes, from);
+    }
+    if (lines === null) {
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      lines = this.tracker.scanFull(bytes);
+      this.lastFullScanAtMs = nowMs;
     }
 
-    if (file.size > this.lastOffset) {
-      const chunk = file.slice(this.lastOffset, file.size);
-      const buffer = await chunk.arrayBuffer();
-      const text = this.decoder.decode(buffer);
-      this.lastOffset = file.size;
-      this.fileSize.set(file.size);
-
-      const combined = this.carry + text;
-      const parts = combined.split(/\r?\n/);
-      this.carry = parts.pop() ?? '';
-      const lines = parts.filter((line) => line.length > 0);
-      if (lines.length > 0) {
-        if (isInitialLoad) {
-          // Le tout premier lot d'une (re)connexion peut représenter des dizaines de milliers de
-          // lignes : son interprétation par StatsStoreService.ingest() (déclenchée SYNCHRONEMENT par
-          // le `next()` juste en dessous) peut prendre de quelques centaines de ms à plusieurs
-          // secondes sur un fichier volumineux (voir CLAUDE.md, régression de perf sur les
-          // homonymes butin corrigée le 2026-08-30 pour le cas pathologique — mais même après ce
-          // correctif, un très gros fichier reste un calcul synchrone non négligeable). `connect()`
-          // vient de poser `initialReadPending` à `true` (voir sa doc, lue par
-          // FightHistoryComponent.historyLoading pour afficher un spinner) — sans CE yield explicite,
-          // rien ne garantit que le navigateur ait une occasion de PEINDRE ce nouvel état avant que le
-          // thread principal ne se bloque pour le calcul synchrone qui suit : les deux `await` déjà
-          // présents plus haut (`getFile()`/`arrayBuffer()`) peuvent se résoudre quasi instantanément
-          // (fichier déjà en cache OS) et n'offrent alors aucune fenêtre de peinture réelle. Un yield
-          // MACROTASK (`setTimeout`, pas microtask/`Promise.resolve()`) est nécessaire : le
-          // navigateur n'exécute son étape de rendu qu'entre deux tâches de la file, jamais entre deux
-          // microtâches — c'est ce qui garantit ici qu'au moins une frame avec le spinner visible soit
-          // peinte avant le gel. Bug réel signalé par l'utilisateur (vidéo à l'appui) : jusqu'à ~10s
-          // sans le moindre retour visuel au premier chargement d'un fichier volumineux.
-          await new Promise<void>((resolve) => setTimeout(resolve, 0));
-        }
-        this.newLines$.next({ lines, isInitialLoad });
+    if (lines.length > 0) {
+      if (isInitialLoad) {
+        // Le tout premier lot d'une (re)connexion peut représenter des dizaines de milliers de
+        // lignes : son interprétation par StatsStoreService.ingest() (déclenchée SYNCHRONEMENT par
+        // le `next()` juste en dessous) peut prendre de quelques centaines de ms à plusieurs
+        // secondes sur un fichier volumineux (voir CLAUDE.md, régression de perf sur les
+        // homonymes butin corrigée le 2026-08-30 pour le cas pathologique — mais même après ce
+        // correctif, un très gros fichier reste un calcul synchrone non négligeable). `connect()`
+        // vient de poser `initialReadPending` à `true` (voir sa doc, lue par
+        // FightHistoryComponent.historyLoading pour afficher un spinner) — sans CE yield explicite,
+        // rien ne garantit que le navigateur ait une occasion de PEINDRE ce nouvel état avant que le
+        // thread principal ne se bloque pour le calcul synchrone qui suit : les deux `await` déjà
+        // présents plus haut (`getFile()`/`arrayBuffer()`) peuvent se résoudre quasi instantanément
+        // (fichier déjà en cache OS) et n'offrent alors aucune fenêtre de peinture réelle. Un yield
+        // MACROTASK (`setTimeout`, pas microtask/`Promise.resolve()`) est nécessaire : le
+        // navigateur n'exécute son étape de rendu qu'entre deux tâches de la file, jamais entre deux
+        // microtâches — c'est ce qui garantit ici qu'au moins une frame avec le spinner visible soit
+        // peinte avant le gel. Bug réel signalé par l'utilisateur (vidéo à l'appui) : jusqu'à ~10s
+        // sans le moindre retour visuel au premier chargement d'un fichier volumineux.
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
       }
+      this.newLines$.next({ lines, isInitialLoad });
     }
   }
 
