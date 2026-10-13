@@ -161,7 +161,7 @@ jobs:
       # des GitHub Deployments (permission deployments: write du job).
       - name: Deploy to Cloudflare Pages
         # --branch=claude/dev en dur (le job n'est autorisé que sur cette branche).
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0 (= tag v4 ; v4.1.x publiés sans dist/, inutilisables)
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.0.0 (= tag v4 ; v4.1.x publiés sans dist/, inutilisables)
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
