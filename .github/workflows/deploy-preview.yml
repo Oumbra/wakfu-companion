@@ -44,7 +44,7 @@ jobs:
           persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '22'
           # setup-node >= v5 active seul le cache npm (champ packageManager) : job porteur de
@@ -161,7 +161,7 @@ jobs:
       # des GitHub Deployments (permission deployments: write du job).
       - name: Deploy to Cloudflare Pages
         # --branch=claude/dev en dur (le job n'est autorisé que sur cette branche).
-        uses: cloudflare/wrangler-action@ebbaa1584979971c8614a24965b4405ff95890e0 # v4.0.0 (= tag v4 ; v4.1.x publiés sans dist/, inutilisables)
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.0.0 (= tag v4 ; v4.1.x publiés sans dist/, inutilisables)
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
