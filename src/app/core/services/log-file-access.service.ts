@@ -19,6 +19,32 @@ const MAX_TRANSIENT_READ_FAILURES = 5;
  * un très gros fichier chaque seconde.
  */
 const FULL_SCAN_BYTES_PER_SECOND = 4 * 1024 * 1024;
+/**
+ * Délai maximal d'un appel au navigateur sur le handle (`queryPermission`, `requestPermission`,
+ * `getFile`). Chrome 157+ peut ne jamais répondre sur un handle mémorisé sous `%AppData%` :
+ * sans borne, `init()` restait suspendu et l'overlay de chargement plein écran ne partait jamais.
+ * Passé ce délai, la lecture est traitée comme bloquée (voir `liveTrackingBlocked`).
+ */
+const HANDLE_CALL_TIMEOUT_MS = 3000;
+
+/** Valeur rendue par `withTimeout` quand l'appel n'a pas répondu à temps. */
+const TIMED_OUT = Symbol('timed-out');
+
+function withTimeout<T>(promise: Promise<T>): Promise<T | typeof TIMED_OUT> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(TIMED_OUT), HANDLE_CALL_TIMEOUT_MS);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err: unknown) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 /**
  * Ouvre `wakfu.log` via la File System Access API (Chrome/Edge/Opera) et le
@@ -145,12 +171,16 @@ export class LogFileAccessService {
       }
       this.handle = stored;
       this.fileName.set(stored.name);
-      const permission = await stored.queryPermission({ mode: 'read' });
-      if (permission === 'granted') {
+      const permission = await withTimeout(stored.queryPermission({ mode: 'read' }));
+      if (permission === TIMED_OUT) {
+        this.blockLiveTracking();
+      } else if (permission === 'granted') {
         await this.connect(stored);
       } else {
         this.status.set('needs-reconnect');
       }
+    } catch (err) {
+      this.setError(err);
     } finally {
       this.resolveReady();
       this.loadingOverlay.hide();
@@ -244,11 +274,11 @@ export class LogFileAccessService {
     );
   }
 
-  /** Vrai si le navigateur interdit de lire le fichier via son handle (voir `liveTrackingBlocked`). */
+  /** Vrai si le navigateur interdit, ou ne répond pas, pour lire le fichier via son handle (voir
+   * `liveTrackingBlocked`). */
   private async isReadBlocked(handle: FileSystemFileHandle): Promise<boolean> {
     try {
-      await handle.getFile();
-      return false;
+      return (await withTimeout(handle.getFile())) === TIMED_OUT;
     } catch (err) {
       // Autre échec (fichier verrouillé un instant…) : `connect()` le gère comme d'habitude.
       return this.isSecurityError(err);
@@ -312,8 +342,10 @@ export class LogFileAccessService {
       return;
     }
     try {
-      const permission = await this.handle.requestPermission({ mode: 'read' });
-      if (permission === 'granted') {
+      const permission = await withTimeout(this.handle.requestPermission({ mode: 'read' }));
+      if (permission === TIMED_OUT) {
+        this.blockLiveTracking();
+      } else if (permission === 'granted') {
         await this.connect(this.handle);
       } else {
         this.status.set('needs-reconnect');
@@ -386,7 +418,11 @@ export class LogFileAccessService {
   private async poll(): Promise<void> {
     if (!this.handle) return;
     try {
-      const file = await this.handle.getFile();
+      const file = await withTimeout(this.handle.getFile());
+      if (file === TIMED_OUT) {
+        this.blockLiveTracking();
+        return;
+      }
       this.consecutiveTransientReadFailures = 0;
       if (this.status() === 'error') {
         this.status.set('connected');

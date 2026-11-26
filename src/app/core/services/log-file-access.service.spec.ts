@@ -239,6 +239,32 @@ describe('LogFileAccessService', () => {
       await service.forgetFile();
     });
 
+    it('permission jamais rendue au démarrage : chargement levé, lecture traitée comme bloquée', async () => {
+      vi.useFakeTimers();
+      try {
+        const { service, handle } = setup();
+        (handle as unknown as { queryPermission: () => Promise<string> }).queryPermission = () =>
+          new Promise<string>(() => undefined);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const persistence = (service as any).persistence;
+        vi.spyOn(persistence, 'getFileHandle').mockResolvedValue(handle);
+        vi.stubGlobal('showOpenFilePicker', () => undefined);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const overlay = (service as any).loadingOverlay;
+
+        const done = service.init();
+        await vi.advanceTimersByTimeAsync(3000);
+        await done;
+
+        expect(overlay.visible()).toBe(false);
+        expect(service.status()).toBe('error');
+        expect(service.liveTrackingBlocked()).toBe(true);
+      } finally {
+        vi.unstubAllGlobals();
+        vi.useRealTimers();
+      }
+    });
+
     it('handle mémorisé devenu illisible : erreur explicite, plus de sondage', async () => {
       const { service, handle } = setup();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
