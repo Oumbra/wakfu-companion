@@ -7,11 +7,28 @@
   padding: 20px;
 }
 
+/* Grille à trois rangées égales autour du contenu : la carte de dépôt reste centrée dans la page
+   comme sans le cadre « suivi en direct bloqué », logé au bas de la rangée du haut. Si la place
+   manque, la rangée du haut grandit et décale la carte plutôt que de chevaucher l'en-tête. */
 .setup-shell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  grid-template-rows: 1fr auto 1fr;
+  justify-items: center;
+  row-gap: 24px;
+  align-self: stretch;
   width: 100%;
+}
+
+.setup-card {
+  grid-row: 2;
+}
+
+/* Cadre « suivi en direct bloqué » au-dessus de la zone de dépôt, un peu plus large qu'elle. */
+.setup-live-tracking-banner {
+  grid-row: 1;
+  align-self: end;
+  width: 100%;
+  max-width: 640px;
 }
 
 .setup-card {

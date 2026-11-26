@@ -1,0 +1,212 @@
+/* Mêmes teintes que les cartes d'annonce « Important » (`announcement-card.component.css`) :
+   orange lisible sur les thèmes sombre et clair, texte blanc. */
+:host {
+  --ltb-tone: #e8590c;
+  --ltb-on-tone: #ffffff;
+  display: block;
+}
+
+.ltb-badge {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--ltb-tone);
+  color: var(--ltb-on-tone);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Appel à l'action vers l'overlay : « Utiliser » suivi de la marque, sur un violet profond (teinte
+   du logo) bordé de violet vif. Ni orange (avertissement) ni cyan (couleur de la marque, qui doit
+   rester lisible) ; couleurs fixes, identiques sur tous les thèmes : la marque y reprend ses
+   teintes du thème sombre. */
+.ltb-cta {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  padding: 7px 14px 7px 12px;
+  background: linear-gradient(135deg, #2a1650, #3b1d6e);
+  color: #ffffff;
+  border: 1px solid #8b5cf6;
+  border-radius: 8px;
+  box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    box-shadow 150ms,
+    border-color 150ms,
+    transform 150ms;
+}
+.ltb-cta:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.55);
+  transform: translateY(-1px);
+}
+.ltb-cta:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.ltb-cta app-overlay-brand {
+  --overlay-brand-font-size: 0.8rem;
+  --accent: #00d2ff;
+  --text-muted: #b9a8e0;
+}
+
+.ltb-body p,
+.ltb-band-body p {
+  margin: 0;
+}
+
+/* --- Variante « card » : cadre au-dessus de la zone de dépôt. --- */
+
+.ltb-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  background: var(--panel-header-bg);
+  border: 1px solid color-mix(in srgb, var(--ltb-tone) 55%, transparent);
+  border-radius: 12px;
+}
+
+.ltb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 4px;
+  color: var(--text-bright);
+}
+
+.ltb-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ltb-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ltb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.ltb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 12px;
+}
+
+/* --- Variante « band » : bandeau fin en tête du tableau de bord, repliable. --- */
+
+.ltb-band {
+  background: var(--panel-header-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--ltb-tone) 55%, transparent);
+}
+
+.ltb-band-head {
+  background: var(--surface-well);
+}
+.ltb-band:not(.collapsed) .ltb-band-head {
+  border-bottom: 1px solid var(--border);
+}
+
+.ltb-band-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 5px 16px;
+}
+
+.ltb-band-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.ltb-band .ltb-cta {
+  padding: 3px 10px 3px 8px;
+  font-size: 0.8rem;
+}
+.ltb-band .ltb-cta app-overlay-brand {
+  --overlay-brand-font-size: 0.7rem;
+}
+
+.ltb-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 4px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+.ltb-toggle:hover {
+  color: var(--text-color);
+}
+
+.ltb-chevron {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(180deg);
+  transition: transform 150ms;
+}
+.ltb-band.collapsed .ltb-chevron {
+  transform: none;
+}
+
+.ltb-band-body {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 8px;
+  padding-bottom: 10px;
+  color: var(--text-color);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Étroit : pastille et libellé du bouton de repli masqués, titre sur deux lignes au besoin. */
+@media (max-width: 700px) {
+  .ltb-band .ltb-badge,
+  .ltb-toggle-label {
+    display: none;
+  }
+  .ltb-band-title {
+    white-space: normal;
+  }
+}

@@ -12,7 +12,7 @@ const LAST_COL = CLASS_PORTRAITS_SPRITE_COLS - 1;
 
 /**
  * Portrait "grand format" d'une classe (planche `class-avatars-sheet-*.png`, 2 colonnes
- * [féminin, masculin] x 18 lignes — voir class-portraits.data.ts). Contrairement à l'ancienne
+ * [féminin, masculin] x 19 lignes — voir class-portraits.data.ts). Contrairement à l'ancienne
  * planche (4 colonnes, une variante mate ET une colorée pré-rendues par case), cette planche ne
  * fournit qu'UNE seule image par sexe : l'effet "mat au repos, coloré au survol" est donc
  * reproduit ici par un filtre CSS (`grayscale`/`brightness`) sur l'unique calque plutôt que par un

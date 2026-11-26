@@ -1,4 +1,8 @@
 <div class="setup-shell">
+  <!-- Lecture en direct bloquée par Chrome 157+ : prévenir avant même le dépôt du fichier. -->
+  @if (logFileAccess.status() !== 'unsupported') {
+    <app-live-tracking-blocked-banner class="setup-live-tracking-banner" />
+  }
   <div class="setup-card">
     @switch (logFileAccess.status()) {
       @case ('needs-reconnect') {

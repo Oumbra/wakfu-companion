@@ -38,7 +38,7 @@ interface ClassOption {
 
 // Même ordre que la grille "Avatar" du profil (CLASS_PORTRAIT_ORDER) plutôt qu'un tri
 // alphabétique par clé interne — cohérence visuelle entre les deux endroits où l'utilisateur
-// parcourt les 18 classes. Indépendant de la locale : trier par libellé localisé mélangerait
+// parcourt les 19 classes. Indépendant de la locale : trier par libellé localisé mélangerait
 // l'agencement de la grille à chaque changement de langue — voir class-names.data.ts pour les
 // libellés eux-mêmes, très différents d'une langue à l'autre.
 const CLASS_KEYS = CLASS_PORTRAIT_ORDER;

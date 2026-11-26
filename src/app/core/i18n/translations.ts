@@ -892,6 +892,16 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       "L'en-tête affiche alors <b>Overlay</b> : seul l'overlay lit le fichier.",
     'overlay.conflict.step3Alt': 'En-tête du site : Overlay à la place de wakfu.log',
     'overlay.conflict.action': 'Passer en mode overlay',
+    'liveTrackingBlocked.badge': 'Important',
+    'liveTrackingBlocked.title': 'Suivi en direct bloqué par Chrome',
+    'liveTrackingBlocked.text':
+      "Une mise à jour récente de Chrome empêche le site de relire <b>wakfu.log</b> en continu. Le contenu du fichier au moment où vous l'avez déposé a bien été chargé, mais les nouveaux combats n'apparaîtront pas d'eux-mêmes.",
+    'liveTrackingBlocked.solution':
+      "En attendant un correctif de Chrome, utilisez l'<b>overlay</b> pour le suivi en direct, ou glissez-déposez de nouveau <b>wakfu.log</b> pour charger ce qui s'y est ajouté.",
+    'liveTrackingBlocked.action': "Utiliser l'overlay",
+    'liveTrackingBlocked.actionVerb': 'Utiliser',
+    'liveTrackingBlocked.collapse': 'Replier',
+    'liveTrackingBlocked.expand': 'Déplier',
     'overlay.download.title': 'Overlay de bureau',
     'overlay.download.intro':
       'Une petite application à télécharger sur votre ordinateur, qui affiche le compteur de dégâts et votre suivi directement par-dessus le jeu, reliée à ce compte.',
@@ -1960,6 +1970,16 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'The header then shows <b>Overlay</b>: only the overlay reads the file.',
     'overlay.conflict.step3Alt': 'Site header: Overlay instead of wakfu.log',
     'overlay.conflict.action': 'Switch to overlay mode',
+    'liveTrackingBlocked.badge': 'Important',
+    'liveTrackingBlocked.title': 'Live tracking blocked by Chrome',
+    'liveTrackingBlocked.text':
+      "A recent Chrome update prevents the site from continuously reading <b>wakfu.log</b>. The file's content at the time you dropped it has been loaded, but new fights will not show up on their own.",
+    'liveTrackingBlocked.solution':
+      'Until Chrome ships a fix, use the <b>overlay</b> for live tracking, or drag and drop <b>wakfu.log</b> again to load what has been added since.',
+    'liveTrackingBlocked.action': 'Use the overlay',
+    'liveTrackingBlocked.actionVerb': 'Use',
+    'liveTrackingBlocked.collapse': 'Collapse',
+    'liveTrackingBlocked.expand': 'Expand',
     'overlay.download.title': 'Desktop overlay',
     'overlay.download.intro':
       'A small app to download to your computer that shows the damage meter and your tracking right on top of the game, linked to this account.',
@@ -3038,6 +3058,16 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'La cabecera muestra entonces <b>Overlay</b>: solo el overlay lee el archivo.',
     'overlay.conflict.step3Alt': 'Cabecera del sitio: Overlay en lugar de wakfu.log',
     'overlay.conflict.action': 'Pasar al modo overlay',
+    'liveTrackingBlocked.badge': 'Importante',
+    'liveTrackingBlocked.title': 'Seguimiento en directo bloqueado por Chrome',
+    'liveTrackingBlocked.text':
+      'Una actualización reciente de Chrome impide que el sitio lea <b>wakfu.log</b> de forma continua. Se ha cargado el contenido del archivo en el momento en que lo soltaste, pero los nuevos combates no aparecerán por sí solos.',
+    'liveTrackingBlocked.solution':
+      'Mientras Chrome publica una corrección, usa el <b>overlay</b> para el seguimiento en directo, o arrastra y suelta de nuevo <b>wakfu.log</b> para cargar lo que se haya añadido desde entonces.',
+    'liveTrackingBlocked.action': 'Usar el overlay',
+    'liveTrackingBlocked.actionVerb': 'Usar',
+    'liveTrackingBlocked.collapse': 'Contraer',
+    'liveTrackingBlocked.expand': 'Desplegar',
     'overlay.download.title': 'Overlay de escritorio',
     'overlay.download.intro':
       'Una pequeña aplicación para descargar en tu ordenador, que muestra el medidor de daños y tu seguimiento directamente encima del juego, vinculada a esta cuenta.',
@@ -4114,6 +4144,16 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
       'O cabeçalho passa a mostrar <b>Overlay</b>: só o overlay lê o arquivo.',
     'overlay.conflict.step3Alt': 'Cabeçalho do site: Overlay no lugar de wakfu.log',
     'overlay.conflict.action': 'Mudar para o modo overlay',
+    'liveTrackingBlocked.badge': 'Importante',
+    'liveTrackingBlocked.title': 'Acompanhamento ao vivo bloqueado pelo Chrome',
+    'liveTrackingBlocked.text':
+      'Uma atualização recente do Chrome impede o site de ler <b>wakfu.log</b> continuamente. O conteúdo do arquivo no momento em que você o soltou foi carregado, mas os novos combates não aparecerão sozinhos.',
+    'liveTrackingBlocked.solution':
+      'Enquanto o Chrome não traz uma correção, use o <b>overlay</b> para o acompanhamento ao vivo, ou arraste e solte <b>wakfu.log</b> de novo para carregar o que foi adicionado desde então.',
+    'liveTrackingBlocked.action': 'Usar o overlay',
+    'liveTrackingBlocked.actionVerb': 'Usar',
+    'liveTrackingBlocked.collapse': 'Recolher',
+    'liveTrackingBlocked.expand': 'Expandir',
     'overlay.download.title': 'Overlay de desktop',
     'overlay.download.intro':
       'Um pequeno aplicativo para baixar no seu computador, que mostra o medidor de dano e seu acompanhamento direto por cima do jogo, vinculado a esta conta.',

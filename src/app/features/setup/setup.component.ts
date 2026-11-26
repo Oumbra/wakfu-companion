@@ -13,6 +13,7 @@ import { TranslateHtmlPipe } from '../../shared/translate-html.pipe';
 import { TooltipDirective } from '../../shared/tooltip/tooltip.directive';
 import { AuthProviderButtonsComponent } from '../../shared/auth-provider-buttons/auth-provider-buttons.component';
 import { OverlayBrandComponent } from '../../shared/overlay-brand/overlay-brand.component';
+import { LiveTrackingBlockedBannerComponent } from '../../shared/live-tracking-blocked-banner/live-tracking-blocked-banner.component';
 
 interface CompatibleBrowser {
   kind: BrowserKind;
@@ -35,6 +36,7 @@ const COMPATIBLE_BROWSERS: readonly CompatibleBrowser[] = [
     TooltipDirective,
     AuthProviderButtonsComponent,
     OverlayBrandComponent,
+    LiveTrackingBlockedBannerComponent,
   ],
   templateUrl: './setup.component.html',
   styleUrl: './setup.component.css',
