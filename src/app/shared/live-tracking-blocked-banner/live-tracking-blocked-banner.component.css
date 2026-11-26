@@ -1,93 +1,190 @@
-/* Orange « Important » des cartes d'annonce (`.announcement-card-important`) : lisible sur les
-   thèmes sombre et clair, texte blanc. Pleine largeur du conteneur, contenu centré et borné. */
+/* Mêmes teintes et même disposition que les cartes d'annonce « Important »
+   (`announcement-card.component.css`) : orange lisible sur les thèmes sombre et clair, texte blanc. */
 :host {
+  --ltb-tone: #e8590c;
+  --ltb-on-tone: #ffffff;
   display: block;
-  --live-tracking-banner-tone: #e8590c;
 }
 
-.live-tracking-banner {
-  width: 100%;
-  background: color-mix(in srgb, var(--live-tracking-banner-tone) 12%, var(--panel-header-bg));
-  border-top: 1px solid color-mix(in srgb, var(--live-tracking-banner-tone) 55%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--live-tracking-banner-tone) 55%, transparent);
-}
-
-.live-tracking-banner-inner {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 12px 20px;
-  text-align: left;
-}
-
-.live-tracking-banner-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
+.ltb-badge {
   flex-shrink: 0;
-}
-
-.live-tracking-banner-badge {
   padding: 3px 9px;
   border-radius: 10px;
-  background: var(--live-tracking-banner-tone);
-  color: #ffffff;
+  background: var(--ltb-tone);
+  color: var(--ltb-on-tone);
   font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
-.live-tracking-banner-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  line-height: 1.4;
-  color: var(--text-color);
-}
-
-.live-tracking-banner-title {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.live-tracking-banner-text {
-  margin: 0;
-}
-
-.live-tracking-banner-action {
+.ltb-action {
   flex-shrink: 0;
-  height: auto;
-  background: var(--live-tracking-banner-tone);
-  color: #ffffff;
+  background: var(--ltb-tone);
+  color: var(--ltb-on-tone);
   border: none;
   border-radius: 6px;
-  padding: 8px 14px;
+  padding: 6px 14px;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
 }
-.live-tracking-banner-action:hover {
+.ltb-action:hover {
   filter: brightness(1.1);
 }
 
-/* Étroit : marque, texte puis bouton empilés. */
-@media (max-width: 800px) {
-  .live-tracking-banner-inner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+.ltb-body p,
+.ltb-band-body p {
+  margin: 0;
+}
+
+/* --- Variante « card » : cadre au-dessus de la zone de dépôt. --- */
+
+.ltb-card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  text-align: left;
+  background: var(--panel-header-bg);
+  border: 1px solid color-mix(in srgb, var(--ltb-tone) 55%, transparent);
+  border-radius: 12px;
+}
+
+.ltb-brand-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--surface-well);
+  border-bottom: 1px solid var(--border);
+}
+
+.ltb-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px 4px;
+  color: var(--text-bright);
+}
+
+.ltb-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ltb-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--text-color);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.ltb-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 14px 12px;
+}
+
+/* --- Variante « band » : bandeau fin en tête du tableau de bord, repliable. --- */
+
+.ltb-band {
+  background: var(--panel-header-bg);
+  border-bottom: 1px solid color-mix(in srgb, var(--ltb-tone) 55%, transparent);
+}
+
+.ltb-band-head {
+  background: var(--surface-well);
+}
+.ltb-band:not(.collapsed) .ltb-band-head {
+  border-bottom: 1px solid var(--border);
+}
+
+.ltb-band-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 5px 16px;
+}
+
+.ltb-band-inner app-overlay-brand {
+  --overlay-brand-font-size: 0.72rem;
+  flex-shrink: 0;
+}
+
+.ltb-band-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-bright);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.ltb-band .ltb-action {
+  padding: 3px 12px;
+  font-size: 0.8rem;
+}
+
+.ltb-toggle {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 4px;
+  font-size: 0.8rem;
+  font-weight: 400;
+  cursor: pointer;
+}
+.ltb-toggle:hover {
+  color: var(--text-color);
+}
+
+.ltb-chevron {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(180deg);
+  transition: transform 150ms;
+}
+.ltb-band.collapsed .ltb-chevron {
+  transform: none;
+}
+
+.ltb-band-body {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-top: 8px;
+  padding-bottom: 10px;
+  color: var(--text-color);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* Étroit : pastille et libellé du bouton de repli masqués, titre sur deux lignes au besoin. */
+@media (max-width: 700px) {
+  .ltb-band .ltb-badge,
+  .ltb-toggle-label {
+    display: none;
   }
-  .live-tracking-banner-head {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+  .ltb-band-title {
+    white-space: normal;
   }
 }

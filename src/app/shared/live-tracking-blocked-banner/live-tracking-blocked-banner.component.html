@@ -1,16 +1,52 @@
-<div class="live-tracking-banner" role="status">
-  <div class="live-tracking-banner-inner">
-    <div class="live-tracking-banner-head">
+@if (variant() === 'card') {
+  <div class="ltb-card" role="status">
+    <div class="ltb-brand-row">
       <app-overlay-brand />
-      <span class="live-tracking-banner-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+      <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
     </div>
-    <div class="live-tracking-banner-body">
-      <p class="live-tracking-banner-title">{{ 'liveTrackingBlocked.title' | t }}</p>
-      <p class="live-tracking-banner-text" [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
-      <p class="live-tracking-banner-text" [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+    <div class="ltb-main">
+      <span class="ltb-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+      <div class="ltb-body">
+        <p [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
+        <p [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+      </div>
     </div>
-    <button type="button" class="live-tracking-banner-action" (click)="openOverlay()">
-      {{ 'liveTrackingBlocked.action' | t }}
-    </button>
+    <div class="ltb-actions">
+      <button type="button" class="ltb-action" (click)="openOverlay()">
+        {{ 'liveTrackingBlocked.action' | t }}
+      </button>
+    </div>
   </div>
-</div>
+} @else {
+  <div class="ltb-band" [class.collapsed]="collapsed()" role="status">
+    <div class="ltb-band-head">
+      <div class="ltb-band-inner">
+        <app-overlay-brand />
+        <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+        <span class="ltb-band-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+        <button type="button" class="ltb-action" (click)="openOverlay()">
+          {{ 'liveTrackingBlocked.action' | t }}
+        </button>
+        <button
+          type="button"
+          class="ltb-toggle"
+          [attr.aria-expanded]="!collapsed()"
+          (click)="toggleCollapsed()"
+        >
+          <span class="ltb-toggle-label">{{
+            (collapsed() ? 'liveTrackingBlocked.expand' : 'liveTrackingBlocked.collapse') | t
+          }}</span>
+          <svg class="ltb-chevron" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 4.5 6 7.5 9 4.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    @if (!collapsed()) {
+      <div class="ltb-band-inner ltb-band-body">
+        <p [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
+        <p [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+      </div>
+    }
+  </div>
+}

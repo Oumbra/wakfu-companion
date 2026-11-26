@@ -16,10 +16,10 @@
   width: 100%;
 }
 
-/* Bandeau « suivi en direct bloqué » : toute la largeur de la page, padding de `:host` compris. */
+/* Cadre « suivi en direct bloqué » au-dessus de la zone de dépôt, un peu plus large qu'elle. */
 .setup-live-tracking-banner {
-  align-self: stretch;
-  margin: 0 -20px;
+  width: 100%;
+  max-width: 640px;
 }
 
 .setup-card {

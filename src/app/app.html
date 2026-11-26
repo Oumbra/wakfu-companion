@@ -15,7 +15,7 @@
         <main class="app-main">
           @if (logFileAccess.status() === 'connected') {
             @if (logFileAccess.liveTrackingBlocked()) {
-              <app-live-tracking-blocked-banner class="app-main-banner" />
+              <app-live-tracking-blocked-banner class="app-main-banner" variant="band" />
             }
             <app-dashboard />
           } @else {
