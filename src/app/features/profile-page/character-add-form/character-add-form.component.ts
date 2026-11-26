@@ -46,7 +46,7 @@ export class CharacterAddFormComponent {
     () => this.pendingClass() !== null && this.name().trim().length > 0,
   );
 
-  /** Les 36 portraits (18 classes x 2 sexes, voir AVATAR_GRID_ENTRIES) proposés en boucle par
+  /** Les 38 portraits (19 classes x 2 sexes, voir AVATAR_GRID_ENTRIES) proposés en boucle par
    * `app-directional-slideshow` (voir character-add-form.component.html) tant qu'aucune classe
    * n'est choisie — le tirage aléatoire (sans répétition consécutive) est géré par ce composant,
    * pas besoin de mélanger la liste ici. */

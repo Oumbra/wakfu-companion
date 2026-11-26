@@ -195,7 +195,7 @@ export class ProfilePageComponent implements OnDestroy {
    * `display:none/flex` pur CSS (voir `effectiveCharacterViewMode` ci-dessous). */
   protected readonly isMobile = new MediaQuerySignal('(max-width: 800px)');
 
-  /** Cases de la grille "Avatar" (18 classes x 2 sexes, voir class-portraits.data.ts) — l'index
+  /** Cases de la grille "Avatar" (19 classes x 2 sexes, voir class-portraits.data.ts) — l'index
    * dans ce tableau EST `profile.avatarIndex()` (schéma v5, voir ProfileService). */
   protected readonly avatarGridEntries = AVATAR_GRID_ENTRIES;
 

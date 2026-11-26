@@ -8,6 +8,7 @@
 export type Gender = 'm' | 'f';
 
 export const CLASS_ICON_DATA_URI: Readonly<Record<string, string>> = {
+  bellaphone: 'assets/classes/bellaphone-m-b3439ea6.png',
   cra: 'assets/classes/cra-m-6b6816dc.png',
   ecaflip: 'assets/classes/ecaflip-m-d84eff73.png',
   eliotrope: 'assets/classes/eliotrope-m-d9c53f18.png',
@@ -36,6 +37,7 @@ export const UNKNOWN_ENTITY_ICON_DATA_URI = 'assets/ui/unknown-entity-236e6908.p
  * CLASS_ICON_DATA_URI.
  */
 export const CLASS_ICON_FEMALE_DATA_URI: Readonly<Record<string, string>> = {
+  bellaphone: 'assets/classes/bellaphone-f-f8401ffe.png',
   cra: 'assets/classes/cra-f-0a487098.png',
   ecaflip: 'assets/classes/ecaflip-f-98113853.png',
   eliotrope: 'assets/classes/eliotrope-f-5a37dcf7.png',

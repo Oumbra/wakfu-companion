@@ -8,7 +8,7 @@ import {
 const LAST_INDEX = CLASS_PORTRAITS_SPRITE_COLS * CLASS_PORTRAITS_SPRITE_ROWS - 1;
 
 /**
- * Une case de la planche de portraits "grand format" (18 classes x 2 sexes, voir
+ * Une case de la planche de portraits "grand format" (19 classes x 2 sexes, voir
  * class-portraits.data.ts) — même planche que `app-class-portrait`, mais sans l'effet de survol
  * mat/coloré (petit badge toujours affiché en couleur, pas une tuile de choix). Positionnement en
  * pourcentage (pas en px) pour rester net quel que soit l'agrandissement demandé par l'appelant
@@ -40,7 +40,7 @@ const LAST_INDEX = CLASS_PORTRAITS_SPRITE_COLS * CLASS_PORTRAITS_SPRITE_ROWS - 1
   ],
 })
 export class AvatarIconComponent {
-  /** Index 0-35 dans AVATAR_GRID_ENTRIES (voir class-portraits.data.ts, `getAvatarGridIndex`) :
+  /** Index 0-37 dans AVATAR_GRID_ENTRIES (voir class-portraits.data.ts, `getAvatarGridIndex`) :
    * rangée = classe (CLASS_PORTRAIT_ORDER), colonne = sexe (0 = féminin, 1 = masculin). */
   readonly index = input.required<number>();
 
