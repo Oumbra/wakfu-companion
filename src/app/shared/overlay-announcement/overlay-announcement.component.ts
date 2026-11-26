@@ -20,7 +20,7 @@ import { TranslatePipe } from '../translate.pipe';
  *
  * S'efface devant la bannière de mise à jour du site et devant l'avertissement « fichier lu en double »
  * (`app-overlay-conflict-notice`) : même position, plus urgents. Masquée aussi pendant un suivi en
- * direct bloqué (`app-live-tracking-blocked-notice`), qui recommande déjà l'overlay.
+ * direct bloqué (bandeau `app-live-tracking-blocked-banner`), qui recommande déjà l'overlay.
  */
 @Component({
   selector: 'app-overlay-announcement',

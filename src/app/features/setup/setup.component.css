@@ -9,9 +9,17 @@
 
 .setup-shell {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 24px;
   width: 100%;
+}
+
+/* Bandeau « suivi en direct bloqué » : toute la largeur de la page, padding de `:host` compris. */
+.setup-live-tracking-banner {
+  align-self: stretch;
+  margin: 0 -20px;
 }
 
 .setup-card {

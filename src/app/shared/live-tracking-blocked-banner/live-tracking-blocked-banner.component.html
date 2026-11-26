@@ -1,0 +1,16 @@
+<div class="live-tracking-banner" role="status">
+  <div class="live-tracking-banner-inner">
+    <div class="live-tracking-banner-head">
+      <app-overlay-brand />
+      <span class="live-tracking-banner-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+    </div>
+    <div class="live-tracking-banner-body">
+      <p class="live-tracking-banner-title">{{ 'liveTrackingBlocked.title' | t }}</p>
+      <p class="live-tracking-banner-text" [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
+      <p class="live-tracking-banner-text" [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+    </div>
+    <button type="button" class="live-tracking-banner-action" (click)="openOverlay()">
+      {{ 'liveTrackingBlocked.action' | t }}
+    </button>
+  </div>
+</div>

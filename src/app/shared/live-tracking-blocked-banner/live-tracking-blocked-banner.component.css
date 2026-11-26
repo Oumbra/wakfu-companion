@@ -1,0 +1,93 @@
+/* Orange « Important » des cartes d'annonce (`.announcement-card-important`) : lisible sur les
+   thèmes sombre et clair, texte blanc. Pleine largeur du conteneur, contenu centré et borné. */
+:host {
+  display: block;
+  --live-tracking-banner-tone: #e8590c;
+}
+
+.live-tracking-banner {
+  width: 100%;
+  background: color-mix(in srgb, var(--live-tracking-banner-tone) 12%, var(--panel-header-bg));
+  border-top: 1px solid color-mix(in srgb, var(--live-tracking-banner-tone) 55%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--live-tracking-banner-tone) 55%, transparent);
+}
+
+.live-tracking-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  text-align: left;
+}
+
+.live-tracking-banner-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.live-tracking-banner-badge {
+  padding: 3px 9px;
+  border-radius: 10px;
+  background: var(--live-tracking-banner-tone);
+  color: #ffffff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.live-tracking-banner-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: var(--text-color);
+}
+
+.live-tracking-banner-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.live-tracking-banner-text {
+  margin: 0;
+}
+
+.live-tracking-banner-action {
+  flex-shrink: 0;
+  height: auto;
+  background: var(--live-tracking-banner-tone);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.live-tracking-banner-action:hover {
+  filter: brightness(1.1);
+}
+
+/* Étroit : marque, texte puis bouton empilés. */
+@media (max-width: 800px) {
+  .live-tracking-banner-inner {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .live-tracking-banner-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}

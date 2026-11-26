@@ -82,7 +82,7 @@ export class LogFileAccessService {
    * natif pour les dossiers sensibles comme `%AppData%\Roaming` (régression Chromium suivie sous
    * https://issuetracker.google.com/issues/584839869). Le site lit alors une copie figée du fichier,
    * prise au moment du dépôt (`handleDrop`), sans suivi en direct : déposer à nouveau le fichier
-   * charge ce qui s'y est ajouté depuis. `LiveTrackingBlockedNoticeComponent` l'explique et oriente
+   * charge ce qui s'y est ajouté depuis. `LiveTrackingBlockedBannerComponent` l'explique et oriente
    * vers l'overlay en attendant le correctif du navigateur.
    */
   readonly liveTrackingBlocked = signal(false);
