@@ -176,4 +176,82 @@ describe('LogFileAccessService', () => {
     expect(service.status()).toBe('error');
     expect(service.errorMessage()).toContain('denied');
   });
+
+  describe('lecture bloquée par le navigateur (SecurityError sur getFile)', () => {
+    const securityError = () =>
+      new DOMException(
+        'An attempt was made to break through the security policy of the user agent.',
+        'SecurityError',
+      );
+
+    /** DataTransfer factice : handle illisible + copie du fichier fournie par `getAsFile()`. */
+    function dropOf(content: string, handle: FileSystemFileHandle): DataTransfer {
+      const item = {
+        kind: 'file',
+        getAsFile: () => new File([content], 'wakfu.log'),
+        getAsFileSystemHandle: () => Promise.resolve(handle),
+      };
+      return { items: [item] } as unknown as DataTransfer;
+    }
+
+    function setup() {
+      const service = TestBed.inject(LogFileAccessService);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const persistence = (service as any).persistence;
+      const setHandle = vi.spyOn(persistence, 'setFileHandle').mockResolvedValue(undefined);
+      vi.spyOn(persistence, 'clearFileHandle').mockResolvedValue(undefined);
+      const handle = createFakeHandle();
+      handle.getFile = () => Promise.reject(securityError());
+      const emitted: { lines: string[]; isInitialLoad: boolean }[] = [];
+      service.newLines$.subscribe((batch) => emitted.push(batch));
+      return { service, handle, setHandle, emitted };
+    }
+
+    it('charge la copie déposée sans suivi en direct ni handle mémorisé', async () => {
+      const { service, handle, setHandle, emitted } = setup();
+      await service.handleDrop(dropOf('ligne 1\nligne 2\n', handle));
+
+      expect(service.status()).toBe('connected');
+      expect(service.liveTrackingBlocked()).toBe(true);
+      expect(service.simulated()).toBe(false);
+      expect(service.initialReadPending()).toBe(false);
+      expect(setHandle).not.toHaveBeenCalled();
+      expect(emitted).toEqual([{ lines: ['ligne 1', 'ligne 2'], isInitialLoad: true }]);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((service as any).pollTimer).toBeNull();
+    });
+
+    it('un nouveau dépôt ne publie que les lignes ajoutées depuis', async () => {
+      const { service, handle, emitted } = setup();
+      await service.handleDrop(dropOf('ligne 1\nligne 2\n', handle));
+      await service.handleDrop(dropOf('ligne 1\nligne 2\nligne 3\n', handle));
+
+      expect(emitted[1]).toEqual({ lines: ['ligne 3'], isInitialLoad: false });
+    });
+
+    it('lecture possible : suivi en direct habituel', async () => {
+      const { service, handle, setHandle } = setup();
+      handle.getFile = () => Promise.resolve(new File(['ligne 1\n'], 'wakfu.log'));
+      await service.handleDrop(dropOf('ligne 1\n', handle));
+
+      expect(service.liveTrackingBlocked()).toBe(false);
+      expect(setHandle).toHaveBeenCalled();
+      await service.forgetFile();
+    });
+
+    it('handle mémorisé devenu illisible : erreur explicite, plus de sondage', async () => {
+      const { service, handle } = setup();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (service as any).connect(handle);
+
+      expect(service.status()).toBe('error');
+      expect(service.liveTrackingBlocked()).toBe(true);
+      expect(service.errorMessage()).toContain('overlay');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((service as any).pollTimer).toBeNull();
+
+      await service.forgetFile();
+      expect(service.liveTrackingBlocked()).toBe(false);
+    });
+  });
 });

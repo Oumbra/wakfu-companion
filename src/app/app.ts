@@ -46,6 +46,7 @@ import { AppUpdateService } from './core/services/app-update.service';
 import { AppUpdateNoticeComponent } from './shared/app-update-notice/app-update-notice.component';
 import { OverlayAnnouncementComponent } from './shared/overlay-announcement/overlay-announcement.component';
 import { OverlayConflictNoticeComponent } from './shared/overlay-conflict-notice/overlay-conflict-notice.component';
+import { LiveTrackingBlockedNoticeComponent } from './shared/live-tracking-blocked-notice/live-tracking-blocked-notice.component';
 import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-more-scope-menu.component';
 
 @Component({
@@ -76,6 +77,7 @@ import { LoadMoreScopeMenuComponent } from './shared/load-more-scope-menu/load-m
     AppUpdateNoticeComponent,
     OverlayAnnouncementComponent,
     OverlayConflictNoticeComponent,
+    LiveTrackingBlockedNoticeComponent,
     LoadMoreScopeMenuComponent,
   ],
   templateUrl: './app.html',

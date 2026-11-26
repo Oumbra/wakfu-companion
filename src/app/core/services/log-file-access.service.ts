@@ -37,7 +37,9 @@ const FULL_SCAN_BYTES_PER_SECOND = 4 * 1024 * 1024;
  * fichier situé sous `%AppData%\Roaming` — précisément le dossier par défaut
  * des logs Wakfu — mais PAS le glisser-déposer (`getAsFileSystemHandle`),
  * qui reste donc la solution de repli à recommander à l'utilisateur si le
- * clic échoue pour cette raison (voir errorMessage dans pickFile()).
+ * clic échoue pour cette raison (voir errorMessage dans pickFile()). Depuis
+ * Chrome 157, ce même blocage peut aussi viser la lecture du fichier déposé :
+ * voir `liveTrackingBlocked` pour le repli (copie figée, sans suivi en direct).
  */
 @Injectable({ providedIn: 'root' })
 export class LogFileAccessService {
@@ -73,6 +75,17 @@ export class LogFileAccessService {
    * n'y émettrait donc jamais rien pour la reprendre à `false`.
    */
   readonly initialReadPending = signal(false);
+
+  /**
+   * Vrai quand le navigateur refuse toute lecture via le handle du fichier (`SecurityError` sur
+   * `getFile()`) : Chrome 157+ applique à un fichier glissé-déposé le même blocage qu'au sélecteur
+   * natif pour les dossiers sensibles comme `%AppData%\Roaming` (régression Chromium suivie sous
+   * https://issuetracker.google.com/issues/584839869). Le site lit alors une copie figée du fichier,
+   * prise au moment du dépôt (`handleDrop`), sans suivi en direct : déposer à nouveau le fichier
+   * charge ce qui s'y est ajouté depuis. `LiveTrackingBlockedNoticeComponent` l'explique et oriente
+   * vers l'overlay en attendant le correctif du navigateur.
+   */
+  readonly liveTrackingBlocked = signal(false);
 
   private handle: FileSystemFileHandle | null = null;
   /** Lignes déjà lues (position + empreinte) : détecte aussi celles qu'un autre client réécrit
@@ -173,6 +186,9 @@ export class LogFileAccessService {
   /** Traite un fichier glissé-déposé (nécessite le support getAsFileSystemHandle). */
   async handleDrop(dataTransfer: DataTransfer): Promise<void> {
     const item = dataTransfer.items?.[0];
+    // À lancer AVANT tout `await` : le contenu du DataTransfer n'est plus accessible une fois
+    // l'événement drop terminé. Ne sert que si la lecture par le handle est bloquée.
+    const snapshot = this.readDroppedSnapshot(item);
     const withHandle = item as
       | (DataTransferItem & { getAsFileSystemHandle?: () => Promise<FileSystemHandle | null> })
       | undefined;
@@ -196,11 +212,97 @@ export class LogFileAccessService {
         this.rejectWrongFile(fileHandle.name);
         return;
       }
+      if (await this.isReadBlocked(fileHandle)) {
+        const file = await snapshot;
+        if (!file) {
+          this.blockLiveTracking();
+          return;
+        }
+        // Handle inutilisable : inutile de le mémoriser pour une reconnexion en un clic.
+        await this.persistence.clearFileHandle(STORAGE_KEY);
+        await this.connectSnapshot(file);
+        return;
+      }
       await this.persistence.setFileHandle(STORAGE_KEY, fileHandle);
       await this.connect(fileHandle);
     } catch (err) {
       this.setError(err);
     }
+  }
+
+  /**
+   * Copie en mémoire du fichier déposé, lue tout de suite : le jeu écrit en continu dans
+   * `wakfu.log`, et un `File` lu après modification du fichier sur disque échoue
+   * (`NotReadableError`). `null` si le navigateur ne fournit pas le fichier ou ne peut pas le lire.
+   */
+  private readDroppedSnapshot(item: DataTransferItem | undefined): Promise<File | null> {
+    const file = item?.kind === 'file' ? item.getAsFile() : null;
+    if (!file) return Promise.resolve(null);
+    return file.arrayBuffer().then(
+      (bytes) => new File([bytes], file.name),
+      () => null,
+    );
+  }
+
+  /** Vrai si le navigateur interdit de lire le fichier via son handle (voir `liveTrackingBlocked`). */
+  private async isReadBlocked(handle: FileSystemFileHandle): Promise<boolean> {
+    try {
+      await handle.getFile();
+      return false;
+    } catch (err) {
+      // Autre échec (fichier verrouillé un instant…) : `connect()` le gère comme d'habitude.
+      return this.isSecurityError(err);
+    }
+  }
+
+  private isSecurityError(err: unknown): boolean {
+    return err instanceof DOMException && err.name === 'SecurityError';
+  }
+
+  /**
+   * Lit une fois la copie figée du fichier, sans sondage. Si la copie précédente venait du même
+   * suivi bloqué, les lignes déjà lues ne sont pas rejouées : seules celles ajoutées depuis sont
+   * publiées, comme une lecture en direct différée.
+   */
+  private async connectSnapshot(file: File): Promise<void> {
+    this.stopPolling();
+    const refresh = this.liveTrackingBlocked() && this.status() === 'connected';
+    this.handle = null;
+    this.fileName.set(file.name);
+    this.simulated.set(false);
+    if (!refresh) {
+      this.tracker.reset();
+      this.lastSize = 0;
+      this.isFirstRead = true;
+    }
+    this.lastFullScanAtMs = 0;
+    this.consecutiveTransientReadFailures = 0;
+    this.errorMessage.set(null);
+    this.liveTrackingBlocked.set(true);
+    this.status.set('connected');
+    this.initialReadPending.set(!refresh);
+    try {
+      await this.processFile(file);
+    } finally {
+      this.initialReadPending.set(false);
+    }
+  }
+
+  /**
+   * Handle mémorisé ou déposé devenu illisible et aucune copie disponible : on l'oublie et on
+   * invite à déposer de nouveau le fichier (copie figée) ou à passer par l'overlay.
+   */
+  private blockLiveTracking(): void {
+    this.stopPolling();
+    this.handle = null;
+    void this.persistence.clearFileHandle(STORAGE_KEY);
+    this.liveTrackingBlocked.set(true);
+    this.status.set('error');
+    this.errorMessage.set(
+      'Le navigateur bloque désormais la lecture en direct de wakfu.log. Glissez-déposez de ' +
+        'nouveau le fichier pour en charger le contenu actuel, ou utilisez l’overlay pour le ' +
+        'suivi en direct.',
+    );
   }
 
   /** Redemande la permission sur le handle mémorisé (geste utilisateur requis). */
@@ -241,6 +343,7 @@ export class LogFileAccessService {
     this.fileName.set(displayName);
     this.fileSize.set(0);
     this.simulated.set(true);
+    this.liveTrackingBlocked.set(false);
     this.status.set('connected');
   }
 
@@ -255,6 +358,7 @@ export class LogFileAccessService {
     this.consecutiveTransientReadFailures = 0;
     this.status.set('idle');
     this.simulated.set(false);
+    this.liveTrackingBlocked.set(false);
     this.fileName.set(null);
     this.fileSize.set(0);
     this.errorMessage.set(null);
@@ -264,6 +368,7 @@ export class LogFileAccessService {
     this.handle = handle;
     this.fileName.set(handle.name);
     this.simulated.set(false);
+    this.liveTrackingBlocked.set(false);
     this.tracker.reset();
     this.lastSize = 0;
     this.isFirstRead = true;
@@ -274,7 +379,8 @@ export class LogFileAccessService {
     this.stopPolling();
     await this.poll();
     this.initialReadPending.set(false);
-    this.pollTimer = setInterval(() => void this.poll(), POLL_INTERVAL_MS);
+    // Lecture bloquée dès le premier sondage (`blockLiveTracking`) : rien à relire.
+    if (this.handle) this.pollTimer = setInterval(() => void this.poll(), POLL_INTERVAL_MS);
   }
 
   private async poll(): Promise<void> {
@@ -288,6 +394,10 @@ export class LogFileAccessService {
       }
       await this.processFile(file);
     } catch (err) {
+      if (this.isSecurityError(err)) {
+        this.blockLiveTracking();
+        return;
+      }
       if (this.isTransientReadError(err)) {
         this.consecutiveTransientReadFailures++;
         if (this.consecutiveTransientReadFailures <= MAX_TRANSIENT_READ_FAILURES) {
