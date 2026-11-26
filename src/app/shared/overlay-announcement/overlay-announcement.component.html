@@ -1,4 +1,9 @@
-@if (overlay.showAnnouncement() && !updateService.updateReady() && !conflict.show()) {
+@if (
+  overlay.showAnnouncement() &&
+  !updateService.updateReady() &&
+  !conflict.show() &&
+  !logFileAccess.liveTrackingBlocked()
+) {
   <app-announcement-card
     [badge]="'overlay.announcement.badge' | t"
     [cardTitle]="'overlay.announcement.title' | t"

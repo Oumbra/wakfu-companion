@@ -1,0 +1,62 @@
+@if (variant() === 'card') {
+  <div class="ltb-card" role="status">
+    <div class="ltb-main">
+      <div class="ltb-title-row">
+        <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+        <span class="ltb-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+      </div>
+      <div class="ltb-body">
+        <p [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
+        <p [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+      </div>
+    </div>
+    <div class="ltb-actions">
+      <button
+        type="button"
+        class="ltb-cta"
+        [attr.aria-label]="'liveTrackingBlocked.action' | t"
+        (click)="openOverlay()"
+      >
+        <span class="ltb-cta-verb">{{ 'liveTrackingBlocked.actionVerb' | t }}</span>
+        <app-overlay-brand />
+      </button>
+    </div>
+  </div>
+} @else {
+  <div class="ltb-band" [class.collapsed]="collapsed()" role="status">
+    <div class="ltb-band-head">
+      <div class="ltb-band-inner">
+        <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+        <span class="ltb-band-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+        <button
+          type="button"
+          class="ltb-cta"
+          [attr.aria-label]="'liveTrackingBlocked.action' | t"
+          (click)="openOverlay()"
+        >
+          <span class="ltb-cta-verb">{{ 'liveTrackingBlocked.actionVerb' | t }}</span>
+          <app-overlay-brand />
+        </button>
+        <button
+          type="button"
+          class="ltb-toggle"
+          [attr.aria-expanded]="!collapsed()"
+          (click)="toggleCollapsed()"
+        >
+          <span class="ltb-toggle-label">{{
+            (collapsed() ? 'liveTrackingBlocked.expand' : 'liveTrackingBlocked.collapse') | t
+          }}</span>
+          <svg class="ltb-chevron" viewBox="0 0 12 12" aria-hidden="true">
+            <path d="M3 4.5 6 7.5 9 4.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    @if (!collapsed()) {
+      <div class="ltb-band-inner ltb-band-body">
+        <p [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
+        <p [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
+      </div>
+    }
+  </div>
+}

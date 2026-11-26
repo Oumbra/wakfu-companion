@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { AppUpdateService } from '../../core/services/app-update.service';
+import { LogFileAccessService } from '../../core/services/log-file-access.service';
 import { NavigationService } from '../../core/services/navigation.service';
 import { OS_LOGOS } from '../../core/data/os-logos.data';
 import {
@@ -18,7 +19,8 @@ import { TranslatePipe } from '../translate.pipe';
  * comme « Plus tard » ou un téléchargement lancé depuis cet onglet.
  *
  * S'efface devant la bannière de mise à jour du site et devant l'avertissement « fichier lu en double »
- * (`app-overlay-conflict-notice`) : même position, plus urgents.
+ * (`app-overlay-conflict-notice`) : même position, plus urgents. Masquée aussi pendant un suivi en
+ * direct bloqué (bandeau `app-live-tracking-blocked-banner`), qui recommande déjà l'overlay.
  */
 @Component({
   selector: 'app-overlay-announcement',
@@ -30,6 +32,7 @@ export class OverlayAnnouncementComponent {
   protected readonly overlay = inject(OverlayReleaseService);
   protected readonly updateService = inject(AppUpdateService);
   protected readonly conflict = inject(OverlayConflictService);
+  protected readonly logFileAccess = inject(LogFileAccessService);
   private readonly nav = inject(NavigationService);
 
   protected readonly platforms: readonly OverlayPlatform[] = ['windows', 'linux'];

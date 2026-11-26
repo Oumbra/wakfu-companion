@@ -1,18 +1,21 @@
 import { Gender } from './class-icons.data';
 
 /**
- * Portraits de classe "grand format" (2 sexes x 18 classes) — planche `class-avatars-sheet-*.png`,
- * 2 colonnes (0 = féminin, 1 = masculin) x 18 lignes, une seule image par sexe (pas de variante
+ * Portraits de classe "grand format" (2 sexes x 19 classes) — planche `class-avatars-sheet-*.png`,
+ * 2 colonnes (0 = féminin, 1 = masculin) x 19 lignes, une seule image par sexe (pas de variante
  * mate pré-rendue, contrairement à l'ancienne planche `class-portraits-v2-*.png` — voir git log). Sources : `static.ankama.com/web-test/{id}.png`
  * (icônes de sélection d'avatar du jeu, fournies directement par identifiant numérique plutôt que
  * cadrées à la main comme la planche précédente), assemblées en une seule planche 2026-08-15.
  *
+ * La 19ᵉ ligne (Bellaphone, classe ajoutée par la mise à jour de novembre 2026) est ajoutée en fin
+ * de planche : les index déjà enregistrés (0-35) gardent leur sens.
+ *
  * Une variante à fond transparent (`class-avatars-sheet-transparent-*.png`, 2026-08-16) a existé
  * puis a été retirée le 2026-09-21 : seule la planche opaque d'origine est servie.
  */
-export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-ade44514.png';
+export const CLASS_PORTRAITS_SPRITE_URI = 'assets/avatars/class-avatars-sheet-d5ee9b94.png';
 export const CLASS_PORTRAITS_SPRITE_COLS = 2;
-export const CLASS_PORTRAITS_SPRITE_ROWS = 18;
+export const CLASS_PORTRAITS_SPRITE_ROWS = 19;
 
 /** Ordre RÉEL des lignes de la planche `class-avatars-sheet-*.png` (spécifié explicitement par
  * l'utilisateur au moment de l'assemblage — pas déduit d'une source externe, contrairement à
@@ -36,6 +39,7 @@ export const CLASS_PORTRAIT_ORDER: readonly string[] = [
   'osamodas',
   'pandawa',
   'rogue',
+  'bellaphone',
 ];
 
 /** Sexe "par défaut" d'une classe (repris de l'ancienne planche à 1 portrait/classe) — n'a plus
@@ -60,13 +64,14 @@ export const CLASS_PORTRAIT_DEFAULT_GENDER: Readonly<Record<string, Gender>> = {
   eliotrope: 'm',
   huppermage: 'm',
   ouginak: 'm',
+  bellaphone: 'f',
 };
 
 const CLASS_PORTRAIT_ROW: Readonly<Record<string, number>> = Object.fromEntries(
   CLASS_PORTRAIT_ORDER.map((key, i) => [key, i]),
 );
 
-/** Ligne (0-17) d'une classe dans la planche — 0 (Cra) si `className` inconnu/absent, pour rester
+/** Ligne (0-18) d'une classe dans la planche — 0 (Cra) si `className` inconnu/absent, pour rester
  * cohérent avec `getAvatarGridIndex` (repli sur la 1ère case plutôt que planter). */
 export function getClassPortraitRow(className: string | undefined): number {
   return (className ? CLASS_PORTRAIT_ROW[className] : undefined) ?? 0;
@@ -79,10 +84,10 @@ export function getClassPortraitDefaultGender(className: string | undefined): Ge
   return (className && CLASS_PORTRAIT_DEFAULT_GENDER[className]) || 'f';
 }
 
-/** Une entrée par case de la grille "Avatar" du profil : 18 classes (voir CLASS_PORTRAIT_ORDER) x
+/** Une entrée par case de la grille "Avatar" du profil : 19 classes (voir CLASS_PORTRAIT_ORDER) x
  * 2 sexes, féminin puis masculin pour chaque classe — mêmes colonnes que la planche
- * (col 0 = féminin, col 1 = masculin), 36 cases au total. `profile.avatarIndex()` est un index
- * dans CE tableau (0-35). */
+ * (col 0 = féminin, col 1 = masculin), 38 cases au total. `profile.avatarIndex()` est un index
+ * dans CE tableau (0-37). */
 export const AVATAR_GRID_ENTRIES: readonly { className: string; gender: Gender }[] =
   CLASS_PORTRAIT_ORDER.flatMap((className) => [
     { className, gender: 'f' as Gender },
@@ -99,7 +104,7 @@ export function getAvatarGridEntry(index: number | null | undefined): {
   );
 }
 
-/** Index (0-35) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case.
+/** Index (0-37) dans AVATAR_GRID_ENTRIES pour une classe+sexe donnés — classe inconnue -> 1ère case.
  * Utilisé aussi bien par `migrateLegacyAvatarIndex` ci-dessous que par `AvatarIconComponent` (petit
  * portrait persistant, pas de choix interactif) — voir ce composant pour son propre repli si
  * `className`/`gender` sont absents en amont. */

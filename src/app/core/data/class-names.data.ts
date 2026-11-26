@@ -1,7 +1,7 @@
 import { AppLocale } from '../services/i18n.service';
 
 /**
- * Noms de classe localisés (18 classes) — PAS dérivables de la clé interne
+ * Noms de classe localisés (19 classes) — PAS dérivables de la clé interne
  * (`class-icons.data.ts`, proche de l'anglais) par simple capitalisation : plusieurs classes ont un
  * nom radicalement différent selon la langue (ex. `zobal` = "Masqueraider" en anglais, `rogue` =
  * "Tymador" en espagnol/"Ladino" en portugais, `foggernaut` = "Steamer" en français/espagnol/
@@ -9,6 +9,7 @@ import { AppLocale } from '../services/i18n.service';
  * À réviser si Ankama renomme une classe dans une de ces langues.
  */
 export const CLASS_NAMES: Readonly<Record<string, Readonly<Record<AppLocale, string>>>> = {
+  bellaphone: { fr: 'Bellaphone', en: 'Bellaphone', es: 'Belíade', pt: 'Beléfone' },
   cra: { fr: 'Crâ', en: 'Cra', es: 'Ocra', pt: 'Cra' },
   ecaflip: { fr: 'Ecaflip', en: 'Ecaflip', es: 'Zurcarák', pt: 'Ecaflip' },
   eliotrope: { fr: 'Eliotrope', en: 'Eliotrope', es: 'Selotrop', pt: 'Eliotrope' },

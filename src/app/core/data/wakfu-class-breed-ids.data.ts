@@ -32,4 +32,5 @@ export const WAKFU_CLASS_BREED_IDS: Readonly<Record<number, string>> = {
   16: 'foggernaut',
   18: 'eliotrope',
   19: 'huppermage',
+  20: 'bellaphone',
 };
