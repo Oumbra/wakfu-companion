@@ -11,9 +11,14 @@
       </div>
     </div>
     <div class="ltb-actions">
-      <app-overlay-brand />
-      <button type="button" class="ltb-action" (click)="openOverlay()">
-        {{ 'liveTrackingBlocked.action' | t }}
+      <button
+        type="button"
+        class="ltb-cta"
+        [attr.aria-label]="'liveTrackingBlocked.action' | t"
+        (click)="openOverlay()"
+      >
+        <span class="ltb-cta-verb">{{ 'liveTrackingBlocked.actionVerb' | t }}</span>
+        <app-overlay-brand />
       </button>
     </div>
   </div>
@@ -23,9 +28,14 @@
       <div class="ltb-band-inner">
         <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
         <span class="ltb-band-title">{{ 'liveTrackingBlocked.title' | t }}</span>
-        <app-overlay-brand />
-        <button type="button" class="ltb-action" (click)="openOverlay()">
-          {{ 'liveTrackingBlocked.action' | t }}
+        <button
+          type="button"
+          class="ltb-cta"
+          [attr.aria-label]="'liveTrackingBlocked.action' | t"
+          (click)="openOverlay()"
+        >
+          <span class="ltb-cta-verb">{{ 'liveTrackingBlocked.actionVerb' | t }}</span>
+          <app-overlay-brand />
         </button>
         <button
           type="button"

@@ -899,6 +899,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'liveTrackingBlocked.solution':
       "En attendant un correctif de Chrome, utilisez l'<b>overlay</b> pour le suivi en direct, ou glissez-déposez de nouveau <b>wakfu.log</b> pour charger ce qui s'y est ajouté.",
     'liveTrackingBlocked.action': "Utiliser l'overlay",
+    'liveTrackingBlocked.actionVerb': 'Utiliser',
     'liveTrackingBlocked.collapse': 'Replier',
     'liveTrackingBlocked.expand': 'Déplier',
     'overlay.download.title': 'Overlay de bureau',
@@ -1976,6 +1977,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'liveTrackingBlocked.solution':
       'Until Chrome ships a fix, use the <b>overlay</b> for live tracking, or drag and drop <b>wakfu.log</b> again to load what has been added since.',
     'liveTrackingBlocked.action': 'Use the overlay',
+    'liveTrackingBlocked.actionVerb': 'Use',
     'liveTrackingBlocked.collapse': 'Collapse',
     'liveTrackingBlocked.expand': 'Expand',
     'overlay.download.title': 'Desktop overlay',
@@ -3063,6 +3065,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'liveTrackingBlocked.solution':
       'Mientras Chrome publica una corrección, usa el <b>overlay</b> para el seguimiento en directo, o arrastra y suelta de nuevo <b>wakfu.log</b> para cargar lo que se haya añadido desde entonces.',
     'liveTrackingBlocked.action': 'Usar el overlay',
+    'liveTrackingBlocked.actionVerb': 'Usar',
     'liveTrackingBlocked.collapse': 'Contraer',
     'liveTrackingBlocked.expand': 'Desplegar',
     'overlay.download.title': 'Overlay de escritorio',
@@ -4148,6 +4151,7 @@ export const TRANSLATIONS: Record<AppLocale, Record<string, string>> = {
     'liveTrackingBlocked.solution':
       'Enquanto o Chrome não traz uma correção, use o <b>overlay</b> para o acompanhamento ao vivo, ou arraste e solte <b>wakfu.log</b> de novo para carregar o que foi adicionado desde então.',
     'liveTrackingBlocked.action': 'Usar o overlay',
+    'liveTrackingBlocked.actionVerb': 'Usar',
     'liveTrackingBlocked.collapse': 'Recolher',
     'liveTrackingBlocked.expand': 'Expandir',
     'overlay.download.title': 'Overlay de desktop',

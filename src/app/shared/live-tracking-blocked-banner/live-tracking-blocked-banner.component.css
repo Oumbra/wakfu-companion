@@ -18,19 +18,44 @@
   letter-spacing: 0.04em;
 }
 
-.ltb-action {
+/* Appel à l'action vers l'overlay : « Utiliser » suivi de la marque, sur un violet profond (teinte
+   du logo) bordé de violet vif. Ni orange (avertissement) ni cyan (couleur de la marque, qui doit
+   rester lisible) ; couleurs fixes, identiques sur tous les thèmes : la marque y reprend ses
+   teintes du thème sombre. */
+.ltb-cta {
   flex-shrink: 0;
-  background: var(--ltb-tone);
-  color: var(--ltb-on-tone);
-  border: none;
-  border-radius: 6px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: auto;
+  padding: 7px 14px 7px 12px;
+  background: linear-gradient(135deg, #2a1650, #3b1d6e);
+  color: #ffffff;
+  border: 1px solid #8b5cf6;
+  border-radius: 8px;
+  box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
+  transition:
+    box-shadow 150ms,
+    border-color 150ms,
+    transform 150ms;
 }
-.ltb-action:hover {
-  filter: brightness(1.1);
+.ltb-cta:hover {
+  border-color: #a78bfa;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.55);
+  transform: translateY(-1px);
+}
+.ltb-cta:focus-visible {
+  outline: 2px solid #a78bfa;
+  outline-offset: 2px;
+}
+
+.ltb-cta app-overlay-brand {
+  --overlay-brand-font-size: 0.8rem;
+  --accent: #00d2ff;
+  --text-muted: #b9a8e0;
 }
 
 .ltb-body p,
@@ -81,8 +106,6 @@
   line-height: 1.45;
 }
 
-/* Marque de l'overlay juste avant le bouton qui y mène : c'est l'overlay qui est proposé, le
-   suivi bloqué est celui du site. */
 .ltb-actions {
   display: flex;
   flex-wrap: wrap;
@@ -90,10 +113,6 @@
   align-items: center;
   gap: 10px;
   padding: 8px 14px 12px;
-}
-
-.ltb-actions app-overlay-brand {
-  --overlay-brand-font-size: 0.8rem;
 }
 
 /* --- Variante « band » : bandeau fin en tête du tableau de bord, repliable. --- */
@@ -119,11 +138,6 @@
   padding: 5px 16px;
 }
 
-.ltb-band-inner app-overlay-brand {
-  --overlay-brand-font-size: 0.72rem;
-  flex-shrink: 0;
-}
-
 .ltb-band-title {
   flex: 1;
   min-width: 0;
@@ -135,9 +149,12 @@
   font-weight: 700;
 }
 
-.ltb-band .ltb-action {
-  padding: 3px 12px;
+.ltb-band .ltb-cta {
+  padding: 3px 10px 3px 8px;
   font-size: 0.8rem;
+}
+.ltb-band .ltb-cta app-overlay-brand {
+  --overlay-brand-font-size: 0.7rem;
 }
 
 .ltb-toggle {
