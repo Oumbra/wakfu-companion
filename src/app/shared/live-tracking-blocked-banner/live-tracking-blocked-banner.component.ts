@@ -13,12 +13,12 @@ const COLLAPSED_STORAGE_KEY = 'wakfu-live-tracking-banner-collapsed';
  * figée du fichier déposé. Recommande l'overlay pour le suivi en direct (l'action mène à l'onglet
  * Connexion du profil, où se trouvent ses téléchargements) ou un nouveau dépôt du fichier.
  *
- * Même disposition que les cartes d'annonce (`app-announcement-card`) : marque et pastille, puis
- * titre, texte et action. Deux variantes :
+ * Pastille et titre, texte, puis la marque de l'overlay juste avant le bouton qui y mène (c'est
+ * le suivi du site qui est bloqué, pas celui de l'overlay). Deux variantes :
  * - `card` : cadre au-dessus de la zone de dépôt (`SetupComponent`), toujours affiché pour
  *   prévenir avant même le dépôt ;
  * - `band` : bandeau fin pleine largeur en tête du tableau de bord (`app.html`) quand le suivi est
- *   effectivement bloqué, repliable sur une seule ligne (marque, titre, action), choix mémorisé.
+ *   effectivement bloqué, repliable sur une seule ligne (titre, marque, action), choix mémorisé.
  *
  * À retirer une fois le correctif de Chrome publié.
  */

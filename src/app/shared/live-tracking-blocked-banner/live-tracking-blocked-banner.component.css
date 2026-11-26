@@ -1,5 +1,5 @@
-/* Mêmes teintes et même disposition que les cartes d'annonce « Important »
-   (`announcement-card.component.css`) : orange lisible sur les thèmes sombre et clair, texte blanc. */
+/* Mêmes teintes que les cartes d'annonce « Important » (`announcement-card.component.css`) :
+   orange lisible sur les thèmes sombre et clair, texte blanc. */
 :host {
   --ltb-tone: #e8590c;
   --ltb-on-tone: #ffffff;
@@ -51,23 +51,19 @@
   border-radius: 12px;
 }
 
-.ltb-brand-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 12px 16px;
-  background: var(--surface-well);
-  border-bottom: 1px solid var(--border);
-}
-
 .ltb-main {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 14px 16px 4px;
+  gap: 8px;
+  padding: 16px 16px 4px;
   color: var(--text-bright);
+}
+
+.ltb-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .ltb-title {
@@ -85,10 +81,19 @@
   line-height: 1.45;
 }
 
+/* Marque de l'overlay juste avant le bouton qui y mène : c'est l'overlay qui est proposé, le
+   suivi bloqué est celui du site. */
 .ltb-actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
   padding: 8px 14px 12px;
+}
+
+.ltb-actions app-overlay-brand {
+  --overlay-brand-font-size: 0.8rem;
 }
 
 /* --- Variante « band » : bandeau fin en tête du tableau de bord, repliable. --- */

@@ -1,17 +1,17 @@
 @if (variant() === 'card') {
   <div class="ltb-card" role="status">
-    <div class="ltb-brand-row">
-      <app-overlay-brand />
-      <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
-    </div>
     <div class="ltb-main">
-      <span class="ltb-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+      <div class="ltb-title-row">
+        <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
+        <span class="ltb-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+      </div>
       <div class="ltb-body">
         <p [innerHTML]="'liveTrackingBlocked.text' | tHtml"></p>
         <p [innerHTML]="'liveTrackingBlocked.solution' | tHtml"></p>
       </div>
     </div>
     <div class="ltb-actions">
+      <app-overlay-brand />
       <button type="button" class="ltb-action" (click)="openOverlay()">
         {{ 'liveTrackingBlocked.action' | t }}
       </button>
@@ -21,9 +21,9 @@
   <div class="ltb-band" [class.collapsed]="collapsed()" role="status">
     <div class="ltb-band-head">
       <div class="ltb-band-inner">
-        <app-overlay-brand />
         <span class="ltb-badge">{{ 'liveTrackingBlocked.badge' | t }}</span>
         <span class="ltb-band-title">{{ 'liveTrackingBlocked.title' | t }}</span>
+        <app-overlay-brand />
         <button type="button" class="ltb-action" (click)="openOverlay()">
           {{ 'liveTrackingBlocked.action' | t }}
         </button>
